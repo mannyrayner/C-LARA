@@ -397,6 +397,8 @@ def report_encoding_error(Str):
 
 def get_config():
     file = '$CLARA/clara_app/clara_core/config.ini'
+    if not local_file_exists(file):
+        raise InternalCLARAError( message=f'Unable to find config file {file}')
     config = configparser.ConfigParser()
     config.read(absolute_local_file_name(file))
     return config
