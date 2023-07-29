@@ -1,0 +1,152 @@
+
+This file lists the C-LARA operations currently supported and provides brief explanations.
+The function names are the one in the Django MVC 'views' file, $CLARA/clara_app/views.py.
+
+- register(request)
+Create a new account. The user is prompted to provide a userid, an email address, and a password.  
+
+- edit_profile(request)
+Edit user profile. The user is prompted to provide their location, their date of birth, a short
+bio, and a photo. All information is optional.
+
+- profile(request)
+Show user profile. 
+        
+- credit_balance(request)
+Show credit balance for money spent on API calls. The calls to ChatGPT-4 used to write texts
+and perform annotations cost money. Typically, the total cost for the API calls required to
+construct a fully annotated 250 word story costs is around $0.50. 
+    
+- add_credit(request)
+Add credit to account [admin only].
+
+- manage_language_masters(request)
+Manage users declared as 'language masters', adding or withdrawing the 'language master' privilege [admin only].
+There is at most one 'language master' for each language. The language master is responsible for creating and
+maintaining the language-specific ChatGPT-4 templates and examples used to construct the ChatGPT-4 prompts 
+for annotation; a prompt is formed by substituting the examples in the template. If the templates and examples
+do not exist for the language in question, a set of default language-independent templates and examples
+are used.
+
+- edit_prompt(request)
+Edit templates and examples for ChatGPT-4 language annotion prompts [language master only].
+See above under "manage_language_masters".
+
+- register_content(request)
+Register a piece of content that is already posted somewhere on the web. For downward compatibility
+with the previous LARA project, this command allows a user to make a piece of LARA content accessible through
+C-LARA so that users can add ratings and comments.
+
+- content_list(request)
+List currently registered content. List content created and registered using C-LARA, plus
+legacy content registered using the "register_content" operation above.
+
+- content_detail(request, content_id)
+Show a piece of registered content. Users can add ratings and comments. The comments
+are displayed in a chronologically ordered comment thread.
+
+- create_project(request)
+Create a new C-LARA project. The user is prompted to provide the L2 (the text language),
+the L1 (the language in which glosses will be provided) and a provisional title. In most
+cases, the title will later be changed.
+
+- clone_project(request, project_id)
+Create a clone of a project. The user is prompted to provide a new L2, a new L1, and a new title.
+If the L2 and L1 are the same, all text and annotated text files are copied.
+If the L2 is the same and the L1 is not the same, all files are copied except the gloss file.
+If the L2 is not the same, only the text file is copied over (the user may wish to translate or adapt it).
+
+- manage_project_members(request, project_id)
+Manage the users associated with a project. Users can have the roles 'Owner', 'Annotator' or 'Viewer'.
+The project owner can assign other users roles within the project, or withdraw these privileges.
+An 'Owner' can perform all operations.
+An 'Annotator' can edit any version of the text.
+A 'Viewer' can visit any version of the text, or clone the project.
+
+- project_list(request)
+List projects on which the user has a role. This means projects created by the user, or
+projects on which some other user has assigned them a role using manage_project_members.
+There are controls to show the amount of money and API call time spent on each project,
+itemised by operation.
+
+- delete_project(request, project_id)
+Delete a project. The user is prompted to confirm.
+
+- project_detail(request, project_id)
+Display information and functionalities associated with a project.
+This brings up a view which allows the user to change the project title,
+access the various text creation and annotation operations relevant to the
+project, compare two different versions of a text, show the project's
+annotation history, clone the project, and delete the project.
+
+- compare_versions(request, project_id)
+Compare two versions of a project file. The user selects a type of
+text ("plain", "summary", "segmented", "gloss" or "lemma"), and is shown
+a menu listing the different versions of the text. Versions are shown
+together with a timestamp and the method used to create the text, which
+is one of "AI generated", "AI revised", "Human revised" and
+"Tagger generated". The user selects two versions and is given a display
+with a colour-coded diff and an error rate.
+
+- create_plain_text(request, project_id)
+Create or edit "plain" version of the text.
+The user can instruct the AI to create a text, optionally providing an explicit prompt,
+or edit the existing text.
+    
+- create_summary(request, project_id)
+Create or edit "summary" version of the text.
+The user can instruct the AI to create a summary of the text, or edit the existing summary.
+    
+- create_segmented_text(request, project_id)
+Create or edit "segmented" version of the text.
+The user can instruct the AI to create a segmented version of the text, instruct the AI
+to try to improve the current segmented version, or edit the current segmented version.
+The prompt used to make the segmentation request to the AI is determined by the templates
+and examples defined by the "edit_prompt" operation. Segmentation will typically divide the
+text into pages and sentence-like segments, and divide surface words into smaller units
+when appropriate. For example, this operation might mark split up compound words in a Germanic
+language, split off clitics in a Romance language, or insert boundaries between all words
+in a language like Chinese or Japanese which does not use inter-word spaces.
+
+- create_glossed_text(request, project_id)
+Create or edit "glossed" version of the text.
+The user can instruct the AI to create a glossed version of the text, instruct the AI
+to try to improve the current glossed version, or edit the current glossed version.
+The prompt used to make the glossing request to the AI is determined by the templates
+and examples defined by the "edit_prompt" operation. Glosses are provided in the project's
+defined L1 language.
+
+- create_lemma_tagged_text(request, project_id)
+Create or edit "lemma-tagged" version of the text.
+The user can instruct the AI to create a lemma-tagged version of the text, instruct the AI
+to try to improve the current lemma-tagged version, edit the current lemma-tagged version,
+or request a lemma-tagged version produced by TreeTagger when this is available for the L2
+language. The prompt used to make the lemma-tagging request to the AI is determined by the templates
+and examples defined by the edit_prompt operation. In the lemma-tagged version, each word
+is associated with a lemma and a part-of-speech (POS) tag from the Universal Dependencies version 2
+tagset.
+
+- project_history(request, project_id)
+Display the history of updates to project files. 
+
+- render_text(request, project_id)
+Render the internal representation to create a directory of static HTML files.
+These files provide a multimedia view of the text, giving access to word and sentence audio,
+glosses, and a concordance.
+
+- register_project_content(request, project_id)
+Register content produced by rendering from a project.
+This makes the multimedia version of the text accessible through the content_list view.
+
+- serve_rendered_text(request, project_id, filename)
+Display a static HTML page.
+This is used internally to serve up the pages created by the render_text view.
+
+- serve_rendered_text_multimedia(request, project_id, filename)
+Display a static multimedia file.
+This is used internally to serve up the TTS-generated audio files created by the render_text view.
+
+- serve_zipfile(request, project_id)
+Download a zipfile of the HTML pages created from a project.
+This lets the user obtain a self-contained version of the multimedia HTML generated from
+the project, so that they can install it on their own machine or on another webserver.

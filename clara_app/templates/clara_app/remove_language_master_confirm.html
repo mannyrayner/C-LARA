@@ -1,0 +1,10 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>Remove Language Master</h2>
+<p>Are you sure you want to remove {{ language_master.user.username }} as a master for {{ language_master.language }}?</p>
+<form method="POST">
+    {% csrf_token %}
+    <button type="submit">Confirm</button>
+</form>
+{% endblock %}

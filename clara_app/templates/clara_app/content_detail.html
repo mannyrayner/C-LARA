@@ -1,0 +1,39 @@
+{% extends 'clara_app/base.html' %}
+
+{% block content %}
+  <h2>{{ content.title }}</h2>
+  <p>URL: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  {% if average_rating %}
+    <p>Average Rating: {{ average_rating }}</p>
+  {% else %}
+    <p>No ratings yet</p>
+  {% endif %}
+  <form method="post">
+    {% csrf_token %}
+    {{ rating_form.as_p }}
+    <button type="submit" name="submit_rating">Submit rating</button>
+</form>
+
+  <p>L2: {{ content.l2 }}</p>
+  <p>L1: {{ content.l1 }}</p>
+  <p>Summary: {{ content.summary }}</p>
+  <p>Length in words: {{ content.length_in_words }}</p>
+  <p>Author: {{ content.author }}</p>
+  <p>Voice: {{ content.voice }}</p>
+  <p>Annotator: {{ content.annotator }}</p>
+  <p>Difficulty Level: {{ content.difficulty_level }}</p>
+  
+  {% for comment in comments %}
+    <p>
+      <strong>{{ comment.user.username }}</strong> 
+      ({{ comment.timestamp|date:"F j, Y, P" }}):
+      {{ comment.comment }}
+    </p>
+  {% endfor %}
+  <form method="post">
+    {% csrf_token %}
+    {{ comment_form.as_p }}
+    <button type="submit" name="submit_comment">Submit comment</button>
+  </form>
+
+{% endblock %}

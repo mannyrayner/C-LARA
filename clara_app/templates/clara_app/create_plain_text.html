@@ -1,0 +1,30 @@
+{% extends 'clara_app/base.html' %}
+
+{% load static %}
+
+{% block title %}Create Plain Text{% endblock %}
+
+{% block content %}
+  <h2>Create Plain Text ("{{ project.title }}")</h2>
+  <form method="post" id="create-plain-text-form">
+    {% csrf_token %}
+    <p>{{ form.text_choice.label_tag }} {{ form.text_choice }}</p>
+    <p>{{ form.archived_version.label_tag }} {{ form.archived_version }}</p>
+    <p>{{ form.prompt.label_tag }} {{ form.prompt }}</p>
+	<p>{{ form.current_version.label_tag }} {{ form.current_version }}</p>
+    <p>{{ form.text.label_tag }} {{ form.text }}</p>
+    <p>{{ form.label.label_tag }} {{ form.label }}</p>
+	<p>{{ form.gold_standard.label_tag }} {{ form.gold_standard }}</p>
+    <button type="submit" id="submit-button">Create</button>
+  </form>
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+
+  <script type="text/javascript">
+    document.getElementById('create-plain-text-form').onsubmit = function() {
+      document.getElementById('submit-button').textContent = "Processing...";
+    };
+  </script>
+  
+  <script src="{% static 'clara_app/scripts/form-button-text.js' %}"></script>
+	
+{% endblock %}

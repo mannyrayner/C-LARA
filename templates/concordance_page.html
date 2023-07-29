@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="{{ l2_language }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concordance: {{ lemma }}</title>
+  <link rel="stylesheet" href="./static/clara_styles.css">
+</head>
+<body>
+  <div class="concordance" id="concordance_{{ lemma }}">
+  	<h1>{{ lemma }}</h1>
+    {%- for segment in concordance_segments -%}
+    <span class="segment" 
+			data-segment-uid="{{ segment.annotations.segment_uid }}" 
+			data-segment-audio="{{ segment.annotations.tts.file_path if segment.annotations.tts else '' }}">
+	  <span class="back-arrow-icon" 
+			data-segment-uid="{{ segment.annotations.segment_uid }}" 
+			data-page-number="{{ segment.annotations.page_number }}">&#x2190;</span>
+      {%- for element in segment.content_elements -%}
+        {%- if element.type == "Word" -%}
+          <span class="word {% if element.annotations.lemma == lemma %}concordance-highlight{% endif %}"
+                data-gloss="{{ element.annotations.gloss }}"
+                data-lemma="{{ element.annotations.lemma }}" 
+                data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
+        {%- else -%}{{ element.content }}
+        {%- endif -%}
+      {%- endfor -%}
+      {%- if segment.annotations.tts -%}
+      <span class="speaker-icon">&#128266;</span>
+      {%- endif -%}<br>
+    </span>
+    {%- endfor -%}
+  </div>
+  <script src="./static/clara_scripts.js"></script>
+</body>
+</html>

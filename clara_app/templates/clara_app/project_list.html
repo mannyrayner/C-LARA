@@ -1,0 +1,67 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h1>Your Projects</h1>
+  <button id="toggleCosts">Show/hide costs</button>
+  <button id="toggleDurations">Show/hide durations</button>
+  <ul>
+    {% for project, data in page_obj %}
+      <li>
+        <a href="{% url 'project_detail' project.id %}">{{ project.title }}</a> (Role: {{ data.role }})
+        <div class="costInfo" style="display: none;">
+          <p>Total cost: ${{ data.cost|floatformat:2 }}</p>
+          <p>Cost per operation:</p>
+          <ul>
+            {% for operation, cost in data.operation_costs.items %}
+              <li>{{ operation }}: ${{ cost|floatformat:2 }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="durationInfo" style="display: none;">
+          <p>Total duration: {{ data.duration|floatformat:2 }} minutes</p>
+          <p>Duration per operation:</p>
+          <ul>
+            {% for operation, duration in data.operation_durations.items %}
+              <li>{{ operation }}: {{ duration|floatformat:2 }} minutes</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <!-- Pagination navigation -->
+  {% if page_obj.has_previous %}
+    <a href="?page=1">&laquo; first</a>
+    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+  {% endif %}
+  <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">next</a>
+    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+  {% endif %}
+
+   <script>
+    document.getElementById("toggleCosts").addEventListener("click", function() {
+      var costInfos = document.getElementsByClassName("costInfo");
+      for (var i = 0; i < costInfos.length; i++) {
+        if (costInfos[i].style.display === "none") {
+          costInfos[i].style.display = "block";
+        } else {
+          costInfos[i].style.display = "none";
+        }
+      }
+    });
+    document.getElementById("toggleDurations").addEventListener("click", function() {
+      var durationInfos = document.getElementsByClassName("durationInfo");
+      for (var i = 0; i < durationInfos.length; i++) {
+        if (durationInfos[i].style.display === "none") {
+          durationInfos[i].style.display = "block";
+        } else {
+          durationInfos[i].style.display = "none";
+        }
+      }
+    });
+  </script>
+{% endblock %}
+

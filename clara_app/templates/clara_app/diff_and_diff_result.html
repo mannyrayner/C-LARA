@@ -1,0 +1,85 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Compare Text Versions{% endblock %}
+
+{% block content %}
+  <h2>Compare Text Versions ("{{ project.title }}")</h2>
+  
+   <style>
+    .inserted {
+        color: #90ee90;  /* Light green */
+        font-weight: bold;
+    }
+    .deleted {
+        color: red;
+        font-weight: bold;
+    }
+	pre {
+        white-space: pre-wrap;  /* CSS 3 */
+        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+        white-space: -pre-wrap;  /* Opera 4-6 */
+        white-space: -o-pre-wrap;  /* Opera 7 */
+        word-wrap: break-word;  /* Internet Explorer 5.5+ */
+    }
+	</style>
+  
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Compare</button>
+  </form>
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  
+  {% if diff_result.error_rate %}
+    <h3>Error Rate</h3>
+    <p>{{ diff_result.error_rate|floatformat:2 }}%</p>  
+  {% endif %}
+
+  {% if diff_result.details %}
+    <h3>Details</h3>
+    <pre>{{ diff_result.details|safe }}</pre>
+  {% endif %}
+
+  <!-- JavaScript for dynamically populating the file menus -->
+  <script type="text/javascript">
+  $(document).ready(function() {
+    var csrf_token = "{{ csrf_token }}"; // Django provides this template tag for CSRF token
+    $.ajaxSetup({
+        headers: { "X-CSRFToken": csrf_token }
+    });
+
+    $('#id_version').change(function() {
+        var selected_version = $(this).val();
+        var project_id = "{{ project.id }}"; // Assuming you pass the project in the context of your view
+
+        $.ajax({
+            url: '/accounts/projects/' + project_id + '/metadata/' + selected_version + '/',
+            type: 'GET',
+            success: function(data) {
+                // Clear existing options
+                $('#id_file1').html('');
+                $('#id_file2').html('');
+
+                // Add new options
+                for (var i=0; i < data.length; i++) {
+                    $('#id_file1').append($('<option>', {
+                        value: data[i].file,
+                        text: data[i].description  
+                    }));
+                    $('#id_file2').append($('<option>', {
+                        value: data[i].file,
+                        text: data[i].description  
+                    }));
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                // Handle any errors here
+                console.log(jqXHR);
+                console.log(textStatus);
+                console.log(errorThrown);
+            }
+        });
+    });
+  });
+  </script>
+{% endblock %}

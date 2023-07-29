@@ -1,0 +1,15 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+    <h1>Edit Annotation Prompts</h1>
+	<form method="POST">
+	  {% csrf_token %}
+	  {{ prompt_selection_form.as_p }}
+	  {{ prompt_formset.management_form }}
+	  {% for form in prompt_formset %}
+		{{ form.as_p }}
+	  {% endfor %}
+	  <input type="submit" name="action" value="Load">
+	  <input type="submit" name="action" value="Save">
+    </form>
+{% endblock %}

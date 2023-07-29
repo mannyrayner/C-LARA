@@ -1,0 +1,10 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Register Content</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Register Content</button>
+  </form>
+{% endblock %}

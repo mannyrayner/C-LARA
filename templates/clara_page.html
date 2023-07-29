@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="{{ l2_language }} dir="{{ 'rtl' if is_rtl else 'ltr' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page {{ page_number }}</title>
+  <link rel="stylesheet" href="./static/clara_styles.css">
+</head>
+<body>
+  <header>
+	<nav class="nav-bar">
+	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
+	  <a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">First</a>
+	  <a href="{{ 'page_' ~ (page_number + 1) ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Next</a>
+	  <button id="vocab-frequency-btn">Frequency</button>
+	  <button id="vocab-alphabetical-btn">Alphabetical</button>
+	</nav>
+  </header>
+  <!-- Wrap the main text pane and concordance pane in a container div -->
+  <div class="page-container {{ 'rtl' if is_rtl else '' }}">
+    <div class="main-text-pane-wrapper">
+	  <div class="page" id="main-text-pane">
+		{%- for segment in page.segments -%}
+		<span class="segment" 
+			  data-segment-uid="{{ segment.annotations.segment_uid }}" 
+			  data-segment-audio="{{ segment.annotations.tts.file_path if segment.annotations.tts else '' }}">
+		  {%- for element in segment.content_elements -%}
+			{%- if element.type == "Word" -%}
+			  <span class="word" data-gloss="{{ element.annotations.gloss }}" 
+					data-lemma="{{ element.annotations.lemma }}" 
+					data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
+			{%- else -%}{{ element.content|replace('\n', '<br>')|safe }}
+			{%- endif -%}
+		  {%- endfor -%}
+		  {%- if segment.annotations.tts -%}
+			<span class="speaker-icon">&#128266;</span>
+		  {%- endif -%}
+		</span>
+		{%- endfor -%}
+	  </div>
+    </div>
+    <div class="concordance-pane-wrapper">
+	  <iframe id="concordance-pane" src="" frameborder="0" class="concordance-iframe"></iframe>
+    </div>
+  </div>
+  <script src="./static/clara_scripts.js"></script>
+  <script>
+    function removeClassAfterDuration(element, className, duration) {
+	  setTimeout(() => {
+		element.classList.remove(className);
+	  }, duration);
+	}
+
+	document.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'loadConcordance') {
+        const concordancePane = document.getElementById("concordance-pane");
+        concordancePane.src = `concordance_${event.data.data.lemma}.html`;
+      } else if (event.data.type === 'scrollToSegment') {
+        const { segmentUid, pageNumber } = event.data.data;
+        scrollToSegmentHandler(segmentUid, pageNumber);
+      }
+    });
+  });
+
+  </script>
+</body>
+</html>

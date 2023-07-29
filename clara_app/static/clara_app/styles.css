@@ -1,0 +1,9 @@
+.disabled-link {
+    pointer-events: none;
+    color: #ccc;
+}
+
+.textarea-class {
+    width: 200%; 
+    height: 300px; 
+}

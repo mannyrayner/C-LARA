@@ -1,0 +1,178 @@
+TO-DO. ITEMS THAT HAVE BEEN SUGGESTED BUT NOT YET COMPLETED.
+
+Meta
+  Functionality for keeping to-do list on C-LARA platform
+  Functionality for adding/rating/upvoting/commenting to-do list items
+  Functionality for including ChatGPT-4 in to-do list discussion
+
+Bugs
+  Lemmas containing punctuation marks not properly handled
+  Issue when glossing separated words with hyphens, e.g. "Hårde|-kogte"
+
+Refactoring
+
+Rationalise repository
+  Decide what should be removed from the repository (e.g. database file, compiled content)
+  Decide if content should be moved to a separate repository
+  Decide whether to stay with SVN or move to Git
+
+Deployment
+  Talk with UniSA sysadmins about deployment 
+  Talk with UniSA commercialisation people about server with support for automatic payments
+  Temporary deployment on Heroku for internal testing purposes?
+
+Admin/moderator functions
+  Functionality for suspending/blocking users
+
+Social network
+  Email notifications
+  Basic flagging and moderation functionality
+  More fine-grained ratings, e.g. for annotation quality and audio
+
+Basic functionality
+  Password retrieval
+
+Reading functionality
+  Linking multiple texts into a single "reading progress" document
+
+Naming, renaming and deleting
+  Functionality for deleting a piece of external (LARA) content
+
+Registered content
+  Add search function to list of registered content
+
+Layout
+
+Annotation
+  Better treatment of MWEs, perhaps in the "improvement" phase or as an independent operation
+  Functionality to get an error rate summary
+  Conversion from TreeTagger POS tags to UD v2 tags for more languages
+  Functionality to show combination of template and examples when editing prompts
+  Structured editing interface for correcting glossed/tagged text
+  Functionality to revert prompt/prompt-examples to archived version
+  Functionality to use UD v2 treebank entries as examples for prompt templates
+  Single command to do all remaining annotation
+  Automatic alignment of gloss and lemma data, perhaps by annotating one version to create the other
+  Checking of timestamps on files in pipeline to find when results are invalidated 
+  Allow segmentation to be done by Punkt (= free annotation)
+
+Prompt templates and examples
+  Add segmentation templates and examples for Chinese and Japanese
+
+Help
+  Online help for prompt customisation
+  Online help for other views
+
+Displaying progress
+  Functionality for displaying progress to user during lengthy operations (ChatGPT-4 calls, TTS)
+
+Error handling
+
+Data tracking
+  Functionality for tracking usage at the level of texts
+  Functionality for tracking usage at the level of pages/words
+  Functionality for more detailed tracking of project revision history
+
+Gamification
+  Basic generic functionality for adding gamification 
+  Simple word-based and sentence-based games (e.g. flashcards, fill in blanks)
+  Graphic word-based and sentence-based games (e.g. rearrange jumbled words)
+
+Images
+  Basic functionality for including images 
+  Functionality for including DALL-E generated images 
+  Functionality for images with mouse-aware content
+
+Speech
+  Functionality for recording human audio
+  Functionality for using automatic alignment of text and audio to create multimodal content
+  Functionality to support speech recognition practice
+
+--------------------------------
+
+DONE. ITEMS FROM THE TO-DO LIST WHICH HAVE BEEN COMPLETED. 
+
+Meta
+  Immediate: where should we keep the to-do list so that it's easily visible? [2023-06-04; < 1 hour]
+
+Contact with UniSA
+  Talk with commercialisation people about server with support for automatic payments (initial meeting) [2023-07-03; 3 hours]
+
+Naming, renaming and deleting
+  Better naming convention for directory associated with C-LARA project - current one is brittle [2023-06-04; < 1 hour]
+
+Admin/moderator functions
+  Add possibility of defining users as admins/moderators [2023-06-04; a few hours]
+  Functionality for adding credit to an account [2023-06-04; 1-2 hours]
+  Functionality for declaring users as "language masters" [2023-06-22; a few hours]
+
+Social network
+  Initial functionality [2023-06-04; 1-2 hours]
+  Allow user to add more information to their profile, most importantly email [2023-06-27; 1-2 hours]   
+
+Naming, renaming and deleting
+  Functionality for renaming a project [2023-06-05; < 1 hour]
+  Functionality for deleting a project [2023-06-05; < 1 hour]
+
+Data tracking
+  Functionality to display cost of a given project [2023-06-05; 1-2 hours]
+  Functionality for more detailed breakdown of costs, e.g. by project or type [2023-06-06; 1-2 hours]
+  Functionality for giving other users roles in projects [2023-06-15; a few hours]
+  Functionality for labelling edited versions of files [2023-06-18; a few hours]
+  Functionality for tracking annotation accuracy [2023-06-20; a week]
+  Functionality for tracking API call durations as well as costs [2023-06-27; a few hours] 
+
+Error handling
+  Catch server shutdown (APIError and others) during ChatGPT-4 calls [2023-06-06; a few hours]
+  Block attempts to perform project actions out of order [2023-06-06; 1-2 hours]
+
+Annotation 
+  Functionality for summarisation of texts [2023-06-06; 1-2 hours]
+  Make ChatGPT-4-based annotation more efficient [2023-06-12; 1-2 days]
+  Add option to request ChatGPT-4-based revision of annotated text [2023-06-21; a day]
+  Multi-Word Expression tagging (initial version) [2023-06-21; a few hours]
+  Make it possible for user to customise ChatGPT-4 prompts used for annotation [2023-06-26; a week]
+  Check well-formedness of templates in prompt customisation [2023-06-26; a few hours]
+  Display examples more clearly in prompt customisation [2023-06-26; a few hours]
+  Include Universal Dependencies v2 part-of-speech information in lemma annotation [2023-06-26; 1-2 days]
+  Allow tagging to be done by automatic tagger-lemmatisers when available [2023-06-28; 1-2 days]
+  Add conversion from TreeTagger POS tags to UD v2 tags (EN) [2023-06-28; 1-2 hours]
+  Add conversion from TreeTagger POS tags to UD v2 tags (FR, NL, DE, FR) [2023-06-29; 1-2 hours]
+  Functionality to revert text to archived version [2023-07-05; 3 days]
+  Functionality to add labels to archived version [2023-07-10; 1-2 hours]
+  Give more informative feedback on annotated text syntax errors [2023-07-12; 1-2 hours]
+  Check well-formedness of annotated text before checking in [2023-07-12; 1-2 hours]
+
+Prompt templates and examples
+  Improve SE and FR examples for gloss and lemma tagging to include reflexive and particle verbs [2023-07-16; < 1 hour]
+  Improve FR examples for gloss and lemma tagging to include the important construction "il y a" [2023-07-16; < 1 hour]
+
+Cloning
+  Functionality for simple cloning of a project [2023-06-10; a few hours]
+  Functionality for intelligent (ChatGPT-4-based) cloning of a project [2023-06-10; a few hours]
+
+Bugs
+  Extra newlines appear when moving text between screen and internal objects/files [2023-06-11; a few hours]
+  Fix issue with spurious line breaks in diff view [2023-06-22; 1-2 hours]
+  Don't put speaker icons on empty segments [2023-06-27; < 1 hour]
+  Add pagination to list of projects [2023-06-27; < 1 hour]
+  Delete internal project directory when deleting project [2023-06-29; < 1 hour]
+  Spurious <page> and || separators in diff view for "plain" [2023-07-05; < 1 hour]
+  Add interword vertical bars in to_text methods [2023-07-05; < 1 hour]
+  Preload menus in diff view [2023-07-05; < 1 hour]
+  Better syntax checking for internalisation, e.g. "by#par# the#le# way#chemin" [2023-07-09; 1-2 hours]
+  Keep settings when going back to comparison page [2023-07-09; 1-2 hours]
+  "Substitute" case not being properly handled in version diff [2023-07-10; 1-2 hours]
+  Catch internalisation errors in prompt examples when using them in annotation [2023-07-12; 1-2 hours]   
+  Handle languages not covered by TTS [2023-07-12; 1-2 hours]
+  Don't count punctuation and layout in version diff, except in segmented mode [2023-07-14; 1-2 hours]   
+
+Refactoring
+  Tidy up annotation code and templates to use 'messages' framework uniformly with other views functions [2023-07-12; 2-3 hours]
+
+Layout
+  Move version label higher in annotation screen [2023-07-12; < 1 hour]   
+
+Help
+  Top-level document summarising available functionality [2023-06-29; a few hours]
+

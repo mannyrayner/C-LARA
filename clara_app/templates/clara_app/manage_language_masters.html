@@ -1,0 +1,22 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>Manage Language Masters</h2>
+
+{% for language_master in language_masters %}
+<div>
+    <p>{{ language_master.user.username }} is a master for {{ language_master.language }}
+    <form method="GET" action="{% url 'remove_language_master' language_master.pk %}">
+        {% csrf_token %}
+        <input type="submit" value="Remove">
+    </form></p>
+</div>
+{% endfor %}
+
+<h2>Assign New Language Master</h2>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Assign</button>
+</form>
+{% endblock %}

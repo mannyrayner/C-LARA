@@ -1,0 +1,11 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h1>Are you sure you want to delete this project?</h1>
+  <p>{{ project.title }}</p>
+  <form method="post">
+    {% csrf_token %}
+    <input type="submit" value="Yes, delete it">
+  </form>
+  <a href="{% url 'project_detail' project.id %}">No, take me back</a>
+{% endblock %}

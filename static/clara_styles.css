@@ -1,0 +1,157 @@
+.word {
+  cursor: pointer;
+  position: relative;
+  font-size: 1.4em; /* Increase font size even more */
+  line-height: 1.6; /* Add a bit more space between lines */
+}
+
+.word:hover {
+  background-color: rgba(255, 255, 0, 0.5); /* Yellow with 50% opacity */
+}
+
+.word:hover::after {
+  content: attr(data-gloss);
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 1em; /* Increase font size for better readability */
+  top: -2em;
+  left: 0;
+  min-width: 100%; /* Ensure the gloss popup is never smaller than the word it is glossing */
+  white-space: nowrap; /* Prevent the gloss from wrapping to a new line */
+}
+
+body {
+  margin: 1rem;
+  padding: 2rem 1rem; /* Increase the top padding from 1rem to 2rem */
+  /* Add other body styles if needed */
+}
+
+
+/* Navigation Bar */
+nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f8f8;
+  padding: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation Buttons */
+.nav-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f8f8;
+  padding: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.nav-bar a,
+.nav-bar button {
+  display: inline-block;
+  font-family: Arial, sans-serif;
+  text-decoration: none;
+  color: #333;
+  margin: 0 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background-color: #fff;
+  transition: all 0.3s ease;
+  font-size: 1em;
+}
+
+.nav-bar a:hover,
+.nav-bar button:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.nav-bar a.disabled,
+.nav-bar button:disabled {
+  color: #999;
+  border-color: #999;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.vocab-list {
+  font-size: 1.4em;
+  line-height: 1.6;
+}
+
+.speaker-icon {
+  cursor: pointer;
+  margin-left: 0.2em;
+  font-size: 0.8em;
+  vertical-align: middle;
+}
+
+.concordance-highlight {
+  background-color: yellow;
+}
+
+.back-arrow-icon {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 1.2em;
+  padding: 2px;
+  border-radius: 4px;
+  margin-right: 4px;
+}
+
+.back-arrow-icon:hover {
+  background-color: #f0f0f0;
+}
+
+.back-arrow-icon:active {
+  background-color: #e0e0e0;
+}
+
+.segment-highlight {
+  background-color: rgba(255, 255, 0, 0.5); /* Yellow with 50% opacity */
+}
+
+/* Add these styles to the end of the clara_styles.css file */
+
+.page-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.page-container.rtl {
+  flex-direction: row-reverse;
+}
+
+.concordance-pane-wrapper {
+  width: 50%;
+  height: 100vh;
+  position: relative;
+}
+
+.concordance-iframe {
+  width: 100%;
+  height: 75vh;
+}  
+
+.main-text-pane-wrapper {
+  width: 50%;
+  height: 100vh;
+  overflow-y: auto;
+  padding-top: 2rem; /* Add padding-top to create space at the top of the main text */
+}
+
+.concordance-pane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+

@@ -1,0 +1,37 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Diff Result{% endblock %}
+
+{% block content %}
+  <h2>Diff Result</h2>
+
+  <style>
+    .inserted {
+        color: #90ee90;  /* Light green */
+        font-weight: bold;
+    }
+    .deleted {
+        color: red;
+        font-weight: bold;
+    }
+	pre {
+        white-space: pre-wrap;  /* CSS 3 */
+        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+        white-space: -pre-wrap;  /* Opera 4-6 */
+        white-space: -o-pre-wrap;  /* Opera 7 */
+        word-wrap: break-word;  /* Internet Explorer 5.5+ */
+    }
+	</style>
+
+  {% if diff_result.error_rate %}
+    <h3>Error Rate</h3>
+    <p>{{ diff_result.error_rate|floatformat:2 }}%</p>  
+  {% endif %}
+
+  {% if diff_result.details %}
+    <h3>Details</h3>
+    <pre>{{ diff_result.details|safe }}</pre>
+  {% endif %}
+
+  <a href="{% url 'compare_versions' project.id %}">Back to Comparison Selection</a>
+{% endblock %}

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="{{ l2_language }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocabulary List - Frequency</title>
+  <link rel="stylesheet" href="./static/clara_styles.css">
+</head>
+<body>
+  <h2>Vocabulary List - Frequency</h2>
+  <div class="vocab-list">
+  <ul>
+    {% for lemma, lemma_data in vocabulary_list %}
+    <li>
+	  <a href="concordance_{{ lemma }}.html">{{ lemma }} ({{ lemma_data.frequency }})</a>
+    </li>
+	{% endfor %}
+  </ul>
+  </div>
+</body>
+</html>

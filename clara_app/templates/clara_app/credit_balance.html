@@ -1,0 +1,6 @@
+{% extends 'clara_app/base.html' %}
+
+{% block content %}
+  <h1>Credit Balance</h1>
+  <p>Your current credit balance is: ${{ credit_balance|floatformat:2 }}</p>
+{% endblock %}

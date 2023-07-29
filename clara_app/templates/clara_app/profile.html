@@ -1,0 +1,13 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Profile</h2>
+  <p>Welcome, {{ request.user.username }}!</p>
+  <p>Email: {{ email }}</p>
+  <p>Bio: {{ profile.bio }}</p>
+  <p>Location: {{ profile.location }}</p>
+  <p>Birth date: {{ profile.birth_date }}</p>
+  {% if profile.profile_picture %}
+    <img src="{{ profile.profile_picture.url }}" alt="Profile picture">
+  {% endif %}
+{% endblock %}

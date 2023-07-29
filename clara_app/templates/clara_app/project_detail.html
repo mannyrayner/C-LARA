@@ -1,0 +1,28 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+	<h1>{{ project.title }}</h1>
+	<form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Title</button>
+    </form>
+	<p>L2 Language: {{ project.l2 }}</p>
+	<p>L1 Language: {{ project.l1 }}</p>
+	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
+	<p><a href="{% url 'create_plain_text' project.id %}" >Create/Edit Plain Text</a></p>
+	<p><a href="{% url 'create_summary' project.id %}" >Create/Edit Summary</a></p>
+	<p><a href="{% url 'create_segmented_text' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Create/Edit Segmented Text</a></p>
+	<p><a href="{% url 'create_glossed_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Create/Edit Glossed Text</a></p>
+	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">Create/Edit Lemma Tagged Text</a></p>
+	<p><a href="{% url 'create_lemma_and_gloss_tagged_text' project.id %}" {% if not can_render %}class="disabled-link{% endif %}">Create/Edit Lemma and Gloss Tagged Text</a></p>
+	<p><a href="{% url 'render_text' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Render Text</a></p>
+	<p><a href="{% url 'compare_versions' project.id %}">Compare Text Versions</a></p>
+	<p><a href="{% url 'project_history' project.id %}">View Project History</a></p>
+	<p><a href="{% url 'manage_project_members' project.id %}">Manage Project Members</a></p>
+	<p><a href="{% url 'clone_project' project.id %}">Clone Project</a></p>
+	<p><a href="{% url 'delete_project' project.id %}">Delete Project</a></p>
+
+{% endblock %}
+
+

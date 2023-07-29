@@ -1,0 +1,24 @@
+{% extends 'clara_app/base.html' %}
+
+{% load static %}
+
+{% block title %}Create Lemma and Gloss Tagged Text{% endblock %}
+
+{% block content %}
+  <h2>Create Lemma and Gloss Tagged Text ("{{ project.title }}")</h2>
+  <form method="post" id="create-lemma-and-gloss-tagged-text-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" id="submit-button">Create</button>
+  </form>
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+
+  <script type="text/javascript">
+    document.getElementById('create-lemma-and-gloss-tagged-text-form').onsubmit = function() {
+      document.getElementById('submit-button').textContent = "Processing...";
+    };
+  </script>
+  
+  <script src="{% static 'clara_app/scripts/form-button-text.js' %}"></script>
+  
+{% endblock %}

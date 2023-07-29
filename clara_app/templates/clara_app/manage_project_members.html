@@ -1,0 +1,41 @@
+
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+    <h1>Manage Project Members ("{{ project.title }}")</h1>
+    <form method="POST" action="{% url 'manage_project_members' project.id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Add Member</button>
+    </form>
+
+    {% if permissions %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for permission in permissions %}
+                <tr>
+                    <td>{{ permission.user.username }}</td>
+                    <td>{{ permission.role }}</td>
+                    <td>
+                        <form method="POST" action="{% url 'remove_project_member' permission.id %}">
+                            {% csrf_token %}
+                            <button type="submit">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No project members found.</p>
+    {% endif %}
+
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+{% endblock %}

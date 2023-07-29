@@ -1,0 +1,16 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Project History{% endblock %}
+
+{% block content %}
+  <h2>Project History ("{{ project.title }}")</h2>
+  <ul>
+    {% for action in actions %}
+      <li>
+        <strong>{{ action.timestamp }}</strong>: {{ action.user.username }} 
+        {{ action.get_action_display }}d {{ action.get_text_version_display }} text.
+      </li>
+    {% endfor %}
+  </ul>
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+{% endblock %}

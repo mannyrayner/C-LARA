@@ -1,0 +1,54 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="{% static 'clara_app/styles.css' %}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script type="text/javascript">
+    var csrf_token = "{% csrf_token %}";
+  </script>
+  <title>{% block title %}C-LARA{% endblock %}</title>
+</head>
+<body>
+  <header>
+    <nav>
+      <ul>
+        {% if user.is_authenticated %}
+		  <li><a href="{% url 'profile' %}">Display user profile</a></li>
+		  <li><a href="{% url 'edit_profile' %}">Edit user profile</a></li>
+		  <li><a href="{% url 'credit_balance' %}">Credit balance for ChatGPT-4 API calls</a></li>
+		  {% if user.is_admin %}
+            <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>
+			<li><a href="{% url 'manage_language_masters' %}">Manage language masters</a></li>
+          {% endif %}
+		  {% if user.is_language_master %}
+			<li><a href="{% url 'edit_prompt' %}">Edit annotation prompts</a></li>
+		  {% endif %}
+		  <li><a href="{% url 'create_project' %}">Create new C-LARA project</a></li>
+		  <li><a href="{% url 'project_list' %}">List your C-LARA projects</a></li>
+		  <li><a href="{% url 'content_list' %}">List registered content</a></li>
+		  <li><a href="{% url 'register_content' %}">Register external LARA content</a></li>
+          <li><a href="{% url 'logout' %}">Logout</a></li>
+        {% else %}
+          <li><a href="{% url 'login' %}">Login</a></li>
+          <li><a href="{% url 'register' %}">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    {% for message in messages %}
+       <div class="alert alert-{{ message.tags }}">
+       {{ message }}
+       </div>
+    {% endfor %}
+
+    {% block content %}
+    {% endblock %}
+  </main>
+</body>
+</html>
