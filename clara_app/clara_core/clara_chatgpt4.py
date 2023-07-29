@@ -12,7 +12,8 @@ This module also provides an option to use a manual alternative to the ChatGPT-4
 
 from .clara_classes import *
 from . import clara_openai
-from . import clara_chatgpt4_manual
+# Comment this out for now. We haven't used it for ages, and it confuses Heroku.
+#from . import clara_chatgpt4_manual
 from . import clara_utils
 
 import os
