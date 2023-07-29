@@ -1,0 +1,14 @@
+Django
+configparser
+gTTS
+jinja2
+openai
+Pillow
+regex
+requests
+boto3
+psycopg2
+retrying
+tiktoken
+unidecode
+whitenoise
