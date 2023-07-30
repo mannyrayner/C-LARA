@@ -1,7 +1,10 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Content, User, UserProfile, LanguageMaster, CLARAProject, Rating, Comment
+# Temporarily remove User
+#from .models import Content, User, UserProfile, LanguageMaster, CLARAProject, Rating, Comment
+from .models import Content, UserProfile, LanguageMaster, CLARAProject, Rating, Comment
+from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
 
