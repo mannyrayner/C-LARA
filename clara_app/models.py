@@ -7,13 +7,13 @@ from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
 
-class User(AbstractUser):
-    is_admin = models.BooleanField(default=False)
-    is_moderator = models.BooleanField(default=False)
-    credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+# class User(AbstractUser):
+    # is_admin = models.BooleanField(default=False)
+    # is_moderator = models.BooleanField(default=False)
+    # credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     
-    def is_language_master(self):
-        return self.language_master_set.exists()
+    # def is_language_master(self):
+        # return self.language_master_set.exists()
         
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

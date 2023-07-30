@@ -110,7 +110,8 @@ else:
     # # Version for sqlite3 configuration, development on local machine
     # AUTH_USER_MODEL = 'clara_app.User'
     
-AUTH_USER_MODEL = 'clara_app.User'
+#AUTH_USER_MODEL = 'clara_app.User'
+AUTH_USER_MODEL = 'auth.User'
 
 AUTHENTICATION_BACKENDS = ['clara_app.backends.CustomUserModelBackend']
 
