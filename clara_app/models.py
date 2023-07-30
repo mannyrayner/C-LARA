@@ -1,12 +1,14 @@
 from django.db import models
 from django.urls import reverse
-from django.contrib.auth.models import AbstractUser
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
 
-from django.contrib.auth.models import AbstractUser, Group, Permission
+# Temporarily remove User
+#from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.contrib.auth.models import User, Group, Permission
 from django.db import models
 
+# Temporarily remove User
 # class User(AbstractUser):
     # is_admin = models.BooleanField(default=False)
     # is_moderator = models.BooleanField(default=False)
