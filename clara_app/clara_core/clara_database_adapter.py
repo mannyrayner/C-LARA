@@ -10,8 +10,9 @@ The function clara_database_adapter.localise_sql_query converts this to sqlite3 
 """
 
 import os
-import psycopg2
+import urllib.parse as urlparse
 import sqlite3
+import psycopg2
 from psycopg2.extras import RealDictCursor
 from .clara_utils import get_config
 
@@ -20,14 +21,19 @@ config = get_config()
 def connect(database_name):
     if os.getenv('DB_TYPE') == 'sqlite':
         return sqlite3.connect(database_name)
-    else:  # Assuming PostgreSQL
-        postgres_config = {
-            'dbname': config.get('postgres', 'dbname'),
-            'user': config.get('postgres', 'user'),
-            'password': config.get('postgres', 'password'),
-            'host': config.get('postgres', 'host')
-        }
-        return psycopg2.connect(**postgres_config, cursor_factory=RealDictCursor)
+    else:  # Assuming PostgreSQL on Heroku
+        url = urlparse.urlparse(os.environ.get('DATABASE_URL'))
+        dbname = url.path[1:]
+        user = url.username
+        password = url.password
+        host = url.hostname
+        return psycopg2.connect(
+            dbname=dbname,
+            user=user,
+            password=password,
+            host=host,
+            cursor_factory=RealDictCursor
+        )
 
 def localise_sql_query(query):
     if os.getenv('DB_TYPE') == 'sqlite':

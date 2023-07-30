@@ -11,9 +11,12 @@ class User(AbstractUser):
     is_admin = models.BooleanField(default=False)
     is_moderator = models.BooleanField(default=False)
     credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-
-    groups = models.ManyToManyField(Group, blank=True, related_name="clara_app_users")
-    user_permissions = models.ManyToManyField(Permission, blank=True, related_name="clara_app_users")
+    
+    # ChatGPT-4 says: 
+    # The AbstractUser model already includes groups and user_permissions fields, 
+    # so you don't need to include them again in your custom User model.
+    #groups = models.ManyToManyField(Group, blank=True, related_name="clara_app_users")
+    #user_permissions = models.ManyToManyField(Permission, blank=True, related_name="clara_app_users")
     
     def is_language_master(self):
         return self.language_master_set.exists()
