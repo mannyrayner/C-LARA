@@ -11,7 +11,11 @@ from django import forms
 from django.db.models import Avg, Q
 from django.core.exceptions import PermissionDenied
 
-from .models import User, UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
+# Temporarily remove User
+#from .models import User, UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
+from .models import UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
+from django.contrib.auth.models import User
+
 from .forms import RegistrationForm, UserForm, UserProfileForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateSegmentedTextForm
