@@ -1,5 +1,7 @@
 from django.contrib.auth.backends import ModelBackend
-from clara_app.models import User
+# Temporarily remove User
+#from clara_app.models import User
+from django.contrib.auth.models import User
 
 class CustomUserModelBackend(ModelBackend):
     def get_user(self, user_id):
