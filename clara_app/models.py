@@ -5,7 +5,7 @@ from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
 
 # Temporarily remove User
 #from django.contrib.auth.models import AbstractUser, Group, Permission
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
 
 # Temporarily remove User
