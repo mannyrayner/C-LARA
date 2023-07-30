@@ -14,4 +14,4 @@ unidecode
 whitenoise
 dj-database-url
 psycopg2
-psycopg2-binarygunicorn
+psycopg2-binary
