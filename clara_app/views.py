@@ -98,7 +98,8 @@ def credit_balance(request):
     
 # Add credit to account
 @login_required
-@user_passes_test(lambda u: u.is_admin)
+# Temporarily remove User
+#@user_passes_test(lambda u: u.is_admin)
 def add_credit(request):
     if request.method == 'POST':
         form = AddCreditForm(request.POST)
@@ -113,7 +114,8 @@ def add_credit(request):
 
 # Manage users declared as 'language masters', adding or withdrawing the 'language master' privilege   
 @login_required
-@user_passes_test(lambda u: u.is_admin)
+# Temporarily remove User
+#@user_passes_test(lambda u: u.is_admin)
 def manage_language_masters(request):
     language_masters = LanguageMaster.objects.all()
     if request.method == 'POST':
@@ -132,7 +134,8 @@ def manage_language_masters(request):
 
 # Remove someone as a language master, asking for confirmation first
 @login_required
-@user_passes_test(lambda u: u.is_admin)
+# Temporarily remove User
+#@user_passes_test(lambda u: u.is_admin)
 def remove_language_master(request, pk):
     language_master = get_object_or_404(LanguageMaster, pk=pk)
     if request.method == 'POST':
