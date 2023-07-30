@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from django.contrib.messages import constants as messages
+import dj_database_url
 
 from pathlib import Path
 
@@ -28,7 +29,8 @@ SECRET_KEY = 'django-insecure--frk$cftm09g^!^9n6)ii=)c(l3xj1!6h7h-hn6g(&1&q@n85&
 DEBUG = True
 
 # For Heroku
-ALLOWED_HOSTS = ['c-lara-758a4f81c1ff.herokuapp.com']
+ALLOWED_HOSTS = ['localhost',
+                 'c-lara-758a4f81c1ff.herokuapp.com']
 
 # Application definition
 
@@ -81,11 +83,19 @@ WSGI_APPLICATION = 'clara_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# Version for sqlite3 configuration, development on local machine
+# DATABASES = {
+    # 'default': {
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+    # }
+# }
+
+# Version for Heroku deployment
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL')
+    )
 }
 
 AUTH_USER_MODEL = 'clara_app.User'
