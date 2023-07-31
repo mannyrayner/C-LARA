@@ -116,6 +116,7 @@ def add_credit(request):
             credit = form.cleaned_data['credit']
             user.userprofile.credit += credit
             user.userprofile.save()
+            messages.success(request, "Credit added successfully")
     else:
         form = AddCreditForm()
     return render(request, 'clara_app/add_credit.html', {'form': form})
