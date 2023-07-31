@@ -3,12 +3,12 @@ from django.urls import reverse
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
 
-# Temporarily remove User
+# Remove custom User
 #from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
 
-# Temporarily remove User
+# Remove custom User and move fields to UserProfile
 # class User(AbstractUser):
     # is_admin = models.BooleanField(default=False)
     # is_moderator = models.BooleanField(default=False)
@@ -17,12 +17,25 @@ from django.db import models
     # def is_language_master(self):
         # return self.language_master_set.exists()
         
+# class UserProfile(models.Model):
+    # user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # bio = models.TextField(blank=True, null=True)
+    # location = models.CharField(max_length=100, blank=True, null=True)
+    # birth_date = models.DateField(blank=True, null=True)
+    # profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True, null=True)
     location = models.CharField(max_length=100, blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    is_admin = models.BooleanField(default=False)
+    is_moderator = models.BooleanField(default=False)
+    credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+
+    def is_language_master(self):
+        return self.user.language_master_set.exists()
 
 class LanguageMaster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='language_master_set')

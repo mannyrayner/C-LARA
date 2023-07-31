@@ -11,7 +11,7 @@ from django import forms
 from django.db.models import Avg, Q
 from django.core.exceptions import PermissionDenied
 
-# Temporarily remove User
+# Remove custom User
 #from .models import User, UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from .models import UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
@@ -52,6 +52,10 @@ def register(request):
             user = form.save()  # This will save username and password.
             user.email = form.cleaned_data.get('email')  # This will save email.
             user.save()  # Save the user object again.
+            
+            # Create the UserProfile instance and associate it with the new user.
+            UserProfile.objects.create(user=user)
+
             username = form.cleaned_data.get('username')
             messages.success(request, f'Account created for {username}!')
             return redirect('login')
@@ -97,29 +101,29 @@ def edit_profile(request):
 @login_required
 def credit_balance(request):
     total_cost = get_user_api_cost(request.user)
-    credit_balance = request.user.credit - total_cost  
+    credit_balance = request.user.userprofile.credit - total_cost  
     return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance})
     
+# Remove custom User
 # Add credit to account
 @login_required
-# Temporarily remove User
-#@user_passes_test(lambda u: u.is_admin)
+@user_passes_test(lambda u: u.userprofile.is_admin)
 def add_credit(request):
     if request.method == 'POST':
         form = AddCreditForm(request.POST)
         if form.is_valid():
             user = form.cleaned_data['user']
             credit = form.cleaned_data['credit']
-            user.credit += credit
-            user.save()
+            user.userprofile.credit += credit
+            user.userprofile.save()
     else:
         form = AddCreditForm()
     return render(request, 'clara_app/add_credit.html', {'form': form})
 
+# Remove custom User
 # Manage users declared as 'language masters', adding or withdrawing the 'language master' privilege   
 @login_required
-# Temporarily remove User
-#@user_passes_test(lambda u: u.is_admin)
+@user_passes_test(lambda u: u.userprofile.is_admin)
 def manage_language_masters(request):
     language_masters = LanguageMaster.objects.all()
     if request.method == 'POST':
@@ -136,10 +140,10 @@ def manage_language_masters(request):
         'form': form,
     })
 
+# Remove custom User
 # Remove someone as a language master, asking for confirmation first
 @login_required
-# Temporarily remove User
-#@user_passes_test(lambda u: u.is_admin)
+@user_passes_test(lambda u: u.userprofile.is_admin)
 def remove_language_master(request, pk):
     language_master = get_object_or_404(LanguageMaster, pk=pk)
     if request.method == 'POST':

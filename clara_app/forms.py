@@ -1,13 +1,14 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-# Temporarily remove User
+# Remove custom User
 #from .models import Content, User, UserProfile, LanguageMaster, CLARAProject, Rating, Comment
 from .models import Content, UserProfile, LanguageMaster, CLARAProject, Rating, Comment
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
 
+# Remove custom User
 # Custom version of django.contrib.auth.forms.UserCreationForm
 # which uses clara_app.models.User instead of auth.User
 # class ClaraUserCreationForm(UserCreationForm):

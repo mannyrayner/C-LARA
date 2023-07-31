@@ -1,5 +1,5 @@
 from django.contrib.auth.backends import ModelBackend
-# Temporarily remove User
+# Remove custom User
 #from clara_app.models import User
 from django.contrib.auth.models import User
 
