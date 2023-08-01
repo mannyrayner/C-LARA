@@ -172,15 +172,15 @@ AWS_S3_OBJECT_PARAMETERS = {
 
 AWS_LOCATION = 'static'
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+#DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 #DEFAULT_FILE_STORAGE = 'clara_project.storage_backends.MyS3Boto3Storage'
+#STATICFILES_STORAGE = 'storages.backends.s3boto3.S3ManifestStaticStorage'
+STORAGES = {"staticfiles": {"BACKEND": "storages.backends.s3boto3.S3StaticStorage"}}
 
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
-#STATICFILES_STORAGE = 'storages.backends.s3boto3.S3ManifestStaticStorage'
-STORAGES = {"staticfiles": {"BACKEND": "storages.backends.s3boto3.S3StaticStorage"}}
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
