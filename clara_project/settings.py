@@ -159,7 +159,7 @@ AWS_S3_REGION_NAME = os.getenv('AWS_REGION')
 
 AWS_DEFAULT_ACL = None
 
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
 
 # Typical S3 URL looks like this: https://c-lara.s3.ap-southeast-2.amazonaws.com/static/profile_pictures/OwnPicture.jpg
 #AWS_S3_ENDPOINT_URL = 'https://s3-ap-southeast-2.amazonaws.com'
