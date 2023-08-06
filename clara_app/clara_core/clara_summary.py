@@ -11,7 +11,7 @@ The main function is:
 
 from . import clara_chatgpt4
 
-def generate_summary(text, l2_language):
+def generate_summary(text, l2_language, callback=None):
     l2_language = l2_language.capitalize()
     prompt = f"""Read the following {l2_language} text and create a short summary in English of 1-2 sentences in length.
 
@@ -21,10 +21,10 @@ Here is the text:
 
 Just give the summary and nothing else, since the output will be read by a Python script.
 """
-    api_call = clara_chatgpt4.call_chat_gpt4(prompt)
+    api_call = clara_chatgpt4.call_chat_gpt4(prompt, callback=callback)
     return ( api_call.response, [ api_call ] )
 
-def improve_summary(text, old_summary, l2_language):
+def improve_summary(text, old_summary, l2_language, callback=None):
     l2_language = l2_language.capitalize()
     prompt = f"""Read the following {l2_language} text and the short English summary, which should be 1-2 sentences in length.
 If possible, try to improve the summary.
@@ -39,5 +39,5 @@ Here is the summary:
 
 Just give the revised summary and nothing else, since the output will be read by a Python script.
 """
-    api_call = clara_chatgpt4.call_chat_gpt4(prompt)
+    api_call = clara_chatgpt4.call_chat_gpt4(prompt, callback=callback)
     return ( api_call.response, [ api_call ] )
