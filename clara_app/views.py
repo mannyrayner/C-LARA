@@ -800,9 +800,13 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
 
 def perform_improve_operation_and_store_api_calls(version, project, clara_project_internal,
                                                    user_object, label, callback=None):
-    operation, api_calls = perform_improve_operation(version, clara_project_internal, user_object.username, label, callback=callback)
-    store_api_calls(api_calls, project, user_object, version)
-    post_task_update(callback, f"finished")
+    try:                                               
+        operation, api_calls = perform_improve_operation(version, clara_project_internal, user_object.username, label, callback=callback)
+        store_api_calls(api_calls, project, user_object, version)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"error")
  
 def perform_improve_operation(version, clara_project_internal, user, label, callback=None):
     if version == 'plain':
@@ -942,8 +946,12 @@ def project_history(request, project_id):
 # ASYNCHRONOUS PROCESSING
 
 def clara_project_internal_render_text(clara_project_internal, project_id, self_contained=False, callback=None):
-    print(f'--- Started clara_project_internal_render_text')
-    clara_project_internal.render_text(project_id, self_contained=self_contained, callback=callback)
+    try:
+        clara_project_internal.render_text(project_id, self_contained=self_contained, callback=callback)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"error")
 
 # Start the async process that will do the rendering
 @login_required
