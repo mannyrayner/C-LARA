@@ -29,13 +29,14 @@ from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm
 from .utils import create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
+from .utils import post_task_update_in_db, get_task_updates, delete_all_tasks
 
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, output_dir_for_project_id
+from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, output_dir_for_project_id, post_task_update
 
 from pathlib import Path
 from decimal import Decimal
@@ -47,6 +48,7 @@ import shutil
 import mimetypes
 import logging
 import pprint
+import uuid
 
 # Create a new account    
 def register(request):
