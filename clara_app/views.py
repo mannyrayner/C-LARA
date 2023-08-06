@@ -694,11 +694,11 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
 def generate_text_status(request, project_id, report_id):
     messages = get_task_updates(report_id)
     print(f'{len(messages)} messages received')
-    elif 'error' in messages:
+    if 'error' in messages:
         status = 'error'
-    if 'finished' in messages:
+    elif 'finished' in messages:
         status = 'finished' 
-    elif: 
+    else: 
         status = 'unknown'    
     return JsonResponse({'messages': messages, 'status': status})
 
@@ -993,7 +993,8 @@ def render_text_status(request, project_id, task_id, report_id):
         status = 'error'
     elif 'finished' in messages:
         status = 'finished'  
-    else status = 'unknown'    
+    else:
+        status = 'unknown'    
     return JsonResponse({'messages': messages, 'status': status})
 
 # Render the monitoring page, which will use JavaScript to poll the task status API
