@@ -694,7 +694,12 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
 def generate_text_status(request, project_id, report_id):
     messages = get_task_updates(report_id)
     print(f'{len(messages)} messages received')
-    status = 'finished' if 'finished' in messages else 'unknown'    
+    elif 'error' in messages:
+        status = 'error'
+    if 'finished' in messages:
+        status = 'finished' 
+    elif: 
+        status = 'unknown'    
     return JsonResponse({'messages': messages, 'status': status})
 
 @login_required
@@ -707,9 +712,8 @@ def generate_text_monitor(request, project_id, version, report_id):
 # Display the final result of rendering
 @login_required
 @user_has_a_project_role
-def generate_text_complete(request, project_id, version):
+def generate_text_complete(request, project_id, version, status):
 
-    messages.success(request, f'Created {version} text')
     previous_version, template = previous_version_and_template_for_version(version)
 
     # We are making a new request in this view
@@ -719,6 +723,11 @@ def generate_text_complete(request, project_id, version):
     else:
         # Remove any outstanding tasks, so that they can't be retried
         delete_all_tasks()
+        if status == 'error':
+            messages.error(request, f'Something went wrong when creating {version} text')
+        else:
+            messages.success(request, f'Created {version} text')
+        
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         tree_tagger_supported = fully_supported_treetagger_language(project.l2)
@@ -766,9 +775,13 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
 
 def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
                                                    user_object, label, prompt=None, callback=None):
-    operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label, prompt=prompt, callback=callback)
-    store_api_calls(api_calls, project, user_object, version)
-    post_task_update(callback, f"finished")
+    try:                                               
+        operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label, prompt=prompt, callback=callback)
+        store_api_calls(api_calls, project, user_object, version)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"error")
     
 def perform_generate_operation(version, clara_project_internal, user, label, prompt=None, callback=None):
     if version == 'plain':
@@ -976,16 +989,11 @@ def render_text_status(request, project_id, task_id, report_id):
     print(f'{len(messages)} messages received')
     #if len(messages) != 0:
     #    pprint.pprint(messages)
-    try:
-        task = Task.objects.get(id=task_id)
-        status = 'finished' if task.success else 'in_progress'
-    except:
-        #print(f'*** Warning: unable to find task {task_id}')
-        #all_tasks = Task.objects.all()
-        #print(f'{len(all_tasks)} tasks found')
-        #if len(all_tasks) != 0:
-        #    pprint.pprint(all_tasks)
-        status = 'finished' if 'finished' in messages else 'unknown'    
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else status = 'unknown'    
     return JsonResponse({'messages': messages, 'status': status})
 
 # Render the monitoring page, which will use JavaScript to poll the task status API
@@ -999,16 +1007,15 @@ def render_text_monitor(request, project_id, task_id, report_id):
 # Display the final result of rendering
 @login_required
 @user_has_a_project_role
-def render_text_complete(request, project_id, task_id):
+def render_text_complete(request, project_id, status):
     project = get_object_or_404(CLARAProject, pk=project_id)
 
     # Remove any outstanding tasks, so that they can't be retried
     delete_all_tasks()
     
-    try:
-        task = Task.objects.get(id=task_id)
-        succeeded = task.success
-    except:
+    if status == 'error':
+        succeeded = False
+    else:
         succeeded = True
     if succeeded:
         # Define URLs for the first page of content and the zip file
@@ -1016,6 +1023,7 @@ def render_text_complete(request, project_id, task_id):
         # Put back zipfile later
         #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
         zipfile_url = None
+        messages.success(request, f'Text rendered successfully!')
 
         # Create the form for registering the project content
         register_form = RegisterAsContentForm()
@@ -1023,6 +1031,7 @@ def render_text_complete(request, project_id, task_id):
         content_url = None
         zipfile_url = None
         register_form = None
+        messages.error(request, "Error in rendering.")
         
     return render(request, 'clara_app/render_text_complete.html',
                   {'content_url': content_url, 'zipfile_url': zipfile_url,
