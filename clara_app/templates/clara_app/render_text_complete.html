@@ -1,0 +1,27 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Show Rendered Text{% endblock %}
+
+{% block content %}
+
+  {% if content_url %}
+    <h3>Rendered Text for {{ project.title }}</h3>
+	<p><a href="{% url 'serve_rendered_text' project.id 'page_1.html' %}" target="_blank">View Content</a></p>
+    {% if zipfile_url %}
+       <p><a href="{% url 'serve_zipfile' project.id %}" download="{{ project.id }}.zip">Download Zip</a></p>
+    {% endif %}
+	
+	<form method="post" action="{% url 'register_project_content' project.id %}" id="register-content-form">
+      {% csrf_token %}
+      {{ register_form.as_p }}
+      <button type="submit" id="register-button">Register as Content</button>
+    </form>
+  {% endif %}
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+
+  <script type="text/javascript">
+    document.getElementById('render-text-form').onsubmit = function() {
+      document.getElementById('submit-button').textContent = "Processing...";
+    };
+  </script>
+{% endblock %}

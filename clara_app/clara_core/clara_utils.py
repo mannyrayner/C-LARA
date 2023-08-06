@@ -434,3 +434,19 @@ def format_timestamp(timestamp_string):
 def replace_punctuation_with_underscores(s):
     return re.sub(f"[{re.escape(string.punctuation)}]+", "_", s)
 
+# This assumes that 'callback' is a callback function taking one arg
+# If it is non-null, call it on the message.
+# Also print the message.
+#
+# The intention is that calling the callback posts the message,
+# suitably associating it with the report ID, which should be part of the callback
+def post_task_update(callback, message):
+    if callback and isinstance(callback, ( list, tuple )) and len(callback) == 2:
+        callback_function, report_id = callback
+        callback_function(report_id, message)
+        print(f"Posted task update: '{message}'")
+    elif callback:
+        print(f"Error: bad callback: {callback}. Must be a two element list.")
+    else:
+        print(f"Could not post task update '{message}'. Callback = {callback}")
+    

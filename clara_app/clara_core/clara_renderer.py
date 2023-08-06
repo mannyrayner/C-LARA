@@ -13,7 +13,7 @@ The renderer also supports self-contained rendering, which means that all multim
 from .clara_utils import _s3_storage, absolute_file_name
 from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists
 from .clara_utils import copy_file, basename, write_txt_file, output_dir_for_project_id
-from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores
+from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update 
 
 from pathlib import Path
 import os
@@ -27,8 +27,8 @@ class StaticHTMLRenderer:
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
         self.output_dir = Path(output_dir_for_project_id(project_id))
         
-        # Remove the existing output_dir if it exists
-        if directory_exists(self.output_dir):
+        # Remove the existing output_dir if we're not on S3 and it exists
+        if not _s3_storage and directory_exists(self.output_dir):
             remove_directory(self.output_dir)
         
         # Create the new output_dir
@@ -72,9 +72,12 @@ class StaticHTMLRenderer:
                                         l2_language=l2_language)
         return rendered_page
 
-    def render_text(self, text, self_contained=False):
+    # ASYNCHRONOUS PROCESSING
+    def render_text(self, text, self_contained=False, callback=None):
+        post_task_update(callback, f"--- render_text: self_contained = {self_contained}")
         # Create multimedia directory if self-contained is True
         if self_contained:
+            post_task_update(callback, f"--- Copying audio files")
             multimedia_dir = self.output_dir / 'multimedia'
             make_directory(multimedia_dir, exist_ok=True)
 
@@ -89,8 +92,9 @@ class StaticHTMLRenderer:
                             new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                             copy_file(old_audio_file_path, new_audio_file_path)
                             segment.annotations['tts']['file_path'] = new_audio_file_path_relative
+                            #post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
                         except:
-                            print(f'*** Warning: could not copy audio for {old_audio_file_path}')
+                            post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
                     for element in segment.content_elements:
                         if element.type == "Word" and 'tts' in element.annotations and 'file_path' in element.annotations['tts']:
                             old_audio_file_path = element.annotations['tts']['file_path']
@@ -99,32 +103,47 @@ class StaticHTMLRenderer:
                                 new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                                 copy_file(old_audio_file_path, new_audio_file_path)
                                 element.annotations['tts']['file_path'] = new_audio_file_path_relative
+                                #post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
                             except:
-                                print(f'*** Warning: could not copy audio for {old_audio_file_path}')
+                                post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
+            post_task_update(callback, f"--- Audio files copied")
                         
         total_pages = len(text.pages)
+        post_task_update(callback, f"--- Creating text pages")
         for index, page in enumerate(text.pages):
             rendered_page = self.render_page(page, index + 1, total_pages, text.l2_language, text.l1_language)
             output_file_path = self.output_dir / f'page_{index + 1}.html'
             write_txt_file(rendered_page, output_file_path)
-                
+            post_task_update(callback, f"--- Written page {index}")
+        post_task_update(callback, f"--- Text pages created")
+        
+        post_task_update(callback, f"--- Creating concordance pages")
+        index = 0
         for lemma, lemma_data in text.annotations['concordance'].items():
+            index += 1
             rendered_page = self.render_concordance_page(lemma, lemma_data["segments"], text.l2_language)
             lemma = replace_punctuation_with_underscores(lemma)
             output_file_path = self.output_dir / f"concordance_{lemma}.html"
             write_txt_file(rendered_page, output_file_path)
+            if index % 20 == 0:
+                post_task_update(callback, f"--- Written {index} concordance pages")
+        post_task_update(callback, f"--- Written all concordance pages")
 
+        post_task_update(callback, f"--- Creating vocabulary lists")
         # Render alphabetical vocabulary list
         alphabetical_vocabulary_list = sorted(text.annotations['concordance'].items(), key=lambda x: x[0].lower())
         rendered_page = self.render_alphabetical_vocabulary_list(alphabetical_vocabulary_list, text.l2_language)
         output_file_path = self.output_dir / "vocab_list_alphabetical.html"
         write_txt_file(rendered_page, output_file_path)
+        #post_task_update(callback, f"Written alphabetical vocabulary list file '{output_file_path}'")
 
         # Render frequency vocabulary list
         frequency_vocabulary_list = sorted(text.annotations['concordance'].items(), key=lambda x: x[1]["frequency"], reverse=True)
         rendered_page = self.render_frequency_vocabulary_list(frequency_vocabulary_list, text.l2_language)
         output_file_path = self.output_dir / "vocab_list_frequency.html"
         write_txt_file(rendered_page, output_file_path)
+        #post_task_update(callback, f"Written frequency vocabulary list file '{output_file_path}'")
+        post_task_update(callback, f"--- Vocabulary lists created")
         
 
 

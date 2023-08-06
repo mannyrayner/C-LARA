@@ -3,13 +3,36 @@ from django.db.models import Sum
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 
+from django_q.models import OrmQ
+
 from functools import wraps
 from decimal import Decimal
 import datetime
+import time
 
-from .models import CLARAProject, APICall, ProjectPermissions, LanguageMaster
+from .models import CLARAProject, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
 
 import re
+
+# ASYNCHRONOUS PROCESSING
+# Used in callback function passed to asynchronous processes,
+# so that they can report progress. 
+def post_task_update_in_db(report_id, message):
+    #print(f"--- Posted task update in_db: report_id = '{report_id}, message = '{message}')")
+    TaskUpdate.objects.create(report_id=report_id, message=message)
+
+# ASYNCHRONOUS PROCESSING
+# Extract unread messages for a given task ID
+def get_task_updates(report_id):
+    updates = TaskUpdate.objects.filter(report_id=report_id).order_by('timestamp')
+    messages = [update.message for update in updates]
+    updates.delete()  # Delete the updates after reading them
+    return messages
+
+# ASYNCHRONOUS PROCESSING
+def delete_all_tasks():
+    OrmQ.objects.all().delete()
+    time.sleep(1)
 
 # Create internal_id by sanitizing the project title and appending the project_id
 def create_internal_project_id(title, project_id):

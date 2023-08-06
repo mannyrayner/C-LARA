@@ -16,6 +16,10 @@ from django.core.exceptions import PermissionDenied
 from .models import UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
 
+# ASYNCHRONOUS PROCESSING
+from django_q.tasks import async_task
+from django_q.models import Task
+
 from .forms import RegistrationForm, UserForm, UserProfileForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateSegmentedTextForm
@@ -567,11 +571,13 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             text_choice = form.cleaned_data['text_choice']
             label = form.cleaned_data['label']
             gold_standard = form.cleaned_data['gold_standard']
-            user = request.user.username
+            username = request.user.username
             # We have an optional prompt when creating the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
             # We're saving an edited version of a file
-            if text_choice == 'manual':
+            if not text_choice in ( 'manual', 'load_archived', 'generate', 'improve', 'tree_tagger' ):
+                raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
+            elif text_choice == 'manual':
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER', 'ANNOTATOR']):
                     raise PermissionDenied("You don't have permission to save edited text.")
                 annotated_text = form.cleaned_data['text']
@@ -579,7 +585,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                 try:
                     internalize_text(annotated_text, clara_project_internal.l2_language, clara_project_internal.l1_language, this_version)
                     clara_project_internal.save_text_version(this_version, annotated_text, 
-                                                             user=user, label=label, gold_standard=gold_standard)
+                                                             user=username, label=label, gold_standard=gold_standard)
                     messages.success(request, "File saved")
                 except InternalisationError as e:
                     messages.error(request, e.message)
@@ -604,26 +610,45 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         text_choice = 'generate'
                     current_version = ""
             # We're using the AI or a tagger to create a new version of a file
-            else:
+            elif text_choice in ( 'generate', 'improve', 'tree_tagger' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
                 try:
+                    # Create a unique ID to tag messages posted by this task, and a callback
+                    report_id = uuid.uuid4()
+                    callback = [post_task_update_in_db, report_id]
+
                     # We are creating the text using the AI
                     if text_choice == 'generate':
-                        action, api_calls = perform_generate_operation(this_version, clara_project_internal, user, label, prompt=prompt) 
+                        #action, api_calls = perform_generate_operation(this_version, clara_project_internal, username, label, prompt=prompt)
+                        # We want to get a possible template error here rather than in the asynch process
+                        clara_project_internal.try_to_use_templates('annotate', this_version)
+                        async_task(perform_generate_operation_and_store_api_calls, this_version, project, clara_project_internal,
+                                   request.user, label, prompt=prompt, callback=callback)
+                        print(f'--- Started generation task')
+                        #Redirect to the monitor view, passing the task ID and report ID as parameters
+                        return redirect('generate_text_monitor', project_id, this_version, report_id)
+                    # We are improving the text using the AI
+                    elif text_choice == 'improve':
+                        #action, api_calls = perform_improve_operation(this_version, clara_project_internal, username, label)
+                        # We want to get a possible template error here rather than in the asynch process
+                        clara_project_internal.try_to_use_templates('improve', this_version)
+                        async_task(perform_improve_operation_and_store_api_calls, this_version, project, clara_project_internal,
+                                   request.user, label, callback=callback)
+                        print(f'--- Started improvement task')
+                        #Redirect to the monitor view, passing the task ID and report ID as parameters
+                        return redirect('generate_text_monitor', project_id, this_version, report_id)
                     # We are creating the text using TreeTagger. This operation is only possible with lemma tagging
                     elif text_choice == 'tree_tagger':
-                        action, api_calls = ( 'generate', clara_project_internal.create_lemma_tagged_text_with_treetagger(user=user, label=label) )
-                    # We are improving the text using the AI
-                    else:
-                        action, api_calls = perform_improve_operation(this_version, clara_project_internal, user, label) 
-                    store_api_calls(api_calls, project, request.user, this_version)
-                    annotated_text = clara_project_internal.load_text_version(this_version)
-                    text_choice = 'manual'
-                    success_message = f'Created {this_version} text: {len(api_calls)} API calls'
-                    print(f'--- {success_message}')
-                    messages.success(request, success_message)
-                    current_version = clara_project_internal.get_file_description(this_version, 'current')
+                        action, api_calls = ( 'generate', clara_project_internal.create_lemma_tagged_text_with_treetagger(user=username, label=label) )
+                        # These operations are handled elsewhere for generation and improvement, due to asynchrony
+                        store_api_calls(api_calls, project, request.user, this_version)
+                        annotated_text = clara_project_internal.load_text_version(this_version)
+                        text_choice = 'manual'
+                        success_message = f'Created {this_version} text'
+                        print(f'--- {success_message}')
+                        messages.success(request, success_message)
+                        current_version = clara_project_internal.get_file_description(this_version, 'current')
                 except InternalisationError as e:
                     messages.error(request, f"Something appears to be wrong with a prompt example. Error details: {e.message}")
                     annotated_text = ''
@@ -661,6 +686,66 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
 
     return render(request, template, {'form': form, 'project': project})
 
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_has_a_project_role
+def generate_text_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    status = 'finished' if 'finished' in messages else 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_has_a_project_role
+def generate_text_monitor(request, project_id, version, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/generate_text_monitor.html',
+                  {'version': version, 'report_id': report_id, 'project_id': project_id, 'project': project})
+
+# Display the final result of rendering
+@login_required
+@user_has_a_project_role
+def generate_text_complete(request, project_id, version):
+
+    messages.success(request, f'Created {version} text')
+    previous_version, template = previous_version_and_template_for_version(version)
+
+    # We are making a new request in this view
+    if request.method == 'POST':
+        return create_annotated_text_of_right_type(request, project_id, version, previous_version, template)
+    # We got here from the monitor view
+    else:
+        # Remove any outstanding tasks, so that they can't be retried
+        delete_all_tasks()
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        tree_tagger_supported = fully_supported_treetagger_language(project.l2)
+        metadata = clara_project_internal.get_metadata()
+        current_version = clara_project_internal.get_file_description(version, 'current')
+        archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == version]
+        text_choice = 'generate' if archived_versions == [] else 'manual'
+        prompt = None
+
+        try:
+            annotated_text = clara_project_internal.load_text_version(version)
+            text_choice = 'manual'
+        except FileNotFoundError:
+            try:
+                annotated_text = clara_project_internal.load_text_version(previous_version)
+            except FileNotFoundError:
+                annotated_text = ""
+            text_choice = 'generate'
+        current_version = clara_project_internal.get_file_description(version, 'current')
+
+    # The archived versions will have changed if we created a new file
+    metadata = clara_project_internal.get_metadata()
+    archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == version]
+    form = CreateAnnotationTextFormOfRightType(version, initial={'text': annotated_text, 'text_choice': text_choice},
+                                               prompt=prompt, archived_versions=archived_versions, current_version=current_version,
+                                               tree_tagger_supported=tree_tagger_supported)
+
+    return render(request, template, {'form': form, 'project': project})
+
 def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
     if version == 'plain':
         return CreatePlainTextForm(*args, **kwargs)
@@ -677,53 +762,84 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
     else:
         raise InternalCLARAError(message = f'Unknown first argument in CreateAnnotationTextFormOfRightType: {version}')
 
-def perform_generate_operation(version, clara_project_internal, user, label, prompt=None):
+def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
+                                                   user_object, label, prompt=None, callback=None):
+    operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label, prompt=prompt, callback=callback)
+    store_api_calls(api_calls, project, user_object, version)
+    post_task_update(callback, f"finished")
+    
+def perform_generate_operation(version, clara_project_internal, user, label, prompt=None, callback=None):
     if version == 'plain':
-        return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label) )
+        return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, callback=callback) )
     elif version == 'summary':
-        return ( 'generate', clara_project_internal.create_summary(user=user, label=label) )
+        return ( 'generate', clara_project_internal.create_summary(user=user, label=label, callback=callback) )
     elif version == 'segmented':
-        return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label, callback=callback) )
     elif version == 'gloss':
-        return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, callback=callback) )
     elif version == 'lemma':
-        return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label, callback=callback) )
     # There is no generate operation for lemma_and_gloss, since we make it by merging lemma and gloss
     else:
         raise InternalCLARAError(message = f'Unknown first argument in perform_generate_operation: {version}')
 
-def perform_improve_operation(version, clara_project_internal, user, label):
+def perform_improve_operation_and_store_api_calls(version, project, clara_project_internal,
+                                                   user_object, label, callback=None):
+    operation, api_calls = perform_improve_operation(version, clara_project_internal, user_object.username, label, callback=callback)
+    store_api_calls(api_calls, project, user_object, version)
+    post_task_update(callback, f"finished")
+ 
+def perform_improve_operation(version, clara_project_internal, user, label, callback=None):
     if version == 'plain':
-        return ( 'generate', clara_project_internal.improve_plain_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.improve_plain_text(user=user, label=label, callback=callback) )
     if version == 'summary':
-        return ( 'improve', clara_project_internal.improve_summary(user=user, label=label) )
+        return ( 'generate', clara_project_internal.improve_summary(user=user, label=label, callback=callback) )
     elif version == 'segmented':
-        return ( 'generate', clara_project_internal.improve_segmented_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.improve_segmented_text(user=user, label=label, callback=callback) )
     elif version == 'gloss':
-        return ( 'generate', clara_project_internal.improve_glossed_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.improve_glossed_text(user=user, label=label, callback=callback) )
     elif version == 'lemma':
-        return ( 'generate', clara_project_internal.improve_lemma_tagged_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.improve_lemma_tagged_text(user=user, label=label, callback=callback) )
     elif version == 'lemma_and_gloss':
-        return ( 'generate', clara_project_internal.improve_lemma_and_gloss_tagged_text(user=user, label=label) )
+        return ( 'generate', clara_project_internal.improve_lemma_and_gloss_tagged_text(user=user, label=label, callback=callback) )
     else:
         raise InternalCLARAError(message = f'Unknown first argument in perform_improve_operation: {version}')
+
+def previous_version_and_template_for_version(this_version):
+    if this_version == 'plain':
+        return ( 'plain', 'clara_app/create_plain_text.html' )
+    elif this_version == 'summary':
+        return ( 'plain', 'clara_app/create_summary.html' )
+    elif this_version == 'segmented':
+        return ( 'plain', 'clara_app/create_segmented_text.html' )
+    elif this_version == 'gloss':
+        return ( 'segmented', 'clara_app/create_glossed_text.html' )
+    elif this_version == 'lemma':
+        return ( 'segmented', 'clara_app/create_lemma_tagged_text.html' )
+    elif this_version == 'lemma_and_gloss':
+        return ( 'lemma_and_gloss', 'clara_app/create_lemma_and_gloss_tagged_text.html' )
+    else:
+        raise InternalCLARAError(message = f'Unknown first argument in previous_version_and_template_for_version: {this_version}')
 
 # Create or edit "plain" version of the text        
 @login_required
 @user_has_a_project_role
 def create_plain_text(request, project_id):
     this_version = 'plain'
-    previous_version = 'plain'
-    template = 'clara_app/create_plain_text.html'
+    #previous_version = 'plain'
+    #template = 'clara_app/create_plain_text.html'
+    previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
     
 #Create or edit "summary" version of the text     
 @login_required
 @user_has_a_project_role
 def create_summary(request, project_id):
     this_version = 'summary'
-    previous_version = 'plain'
-    template = 'clara_app/create_summary.html'
+    #previous_version = 'plain'
+    #template = 'clara_app/create_summary.html'
+    previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
 # Create or edit "segmented" version of the text     
@@ -731,8 +847,9 @@ def create_summary(request, project_id):
 @user_has_a_project_role
 def create_segmented_text(request, project_id):
     this_version = 'segmented'
-    previous_version = 'plain'
-    template = 'clara_app/create_segmented_text.html'
+    #previous_version = 'plain'
+    #template = 'clara_app/create_segmented_text.html'
+    previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
 # Create or edit "glossed" version of the text     
@@ -740,8 +857,9 @@ def create_segmented_text(request, project_id):
 @user_has_a_project_role
 def create_glossed_text(request, project_id):
     this_version = 'gloss'
-    previous_version = 'segmented'
-    template = 'clara_app/create_glossed_text.html'
+    #previous_version = 'segmented'
+    #template = 'clara_app/create_glossed_text.html'
+    previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
 # Create or edit "lemma-tagged" version of the text 
@@ -749,8 +867,9 @@ def create_glossed_text(request, project_id):
 @user_has_a_project_role
 def create_lemma_tagged_text(request, project_id):
     this_version = 'lemma'
-    previous_version = 'segmented'
-    template = 'clara_app/create_lemma_tagged_text.html'
+    #previous_version = 'segmented'
+    #template = 'clara_app/create_lemma_tagged_text.html'
+    previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
 # Create or edit "lemma-and-glossed" version of the text 
@@ -758,8 +877,9 @@ def create_lemma_tagged_text(request, project_id):
 @user_has_a_project_role
 def create_lemma_and_gloss_tagged_text(request, project_id):
     this_version = 'lemma_and_gloss'
-    previous_version = 'lemma_and_gloss'
-    template = 'clara_app/create_lemma_and_gloss_tagged_text.html'
+    #previous_version = 'lemma_and_gloss'
+    #template = 'clara_app/create_lemma_and_gloss_tagged_text.html'
+    previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
 # Display the history of updates to project files 
@@ -771,13 +891,52 @@ def project_history(request, project_id):
     return render(request, 'clara_app/project_history.html', {'project': project, 'actions': actions})
 
 # Render the internal representation to create a directory of static HTML files
+##@login_required
+##@user_has_a_project_role
+##def render_text(request, project_id):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##
+##    # Check that the required text versions exist
+##    if "gloss" not in clara_project_internal.text_versions or "lemma" not in clara_project_internal.text_versions:
+##        messages.error(request, "Glossed and lemma-tagged versions of the text must exist to render it.")
+##        return redirect('project_detail', project_id=project.id)
+##
+##    if request.method == 'POST':
+##        form = RenderTextForm(request.POST)
+##        if form.is_valid():
+##            # Call the render_text method to generate the HTML files
+##            clara_project_internal.render_text(project_id, self_contained=True)
+##            
+##            # Define URLs for the first page of content and the zip file
+##            content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
+##            # Put back zipfile later
+##            #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
+##            zipfile_url = None
+##
+##            # Create the form for registering the project content
+##            register_form = RegisterAsContentForm()
+##            
+##            return render(request, 'clara_app/render_text.html', {'content_url': content_url, 'zipfile_url': zipfile_url, 'project': project, 'register_form': register_form})
+## 
+##    else:
+##        form = RenderTextForm()
+##
+##        return render(request, 'clara_app/render_text.html', {'form': form, 'project': project})
+
+# ASYNCHRONOUS PROCESSING
+
+def clara_project_internal_render_text(clara_project_internal, project_id, self_contained=False, callback=None):
+    print(f'--- Started clara_project_internal_render_text')
+    clara_project_internal.render_text(project_id, self_contained=self_contained, callback=callback)
+
+# Start the async process that will do the rendering
 @login_required
 @user_has_a_project_role
-def render_text(request, project_id):
+def render_text_start(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    # Check that the required text versions exist
     if "gloss" not in clara_project_internal.text_versions or "lemma" not in clara_project_internal.text_versions:
         messages.error(request, "Glossed and lemma-tagged versions of the text must exist to render it.")
         return redirect('project_detail', project_id=project.id)
@@ -785,43 +944,87 @@ def render_text(request, project_id):
     if request.method == 'POST':
         form = RenderTextForm(request.POST)
         if form.is_valid():
-            # Call the render_text method to generate the HTML files
-            clara_project_internal.render_text(project_id, self_contained=True)
+            # Remove any outstanding tasks, this should be the only one running
+            #delete_all_tasks() 
             
-            output_dir = Path(output_dir_for_project_id(project_id))
+            # Create a unique ID to tag messages posted by this task
+            report_id = uuid.uuid4()
 
-            # Define a location to move the rendered files to
-            #web_accessible_dir = Path(settings.STATIC_ROOT) / f"rendered_texts/{project.id}"
+            # Define a callback as list of the callback function and the first argument
+            # We can't use a lambda function or a closure because async_task can't apply pickle to them
+            callback = [post_task_update_in_db, report_id]
+        
+            # Enqueue the render_text task
+            self_contained = True
+            task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id, self_contained=self_contained, callback=callback)
+            print(f'--- Started task: task_id = {task_id}, self_contained={self_contained}')
 
-            # If the directory already exists, delete it
-            #if web_accessible_dir.exists():
-            #    shutil.rmtree(web_accessible_dir)
-
-            # Now create the (empty) directory
-            #web_accessible_dir.mkdir(parents=True, exist_ok=True)
-
-            # Move the files to the web-accessible directory
-            #for item in output_dir.glob("*"):
-            #    shutil.move(str(item), str(web_accessible_dir))
-
-            # Create a zip file of the directory
-            #shutil.make_archive(web_accessible_dir, 'zip', web_accessible_dir)
-
-            # Define URLs for the first page of content and the zip file
-            content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
-            # Put back zipfile later
-            #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
-            zipfile_url = None
-
-            # Create the form for registering the project content
-            register_form = RegisterAsContentForm()
-            
-            return render(request, 'clara_app/render_text.html', {'content_url': content_url, 'zipfile_url': zipfile_url, 'project': project, 'register_form': register_form})
- 
+            # Redirect to the monitor view, passing the task ID and report ID as parameters
+            return redirect('render_text_monitor', project_id, task_id, report_id)
+        
     else:
         form = RenderTextForm()
+        return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
 
-        return render(request, 'clara_app/render_text.html', {'form': form, 'project': project})
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_has_a_project_role
+def render_text_status(request, project_id, task_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    #if len(messages) != 0:
+    #    pprint.pprint(messages)
+    try:
+        task = Task.objects.get(id=task_id)
+        status = 'finished' if task.success else 'in_progress'
+    except:
+        #print(f'*** Warning: unable to find task {task_id}')
+        #all_tasks = Task.objects.all()
+        #print(f'{len(all_tasks)} tasks found')
+        #if len(all_tasks) != 0:
+        #    pprint.pprint(all_tasks)
+        status = 'finished' if 'finished' in messages else 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+# Render the monitoring page, which will use JavaScript to poll the task status API
+@login_required
+@user_has_a_project_role
+def render_text_monitor(request, project_id, task_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/render_text_monitor.html',
+                  {'task_id': task_id, 'report_id': report_id, 'project_id': project_id, 'project': project})
+
+# Display the final result of rendering
+@login_required
+@user_has_a_project_role
+def render_text_complete(request, project_id, task_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    # Remove any outstanding tasks, so that they can't be retried
+    delete_all_tasks()
+    
+    try:
+        task = Task.objects.get(id=task_id)
+        succeeded = task.success
+    except:
+        succeeded = True
+    if succeeded:
+        # Define URLs for the first page of content and the zip file
+        content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
+        # Put back zipfile later
+        #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
+        zipfile_url = None
+
+        # Create the form for registering the project content
+        register_form = RegisterAsContentForm()
+    else:
+        content_url = None
+        zipfile_url = None
+        register_form = None
+        
+    return render(request, 'clara_app/render_text_complete.html',
+                  {'content_url': content_url, 'zipfile_url': zipfile_url,
+                   'project': project, 'register_form': register_form})
 
 # Register content produced by rendering from a project        
 @login_required
@@ -883,37 +1086,6 @@ def register_project_content(request, project_id):
 
     # If the form was not submitted or was not valid, redirect back to the project detail page.
     return redirect('project_detail', project_id=project.id)
-
-#Serve up static HTML page 
-# @xframe_options_sameorigin
-# def serve_rendered_text(request, project_id, filename):
-    ##file_path = settings.STATIC_ROOT / f"rendered_texts/{project_id}/{filename}"
-    # file_path = absolute_file_name( Path(output_dir_for_project_id(project_id)) / f"{filename}" )
-    # if file_exists(file_path):
-        # content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-        # return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-    # else:
-        # raise Http404
-
-#Serve up static CSS or JS file 
-# def serve_rendered_text_static(request, project_id, filename):
-    ##file_path = settings.STATIC_ROOT / f"rendered_texts/{project_id}/static/{filename}"
-    # file_path = absolute_file_name( Path(output_dir_for_project_id(project_id)) / f"{static/filename}" )
-    # if file_exists(file_path):
-        # content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-        # return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-    # else:
-        # raise Http404
-
-#Serve up static multimedia file 
-# def serve_rendered_text_multimedia(request, project_id, filename):
-    ##file_path = settings.STATIC_ROOT / f"rendered_texts/{project_id}/multimedia/{filename}"
-    # file_path = absolute_file_name( Path(output_dir_for_project_id(project_id)) / f"{multimedia/filename}" )
-    # if file_exists(file_path):
-        # content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-        # return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-    # else:
-        # raise Http404
         
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, filename):
@@ -951,7 +1123,6 @@ def serve_rendered_text_multimedia(request, project_id, filename):
             return HttpResponse(open(file_path, 'rb'), content_type=content_type)
     else:
         raise Http404
-
 
 # Serve up self-contained zipfile of HTML pages created from a project
 @login_required

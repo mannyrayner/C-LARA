@@ -121,6 +121,7 @@ Requires "gloss" and "lemma" versions to exist.
 """
 
 from .clara_classes import *
+from .clara_create_annotations import invoke_templates_on_trivial_text
 from .clara_create_annotations import generate_glossed_version, generate_segmented_version, generate_tagged_version
 from .clara_create_annotations import improve_glossed_version, improve_segmented_version, improve_tagged_version
 from .clara_create_annotations import improve_lemma_and_gloss_tagged_version
@@ -138,6 +139,7 @@ from .clara_utils import absolute_file_name, read_json_file, write_json_to_file,
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp
+from .clara_utils import post_task_update
 
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Union
@@ -465,110 +467,114 @@ class CLARAProjectInternal:
         internalised_text2 = internalize_text(text2, self.l2_language, self.l1_language, version)
 
         return diff_text_objects(internalised_text1, internalised_text2, version, required)
+
+    # Create a prompt using null text to see if there is a template error
+    def try_to_use_templates(self, generate_or_improve, version):
+        return invoke_templates_on_trivial_text(generate_or_improve, version, self.l1_language, self.l2_language)
         
     # Call ChatGPT-4 to create a story based on the given prompt
-    def create_plain_text(self, prompt: Optional[str] = None, user='Unknown', label='') -> List[APICall]:
-        plain_text, api_calls = generate_story(self.l2_language, prompt)
+    def create_plain_text(self, prompt: Optional[str] = None, user='Unknown', label='', callback=None) -> List[APICall]:
+        plain_text, api_calls = generate_story(self.l2_language, prompt, callback=callback)
         self.save_text_version('plain', plain_text, user=user, label=label, source='ai_generated')
         return api_calls
 
     # Call ChatGPT-4 to try to improve a text
-    def improve_plain_text(self, user='Unknown', label='') -> List[APICall]:
+    def improve_plain_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         try:
             current_version = self.load_text_version("plain")
-            plain_text, api_calls = improve_story(self.l2_language, current_version)
+            plain_text, api_calls = improve_story(self.l2_language, current_version, callback=callback)
             self.save_text_version("plain", plain_text, user=user, label=label, source='ai_revised')
             return api_calls
         except:
             return []
 
     # Call ChatGPT-4 to create a short summary of the text
-    def create_summary(self, user='Unknown', label='') -> List[APICall]:
+    def create_summary(self, user='Unknown', label='', callback=None) -> List[APICall]:
         try:
             plain_text = self.load_text_version("plain")
-            summary_text, api_calls = generate_summary(plain_text, self.l2_language)
+            summary_text, api_calls = generate_summary(plain_text, self.l2_language, callback=callback)
             self.save_text_version("summary", summary_text, user=user, label=label, source='ai_generated')
             return api_calls
         except:
             return []
 
     # Call ChatGPT-4 to try to improve the summary of the text
-    def improve_summary(self, user='Unknown', label='') -> List[APICall]:
+    def improve_summary(self, user='Unknown', label='', callback=None) -> List[APICall]:
         try:
             plain_text = self.load_text_version("plain")
             old_summary_text = self.load_text_version("summary")
-            summary_text, api_calls = improve_summary(plain_text, old_summary_text, self.l2_language)
+            summary_text, api_calls = improve_summary(plain_text, old_summary_text, self.l2_language, callback=callback)
             self.save_text_version("summary", summary_text, user=user, label=label, source='ai_revised')
             return api_calls
         except:
             return []
 
     # Call ChatGPT-4 to estimate the reading level or use the cached version
-    def get_cefr_level(self, user='Unknown')-> Tuple[Union[str, None], List[APICall]]:
+    def get_cefr_level(self, user='Unknown', callback=None)-> Tuple[Union[str, None], List[APICall]]:
         if self.cefr_level:
             return ( self.cefr_level, [] )
         try:
             plain_text = self.load_text_version("plain")
-            cefr_level, api_calls = estimate_cefr_reading_level(plain_text, self.l2_language)
+            cefr_level, api_calls = estimate_cefr_reading_level(plain_text, self.l2_language, callback=callback)
             self.save_text_version("cefr_level", cefr_level, user=user, source='ai_generated')
             return ( cefr_level, api_calls )
         except:
             return ( None, [] )
 
     # Call ChatGPT-4 to create a version of the text with segmentation annotations
-    def create_segmented_text(self, user='Unknown', label='') -> List[APICall]:
+    def create_segmented_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         plain_text = self.load_text_version("plain")
-        segmented_text, api_calls = generate_segmented_version(plain_text, self.l2_language)
+        segmented_text, api_calls = generate_segmented_version(plain_text, self.l2_language, callback=callback)
         self.save_text_version("segmented", segmented_text, user=user, label=label, source='ai_generated')
         return api_calls
 
     # Call ChatGPT-4 to improve existing segmentation annotations
-    def improve_segmented_text(self, user='Unknown', label='') -> List[APICall]:
+    def improve_segmented_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented")
-        new_segmented_text, api_calls = improve_segmented_version(segmented_text, self.l2_language)
+        new_segmented_text, api_calls = improve_segmented_version(segmented_text, self.l2_language, callback=callback)
         self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')
         return api_calls
 
     # Call ChatGPT-4 to create a version of the text with gloss annotations
-    def create_glossed_text(self, user='Unknown', label='') -> List[APICall]:
+    def create_glossed_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented")
-        glossed_text, api_calls = generate_glossed_version(segmented_text, self.l1_language, self.l2_language)
+        glossed_text, api_calls = generate_glossed_version(segmented_text, self.l1_language, self.l2_language, callback=callback)
         self.save_text_version("gloss", glossed_text, user=user, label=label, source='ai_generated')
         return api_calls
 
     # Call ChatGPT-4 to improve existing gloss annotations
-    def improve_glossed_text(self, user='Unknown', label='') -> List[APICall]:
+    def improve_glossed_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         glossed_text = self.load_text_version("gloss")
-        new_glossed_text, api_calls = improve_glossed_version(glossed_text, self.l1_language, self.l2_language)
+        new_glossed_text, api_calls = improve_glossed_version(glossed_text, self.l1_language, self.l2_language, callback=callback)
         self.save_text_version("gloss", new_glossed_text, user=user, label=label, source='ai_revised')
         return api_calls
 
     # Call Treetagger to create a version of the text with lemma annotations
-    def create_lemma_tagged_text_with_treetagger(self, user='Unknown', label='') -> List[APICall]:
+    def create_lemma_tagged_text_with_treetagger(self, user='Unknown', label='', callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented")
-        lemma_tagged_text = generate_tagged_version_with_treetagger(segmented_text, self.l2_language)
+        lemma_tagged_text = generate_tagged_version_with_treetagger(segmented_text, self.l2_language, callback=callback)
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='tagger_generated')
         api_calls = []
         return api_calls
 
     # Call ChatGPT-4 to create a version of the text with lemma annotations
-    def create_lemma_tagged_text(self, user='Unknown', label='') -> List[APICall]:
+    def create_lemma_tagged_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented")
-        lemma_tagged_text, api_calls = generate_tagged_version(segmented_text, self.l2_language)
+        lemma_tagged_text, api_calls = generate_tagged_version(segmented_text, self.l2_language, callback=callback)
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='ai_generated')
         return api_calls
 
     # Call ChatGPT-4 to improve existing lemma annotations
-    def improve_lemma_tagged_text(self, user='Unknown', label='') -> List[APICall]:
+    def improve_lemma_tagged_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         lemma_tagged_text = self.load_text_version("lemma")
-        new_lemma_tagged_text, api_calls = improve_tagged_version(lemma_tagged_text, self.l2_language)
+        new_lemma_tagged_text, api_calls = improve_tagged_version(lemma_tagged_text, self.l2_language, callback=callback)
         self.save_text_version("lemma", new_lemma_tagged_text, user=user, label=label, source='ai_revised')
         return api_calls
 
     # Call ChatGPT-4 to improve existing lemma_and_gloss annotations
-    def improve_lemma_and_gloss_tagged_text(self, user='Unknown', label='') -> List[APICall]:
+    def improve_lemma_and_gloss_tagged_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         lemma_and_gloss_tagged_text = self.load_text_version("lemma_and_gloss")
-        new_lemma_and_gloss_tagged_text, api_calls = improve_lemma_and_gloss_tagged_version(lemma_and_gloss_tagged_text, self.l1_language, self.l2_language)
+        new_lemma_and_gloss_tagged_text, api_calls = improve_lemma_and_gloss_tagged_version(lemma_and_gloss_tagged_text, self.l1_language, self.l2_language, callback=callback)
         self.save_text_version("lemma_and_gloss", new_lemma_and_gloss_tagged_text, user=user, label=label, source='ai_revised')
         return api_calls
 
@@ -596,14 +602,23 @@ class CLARAProjectInternal:
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     # Caches the internalised version.
-    def get_internalised_and_annotated_text(self) -> str:
+    # ASYNCHRONOUS PROCESSING
+    def get_internalised_and_annotated_text(self, callback=None) -> str:
         if self.internalised_and_annotated_text:
             return self.internalised_and_annotated_text
+        post_task_update(callback, f"--- Creating internalised text")
         text_object = self.get_internalised_text()
+        post_task_update(callback, f"--- Internalised text created")
+        
+        post_task_update(callback, f"--- Adding TTS annotations")
         tts_annotator = TTSAnnotator(self.l2_language)
-        tts_annotator.annotate_text(text_object)
+        tts_annotator.annotate_text(text_object, callback=callback)
+        post_task_update(callback, f"--- TTS annotations done")
+        
+        post_task_update(callback, f"--- Adding concordance annotations")
         concordance_annotator = ConcordanceAnnotator()
         concordance_annotator.annotate_text(text_object)
+        post_task_update(callback, f"--- Concordance annotations done")
         self.internalised_and_annotated_text = text_object
         return text_object
 
@@ -611,10 +626,15 @@ class CLARAProjectInternal:
     # "Self-contained" means that it includes all the multimedia files referenced.
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
     # Requires 'gloss' and 'lemma' texts.
-    def render_text(self, project_id, self_contained=False) -> None:
-        text_object = self.get_internalised_and_annotated_text()
+    # ASYNCHRONOUS PROCESSING
+    def render_text(self, project_id, self_contained=False, callback=None) -> None:
+        post_task_update(callback, f"--- Start rendering text")
+        text_object = self.get_internalised_and_annotated_text(callback=callback)
+        post_task_update(callback, f"--- Created internalised and annotated text")
         renderer = StaticHTMLRenderer(project_id)
-        renderer.render_text(text_object, self_contained=self_contained)
+        post_task_update(callback, f"--- Start creating pages")
+        renderer.render_text(text_object, self_contained=self_contained, callback=callback)
+        post_task_update(callback, f"finished")
         return renderer.output_dir
 
     # Get the word-count

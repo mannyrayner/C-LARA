@@ -14,7 +14,7 @@ from .clara_classes import *
 from . import clara_openai
 # Comment this out for now. We haven't used it for ages, and it confuses Heroku.
 #from . import clara_chatgpt4_manual
-from . import clara_utils
+from .clara_utils import get_config, post_task_update, print_and_flush
 
 import os
 import openai
@@ -25,7 +25,7 @@ from openai.error import RateLimitError, Timeout
 
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-config = clara_utils.get_config()
+config = get_config()
 
 # Set up OpenAI API client
 
@@ -37,19 +37,20 @@ def is_retryable_exception(exception):
 
 # Specify retry parameters: wait 5 seconds between retries, and retry up to 5 times
 @retry(stop_max_attempt_number=5, wait_fixed=5000, retry_on_exception=is_retryable_exception)
-def call_chat_gpt4(prompt):
+def call_chat_gpt4(prompt, callback=None):
     if USE_API:
-        return get_api_chatgpt4_response(prompt)
+        return get_api_chatgpt4_response(prompt, callback=callback)
     else:
         return clara_chatgpt4_manual.get_chatgpt4_response(prompt)
 
-def get_api_chatgpt4_response(prompt):
+def get_api_chatgpt4_response(prompt, callback=None):
     start_time = time.time()
     n_prompt_chars = int(config.get('chatgpt4_trace', 'max_prompt_chars_to_show'))
     n_response_chars = int(config.get('chatgpt4_trace', 'max_response_chars_to_show'))
     if n_prompt_chars != 0:
         truncated_prompt = prompt if len(prompt) <= n_prompt_chars else prompt[:n_prompt_chars] + '...'
-        clara_utils.print_and_flush(f'--- Sending request to ChatGPT-4: "{truncated_prompt}"')
+        #print_and_flush(f'--- Sending request to ChatGPT-4: "{truncated_prompt}"')
+        post_task_update(callback, f'--- Sending request to ChatGPT-4: "{truncated_prompt}"')
     messages = [ {"role": "system", "content": "You are a helpful assistant."},
                  {"role": "user", "content": prompt} ]
     response = openai.ChatCompletion.create(
@@ -63,10 +64,12 @@ def get_api_chatgpt4_response(prompt):
     response_string = response.choices[0]['message']['content']
     if n_response_chars != 0:
         truncated_response = response_string if len(response_string) <= n_response_chars else response_string[:n_response_chars] + '...'
-        clara_utils.print_and_flush(f'--- Received response from ChatGPT-4: "{truncated_response}"')
+        #print_and_flush(f'--- Received response from ChatGPT-4: "{truncated_response}"')
+        post_task_update(callback, f'--- Received response from ChatGPT-4: "{truncated_response}"')
     cost = clara_openai.cost_of_gpt4_api_call(messages, response_string)
     elapsed_time = time.time() - start_time
-    clara_utils.print_and_flush(f'--- Done (${cost:.2f}; {elapsed_time:.1f} secs)')
+    #print_and_flush(f'--- Done (${cost:.2f}; {elapsed_time:.1f} secs)')
+    post_task_update(callback, f'--- Done (${cost:.2f}; {elapsed_time:.1f} secs)')
     
     # Create an APICall object
     api_call = APICall(
