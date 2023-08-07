@@ -226,7 +226,7 @@ def file_exists(pathname):
         return os.path.isfile(abspathname)
 
 def local_file_exists(pathname):
-    abspathname = absolute_file_name(pathname)
+    abspathname = absolute_local_file_name(pathname)
     
     return os.path.isfile(abspathname)
 
