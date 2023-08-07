@@ -23,7 +23,6 @@ Returns the language ID for the given language in the specified TTS engine or th
 from . import clara_utils
 
 import os
-import json
 import tempfile
 import requests
 import base64
@@ -192,6 +191,10 @@ class GoogleTTSEngine(TTSEngine):
                            'welsh': {'language_id': 'cy', 'voices': ['default']}
                         }
 
+##    def create_mp3(self, language_id, voice_id, text, output_file):
+##        tts = gtts.gTTS(text, lang=language_id)
+##        tts.save(output_file)
+##        return True
     def create_mp3(self, language_id, voice_id, text, output_file):
         temp_filename = None
         creds_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
@@ -215,6 +218,9 @@ class GoogleTTSEngine(TTSEngine):
         
         if temp_filename:
             os.unlink(temp_filename)
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = ''
+            
+        return True
 
 class ABAIREngine(TTSEngine):
     def __init__(self, base_url=None):
