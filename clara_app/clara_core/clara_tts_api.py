@@ -190,6 +190,7 @@ class GoogleTTSEngine(TTSEngine):
                            'vietnamese': {'language_id': 'vi', 'voices': ['default']},
                            'welsh': {'language_id': 'cy', 'voices': ['default']}
                         }
+    print('--- Creating Google TTS Engine object (2023 Aug 8 17:00 version)')
 
 ##    def create_mp3(self, language_id, voice_id, text, output_file):
 ##        tts = gtts.gTTS(text, lang=language_id)
@@ -277,9 +278,10 @@ def create_tts_engine(engine_type):
     else:
         raise ValueError(f"Unknown TTS engine type: {engine_type}")
     
-def get_tts_engine(language):
+def get_tts_engine(language, callback=None):
     for tts_engine in TTS_ENGINES:
         if language in tts_engine.languages:
+            post_task_update(callback, f"--- Using TTS engine of type 'tts_engine.tts_engine_type'")
             return tts_engine
     return None
 

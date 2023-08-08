@@ -25,13 +25,14 @@ import shutil
 import uuid
 
 class TTSAnnotator:
-    def __init__(self, language, tts_engine_type=None, tts_repository=None):
+    def __init__(self, language, tts_engine_type=None, tts_repository=None, callback=None):
         self.language = language
-        self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language)
+        self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, callback=callback)
         self.engine_id = self.tts_engine.tts_engine_type if self.tts_engine else None
         self.voice_id = get_default_voice(language, self.tts_engine) if self.tts_engine else None
         self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
         self.tts_repository = tts_repository or TTSRepository()
+        post_task_update(callback, f"--- Using TTSAnnotator object with TTS engine of type '{self.engine_id}'")
 
     def annotate_text(self, text_obj, callback=None):
         if self.tts_engine:
