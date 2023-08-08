@@ -25,6 +25,7 @@ from .clara_classes import InternalCLARAError
 from pathlib import Path
 
 import os
+import traceback
 
 config = get_config()
 
@@ -104,7 +105,8 @@ class TTSRepository:
             connection.close()
             return result[0] if result else None
         except Exception as e:
-            post_task_update(callback, f'*** Error when looking for "{text}" in TTS database: "{str(e)}"')
+            error_message = f'*** Error when looking for "{text}" in TTS database: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
             raise InternalCLARAError(message='TTS database inconsistency')
 
     def get_language_directory(self, engine_id, language_id):
