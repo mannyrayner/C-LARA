@@ -216,13 +216,16 @@ class GoogleTTSEngine(TTSEngine):
             post_task_update(callback, f"--- Unable to find Google credentials in GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON")
             return False
 
-        tts = gtts.gTTS(text, lang=language_id)
-        tts.save(output_file)
+        post_task_update(callback, f"--- Skipping call: gtts.gTTS(text, lang=language_id")
+        result = False
+        #tts = gtts.gTTS(text, lang=language_id)
+        #tts.save(output_file)
+        #result = tts
        
         if temp_filename:
             os.unlink(temp_filename)
             
-        return True
+        return result
 
 class ABAIREngine(TTSEngine):
     def __init__(self, base_url=None):
