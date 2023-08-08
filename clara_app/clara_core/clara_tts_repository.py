@@ -21,6 +21,8 @@ from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_l
 from .clara_utils import make_directory, remove_directory, directory_exists, list_files_in_directory
 from pathlib import Path
 
+import os
+
 config = get_config()
 
 class TTSRepository:
@@ -35,13 +37,24 @@ class TTSRepository:
 
         connection = connect(self.db_file)
         cursor = connection.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS metadata
-                          (id INTEGER PRIMARY KEY,
-                           engine_id TEXT,
-                           language_id TEXT,
-                           voice_id TEXT,
-                           text TEXT,
-                           file_path TEXT)''')
+        if os.getenv('DB_TYPE') == 'sqlite':
+            cursor.execute('''CREATE TABLE IF NOT EXISTS metadata
+                              (id INTEGER PRIMARY KEY,
+                               engine_id TEXT,
+                               language_id TEXT,
+                               voice_id TEXT,
+                               text TEXT,
+                               file_path TEXT)''')
+        # Assume Postgres, which does auto-incrementing differently
+        # We need a suitable definition for the primary key
+        else:
+            cursor.execute('''CREATE TABLE IF NOT EXISTS metadata
+                              (id SERIAL PRIMARY KEY,
+                               engine_id TEXT,
+                               language_id TEXT,
+                               voice_id TEXT,
+                               text TEXT,
+                               file_path TEXT)''')
         connection.commit()
         connection.close()
 
