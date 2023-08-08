@@ -52,7 +52,7 @@ class TTSAnnotator:
         self._add_tts_annotations(text_obj, callback=callback)
 
     def _get_missing_audio(self, text_obj, callback=None):
-        post_task_update(callback, f"--- Looking for missing words and segments")
+        post_task_update(callback, f"--- Looking for missing words and segments: 2023 Aug 8 17:00 version")
         words = set()
         segments = set()
         for page in text_obj.pages:

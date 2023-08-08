@@ -214,7 +214,7 @@ class GoogleTTSEngine(TTSEngine):
                 # Set the environment variable so gTTS can pick it up
                 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
 
-            post_task_update(callback, f"--- Passing text to Google TTS: '{text}'")
+            post_task_update(callback, f"--- Passing text to Google TTS (2023 Aug 8 17:00 version): '{text}'")
             tts = gtts.gTTS(text, lang=language_id)
             tts.save(output_file)
             result = True
