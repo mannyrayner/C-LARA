@@ -21,7 +21,7 @@ Returns the language ID for the given language in the specified TTS engine or th
 """
 
 from .clara_utils import get_config, post_task_update, os_environ_or_none
-from .clara_utils import absolute_file_name, absolute_local_file_name, local_file_exists, write_json_to_file_plain_utf8
+from .clara_utils import absolute_file_name, absolute_local_file_name, local_file_exists, write_local_txt_file
 
 import os
 import tempfile
@@ -210,7 +210,7 @@ class GoogleTTSEngine(TTSEngine):
             # Write the credentials to a temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
                 temp_filename = temp.name
-                write_json_to_file_plain_utf8(creds_content, temp_filename)                
+                write_local_txt_file(creds_string, temp_filename)                
                 # Set the environment variable so gTTS can pick it up
                 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
         else:

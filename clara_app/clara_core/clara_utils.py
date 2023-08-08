@@ -341,6 +341,12 @@ def write_txt_file(data, pathname: str):
     else:
         with open(abspathname, 'w', encoding='utf-8') as f:
             f.write(data)
+            
+def write_local_txt_file(data, pathname: str):
+    abspathname = absolute_file_name(pathname)
+
+    with open(abspathname, 'w', encoding='utf-8') as f:
+        f.write(data)
 
 def read_json_or_txt_file(file_path: str):
     extension = extension_for_file_path(file_path)
