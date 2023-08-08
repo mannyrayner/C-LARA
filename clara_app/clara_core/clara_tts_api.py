@@ -219,11 +219,10 @@ class GoogleTTSEngine(TTSEngine):
             tts = gtts.gTTS(text, lang=language_id)
             tts.save(output_file)
             result = True
-            
         except Exception as e:
             post_task_update(callback, f"*** Error creating Google TTS file: {str(e)}")
             result = False
-        
+       
         if temp_filename:
             os.unlink(temp_filename)
             
@@ -281,7 +280,7 @@ def create_tts_engine(engine_type):
 def get_tts_engine(language, callback=None):
     for tts_engine in TTS_ENGINES:
         if language in tts_engine.languages:
-            post_task_update(callback, f"--- Using TTS engine of type 'tts_engine.tts_engine_type'")
+            post_task_update(callback, f"--- clara_tts_api found TTS engine of type '{tts_engine.tts_engine_type}'")
             return tts_engine
     return None
 
