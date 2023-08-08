@@ -87,8 +87,19 @@ class TTSRepository:
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("SELECT file_path FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s"),
-                           (engine_id, language_id, voice_id, text))
+            # cursor.execute(localise_sql_query("SELECT file_path FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s"),
+                           # (engine_id, language_id, voice_id, text))
+            cursor.execute("""SELECT file_path FROM metadata 
+                              WHERE engine_id = %(engine_id)s 
+                              AND language_id = %(language_id)s 
+                              AND voice_id = %(voice_id)s 
+                              AND text = %(text)s""",
+                            params = {
+                                        'engine_id': engine_id,
+                                        'language_id': language_id,
+                                        'voice_id': voice_id,
+                                        'text': text
+                                    }
             result = cursor.fetchone()
             connection.close()
             return result[0] if result else None
