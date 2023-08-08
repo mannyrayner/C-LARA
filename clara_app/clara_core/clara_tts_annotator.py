@@ -53,7 +53,7 @@ class TTSAnnotator:
         self._add_tts_annotations(text_obj, callback=callback)
 
     def _get_missing_audio(self, text_obj, callback=None):
-        post_task_update(callback, f"--- Looking for missing words and segments: 2023 Aug 8 17:00 version")
+        post_task_update(callback, f"--- Looking for missing words and segments")
         words = set()
         segments = set()
         for page in text_obj.pages:
@@ -71,13 +71,13 @@ class TTSAnnotator:
         # We don't want to include trivial strings, so check using strip().
         for word in words:
             #post_task_update(callback, f"Checking TTS file for '{word}'")
-            if word.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, word):
+            if word.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, word, callback=callback):
                 missing_words.append(word)
         post_task_update(callback, f"--- Found {len(missing_words)} words without audio")
 
         for segment in segments:
             #post_task_update(callback, f"Checking TTS file for '{segment}'")
-            if segment.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, segment):
+            if segment.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, segment, callback=callback):
                 missing_segments.append(segment)
         post_task_update(callback, f"--- Found {len(missing_segments)} segments without audio")
 

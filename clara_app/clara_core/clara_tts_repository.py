@@ -18,7 +18,10 @@ from .clara_database_adapter import connect, localise_sql_query
 
 from .clara_tts_api import get_tts_engine_types
 from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, copy_local_file
-from .clara_utils import make_directory, remove_directory, directory_exists, list_files_in_directory
+from .clara_utils import make_directory, remove_directory, directory_exists, list_files_in_directory, post_task_update
+
+from .clara_classes import InternalCLARAError
+
 from pathlib import Path
 
 import os
@@ -68,22 +71,30 @@ class TTSRepository:
         for engine_id in get_tts_engine_types():
             remove_directory(self.get_language_directory(engine_id, language_id))
 
-    def add_entry(self, engine_id, language_id, voice_id, text, file_path):
-        connection = connect(self.db_file)
-        cursor = connection.cursor()
-        cursor.execute(localise_sql_query("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (%s, %s, %s, %s, %s)"),
-                       (engine_id, language_id, voice_id, text, file_path))
-        connection.commit()
-        connection.close()
+    def add_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            cursor.execute(localise_sql_query("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (%s, %s, %s, %s, %s)"),
+                           (engine_id, language_id, voice_id, text, file_path))
+            connection.commit()
+            connection.close()
+        except Exception as e:
+            post_task_update(callback, f'*** Error when inserting "{language_id}/{text}/{file_path}" into TTS database: "{str(e)}"')
+            raise InternalCLARAError(message='TTS database inconsistency')
 
-    def get_entry(self, engine_id, language_id, voice_id, text):
-        connection = connect(self.db_file)
-        cursor = connection.cursor()
-        cursor.execute(localise_sql_query("SELECT file_path FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s"),
-                       (engine_id, language_id, voice_id, text))
-        result = cursor.fetchone()
-        connection.close()
-        return result[0] if result else None
+    def get_entry(self, engine_id, language_id, voice_id, text, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            cursor.execute(localise_sql_query("SELECT file_path FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s"),
+                           (engine_id, language_id, voice_id, text))
+            result = cursor.fetchone()
+            connection.close()
+            return result[0] if result else None
+        except Exception as e:
+            post_task_update(callback, f'*** Error when looking for "{text}" in TTS database: "{str(e)}"')
+            raise InternalCLARAError(message='TTS database inconsistency')
 
     def get_language_directory(self, engine_id, language_id):
         return absolute_file_name( Path(self.base_dir) / engine_id / language_id )
