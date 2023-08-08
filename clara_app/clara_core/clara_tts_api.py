@@ -20,7 +20,7 @@ Returns the default voice for the given language in the specified TTS engine or 
 Returns the language ID for the given language in the specified TTS engine or the first available engine if not specified.
 """
 
-from . import clara_utils
+from .clara_utils import get_config, absolute_file_name, absolute_local_file_name, local_file_exists, post_task_update
 
 import os
 import tempfile
@@ -28,7 +28,7 @@ import requests
 import base64
 import gtts
 
-config = clara_utils.get_config()
+config = get_config()
 
 class TTSEngine:
     def create_mp3(self, language_id, voice_id, text, output_file):
@@ -100,7 +100,7 @@ class ReadSpeakerEngine(TTSEngine):
 
     def load_api_key(self):
         try:
-            key_path = clara_utils.absolute_file_name(config.get('paths', 'readspeaker_license_key'))
+            key_path = absolute_local_file_name(config.get('paths', 'readspeaker_license_key'))
             with open(key_path, 'r') as f:
                 return f.read().strip()
         except:
@@ -201,7 +201,7 @@ class GoogleTTSEngine(TTSEngine):
         creds_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
         
         try:
-            if not creds_file or not clara_utils.local_file_exists(creds_file):
+            if not creds_file or not local_file_exists(creds_file):
                 # Get the credentials from the environment variable
                 creds_content = os.environ.get('GOOGLE_CREDENTIALS_JSON')
                 if not creds_content:
