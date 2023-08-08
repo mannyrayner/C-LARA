@@ -20,7 +20,8 @@ Returns the default voice for the given language in the specified TTS engine or 
 Returns the language ID for the given language in the specified TTS engine or the first available engine if not specified.
 """
 
-from .clara_utils import get_config, absolute_file_name, absolute_local_file_name, local_file_exists, post_task_update
+from .clara_utils import get_config, post_task_update
+from .clara_utils import absolute_file_name, absolute_local_file_name, local_file_exists, write_json_to_file_plain_utf8
 
 import os
 import tempfile
@@ -194,20 +195,26 @@ class GoogleTTSEngine(TTSEngine):
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
         temp_filename = None
         creds_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+        creds_string = os.environ.get('GOOGLE_CREDENTIALS_JSON')
         
-        if not creds_file or not local_file_exists(creds_file):
-            # Get the credentials from the environment variable
-            creds_content = os.environ.get('GOOGLE_CREDENTIALS_JSON')
-            if not creds_content:
+        if creds_file and local_file_exists(creds_file):
+            print(f'Getting Google credentials from file: {creds_file}')
+        elif creds_string:
+            print(f'Getting Google credentials from GOOGLE_CREDENTIALS_JSON')
+            try:
+                creds_content = json.loads(creds_string)
+            except:
+                post_task_update(callback, f"*** Error: content of GOOGLE_CREDENTIALS_JSON not well-formed JSON")
                 return False
-        
             # Write the credentials to a temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
-                temp.write(creds_content.encode())
                 temp_filename = temp.name
-
-            # Set the environment variable so gTTS can pick it up
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
+                write_json_to_file_plain_utf8(creds_content, temp_filename)                
+                # Set the environment variable so gTTS can pick it up
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
+        else:
+            post_task_update(callback, f"--- Unable to find Google credentials in GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON")
+            return False
 
         tts = gtts.gTTS(text, lang=language_id)
         tts.save(output_file)
