@@ -106,7 +106,7 @@ class ReadSpeakerEngine(TTSEngine):
         except:
             return None
         
-    def create_mp3(self, language_id, voice_id, text, output_file):
+    def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
         data = {
             "key": self.api_key,
             "lang": language_id,
@@ -195,7 +195,7 @@ class GoogleTTSEngine(TTSEngine):
 ##        tts = gtts.gTTS(text, lang=language_id)
 ##        tts.save(output_file)
 ##        return True
-    def create_mp3(self, language_id, voice_id, text, output_file):
+    def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
         temp_filename = None
         creds_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
         
@@ -213,14 +213,18 @@ class GoogleTTSEngine(TTSEngine):
             # Set the environment variable so gTTS can pick it up
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
 
-        tts = gtts.gTTS(text, lang=language_id)
-        tts.save(output_file)
+        try:
+            tts = gtts.gTTS(text, lang=language_id)
+            tts.save(output_file)
+            result = True
+        except Exception as e:
+            post_task_update(callback, f"{str(e)}")
+            result = False
         
         if temp_filename:
             os.unlink(temp_filename)
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = ''
             
-        return True
+        return result
 
 class ABAIREngine(TTSEngine):
     def __init__(self, base_url=None):
@@ -236,7 +240,7 @@ class ABAIREngine(TTSEngine):
                             }
                           }
 
-    def create_mp3(self, language_id, voice_id, text, output_file):
+    def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
         data = {
             "synthinput": {
                 "text": text
