@@ -104,7 +104,11 @@ class TTSRepository:
             result = cursor.fetchone()
             connection.close()
             post_task_update(callback, f'--- Result of TTS DB query on "{text}": {result}')
-            return result[0] if result else None
+            if os.getenv('DB_TYPE') == 'sqlite':
+                return result[0] if result else None
+            else:  # Assuming PostgreSQL
+                return result['file_path'] if result else None
+
         except Exception as e:
             error_message = f'*** Error when looking for "{text}" in TTS database: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
