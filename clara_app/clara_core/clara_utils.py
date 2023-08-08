@@ -394,6 +394,12 @@ def report_encoding_error(Str):
         print(f'{Str1} [some characters changed, encoding problems]')
     except:
         print(_encodingError)
+        
+def os_environ_or_none(environment_variable):
+    try:
+        return os.environ[environment_variable]
+    except:
+        return None
 
 def get_config():
     file = '$CLARA/clara_app/clara_core/config.ini'

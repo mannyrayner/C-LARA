@@ -20,7 +20,7 @@ Returns the default voice for the given language in the specified TTS engine or 
 Returns the language ID for the given language in the specified TTS engine or the first available engine if not specified.
 """
 
-from .clara_utils import get_config, post_task_update
+from .clara_utils import get_config, post_task_update, os_environ_or_none
 from .clara_utils import absolute_file_name, absolute_local_file_name, local_file_exists, write_json_to_file_plain_utf8
 
 import os
@@ -194,8 +194,9 @@ class GoogleTTSEngine(TTSEngine):
 
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
         temp_filename = None
-        creds_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
-        creds_string = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+        
+        creds_file = os_environ_or_none('GOOGLE_APPLICATION_CREDENTIALS')
+        creds_string = os_environ_or_none('GOOGLE_CREDENTIALS_JSON')
         
         if creds_file and local_file_exists(creds_file):
             print(f'Getting Google credentials from file: {creds_file}')
@@ -218,9 +219,9 @@ class GoogleTTSEngine(TTSEngine):
 
         post_task_update(callback, f"--- Skipping call: gtts.gTTS(text, lang=language_id")
         result = False
-        #tts = gtts.gTTS(text, lang=language_id)
-        #tts.save(output_file)
-        #result = tts
+        tts = gtts.gTTS(text, lang=language_id)
+        tts.save(output_file)
+        result = tts
        
         if temp_filename:
             os.unlink(temp_filename)
