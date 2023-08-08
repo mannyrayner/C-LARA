@@ -295,6 +295,12 @@ def read_json_file(pathname):
         with open(abspathname, encoding='utf-8') as f:
             return json.load(f)
 
+def read_json_local_file(pathname):
+    abspathname = absolute_local_file_name(pathname)
+
+    with open(abspathname, encoding='utf-8') as f:
+        return json.load(f)
+
 def write_json_to_file(data, pathname):
     abspathname = absolute_file_name(pathname)
 

@@ -202,11 +202,11 @@ class GoogleTTSEngine(TTSEngine):
             print(f'Getting Google credentials from file: {creds_file}')
         elif creds_string:
             print(f'Getting Google credentials from GOOGLE_CREDENTIALS_JSON')
-            try:
-                creds_content = json.loads(creds_string)
-            except:
-                post_task_update(callback, f"*** Error: content of GOOGLE_CREDENTIALS_JSON not well-formed JSON")
-                return False
+            # try:
+                # creds_content = json.loads(creds_string)
+            # except:
+                # post_task_update(callback, f"*** Error: content of GOOGLE_CREDENTIALS_JSON not well-formed JSON")
+                # return False
             # Write the credentials to a temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
                 temp_filename = temp.name
