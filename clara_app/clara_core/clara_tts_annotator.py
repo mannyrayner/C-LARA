@@ -82,7 +82,6 @@ class TTSAnnotator:
 
         return missing_words, missing_segments
 
-    # ASYNCHRONOUS PROCESSING
     def _create_and_store_missing_mp3s(self, missing_audio, callback=None):
         temp_dir = tempfile.mkdtemp()
 
