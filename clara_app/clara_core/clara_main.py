@@ -602,7 +602,6 @@ class CLARAProjectInternal:
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     # Caches the internalised version.
-    # ASYNCHRONOUS PROCESSING
     def get_internalised_and_annotated_text(self, callback=None) -> str:
         if self.internalised_and_annotated_text:
             return self.internalised_and_annotated_text
@@ -611,7 +610,7 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- Internalised text created")
         
         post_task_update(callback, f"--- Adding TTS annotations")
-        tts_annotator = TTSAnnotator(self.l2_language)
+        tts_annotator = TTSAnnotator(self.l2_language, callback=callback)
         tts_annotator.annotate_text(text_object, callback=callback)
         post_task_update(callback, f"--- TTS annotations done")
         
@@ -626,7 +625,6 @@ class CLARAProjectInternal:
     # "Self-contained" means that it includes all the multimedia files referenced.
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
     # Requires 'gloss' and 'lemma' texts.
-    # ASYNCHRONOUS PROCESSING
     def render_text(self, project_id, self_contained=False, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text")
         text_object = self.get_internalised_and_annotated_text(callback=callback)
