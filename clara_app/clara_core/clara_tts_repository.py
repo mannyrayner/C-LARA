@@ -103,7 +103,6 @@ class TTSRepository:
                            })
             result = cursor.fetchone()
             connection.close()
-            post_task_update(callback, f'--- Result of TTS DB query on "{text}": {result}')
             if os.getenv('DB_TYPE') == 'sqlite':
                 return result[0] if result else None
             else:  # Assuming PostgreSQL

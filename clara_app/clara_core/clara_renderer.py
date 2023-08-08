@@ -72,7 +72,6 @@ class StaticHTMLRenderer:
                                         l2_language=l2_language)
         return rendered_page
 
-    # ASYNCHRONOUS PROCESSING
     def render_text(self, text, self_contained=False, callback=None):
         post_task_update(callback, f"--- render_text: self_contained = {self_contained}")
         # Create multimedia directory if self-contained is True
@@ -93,7 +92,7 @@ class StaticHTMLRenderer:
                                 new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                                 copy_file(old_audio_file_path, new_audio_file_path)
                                 segment.annotations['tts']['file_path'] = new_audio_file_path_relative
-                                #post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
+                                post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
                             except:
                                 post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
                     for element in segment.content_elements:
@@ -105,7 +104,7 @@ class StaticHTMLRenderer:
                                     new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                                     copy_file(old_audio_file_path, new_audio_file_path)
                                     element.annotations['tts']['file_path'] = new_audio_file_path_relative
-                                    #post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
+                                    post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
                                 except:
                                     post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
             post_task_update(callback, f"--- Audio files copied")
