@@ -199,26 +199,27 @@ class GoogleTTSEngine(TTSEngine):
         temp_filename = None
         creds_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
         
-        if not creds_file or not clara_utils.local_file_exists(creds_file):
-            # Get the credentials from the environment variable
-            creds_content = os.environ.get('GOOGLE_CREDENTIALS_JSON')
-            if not creds_content:
-                return False
-        
-            # Write the credentials to a temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
-                temp.write(creds_content.encode())
-                temp_filename = temp.name
-
-            # Set the environment variable so gTTS can pick it up
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
-
         try:
+            if not creds_file or not clara_utils.local_file_exists(creds_file):
+                # Get the credentials from the environment variable
+                creds_content = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+                if not creds_content:
+                    return False
+            
+                # Write the credentials to a temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
+                    temp.write(creds_content.encode())
+                    temp_filename = temp.name
+
+                # Set the environment variable so gTTS can pick it up
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
+
             tts = gtts.gTTS(text, lang=language_id)
             tts.save(output_file)
             result = True
+            
         except Exception as e:
-            post_task_update(callback, f"{str(e)}")
+            post_task_update(callback, f"*** Error creating Google TTS file: {str(e)}")
             result = False
         
         if temp_filename:
