@@ -87,25 +87,27 @@ class StaticHTMLRenderer:
                 for segment in page.segments:
                     if 'tts' in segment.annotations and 'file_path' in segment.annotations['tts']:
                         old_audio_file_path = segment.annotations['tts']['file_path']
-                        try:
-                            new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
-                            new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
-                            copy_file(old_audio_file_path, new_audio_file_path)
-                            segment.annotations['tts']['file_path'] = new_audio_file_path_relative
-                            #post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
-                        except:
-                            post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
-                    for element in segment.content_elements:
-                        if element.type == "Word" and 'tts' in element.annotations and 'file_path' in element.annotations['tts']:
-                            old_audio_file_path = element.annotations['tts']['file_path']
+                        if old_audio_file_path != 'placeholder.mp3':
                             try:
                                 new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
                                 new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                                 copy_file(old_audio_file_path, new_audio_file_path)
-                                element.annotations['tts']['file_path'] = new_audio_file_path_relative
+                                segment.annotations['tts']['file_path'] = new_audio_file_path_relative
                                 #post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
                             except:
                                 post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
+                    for element in segment.content_elements:
+                        if element.type == "Word" and 'tts' in element.annotations and 'file_path' in element.annotations['tts']:
+                            old_audio_file_path = element.annotations['tts']['file_path']
+                            if old_audio_file_path != 'placeholder.mp3':
+                                try:
+                                    new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
+                                    new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
+                                    copy_file(old_audio_file_path, new_audio_file_path)
+                                    element.annotations['tts']['file_path'] = new_audio_file_path_relative
+                                    #post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
+                                except:
+                                    post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
             post_task_update(callback, f"--- Audio files copied")
                         
         total_pages = len(text.pages)

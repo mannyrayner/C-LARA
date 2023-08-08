@@ -190,43 +190,32 @@ class GoogleTTSEngine(TTSEngine):
                            'vietnamese': {'language_id': 'vi', 'voices': ['default']},
                            'welsh': {'language_id': 'cy', 'voices': ['default']}
                         }
-    print('--- Creating Google TTS Engine object (2023 Aug 8 17:00 version)')
 
-##    def create_mp3(self, language_id, voice_id, text, output_file):
-##        tts = gtts.gTTS(text, lang=language_id)
-##        tts.save(output_file)
-##        return True
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
         temp_filename = None
         creds_file = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
         
-        try:
-            if not creds_file or not local_file_exists(creds_file):
-                # Get the credentials from the environment variable
-                creds_content = os.environ.get('GOOGLE_CREDENTIALS_JSON')
-                if not creds_content:
-                    return False
-            
-                # Write the credentials to a temporary file
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
-                    temp.write(creds_content.encode())
-                    temp_filename = temp.name
+        if not creds_file or not local_file_exists(creds_file):
+            # Get the credentials from the environment variable
+            creds_content = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+            if not creds_content:
+                return False
+        
+            # Write the credentials to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
+                temp.write(creds_content.encode())
+                temp_filename = temp.name
 
-                # Set the environment variable so gTTS can pick it up
-                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
+            # Set the environment variable so gTTS can pick it up
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
 
-            post_task_update(callback, f"--- Passing text to Google TTS (2023 Aug 8 17:00 version): '{text}'")
-            tts = gtts.gTTS(text, lang=language_id)
-            tts.save(output_file)
-            result = True
-        except Exception as e:
-            post_task_update(callback, f"*** Error creating Google TTS file: {str(e)}")
-            result = False
+        tts = gtts.gTTS(text, lang=language_id)
+        tts.save(output_file)
        
         if temp_filename:
             os.unlink(temp_filename)
             
-        return result
+        return True
 
 class ABAIREngine(TTSEngine):
     def __init__(self, base_url=None):

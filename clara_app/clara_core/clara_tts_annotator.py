@@ -92,15 +92,14 @@ class TTSAnnotator:
                 unique_filename = f"{uuid.uuid4()}.mp3"
                 temp_file = os.path.join(temp_dir, unique_filename)
                 result = self.tts_engine.create_mp3(self.language_id, self.voice_id, audio, temp_file, callback=callback)
+                if result:
+                    file_path = self.tts_repository.store_mp3(self.engine_id, self.language_id, self.voice_id, temp_file)
+                    self.tts_repository.add_entry(self.engine_id, self.language_id, self.voice_id, audio, file_path)
+                else:
+                    post_task_update(callback, f"--- Failed to create mp3 for '{audio}'")
             except Exception as e:
                 post_task_update(callback, f"*** Error creating TTS file: {str(e)}")
-                result = False
-            if result:
-                file_path = self.tts_repository.store_mp3(self.engine_id, self.language_id, self.voice_id, temp_file)
-                self.tts_repository.add_entry(self.engine_id, self.language_id, self.voice_id, audio, file_path)
-            else:
-                post_task_update(callback, f"--- Failed to create mp3 for '{audio}'")
-
+                
         shutil.rmtree(temp_dir)
 
     def _add_tts_annotations(self, text_obj, callback=None):
