@@ -7,3 +7,8 @@
     width: 200%; 
     height: 300px; 
 }
+
+.status-messages-class {
+    height: 200px;  /* Adjust as needed */
+    overflow-y: auto;
+}
