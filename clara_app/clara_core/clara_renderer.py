@@ -106,7 +106,7 @@ class StaticHTMLRenderer:
                 try:
                     copy_file(old_audio_file_path, new_audio_file_path)
                     n_files_copied += 1
-                    if n_files_copied % 20 == 0:
+                    if n_files_copied % 10 == 0:
                         post_task_update(callback, f'--- Copied {n_files_copied}/{n_files_to_copy} files')
                 except:
                     post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
@@ -121,16 +121,17 @@ class StaticHTMLRenderer:
             post_task_update(callback, f"--- Written page {index}")
         post_task_update(callback, f"--- Text pages created")
         
-        post_task_update(callback, f"--- Creating concordance pages")
         index = 0
+        n_lemmas = len(text.annotations['concordance'].items())
+        post_task_update(callback, f"--- Creating {n_lemmas} concordance pages")
         for lemma, lemma_data in text.annotations['concordance'].items():
             index += 1
             rendered_page = self.render_concordance_page(lemma, lemma_data["segments"], text.l2_language)
             lemma = replace_punctuation_with_underscores(lemma)
             output_file_path = self.output_dir / f"concordance_{lemma}.html"
             write_txt_file(rendered_page, output_file_path)
-            if index % 20 == 0:
-                post_task_update(callback, f"--- Written {index} concordance pages")
+            if index % 10 == 0:
+                post_task_update(callback, f"--- Written {index}/{n_lemmas} concordance pages")
         post_task_update(callback, f"--- Written all concordance pages")
 
         post_task_update(callback, f"--- Creating vocabulary lists")
@@ -139,14 +140,12 @@ class StaticHTMLRenderer:
         rendered_page = self.render_alphabetical_vocabulary_list(alphabetical_vocabulary_list, text.l2_language)
         output_file_path = self.output_dir / "vocab_list_alphabetical.html"
         write_txt_file(rendered_page, output_file_path)
-        #post_task_update(callback, f"Written alphabetical vocabulary list file '{output_file_path}'")
 
         # Render frequency vocabulary list
         frequency_vocabulary_list = sorted(text.annotations['concordance'].items(), key=lambda x: x[1]["frequency"], reverse=True)
         rendered_page = self.render_frequency_vocabulary_list(frequency_vocabulary_list, text.l2_language)
         output_file_path = self.output_dir / "vocab_list_frequency.html"
         write_txt_file(rendered_page, output_file_path)
-        #post_task_update(callback, f"Written frequency vocabulary list file '{output_file_path}'")
         post_task_update(callback, f"--- Vocabulary lists created")
         
 
