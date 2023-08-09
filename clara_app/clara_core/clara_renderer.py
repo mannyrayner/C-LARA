@@ -70,7 +70,7 @@ class StaticHTMLRenderer:
         template = self.template_env.get_template('frequency_vocabulary_list.html')
         rendered_page = template.render(vocabulary_list=vocabulary_list,
                                         l2_language=l2_language)
-        return rendered_page
+        return rendered_page 
 
     def render_text(self, text, self_contained=False, callback=None):
         post_task_update(callback, f"--- Rendering_text") 
