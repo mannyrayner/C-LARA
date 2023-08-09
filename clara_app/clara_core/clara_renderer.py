@@ -19,6 +19,7 @@ from pathlib import Path
 import os
 from jinja2 import Environment, FileSystemLoader
 import shutil
+import traceback
 
 config = get_config()
 
@@ -103,14 +104,16 @@ class StaticHTMLRenderer:
             n_files_copied = 0
             post_task_update(callback, f"--- Copying {n_files_to_copy} audio files")
             for old_audio_file_path in copy_operations:
+                new_audio_file_path = copy_operations[new_audio_file_path]
                 try:
-                    new_audio_file_path = copy_operations[new_audio_file_path]
                     copy_file(old_audio_file_path, new_audio_file_path)
                     n_files_copied += 1
                     if n_files_copied % 10 == 0:
                         post_task_update(callback, f'--- Copied {n_files_copied}/{n_files_to_copy} files')
-                except:
-                    post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
+                except Exception as e:
+                    post_task_update(callback, f'*** Warning: error when copying audio from {old_audio_file_path} to {new_audio_file_path}')
+                    error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+                    post_task_update(callback, error_message)
             post_task_update(callback, f"--- Done. {n_files_copied}/{n_files_to_copy} files successfully copied")
                         
         total_pages = len(text.pages)
