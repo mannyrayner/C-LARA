@@ -73,41 +73,44 @@ class StaticHTMLRenderer:
         return rendered_page
 
     def render_text(self, text, self_contained=False, callback=None):
-        post_task_update(callback, f"--- render_text: self_contained = {self_contained}")
+        post_task_update(callback, f"--- Rendering_text") 
         # Create multimedia directory if self-contained is True
         if self_contained:
-            post_task_update(callback, f"--- Copying audio files")
             multimedia_dir = self.output_dir / 'multimedia'
             make_directory(multimedia_dir, exist_ok=True)
+            copy_operations = {}
 
-            # Traverse the Text object, copying each multimedia file
-            # referenced to the new multimedia directory and update the reference
+            # Traverse the Text object, replacing each multimedia file with a
+            # reference to the new multimedia directory and storing the copy operations
             for page in text.pages:
                 for segment in page.segments:
                     if 'tts' in segment.annotations and 'file_path' in segment.annotations['tts']:
                         old_audio_file_path = segment.annotations['tts']['file_path']
                         if old_audio_file_path != 'placeholder.mp3':
-                            try:
-                                new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
-                                new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
-                                copy_file(old_audio_file_path, new_audio_file_path)
-                                segment.annotations['tts']['file_path'] = new_audio_file_path_relative
-                                post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
-                            except:
-                                post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
+                            new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
+                            new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
+                            copy_operations[old_audio_file_path] = new_audio_file_path
+                            segment.annotations['tts']['file_path'] = new_audio_file_path_relative
                     for element in segment.content_elements:
                         if element.type == "Word" and 'tts' in element.annotations and 'file_path' in element.annotations['tts']:
                             old_audio_file_path = element.annotations['tts']['file_path']
                             if old_audio_file_path != 'placeholder.mp3':
-                                try:
-                                    new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
-                                    new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
-                                    copy_file(old_audio_file_path, new_audio_file_path)
-                                    element.annotations['tts']['file_path'] = new_audio_file_path_relative
-                                    post_task_update(callback, f"Copied audio file '{old_audio_file_path}'")
-                                except:
-                                    post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
-            post_task_update(callback, f"--- Audio files copied")
+                                new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
+                                new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
+                                copy_operations[old_audio_file_path] = new_audio_file_path
+                                element.annotations['tts']['file_path'] = new_audio_file_path_relative                                  
+            n_files_to_copy = len(copy_operations)
+            n_files_copied = 0
+            post_task_update(callback, f"--- Copying {n_files_to_copy} audio files")
+            for old_audio_file_path in copy_operations:
+                try:
+                    copy_file(old_audio_file_path, new_audio_file_path)
+                    n_files_copied += 1
+                    if n_files_copied % 20 == 0:
+                        post_task_update(callback, f'--- Copied {n_files_copied}/{n_files_to_copy} files')
+                except:
+                    post_task_update(callback, f'*** Warning: could not copy audio for {old_audio_file_path}')
+            post_task_update(callback, f"--- Done. {n_files_copied}/{n_files_to_copy} files successfully copied")
                         
         total_pages = len(text.pages)
         post_task_update(callback, f"--- Creating text pages")
