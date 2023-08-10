@@ -15,7 +15,6 @@
 	<p><a href="{% url 'create_segmented_text' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Create/Edit Segmented Text</a></p>
 	<p><a href="{% url 'create_glossed_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Create/Edit Glossed Text</a></p>
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">Create/Edit Lemma Tagged Text</a></p>
-	<p><a href="{% url 'create_lemma_and_gloss_tagged_text' project.id %}" {% if not can_render %}class="disabled-link{% endif %}">Create/Edit Lemma and Gloss Tagged Text</a></p>
 	<p><a href="{% url 'render_text_start' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Render Text</a></p>
 	<p><a href="{% url 'compare_versions' project.id %}">Compare Text Versions</a></p>
 	<p><a href="{% url 'project_history' project.id %}">View Project History</a></p>
