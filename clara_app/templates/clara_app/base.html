@@ -24,7 +24,7 @@
             <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>
 			<li><a href="{% url 'manage_language_masters' %}">Manage language masters</a></li>
           {% endif %}
-		  {% if user.is_language_master %}
+		  {% if user.userprofile.is_language_master %}
 			<li><a href="{% url 'edit_prompt' %}">Edit annotation prompts</a></li>
 		  {% endif %}
 		  <li><a href="{% url 'create_project' %}">Create new C-LARA project</a></li>
