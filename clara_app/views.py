@@ -612,6 +612,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         text_choice = 'generate'
                     current_version = ""
             # We're using the AI or a tagger to create a new version of a file
+            elif text_choice in ( 'generate', 'improve' ) and not request.user.userprofile.credit > 0:
+                messages.error(request, f"Sorry, you need money in your account to perform this operation")
             elif text_choice in ( 'generate', 'improve', 'tree_tagger' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
