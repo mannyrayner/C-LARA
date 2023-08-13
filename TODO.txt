@@ -11,20 +11,18 @@ Bugs
 
 Refactoring
 
-Rationalise repository
-  Decide what should be removed from the repository (e.g. database file, compiled content)
-  Decide if content should be moved to a separate repository
-  Decide whether to stay with SVN or move to Git
+Rationalising repositories
+  Separate repository for content
 
 Deployment
   Talk with UniSA sysadmins about deployment 
   Talk with UniSA commercialisation people about server with support for automatic payments
-  Temporary deployment on Heroku for internal testing purposes?
 
 Admin/moderator functions
   Functionality for suspending/blocking users
 
 Social network
+  Make it as simple as possible to export a C-LARA link to another social network
   Email notifications
   Basic flagging and moderation functionality
   More fine-grained ratings, e.g. for annotation quality and audio
@@ -94,6 +92,13 @@ DONE. ITEMS FROM THE TO-DO LIST WHICH HAVE BEEN COMPLETED.
 
 Meta
   Immediate: where should we keep the to-do list so that it's easily visible? [2023-06-04; < 1 hour]
+
+Rationalise repository
+  Database file, compiled content etc removed from the repository [2023-07-25; < 1 hour]
+  Code etc moved to GitHub [2023-07-25; 2-3 hours]
+
+Deployment
+  Deployment on Heroku for internal testing purposes [2023-08-09; 2-3 weeks]
 
 Contact with UniSA
   Talk with commercialisation people about server with support for automatic payments (initial meeting) [2023-07-03; 3 hours]
