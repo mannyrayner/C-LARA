@@ -93,6 +93,11 @@ def make_directory(pathname, parents=False, exist_ok=False):
 
         abspathname.mkdir(parents=parents, exist_ok=exist_ok)
 
+def make_local_directory(pathname, parents=False, exist_ok=False):
+    abspathname = Path(absolute_file_name(pathname))
+    
+    abspathname.mkdir(parents=parents, exist_ok=exist_ok)
+
 def remove_directory(pathname):
     abspathname = absolute_file_name(pathname)
 
@@ -230,6 +235,11 @@ def local_file_exists(pathname):
     
     return os.path.isfile(abspathname)
 
+def local_directory_exists(pathname):
+    abspathname = absolute_file_name(pathname)
+
+    return os.path.isdir(abspathname)
+        
 def directory_exists(pathname):
     abspathname = absolute_file_name(pathname)
 
