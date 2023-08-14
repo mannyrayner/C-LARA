@@ -14,6 +14,7 @@ import urllib.parse as urlparse
 import sqlite3
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
 from .clara_utils import get_config
 
 config = get_config()
