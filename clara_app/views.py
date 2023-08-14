@@ -36,7 +36,7 @@ from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, output_dir_for_project_id, post_task_update
+from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, read_txt_file, output_dir_for_project_id, post_task_update
 
 from pathlib import Path
 from decimal import Decimal
@@ -599,9 +599,10 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             elif text_choice == 'load_archived':
                 try:
                     archived_file = form.cleaned_data['archived_version']
-                    annotated_text = Path(archived_file).read_text(encoding="utf-8")
+                    annotated_text = read_txt_file(archived_file)
                     text_choice = 'manual'
                     current_version = clara_project_internal.get_file_description(this_version, archived_file)
+                    messages.success(request, f"Loaded archived file {archived_file}")
                 except FileNotFoundError:
                     messages.error(request, f"Unable to find archived file {archived_file}")
                     try:
