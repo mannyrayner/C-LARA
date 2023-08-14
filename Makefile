@@ -4,6 +4,9 @@ migrate:
 
 runserver:
 	python3 manage.py runserver
+	
+qcluster:
+	python3 manage.py qcluster
 
 check:
 	python3 manage.py check
