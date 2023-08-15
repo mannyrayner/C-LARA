@@ -136,6 +136,7 @@ class GoogleTTSEngine(TTSEngine):
                            'bosnian': {'language_id': 'bs', 'voices': ['default']},
                            'catalan': {'language_id': 'ca', 'voices': ['default']},
                            'cantonese': {'language_id': 'zh-CN', 'voices': ['default']},
+                           'chinese': {'language_id': 'zh', 'voices': ['default']},
                            'mandarin': {'language_id': 'zh', 'voices': ['default']},
                            'taiwanese': {'language_id': 'zh-TW', 'voices': ['default']},
                            'croatian': {'language_id': 'hr', 'voices': ['default']},
