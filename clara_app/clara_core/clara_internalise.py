@@ -60,7 +60,8 @@ def parse_content_elements_segmented(segment_text):
             # Word with smaller pieces
             pieces = item.split("|")
             for piece in pieces:
-                content_elements.append(ContentElement("Word", content=piece, annotations={}))
+                if piece != '':
+                    content_elements.append(ContentElement("Word", content=piece, annotations={}))
         else:
             # Regular word
             content_elements.append(ContentElement("Word", content=item, annotations={}))
