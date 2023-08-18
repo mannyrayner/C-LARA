@@ -33,7 +33,7 @@ class StaticHTMLRenderer:
             remove_directory(self.output_dir)
         
         # Create the new output_dir
-        make_directory(self.output_dir)
+        make_directory(self.output_dir, parents=True)
 
         # Copy the 'static' folder to the output_dir
         static_src = absolute_file_name('$CLARA/static')

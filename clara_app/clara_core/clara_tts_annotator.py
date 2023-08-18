@@ -31,7 +31,7 @@ class TTSAnnotator:
         self.engine_id = self.tts_engine.tts_engine_type if self.tts_engine else None
         self.voice_id = get_default_voice(language, self.tts_engine) if self.tts_engine else None
         self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
-        self.tts_repository = tts_repository or TTSRepository()
+        self.tts_repository = tts_repository or TTSRepository(callback=callback)
         post_task_update(callback, f"--- Using TTSAnnotator object with TTS engine of type '{self.engine_id}'")
 
     def annotate_text(self, text_obj, callback=None):

@@ -31,7 +31,7 @@ config = get_config()
 
 class TTSRepository:
     def __init__(self, callback=None):   
-        self.db_file = absolute_local_file_name(config.get('tts_repository', 'db_file'))
+        self.db_file = absolute_local_file_name(config.get('tts_repository', ( 'db_file' if _s3_storage else 'db_file_local' )))
         self.base_dir = absolute_file_name(config.get('tts_repository', 'base_dir'))
         self._initialize_repository(callback=callback)
 

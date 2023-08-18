@@ -31,15 +31,17 @@ There are also several utility functions to help with the annotation process.
 from . import clara_prompt_templates
 from . import clara_chatgpt4
 from . import clara_internalise
-from . import clara_utils
 from . import clara_test
+
+from .clara_utils import get_config, post_task_update
 from .clara_classes import *
 
 import json
 import regex
 import difflib
+import traceback
 
-config = clara_utils.get_config()
+config = get_config()
 
 # Try invoking the template-based prompt generation with trivial text to see if we get an error
 def invoke_templates_on_trivial_text(annotate_or_improve, version, l1_language, l2_language):
@@ -150,17 +152,26 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
     else:
         raise InternalCLARAError(message = f'Unsupported combination gloss_or_lemma = {gloss_or_lemma} and annotate_or_improve = {annotate_or_improve} in create_annotation' )
     api_calls = []
+    n_attempts = 0
+    limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
     while True:
-        clara_utils.print_and_flush(f'--- Calling ChatGPT-4 to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
-        api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, callback=callback)
-        api_calls += [ api_call ]
+        if n_attempts > limit:
+            raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
+        post_task_update(callback, f'--- Calling ChatGPT-4 to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
         try:
+            api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, callback=callback)
+            api_calls += [ api_call ]
             annotated_simplified_elements = parse_chatgpt_gloss_response(api_call.response, simplified_elements, gloss_or_lemma)
             nontrivial_annotated_elements = [ unsimplify_element(element, gloss_or_lemma) for element in annotated_simplified_elements ]
             annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, gloss_or_lemma)
             return ( annotated_elements, api_calls )
         except ChatGPTError as e:
-            clara_utils.print_and_flush(e.message)
+            post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
+            post_task_update(callback, e.message)
+        except Exception as e:
+            post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
 
 def merge_elements_and_annotated_elements(elements, annotated_elements, gloss_or_lemma):
     matcher = difflib.SequenceMatcher(None, 
