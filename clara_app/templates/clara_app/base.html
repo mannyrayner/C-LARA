@@ -5,11 +5,26 @@
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="{% static 'clara_app/styles.css' %}">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script type="text/javascript">
     var csrf_token = "{% csrf_token %}";
   </script>
+  <style>
+  .disabled-link {
+    pointer-events: none;
+    color: #ccc;
+   }
+
+  .textarea-class {
+    width: 200%; 
+    height: 300px; 
+  }
+
+  .status-messages-class {
+    height: 200px;  /* Adjust as needed */
+    overflow-y: auto;
+  }
+  </style>
   <title>{% block title %}C-LARA{% endblock %}</title>
 </head>
 <body>
