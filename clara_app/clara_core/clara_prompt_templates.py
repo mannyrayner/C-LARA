@@ -56,7 +56,7 @@ class PromptTemplateRepository:
         else:
             data = None
             
-        check_well_formed_for_loading(data, template_or_examples, annotation_type, operation)
+        check_well_formed_for_loading(data, template_or_examples, annotation_type, operation, self.language)
         return data
 
     # Write a file version, archive the old one if necessary, and update the metadata.
@@ -68,7 +68,7 @@ class PromptTemplateRepository:
     def save_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str,
                                   data: Union[str, list], user='Unknown'):
         # Raises exception if data is not well-formed in this context
-        check_well_formed_for_saving(data, template_or_examples, annotation_type, operation)
+        check_well_formed_for_saving(data, template_or_examples, annotation_type, operation, self.language)
         
         file_path = self._get_file_path(template_or_examples, annotation_type, operation)
         extension = extension_for_file_path(file_path)
@@ -128,22 +128,26 @@ class PromptTemplateRepository:
 # e.g. that a template is a string or that gloss examples are a list of pairs of strings.
 # If there are other problems, we're probably going to want to fix them by loading the
 # data, editing it, and saving it.
-def check_well_formed_for_loading(data, template_or_examples, annotation_type, operation):
+def check_well_formed_for_loading(data, template_or_examples, annotation_type, operation, language):
     if template_or_examples == 'template':
+        if not data:
+            raise TemplateError(message = f'Template is missing for language "{language}"')
         if not isinstance(data, str):
-            raise TemplateError(message = f'Template is not a string')
+            raise TemplateError(message = f'Templatelanguage "{language}" is not a string')
     elif operation == 'improve' and annotation_type != 'segmented':
+        if not data:
+            raise TemplateError(message = f'Examples are missing language "{language}"')
         if not is_list_of_n_tuples_of_strings(data, 2):
-            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} is not a list of pairs of strings')
+            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of pairs of strings')
     else:
         if not is_list_of_strings(data):
-            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} is not a list of strings')
+            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of strings')
     return True
 
 # When we're saving the data, we carry out a more fine-grained check to try and make sure
 # that the result is going to be usable.
-def check_well_formed_for_saving(data, template_or_examples, annotation_type, operation):
-    check_well_formed_for_loading(data, template_or_examples, annotation_type, operation)
+def check_well_formed_for_saving(data, template_or_examples, annotation_type, operation, language):
+    check_well_formed_for_loading(data, template_or_examples, annotation_type, operation, language)
     if template_or_examples == 'template':
         check_validity_of_template(data, annotation_type)
     elif annotation_type == 'segmented':
