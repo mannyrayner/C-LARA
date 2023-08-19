@@ -6,13 +6,15 @@ Meta
   Functionality for including ChatGPT-4 in to-do list discussion
 
 Bugs
+  If initial text is pasted in, it is listed as 'ai_generated'
+  Fail cleanly when 'default' templates are missing/malformed.
   Lemmas containing punctuation marks not properly handled
   Issue when glossing separated words with hyphens, e.g. "Hårde|-kogte"
+  Log missing events (glossing and lemma-tagging, at least) in history
 
 Refactoring
 
-Rationalising repositories
-  Separate repository for content
+Rationalise repository
 
 Deployment
   Talk with UniSA sysadmins about deployment 
@@ -22,7 +24,6 @@ Admin/moderator functions
   Functionality for suspending/blocking users
 
 Social network
-  Make it as simple as possible to export a C-LARA link to another social network
   Email notifications
   Basic flagging and moderation functionality
   More fine-grained ratings, e.g. for annotation quality and audio
@@ -55,7 +56,7 @@ Annotation
   Allow segmentation to be done by Punkt (= free annotation)
 
 Prompt templates and examples
-  Add segmentation templates and examples for Chinese and Japanese
+  Add segmentation templates and examples for Japanese
 
 Help
   Online help for prompt customisation
@@ -87,21 +88,20 @@ Speech
   Functionality to support speech recognition practice
 
 --------------------------------
-
+ 
 DONE. ITEMS FROM THE TO-DO LIST WHICH HAVE BEEN COMPLETED. 
 
 Meta
   Immediate: where should we keep the to-do list so that it's easily visible? [2023-06-04; < 1 hour]
 
-Rationalise repository
-  Database file, compiled content etc removed from the repository [2023-07-25; < 1 hour]
-  Code etc moved to GitHub [2023-07-25; 2-3 hours]
-
-Deployment
-  Deployment on Heroku for internal testing purposes [2023-08-09; 2-3 weeks]
-
 Contact with UniSA
   Talk with commercialisation people about server with support for automatic payments (initial meeting) [2023-07-03; 3 hours]
+
+Infrastructure
+  Move to GitHub [2023-08-10; 1 day]
+
+Heroku
+  Deploy on Heroku [2023-08-10; 2-3 weeks]
 
 Naming, renaming and deleting
   Better naming convention for directory associated with C-LARA project - current one is brittle [2023-06-04; < 1 hour]
@@ -151,6 +151,7 @@ Annotation
 Prompt templates and examples
   Improve SE and FR examples for gloss and lemma tagging to include reflexive and particle verbs [2023-07-16; < 1 hour]
   Improve FR examples for gloss and lemma tagging to include the important construction "il y a" [2023-07-16; < 1 hour]
+  Add segmentation templates and examples for Chinese [2023-08-16; < 1 hour]
 
 Cloning
   Functionality for simple cloning of a project [2023-06-10; a few hours]
@@ -170,7 +171,9 @@ Bugs
   "Substitute" case not being properly handled in version diff [2023-07-10; 1-2 hours]
   Catch internalisation errors in prompt examples when using them in annotation [2023-07-12; 1-2 hours]   
   Handle languages not covered by TTS [2023-07-12; 1-2 hours]
-  Don't count punctuation and layout in version diff, except in segmented mode [2023-07-14; 1-2 hours]   
+  Don't count punctuation and layout in version diff, except in segmented mode [2023-07-14; 1-2 hours]
+  Better error handling and use of callback in clara_create_annotations.call_chatgpt4_to_annotate_or_improve_elements [2023-08-19; 1-2 hours]
+  Restore CSS in Heroku version [2023-08-19; 1 day]
 
 Refactoring
   Tidy up annotation code and templates to use 'messages' framework uniformly with other views functions [2023-07-12; 2-3 hours]
