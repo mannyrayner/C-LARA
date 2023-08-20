@@ -43,6 +43,7 @@ Registered content
 Layout
 
 Annotation
+  Better error message when annotated text is not well-formed
   Better treatment of MWEs, perhaps in the "improvement" phase or as an independent operation
   Functionality to get an error rate summary
   Conversion from TreeTagger POS tags to UD v2 tags for more languages
