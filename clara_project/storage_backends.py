@@ -10,6 +10,7 @@ class MyS3Boto3Storage(S3Boto3Storage):
     region_name = os.environ.get('AWS_REGION')
 
     def url(self, name):
+        print(name)
         url = super().url(name)
         if url.startswith('//'):
             url = 'https:%s' % url
