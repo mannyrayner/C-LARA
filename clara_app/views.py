@@ -726,8 +726,9 @@ def generate_text_complete(request, project_id, version, status):
         return create_annotated_text_of_right_type(request, project_id, version, previous_version, template)
     # We got here from the monitor view
     else:
+        # Take this out, may well be dangerous and tasks should not be retried anyway given Q_CLUSTER settings
         # Remove any outstanding tasks, so that they can't be retried
-        delete_all_tasks()
+        #delete_all_tasks()
         if status == 'error':
             messages.error(request, f'Something went wrong when creating {version} text')
         else:
@@ -1160,3 +1161,4 @@ def serve_zipfile(request, project_id):
         raise Http404("Zipfile does not exist")
 
     return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
+
