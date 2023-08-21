@@ -36,7 +36,7 @@ from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, read_txt_file, output_dir_for_project_id, post_task_update
+from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, read_txt_file, output_dir_for_project_id, post_task_update, is_rtl_language
 
 from pathlib import Path
 from decimal import Decimal
@@ -559,6 +559,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     tree_tagger_supported = fully_supported_treetagger_language(project.l2)
+    rtl_language=is_rtl_language(project.l2)
     metadata = clara_project_internal.get_metadata()
     current_version = clara_project_internal.get_file_description(this_version, 'current')
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == this_version]
@@ -567,8 +568,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     action = None
 
     if request.method == 'POST':
-        form = CreateAnnotationTextFormOfRightType(this_version, request.POST,
-                                                   prompt=prompt, archived_versions=archived_versions, tree_tagger_supported=tree_tagger_supported)
+        form = CreateAnnotationTextFormOfRightType(this_version, request.POST, prompt=prompt,
+                                                   archived_versions=archived_versions, tree_tagger_supported=tree_tagger_supported, is_rtl_language=rtl_language)
         if form.is_valid():
             text_choice = form.cleaned_data['text_choice']
             label = form.cleaned_data['label']
@@ -689,7 +690,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == this_version]
     form = CreateAnnotationTextFormOfRightType(this_version, initial={'text': annotated_text, 'text_choice': text_choice},
                                                prompt=prompt, archived_versions=archived_versions, current_version=current_version,
-                                               tree_tagger_supported=tree_tagger_supported)
+                                               tree_tagger_supported=tree_tagger_supported, is_rtl_language=rtl_language)
 
     return render(request, template, {'form': form, 'project': project})
 
@@ -757,9 +758,10 @@ def generate_text_complete(request, project_id, version, status):
     # The archived versions will have changed if we created a new file
     metadata = clara_project_internal.get_metadata()
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == version]
+    rtl_language=is_rtl_language(project.l2)
     form = CreateAnnotationTextFormOfRightType(version, initial={'text': annotated_text, 'text_choice': text_choice},
                                                prompt=prompt, archived_versions=archived_versions, current_version=current_version,
-                                               tree_tagger_supported=tree_tagger_supported)
+                                               tree_tagger_supported=tree_tagger_supported, is_rtl_language=rtl_language)
 
     return render(request, template, {'form': form, 'project': project})
 

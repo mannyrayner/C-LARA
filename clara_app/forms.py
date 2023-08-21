@@ -94,8 +94,14 @@ class CreateAnnotatedTextForm(forms.Form):
     label = forms.CharField(required=False, max_length=200)
     gold_standard = forms.BooleanField(required=False)
     
-    def __init__(self, *args, tree_tagger_supported=False, prompt=None, archived_versions=None, current_version='', **kwargs):
+    def __init__(self, *args, tree_tagger_supported=False, is_rtl_language=False, prompt=None,
+                 archived_versions=None, current_version='', **kwargs):
         super(CreateAnnotatedTextForm, self).__init__(*args, **kwargs)
+
+        # For right-to-left languages like Arabic, Farsi, Urdu and Hebrew
+        if is_rtl_language:
+            self.fields['text'].widget.attrs['dir'] = 'rtl'
+        
         if archived_versions:
             self.fields['archived_version'].choices = archived_versions
         if current_version:
