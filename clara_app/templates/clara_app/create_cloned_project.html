@@ -5,7 +5,7 @@
   <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Created Cloned Project)</button>
+    <button type="submit">Create Cloned Project</button>
     {% if form.errors %}
         <ul>
         {% for field in form %}
