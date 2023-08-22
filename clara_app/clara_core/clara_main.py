@@ -130,6 +130,7 @@ from .clara_create_story import generate_story, improve_story
 from .clara_cefr import estimate_cefr_reading_level
 from .clara_summary import generate_summary, improve_summary
 from .clara_internalise import internalize_text
+from .clara_correct_syntax import correct_syntax_in_string
 from .clara_diff import diff_text_objects
 from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged
 from .clara_tts_annotator import TTSAnnotator
@@ -471,6 +472,12 @@ class CLARAProjectInternal:
     # Create a prompt using null text to see if there is a template error
     def try_to_use_templates(self, generate_or_improve, version):
         return invoke_templates_on_trivial_text(generate_or_improve, version, self.l1_language, self.l2_language)
+
+    # Try to correct syntax in text and save if successful
+    def correct_syntax_and_save(self, text, version, user='Unknown', label='', callback=None):
+        corrected_text, api_calls = correct_syntax_in_string(text, version, self.l2_language, l1=self.l1_language, callback=callback)
+        self.save_text_version(version, corrected_text, user=user, label=label, source='ai_corrected')
+        return api_calls
         
     # Call ChatGPT-4 to create a story based on the given prompt
     def create_plain_text(self, prompt: Optional[str] = None, user='Unknown', label='', callback=None) -> List[APICall]:
