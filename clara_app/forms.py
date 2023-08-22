@@ -126,7 +126,17 @@ class CreatePlainTextForm(CreateAnnotatedTextForm):
         #self.field_order = ['text_choice', 'archived_version', 'prompt', 'text', 'current_version', 'gold_standard']
             
 class CreateSegmentedTextForm(CreateAnnotatedTextForm):
-    pass
+    TEXT_CHOICES=[
+            ('generate', 'Segment text using AI'),
+            ('correct', 'Try to fix errors in malformed segmented text using AI'), 
+            ('improve', 'Improve existing segmented text using AI'),
+            ('manual', 'Manually enter/edit segmented text'),
+            ('load_archived', 'Load archived version')
+        ]
+
+    def __init__(self, *args, prompt=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
     
 class CreateSummaryTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
@@ -141,12 +151,23 @@ class CreateSummaryTextForm(CreateAnnotatedTextForm):
         self.fields['text_choice'].choices = self.TEXT_CHOICES
    
 class CreateGlossedTextForm(CreateAnnotatedTextForm):
-    pass
+    TEXT_CHOICES = [
+        ('generate', 'Generate annotated text using AI'),
+        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
+        ('improve', 'Improve existing annotated text using AI'),
+        ('manual', 'Manually enter annotated text'),
+        ('load_archived', 'Load archived version')
+    ]
+
+    def __init__(self, *args, prompt=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
 
 class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('tree_tagger', 'Generate annotated text using TreeTagger'),
         ('generate', 'Generate annotated text using AI'),
+        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
         ('manual', 'Manually enter annotated text'),
         ('load_archived', 'Load archived version')
