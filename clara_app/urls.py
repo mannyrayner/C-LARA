@@ -37,8 +37,6 @@ urlpatterns = [
     path('project/<int:project_id>/create_lemma_tagged_text/', views.create_lemma_tagged_text, name='create_lemma_tagged_text'),
     path('project/<int:project_id>/create_lemma_and_gloss_tagged_text/', views.create_lemma_and_gloss_tagged_text, name='create_lemma_and_gloss_tagged_text'),
     path('project/<int:project_id>/history/', views.project_history, name='project_history'),
-    # ASYNCHRONOUS PROCESSING
-    #path('project/<int:project_id>/render_text/', views.render_text, name='render_text'),
     path('project/<int:project_id>/render_text_start/', views.render_text_start, name='render_text_start'),
     path('project/<int:project_id>/render_text_status/<str:task_id>/<str:report_id>/', views.render_text_status, name='render_text_status'),
     path('project/<int:project_id>/render_text_monitor/<str:task_id>/<str:report_id>/', views.render_text_monitor, name='render_text_monitor'),
