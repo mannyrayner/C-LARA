@@ -1,9 +1,14 @@
+"""
+Call ChatGPT-4 to try to fix non-well-formed annotated text. Most often this will be a question of missing or superfluous
+hashtags or slashes in glossed or lemma-tagged text.
+"""
 
-from . import clara_chatgpt4
-from . import clara_internalise
-
+from .clara_chatgpt4 import call_chat_gpt4
+from .clara_internalise import parse_content_elements
 from .clara_utils import get_config, post_task_update
-from .clara_classes import *
+from .clara_classes import InternalCLARAError, ChatGPTError
+
+config = get_config()
 
 def correct_syntax_in_string(text, text_type, l2, l1=None, callback=None):
     if not text_type in ( 'segmented', 'gloss', 'lemma' ):
@@ -12,7 +17,7 @@ def correct_syntax_in_string(text, text_type, l2, l1=None, callback=None):
     segments_out = []
     all_api_calls = []
     for segment in segments:
-        segment_out, api_calls = correct_syntax_in_segment(text, text_type, l2, l1=l1, callback=callback)
+        api_calls, segment_out = correct_syntax_in_segment(text, text_type, l2, l1=l1, callback=callback)
         all_api_calls += api_calls
         segments_out += [ segment_out ]
     return ( all_api_calls, '||'.join(segments_out) )
@@ -20,8 +25,9 @@ def correct_syntax_in_string(text, text_type, l2, l1=None, callback=None):
 def correct_syntax_in_segment(segment_text, text_type, l2, l1=None, callback=None):
     try:
         parse_content_elements(segment_text, text_type)
-        # We didn't raise an exception, so it's okay
-        return segment_text
+        # We didn't raise an exception, so it's okay. Return the original text with null API calls
+        api_calls = []
+        return ( api_calls, segment_text )
     except:
         # We did get an exception, so try to fix it
         return call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=l1, callback=callback)
@@ -37,14 +43,14 @@ def call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=N
         n_attempts += 1
         post_task_update(callback, f'--- Calling ChatGPT-4 to try to correct syntax in "{segment_text}" considered as {text_type} text (attempt {n_attempts})')
         try:
-            api_call = clara_chatgpt4.call_chat_gpt4(prompt, callback=callback)
+            api_call = call_chat_gpt4(prompt, callback=callback)
             api_calls += [ api_call ]
-            corrected_segment_text = parse_chatgpt_response(api_call.response)
+            corrected_segment_text = api_call.response
             try:
-                post_task_update(callback, f'--- Corrected to "{corrected_segment_text}"')
-                return ( corrected_segment_text, api_calls )
+                post_task_update(callback, f'--- Corrected to "{corrected_segment_text}", now well-formed')
+                return ( api_calls, corrected_segment_text )
             except:
-                post_task_update(callback, f'--- Edited to "{corrected_segment_text}", but this is still not well-formed')
+                post_task_update(callback, f'--- Corrected to "{corrected_segment_text}", but this is still not well-formed')
         except Exception as e:
             post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
@@ -68,7 +74,7 @@ only changing vertical bar annotations and not the words themselves. Here is the
 
 The outut will be read by a Python script, so return only the corrected annotated text without any introduction, explanation or postscript."""
 
-def prompt_to_correct_segmented_syntax_in_segment(segment_text, l2, l1):
+def prompt_to_correct_gloss_syntax_in_segment(segment_text, l2, l1):
     return f"""I am going to give you a piece of {l2.capitalize()} text, which should have been marked up so that each word is
 followed by a {l1.capitalize()} gloss enclosed in hashtags. For example, glossing French in English, a correctly glossed piece of
 text might look like this: "le#the# chien#dog#".
