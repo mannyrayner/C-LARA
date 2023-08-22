@@ -578,7 +578,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             # We have an optional prompt when creating the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
             # We're saving an edited version of a file
-            if not text_choice in ( 'manual', 'load_archived', 'generate', 'improve', 'tree_tagger' ):
+            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'tree_tagger' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
             elif text_choice == 'manual':
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER', 'ANNOTATOR']):
@@ -614,11 +614,11 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         text_choice = 'generate'
                     current_version = ""
             # We're using the AI or a tagger to create a new version of a file
-            elif text_choice in ( 'generate', 'improve' ) and not request.user.userprofile.credit > 0:
+            elif text_choice in ( 'generate', 'correct', 'improve' ) and not request.user.userprofile.credit > 0:
                 messages.error(request, f"Sorry, you need money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
-            elif text_choice in ( 'generate', 'improve', 'tree_tagger' ):
+            elif text_choice in ( 'generate', 'correct', 'improve', 'tree_tagger' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
                 try:
@@ -626,9 +626,16 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     report_id = uuid.uuid4()
                     callback = [post_task_update_in_db, report_id]
 
+                    # We are correcting the text using the AI and then saving it
+                    if text_choice == 'correct':
+                        annotated_text = form.cleaned_data['text']
+                        async_task(perform_correct_operation_and_store_api_calls, annotated_text, this_version, project, clara_project_internal,
+                                   request.user, label, callback=callback)
+                        print(f'--- Started correction task')
+                        #Redirect to the monitor view, passing the task ID and report ID as parameters
+                        return redirect('generate_text_monitor', project_id, this_version, report_id)
                     # We are creating the text using the AI
-                    if text_choice == 'generate':
-                        #action, api_calls = perform_generate_operation(this_version, clara_project_internal, username, label, prompt=prompt)
+                    elif text_choice == 'generate':
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('annotate', this_version)
                         async_task(perform_generate_operation_and_store_api_calls, this_version, project, clara_project_internal,
@@ -638,7 +645,6 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
                     # We are improving the text using the AI
                     elif text_choice == 'improve':
-                        #action, api_calls = perform_improve_operation(this_version, clara_project_internal, username, label)
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('improve', this_version)
                         async_task(perform_improve_operation_and_store_api_calls, this_version, project, clara_project_internal,
@@ -727,9 +733,6 @@ def generate_text_complete(request, project_id, version, status):
         return create_annotated_text_of_right_type(request, project_id, version, previous_version, template)
     # We got here from the monitor view
     else:
-        # Take this out, may well be dangerous and tasks should not be retried anyway given Q_CLUSTER settings
-        # Remove any outstanding tasks, so that they can't be retried
-        #delete_all_tasks()
         if status == 'error':
             messages.error(request, f'Something went wrong when creating {version} text')
         else:
@@ -780,6 +783,21 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreateLemmaAndGlossTaggedTextForm(*args, **kwargs)
     else:
         raise InternalCLARAError(message = f'Unknown first argument in CreateAnnotationTextFormOfRightType: {version}')
+
+def perform_correct_operation_and_store_api_calls(annotated_text, version, project, clara_project_internal,
+                                                  user_object, label, callback=None):
+    try:                                               
+        operation, api_calls = perform_correct_operation(annotated_text, version, clara_project_internal, user_object.username, label, callback=callback)
+        store_api_calls(api_calls, project, user_object, version)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}")
+        raise e
+        post_task_update(callback, f"error")
+
+def perform_correct_operation(annotated_text, version, clara_project_internal, user, label, callback=None):
+    #print(f'clara_project_internal.correct_syntax_and_save({annotated_text}, {version}, user={user}, label={label}, callback={callback})')
+    return ( 'correct', clara_project_internal.correct_syntax_and_save(annotated_text, version, user=user, label=label, callback=callback) )
 
 def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
                                                    user_object, label, prompt=None, callback=None):
