@@ -1,5 +1,5 @@
 """
-Call ChatGPT-4 to try to fix non-well-formed annotated text. Most often this will be a question of missing or superfluous
+Call ChatGPT-4 to try to fix non-well-formed annotated text. Typically this will be a question of missing or superfluous
 hashtags or slashes in glossed or lemma-tagged text.
 """
 
@@ -17,17 +17,17 @@ def correct_syntax_in_string(text, text_type, l2, l1=None, callback=None):
     segments_out = []
     all_api_calls = []
     for segment in segments:
-        api_calls, segment_out = correct_syntax_in_segment(text, text_type, l2, l1=l1, callback=callback)
+        segment_out, api_calls = correct_syntax_in_segment(segment, text_type, l2, l1=l1, callback=callback)
         all_api_calls += api_calls
         segments_out += [ segment_out ]
-    return ( all_api_calls, '||'.join(segments_out) )
+    return ( '||'.join(segments_out), all_api_calls )
 
 def correct_syntax_in_segment(segment_text, text_type, l2, l1=None, callback=None):
     try:
         parse_content_elements(segment_text, text_type)
         # We didn't raise an exception, so it's okay. Return the original text with null API calls
         api_calls = []
-        return ( api_calls, segment_text )
+        return ( segment_text, api_calls )
     except:
         # We did get an exception, so try to fix it
         return call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=l1, callback=callback)
@@ -39,7 +39,7 @@ def call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=N
     limit = int(config.get('chatgpt4_syntax_correction', 'retry_limit'))
     while True:
         if n_attempts >= limit:
-            raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
+            raise ChatGPTError( message=f'*** Unable to correct text after {limit} attempts' )
         n_attempts += 1
         post_task_update(callback, f'--- Calling ChatGPT-4 to try to correct syntax in "{segment_text}" considered as {text_type} text (attempt {n_attempts})')
         try:
@@ -48,7 +48,7 @@ def call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=N
             corrected_segment_text = api_call.response
             try:
                 post_task_update(callback, f'--- Corrected to "{corrected_segment_text}", now well-formed')
-                return ( api_calls, corrected_segment_text )
+                return ( corrected_segment_text, api_calls )
             except:
                 post_task_update(callback, f'--- Corrected to "{corrected_segment_text}", but this is still not well-formed')
         except Exception as e:
