@@ -31,6 +31,9 @@ function updateButton() {
 	case 'load_archived':
 	  buttonText = 'Load';
 	  break;
+	case 'correct':
+	  buttonText = 'Correct';
+	  break;
 	default:
 	  buttonText = 'Submit';
   }
