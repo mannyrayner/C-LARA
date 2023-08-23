@@ -158,6 +158,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
         if n_attempts > limit:
             raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
         post_task_update(callback, f'--- Calling ChatGPT-4 to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
+        n_attempts += 1
         try:
             api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, callback=callback)
             api_calls += [ api_call ]
@@ -166,7 +167,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
             annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, gloss_or_lemma)
             return ( annotated_elements, api_calls )
         except ChatGPTError as e:
-            post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
+            post_task_update(callback, f'*** Warning: unable to parse response from ChatGPT-4')
             post_task_update(callback, e.message)
         except Exception as e:
             post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
