@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.conf import settings
 from django import forms
 from django.db.models import Avg, Q
+from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 
 # Remove custom User
@@ -420,7 +421,7 @@ def remove_project_member(request, permission_id):
 @login_required
 def project_list(request):
     user = request.user
-    projects = CLARAProject.objects.filter(Q(user=user) | Q(projectpermissions__user=user))
+    projects = CLARAProject.objects.filter(Q(user=user) | Q(projectpermissions__user=user)).order_by(Lower('title'))
     
     project_data = {}
     for project in projects:
