@@ -6,6 +6,7 @@ Meta
   Functionality for including ChatGPT-4 in to-do list discussion
 
 Bugs
+  Handle right-to-left languages correctly in generation/editing views
   If initial text is pasted in, it is listed as 'ai_generated'
   Fail cleanly when 'default' templates are missing/malformed.
   Lemmas containing punctuation marks not properly handled
@@ -43,7 +44,7 @@ Registered content
 Layout
 
 Annotation
-  Better error message when annotated text is not well-formed
+  Make it possible to import templates and examples from another language
   Better treatment of MWEs, perhaps in the "improvement" phase or as an independent operation
   Functionality to get an error rate summary
   Conversion from TreeTagger POS tags to UD v2 tags for more languages
@@ -148,6 +149,7 @@ Annotation
   Functionality to add labels to archived version [2023-07-10; 1-2 hours]
   Give more informative feedback on annotated text syntax errors [2023-07-12; 1-2 hours]
   Check well-formedness of annotated text before checking in [2023-07-12; 1-2 hours]
+  Automatic correction of syntax errors using AI [2023-08-22; 1-2 days]
 
 Prompt templates and examples
   Improve SE and FR examples for gloss and lemma tagging to include reflexive and particle verbs [2023-07-16; < 1 hour]
