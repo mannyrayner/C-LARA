@@ -18,6 +18,8 @@ import re
 # so that they can report progress. 
 def post_task_update_in_db(report_id, message):
     #print(f"--- Posted task update in_db: report_id = '{report_id}, message = '{message}')")
+    if len(message) > 1000:
+        message = message[:1000] + '...'
     TaskUpdate.objects.create(report_id=report_id, message=message)
 
 # Extract unread messages for a given task ID
