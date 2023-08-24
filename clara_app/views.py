@@ -168,6 +168,7 @@ def edit_prompt(request):
         prompt_selection_form = PromptSelectionForm(request.POST, user=request.user)
         if prompt_selection_form.is_valid():
             language = prompt_selection_form.cleaned_data['language']
+            default_language = prompt_selection_form.cleaned_data['default_language']
             template_or_examples = prompt_selection_form.cleaned_data['template_or_examples']
             operation = prompt_selection_form.cleaned_data['operation']
             annotation_type = prompt_selection_form.cleaned_data['annotation_type']
@@ -181,17 +182,29 @@ def edit_prompt(request):
             prompt_repo = PromptTemplateRepository(language)
 
             if request.POST.get('action') == 'Load':
+                # Start by trying to get the data from our current language
                 try:
                     prompts = prompt_repo.load_template_or_examples(template_or_examples, annotation_type, operation)
                 except TemplateError as e1:
-                    if language != 'default':
+                    # If the default language is different, try that next
+                    if language != default_language:
                         try:
-                            prompt_repo_default = PromptTemplateRepository('default')
-                            prompts = prompt_repo_default.load_template_or_examples(template_or_examples, annotation_type, operation)
+                            prompt_repo_default_language = PromptTemplateRepository(default_language)
+                            prompts = prompt_repo_default_language.load_template_or_examples(template_or_examples, annotation_type, operation)
                         except TemplateError as e2:
-                            messages.error(request, f"{e2.message}")
-                            prompt_formset = None  # No formset because we couldn't get the data
-                            return render(request, 'clara_app/edit_prompt.html', {'prompt_selection_form': prompt_selection_form, 'prompt_formset': prompt_formset})
+                            # If we haven't already done that, try 'default'
+                            if language != 'default' and default_language != 'default':
+                                try:
+                                    prompt_repo_default = PromptTemplateRepository('default')
+                                    prompts = prompt_repo_default.load_template_or_examples(template_or_examples, annotation_type, operation)
+                                except TemplateError as e3:
+                                    messages.error(request, f"{e3.message}")
+                                    prompt_formset = None  # No formset because we couldn't get the data
+                                    return render(request, 'clara_app/edit_prompt.html', {'prompt_selection_form': prompt_selection_form, 'prompt_formset': prompt_formset})
+                            else:
+                                messages.error(request, f"{e2.message}")
+                                prompt_formset = None  # No formset because we couldn't get the data
+                                return render(request, 'clara_app/edit_prompt.html', {'prompt_selection_form': prompt_selection_form, 'prompt_formset': prompt_formset})
                     else:
                         messages.error(request, f"{e1.message}")
                         prompt_formset = None  # No formset because we couldn't get the data

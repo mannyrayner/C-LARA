@@ -241,10 +241,10 @@ class PromptSelectionForm(forms.Form):
         ("segmented", "Segmented"),
         ("gloss", "Gloss"),
         ("lemma", "Lemma"),
-        ("lemma_and_gloss", "Lemma and gloss"),
     ]
 
     language = forms.ChoiceField(choices=[])  # Empty choices initially
+    default_language = forms.ChoiceField(choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
     annotation_type = forms.ChoiceField(choices=annotation_type_choices)
     operation = forms.ChoiceField(choices=operation_choices)
     template_or_examples = forms.ChoiceField(choices=template_or_examples_choices)
