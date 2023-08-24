@@ -32,7 +32,7 @@ class TTSAnnotator:
         self.voice_id = get_default_voice(language, self.tts_engine) if self.tts_engine else None
         self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
         self.tts_repository = tts_repository or TTSRepository(callback=callback)
-        post_task_update(callback, f"--- Using TTSAnnotator object with TTS engine of type '{self.engine_id}'")
+        post_task_update(callback, f"--- Using TTSAnnotator object with TTS engine of type '{self.engine_id}' and language ID '{self.language_id}'")
 
     def annotate_text(self, text_obj, callback=None):
         if self.tts_engine:
@@ -87,7 +87,7 @@ class TTSAnnotator:
         temp_dir = tempfile.mkdtemp()
 
         for i, audio in enumerate(missing_audio, 1):
-            post_task_update(callback, f"--- Creating mp3 for '{audio}' ({i}/{len(missing_audio)})")
+            post_task_update(callback, f"--- Creating mp3 for '{audio}', language ID = '{self.language_id}' ({i}/{len(missing_audio)})")
             try:
                 unique_filename = f"{uuid.uuid4()}.mp3"
                 temp_file = os.path.join(temp_dir, unique_filename)
