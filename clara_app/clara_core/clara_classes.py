@@ -27,9 +27,17 @@ class ContentElement:
     def to_text(self, annotation_type=None):
         def escape_special_chars(text):
             return text.replace("#", r"\#").replace("@", r"\@").replace("<", r"\<").replace(">", r"\>")
+
+        # If a Word element contains spaces, we need to add @ signs around it for the annotated text to be well-formed
+        def put_at_signs_around_text_if_necessary(text, annotation_type):
+            if ' ' in text and annotation_type in ( 'segmented', 'gloss', 'lemma' ):
+                return f'@{text}@'
+            else:
+                return text
         
         if self.type == "Word":
             escaped_content = escape_special_chars(self.content)
+            escaped_content = put_at_signs_around_text_if_necessary(escaped_content, annotation_type)
             annotations = self.annotations
             # For texts tagged with lemma, POS and gloss, we have the special notation Word#Lemma/POS/Gloss#
             if annotation_type == 'lemma_and_gloss':
