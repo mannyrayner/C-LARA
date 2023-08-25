@@ -21,6 +21,9 @@ Deployment
   Talk with UniSA sysadmins about deployment 
   Talk with UniSA commercialisation people about server with support for automatic payments
 
+Heroku
+  Need to inform user when helper processes appear to run out of memory and/or crash. 
+
 Admin/moderator functions
   Functionality for suspending/blocking users
 
@@ -30,6 +33,7 @@ Social network
   More fine-grained ratings, e.g. for annotation quality and audio
 
 Basic functionality
+  Better logging, so that users can retrieve update messages
   Password retrieval
 
 Reading functionality
@@ -44,7 +48,6 @@ Registered content
 Layout
 
 Annotation
-  Make it possible to import templates and examples from another language
   Better treatment of MWEs, perhaps in the "improvement" phase or as an independent operation
   Functionality to get an error rate summary
   Conversion from TreeTagger POS tags to UD v2 tags for more languages
@@ -150,6 +153,7 @@ Annotation
   Give more informative feedback on annotated text syntax errors [2023-07-12; 1-2 hours]
   Check well-formedness of annotated text before checking in [2023-07-12; 1-2 hours]
   Automatic correction of syntax errors using AI [2023-08-22; 1-2 days]
+  Make it possible to import templates and examples from another language [2023-08-24; 2-3 hours]
 
 Prompt templates and examples
   Improve SE and FR examples for gloss and lemma tagging to include reflexive and particle verbs [2023-07-16; < 1 hour]
