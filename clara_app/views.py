@@ -272,7 +272,7 @@ def content_success(request):
 # List currently registered content
 @login_required
 def content_list(request):
-    content_list = Content.objects.all()
+    content_list = Content.objects.all().order_by(Lower('title'))
     paginator = Paginator(content_list, 10)  # Show 10 content items per page
 
     page = request.GET.get('page')
