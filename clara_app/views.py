@@ -806,7 +806,7 @@ def perform_correct_operation_and_store_api_calls(annotated_text, version, proje
         post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}")
-        raise e
+        #raise e
         post_task_update(callback, f"error")
 
 def perform_correct_operation(annotated_text, version, clara_project_internal, user, label, callback=None):
@@ -983,8 +983,6 @@ def project_history(request, project_id):
 ##
 ##        return render(request, 'clara_app/render_text.html', {'form': form, 'project': project})
 
-# ASYNCHRONOUS PROCESSING
-
 def clara_project_internal_render_text(clara_project_internal, project_id, self_contained=False, callback=None):
     try:
         clara_project_internal.render_text(project_id, self_contained=self_contained, callback=callback)
@@ -1019,12 +1017,22 @@ def render_text_start(request, project_id):
         
             # Enqueue the render_text task
             self_contained = True
-            task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id, self_contained=self_contained, callback=callback)
-            print(f'--- Started task: task_id = {task_id}, self_contained={self_contained}')
+            # First check that we can internalise and merge the gloss and lemma files, and give an error if we can't
+            try:
+                internalised_text = clara_project_internal.get_internalised_text()
+                task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id, self_contained=self_contained, callback=callback)
+                print(f'--- Started task: task_id = {task_id}, self_contained={self_contained}')
 
-            # Redirect to the monitor view, passing the task ID and report ID as parameters
-            return redirect('render_text_monitor', project_id, task_id, report_id)
-        
+                # Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('render_text_monitor', project_id, task_id, report_id)
+            except InternalisationError as e:
+                messages.error(request, f'{e.message}')
+                form = RenderTextForm()
+                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
+            except Exception as e:
+                messages.error(request, f"An internal error occurred in rendering. Error details: {str(e)}")
+                form = RenderTextForm()
+                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
     else:
         form = RenderTextForm()
         return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
