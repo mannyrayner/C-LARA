@@ -1,5 +1,6 @@
 import glob
 import os
+import traceback
 
 categories = {
     'Core': {
@@ -27,7 +28,17 @@ categories = {
 def count_lines(files_pattern):
     files_pattern = os.path.expandvars(files_pattern)
     files = glob.glob(files_pattern)
-    return sum(1 for file in files for line in open(file, encoding='utf-8'))
+    return sum(count_lines_in_file(file) for file in files)
+
+def count_lines_in_file(file):
+    try:
+        return sum(1 for line in open(file, encoding='utf-8'))
+    except Exception as e:
+        print(f'*** Warning: error when processing {file}')
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        print(error_message)
+        return 0
+        
 
 def print_table():
     latex_table = "\\begin{tabular}{lr}\n\\toprule\n\\multicolumn{1}{c}{\\textbf{Type}} & \\multicolumn{1}{c}{\\textbf{Lines}} \\\\\n\\midrule"
