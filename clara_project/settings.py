@@ -201,7 +201,7 @@ Q_CLUSTER = {
     'retry': 100000000,  # Don't want tasks retried
     'save_limit': 100,
     'name': 'DjangORM',
-    'workers': 20,
+    'workers': 10,
     'queue_limit': 10,
     'bulk': 10,
     'orm': 'default'  # Using Django's ORM
