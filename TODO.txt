@@ -6,11 +6,10 @@ Meta
   Functionality for including ChatGPT-4 in to-do list discussion
 
 Bugs
-  Handle right-to-left languages correctly in generation/editing views
   If initial text is pasted in, it is listed as 'ai_generated'
   Fail cleanly when 'default' templates are missing/malformed.
   Lemmas containing punctuation marks not properly handled
-  Issue when glossing separated words with hyphens, e.g. "Hårde|-kogte"
+  Issue when glossing separated words with hyphens, e.g. "HÃ¥rde|-kogte"
   Log missing events (glossing and lemma-tagging, at least) in history
 
 Refactoring
@@ -33,6 +32,7 @@ Social network
   More fine-grained ratings, e.g. for annotation quality and audio
 
 Basic functionality
+  Better display of "No messages for 5 seconds", updating total time without messages in separate pane
   Better logging, so that users can retrieve update messages
   Password retrieval
 
@@ -118,7 +118,8 @@ Admin/moderator functions
 
 Social network
   Initial functionality [2023-06-04; 1-2 hours]
-  Allow user to add more information to their profile, most importantly email [2023-06-27; 1-2 hours]   
+  Allow user to add more information to their profile, most importantly email [2023-06-27; 1-2 hours]
+  Order registered content alphabetically [2023-08-25; < 1 hour]
 
 Naming, renaming and deleting
   Functionality for renaming a project [2023-06-05; < 1 hour]
@@ -181,6 +182,7 @@ Bugs
   Don't count punctuation and layout in version diff, except in segmented mode [2023-07-14; 1-2 hours]
   Better error handling and use of callback in clara_create_annotations.call_chatgpt4_to_annotate_or_improve_elements [2023-08-19; 1-2 hours]
   Restore CSS in Heroku version [2023-08-19; 1 day]
+  Handle right-to-left languages correctly in generation/editing views [2023-08-19; 1 hour]
 
 Refactoring
   Tidy up annotation code and templates to use 'messages' framework uniformly with other views functions [2023-07-12; 2-3 hours]
@@ -190,4 +192,3 @@ Layout
 
 Help
   Top-level document summarising available functionality [2023-06-29; a few hours]
-
