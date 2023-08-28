@@ -6,9 +6,7 @@ Meta
   Functionality for including ChatGPT-4 in to-do list discussion
 
 Bugs
-  If initial text is pasted in, it is listed as 'ai_generated'
   Fail cleanly when 'default' templates are missing/malformed.
-  Lemmas containing punctuation marks not properly handled
   Issue when glossing separated words with hyphens, e.g. "Hårde|-kogte"
   Log missing events (glossing and lemma-tagging, at least) in history
 
@@ -21,8 +19,7 @@ Deployment
   Talk with UniSA commercialisation people about server with support for automatic payments
 
 Heroku
-  Need to inform user when helper processes appear to run out of memory and/or crash. 
-
+  
 Admin/moderator functions
   Functionality for suspending/blocking users
 
@@ -107,6 +104,7 @@ Infrastructure
 
 Heroku
   Deploy on Heroku [2023-08-10; 2-3 weeks]
+  Need to inform user when helper processes appear to run out of memory and/or crash. [2023-08-29; 1 day]
 
 Naming, renaming and deleting
   Better naming convention for directory associated with C-LARA project - current one is brittle [2023-06-04; < 1 hour]
@@ -183,6 +181,8 @@ Bugs
   Better error handling and use of callback in clara_create_annotations.call_chatgpt4_to_annotate_or_improve_elements [2023-08-19; 1-2 hours]
   Restore CSS in Heroku version [2023-08-19; 1 day]
   Handle right-to-left languages correctly in generation/editing views [2023-08-19; 1 hour]
+  LTR incorrectly applied to summary [2023-08-29; < 1 hour]
+  Lemmas containing punctuation marks not properly handled, e.g. anything with a 's in English [2023-08-29; < 1 hour]
 
 Refactoring
   Tidy up annotation code and templates to use 'messages' framework uniformly with other views functions [2023-07-12; 2-3 hours]
