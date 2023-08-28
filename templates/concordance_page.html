@@ -20,7 +20,7 @@
         {%- if element.type == "Word" -%}
           <span class="word {% if element.annotations.lemma == lemma %}concordance-highlight{% endif %}"
                 data-gloss="{{ element.annotations.gloss }}"
-                data-lemma="{{ element.annotations.lemma }}" 
+                data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
                 data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
         {%- else -%}{{ element.content }}
         {%- endif -%}
