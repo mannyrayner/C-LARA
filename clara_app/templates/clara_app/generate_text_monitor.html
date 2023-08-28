@@ -9,6 +9,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<script>
 		var interval_id = setInterval(getTaskStatus, 5000);  // Call getTaskStatus every 5 seconds
+		var lastUpdateTimestamp = new Date().getTime(); // Get the current timestamp
 
 		function getTaskStatus() {
 			$.ajax({
@@ -17,6 +18,9 @@
 				success: function(response) {
 					// Check if there are new messages
 					if (response.messages.length > 0) {
+						// Update the last update timestamp
+						lastUpdateTimestamp = new Date().getTime();
+
 						// Add the latest messages to the status messages element
 						response.messages.forEach(function(message) {
 							$("#status-messages").append("<p>" + message + "</p>");
@@ -32,14 +36,20 @@
 					if (response.status == 'finished') {
 						clearInterval(interval_id);
 						window.location = "{% url 'generate_text_complete' project_id version 'finished' %}";
-				    } else if (response.status == 'error') {
+					} else if (response.status == 'error') {
 						clearInterval(interval_id);
 						window.location = "{% url 'generate_text_complete' project_id version 'error' %}";
 					}
 
+					// Check if the difference between the current timestamp and the last update exceeds 60 seconds
+					if (new Date().getTime() - lastUpdateTimestamp > 60000) {
+						clearInterval(interval_id);
+						window.location = "{% url 'generate_text_complete' project_id version 'error' %}";
+					}
 				}
 			});
 		}
-</script>
+
+	</script>
 
 {% endblock %}
