@@ -26,6 +26,8 @@ config = get_config()
 class StaticHTMLRenderer:
     def __init__(self, project_id):
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
+        self.template_env.filters['replace_punctuation'] = replace_punctuation_with_underscores
+        
         self.output_dir = Path(output_dir_for_project_id(project_id))
         
         # Remove the existing output_dir if we're not on S3 and it exists
