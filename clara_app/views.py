@@ -573,7 +573,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     tree_tagger_supported = fully_supported_treetagger_language(project.l2)
-    rtl_language=is_rtl_language(project.l2)
+    # The summary is in English, so always left-to-right even if the main text is right-to-left
+    rtl_language=is_rtl_language(project.l2) if this_version != 'summary' else False
     metadata = clara_project_internal.get_metadata()
     current_version = clara_project_internal.get_file_description(this_version, 'current')
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == this_version]
