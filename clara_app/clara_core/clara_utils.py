@@ -15,6 +15,8 @@ import boto3
 import botocore
 import os
 
+from asgiref.sync import sync_to_async
+
 from .clara_classes import InternalCLARAError
 
 _s3_storage = True if os.getenv('FILE_STORAGE_TYPE') == 'S3' else False
@@ -468,6 +470,13 @@ def replace_punctuation_with_underscores(s):
 #
 # The intention is that calling the callback posts the message,
 # suitably associating it with the report ID, which should be part of the callback
+
+# Wrap this version in sync_to_async so that we can post updates in asynchronous contexts.
+# We need it in particular in clara_chatgpt4
+@sync_to_async
+def post_task_update_async(callback, message):
+    post_task_update(callback, message)
+
 def post_task_update(callback, message):
     if callback and isinstance(callback, ( list, tuple )) and len(callback) == 2:
         callback_function, report_id = callback
