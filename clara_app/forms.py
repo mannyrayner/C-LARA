@@ -215,7 +215,6 @@ class DiffSelectionForm(forms.Form):
         ('segmented', 'Segmented'),
         ('gloss', 'Gloss'),
         ('lemma', 'Lemma'),
-        ('lemma_and_gloss', 'Lemma and gloss'),
     ]
 
     version = forms.ChoiceField(choices=version_choices)
