@@ -39,6 +39,10 @@ def diff_text_objects(internalised_text1: Text, internalised_text2: Text, versio
 # Don't add boundaries if we have a "plain" version, since the text is meant to be unannotated.
 # In 'gloss' or 'lemma' mode, the # signs separate.
 def text_to_diff_elements(text: Text, version: str) -> List[DiffElement]:
+    # Remove the POS information before diffing, since it's both unreliable and often irrelevant
+    def remove_pos_from_annotations(annotations):
+        return { key: annotations[key] for key in annotations if key != 'pos' }
+    
     diff_elements = []
 
     for page in text.pages:
@@ -48,7 +52,9 @@ def text_to_diff_elements(text: Text, version: str) -> List[DiffElement]:
                 this_type = element.type
                 if version == 'segmented' and last_type == 'Word' and this_type == 'Word':
                     diff_elements.append(DiffElement('ContentElement', '|', {}))
-                diff_elements.append(DiffElement('ContentElement', element.content, element.annotations))
+                diff_elements.append(DiffElement('ContentElement',
+                                                 element.content,
+                                                 remove_pos_from_annotations(element.annotations)))
                 last_type = this_type
             if version != 'plain':
                 diff_elements.append(DiffElement('ContentElement', '||', {}))
