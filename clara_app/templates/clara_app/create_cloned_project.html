@@ -1,7 +1,7 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-  <h1>Create a cloned project ("{{ project.title }}"</h1>
+  <h1>Create a cloned project ("{{ project.title }}")</h1>
   <form method="POST">
     {% csrf_token %}
     {{ form.as_p }}
