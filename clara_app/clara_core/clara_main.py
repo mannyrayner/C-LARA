@@ -131,6 +131,7 @@ from .clara_cefr import estimate_cefr_reading_level
 from .clara_summary import generate_summary, improve_summary
 from .clara_internalise import internalize_text
 from .clara_correct_syntax import correct_syntax_in_string
+from .clara_chinese import segment_text_using_jieba
 from .clara_diff import diff_text_objects
 from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged
 from .clara_tts_annotator import TTSAnnotator
@@ -533,6 +534,14 @@ class CLARAProjectInternal:
         plain_text = self.load_text_version("plain")
         segmented_text, api_calls = generate_segmented_version(plain_text, self.l2_language, callback=callback)
         self.save_text_version("segmented", segmented_text, user=user, label=label, source='ai_generated')
+        return api_calls
+
+    # Call Jieba to create a version of the text with segmentation annotations
+    def create_segmented_text_using_jieba(self, user='Unknown', label='') -> List[APICall]:
+        plain_text = self.load_text_version("plain")
+        segmented_text = segment_text_using_jieba(plain_text)
+        self.save_text_version("segmented", segmented_text, user=user, label=label, source='jieba_generated')
+        api_calls = []
         return api_calls
 
     # Call ChatGPT-4 to improve existing segmentation annotations

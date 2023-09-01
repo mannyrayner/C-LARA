@@ -20,14 +20,19 @@ from asgiref.sync import sync_to_async
 from .clara_classes import InternalCLARAError
 
 _s3_storage = True if os.getenv('FILE_STORAGE_TYPE') == 'S3' else False
-_s3_bucket_name = os.getenv('S3_BUCKET_NAME')
+
 
 ## Initialize Boto3 session if we are using S3
+_s3_bucket_name = None
 _s3_session = None
 _s3_client = None
 _s3_bucket = None
 
-if _s3_storage:
+def initialise_s3():
+    global _s3_bucket_name, _s3_session, _s3_client, _s3_bucket
+    
+    _s3_bucket_name = os.getenv('S3_BUCKET_NAME')
+    
     _s3_session = boto3.Session(aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
                                 aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
                                 region_name=os.getenv('AWS_REGION'))
@@ -35,6 +40,12 @@ if _s3_storage:
     _s3_client = _s3_session.client('s3')
 
     _s3_bucket = _s3_session.resource('s3').Bucket(_s3_bucket_name)
+
+if _s3_storage:
+    initialise_s3()
+
+def s3_is_initialised():
+    return True if _s3_session else False
 
 def fail_if_no_s3_bucket():
     if not _s3_bucket_name:
@@ -57,12 +68,7 @@ def s3_file_name(pathname):
     if isinstance(pathname, ( Path )):
         pathname = str(pathname)
         
-    if pathname.startswith('$CLARA/'):
-        pathname = pathname.replace('$CLARA/', '', 1)
-    if pathname.startswith('$CLARA\\'):
-        pathname = pathname.replace('$CLARA\\', '', 1)
-    elif pathname.startswith('$CLARA'):
-        pathname = pathname.replace('$CLARA', '', 1)
+    pathname = replace_clara_env_variable_in_pathname_for_s3(pathname)
         
     ## Replace backslashes with forward slashes
     return pathname.replace('\\', '/')
@@ -70,21 +76,26 @@ def s3_file_name(pathname):
 def absolute_file_name(pathname):
     if isinstance(pathname, ( Path )):
         pathname = str(pathname)
-        
+
     ## Strip off any initial "$CLARA", "$CLARA/" or "$CLARA\" if we are using S3 
     if _s3_storage:
-        if pathname.startswith('$CLARA/'):
-            pathname = pathname.replace('$CLARA/', '', 1)
-        if pathname.startswith('$CLARA\\'):
-            pathname = pathname.replace('$CLARA\\', '', 1)
-        elif pathname.startswith('$CLARA'):
-            pathname = pathname.replace('$CLARA', '', 1)
+        pathname = replace_clara_env_variable_in_pathname_for_s3(pathname)
     ## Expand the environment var and get an absolute path name if we are using local files
     else:
         pathname = os.path.abspath(os.path.expandvars(pathname))
         
     ## Replace backslashes with forward slashes
     return pathname.replace('\\', '/')
+
+def replace_clara_env_variable_in_pathname_for_s3(pathname):
+    if pathname.startswith('$CLARA/'):
+        return pathname.replace('$CLARA/', '', 1)
+    elif pathname.startswith('$CLARA\\'):
+        return pathname.replace('$CLARA\\', '', 1)
+    elif pathname.startswith('$CLARA'):
+        return pathname.replace('$CLARA', '', 1)
+    else:
+        return pathname
 
 def make_directory(pathname, parents=False, exist_ok=False):
     if _s3_storage:
@@ -171,6 +182,22 @@ def copy_directory(pathname1, pathname2):
             _s3_bucket.copy(old_source, new_key)
     else:
         shutil.copytree(abspathname1, abspathname2)
+
+# Copy a local file to S3, even if we aren't currently in S3 mode.
+def copy_local_file_to_s3(local_pathname, s3_pathname=None):
+    if not s3_is_initialised():
+        initialise_s3()
+
+    s3_pathname = s3_pathname if s3_pathname else local_pathname
+    abs_local_pathname = absolute_local_file_name(local_pathname)
+    abs_s3_pathname = s3_file_name(s3_pathname)
+
+    fail_if_no_s3_bucket()
+
+    with open(abs_local_pathname, "rb") as data:
+        _s3_client.put_object(Bucket=_s3_bucket_name, Key=abs_s3_pathname, Body=data)
+
+    print(f'--- Copied local file {abs_local_pathname} to S3 file {abs_s3_pathname}, bucket = {_s3_bucket_name}')
 
 # This function will normally be run on a local machine to sync an S3 directory with a local one
 def copy_directory_to_s3(local_pathname, s3_pathname=None):
