@@ -34,6 +34,9 @@ function updateButton() {
 	case 'correct':
 	  buttonText = 'Correct';
 	  break;
+	case 'jieba':
+	  buttonText = 'Use Jieba';
+	  break;
 	default:
 	  buttonText = 'Submit';
   }
