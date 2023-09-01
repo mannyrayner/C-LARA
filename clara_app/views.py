@@ -36,6 +36,7 @@ from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
+from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
 from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, read_txt_file, output_dir_for_project_id, post_task_update, is_rtl_language
 
@@ -573,6 +574,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     tree_tagger_supported = fully_supported_treetagger_language(project.l2)
+    jieba_supported = is_chinese_language(project.l2)
     # The summary is in English, so always left-to-right even if the main text is right-to-left
     rtl_language=is_rtl_language(project.l2) if this_version != 'summary' else False
     metadata = clara_project_internal.get_metadata()
@@ -584,7 +586,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
 
     if request.method == 'POST':
         form = CreateAnnotationTextFormOfRightType(this_version, request.POST, prompt=prompt,
-                                                   archived_versions=archived_versions, tree_tagger_supported=tree_tagger_supported, is_rtl_language=rtl_language)
+                                                   archived_versions=archived_versions,
+                                                   tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
         if form.is_valid():
             text_choice = form.cleaned_data['text_choice']
             label = form.cleaned_data['label']
@@ -592,9 +595,9 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             username = request.user.username
             # We have an optional prompt when creating the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
-            # We're saving an edited version of a file
-            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'tree_tagger' ):
+            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'tree_tagger', 'jieba' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
+            # We're saving an edited version of a file
             elif text_choice == 'manual':
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER', 'ANNOTATOR']):
                     raise PermissionDenied("You don't have permission to save edited text.")
@@ -633,7 +636,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                 messages.error(request, f"Sorry, you need money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
-            elif text_choice in ( 'generate', 'correct', 'improve', 'tree_tagger' ):
+            elif text_choice in ( 'generate', 'correct', 'improve', 'tree_tagger', 'jieba' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
                 try:
@@ -674,7 +677,18 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         store_api_calls(api_calls, project, request.user, this_version)
                         annotated_text = clara_project_internal.load_text_version(this_version)
                         text_choice = 'manual'
-                        success_message = f'Created {this_version} text'
+                        success_message = f'Created {this_version} text using TreeTagger'
+                        print(f'--- {success_message}')
+                        messages.success(request, success_message)
+                        current_version = clara_project_internal.get_file_description(this_version, 'current')
+                    # We are creating the text using Jieba. This operation is only possible with segmentation
+                    elif text_choice == 'jieba':
+                        action, api_calls = ( 'generate', clara_project_internal.create_segmented_text_using_jieba(user=username, label=label) )
+                        # These operations are handled elsewhere for generation and improvement, due to asynchrony
+                        store_api_calls(api_calls, project, request.user, this_version)
+                        annotated_text = clara_project_internal.load_text_version(this_version)
+                        text_choice = 'manual'
+                        success_message = f'Created {this_version} text using Jieba'
                         print(f'--- {success_message}')
                         messages.success(request, success_message)
                         current_version = clara_project_internal.get_file_description(this_version, 'current')
@@ -711,7 +725,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == this_version]
     form = CreateAnnotationTextFormOfRightType(this_version, initial={'text': annotated_text, 'text_choice': text_choice},
                                                prompt=prompt, archived_versions=archived_versions, current_version=current_version,
-                                               tree_tagger_supported=tree_tagger_supported, is_rtl_language=rtl_language)
+                                               tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
 
     return render(request, template, {'form': form, 'project': project})
 
@@ -756,6 +770,7 @@ def generate_text_complete(request, project_id, version, status):
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         tree_tagger_supported = fully_supported_treetagger_language(project.l2)
+        jieba_supported = is_chinese_language(project.l2)
         metadata = clara_project_internal.get_metadata()
         current_version = clara_project_internal.get_file_description(version, 'current')
         archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == version]
@@ -779,7 +794,7 @@ def generate_text_complete(request, project_id, version, status):
     rtl_language=is_rtl_language(project.l2)
     form = CreateAnnotationTextFormOfRightType(version, initial={'text': annotated_text, 'text_choice': text_choice},
                                                prompt=prompt, archived_versions=archived_versions, current_version=current_version,
-                                               tree_tagger_supported=tree_tagger_supported, is_rtl_language=rtl_language)
+                                               tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
 
     return render(request, template, {'form': form, 'project': project})
 

@@ -94,8 +94,11 @@ class CreateAnnotatedTextForm(forms.Form):
     label = forms.CharField(required=False, max_length=200)
     gold_standard = forms.BooleanField(required=False)
     
-    def __init__(self, *args, tree_tagger_supported=False, is_rtl_language=False, prompt=None,
-                 archived_versions=None, current_version='', **kwargs):
+    def __init__(self, *args,
+                 tree_tagger_supported=False, jieba_supported=False,
+                 is_rtl_language=False, prompt=None,
+                 archived_versions=None, current_version='',
+                 **kwargs):
         super(CreateAnnotatedTextForm, self).__init__(*args, **kwargs)
 
         # For right-to-left languages like Arabic, Farsi, Urdu and Hebrew
@@ -127,6 +130,7 @@ class CreatePlainTextForm(CreateAnnotatedTextForm):
             
 class CreateSegmentedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES=[
+            ('jieba', 'Segment text using Jieba'),
             ('generate', 'Segment text using AI'),
             ('correct', 'Try to fix errors in malformed segmented text using AI'), 
             ('improve', 'Improve existing segmented text using AI'),
@@ -134,9 +138,11 @@ class CreateSegmentedTextForm(CreateAnnotatedTextForm):
             ('load_archived', 'Load archived version')
         ]
 
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, jieba_supported=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['text_choice'].choices = self.TEXT_CHOICES
+        self.fields['text_choice'].choices = self.TEXT_CHOICES if jieba_supported else [
+            choice for choice in self.TEXT_CHOICES if choice[0] != 'jieba'
+            ]
     
 class CreateSummaryTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
