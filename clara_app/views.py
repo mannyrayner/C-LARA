@@ -26,7 +26,7 @@ from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateSegmentedTextForm
 from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
-from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm
+from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .utils import create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
@@ -160,7 +160,7 @@ def remove_language_master(request, pk):
         return redirect('manage_language_masters')
     else:
         return render(request, 'clara_app/remove_language_master_confirm.html', {'language_master': language_master})
-
+##
 # Allow a language master to edit templates and examples
 @login_required
 @language_master_required
@@ -171,15 +171,17 @@ def edit_prompt(request):
             language = prompt_selection_form.cleaned_data['language']
             default_language = prompt_selection_form.cleaned_data['default_language']
             template_or_examples = prompt_selection_form.cleaned_data['template_or_examples']
+            # Assume the template is in English, i.e. an ltr language, but the examples are in "language"
+            rtl_language = False if template_or_examples == 'template' else is_rtl_language(language) 
             operation = prompt_selection_form.cleaned_data['operation']
             annotation_type = prompt_selection_form.cleaned_data['annotation_type']
             if template_or_examples == 'template':
-                PromptFormSet = forms.formset_factory(TemplateForm, extra=0)
+                PromptFormSet = forms.formset_factory(TemplateForm, formset=CustomTemplateFormSet, extra=0)
             elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
-                PromptFormSet = forms.formset_factory(StringForm, extra=1)
+                PromptFormSet = forms.formset_factory(StringForm, formset=CustomStringFormSet, extra=1)
             else:
-                PromptFormSet = forms.formset_factory(StringPairForm, extra=1)
-
+                PromptFormSet = forms.formset_factory(StringPairForm, formset=CustomStringPairFormSet, extra=1)
+                
             prompt_repo = PromptTemplateRepository(language)
 
             if request.POST.get('action') == 'Load':
@@ -219,10 +221,10 @@ def edit_prompt(request):
                 else:
                     initial_data = [{'string1': pair[0], 'string2': pair[1]} for pair in prompts]
 
-                prompt_formset = PromptFormSet(initial=initial_data, prefix='prompts')
+                prompt_formset = PromptFormSet(initial=initial_data, prefix='prompts', rtl_language=rtl_language)
 
             elif request.POST.get('action') == 'Save':
-                prompt_formset = PromptFormSet(request.POST, prefix='prompts')
+                prompt_formset = PromptFormSet(request.POST, prefix='prompts', rtl_language=rtl_language)
                 if prompt_formset.is_valid():
                     # Prepare data for saving
                     if template_or_examples == 'template':

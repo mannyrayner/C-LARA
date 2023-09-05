@@ -266,11 +266,32 @@ class PromptSelectionForm(forms.Form):
 class TemplateForm(forms.Form):
     template = forms.CharField(widget=forms.Textarea)
 
+class CustomTemplateFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(CustomTemplateFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['template'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+
 class StringForm(forms.Form):
     string = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))
+    
+class CustomStringFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(CustomStringFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['string'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
 
 class StringPairForm(forms.Form):
     string1 = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))
     string2 = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))
-
+    
+class CustomStringPairFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(CustomStringPairFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
 
