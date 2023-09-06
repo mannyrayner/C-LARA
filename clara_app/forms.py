@@ -155,7 +155,18 @@ class CreateSummaryTextForm(CreateAnnotatedTextForm):
     def __init__(self, *args, prompt=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
-   
+
+class CreateCEFRTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Estimate CEFR level using AI'),
+        ('manual', 'Manually enter/edit CEFR level'),
+        ('load_archived', 'Load archived version')
+    ]
+    
+    def __init__(self, *args, prompt=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
+    
 class CreateGlossedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Generate annotated text using AI'),

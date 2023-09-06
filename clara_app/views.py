@@ -23,7 +23,7 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserProfileForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm
-from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateSegmentedTextForm
+from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
@@ -561,7 +561,7 @@ def compare_versions(request, project_id):
     return render(request, 'clara_app/diff_and_diff_result.html', {'form': form, 'project': project})
 
 # Generic code for the operations which support creating, annotating, improving and editing text,
-# to produce and edit the "plain", "summary", "segmented", "gloss" and "lemma" versions.
+# to produce and edit the "plain", "summary", "cefr", "segmented", "gloss" and "lemma" versions.
 # It is also possible to retrieve archived versions of the files if they exist.
 #
 # The argument 'this_version' is the version we are currently creating/editing.
@@ -577,8 +577,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     tree_tagger_supported = fully_supported_treetagger_language(project.l2)
     jieba_supported = is_chinese_language(project.l2)
-    # The summary is in English, so always left-to-right even if the main text is right-to-left
-    rtl_language=is_rtl_language(project.l2) if this_version != 'summary' else False
+    # The summary and cefr are in English, so always left-to-right even if the main text is right-to-left
+    rtl_language=is_rtl_language(project.l2) if not this_version in ( 'summary', 'cefr_level' ) else False
     metadata = clara_project_internal.get_metadata()
     current_version = clara_project_internal.get_file_description(this_version, 'current')
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == this_version]
@@ -805,6 +805,8 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreatePlainTextForm(*args, **kwargs)
     elif version == 'summary':
         return CreateSummaryTextForm(*args, **kwargs)
+    elif version == 'cefr_level':
+        return CreateCEFRTextForm(*args, **kwargs)
     elif version == 'segmented':
         return CreateSegmentedTextForm(*args, **kwargs)
     elif version == 'gloss':
@@ -846,6 +848,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
         return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, callback=callback) )
     elif version == 'summary':
         return ( 'generate', clara_project_internal.create_summary(user=user, label=label, callback=callback) )
+    elif version == 'cefr_level':
+        return ( 'generate', clara_project_internal.get_cefr_level(user=user, label=label, callback=callback) )
     elif version == 'segmented':
         return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label, callback=callback) )
     elif version == 'gloss':
@@ -887,6 +891,8 @@ def previous_version_and_template_for_version(this_version):
         return ( 'plain', 'clara_app/create_plain_text.html' )
     elif this_version == 'summary':
         return ( 'plain', 'clara_app/create_summary.html' )
+    elif this_version == 'cefr_level':
+        return ( 'plain', 'clara_app/get_cefr_level.html' )
     elif this_version == 'segmented':
         return ( 'plain', 'clara_app/create_segmented_text.html' )
     elif this_version == 'gloss':
@@ -916,6 +922,14 @@ def create_summary(request, project_id):
     this_version = 'summary'
     #previous_version = 'plain'
     #template = 'clara_app/create_summary.html'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
+#Create or edit "cefr_level" version of the text     
+@login_required
+@user_has_a_project_role
+def create_cefr_level(request, project_id):
+    this_version = 'cefr_level'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -1121,11 +1135,12 @@ def register_project_content(request, project_id):
     
     word_count0 = clara_project_internal.get_word_count()
     voice0 = clara_project_internal.get_voice()
-    # CEFR level and summary are not essential, just continue if the ChatGPT-4 calls fail
+    # CEFR level and summary are not essential, just continue if they're not available
     try:
-        cefr_level0, api_calls = clara_project_internal.get_cefr_level(user=request.user.username)
-        print(f'--- Accessed CEFR level: {len(api_calls)} API calls')
-        store_api_calls(api_calls, project, request.user, "cefr")
+        #cefr_level0, api_calls = clara_project_internal.get_cefr_level(user=request.user.username)
+        #print(f'--- Accessed CEFR level: {len(api_calls)} API calls')
+        #store_api_calls(api_calls, project, request.user, "cefr")
+        cefr_level0 = clara_project_internal.load_text_version("cefr_level")
     except Exception as e:
         cefr_level0 = None
     try:
