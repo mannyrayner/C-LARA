@@ -518,16 +518,16 @@ class CLARAProjectInternal:
             return []
 
     # Call ChatGPT-4 to estimate the reading level or use the cached version
-    def get_cefr_level(self, user='Unknown', callback=None)-> Tuple[Union[str, None], List[APICall]]:
+    def get_cefr_level(self, user='Unknown', label='', callback=None)-> Tuple[Union[str, None], List[APICall]]:
         if self.cefr_level:
-            return ( self.cefr_level, [] )
+            return []
         try:
             plain_text = self.load_text_version("plain")
             cefr_level, api_calls = estimate_cefr_reading_level(plain_text, self.l2_language, callback=callback)
-            self.save_text_version("cefr_level", cefr_level, user=user, source='ai_generated')
-            return ( cefr_level, api_calls )
+            self.save_text_version("cefr_level", cefr_level, user=user, label=label, source='ai_generated')
+            return api_calls
         except:
-            return ( None, [] )
+            return []
 
     # Call ChatGPT-4 to create a version of the text with segmentation annotations
     def create_segmented_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
