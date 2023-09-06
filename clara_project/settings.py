@@ -197,7 +197,7 @@ STATICFILES_FINDERS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 Q_CLUSTER = {
-    'timeout': 600,
+    'timeout': 3600,
     'retry': 100000000,  # Don't want tasks retried
     'save_limit': 100,
     'name': 'DjangORM',
