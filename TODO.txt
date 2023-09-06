@@ -6,6 +6,7 @@ Meta
   Functionality for including ChatGPT-4 in to-do list discussion
 
 Bugs
+  Better handling of initial and final apostrophes in internalisation - should not be part of words
   Fail cleanly when 'default' templates are missing/malformed.
   Issue when glossing separated words with hyphens, e.g. "Hårde|-kogte"
   Log missing events (glossing and lemma-tagging, at least) in history
@@ -16,7 +17,10 @@ Rationalise repository
 
 Deployment
   Talk with UniSA sysadmins about deployment 
-  Talk with UniSA commercialisation people about server with support for automatic payments
+
+Payments
+  Correct tracking of payments so that money is subtracted after each successful OpenAI call
+  Integrate automatic payment system
 
 Heroku
   
@@ -45,6 +49,7 @@ Registered content
 Layout
 
 Annotation
+  Present lemmas and POS separately in compare tab
   Better treatment of MWEs, perhaps in the "improvement" phase or as an independent operation
   Functionality to get an error rate summary
   Conversion from TreeTagger POS tags to UD v2 tags for more languages

@@ -23,3 +23,6 @@ test:
 count_lines:
 	python3 count_lines.py
 
+heroku_log:
+	heroku logs --tail --app c-lara
+
