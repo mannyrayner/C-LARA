@@ -1098,9 +1098,6 @@ def render_text_monitor(request, project_id, task_id, report_id):
 @user_has_a_project_role
 def render_text_complete(request, project_id, status):
     project = get_object_or_404(CLARAProject, pk=project_id)
-
-    # Remove any outstanding tasks, so that they can't be retried
-    delete_all_tasks()
     
     if status == 'error':
         succeeded = False
