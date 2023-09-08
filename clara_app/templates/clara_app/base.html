@@ -38,6 +38,7 @@
 		  {% if user.userprofile.is_admin %}
             <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>
 			<li><a href="{% url 'manage_language_masters' %}">Manage language masters</a></li>
+			<li><a href="{% url 'delete_tts_data' %}">Delete TTS data</a></li>
           {% endif %}
 		  {% if user.userprofile.is_language_master %}
 			<li><a href="{% url 'edit_prompt' %}">Edit annotation prompts</a></li>
