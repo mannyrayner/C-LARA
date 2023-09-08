@@ -80,15 +80,26 @@ class TTSRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='TTS database inconsistency')   
 
-    def delete_entries_for_language(self, language_id):
-        connection = connect(self.db_file)
-        cursor = connection.cursor()
-        cursor.execute(localise_sql_query("DELETE FROM metadata WHERE language_id = %s"), (language_id,))
-        connection.commit()
-        connection.close()
+    def delete_entries_for_language(self, engine_id, language_id, callback=None):
+        try:
+            post_task_update(callback, f'--- Deleting tts repository DB entries for {language_id}')
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            cursor.execute(localise_sql_query("DELETE FROM metadata WHERE language_id = %s"), (language_id,))
+            connection.commit()
+            connection.close()
+            post_task_update(callback, f'--- DB entries for {language_id} deleted')
 
-        for engine_id in get_tts_engine_types():
-            remove_directory(self.get_language_directory(engine_id, language_id))
+            post_task_update(callback, f'--- Deleting tts audio files for {language_id}')
+            language_dir = self.get_language_directory(engine_id, language_id)
+            if directory_exists(language_dir):
+                remove_directory(language_dir)
+            post_task_update(callback, f'--- tts audio files for {engine_id} and {language_id} deleted')
+            post_task_update(callback, f'finished')
+        except Exception as e:
+            error_message = f'*** Error when trying to delete TTS data: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            post_task_update(callback, f'error')
 
     def add_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
         try:
@@ -147,3 +158,4 @@ class TTSRepository:
         destination_path = str(Path(voice_dir) / file_name)
         copy_local_file(source_file, destination_path)
         return destination_path
+    

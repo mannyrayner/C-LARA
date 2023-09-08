@@ -34,6 +34,9 @@ class TTSAnnotator:
         self.tts_repository = tts_repository or TTSRepository(callback=callback)
         post_task_update(callback, f"--- Using TTSAnnotator object with TTS engine of type '{self.engine_id}' and language ID '{self.language_id}'")
 
+    def delete_entries_for_language(self, callback=None):
+        self.tts_repository.delete_entries_for_language(self.engine_id, self.language_id, callback=callback)
+
     def annotate_text(self, text_obj, callback=None):
         if self.tts_engine:
         
