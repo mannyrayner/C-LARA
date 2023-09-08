@@ -22,7 +22,7 @@ from django_q.tasks import async_task
 from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserProfileForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
@@ -35,6 +35,7 @@ from .utils import post_task_update_in_db, get_task_updates, delete_all_tasks
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
+from .clara_core.clara_tts_annotator import TTSAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
@@ -129,7 +130,82 @@ def add_credit(request):
         form = AddCreditForm()
     return render(request, 'clara_app/add_credit.html', {'form': form})
 
-# Remove custom User
+def delete_tts_data_for_language(language, callback=None):
+    post_task_update(callback, f"--- Starting delete task for language {language}")
+    tts_annotator = TTSAnnotator(language, callback=callback)
+    tts_annotator.delete_entries_for_language(callback=callback)
+
+# Delete cached TTS data for language   
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def delete_tts_data(request):
+    if request.method == 'POST':
+        form = DeleteTTSDataForm(request.POST)
+        if form.is_valid():
+            language = form.cleaned_data['language']
+            
+            # Create a unique ID to tag messages posted by this task, and a callback
+            report_id = uuid.uuid4()
+            callback = [post_task_update_in_db, report_id]
+
+            async_task(delete_tts_data_for_language, language, callback=callback)
+            print(f'--- Started delete task {language}')
+            #Redirect to the monitor view, passing the task ID and report ID as parameters
+            return redirect('delete_tts_data_monitor', language, report_id)
+
+    else:
+        form = DeleteTTSDataForm()
+    return render(request, 'clara_app/delete_tts_data.html', {
+        'form': form,
+    })
+
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def delete_tts_data_status(request, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def delete_tts_data_monitor(request, language, report_id):
+    return render(request, 'clara_app/delete_tts_data_monitor.html',
+                  {'language': language, 'report_id': report_id})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def delete_tts_data_complete(request, language, status):
+    if request.method == 'POST':
+        form = DeleteTTSDataForm(request.POST)
+        if form.is_valid():
+            language = form.cleaned_data['language']
+            
+            # Create a unique ID to tag messages posted by this task, and a callback
+            report_id = uuid.uuid4()
+            callback = [post_task_update_in_db, report_id]
+
+            async_task(delete_tts_data_for_language, language, callback=callback)
+            print(f'--- Started delete task for {language}')
+            #Redirect to the monitor view, passing the task ID and report ID as parameters
+            return redirect('delete_tts_data_monitor', language, report_id)
+    else:
+        if status == 'error':
+            messages.error(request, f'Something went wrong when deleting TTS data for {language}')
+        else:
+            messages.success(request, f'Deleted TTS data for {language}')
+
+        form = DeleteTTSDataForm()
+
+        return render(request, 'clara_app/delete_tts_data.html',
+                      { 'form': form, } )
+
 # Manage users declared as 'language masters', adding or withdrawing the 'language master' privilege   
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
@@ -149,7 +225,6 @@ def manage_language_masters(request):
         'form': form,
     })
 
-# Remove custom User
 # Remove someone as a language master, asking for confirmation first
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
