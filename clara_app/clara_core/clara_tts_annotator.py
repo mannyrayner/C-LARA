@@ -55,36 +55,70 @@ class TTSAnnotator:
         post_task_update(callback, f"--- All TTS files should be there")
         self._add_tts_annotations(text_obj, callback=callback)
 
-    def _get_missing_audio(self, text_obj, callback=None):
-        post_task_update(callback, f"--- Looking for missing words and segments")
-        words = set()
-        segments = set()
+##    def _get_missing_audio(self, text_obj, callback=None):
+##        post_task_update(callback, f"--- Looking for missing words and segments")
+##        words = set()
+##        segments = set()
+##        for page in text_obj.pages:
+##            for segment in page.segments:
+##                segment_text = canonical_text_for_tts(segment.to_text())
+##                segments.add(segment_text)
+##                for content_element in segment.content_elements:
+##                    if content_element.type == 'Word':
+##                        canonical_word = canonical_word_for_tts(content_element.content)
+##                        words.add(canonical_word)
+##
+##        missing_words = []
+##        missing_segments = []
+##
+##        # We don't want to include trivial strings, so check using strip().
+##        for word in words:
+##            #post_task_update(callback, f"Checking TTS file for '{word}'")
+##            if word.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, word, callback=callback):
+##                missing_words.append(word)
+##        post_task_update(callback, f"--- Found {len(missing_words)} words without audio")
+##
+##        for segment in segments:
+##            #post_task_update(callback, f"Checking TTS file for '{segment}'")
+##            if segment.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, segment, callback=callback):
+##                missing_segments.append(segment)
+##        post_task_update(callback, f"--- Found {len(missing_segments)} segments without audio")
+##
+##        return missing_words, missing_segments
+
+    def _get_all_audio_data(self, text_obj, callback=None):
+        words_data = []
+        segments_data = []
         for page in text_obj.pages:
             for segment in page.segments:
                 segment_text = canonical_text_for_tts(segment.to_text())
-                segments.add(segment_text)
+                file_segment = self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, segment_text, callback=callback)
+                segments_data.append([segment_text, file_segment])
+                
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
                         canonical_word = canonical_word_for_tts(content_element.content)
-                        words.add(canonical_word)
+                        file_word = self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, canonical_word, callback=callback)
+                        words_data.append([canonical_word, file_word])
 
-        missing_words = []
-        missing_segments = []
+        return words_data, segments_data
+
+    def _get_missing_audio(self, text_obj, callback=None):
+        words_data, segments_data = self._get_all_audio_data(text_obj, callback=callback)
 
         # We don't want to include trivial strings, so check using strip().
-        for word in words:
-            #post_task_update(callback, f"Checking TTS file for '{word}'")
-            if word.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, word, callback=callback):
-                missing_words.append(word)
-        post_task_update(callback, f"--- Found {len(missing_words)} words without audio")
+        missing_words = [word_data[0] for word_data in words_data if not word_data[1] and word_data[0].strip()]
+        missing_segments = [segment_data[0] for segment_data in segments_data if not segment_data[1] and segment_data[0].strip()]
 
-        for segment in segments:
-            #post_task_update(callback, f"Checking TTS file for '{segment}'")
-            if segment.strip() and not self.tts_repository.get_entry(self.engine_id, self.language_id, self.voice_id, segment, callback=callback):
-                missing_segments.append(segment)
+        post_task_update(callback, f"--- Found {len(missing_words)} words without audio")
         post_task_update(callback, f"--- Found {len(missing_segments)} segments without audio")
 
         return missing_words, missing_segments
+
+    def _generate_audio_metadata(self, text_obj, callback=None):
+        words_data, segments_data = self._get_all_audio_data(text_obj, callback=callback)
+        # Format and return as required
+
 
     def _create_and_store_missing_mp3s(self, missing_audio, callback=None):
         temp_dir = tempfile.mkdtemp()
