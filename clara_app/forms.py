@@ -309,3 +309,5 @@ class CustomStringPairFormSet(forms.BaseFormSet):
             form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
             form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
 
+class AudioMetadataForm(forms.Form):
+    metadata = forms.CharField(widget=forms.Textarea)

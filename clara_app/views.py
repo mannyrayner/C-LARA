@@ -22,7 +22,7 @@ from django_q.tasks import async_task
 from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserProfileForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
@@ -567,6 +567,27 @@ def project_detail(request, project_id):
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
                     'can_render': can_render }
                     )
+
+@login_required
+@user_has_a_project_role
+def get_audio_metadata_view(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    audio_metadata = clara_project_internal.get_audio_metadata()
+
+    # Convert the metadata to JSON (or similar formatted string)
+    audio_metadata_str = json.dumps(audio_metadata, indent=4)
+    
+    if request.method == 'POST':
+        # Handle POST logic if any (like saving the metadata somewhere)
+        pass
+    else:
+        form = AudioMetadataForm(initial={'metadata': audio_metadata_str})
+    
+    return render(request, 'clara_app/audio_metadata.html', 
+                  { 'project': project, 'form': form })
+
 
 # Get metadata for a version of a text (internal use only)
 @login_required
