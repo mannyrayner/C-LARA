@@ -1,0 +1,11 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+	<h1>Audio Metadata ("{{ project.title }}")</h1>
+	<form method="post">
+        {% csrf_token %}
+        <p>Below is the audio metadata for the project. You can copy and paste this data as needed:</p>
+        {{ form.as_p }}
+    </form>
+    <p><a href="{% url 'project_detail' project.id %}">Back to Project</a></p>
+{% endblock %}
