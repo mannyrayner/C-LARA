@@ -23,6 +23,7 @@ import os
 import tempfile
 import shutil
 import uuid
+import json
 
 class TTSAnnotator:
     def __init__(self, language, tts_engine_type=None, tts_repository=None, callback=None):
@@ -115,10 +116,14 @@ class TTSAnnotator:
 
         return missing_words, missing_segments
 
-    def _generate_audio_metadata(self, text_obj, callback=None):
-        words_data, segments_data = self._get_all_audio_data(text_obj, callback=callback)
-        # Format and return as required
+    def generate_audio_metadata(self, text_obj, callback=None):
+        words_data, segments_data = self._get_all_audio_data(text_obj, callback)
 
+        # Reformat the data as lists of dictionaries.
+        words_metadata = [{"word": word_data[0], "file": word_data[1]} for word_data in words_data]
+        segments_metadata = [{"segment": segment_data[0], "file": segment_data[1]} for segment_data in segments_data]
+
+        return { 'words': words_metadata, 'segments': segments_metadata }
 
     def _create_and_store_missing_mp3s(self, missing_audio, callback=None):
         temp_dir = tempfile.mkdtemp()

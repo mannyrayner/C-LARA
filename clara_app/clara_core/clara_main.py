@@ -637,6 +637,15 @@ class CLARAProjectInternal:
         self.internalised_and_annotated_text = text_object
         return text_object
 
+    # Get audio metadata, for processing by other modules
+    def get_audio_metadata(self, callback=None):
+        post_task_update(callback, f"--- Getting audio metadata")
+        text_object = self.get_internalised_text()
+        post_task_update(callback, f"--- Internalised text created")
+        
+        tts_annotator = TTSAnnotator(self.l2_language, callback=callback)
+        return tts_annotator.generate_audio_metadata(text_object, callback=callback)
+
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
