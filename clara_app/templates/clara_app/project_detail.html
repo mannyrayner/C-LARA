@@ -11,11 +11,12 @@
 	<p>L1 Language: {{ project.l1 }}</p>
 	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
 	<p><a href="{% url 'create_plain_text' project.id %}" >Create/Edit Plain Text</a></p>
-	<p><a href="{% url 'create_summary' project.id %}" >Create/Edit Summary</a></p>
-	<p><a href="{% url 'create_cefr_level' project.id %}" >Estimate/Edit CEFR Level</a></p>
+	<p><a href="{% url 'create_summary' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Create/Edit Summary</a></p>
+	<p><a href="{% url 'create_cefr_level' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Estimate/Edit CEFR Level</a></p>
 	<p><a href="{% url 'create_segmented_text' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Create/Edit Segmented Text</a></p>
 	<p><a href="{% url 'create_glossed_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Create/Edit Glossed Text</a></p>
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">Create/Edit Lemma Tagged Text</a></p>
+	<p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p>
 	<p><a href="{% url 'render_text_start' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Render Text</a></p>
 	<p><a href="{% url 'compare_versions' project.id %}">Compare Text Versions</a></p>
 	<p><a href="{% url 'project_history' project.id %}">View Project History</a></p>
