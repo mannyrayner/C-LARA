@@ -49,6 +49,7 @@ Registered content
 Layout
 
 Annotation
+  Split up material in segments when sending to AI
   Present lemmas and POS separately in compare tab
   Better treatment of MWEs, perhaps in the "improvement" phase or as an independent operation
   Functionality to get an error rate summary

@@ -18,40 +18,27 @@ required here.
 
 2. Installation
 
+C-LARA can currently be run in two configurations: local machine, or Heroku.
+
+The database can be either SQLite or Postgres.
+
+Files can either be kept in the local filesystem, or on S3.
+
+For Heroku, Postgres + S3 is necessary. The following sections refer primarily to
+installing on a local machine. Section (2e) describes installing on Heroku.
+
 2a. Python and packages
 
-C-LARA is implemented in Python using the Django framework. You first need to install
-Python 3.11. Make sure that 'python3' points to this version.
+C-LARA is implemented in Python using the Django framework, with Django-Q for asynchrony.
+You first need to install Python 3.11. Make sure that 'python3' points to this version.
 
 IMPORTANT: EARLIER VERSIONS OF PYTHON 3 MAY NOT WORK. WE KNOW THAT 3.9 IS INSUFFICIENT.
 
-Check whether any of the packages Django, openai, tiktoken, gTTS, requests, boto3, psycopg2, jinja2,
-Pillow, retrying, regex, unidecode, whitenoise and configparser are not yet installed,
-and if necessary install them.
-The easiest way to do this is to carry out the following invocations to 'pip':
-
-pip install Django
-pip install configparser
-pip install gTTS
-pip install jinja2
-pip install openai
-pip install Pillow
-pip install regex
-pip install requests
-pip install boto3
-pip install psycopg2
-pip install retrying
-pip install tiktoken
-pip install unidecode
-pip install whitenoise
-
-Pip itself can if necessary be installed following the instructions on this page:
-https://pip.pypa.io/en/stable/installation/
+Install the Python packages listed in the file requirements.txt (sister to this file).
 
 2b. Downloading the code and other resources
 
-Download the code from SourceForge at https://sourceforge.net/p/c-lara/svn/HEAD/tree/,
-either as an SVN checkout or as a "snapshot" zipfile.
+Download the code from GitHub at https://github.com/mannyrayner/C-LARA.
 
 2c. TreeTagger
 
@@ -62,28 +49,75 @@ This is quick and easy.
 
 2d. Environment variables
 
-Set the environment variable CLARA to the root directory of the material downloaded
-from SourceForge. On my machine, it is set to C:\cygwin64\home\sf\c-lara-svn
+The following environment variables are used:
 
-Set the environment variable OPENAI_API_KEY to the value of your OpenAI license key.
+OPENAI_API_KEY. Value of your OpenAI license key.
 Unfortunately, you need a license enabled for the gpt-4 language model.
 
-If you are using TreeTagger, set the environment variable TREETAGGER to the root TreeTagger
-directory. 
+CLARA_ENVIRONMENT. Set to 'local' for local machine or 'heroku' for Heroku.
 
-3. Running in development mode
+CLARA. Points to the root directory of the material downloaded from GitHub.
+On my machine, it is set to C:\cygwin64\home\github\c-lara
+
+FILE_STORAGE_TYPE. Set to 'local' for local file or 'S3' for AWS S3 files.
+
+AWS_ACCESS_KEY, AWS_REGION, AWS_S3_REGION_NAME, AWS_SECRET_ACCESS_KEY, S3_BUCKET_NAME.
+Set these to appropriate values if you are using S3 files. You need to have set up
+an S3 bucket for them to point to.
+
+DB_TYPE. Set to 'postgres' or 'sqlite' depending on which database you use.
+
+DJANGO_DEBUG. Set to 'True' to enable Django debugging.
+
+GOOGLE_CREDENTIALS_JSON. Set to a suitable JSON value if you are going to use Google TTS.
+You need have set up a suitable Google account for it to point to.
+
+TREETAGGER. If you are using TreeTagger, set to the root TreeTagger directory.
+
+TMPDIR. On Heroku, set to '/tmp'.
+
+2e. Installing on Heroku
+
+Specify a Python 3 project.
+
+Set the environment variables as described in (2d).
+
+Link to the GitHub repository.
+
+There are two processes, as specified in Procfile (sister to this file).
+These are currently allocated the following resources:
+
+gunicorn clara_project.wsgi:application
+Standard 1X dynos.
+
+python manage.py qcluster
+Standard 2X dynos.
+
+The database is Heroku Postgres.
+This is currently allocation to the Standard 0 tier.
+
+3. Running in development mode on a local machine
 
 Make sure that packages are installed and environment variables set as in (2) above. 
 
-You should then be able to  start the server in development mode (i.e. running the system
-on your local machine), by doing the following:
+You should then be able to start the server in development mode (i.e. running the system
+on your local machine), by opening two command prompts and doing the following:
+
+First command prompt (Q-cluster for Django-Q asynchrony):
+
+cd $CLARA
+python3 manage.py qcluster
+
+Second command prompt (server):
 
 cd $CLARA
 python3 manage.py runserver
 
+Note that the server may not immediately connect to the Q-cluster.
+
 C-LARA should then be accessible at http://localhost:8000/accounts/login/
 
-If this does not work, please send a full trace to Emmanuel.Rayner@unige.ch.
+If this does not work, please send a full trace to Manny.Rayner@unisa.edu.au.
 We are still debugging the installation process and I will be responsive!
 
 4. Organisation of material
@@ -120,6 +154,8 @@ clara_chatgpt4.py: Send request to ChatGPT-4 through API.
 
 clara_chatgpt4_manual.py: Send request to ChatGPT-4 through popup window (not used in live system).
 
+clara_chinese.py: Chinese-specific processing, in particular accessing the Jieba package.
+
 clara_classes.py: Define classes used to for internal text representation.
 The top-level class is called Text.
 
@@ -127,9 +163,13 @@ clara_concordance_annotator.py: Annotate a Text object with concordance informat
 
 clara_conventional_tagging.py: Invoke TreeTagger tagger-lemmatiser. May later include other tagger-lemmatisers.
 
+clara_correct_syntax.py: Call ChatGPT-4 to correct malformed C-LARA annotated text.
+
 clara_create_annotations.py: Call ChatGPT-4 to add segmentation, gloss and lemma annotations to Text object.
 
 clara_create_story.py: Call ChatGPT-4 to create a text.
+
+clara_database_adapted.py: SQLite/Postgres compatibility.
 
 clara_diff.py: Compare two versions of a CLARA file and present the results.
 
@@ -149,7 +189,7 @@ clara_prompt_templates.py: Parametrized prompts for ChatGPT-4-based annotation.
 
 clara_renderer.py: Render Text object as optionally self-contained directory of static HTML multimedia files.
 
-clara_test.py: Create summary of text by calling ChatGPT.
+clara_summary.py: Create summary of text by calling ChatGPT.
 
 clara_test.py: Test other functionality (not used in live system).
 
