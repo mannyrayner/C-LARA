@@ -1258,9 +1258,6 @@ def register_project_content(request, project_id):
     voice0 = clara_project_internal.get_voice()
     # CEFR level and summary are not essential, just continue if they're not available
     try:
-        #cefr_level0, api_calls = clara_project_internal.get_cefr_level(user=request.user.username)
-        #print(f'--- Accessed CEFR level: {len(api_calls)} API calls')
-        #store_api_calls(api_calls, project, request.user, "cefr")
         cefr_level0 = clara_project_internal.load_text_version("cefr_level")
     except Exception as e:
         cefr_level0 = None
