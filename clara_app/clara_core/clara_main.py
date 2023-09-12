@@ -107,7 +107,7 @@ Requires "lemma" version to exist. Returns a list of APICall instances related t
 Requires "lemma" and "gloss" versions to exist. Returns a list of APICall instances related to the operation.
 
 - get_internalised_and_annotated_text(). Returns a Text object, defined in clara_classes.py,
-representing the text together with all annotations (segmentation, gloss, lemma, TTS, concordance).
+representing the text together with all annotations (segmentation, gloss, lemma, audio, concordance).
 TTS files are generated as needed.
 Requires "gloss" and "lemma" versions to exist.
 
@@ -134,7 +134,7 @@ from .clara_correct_syntax import correct_syntax_in_string
 from .clara_chinese import segment_text_using_jieba
 from .clara_diff import diff_text_objects
 from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged
-from .clara_tts_annotator import TTSAnnotator
+from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_renderer import StaticHTMLRenderer
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file
@@ -625,10 +625,10 @@ class CLARAProjectInternal:
         text_object = self.get_internalised_text()
         post_task_update(callback, f"--- Internalised text created")
         
-        post_task_update(callback, f"--- Adding TTS annotations")
-        tts_annotator = TTSAnnotator(self.l2_language, callback=callback)
-        tts_annotator.annotate_text(text_object, callback=callback)
-        post_task_update(callback, f"--- TTS annotations done")
+        post_task_update(callback, f"--- Adding audio annotations")
+        audio_annotator = AudioAnnotator(self.l2_language, callback=callback)
+        audio_annotator.annotate_text(text_object, callback=callback)
+        post_task_update(callback, f"--- Audio annotations done")
         
         post_task_update(callback, f"--- Adding concordance annotations")
         concordance_annotator = ConcordanceAnnotator()
@@ -643,8 +643,8 @@ class CLARAProjectInternal:
         text_object = self.get_internalised_text()
         post_task_update(callback, f"--- Internalised text created")
         
-        tts_annotator = TTSAnnotator(self.l2_language, callback=callback)
-        return tts_annotator.generate_audio_metadata(text_object, callback=callback)
+        audio_annotator = AudioAnnotator(self.l2_language, callback=callback)
+        return audio_annotator.generate_audio_metadata(text_object, callback=callback)
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

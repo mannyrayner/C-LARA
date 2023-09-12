@@ -4,7 +4,7 @@ from . import clara_merge_glossed_and_tagged
 from . import clara_create_story
 from . import clara_create_annotations
 from . import clara_concordance_annotator
-from . import clara_tts_annotator
+from . import clara_audio_annotator
 from .clara_classes import *
 from .clara_renderer import StaticHTMLRenderer
 from . import clara_utils
@@ -171,8 +171,8 @@ def get_internalised_and_annotated_story(id):
     if text_object == None:
         return None
     l2_language = text_object.l2_language
-    tts_annotator = clara_tts_annotator.TTSAnnotator(l2_language)
-    tts_annotator.annotate_text(text_object)
+    audio_annotator = clara_audio_annotator.AudioAnnotator(l2_language)
+    audio_annotator.annotate_text(text_object)
     concordance_annotator = clara_concordance_annotator.ConcordanceAnnotator()
     concordance_annotator.annotate_text(text_object)
     return text_object
