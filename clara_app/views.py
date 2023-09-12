@@ -35,7 +35,7 @@ from .utils import post_task_update_in_db, get_task_updates, delete_all_tasks
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
-from .clara_core.clara_tts_annotator import TTSAnnotator
+from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
@@ -132,7 +132,7 @@ def add_credit(request):
 
 def delete_tts_data_for_language(language, callback=None):
     post_task_update(callback, f"--- Starting delete task for language {language}")
-    tts_annotator = TTSAnnotator(language, callback=callback)
+    tts_annotator = AudioAnnotator(language, callback=callback)
     tts_annotator.delete_entries_for_language(callback=callback)
 
 # Delete cached TTS data for language   
