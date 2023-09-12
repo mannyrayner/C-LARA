@@ -126,6 +126,10 @@ and examples defined by the edit_prompt operation. In the lemma-tagged version, 
 is associated with a lemma and a part-of-speech (POS) tag from the Universal Dependencies version 2
 tagset.
 
+- get_audio_metadata_view(request, project_id)
+Download the audio metadate for the project. This is temporary view that will later
+be expanded into handling of human-recorded audio data as an alternative for TTS audio.
+
 - project_history(request, project_id)
 Display the history of updates to project files. 
 
