@@ -553,6 +553,7 @@ def project_detail(request, project_id):
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
     can_render = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
+    rendered_html_exists = clara_project_internal.rendered_html_exists(project_id)
     api_cost = get_project_api_cost(request.user, project)
     if request.method == 'POST':
         form = UpdateProjectTitleForm(request.POST)
@@ -565,7 +566,8 @@ def project_detail(request, project_id):
                   { 'project': project, 'form': form, 'api_cost': api_cost, 
                     'can_create_segmented_text': can_create_segmented_text, 
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
-                    'can_render': can_render }
+                    'can_render': can_render,
+                    'rendered_html_exists': rendered_html_exists }
                     )
 
 @login_required
@@ -1194,26 +1196,52 @@ def render_text_monitor(request, project_id, task_id, report_id):
 @user_has_a_project_role
 def render_text_complete(request, project_id, status):
     project = get_object_or_404(CLARAProject, pk=project_id)
-    
     if status == 'error':
         succeeded = False
     else:
         succeeded = True
+    
     if succeeded:
         # Define URLs for the first page of content and the zip file
         content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
         # Put back zipfile later
         #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
         zipfile_url = None
-        messages.success(request, f'Text rendered successfully!')
-
         # Create the form for registering the project content
         register_form = RegisterAsContentForm()
+        messages.success(request, f'Rendered text found')
     else:
         content_url = None
         zipfile_url = None
         register_form = None
-        messages.error(request, "Error in rendering.")
+        messages.error(request, "Rendered text not found")
+        
+    return render(request, 'clara_app/render_text_complete.html',
+                  {'content_url': content_url, 'zipfile_url': zipfile_url,
+                   'project': project, 'register_form': register_form})
+
+@login_required
+@user_has_a_project_role
+def offer_to_register_content(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    succeeded = clara_project_internal.rendered_html_exists(project_id)
+
+    if succeeded:
+        # Define URLs for the first page of content and the zip file
+        content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
+        # Put back zipfile later
+        #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
+        zipfile_url = None
+        # Create the form for registering the project content
+        register_form = RegisterAsContentForm()
+        messages.success(request, f'Rendered text found')
+    else:
+        content_url = None
+        zipfile_url = None
+        register_form = None
+        messages.error(request, "Rendered text not found")
         
     return render(request, 'clara_app/render_text_complete.html',
                   {'content_url': content_url, 'zipfile_url': zipfile_url,
