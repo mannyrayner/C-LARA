@@ -43,10 +43,11 @@ class AudioRepository:
             if os.getenv('DB_TYPE') == 'sqlite':
                 # If we're using sqlite, check if db_file exists and if not create it
                 db_dir = config.get('audio_repository', 'db_dir')
-                post_task_update(callback, f'--- Creating empty DB file for audio repository, {self.db_file}')
                 if not local_directory_exists(db_dir):
+                    post_task_update(callback, f'--- Creating empty DB dir for audio repository, {db_dir}')
                     make_local_directory(db_dir)
                 if not local_file_exists(self.db_file):
+                    post_task_update(callback, f'--- Creating empty DB file for audio repository, {self.db_file}')
                     open(self.db_file, 'a').close()
                     
             connection = connect(self.db_file)
@@ -73,7 +74,7 @@ class AudioRepository:
                                    
             connection.commit()
             connection.close()
-            post_task_update(callback, f'--- Initialised TTS repository')
+            post_task_update(callback, f'--- Initialised audio repository')
                                    
         except Exception as e:
             error_message = f'*** Error when trying to initialise TTS database: "{str(e)}"\n{traceback.format_exc()}'
