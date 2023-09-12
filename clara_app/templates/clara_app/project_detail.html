@@ -18,6 +18,7 @@
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">Create/Edit Lemma Tagged Text</a></p>
 	<p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p>
 	<p><a href="{% url 'render_text_start' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Render Text</a></p>
+	<p><a href="{% url 'offer_to_register_content' project.id %}" {% if not rendered_html_exists %}class="disabled-link"{% endif %}>Register Rendered Text</a></p>
 	<p><a href="{% url 'compare_versions' project.id %}">Compare Text Versions</a></p>
 	<p><a href="{% url 'project_history' project.id %}">View Project History</a></p>
 	<p><a href="{% url 'manage_project_members' project.id %}">Manage Project Members</a></p>
