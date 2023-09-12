@@ -138,7 +138,7 @@ from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_renderer import StaticHTMLRenderer
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file
-from .clara_utils import rename_file, remove_file, get_file_time, file_exists
+from .clara_utils import rename_file, remove_file, get_file_time, file_exists, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp
 from .clara_utils import post_task_update
@@ -659,6 +659,14 @@ class CLARAProjectInternal:
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
         return renderer.output_dir
+
+    # Determine whether the rendered HTML has been created
+    def rendered_html_exists(self, project_id):
+        output_dir = output_dir_for_project_id(project_id)
+        page_1_file = str( Path(output_dir) / 'page_1.html' )
+        print(f'--- Checking first page of rendered text: {page_1_file}')
+        # If the first page exists, at least some HTML has been created
+        return file_exists(page_1_file)
 
     # Get the word-count
     def get_word_count(self) -> int:
