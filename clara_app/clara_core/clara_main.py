@@ -670,14 +670,15 @@ class CLARAProjectInternal:
 
     # Get the word-count
     def get_word_count(self) -> int:
-        text_object = self.get_internalised_and_annotated_text()
+        text_object = self.get_internalised_text()
         return None if not text_object else text_object.word_count()
 
     # Get the voice
     def get_voice(self) -> str:
-        text_object = self.get_internalised_and_annotated_text()
-        return None if not text_object else text_object.voice
-    
+        #text_object = self.get_internalised_and_annotated_text()
+        #return None if not text_object else text_object.voice
+        audio_annotator = AudioAnnotator(self.l2_language)
+        return None if not audio_annotator else audio_annotator.printname_for_voice()
 
     
             
