@@ -5,7 +5,7 @@
 {% block content %}
 
   {% if content_url %}
-    <h3>Rendered Text for {{ project.title }}</h3>
+    <h3>Rendered Text ("{{ project.title }}")</h3>
 	<p><a href="{% url 'serve_rendered_text' project.id 'page_1.html' %}" target="_blank">View Content</a></p>
     {% if zipfile_url %}
        <p><a href="{% url 'serve_zipfile' project.id %}" download="{{ project.id }}.zip">Download Zip</a></p>
