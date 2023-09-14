@@ -62,7 +62,8 @@ Other project members, please submit similar paragraphs!
 2.3 Written Documents
 Three important documents are available from the GitHub repository (https:
 //github.com/mannyrayner/C-LARA): a README file, a FUNCTIONALITY
-file listing all top-level platform functionalities, and a TODO list including both
+file listing all top-level platform
+functionalities, and a TODO list including both
 future and completed items. The following papers also exist:
 
 1. "ChatGPT-Based Learning And Reading Assistant: Initial Report"
