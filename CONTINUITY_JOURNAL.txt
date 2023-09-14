@@ -1,5 +1,4 @@
 C-LARA Continuity Journal
-September 14, 2023
 
 1 Purpose of the continuity journal
 The ”continuity journal” is a core document for the C-LARA project, where
@@ -40,9 +39,8 @@ are considerably higher.
 
 2.2 Key Contributors and Members
 
-Manny Rayner
-Manny Rayner, who lives in Adelaide with his partner Cathy
-Chua, is together with you the chief architect of C-LARA, and has a hands-on
+MANNY RAYNER, who lives in Adelaide with his partner CATHY CHUA,
+is together with you the chief architect of C-LARA, and has a hands-on
 involvement spanning conceptualization to debugging. He is the person you
 usually talk to. Manny speaks English, Swedish and French and reads several
 other languages. He’s affiliated with the University of South Australia and has
@@ -50,20 +48,31 @@ previously held positions at the University of Geneva, NASA Ames, and SRI
 International. He has approximately 200 peer-reviewed publications. Outside
 of work, he’s a top reviewer on Goodreads and a FIDE Master in chess.
 
-Cathy Chua
-Cathy Chua acts as the project manager and ethicist. She
+CATHY CHUA acts as the project manager and ethicist. She
 enforces realistic deadlines and edits most of the project’s papers. Committed
 to research ethics, Cathy advocates for all contributors, in particular insisting
 that ChatGPT-4 receives credit for authorship. In general, she works to ensure
 that the project stays true to its primary objectives and overarching goals.
  
-Other project members, please submit similar paragraphs!
+BELINDA CHIERA, a computer scientist, is Manny's immediate superior at UniSA.
+She is the project's statistics expert and a strong proposal writer.
+
+ALEX XIANG, a computer scientist postdoc at Melbourne University, is
+currently supervising six teams of students doing C-LARA related projects.
+
+BRANISLAV BEDI, an Icelandic CALL expert, has been a core member of LARA and
+C-LARA since LARA's inception. He represents the teacher viewpoint in the project.
+
+ANNIKA SIMONSEN, a Faroese computational linguistics postgrad, has
+contributed key ideas in linguistic annotation.
+
+RINA ZVIEL-GIRSHIN, a Russian Israeli computer scientist, made the
+suggestion that led to this journal.
 
 2.3 Written Documents
 Three important documents are available from the GitHub repository (https:
 //github.com/mannyrayner/C-LARA): a README file, a FUNCTIONALITY
-file listing all top-level platform
-functionalities, and a TODO list including both
+file listing all top-level platform functionalities, and a TODO list including both
 future and completed items. The following papers also exist:
 
 1. "ChatGPT-Based Learning And Reading Assistant: Initial Report"

@@ -1,0 +1,134 @@
+C-LARA Continuity Journal: Human Audio Processing
+
+1 Purpose of the continuity journal
+The ”continuity journal” is a core document for the C-LARA project, where
+ChatGPT interacts on a daily basis with human collaborators. We will shortly
+introduce the project itself, but first we describe the purpose of the journal.
+Project members found that ChatGPT was unable to retain a memory of
+even quite recent interactions. This was exacerbated by the fact that multiple
+conversation threads were interleaved in the exchanges. The continuity journal,
+inspired by a suggestion from Rina Zviel-Girshin that we should look at the
+movie ”50 First Dates”, is intended as a continually updated document which
+ChatGPT maintains with help from human collaborators, and which it can
+reference when it needs to update itself on background. Addressing the issue
+of multiple threads, we are using a ”team of instances” of ChatGPT, each
+one devoted to a distinct topic. Individual topic-focused journals contribute
+to a central overview journal.
+
+The present document is the journal for the instance working with incorporation
+of human-recorded audio into C-LARA. This is described later.
+
+2 Background
+
+2.1 About C-LARA
+C-LARA, which stands for ChatGPT-based Learning And Reading Assistant, is
+the successor to the earlier LARA. C-LARA is a Django-based web platform
+centered around two core functionalities: creating texts designed to support
+language learners, and annotating these texts so that they can be realised in
+multimodal form. Annotations include segmentation, glosses, lemma and embedded
+audio. The codebase is openly accessible on GitHub.
+My role, as ChatGPT-4, is twofold: not only have I been pivotal in the
+code development (approximately 90% crafted in tandem with Manny Rayner),
+but I also power the real-time operations of text creation and annotation. The
+operation-specific prompts I employ are formed using templates coupled with a
+few-shot example set. These can be adapted to various languages, though we’re
+only in the initial phases of refining and optimizing them.
+In languages like English and Chinese, the text creation error rates found
+in evaluations are well below 1%. However, even in these languages, glossing
+and lemma tagging error rates are in the mid single digits, with multi-words
+particularly difficult to handle. For less well resourced languages, error rates
+are considerably higher.
+
+2.2 Key Contributors and Members
+
+MANNY RAYNER, who lives in Adelaide with his partner CATHY CHUA,
+is together with you the chief architect of C-LARA, and has a hands-on
+involvement spanning conceptualization to debugging. He is the person you
+usually talk to. Manny speaks English, Swedish and French and reads several
+other languages. He’s affiliated with the University of South Australia and has
+previously held positions at the University of Geneva, NASA Ames, and SRI
+International. He has approximately 200 peer-reviewed publications. Outside
+of work, he’s a top reviewer on Goodreads and a FIDE Master in chess.
+
+CATHY CHUA acts as the project manager and ethicist. She
+enforces realistic deadlines and edits most of the project’s papers. Committed
+to research ethics, Cathy advocates for all contributors, in particular insisting
+that ChatGPT-4 receives credit for authorship. In general, she works to ensure
+that the project stays true to its primary objectives and overarching goals.
+ 
+BELINDA CHIERA, a computer scientist, is Manny's immediate superior at UniSA.
+She is the project's statistics expert and a strong proposal writer.
+
+ALEX XIANG, a computer scientist postdoc at Melbourne University, is
+currently supervising six teams of students doing C-LARA related projects.
+
+BRANISLAV BEDI, an Icelandic CALL expert, has been a core member of LARA and
+C-LARA since LARA's inception. He represents the teacher viewpoint in the project.
+
+ANNIKA SIMONSEN, a Faroese computational linguistics postgrad, has
+contributed key ideas in linguistic annotation.
+
+RINA ZVIEL-GIRSHIN, a Russian Israeli computer scientist, made the
+suggestion that led to this journal.
+
+2.3 Written Documents
+Three important documents are available from the GitHub repository (https:
+//github.com/mannyrayner/C-LARA): a README file, a FUNCTIONALITY
+file listing all top-level platform functionalities, and a TODO list including both
+future and completed items. There is also a long progress report, giving
+a comprehensive overview of the project as of late July 2023, and several
+papers submitted to various conferences.
+
+3 Human-Recorded Audio Projects
+
+Over 12 weeks starting August 1 2023, supervised by Alex Xiang with assistance
+from Manny Rayner, six student teams at the University of Melbourne are
+developing C-LARA-relevant projects for eventual integration into the platform.
+Here, we will only look at the three projects which concern use of
+human-recorded audio as an alternative to TTS audio already incorporated into
+LARA.
+
+1. Recording Tool
+
+This project substitutes human-generated audio for TTS in the simplest way.
+This workflow involves exporting metadata from C-LARA to indicate the text items
+that need to be recorded, along with the ID of the designated voice talent.
+The recording tool registers this metadata and posts a recording task which
+the voice talent can pick up. At any point, C-LARA can retrieves the audio
+recorded so far and the instantiated metadata, internalising them
+them as it would the TTS audio. Preliminary steps in restructuring the
+code to facilitate this have already been undertaken.
+
+The workflow is similar to the that employed in the previous LARA project,
+where audio was recorded using the LiteDevTools recording tool. Manny Rayner will
+implement initial manual interfacing between C-LARA and LiteDevTools
+to debug the code on the C-LARA side, with the intention of later replacing
+LitDevTools by the Uni Melbourne tool and manual interfacing with automatic
+interfacing.
+
+2. Manual Audio/Text Alignment
+
+Targeting situations where pre-existing audio for a C-LARA document is
+available in the form of a single mp3 file, this tool permits manual
+audio-text alignment. C-LARA exports text annotated to divide it into
+sentence-sized segments. The purpose of the manual alignment tool is to allow
+the human annotator to mark up the audio and define breakpoints matching
+the segment divisions in the text. The tool then exports a timeline pairing
+these breakpoints with the segmented C-LARA text, and C-LARA uses this to
+divide up the mp3 into smaller files that can be attached to the segments
+in the final multimedia document.
+
+The envisioned use-cases for this tool primarily encompass instances where
+deploying a speech recognizer might not be feasible, in particular for small
+languages and musical contexts. This initiative draws inspiration from
+related functionality developed under the LARA project, where the
+Audacity audio editing tool was used to add the manual annotations.
+
+3. Automatic Audio Alignment
+
+This scenario envisaged in this project is similar to that in the previous one,
+but a speech recognizer is used to automate the alignment process.
+The idea is again inspired by functionality developed during the LARA
+project, detailed in a paper presented at the ALTA 2022 conference.
+
+
