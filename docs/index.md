@@ -38,10 +38,12 @@ many options for tuning language-specific performance, and we are actively inves
 - **BELINDA CHIERA**: Project coordination, statistical analysis
 - **CATHY CHUA**: Project coordination, ethical aspects
 - **CATIA CUCCHIARINI**: User studies, Italian and Dutch evaluation
+- **MARTA MYKHATS**: Pedagogical aspects, Ukrainian evaluation
 - **NEASA NÍ CHIARÁIN**: User studies, Irish evaluation
-- **MANNY RAYNER**: Project architecture, software implementation and design, project coordination, English evaluation
+- **MANNY RAYNER**: Software implementation and design, project coordination, English evaluation
 - **CHADI RAHEB**: Farsi evaluation
 - **ANNIKA SIMONSEN**: Linguistic annotation, user studies, Faroese, Danish and Icelandic evaluation
+- **YAO CHUNLIN**: Pedagogical aspects, Mandarin evaluation
 - **ALEX XIANG**: Supervision of student projects, Mandarin evaluation
 - **RINA ZVIEL-GIRSHIN**: Russian evaluation
 
@@ -54,7 +56,7 @@ many options for tuning language-specific performance, and we are actively inves
 
 - [TODO file](https://github.com/mannyrayner/C-LARA/blob/main/TODO.txt) Remaining and completed to-do items.
 
-- ["Continuity journal"](https://github.com/mannyrayner/C-LARA/blob/main/CONTINUITY_JOURNAL.txt) This file, continually updated by ChatGPT-4 with assistance from project members, is used by the AI to refresh its understanding of what has so far been done in the project.
+- ["Continuity journal"](https://github.com/mannyrayner/C-LARA/blob/main/CONTINUITY_JOURNAL.txt) This file, continually updated by ChatGPT-4 with assistance from project members, is used by the AI to refresh its understanding of the project and its own role in it.
 
 
 
