@@ -1,4 +1,12 @@
+<div style="overflow: hidden; background-color: #f1f1f1;">
 
+  <a href="index.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Overview</a>
+  <a href="performance.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Performance</a>
+  <a href="collaborators.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
+  <a href="documents.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
+  <a href="examples.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Examples</a>
+
+</div>
 # C-LARA: ChatGPT-based Learning And Reading Assistant
 
 ## Overview
@@ -22,12 +30,6 @@ part of the software design, and has written a substantial portion of the academ
 the project has produced. We consider that ChatGPT-4 has amply demonstrated its right to be considered
 a core member of the project; our policy of consistently crediting it as a coauthor has already led to 
 some controversy.
-
-- [Overview](index.md)
-- [Performance](performance.md)
-- [Contributors](collaborators.md)
-- [Documents](documents.md)
-- [Examples](examples.md)
 
 
 
