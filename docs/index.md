@@ -27,7 +27,7 @@ As a software engineer, ChatGPT-4 has played a central role in creating the code
 accessible on [GitHub](https://github.com/mannyrayner/C-LARA). ChatGPT-4 has produced about 90% 
 of the code, working in close collaboration with its human partner Manny Rayner. It is also responsible for the greater 
 part of the software design, and has written a substantial portion of the academic publications which
-the project has produced. We consider that ChatGPT-4 has amply demonstrated its right to be accepted as
+the project has produced. We consider that ChatGPT-4 has amply demonstrated its right to be accepted as 
 a core member of the project; our policy of consistently crediting it as a coauthor has already led to 
 some controversy.
 
