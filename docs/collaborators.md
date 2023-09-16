@@ -17,3 +17,4 @@
 - [Performance](performance.md)
 - [Contributors](collaborators.md)
 - [Documents](documents.md)
+- [Examples](examples.md)

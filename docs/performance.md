@@ -11,3 +11,4 @@ many options for tuning language-specific performance, and we are actively inves
 - [Performance](performance.md)
 - [Contributors](collaborators.md)
 - [Documents](documents.md)
+- [Examples](examples.md)
