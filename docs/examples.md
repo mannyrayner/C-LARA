@@ -1,5 +1,7 @@
 ## Examples
-All the example texts were constructed and annotated entirely by ChatGPT-4, accessed through C-LARA. The descriptions next to them have were also written by the AI.
+All the example texts were constructed and annotated entirely by ChatGPT-4, accessed through C-LARA. The summaries next to them have also been written by the AI.
+
+Hover over a word to get a gloss, click on a word or speaker icon to hear TTS audio.
 
 - <a href="https://c-lara-758a4f81c1ff.herokuapp.com/accounts/rendered_texts/135/page_1.html" target="_blank">Les Liaisons dangereuses (French)</a>. "Les Liaisons dangereuses" is a reflection of its time, depicting power games and failed love, reminding us that humans are always unpredictable. Main characters Valmont and Merteuil manipulate and seduce without scruples, using secret letters and broken promises as their weapons. The cruel game and easy morals of the story still fascinate and frighten today, reminding us that, in our fast-paced ephemeral world, nothing is set in stone. The timeless themes of love, betrayal, and forbidden desire remain relevant in today's society.
 
