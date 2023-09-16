@@ -1,10 +1,10 @@
 <div style="overflow: hidden; background-color: #f1f1f1;">
 
-  <a href="index.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Overview</a>
-  <a href="performance.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Performance</a>
-  <a href="collaborators.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
-  <a href="documents.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
-  <a href="examples.md" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Examples</a>
+  <a href="index.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Overview</a>
+  <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Performance</a>
+  <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
+  <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
+  <a href="examples.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Examples</a>
 
 </div>
 ## Documents
