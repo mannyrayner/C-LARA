@@ -9,9 +9,7 @@
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
 
 </div>
-# C-LARA: ChatGPT-based Learning And Reading Assistant
-
-## Overview
+## C-LARA: ChatGPT-based Learning And Reading Assistant
 C-LARA, or **ChatGPT-based Learning And Reading Assistant**, is an open source web platform,
 currently under development by an international open source consortium, whose purpose is to 
 make it easy to create engaging multimedia texts that can help language learners develop their reading and listening skills.
