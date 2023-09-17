@@ -9,5 +9,5 @@
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
 
 </div>
-
+## Contact
 For general enquiries about C-LARA, or to discuss the possibility of getting an account on the provisional Heroku deployment of the platform, please contact Manny Rayner, Manny.Rayner@unisa.edu.au.
