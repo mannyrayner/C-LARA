@@ -1,4 +1,4 @@
-<div id="header-placeholder"></div>
+<div id="header-placeholder" style="overflow: hidden; background-color: #f1f1f1;"></div>
 
 <script>
   document.getElementById("header-placeholder").innerHTML = 
