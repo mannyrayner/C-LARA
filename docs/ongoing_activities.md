@@ -23,7 +23,7 @@ The projects started at the beginning of August, 2023 and will run for twelve we
 
 **UniSA server**
 
-The current provision deployment of C-LARA on Heroku is adequate for internal testing, but too slow for public use.
+The current provisional deployment of C-LARA on Heroku is adequate for internal testing, but too slow for public use.
 We are deploying a faster version on a UniSA server, with the intention of going live in October/November 2023.
 
 **Multi-words**
