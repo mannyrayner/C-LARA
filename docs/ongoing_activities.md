@@ -12,7 +12,7 @@
 
 ## Ongoing Activities
 
-We are currently focussing on the following activities:
+Our current activities include:
 
 **Melbourne University student projects**
 
