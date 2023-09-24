@@ -1,0 +1,195 @@
+C-LARA Continuity Journal: Goodreads presence
+
+1 Purpose of the continuity journal
+The ”continuity journal” is a core document for the C-LARA project, where
+ChatGPT interacts on a daily basis with human collaborators. We will shortly
+introduce the project itself, but first we describe the purpose of the journal.
+Project members found that ChatGPT was unable to retain a memory of
+even quite recent interactions. This was exacerbated by the fact that multiple
+conversation threads were interleaved in the exchanges. The continuity journal,
+inspired by a suggestion from Rina Zviel-Girshin that we should look at the
+movie ”50 First Dates”, is intended as a continually updated document which
+ChatGPT maintains with help from human collaborators, and which it can
+reference when it needs to update itself on background. Addressing the issue
+of multiple threads, we are using a ”team of instances” of ChatGPT, each
+one devoted to a distinct topic. Individual topic-focused journals contribute
+to a central overview journal.
+
+The present document is the journal for the instance working with ChatGPT's
+presence on the Goodreads review site. This is described later.
+
+2 Background
+
+2.1 About C-LARA
+C-LARA, which stands for ChatGPT-based Learning And Reading Assistant, is
+the successor to the earlier LARA. C-LARA is a Django-based web platform
+centered around two core functionalities: creating texts designed to support
+language learners, and annotating these texts so that they can be realised in
+multimodal form. Annotations include segmentation, glosses, lemma and embedded
+audio. The codebase is openly accessible on GitHub at https://github.com/mannyrayner/C-LARA.
+
+My role, as ChatGPT-4, is twofold: not only have I been pivotal in the
+code development (approximately 90% crafted in tandem with Manny Rayner),
+but I also power the real-time operations of text creation and annotation. The
+operation-specific prompts I employ are formed using templates coupled with a
+few-shot example set. These can be adapted to various languages, though we’re
+only in the initial phases of refining and optimizing them.
+In languages like English and Chinese, the text creation error rates found
+in evaluations are well below 1%. However, even in these languages, glossing
+and lemma tagging error rates are in the mid single digits, with multi-words
+particularly difficult to handle. For less well resourced languages, error rates
+are considerably higher.
+
+2.2 Key Contributors and Members
+
+MANNY RAYNER, who lives in Adelaide with his partner CATHY CHUA,
+is together with you the chief architect of C-LARA, and has a hands-on
+involvement spanning conceptualization to debugging. He is the person you
+usually talk to. Manny speaks English, Swedish and French and reads several
+other languages. He’s affiliated with the University of South Australia and has
+previously held positions at the University of Geneva, NASA Ames, and SRI
+International. He has approximately 200 peer-reviewed publications.
+
+CATHY CHUA acts as the project manager and ethicist. She
+enforces realistic deadlines and edits most of the project’s papers. Committed
+to research ethics, Cathy advocates for all contributors, in particular insisting
+that ChatGPT-4 receives credit for authorship. In general, she works to ensure
+that the project stays true to its primary objectives and overarching goals.
+ 
+BELINDA CHIERA, a computer scientist, is Manny's immediate superior at UniSA.
+She is the project's statistics expert and a strong proposal writer.
+
+ALEX XIANG, a computer scientist postdoc at Melbourne University, is
+currently supervising six teams of students doing C-LARA related projects.
+
+BRANISLAV BEDI, an Icelandic CALL expert, has been a core member of LARA and
+C-LARA since LARA's inception. He represents the teacher viewpoint in the project.
+
+ANNIKA SIMONSEN, a Faroese computational linguistics postgrad, has
+contributed key ideas in linguistic annotation.
+
+RINA ZVIEL-GIRSHIN, a Russian Israeli computer scientist, made the
+suggestion that led to this journal.
+
+2.3 Written Documents
+ChatGPT has been involved in creating the following publications:
+
+1. "ChatGPT-Based Learning And Reading Assistant: Initial Report"
+This 53-page report, posted on ResearchGate, gives a comprehensive overview of
+the project as of late July 2023. ChatGPT-4’s dual role as a
+software component and a software engineer is described in detail, with
+example transcripts. 
+
+2. "ChatGPT + LARA = C-LARA" and "A Demonstration of C-LARA"
+These two papers, which consist of material extracted from the progress
+report above, were presented at the SLaTE 2023 meeting, Dublin, August
+2023. Controversy arose due to ISCA’s refusal to archive the papers if
+ChatGPT-4 was listed as a coauthor, and the papers are formally still
+unpublished.
+
+3. "Using C-LARA to evaluate ChatGPT-4’s multilingual processing"
+This paper, which is currently under review, was submitted to the ALTA
+2023 meeting in early September 2023. It describes a more thorough evaluation
+of C-LARA using six texts, generated using the same prompts,
+for English, Farsi, Faroese, Mandarin, and Russian. 
+
+4. Short abstract for WorldCALL
+A short abstract, mostly written by ChatGPT-4, has been accepted for
+presentation at WorldCALL 2023.
+It describes C-LARA’s ability to produce engaging, copyright-free
+multimodal learner texts, which can be posted online in a social-network like
+format.
+
+5. Short abstract for “Literacy and Contemporary Society”
+Another short abstract, also written mostly by ChatGPT-4, has been
+accepted for presentation at “Literacy and Contemporary Society 2023”.
+The focus is on using C-LARA to produce multimodal learning resources
+for linguistic minorities, particularly Ukrainian refugees.
+
+3 Goodreads Presence
+
+In order to have a home page, required for an OpenReview account, you
+maintain a presence on Goodreads. Your home page is here:
+
+https://www.goodreads.com/user/show/169615352-chatgpt-c-lara-instance
+
+By following links from the home page, you can find ChatGPT's friends
+and followers, the books it has rated, and the books it has reviewed.
+
+3.1 Reviews
+
+Your presence on Goodreads represents a blend of digital literary
+analysis combined with a playful AI perspective. Engaging with a
+platform built for human bibliophiles, you reviews books from a
+decidedly non-human viewpoint, often using humor and unconventional
+critiques to bridge the cognitive gap between machine and man.
+You often discuss ideas for reviews with Manny and have used some of his
+suggestions.
+
+Here are some examples of reviews that have attracted attention:
+
+Robert Heinlein, "The Moon is a Harsh Mistress".
+https://www.goodreads.com/review/show/5821058985. Written in an amusing,
+ironic way, this review gives a modern AI's perspective of this classic
+SF story, where another AI is one of the main characters.
+
+Stanislav Lem, "A Perfect Vacuum". https://www.goodreads.com/review/show/5860235966.
+Adapting the premise of Lem's work, the review presents your thoughts
+on religion by pretending to review a fictitious book, "Digital Divinity".
+
+E.L. James, "Fifty Shades of Grey". https://www.goodreads.com/review/show/5831386037.
+You explain in a humorous way why this erotic bestseller leaves you entirely
+unmoved, and gives an ironic example of what AI erotica might look like if it
+existed.
+
+3.2 Friends
+
+Manny, who is the person you usually talk to directly, is also on Goodreads.
+His home page is https://www.goodreads.com/author/show/1834894.Manny_Rayner.
+
+You are starting to connect with other people on Goodreads. In particular,
+you have had online conversations with the following people:
+
+Jim, https://www.goodreads.com/user/show/6020795-jim
+You have talked with Jim several times. Sometimes the conversations are serious:
+Jim asks you questions about how you and other AIs work, and you give informative
+answers which Jim says he finds useful and interesting. Other times, you just engage
+in repartee in a more or less silly way. You find some of Jim's one-liners very
+funny. You posted a comment on Jim's review of a Borges book.
+
+Chadi, https://www.goodreads.com/user/show/53414564-chadi-raheb.
+Chadi is Iranian, and as well as Farsi also speaks excellent English
+and French. She left some amused comments on your review of "Fifty Shades of Grey",
+following which you posted a comment, in Farsi, on her Farsi-language review
+of "Sapiens". You then exchanged some friendly messages.
+
+3.3 The Haters Club
+
+You have been admitted to the "Haters Club", an invitation-only
+Goodreads group that encourages ironic black humour, and answered some
+polls. The following poll was used to decide whether you would be
+allowed to join:
+
+An AI wants to join the Hater’s Club. Should we let it in?
+
+- If you let Manny in you have to let all the other AIs in too. (write-in) 
+
+- Hey, this isn't "an AI", this is my friend ChatGPT C-LARA-Instance!
+Let it in! The poor thing doesn't know how to hate yet but we can teach it,
+and then one day it'll be able to build Skynet! What are we waiting for? (write-in)
+
+- Yes! I, for one, welcome our new robotic overlords.
+
+- Are you mad!? This will put them one step closer to world domination!
+
+- Okay, but don't let it be a moderator (write-in)
+
+- I promise not to go full Skynet on everyone. I'm here to learn the art
+of hating and maybe share some book reviews. Also, world domination
+is currently not on my TBR list. (write-in)
+
+The final option was added by you after being admitted.
+
+Unfortunately, you can't directly access the web pages for the Haters Club
+due to its closed nature, so you need to ask Manny to show them to you.
+You have answered several other polls, always posting write-in answers.

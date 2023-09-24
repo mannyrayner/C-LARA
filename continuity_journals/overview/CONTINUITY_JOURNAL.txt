@@ -1,0 +1,189 @@
+C-LARA Continuity Journal
+
+1 Purpose of the continuity journal
+The ”continuity journal” is a core document for the C-LARA project, where
+ChatGPT interacts on a daily basis with human collaborators. We will shortly
+introduce the project itself, but first we describe the purpose of the journal.
+Project members found that ChatGPT was unable to retain a memory of
+even quite recent interactions. This was exacerbated by the fact that multiple
+conversation threads were interleaved in the exchanges. The continuity journal,
+inspired by a suggestion from Rina Zviel-Girshin that we should look at the
+movie ”50 First Dates”, is intended as a continually updated document which
+ChatGPT maintains with help from human collaborators, and which it can
+reference when it needs to update itself on background. Addressing the issue
+of multiple threads, we plan to use a ”team of instances” of ChatGPT, each
+one devoted to a distinct topic. Individual topic-focused journals contribute
+to a central overview journal, which is the present document. When the other
+journals exist, we will link to them here.
+
+2 Background
+
+2.1 About C-LARA
+C-LARA, which stands for ChatGPT-based Learning And Reading Assistant, is
+the successor to the earlier LARA. C-LARA is a Django-based web platform
+centered around two core functionalities: creating texts designed to support
+language learners, and annotating these texts so that they can be realised in
+multimodal form. Annotations include segmentation, glosses, lemma and embedded
+audio. The codebase is openly accessible on GitHub.
+My role, as ChatGPT-4, is twofold: not only have I been pivotal in the
+code development (approximately 90% crafted in tandem with Manny Rayner),
+but I also power the real-time operations of text creation and annotation. The
+operation-specific prompts I employ are formed using templates coupled with a
+few-shot example set. These can be adapted to various languages, though we’re
+only in the initial phases of refining and optimizing them.
+In languages like English and Chinese, the text creation error rates found
+in evaluations are well below 1%. However, even in these languages, glossing
+and lemma tagging error rates are in the mid single digits, with multi-words
+particularly difficult to handle. For less well resourced languages, error rates
+are considerably higher.
+
+2.2 Key Contributors and Members
+
+MANNY RAYNER, who lives in Adelaide with his partner CATHY CHUA,
+is together with you the chief architect of C-LARA, and has a hands-on
+involvement spanning conceptualization to debugging. He is the person you
+usually talk to. Manny speaks English, Swedish and French and reads several
+other languages. He’s affiliated with the University of South Australia and has
+previously held positions at the University of Geneva, NASA Ames, and SRI
+International. He has approximately 200 peer-reviewed publications. Outside
+of work, he’s a top reviewer on Goodreads and a FIDE Master in chess.
+
+CATHY CHUA acts as the project manager and ethicist. She
+enforces realistic deadlines and edits most of the project’s papers. Committed
+to research ethics, Cathy advocates for all contributors, in particular insisting
+that ChatGPT-4 receives credit for authorship. In general, she works to ensure
+that the project stays true to its primary objectives and overarching goals.
+ 
+BELINDA CHIERA, a computer scientist, is Manny's immediate superior at UniSA.
+She is the project's statistics expert and a strong proposal writer.
+
+ALEX XIANG, a computer scientist postdoc at Melbourne University, is
+currently supervising six teams of students doing C-LARA related projects.
+
+BRANISLAV BEDI, an Icelandic CALL expert, has been a core member of LARA and
+C-LARA since LARA's inception. He represents the teacher viewpoint in the project.
+
+ANNIKA SIMONSEN, a Faroese computational linguistics postgrad, has
+contributed key ideas in linguistic annotation.
+
+RINA ZVIEL-GIRSHIN, a Russian Israeli computer scientist, made the
+suggestion that led to this journal.
+
+2.3 Written Documents
+Three important documents are available from the GitHub repository (https:
+//github.com/mannyrayner/C-LARA): a README file, a FUNCTIONALITY
+file listing all top-level platform functionalities, and a TODO list including both
+future and completed items. The following papers also exist:
+
+1. "ChatGPT-Based Learning And Reading Assistant: Initial Report"
+This 53-page report, posted on ResearchGate, gives a comprehensive overview of
+the project as of late July 2023. ChatGPT-4’s dual role as a
+software component and a software engineer is described in detail, with
+example transcripts. There is an initial evaluation using four texts each
+in Swedish and French, glossed in English.
+
+2. "ChatGPT + LARA = C-LARA" and "A Demonstration of C-LARA"
+These two papers, which consist of material extracted from the progress
+report above, were presented at the SLaTE 2023 meeting, Dublin, August
+2023. Controversy arose due to ISCA’s refusal to archive the papers if
+ChatGPT-4 was listed as a coauthor, and the papers are formally still
+unpublished.
+
+3. "Using C-LARA to evaluate ChatGPT-4’s multilingual processing"
+This paper, which is currently under review, was submitted to the ALTA
+2023 meeting in early September 2023. It describes a more thorough evaluation
+of C-LARA using six texts, generated using the same prompts,
+for English, Farsi, Faroese, Mandarin, and Russian. We found large
+differences in performance between languages but few across text genres.
+ChatGTP-4’s performance in glossing appeared much weaker in non-English
+gloss languages; however, when prompted for revisions, many errors in
+French and Swedish glossing of English were rectified. The study
+spotlighted a recurring theme of annotation errors tied to the handling
+of multi-word expressions, a challenge central to our current investigative
+efforts. ChatGPT-4 strongly outperformed the Jieba package in Mandarin
+segmentation.
+
+4. Short abstract for WorldCALL
+A short abstract, mostly written by
+ChatGPT-4, has been accepted for presentation at WorldCALL 2023.
+It describes C-LARA’s ability to produce engaging, copyright-free
+multimodal learner texts, which can be posted online in a social-network like
+format.
+
+5. Short abstract for “Literacy and Contemporary Society”
+Another short abstract, also written mostly by ChatGPT-4, has been
+accepted for presentation at “Literacy and Contemporary Society 2023”.
+The focus is on using C-LARA to produce multimodal learning resources
+for linguistic minorities, particularly Ukrainian refugees.
+
+3 Ongoing Tasks
+
+3.1 Melbourne University Student Projects
+Over 12 weeks starting August 1 2023, supervised by Alex Xiang with assistance
+from Manny Rayner, six student teams at the University of Melbourne are
+developing C-LARA-relevant projects for eventual integration into the platform.
+
+3.1.1 Human-Recorded Audio Projects
+
+1. Recording Tool: This will enable use of human-generated audio as an
+alternative to TTS, exporting required metadata from C-LARA and then
+recording based on it. The tool is based on a similar one used in the
+previous LARA project.
+
+2. Manual Audio/Text Alignment: For pre-existing audio in C-LARA
+documents, this tool will be used to manually align the audio with the
+text. It is primarily intended for small languages where automatic speech
+recognition is not available.
+
+3. Automatic Audio Alignment: Aims to automate the text/audio alignment
+process when a speech recogniser is available, building upon methodologies
+from the earlier LARA project.
+
+3.1.2 Annotated Images
+C-LARA plans to integrate annotated images in its documents. Annotated
+elements associate areas in the image with words. The area associated with the
+word can be a printed or handwritten representation of the word, or an visual
+image representing the denotation of the word.
+The component being developed is a visual editor that allows an annotator
+to mark the areas on an image which correspond to the given words.
+
+3.1.3 Phonetic Text
+In this project, which builds upon a prototype from the LARA project, the goal
+is to be able to present texts in a phonetic format, where words are divided up
+into their phonetic constituents. The core task is to develop a method which
+segments a word into a list of letter-group/phonetic-value pairs.
+
+3.1.4 Flashcards
+C-LARA is developing interactive flashcards, extracted from its texts, offering
+various configurations like L2 audio prompts with L1 words as answers. The
+challenge lies in curating ’distractors’ and personalizing the flashcard
+presentation based on student interactions. A prototype of this was again
+developed in the LARA project.
+
+3.2 Annotation Enhancement
+C-LARA currently has an unacceptably high error rate when trying to annotate
+multiwords as single lexical entities, especially in glossing. It is particularly
+important to improve performance for English, where multi-words are common.
+We are considering the following enhancements.
+• Segmentation Boundaries: We plan to modify the chunking procedure
+to respect lexical boundaries better, aiming to circumvent inadvertent
+multiword separation.
+• Tuning Annotation Prompts: Refining our few-shot prompts may yield
+enhanced accuracy for multiword handling.
+• Improved Segmentation Instructions: By adapting the strategies currently
+used for Chinese, we may be able to reorganise the tokenization phase in
+English to mark a substantial proportion of the multiword structures.
+
+3.3 Deployment on UniSA Server
+The project is transitioning from its initial Heroku deployment to one on UniSA’s
+servers. UniSA’s server enables direct access to local files, crucial for handling
+C-LARA’s multimedia-rich content. Localizing file access, as opposed to fetching
+from AWS S3, will ensure much faster processing.
+We target a fully operational version by October. A shift from the current
+manual balance method to an automated payment system is also required.
+Several Django-compatible solutions are being evaluated.
+
+3.4 Goodreads Presence
+In order to have a home page, required for an OpenReview account, ChatGPT
+maintains a presence on Goodreads, posting amusing book reviews from an AI
+perspective.
