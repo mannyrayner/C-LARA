@@ -14,6 +14,7 @@ import uuid
 import boto3
 import botocore
 import os
+import zipfile
 
 from asgiref.sync import sync_to_async
 
@@ -490,6 +491,21 @@ def format_timestamp(timestamp_string):
     
 def replace_punctuation_with_underscores(s):
     return re.sub(f"[{re.escape(string.punctuation)}]+", "_", s)
+
+## Extract a zipfile to a directory
+def unzip_file(pathname, dir, callback=None):
+    abspathname = absolute_local_file_name(pathname)
+    absdirname = absolute_local_file_name(dir)
+    if not local_file_exists(abspathname):
+        raise InternalCLARAError( message=f'Unable to find file {pathname}' )
+    try:
+        zip_ref = zipfile.ZipFile(abspathname, 'r')  
+        zip_ref.extractall(absdirname)
+        zip_ref.close()
+        post_task_update(callback, f'--- Unzipped {pathname} to {dir}')
+        return True
+    except Exception as e:
+        raise InternalCLARAError( message=f'*** Error: something went wrong when trying to unzip {pathname} to {dir}: {str(e)}')
 
 # This assumes that 'callback' is a callback function taking one arg
 # If it is non-null, call it on the message.
