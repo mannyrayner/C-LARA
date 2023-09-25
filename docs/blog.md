@@ -12,5 +12,3 @@
 </div>
 ## Blog
 There is a blog about the C-LARA project <a href="https://blog.c-lara.org/" target="_blank">here</a>. 
-
-Contact Cathy Chua, cathyc@pioneerbooks.com.au, if you would like to get access to post in it.
