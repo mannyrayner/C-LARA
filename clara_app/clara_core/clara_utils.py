@@ -15,6 +15,7 @@ import boto3
 import botocore
 import os
 import zipfile
+import tempfile
 
 from asgiref.sync import sync_to_async
 
@@ -502,10 +503,11 @@ def unzip_file(pathname, dir, callback=None):
         zip_ref = zipfile.ZipFile(abspathname, 'r')  
         zip_ref.extractall(absdirname)
         zip_ref.close()
-        post_task_update(callback, f'--- Unzipped {pathname} to {dir}')
+        #post_task_update(callback, f'--- Unzipped {pathname} to {dir}')
         return True
     except Exception as e:
-        raise InternalCLARAError( message=f'*** Error: something went wrong when trying to unzip {pathname} to {dir}: {str(e)}')
+        post_task_update(callback, f'--- Error when trying to unzip {pathname} to {dir}: {str(e)}')
+        raise InternalCLARAError( message=f'*** Error: something went wrong when trying to unzip {pathname} to {dir}') 
 
 # This assumes that 'callback' is a callback function taking one arg
 # If it is non-null, call it on the message.

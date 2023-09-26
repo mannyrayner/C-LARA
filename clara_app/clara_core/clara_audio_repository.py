@@ -17,8 +17,9 @@ The function clara_database_adapter.localise_sql_query converts this to sqlite3 
 from .clara_database_adapter import connect, localise_sql_query
 
 from .clara_tts_api import get_tts_engine_types
-from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, copy_local_file
-from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory, list_files_in_directory, post_task_update
+from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, copy_local_file, basename
+from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory
+from .clara_utils import list_files_in_directory, post_task_update
 
 from .clara_classes import InternalCLARAError
 
@@ -152,10 +153,10 @@ class AudioRepository:
     def get_voice_directory(self, engine_id, language_id, voice_id):
         return absolute_file_name( Path(self.base_dir) / engine_id / language_id / voice_id )
 
-    def store_mp3(self, engine_id, language_id, voice_id, source_file):
+    def store_mp3(self, engine_id, language_id, voice_id, source_file, keep_file_name=False):
         voice_dir = self.get_voice_directory(engine_id, language_id, voice_id)
         make_directory(voice_dir, parents=True, exist_ok=True)
-        file_name = f"{voice_id}_{len(list_files_in_directory(voice_dir)) + 1}.mp3"
+        file_name = basename(source_file) if keep_file_name else f"{voice_id}_{len(list_files_in_directory(voice_dir)) + 1}.mp3"
         destination_path = str(Path(voice_dir) / file_name)
         copy_local_file(source_file, destination_path)
         return destination_path
