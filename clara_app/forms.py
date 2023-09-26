@@ -1,9 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-# Remove custom User
-#from .models import Content, User, UserProfile, LanguageMaster, CLARAProject, Rating, Comment
-from .models import Content, UserProfile, LanguageMaster, CLARAProject, Rating, Comment
+from .models import Content, UserProfile, LanguageMaster, CLARAProject, HumanAudioInfo, Rating, Comment
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
@@ -52,6 +50,11 @@ class ProjectCreationForm(forms.ModelForm):
     class Meta:
         model = CLARAProject
         fields = ['title', 'l2', 'l1']
+
+class HumanAudioInfoForm(forms.ModelForm):
+    class Meta:
+        model = HumanAudioInfo
+        fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id', 'audio_file']
         
 class AddProjectMemberForm(forms.Form):
     ROLE_CHOICES = [

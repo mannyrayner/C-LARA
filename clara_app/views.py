@@ -12,17 +12,14 @@ from django.db.models import Avg, Q
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 
-# Remove custom User
-#from .models import User, UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
-from .models import UserProfile, LanguageMaster, Content, CLARAProject, ProjectPermissions, CLARAProjectAction, Comment, Rating
+from .models import UserProfile, LanguageMaster, Content, CLARAProject, HumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
 
-# ASYNCHRONOUS PROCESSING
 from django_q.tasks import async_task
 from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserProfileForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm, HumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
@@ -31,6 +28,7 @@ from .utils import create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates, delete_all_tasks
+from .utils import uploaded_file_to_file
 
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
@@ -590,6 +588,69 @@ def get_audio_metadata_view(request, project_id):
     return render(request, 'clara_app/audio_metadata.html', 
                   { 'project': project, 'form': form })
 
+@login_required
+@user_has_a_project_role
+def human_audio_processing(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    # Try to get existing HumanAudioInfo for this project or create a new one
+    human_audio_info, created = HumanAudioInfo.objects.get_or_create(project=project)
+
+    # Handle POST request
+    if request.method == 'POST':
+        form = HumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info, initial={'voice_talent_id': 'anonymous'})
+
+        if form.is_valid():
+            # 1. Update the model with any new values from the form
+            form.save()
+
+            # 2. Upload and internalise a LiteDevTools zipfile if there is one.
+            if 'audio_zip' in request.FILES and request.POST['voice_talent_id']: 
+                uploaded_file = request.FILES['audio_zip']
+                zip_file = uploaded_file_to_file(uploaded_file)
+                result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, request.POST['voice_talent_id'])
+
+                if result:
+                    messages.success(request, "LiteDevTools zipfile processed successfully!")
+                else:
+                    messages.error(request, "Something went wrong when installing zipfile")
+
+            messages.success(request, "Human Audio Info updated successfully!")
+
+        else:
+            messages.error(request, "There was an error processing the form. Please check your input.")
+
+    # Handle GET request
+    else:
+        form = HumanAudioInfoForm(instance=human_audio_info, initial={'voice_talent_id': 'anonymous'})
+    
+    context = {
+        'project': project,
+        'form': form,
+        # Any other context data you want to send to the template
+    }
+    return render(request, 'clara_app/human_audio_processing.html', context)
+
+@login_required
+def generate_audio_metadata(request, project_id, metadata_type, voice_id):
+    # Ensure the metadata type is valid
+    if metadata_type not in ['segments', 'words']:
+        return HttpResponse("Invalid metadata type.", status=400)
+
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    # Get audio metadata in the required LiteDevTools format
+    lite_metadata_content = clara_project_internal.get_audio_metadata(tts_engine_type='human_voice', voice_id=voice_id, type=metadata_type, format="lite_dev_tools")
+
+    # Create a response object for file download
+    response = JsonResponse(lite_metadata_content, safe=False, json_dumps_params={'indent': 4})
+    file_name = f"metadata_{metadata_type}_{project_id}.json"
+    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+
+    return response
+
 
 # Get metadata for a version of a text (internal use only)
 @login_required
@@ -1079,43 +1140,13 @@ def project_history(request, project_id):
     actions = CLARAProjectAction.objects.filter(project=project).order_by('-timestamp')
     return render(request, 'clara_app/project_history.html', {'project': project, 'actions': actions})
 
-# Render the internal representation to create a directory of static HTML files
-##@login_required
-##@user_has_a_project_role
-##def render_text(request, project_id):
-##    project = get_object_or_404(CLARAProject, pk=project_id)
-##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-##
-##    # Check that the required text versions exist
-##    if "gloss" not in clara_project_internal.text_versions or "lemma" not in clara_project_internal.text_versions:
-##        messages.error(request, "Glossed and lemma-tagged versions of the text must exist to render it.")
-##        return redirect('project_detail', project_id=project.id)
-##
-##    if request.method == 'POST':
-##        form = RenderTextForm(request.POST)
-##        if form.is_valid():
-##            # Call the render_text method to generate the HTML files
-##            clara_project_internal.render_text(project_id, self_contained=True)
-##            
-##            # Define URLs for the first page of content and the zip file
-##            content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
-##            # Put back zipfile later
-##            #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
-##            zipfile_url = None
-##
-##            # Create the form for registering the project content
-##            register_form = RegisterAsContentForm()
-##            
-##            return render(request, 'clara_app/render_text.html', {'content_url': content_url, 'zipfile_url': zipfile_url, 'project': project, 'register_form': register_form})
-## 
-##    else:
-##        form = RenderTextForm()
-##
-##        return render(request, 'clara_app/render_text.html', {'form': form, 'project': project})
-
-def clara_project_internal_render_text(clara_project_internal, project_id, self_contained=False, callback=None):
+def clara_project_internal_render_text(clara_project_internal, project_id,
+                                       tts_engine_type=None, voice_id=None,
+                                       self_contained=False, callback=None):
     try:
-        clara_project_internal.render_text(project_id, self_contained=self_contained, callback=callback)
+        clara_project_internal.render_text(project_id,
+                                           tts_engine_type=tts_engine_type, voice_id=voice_id,
+                                           self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}")
@@ -1131,6 +1162,15 @@ def render_text_start(request, project_id):
     if "gloss" not in clara_project_internal.text_versions or "lemma" not in clara_project_internal.text_versions:
         messages.error(request, "Glossed and lemma-tagged versions of the text must exist to render it.")
         return redirect('project_detail', project_id=project.id)
+
+    # Check if human audio info exists for the project and if voice_talent_id is set
+    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    if human_audio_info and human_audio_info.voice_talent_id:
+        tts_engine_type = 'human_voice'
+        voice_id = human_audio_info.voice_talent_id
+    else:
+        tts_engine_type = None
+        voice_id = None
 
     if request.method == 'POST':
         form = RenderTextForm(request.POST)
@@ -1150,7 +1190,8 @@ def render_text_start(request, project_id):
             # First check that we can internalise and merge the gloss and lemma files, and give an error if we can't
             try:
                 internalised_text = clara_project_internal.get_internalised_text()
-                task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id, self_contained=self_contained, callback=callback)
+                task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id,
+                                     self_contained=self_contained, tts_engine_type=tts_engine_type, voice_id=voice_id, callback=callback)
                 print(f'--- Started task: task_id = {task_id}, self_contained={self_contained}')
 
                 # Redirect to the monitor view, passing the task ID and report ID as parameters

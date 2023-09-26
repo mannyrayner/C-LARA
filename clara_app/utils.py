@@ -9,6 +9,7 @@ from functools import wraps
 from decimal import Decimal
 import datetime
 import time
+import tempfile
 
 from .models import CLARAProject, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
 
@@ -113,3 +114,15 @@ def language_master_required(function):
         else:
             return HttpResponseForbidden('You are not authorized to edit language prompts')
     return _wrapped_view
+ 
+# Uploaded files aren't always files.
+def uploaded_file_to_file(uploaded_file):
+    try:
+        return uploaded_file.temporary_file_path()
+    except AttributeError:
+        # If not, save the uploaded file to a new temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        for chunk in uploaded_file.chunks():
+            temp_file.write(chunk)
+        temp_file.close()
+        return temp_file.name

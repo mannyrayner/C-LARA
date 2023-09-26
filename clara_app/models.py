@@ -65,6 +65,32 @@ class ProjectPermissions(models.Model):
 
     class Meta:
         unique_together = ("user", "project")
+
+# This is used if we have human-recorded audio instead of TTS
+class HumanAudioInfo(models.Model):
+    # Choices for the 'method' field
+    METHOD_CHOICES = [
+        ('record', 'Record'),
+        ('manual_align', 'Manual Align'),
+        ('automatic_align', 'Automatic Align'),
+    ]
+    
+    # Fields
+    method = models.CharField(max_length=20, choices=METHOD_CHOICES)
+    use_for_segments = models.BooleanField(default=False)
+    use_for_words = models.BooleanField(default=False)
+    voice_talent_id = models.CharField(max_length=200, default='anonymous')
+    audio_file = models.FileField(upload_to='audio_files/', blank=True, null=True)
+    
+    # Relationship with CLARAProject
+    project = models.OneToOneField(
+        'CLARAProject', 
+        on_delete=models.CASCADE, 
+        related_name='human_audio_info'
+    )
+
+    def __str__(self):
+        return f"Human Audio Info for {self.project.title}"
         
 class CLARAProjectAction(models.Model):
     ACTION_CHOICES = [
