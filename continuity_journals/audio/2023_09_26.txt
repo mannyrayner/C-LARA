@@ -1,0 +1,30 @@
+Task Overview:
+
+We embarked on the task of incorporating human-recorded audio into C-LARA as an alternative to the existing Text-to-Speech (TTS) functionality. The goal was to allow for a richer and more natural audio experience for users, especially in contexts where human voice could provide a more authentic and engaging experience.
+
+Key Developments:
+
+1. Audio Processing Method:
+
+We reviewed and refined the method process_lite_dev_tools_zipfile in the AudioAnnotator class. This method processes a zip file containing audio data from LiteDevTools, extracts the audio files, and prepares them for integration into C-LARA.
+Several iterations were made to handle exceptions, manage temporary directories, and ensure the smooth conversion of audio files from .wav to .mp3 format.
+
+2. Audio Conversion:
+
+The function convert_ldt_data_to_mp3 was developed to handle the conversion of audio files. It uses the ffmpeg tool to convert .wav files to .mp3 format, updating the metadata accordingly.
+
+3. Integration with C-LARA:
+
+Modifications were made to the render_text_start function to check for the presence of human audio and use it during the rendering process if available.
+The HumanAudioInfo model was referenced to determine if human audio is available for a particular project and, if so, to fetch the relevant voice talent ID.
+
+Challenges and Solutions:
+
+We encountered challenges related to missing imports, which were resolved.
+There were issues with passing multiple values for the 'callback' argument in the _store_existing_mp3s method. This was addressed by correcting the method invocation.
+
+Next Steps:
+
+Further testing and validation of the human audio integration process.
+Optimization and refinement of the audio processing workflow.
+Exploration of additional features and enhancements related to human audio in C-LARA.
