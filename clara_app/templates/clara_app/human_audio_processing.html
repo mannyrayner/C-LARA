@@ -9,20 +9,48 @@
   
   <form method="post" enctype="multipart/form-data" id="human-audio-processing-form">
     {% csrf_token %}
-    {{ form.as_p }}
-
-    <!-- Control to download a metadata file in LiteDevTools format -->
     <p>
-      <strong>LiteDevTools Metadata Download:</strong>
-	  <a href="{% url 'generate_audio_metadata' project.id 'segments' form.voice_talent_id.value %}" class="btn">Download for Segments</a>
-	  <a href="{% url 'generate_audio_metadata' project.id 'words' form.voice_talent_id.value %}" class="btn">Download for Words</a>
+        <label for="{{ form.method.id_for_label }}">Method:</label>
+        {{ form.method }}
+    </p>
+    <p>
+        <label for="{{ form.use_for_segments.id_for_label }}">Use for Segments:</label>
+        {{ form.use_for_segments }}
+    </p>
+    <p>
+        <label for="{{ form.use_for_words.id_for_label }}">Use for Words:</label>
+        {{ form.use_for_words }}
+    </p>
+    <p>
+        <label for="{{ form.voice_talent_id.id_for_label }}">Voice Talent ID:</label>
+        {{ form.voice_talent_id }}
     </p>
 
-    <!-- Control to upload a LiteDevTools zipfile -->
+    {% if form.method.value == "manual_align" or form.method.value == "automatic_align" %}
     <p>
-      <strong>Upload LiteDevTools Zipfile:</strong>
-      <input type="file" name="audio_zip" accept=".zip">
+        <label for="{{ form.audio_file.id_for_label }}">Audio File:</label>
+        {{ form.audio_file }}
     </p>
+    {% endif %}
+
+	{% if form.method.value == "record" %}
+		<!-- Control to download a metadata file in LiteDevTools format -->
+		<p>
+		  <strong>LiteDevTools Metadata Download:</strong>
+		  {% if form.use_for_segments.value %}
+		     <a href="{% url 'generate_audio_metadata' project.id 'segments' form.voice_talent_id.value %}" class="btn">Download for Segments</a>
+		  {% endif %}
+		  {% if form.use_for_words.value %}
+		     <a href="{% url 'generate_audio_metadata' project.id 'words' form.voice_talent_id.value %}" class="btn">Download for Words</a>
+		  {% endif %}
+		</p>
+
+		<!-- Control to upload a LiteDevTools zipfile -->
+		<p>
+		  <strong>Upload LiteDevTools Zipfile:</strong>
+		  <input type="file" name="audio_zip" accept=".zip">
+		</p>
+	{% endif %}
 
     <button type="submit" id="submit-button">Update & Process</button>
   </form>
