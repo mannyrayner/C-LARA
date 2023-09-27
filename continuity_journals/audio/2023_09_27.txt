@@ -1,0 +1,19 @@
+Continuity Journal - C-LARA Project - Date: 2023-09-27
+
+1. Django Template Rendering Issues:
+
+We identified and fixed an issue with the Django template where the {% url %} tag was missing the required arguments. This was causing the template rendering to fail.
+We made the display of certain elements in the template conditional based on the value of the method field in the model. Specifically, certain controls were displayed only when the method was set to 'record'.
+We further refined the display of download links based on the values of the use_for_segments and use_for_words fields in the model.
+We adjusted the display of the audio_file field based on the value of the method field. It is now displayed when the method is either 'manual_align' or 'automatic_align' but not when it is 'record'.
+We improved the layout and labeling of the form fields in the template to enhance user experience.
+
+2. Continuity Journal Integration:
+
+We integrated the continuity journal functionality into the project. This allows for tracking of changes and progress over time, ensuring that future developers or team members have a clear understanding of the project's history and evolution.
+
+3. Next Steps:
+
+Further refinements and enhancements to the Django template based on project requirements.
+Implementation of the 'manual_align' and 'automatic_align' methods in the backend.
+Testing and validation of the changes made to ensure they meet the desired outcomes.
