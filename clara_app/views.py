@@ -623,7 +623,7 @@ def human_audio_processing(request, project_id):
 
     # Handle GET request
     else:
-        form = HumanAudioInfoForm(instance=human_audio_info, initial={'voice_talent_id': 'anonymous'})
+        form = HumanAudioInfoForm(instance=human_audio_info)
     
     context = {
         'project': project,
@@ -1141,12 +1141,12 @@ def project_history(request, project_id):
     return render(request, 'clara_app/project_history.html', {'project': project, 'actions': actions})
 
 def clara_project_internal_render_text(clara_project_internal, project_id,
-                                       tts_engine_type=None, voice_id=None,
+                                       audio_type_for_words='tts', audio_type_for_segments='tts', human_voice_id=None,
                                        self_contained=False, callback=None):
     try:
         clara_project_internal.render_text(project_id,
-                                           tts_engine_type=tts_engine_type, voice_id=voice_id,
-                                           self_contained=self_contained, callback=callback)
+                                           audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                           human_voice_id=human_voice_id, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}")
@@ -1165,12 +1165,14 @@ def render_text_start(request, project_id):
 
     # Check if human audio info exists for the project and if voice_talent_id is set
     human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
-    if human_audio_info and human_audio_info.voice_talent_id:
-        tts_engine_type = 'human_voice'
-        voice_id = human_audio_info.voice_talent_id
+    if human_audio_info:
+        human_voice_id = human_audio_info.voice_talent_id
+        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
+        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
     else:
-        tts_engine_type = None
-        voice_id = None
+        audio_type_for_words = 'tts'
+        audio_type_for_segments = 'tts'
+        human_voice_id = None
 
     if request.method == 'POST':
         form = RenderTextForm(request.POST)
@@ -1191,7 +1193,8 @@ def render_text_start(request, project_id):
             try:
                 internalised_text = clara_project_internal.get_internalised_text()
                 task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id,
-                                     self_contained=self_contained, tts_engine_type=tts_engine_type, voice_id=voice_id, callback=callback)
+                                     audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                     human_voice_id=human_voice_id, self_contained=self_contained, callback=callback)
                 print(f'--- Started task: task_id = {task_id}, self_contained={self_contained}')
 
                 # Redirect to the monitor view, passing the task ID and report ID as parameters
@@ -1294,9 +1297,23 @@ def offer_to_register_content(request, project_id):
 def register_project_content(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    
+
+    # Check if human audio info exists for the project and if voice_talent_id is set
+    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    if human_audio_info:
+        human_voice_id = human_audio_info.voice_talent_id
+        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
+        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
+    else:
+        audio_type_for_words = 'tts'
+        audio_type_for_segments = 'tts'
+        human_voice_id = None
+
     word_count0 = clara_project_internal.get_word_count()
-    voice0 = clara_project_internal.get_voice()
+    voice0 = clara_project_internal.get_voice(human_voice_id=human_voice_id, 
+                                              audio_type_for_words=audio_type_for_words, 
+                                              audio_type_for_segments=audio_type_for_segments)
+    
     # CEFR level and summary are not essential, just continue if they're not available
     try:
         cefr_level0 = clara_project_internal.load_text_version("cefr_level")
