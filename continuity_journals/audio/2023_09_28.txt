@@ -1,0 +1,26 @@
+Continuity Journal - Entry #3
+
+Date: September 28, 2023
+
+Summary of Changes:
+
+1. Refactoring AudioAnnotator Class:
+
+Modified the constructor of the AudioAnnotator class to support both TTS and human audio. Introduced parameters like audio_type_for_words and audio_type_for_segments to specify the type of audio for words and segments respectively.
+Added validation checks in the constructor to ensure consistency between the specified audio types and provided voice IDs.
+Introduced segment-specific and word-specific engine, language, and voice IDs to facilitate the handling of both TTS and human audio.
+Updated methods like annotate_text, _get_all_audio_data, and _add_audio_annotations to utilize the new segment and word-specific IDs.
+Renamed _store_existing_mp3s to _store_existing_human_audio_mp3s to clarify its purpose.
+
+2. Error Handling:
+
+Enhanced error handling by introducing checks in the constructor of AudioAnnotator to validate the provided audio types and ensure the presence of necessary voice IDs.
+
+Next Steps:
+
+Propagate the changes made in the AudioAnnotator class to higher-level functions and classes that utilize it.
+Conduct thorough testing to ensure the refactored code functions as expected and integrates seamlessly with the existing system.
+
+Notes:
+
+The refactoring aims to provide a more intuitive and flexible way to handle both TTS and human audio in the C-LARA system. The changes are designed to be backward compatible, ensuring smooth integration with existing functionalities.
