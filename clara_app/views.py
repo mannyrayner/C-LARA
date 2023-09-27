@@ -599,7 +599,7 @@ def human_audio_processing(request, project_id):
 
     # Handle POST request
     if request.method == 'POST':
-        form = HumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info, initial={'voice_talent_id': 'anonymous'})
+        form = HumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info)
 
         if form.is_valid():
             # 1. Update the model with any new values from the form
