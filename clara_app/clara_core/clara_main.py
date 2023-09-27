@@ -618,7 +618,8 @@ class CLARAProjectInternal:
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     # Caches the internalised version.
-    def get_internalised_and_annotated_text(self, tts_engine_type=None, voice_id=None, callback=None) -> str:
+    def get_internalised_and_annotated_text(self, tts_engine_type=None, human_voice_id=None,
+                                            audio_type_for_words='tts', audio_type_for_segments='tts', callback=None) -> str:
         if self.internalised_and_annotated_text:
             return self.internalised_and_annotated_text
         post_task_update(callback, f"--- Creating internalised text")
@@ -626,7 +627,8 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- Internalised text created")
         
         post_task_update(callback, f"--- Adding audio annotations")
-        audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, voice_id=voice_id, callback=callback)
+        audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
+                                         audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, callback=callback)
         audio_annotator.annotate_text(text_object, callback=callback)
         post_task_update(callback, f"--- Audio annotations done")
         
@@ -637,21 +639,22 @@ class CLARAProjectInternal:
         self.internalised_and_annotated_text = text_object
         return text_object
 
-    # Get audio metadata, for processing by other modules
-    def get_audio_metadata(self, tts_engine_type=None, voice_id=None, type='all', format='default', callback=None):
+    def get_audio_metadata(self, tts_engine_type=None, voice_id=None, human_voice_id=None,
+                           audio_type_for_words='tts', audio_type_for_segments='tts', type='all', format='default', callback=None):
         post_task_update(callback, f"--- Getting audio metadata")
         text_object = self.get_internalised_text()
         post_task_update(callback, f"--- Internalised text created")
         
-        audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, voice_id=voice_id, callback=callback)
+        audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, voice_id=voice_id, human_voice_id=human_voice_id,
+                                         audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, callback=callback)
         return audio_annotator.generate_audio_metadata(text_object, type=type, format=format, callback=callback)
-    
-    # Unzip a zipfile received from LiteDevTools, which will include audio files and metadata.
+
+    # Unzip a zipfile received from LiteDevTools, which will include human audio files and metadata.
     # Use the metadata to install the files in the audio repository 
-    def process_lite_dev_tools_zipfile(self, zipfile, voice_id, callback=None):
-        post_task_update(callback, f"--- Trying to install LDT zipfile {zipfile} with voice ID {voice_id}")
+    def process_lite_dev_tools_zipfile(self, zipfile, human_voice_id, callback=None):
+        post_task_update(callback, f"--- Trying to install LDT zipfile {zipfile} with human voice ID {human_voice_id}")
         try:
-            audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type='human_voice', voice_id=voice_id, callback=callback)
+            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
             post_task_update(callback, f'--- Calling process_lite_dev_tools_zipfile')
             return audio_annotator.process_lite_dev_tools_zipfile(zipfile, callback=callback)
         except:
@@ -661,9 +664,12 @@ class CLARAProjectInternal:
     # "Self-contained" means that it includes all the multimedia files referenced.
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
     # Requires 'gloss' and 'lemma' texts.
-    def render_text(self, project_id, self_contained=False, tts_engine_type=None, voice_id=None, callback=None) -> None:
+    def render_text(self, project_id, self_contained=False, tts_engine_type=None, human_voice_id=None,
+                    audio_type_for_words='tts', audio_type_for_segments='tts', callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text")
-        text_object = self.get_internalised_and_annotated_text(tts_engine_type=tts_engine_type, voice_id=voice_id, callback=callback)
+        text_object = self.get_internalised_and_annotated_text(tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
+                                                               audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                                               callback=callback)
         post_task_update(callback, f"--- Created internalised and annotated text")
         renderer = StaticHTMLRenderer(project_id)
         post_task_update(callback, f"--- Start creating pages")
@@ -685,10 +691,9 @@ class CLARAProjectInternal:
         return None if not text_object else text_object.word_count()
 
     # Get the voice
-    def get_voice(self) -> str:
-        #text_object = self.get_internalised_and_annotated_text()
-        #return None if not text_object else text_object.voice
-        audio_annotator = AudioAnnotator(self.l2_language)
+    def get_voice(self, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts') -> str:
+        audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id,
+                                         audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments)
         return None if not audio_annotator else audio_annotator.printname_for_voice()
 
     

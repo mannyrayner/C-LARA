@@ -29,20 +29,55 @@ import json
 import traceback
 
 class AudioAnnotator:
-    def __init__(self, language, tts_engine_type=None, voice_id=None, callback=None):
+    def __init__(self, language, tts_engine_type=None, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
         self.language = language
-        if tts_engine_type != 'human_voice':
-            self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, callback=callback)
-            self.engine_id = self.tts_engine.tts_engine_type if self.tts_engine else None
-            self.voice_id = get_default_voice(language, self.tts_engine) if self.tts_engine else None
-            self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
-        else:
-            self.tts_engine = None
-            self.engine_id = 'human_voice'
-            self.voice_id = voice_id
-            self.language_id = language
+        # For TTS
+        self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, callback=callback)
+        self.engine_id = self.tts_engine.tts_engine_type if self.tts_engine else None
+        self.voice_id = get_default_voice(language, self.tts_engine) if self.tts_engine else None
+        self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
+        # For human audio
+        self.human_voice_id = human_voice_id
+        # Common
         self.audio_repository = AudioRepository(callback=callback)
-        post_task_update(callback, f"--- Using AudioAnnotator object with voice of type '{self.engine_id}' and language ID '{self.language_id}'")
+        self.audio_type_for_words = audio_type_for_words
+        self.audio_type_for_segments = audio_type_for_segments
+
+        # Validations
+        valid_audio_types = ['tts', 'human']
+        if self.audio_type_for_words not in valid_audio_types:
+            raise InternalCLARAError(message = f"Invalid audio type for words: {self.audio_type_for_words}. Expected one of {valid_audio_types}.")
+
+        if self.audio_type_for_segments not in valid_audio_types:
+            raise InternalCLARAError(message = f"Invalid audio type for segments: {self.audio_type_for_segments}. Expected one of {valid_audio_types}.")
+        
+        if self.audio_type_for_segments == 'human' and not self.human_voice_id:
+            raise InternalCLARAError(message = "Human audio type specified for segments, but no human_voice_id provided.")
+        
+        if self.audio_type_for_words == 'human' and not self.human_voice_id:
+            raise InternalCLARAError(message = "Human audio type specified for words, but no human_voice_id provided.")
+
+        # Set word- and segment-based engine, language, and voice IDs based on audio types
+        if self.audio_type_for_words == 'tts':
+            self.word_engine_id = self.engine_id
+            self.word_language_id = self.language_id
+            self.word_voice_id = self.voice_id
+        else:
+            self.word_engine_id = 'human_voice'
+            self.word_language_id = self.language
+            self.word_voice_id = self.human_voice_id
+
+        if self.audio_type_for_segments == 'tts':
+            self.segment_engine_id = self.engine_id
+            self.segment_language_id = self.language_id
+            self.segment_voice_id = self.voice_id
+        else:
+            self.segment_engine_id = 'human_voice'
+            self.segment_language_id = self.language
+            self.segment_voice_id = self.human_voice_id
+
+        post_task_update(callback, f"--- Using AudioAnnotator object with TTS voice of type '{self.engine_id}' and human voice '{self.human_voice_id}'")
+
 
     def delete_entries_for_language(self, callback=None):
         self.audio_repository.delete_entries_for_language(self.engine_id, self.language_id, callback=callback)
@@ -52,12 +87,12 @@ class AudioAnnotator:
         
             missing_words, missing_segments = self._get_missing_audio(text_obj, callback=callback)
 
-            if missing_words:
+            if missing_words and self.audio_type_for_words == 'tts':
                 post_task_update(callback, f"--- Creating TTS audio for words")
                 self._create_and_store_missing_mp3s(missing_words, callback=callback)
                 post_task_update(callback, f"--- TTS audio for words created")
 
-            if missing_segments:
+            if missing_segments and self.audio_type_for_segments == 'tts':
                 post_task_update(callback, f"--- Creating TTS audio for segments")
                 self._create_and_store_missing_mp3s(missing_segments, callback=callback)
                 post_task_update(callback, f"--- TTS audio for segments created")
@@ -71,13 +106,13 @@ class AudioAnnotator:
         for page in text_obj.pages:
             for segment in page.segments:
                 segment_text = canonical_text_for_audio(segment.to_text())
-                file_segment = self.audio_repository.get_entry(self.engine_id, self.language_id, self.voice_id, segment_text, callback=callback)
+                file_segment = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text, callback=callback)
                 segments_data.append([segment_text, file_segment])
                 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
                         canonical_word = canonical_word_for_audio(content_element.content)
-                        file_word = self.audio_repository.get_entry(self.engine_id, self.language_id, self.voice_id, canonical_word, callback=callback)
+                        file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
                         words_data.append([canonical_word, file_word])
 
         return words_data, segments_data
@@ -143,7 +178,7 @@ class AudioAnnotator:
             metadata_file = os.path.join(temp_ldt_dir, 'metadata_help.json')
             ldt_metadata = read_json_local_file(metadata_file)
             ldt_metadata = convert_ldt_data_to_mp3(ldt_metadata, temp_ldt_dir, temp_mp3_dir, callback=callback)
-            self._store_existing_mp3s(ldt_metadata, temp_mp3_dir, callback=callback)
+            self._store_existing_human_audio_mp3s(ldt_metadata, temp_mp3_dir, callback=callback)
             return True
         except Exception as e:
             post_task_update(callback, f'*** Error when trying to install LDT audio {zipfile}')
@@ -159,7 +194,7 @@ class AudioAnnotator:
 
     # We have metadata as a list of items of the form { 'text': text, 'file': file } where file is the basename of a file in temp_dir.
     # The files are copied into the appropriate directory and the metadata is used to update the DB
-    def _store_existing_mp3s(self, metadata, temp_dir, callback=None):
+    def _store_existing_human_audio_mp3s(self, metadata, temp_dir, callback=None):
         post_task_update(callback, f'--- Calling _store_existing_mp3s with {len(metadata)} metadata items and audio dir = {temp_dir}')
         for i, metadata_item in enumerate(metadata, 1):
             try:
@@ -168,8 +203,8 @@ class AudioAnnotator:
                 if file:
                     post_task_update(callback, f"--- Adding mp3 to repository for '{text}', ({i}/{len(metadata)})")
                     temp_file = os.path.join(temp_dir, file)
-                    file_path = self.audio_repository.store_mp3(self.engine_id, self.language_id, self.voice_id, temp_file, keep_file_name=True)
-                    self.audio_repository.add_entry(self.engine_id, self.language_id, self.voice_id, text, file_path)
+                    file_path = self.audio_repository.store_mp3('human_voice', self.human_language_id, self.human_voice_id, temp_file, keep_file_name=True)
+                    self.audio_repository.add_entry('human_voice', self.human_language_id, self.human_voice_id, text, file_path)
             except Exception as e:
                 post_task_update(callback, f"*** Error trying to process metadata item {metadata_item}: {str(e)}")
 
@@ -180,36 +215,53 @@ class AudioAnnotator:
         for page in text_obj.pages:
             for segment in page.segments:
                 segment_text = canonical_text_for_audio(segment.to_text())
-                segment_file_path = self.audio_repository.get_entry(self.engine_id, self.language_id, self.voice_id, segment_text)
+                segment_file_path = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text)
                 if not segment_file_path:
                     post_task_update(callback, f"--- Warning: no audio annotation available for segment '{segment_text}'")
                     #segment_file_path = 'placeholder.mp3'
                 else:
                     segment.annotations['tts'] = {
-                        "engine_id": self.engine_id,
-                        "language_id": self.language_id,
-                        "voice_id": self.voice_id,
+                        "engine_id": self.segment_engine_id,
+                        "language_id": self.segment_language_id,
+                        "voice_id": self.segment_voice_id,
                         "file_path": segment_file_path,
                     }                   
 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
                         canonical_word = canonical_word_for_audio(content_element.content)
-                        file_path = self.audio_repository.get_entry(self.engine_id, self.language_id, self.voice_id, canonical_word)
+                        file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
                         if not file_path:
                             post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
                             file_path = 'placeholder.mp3'
                         content_element.annotations['tts'] = {
-                            "engine_id": self.engine_id,
-                            "language_id": self.language_id,
-                            "voice_id": self.voice_id,
+                            "engine_id": self.word_engine_id,
+                            "language_id": self.word_language_id,
+                            "voice_id": self.word_voice_id,
                             "file_path": file_path,
                         }
         post_task_update(callback, f"--- Audio annotations added to internalised text")
 
     def printname_for_voice(self):
-        if self.engine_id:
-            return '_'.join([ self.engine_id, self.language_id, self.voice_id ])
+        segment_voice_str = None
+        word_voice_str = None
+
+        if self.audio_type_for_segments == 'tts' and self.segment_engine_id:
+            segment_voice_str = '_'.join([self.segment_engine_id, self.segment_language_id, self.segment_voice_id]) + " (segments)"
+        elif self.audio_type_for_segments == 'human':
+            segment_voice_str = f"human_{self.segment_language_id}_{self.human_voice_id} (segments)"
+
+        if self.audio_type_for_words == 'tts' and self.word_engine_id:
+            word_voice_str = '_'.join([self.word_engine_id, self.word_language_id, self.word_voice_id]) + " (words)"
+        elif self.audio_type_for_words == 'human':
+            word_voice_str = f"human_{self.word_language_id}_{self.human_voice_id} (words)"
+
+        if segment_voice_str and word_voice_str:
+            return f"{segment_voice_str}, {word_voice_str}"
+        elif segment_voice_str:
+            return segment_voice_str
+        elif word_voice_str:
+            return word_voice_str
         else:
             return 'No audio voice'
 
