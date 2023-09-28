@@ -628,9 +628,9 @@ def human_audio_processing(request, project_id):
                 uploaded_file = request.FILES['audio_zip']
                 zip_file = uploaded_file_to_file(uploaded_file)
                 if not local_file_exists(zip_file):
-                    messages.error(request, "Error: unable to find uploaded file {zip_file}")
+                    messages.error(request, f"Error: unable to find uploaded file {zip_file}")
                 else:
-                    print("--- Found uploaded file {zip_file}")
+                    print(f"--- Found uploaded file {zip_file}")
                     # Create a callback
                     report_id = uuid.uuid4()
                     callback = [post_task_update_in_db, report_id]
