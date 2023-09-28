@@ -498,7 +498,8 @@ def unzip_file(pathname, dir, callback=None):
     abspathname = absolute_local_file_name(pathname)
     absdirname = absolute_local_file_name(dir)
     if not local_file_exists(abspathname):
-        raise InternalCLARAError( message=f'Unable to find file {abspathname}' )
+        message = f'Unable to find file {abspathname}'
+        raise InternalCLARAError( message=message )
     try:
         zip_ref = zipfile.ZipFile(abspathname, 'r')  
         zip_ref.extractall(absdirname)
