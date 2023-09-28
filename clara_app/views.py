@@ -591,11 +591,16 @@ def get_audio_metadata_view(request, project_id):
 
 def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
     try:
-        result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, human_voice_id, callback=callback)
-        if result:
-            post_task_update(callback, f"finished")
-        else:
+        if not local_file_exists(zip_file):
+            post_task_update(callback, "Error: unable to find uploaded file {zip_file}")
             post_task_update(callback, f"error")
+        else:
+            post_task_update(callback, "--- Found uploaded file {zip_file}")
+            result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, human_voice_id, callback=callback)
+            if result:
+                post_task_update(callback, f"finished")
+            else:
+                post_task_update(callback, f"error")
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}")
         post_task_update(callback, f"error")
