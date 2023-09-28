@@ -138,7 +138,7 @@ from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_renderer import StaticHTMLRenderer
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file
-from .clara_utils import rename_file, remove_file, get_file_time, file_exists, output_dir_for_project_id
+from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp
 from .clara_utils import post_task_update
@@ -653,6 +653,11 @@ class CLARAProjectInternal:
     # Use the metadata to install the files in the audio repository 
     def process_lite_dev_tools_zipfile(self, zipfile, human_voice_id, callback=None):
         post_task_update(callback, f"--- Trying to install LDT zipfile {zipfile} with human voice ID {human_voice_id}")
+        if not local_file_exists(zipfile):
+            post_task_update(callback, f'*** Error: unable to find {zipfile}')
+            return False
+        else:
+            post_task_update(callback, f'--- {zipfile} found')
         try:
             audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
             post_task_update(callback, f'--- Calling process_lite_dev_tools_zipfile')
