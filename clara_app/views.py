@@ -592,7 +592,7 @@ def get_audio_metadata_view(request, project_id):
 def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
     try:
         if not local_file_exists(zip_file):
-            post_task_update(callback, "Error: unable to find uploaded file {zip_file}")
+            post_task_update(callback, f"Error: unable to find uploaded file {zip_file}")
             post_task_update(callback, f"error")
         else:
             post_task_update(callback, "--- Found uploaded file {zip_file}")
@@ -630,6 +630,7 @@ def human_audio_processing(request, project_id):
                 if not local_file_exists(zip_file):
                     messages.error(request, "Error: unable to find uploaded file {zip_file}")
                 else:
+                    print("--- Found uploaded file {zip_file}")
                     # Create a callback
                     report_id = uuid.uuid4()
                     callback = [post_task_update_in_db, report_id]
