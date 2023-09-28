@@ -37,7 +37,8 @@ from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, read_txt_file, output_dir_for_project_id, post_task_update, is_rtl_language
+from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file
+from .clara_core.clara_utils import output_dir_for_project_id, post_task_update, is_rtl_language
 
 from pathlib import Path
 from decimal import Decimal
