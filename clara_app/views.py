@@ -621,15 +621,17 @@ def human_audio_processing(request, project_id):
             if 'audio_zip' in request.FILES and human_voice_id: 
                 uploaded_file = request.FILES['audio_zip']
                 zip_file = uploaded_file_to_file(uploaded_file)
+                if not local_file_exists(zip_file):
+                    messages.error(request, "Error: unable to find uploaded file {zip_file}")
+                else:
+                    # Create a callback
+                    report_id = uuid.uuid4()
+                    callback = [post_task_update_in_db, report_id]
 
-                # Create a callback
-                report_id = uuid.uuid4()
-                callback = [post_task_update_in_db, report_id]
+                    async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
 
-                async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
-
-                # Redirect to the monitor view, passing the task ID and report ID as parameters
-                return redirect('process_ldt_zipfile_monitor', project_id, report_id)
+                    # Redirect to the monitor view, passing the task ID and report ID as parameters
+                    return redirect('process_ldt_zipfile_monitor', project_id, report_id)
             
             else:
                 messages.success(request, "Human Audio Info updated successfully!")
