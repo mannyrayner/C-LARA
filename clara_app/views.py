@@ -588,6 +588,17 @@ def get_audio_metadata_view(request, project_id):
     return render(request, 'clara_app/audio_metadata.html', 
                   { 'project': project, 'form': form })
 
+def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
+    try:
+        result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, human_voice_id, callback=callback)
+        if result:
+            post_task_update(callback, f"finished")
+        else:
+            post_task_update(callback, f"error")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"error")
+
 @login_required
 @user_has_a_project_role
 def human_audio_processing(request, project_id):
@@ -606,17 +617,22 @@ def human_audio_processing(request, project_id):
             form.save()
 
             # 2. Upload and internalise a LiteDevTools zipfile if there is one.
-            if 'audio_zip' in request.FILES and request.POST['voice_talent_id']: 
+            human_voice_id = request.POST['voice_talent_id']
+            if 'audio_zip' in request.FILES and human_voice_id: 
                 uploaded_file = request.FILES['audio_zip']
                 zip_file = uploaded_file_to_file(uploaded_file)
-                result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, request.POST['voice_talent_id'])
 
-                if result:
-                    messages.success(request, "LiteDevTools zipfile processed successfully!")
-                else:
-                    messages.error(request, "Something went wrong when installing zipfile")
+                # Create a callback
+                report_id = uuid.uuid4()
+                callback = [post_task_update_in_db, report_id]
 
-            messages.success(request, "Human Audio Info updated successfully!")
+                async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
+
+                # Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('process_ldt_zipfile_monitor', project_id, report_id)
+            
+            else:
+                messages.success(request, "Human Audio Info updated successfully!")
 
         else:
             messages.error(request, "There was an error processing the form. Please check your input.")
@@ -631,6 +647,46 @@ def human_audio_processing(request, project_id):
         # Any other context data you want to send to the template
     }
     return render(request, 'clara_app/human_audio_processing.html', context)
+
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_has_a_project_role
+def process_ldt_zipfile_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+# Render the monitoring page, which will use JavaScript to poll the task status API
+@login_required
+@user_has_a_project_role
+def process_ldt_zipfile_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/process_ldt_zipfile_monitor.html',
+                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+
+# Display the final result of rendering
+@login_required
+@user_has_a_project_role
+def process_ldt_zipfile_complete(request, project_id, status):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    if status == 'error':
+        succeeded = False
+    else:
+        succeeded = True
+    
+    if succeeded:
+        messages.success(request, "LiteDevTools zipfile processed successfully!")
+    else:
+        messages.error(request, "Something went wrong when installing LiteDevTools zipfile")
+        
+    return render(request, 'clara_app/process_ldt_zipfile_complete.html',
+                  {'project': project})
 
 @login_required
 def generate_audio_metadata(request, project_id, metadata_type, voice_id):
