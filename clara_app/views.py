@@ -689,7 +689,7 @@ def process_ldt_zipfile_complete(request, project_id, status):
                   {'project': project})
 
 @login_required
-def generate_audio_metadata(request, project_id, metadata_type, voice_id):
+def generate_audio_metadata(request, project_id, metadata_type, human_voice_id):
     # Ensure the metadata type is valid
     if metadata_type not in ['segments', 'words']:
         return HttpResponse("Invalid metadata type.", status=400)
@@ -698,7 +698,10 @@ def generate_audio_metadata(request, project_id, metadata_type, voice_id):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     
     # Get audio metadata in the required LiteDevTools format
-    lite_metadata_content = clara_project_internal.get_audio_metadata(tts_engine_type='human_voice', voice_id=voice_id, type=metadata_type, format="lite_dev_tools")
+    lite_metadata_content = clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
+                                                                      audio_type_for_segments='human' if metadata_type == 'segments' else 'tts',
+                                                                      audio_type_for_words='human' if metadata_type == 'words' else 'tts',
+                                                                      type=metadata_type, format="lite_dev_tools")
 
     # Create a response object for file download
     response = JsonResponse(lite_metadata_content, safe=False, json_dumps_params={'indent': 4})
