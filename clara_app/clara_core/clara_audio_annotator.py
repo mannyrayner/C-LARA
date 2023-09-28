@@ -203,8 +203,8 @@ class AudioAnnotator:
                 if file:
                     post_task_update(callback, f"--- Adding mp3 to repository for '{text}', ({i}/{len(metadata)})")
                     temp_file = os.path.join(temp_dir, file)
-                    file_path = self.audio_repository.store_mp3('human_voice', self.human_language_id, self.human_voice_id, temp_file, keep_file_name=True)
-                    self.audio_repository.add_entry('human_voice', self.human_language_id, self.human_voice_id, text, file_path)
+                    file_path = self.audio_repository.store_mp3('human_voice', self.language, self.human_voice_id, temp_file, keep_file_name=True)
+                    self.audio_repository.add_entry('human_voice', self.language, self.human_voice_id, text, file_path)
             except Exception as e:
                 post_task_update(callback, f"*** Error trying to process metadata item {metadata_item}: {str(e)}")
 
