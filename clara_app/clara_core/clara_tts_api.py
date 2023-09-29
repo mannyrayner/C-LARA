@@ -222,7 +222,7 @@ class GoogleTTSEngine(TTSEngine):
                 except:
                     post_task_update(callback, f"*** Warning: unable to delete tmp file '{temp_filename}'")
 
-    def _load_google_application_creds(callback=None):
+    def _load_google_application_creds(self, callback=None):
         temp_filename = None
             
         creds_file = os_environ_or_none('GOOGLE_APPLICATION_CREDENTIALS')
