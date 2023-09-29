@@ -65,12 +65,12 @@ def absolute_local_file_name(pathname):
     ## Replace backslashes with forward slashes
     return pathname.replace('\\', '/')
 
-## Strip off any initial "$CLARA", "$CLARA/" or "$CLARA\" if we are using S3 
+## Strip off any initial "$CLARA", "$CLARA/",  "$CLARA\" etc if we are using S3 
 def s3_file_name(pathname):
     if isinstance(pathname, ( Path )):
         pathname = str(pathname)
         
-    pathname = replace_clara_env_variable_in_pathname_for_s3(pathname)
+    pathname = replace_local_path_prefixes_for_s3(pathname)
         
     ## Replace backslashes with forward slashes
     return pathname.replace('\\', '/')
@@ -79,9 +79,9 @@ def absolute_file_name(pathname):
     if isinstance(pathname, ( Path )):
         pathname = str(pathname)
 
-    ## Strip off any initial "$CLARA", "$CLARA/" or "$CLARA\" if we are using S3 
+    ## Strip off any initial "$CLARA", "$CLARA/", "$CLARA\" etc if we are using S3 
     if _s3_storage:
-        pathname = replace_clara_env_variable_in_pathname_for_s3(pathname)
+        pathname = replace_local_path_prefixes_for_s3(pathname)
     ## Expand the environment var and get an absolute path name if we are using local files
     else:
         pathname = os.path.abspath(os.path.expandvars(pathname))
@@ -89,15 +89,24 @@ def absolute_file_name(pathname):
     ## Replace backslashes with forward slashes
     return pathname.replace('\\', '/')
 
-def replace_clara_env_variable_in_pathname_for_s3(pathname):
+def replace_local_path_prefixes_for_s3(pathname):
+    # Handle CLARA environment variable
     if pathname.startswith('$CLARA/'):
-        return pathname.replace('$CLARA/', '', 1)
+        pathname = pathname.replace('$CLARA/', '', 1)
     elif pathname.startswith('$CLARA\\'):
-        return pathname.replace('$CLARA\\', '', 1)
+        pathname = pathname.replace('$CLARA\\', '', 1)
     elif pathname.startswith('$CLARA'):
-        return pathname.replace('$CLARA', '', 1)
-    else:
-        return pathname
+        pathname = pathname.replace('$CLARA', '', 1)
+    
+    # Handle Windows drive letters with both forward and backslashes
+    if re.match(r"^[A-Za-z]:[\\/]", pathname):
+        pathname = pathname[3:]
+    
+    # Handle root directory
+    if pathname.startswith('/'):
+        pathname = pathname[1:]
+    
+    return pathname
 
 def make_directory(pathname, parents=False, exist_ok=False):
     if _s3_storage:
@@ -185,21 +194,49 @@ def copy_directory(pathname1, pathname2):
     else:
         shutil.copytree(abspathname1, abspathname2)
 
+# Make an S3 copy of a file if we're in S3 mode and need to transfer the file to another file system.
+# If we're not in S3 mode, we don't need to do anything: we just use the file as it is.
+def copy_local_file_to_s3_if_necessary(local_pathname, callback=None):
+    if _s3_storage:
+        copy_local_file_to_s3(local_pathname, callback=callback)
+
 # Copy a local file to S3, even if we aren't currently in S3 mode.
-def copy_local_file_to_s3(local_pathname, s3_pathname=None):
+def copy_local_file_to_s3(local_pathname, s3_pathname=None, callback=None):
     if not s3_is_initialised():
         initialise_s3()
+
+    fail_if_no_s3_bucket()
 
     s3_pathname = s3_pathname if s3_pathname else local_pathname
     abs_local_pathname = absolute_local_file_name(local_pathname)
     abs_s3_pathname = s3_file_name(s3_pathname)
 
-    fail_if_no_s3_bucket()
-
     with open(abs_local_pathname, "rb") as data:
         _s3_client.put_object(Bucket=_s3_bucket_name, Key=abs_s3_pathname, Body=data)
 
-    print(f'--- Copied local file {abs_local_pathname} to S3 file {abs_s3_pathname}, bucket = {_s3_bucket_name}')
+    post_task_update(callback, f'--- Copied local file {abs_local_pathname} to S3 file {abs_s3_pathname}, bucket = {_s3_bucket_name}')
+
+# If we're in S3 mode, retrieve a file which probably came from another file system.
+# If we're not in S3 mode, we don't need to do anything: we just use the file as it is.
+def copy_s3_file_to_local_if_necessary(s3_pathname, callback=None):
+    if _s3_storage:
+        copy_s3_file_to_local(s3_pathname, callback=callback)
+
+# Copy an S3 local file to local, even if we aren't currently in S3 mode.
+def copy_s3_file_to_local(s3_pathname, local_pathname=None, callback=None):
+    if not s3_is_initialised():
+        initialise_s3()
+
+    fail_if_no_s3_bucket()
+
+    local_pathname = local_pathname if local_pathname else s3_pathname
+    s3_pathname = s3_file_name(s3_pathname)
+    local_pathname = absolute_local_file_name(local_pathname)
+
+    with open(local_pathname, "wb") as data:
+        _s3_client.download_fileobj(_s3_bucket_name, s3_pathname, data)
+
+    post_task_update(callback, f'--- Copied S3 file {s3_pathname}, bucket = {_s3_bucket_name} local file {local_pathname}')
 
 # This function will normally be run on a local machine to sync an S3 directory with a local one
 def copy_directory_to_s3(local_pathname, s3_pathname=None):
