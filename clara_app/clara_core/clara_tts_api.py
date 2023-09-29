@@ -203,9 +203,9 @@ class GoogleTTSEngine(TTSEngine):
                 tts = gtts.gTTS(text, lang=language_id)
                 tts.save(output_file)
                 return True
-        except gtts.gtts.GTTSError as e:
-            post_task_update(callback, f"*** Warning: gTTS error while creating Google TTS mp3 for '{text}': {str(e)}")
-            return False
+##        except gtts.GTTSError as e:
+##            post_task_update(callback, f"*** Warning: gTTS error while creating Google TTS mp3 for '{text}': {str(e)}")
+##            return False
         except requests.exceptions.RequestException as e:
             post_task_update(callback, f"*** Warning: Network error while creating Google TTS mp3 for '{text}': {str(e)}")
             return False
