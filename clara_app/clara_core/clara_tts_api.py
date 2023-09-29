@@ -194,8 +194,6 @@ class GoogleTTSEngine(TTSEngine):
                         }
 
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
-        temp_filename = None
-        
         try:
             found_google_creds = self._load_google_application_creds(callback=callback)
 
@@ -224,7 +222,7 @@ class GoogleTTSEngine(TTSEngine):
             return True
         elif creds_string:
             creds_file = '/tmp/google_credentials_from_env.json'
-            write_local_txt_file(creds_string, temp_filename)                
+            write_local_txt_file(creds_string, creds_file)                
             # Set the environment variable so gTTS can pick it up
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_file
             return True 
