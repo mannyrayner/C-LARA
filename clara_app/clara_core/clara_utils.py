@@ -421,7 +421,7 @@ def write_txt_file(data, pathname: str):
             f.write(data)
             
 def write_local_txt_file(data, pathname: str):
-    abspathname = absolute_file_name(pathname)
+    abspathname = absolute_local_file_name(pathname)
 
     with open(abspathname, 'w', encoding='utf-8') as f:
         f.write(data)
