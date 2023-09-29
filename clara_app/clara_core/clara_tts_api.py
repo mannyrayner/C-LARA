@@ -197,7 +197,7 @@ class GoogleTTSEngine(TTSEngine):
         temp_filename = None
         
         try:
-            found_google_creds, temp_filename = self._load_google_application_creds(callback=callback)
+            found_google_creds = self._load_google_application_creds(callback=callback)
 
             if found_google_creds:
                 tts = gtts.gTTS(text, lang=language_id)
@@ -215,31 +215,22 @@ class GoogleTTSEngine(TTSEngine):
         except Exception as e:
             post_task_update(callback, f"*** Warning: unable to create Google TTS mp3 for '{text}': {str(e)}")
             return False
-        finally:                     
-            if temp_filename and local_file_exists(temp_filename):
-                try:
-                    remove_file(temp_filename)
-                except:
-                    post_task_update(callback, f"*** Warning: unable to delete tmp file '{temp_filename}'")
 
     def _load_google_application_creds(self, callback=None):
-        temp_filename = None
-            
         creds_file = os_environ_or_none('GOOGLE_APPLICATION_CREDENTIALS')
         creds_string = os_environ_or_none('GOOGLE_CREDENTIALS_JSON')
         
         if creds_file and local_file_exists(creds_file):
-            return ( True, 'no_tmp_file' )
+            return True
         elif creds_string:
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp:
-                temp_filename = temp.name
-                write_local_txt_file(creds_string, temp_filename)                
-                # Set the environment variable so gTTS can pick it up
-                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_filename
-            return ( True, temp_filename )    
+            creds_file = '/tmp/google_credentials_from_env.json'
+            write_local_txt_file(creds_string, temp_filename)                
+            # Set the environment variable so gTTS can pick it up
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_file
+            return True 
         else:
             post_task_update(callback, f"*** Warning: unable to find Google credentials in GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON")
-            return ( False, 'no_tmp_file' )
+            return False
 
 class ABAIREngine(TTSEngine):
     def __init__(self, base_url=None):
