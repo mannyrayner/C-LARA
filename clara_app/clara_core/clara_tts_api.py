@@ -194,6 +194,8 @@ class GoogleTTSEngine(TTSEngine):
                         }
 
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
+        temp_filename = None
+        
         try:
             found_google_creds, temp_filename = self._load_google_application_creds(callback=callback)
 
