@@ -37,7 +37,8 @@ from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file
+from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file
+from .clara_core.clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary
 from .clara_core.clara_utils import output_dir_for_project_id, post_task_update, is_rtl_language
 
 from pathlib import Path
@@ -589,22 +590,6 @@ def get_audio_metadata_view(request, project_id):
     return render(request, 'clara_app/audio_metadata.html', 
                   { 'project': project, 'form': form })
 
-def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
-    try:
-        if not local_file_exists(zip_file):
-            post_task_update(callback, f"Error: unable to find uploaded file {zip_file}")
-            post_task_update(callback, f"error")
-        else:
-            post_task_update(callback, "--- Found uploaded file {zip_file}")
-            result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, human_voice_id, callback=callback)
-            if result:
-                post_task_update(callback, f"finished")
-            else:
-                post_task_update(callback, f"error")
-    except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}")
-        post_task_update(callback, f"error")
-
 @login_required
 @user_has_a_project_role
 def human_audio_processing(request, project_id):
@@ -631,6 +616,8 @@ def human_audio_processing(request, project_id):
                     messages.error(request, f"Error: unable to find uploaded file {zip_file}")
                 else:
                     print(f"--- Found uploaded file {zip_file}")
+                    # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
+                    copy_local_file_to_s3_if_necessary(zip_file)
                     # Create a callback
                     report_id = uuid.uuid4()
                     callback = [post_task_update_in_db, report_id]
@@ -656,6 +643,27 @@ def human_audio_processing(request, project_id):
         # Any other context data you want to send to the template
     }
     return render(request, 'clara_app/human_audio_processing.html', context)
+
+def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
+    try:
+        # If we're on Heroku, the main thread should have copied the zipfile to S3 so that we can can get it
+        copy_s3_file_to_local_if_necessary(zip_file, callback=callback)
+        if not local_file_exists(zip_file):
+            post_task_update(callback, f"Error: unable to find uploaded file {zip_file}")
+            post_task_update(callback, f"error")
+        else:
+            post_task_update(callback, "--- Found uploaded file {zip_file}")
+            result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, human_voice_id, callback=callback)
+            if result:
+                post_task_update(callback, f"finished")
+            else:
+                post_task_update(callback, f"error")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"error")
+    finally:
+        # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
+        remove_file(zip_file)
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
