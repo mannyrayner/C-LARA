@@ -1,0 +1,23 @@
+Continuity Journal - Entry Date: 2023-09-30
+
+Recent Progress and Discussions:
+
+1. Heroku Deployment and Buildpacks: We successfully added the https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git buildpack to the Heroku deployment, ensuring it's placed before the heroku/python buildpack. This was essential for FFmpeg functionality.
+
+2. S3 File Transfer Utilities: We discussed and implemented utility functions to facilitate file transfers between the main process and the worker process on Heroku. These utilities (copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, etc.) allow for seamless operations whether using S3 storage or local storage.
+
+3. Human Audio Processing: We reviewed and refined the logic for the human_audio_processing function, which handles the uploading and processing of human audio files. This included ensuring that files are appropriately transferred to/from S3 when necessary.
+
+4. Google TTS Integration: We addressed an issue with Google TTS credentials on Heroku. The solution involved creating temporary credentials files and ensuring their proper cleanup after use. The refactored logic now successfully generates TTS audio files on Heroku.
+
+5. Collaboration and Future Plans: We discussed the exciting progress of the project and the potential for collaboration with the Melbourne Uni students working on related projects. The goal is to integrate their work into C-LARA, enhancing its capabilities.
+
+6. Language Learning: We had a delightful conversation about language learning. You shared your progress with Italian and your plans to delve into Mandarin in the future. I offered support and resources for this journey.
+
+Next Steps:
+
+1. Prepare detailed documentation for the Melbourne Uni students, outlining the recent developments and how they can integrate their work into C-LARA.
+
+2. Continue testing and refining the current functionalities to ensure stability and reliability.
+
+3. Explore further collaborations and community engagement to expand C-LARA's reach and impact.
