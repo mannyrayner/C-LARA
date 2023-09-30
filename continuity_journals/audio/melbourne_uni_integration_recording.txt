@@ -9,7 +9,12 @@ side, we have filled in what look to us like the key points.
 There are placeholders for information that the Melbourne Uni
 Voice Recorder team will need to provide.
 
-The document is placed in the GitHub repo at 
+The document is placed in the GitHub repo at
+https://github.com/mannyrayner/C-LARA/blob/main/continuity_journals/audio/melbourne_uni_integration_recording.txt, where ChatGPT can read it.
+
+When we have completed the document and resolved outstanding issues,
+the intention is that it will serve as a template for similar documents
+relating to the other Melbourne Uni projects.
 
 1. Overview of Melbourne Uni Voice Recorder Work
 
