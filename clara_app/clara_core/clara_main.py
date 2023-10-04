@@ -677,8 +677,9 @@ class CLARAProjectInternal:
 
     # Process a metadata file and audio file received from manual audio/text alignment.
     # Use the metadata to extract audio segments and store them in the audio repository.
-    def process_manual_alignment(self, metadata_file, audio_file, human_voice_id, callback=None):
-        post_task_update(callback, f"--- Trying to process manual alignment with metadata_file {metadata_file}, audio_file {audio_file}, and human voice ID {human_voice_id}")
+    #def process_manual_alignment(self, metadata_file, audio_file, human_voice_id, callback=None):
+    def process_manual_alignment(self, audacity_label_data, audio_file, human_voice_id, callback=None):
+        post_task_update(callback, f"--- Trying to process manual alignment with audio_file {audio_file} and human voice ID {human_voice_id}")
         
         if not local_file_exists(metadata_file) or not local_file_exists(audio_file):
             post_task_update(callback, f'*** Error: unable to find {metadata_file} or {audio_file}')
@@ -691,8 +692,8 @@ class CLARAProjectInternal:
             annotated_segment_data = self.get_labelled_segmented_text()
             post_task_update(callback, f'--- Found labelled segmented text')
             
-            audacity_label_data = robust_read_local_txt_file(metadata_file)
-            post_task_update(callback, f'--- Read metadata file')
+            #audacity_label_data = robust_read_local_txt_file(metadata_file)
+            #post_task_update(callback, f'--- Read metadata file')
             
             metadata = annotated_segmented_data_and_label_file_data_to_metadata(annotated_segment_data, audacity_label_data)
             # This is what we will do in the final version
