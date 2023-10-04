@@ -18,6 +18,7 @@ import zipfile
 import tempfile
 import chardet
 import hashlib
+import traceback
 
 from asgiref.sync import sync_to_async
 
@@ -446,6 +447,16 @@ def read_local_txt_file(pathname: str):
     with open(abspathname, 'r', encoding='utf-8') as f:
         return f.read()
 
+def check_if_file_can_be_read(pathname: str) -> bool:
+    try:
+        data = robust_read_local_txt_file(pathname)
+        print(f"--- File {pathname} could be read")
+        return True
+    except Exception as e:
+        print(f"*** File {pathname} could not be read")
+        print(f"Exception: {str(e)}\n{traceback.format_exc()}")
+        return False
+           
 # Version that can be used when we're uncertain about the encoding
 def robust_read_local_txt_file(pathname: str) -> str:
     abspathname = absolute_local_file_name(pathname)
