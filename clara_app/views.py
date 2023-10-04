@@ -754,7 +754,6 @@ def process_manual_alignment(clara_project_internal, audio_file, metadata, human
     finally:
         # Clean up: remove files from local and S3
         remove_file(audio_file)
-        remove_file(metadata_file)
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
