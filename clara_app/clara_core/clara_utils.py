@@ -17,6 +17,7 @@ import os
 import zipfile
 import tempfile
 import chardet
+import hashlib
 
 from asgiref.sync import sync_to_async
 
@@ -201,6 +202,11 @@ def copy_local_file_to_s3_if_necessary(local_pathname, callback=None):
     if _s3_storage:
         copy_local_file_to_s3(local_pathname, callback=callback)
 
+def compute_md5(file_path):
+    """Compute the MD5 checksum of a file."""
+    with open(file_path, 'rb') as f:
+        return hashlib.md5(f.read()).hexdigest()
+
 # Copy a local file to S3, even if we aren't currently in S3 mode.
 def copy_local_file_to_s3(local_pathname, s3_pathname=None, callback=None):
     if not s3_is_initialised():
@@ -212,11 +218,19 @@ def copy_local_file_to_s3(local_pathname, s3_pathname=None, callback=None):
     abs_local_pathname = absolute_local_file_name(local_pathname)
     abs_s3_pathname = s3_file_name(s3_pathname)
 
+    # Compute the MD5 checksum of the local file before uploading
+    local_md5 = compute_md5(abs_local_pathname)
+
     with open(abs_local_pathname, "rb") as data:
-        _s3_client.put_object(Bucket=_s3_bucket_name, Key=abs_s3_pathname, Body=data)
+        response = _s3_client.put_object(Bucket=_s3_bucket_name, Key=abs_s3_pathname, Body=data)
+
+    # Verify the MD5 checksum with the one returned by S3
+    s3_md5 = response.get('ETag', '').replace('"', '')
+    if local_md5 != s3_md5:
+        post_task_update(callback, f'*** Checksum mismatch for {abs_local_pathname}. Local MD5: {local_md5}, S3 MD5: {s3_md5}')
+        return
 
     post_task_update(callback, f'--- Copied local file {abs_local_pathname} to S3 file {abs_s3_pathname}, bucket = {_s3_bucket_name}')
-
 # If we're in S3 mode, retrieve a file which probably came from another file system.
 # If we're not in S3 mode, we don't need to do anything: we just use the file as it is.
 def copy_s3_file_to_local_if_necessary(s3_pathname, callback=None):
@@ -237,7 +251,19 @@ def copy_s3_file_to_local(s3_pathname, local_pathname=None, callback=None):
     with open(local_pathname, "wb") as data:
         _s3_client.download_fileobj(_s3_bucket_name, s3_pathname, data)
 
-    post_task_update(callback, f'--- Copied S3 file {s3_pathname}, bucket = {_s3_bucket_name} local file {local_pathname}')
+    # Compute the MD5 checksum of the downloaded file
+    downloaded_md5 = compute_md5(local_pathname)
+
+    # Fetch the MD5 checksum of the file in S3
+    response = _s3_client.head_object(Bucket=_s3_bucket_name, Key=s3_pathname)
+    s3_md5 = response.get('ETag', '').replace('"', '')
+
+    # Verify the MD5 checksum with the one of the downloaded file
+    if downloaded_md5 != s3_md5:
+        post_task_update(callback, f'*** Checksum mismatch for {local_pathname}. Downloaded MD5: {downloaded_md5}, S3 MD5: {s3_md5}')
+        return
+
+    post_task_update(callback, f'--- Copied S3 file {s3_pathname}, bucket = {_s3_bucket_name} to local file {local_pathname}')
 
 # This function will normally be run on a local machine to sync an S3 directory with a local one
 def copy_directory_to_s3(local_pathname, s3_pathname=None):
