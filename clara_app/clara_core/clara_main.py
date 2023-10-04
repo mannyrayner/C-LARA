@@ -149,6 +149,7 @@ from typing import List, Dict, Tuple, Optional, Union
 import datetime
 import logging
 import pprint
+import traceback
 
 config = get_config()
 
@@ -668,7 +669,10 @@ class CLARAProjectInternal:
             audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
             post_task_update(callback, f'--- Calling process_lite_dev_tools_zipfile')
             return audio_annotator.process_lite_dev_tools_zipfile(zipfile, callback=callback)
-        except:
+        except Exception as e:
+            post_task_update(callback, f'*** Error when trying to install LDT zipfile {zipfile}')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
             return False
 
     # Process a metadata file and audio file received from manual audio/text alignment.
@@ -697,7 +701,10 @@ class CLARAProjectInternal:
             audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
             post_task_update(callback, f'--- Calling process_manual_alignment')
             return audio_annotator.process_manual_alignment(metadata, audio_file, callback=callback)
-        except:
+        except Exception as e:
+            post_task_update(callback, f'*** Error when trying to install manual alignments for {audio_file}')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
             return False
 
 
