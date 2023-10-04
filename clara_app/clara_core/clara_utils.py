@@ -422,7 +422,7 @@ def read_local_txt_file(pathname: str):
 
 # Version that can be used when we're uncertain about the encoding
 def robust_read_local_txt_file(pathname: str) -> str:
-    abspathname = absolute_local_file_path(pathname)
+    abspathname = absolute_local_file_name(pathname)
     
     # Detect the file's encoding
     with open(abspathname, 'rb') as f:
