@@ -18,3 +18,4 @@ psycopg2-binary
 django-storages
 django_q
 jieba
+chardet
