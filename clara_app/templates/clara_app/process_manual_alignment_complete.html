@@ -1,0 +1,11 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Finished processing manual text/audio alignment data{% endblock %}
+
+{% block content %}
+
+  <h3>Finished processing manual text/audio alignment data ("{{ project.title }}")</h3>
+	
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+
+{% endblock %}
