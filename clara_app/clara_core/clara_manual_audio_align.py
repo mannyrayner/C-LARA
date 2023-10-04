@@ -8,6 +8,8 @@ from .clara_classes import InternalCLARAError
 
 import os
 import subprocess
+import traceback
+import re
 
 def add_indices_to_segmented_text(segmented_text):
     """
@@ -25,12 +27,12 @@ def add_indices_to_segmented_text(segmented_text):
     
     return annotated_text
 
-def process_alignment_metadata(metadata_file: str, audio_file: str, output_dir: str, callback=None) -> list:
+def process_alignment_metadata(metadata, audio_file, output_dir, callback=None):
     """
     Process the metadata from manual audio/text alignment.
 
     Parameters:
-    - metadata_file: Path to the JSON file containing aligned text, start_time, and end_time.
+    - metadata: list of dicts containing aligned text, start_time, and end_time.
     - audio_file: Path to the main mp3 file containing audio for the entire document.
     - output_dir: Directory where the extracted audio segments will be saved.
 
@@ -42,15 +44,9 @@ def process_alignment_metadata(metadata_file: str, audio_file: str, output_dir: 
     if not local_directory_exists(output_dir):
         make_local_directory(output_dir)
 
-    # Load the metadata from the JSON file
-    try:
-        alignments = read_local_json_file(metadata_file)
-    except Exception as e:
-        raise InternalCLARAError( message=f'*** Error: unable to read alignment metadata file "{metadata_file}": {str(e)}')
-
     new_metadata = []
 
-    for idx, entry in enumerate(alignments):
+    for idx, entry in enumerate(metadata):
         # Extract the audio segment using ffmpeg
         segment_file = os.path.join(output_dir, f"segment_{idx}.mp3")
         try:
@@ -84,3 +80,41 @@ def process_alignment_metadata(metadata_file: str, audio_file: str, output_dir: 
         })
 
     return new_metadata
+
+def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_content, audacity_label_content, callback=None):
+    post_task_update(callback, f'--- Calling annotated_segmented_data_and_label_file_data_to_metadata')
+
+    try:        
+        # Parse the annotated segmented file using regex
+        segments = re.findall(r'\|\d+\|([^|]+)', segmented_file_content)
+        segments = [segment.strip() for segment in segments]
+
+        post_task_update(callback, f'--- Found {len(segments)} segments')
+
+        # Parse the Audacity label file
+        times = []
+        for line in audacity_label_content.split("\n"):
+            if line:
+                start_time, end_time, _ = line.split("\t")
+                times.append((float(start_time), float(end_time)))
+
+        post_task_update(callback, f'--- Found {len(times)} Audacity labels')
+
+        # Combine the two to produce the metadata
+        metadata = []
+        for i, text in enumerate(segments):
+            if i < len(times):
+                metadata.append({
+                    'text': text,
+                    'start_time': times[i][0],
+                    'end_time': times[i][1]
+            })
+
+        post_task_update(callback, f'--- Created {len(metadata)} alignment metadata items')
+        return metadata
+
+    except Exception as e:
+        post_task_update(callback, f'*** Error when trying to create text/audio alignment metadata')
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        post_task_update(callback, error_message)
+        raise InternalCLARAError( message='Error when creating text/audio alignment metadata')
