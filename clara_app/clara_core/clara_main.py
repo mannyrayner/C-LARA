@@ -677,7 +677,7 @@ class CLARAProjectInternal:
 
     # Process a metadata file and audio file received from manual audio/text alignment.
     # Use the metadata to extract audio segments and store them in the audio repository.
-    def process_manual_alignment(self, audacity_label_data, audio_file, human_voice_id, callback=None):
+    def process_manual_alignment(self, audio_file, audacity_label_data, human_voice_id, callback=None):
         post_task_update(callback, f"--- Trying to process manual alignment with audio_file {audio_file} and human voice ID {human_voice_id}")
         
         if not local_file_exists(audio_file):
