@@ -649,7 +649,7 @@ def human_audio_processing(request, project_id):
                     uploaded_metadata = request.FILES['metadata_file']
                     metadata_file = uploaded_file_to_file(uploaded_metadata)
                     if check_if_file_can_be_read(metadata_file):
-                        copy_local_file_to_s3_if_necessary(metadata_file)
+                        #copy_local_file_to_s3_if_necessary(metadata_file)
                         human_audio_info.manual_align_metadata_file = metadata_file  
                         human_audio_info.save()
                         messages.success(request, "Uploaded metadata file saved.")
@@ -670,7 +670,10 @@ def human_audio_processing(request, project_id):
                         report_id = uuid.uuid4()
                         callback = [post_task_update_in_db, report_id]
                         
-                        async_task(process_manual_alignment, clara_project_internal, audio_file, metadata_file, human_voice_id, callback=callback)
+                        #async_task(process_manual_alignment, clara_project_internal, audio_file, metadata_file, human_voice_id, callback=callback)
+                        metadata = robust_read_local_txt_file(metadata_file)
+                        async_task(process_manual_alignment, clara_project_internal, audio_file, metadata, human_voice_id, callback=callback)
+                        
                         print("--- Started async task to process manual alignment data")
 
                         # Redirect to a monitor view 
@@ -713,15 +716,36 @@ def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callba
         # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
         remove_file(zip_file)
 
-def process_manual_alignment(clara_project_internal, audio_file, metadata_file, human_voice_id, callback=None):
+##def process_manual_alignment(clara_project_internal, audio_file, metadata_file, human_voice_id, callback=None):
+##    post_task_update(callback, "--- Started process_manual_alignment in async thread")
+##    try:
+##        # Retrieve files from S3 to local
+##        copy_s3_file_to_local_if_necessary(audio_file, callback=callback)
+##        copy_s3_file_to_local_if_necessary(metadata_file, callback=callback)
+##
+##        # Process the manual alignment
+##        result = clara_project_internal.process_manual_alignment(audio_file, metadata_file, human_voice_id, callback=callback)
+##        
+##        if result:
+##            post_task_update(callback, f"finished")
+##        else:
+##            post_task_update(callback, f"error")
+##    except Exception as e:
+##        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+##        post_task_update(callback, f"error")
+##    finally:
+##        # Clean up: remove files from local and S3
+##        remove_file(audio_file)
+##        remove_file(metadata_file)
+
+def process_manual_alignment(clara_project_internal, audio_file, metadata, human_voice_id, callback=None):
     post_task_update(callback, "--- Started process_manual_alignment in async thread")
     try:
         # Retrieve files from S3 to local
         copy_s3_file_to_local_if_necessary(audio_file, callback=callback)
-        copy_s3_file_to_local_if_necessary(metadata_file, callback=callback)
 
         # Process the manual alignment
-        result = clara_project_internal.process_manual_alignment(audio_file, metadata_file, human_voice_id, callback=callback)
+        result = clara_project_internal.process_manual_alignment(audio_file, metadata, human_voice_id, callback=callback)
         
         if result:
             post_task_update(callback, f"finished")
