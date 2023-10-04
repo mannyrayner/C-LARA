@@ -129,6 +129,7 @@ from .clara_conventional_tagging import generate_tagged_version_with_treetagger
 from .clara_create_story import generate_story, improve_story
 from .clara_cefr import estimate_cefr_reading_level
 from .clara_summary import generate_summary, improve_summary
+from .clara_manual_audio_align import add_indices_to_segmented_text, annotated_segmented_data_and_label_file_data_to_metadata
 from .clara_internalise import internalize_text
 from .clara_correct_syntax import correct_syntax_in_string
 from .clara_chinese import segment_text_using_jieba
@@ -137,7 +138,7 @@ from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_renderer import StaticHTMLRenderer
-from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file
+from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp
@@ -544,6 +545,11 @@ class CLARAProjectInternal:
         api_calls = []
         return api_calls
 
+    # Get "labelled segmented" version of text, used for manual audio/text alignment
+    def get_labelled_segmented_text(self) -> str:
+        segmented_text = self.load_text_version("segmented")
+        return add_indices_to_segmented_text(segmented_text)
+
     # Call ChatGPT-4 to improve existing segmentation annotations
     def improve_segmented_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented")
@@ -664,6 +670,36 @@ class CLARAProjectInternal:
             return audio_annotator.process_lite_dev_tools_zipfile(zipfile, callback=callback)
         except:
             return False
+
+    # Process a metadata file and audio file received from manual audio/text alignment.
+    # Use the metadata to extract audio segments and store them in the audio repository.
+    def process_manual_alignment(self, metadata_file, audio_file, human_voice_id, callback=None):
+        post_task_update(callback, f"--- Trying to process manual alignment with metadata_file {metadata_file}, audio_file {audio_file}, and human voice ID {human_voice_id}")
+        
+        if not local_file_exists(metadata_file) or not local_file_exists(audio_file):
+            post_task_update(callback, f'*** Error: unable to find {metadata_file} or {audio_file}')
+            return False
+        else:
+            post_task_update(callback, f'--- {metadata_file} and {audio_file} found')
+        
+        try:
+            # During initial testing, the metadata file is an Audacity label file. Temporary code to convert it to the real form.
+            annotated_segment_data = self.get_labelled_segmented_text()
+            post_task_update(callback, f'--- Found labelled segmented text')
+            
+            audacity_label_data = read_local_txt_file(metadata_file)
+            post_task_update(callback, f'--- Read metadata file')
+            
+            metadata = annotated_segmented_data_and_label_file_data_to_metadata(annotated_segment_data, audacity_label_data)
+            # This is what we will do in the final version
+            #metadata = read_local_json_file(metadata_file)
+                
+            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
+            post_task_update(callback, f'--- Calling process_manual_alignment')
+            return audio_annotator.process_manual_alignment(metadata, audio_file, callback=callback)
+        except:
+            return False
+
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

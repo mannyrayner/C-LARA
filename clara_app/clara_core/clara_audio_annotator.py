@@ -19,6 +19,7 @@ from .clara_utils import absolute_local_file_name, basename, make_tmp_file, file
 from .clara_tts_api import get_tts_engine, get_default_voice, get_language_id, create_tts_engine
 from .clara_audio_repository import AudioRepository
 from .clara_ldt import convert_ldt_data_to_mp3
+from .clara_manual_audio_align import process_alignment_metadata
 
 import re
 import os
@@ -166,6 +167,7 @@ class AudioAnnotator:
                 
         shutil.rmtree(temp_dir)
 
+    # Process a zipfile received from LiteDevTools. This should contain .wav files and metadata
     def process_lite_dev_tools_zipfile(self, zipfile, callback=None):
         try:
             post_task_update(callback, f'--- Entered process_lite_dev_tools_zipfile: zipfile = {zipfile}')
@@ -191,6 +193,28 @@ class AudioAnnotator:
                 shutil.rmtree(temp_ldt_dir)
             if os.path.exists(temp_mp3_dir):
                 shutil.rmtree(temp_mp3_dir)
+
+    # Process an audio file and alignment data received from the manual audio/text aligner
+    def process_manual_alignment(self, metadata, audio_file, callback=None):
+        try:
+            post_task_update(callback, f'--- Entered process_manual_alignment: audio_file = {audio_file}, {len(metadata)} items of metadata')
+            
+            temp_mp3_dir = tempfile.mkdtemp()
+            
+            alignment_metadata = process_alignment_metadata(metadata, audio_file, temp_mp3_dir, callback=callback)
+            self._store_existing_human_audio_mp3s(alignment_metadata, temp_mp3_dir, callback=callback)
+            
+            return True
+        except Exception as e:
+            post_task_update(callback, f'*** Error when trying to process manual alignment audio {audio_file}')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            return False
+        finally:
+            # Remove the tmp dir once we've used it
+            if os.path.exists(temp_mp3_dir):
+                shutil.rmtree(temp_mp3_dir)
+
 
     # We have metadata as a list of items of the form { 'text': text, 'file': file } where file is the basename of a file in temp_dir.
     # The files are copied into the appropriate directory and the metadata is used to update the DB
