@@ -422,7 +422,7 @@ def read_local_txt_file(pathname: str):
 
 # Version that can be used when we're uncertain about the encoding
 def robust_read_local_txt_file(pathname: str) -> str:
-    abspathname = absolute_local_file_name(pathname)
+    abspathname = absolute_local_file_path(pathname)
     
     # Detect the file's encoding
     with open(abspathname, 'rb') as f:
@@ -430,9 +430,23 @@ def robust_read_local_txt_file(pathname: str) -> str:
         result = chardet.detect(rawdata)
         encoding = result['encoding']
 
+    # Print the detected encoding for debugging
+    print(f"Detected encoding: {encoding}")
+
+    # Handle BOM for UTF encodings
+    if encoding == "UTF-16LE" or encoding == "UTF-16BE":
+        mode = 'r'
+        encoding = 'utf-16'
+    elif encoding == "UTF-32LE" or encoding == "UTF-32BE":
+        mode = 'r'
+        encoding = 'utf-32'
+    else:
+        mode = 'r'
+
     # Read the file using the detected encoding
-    with open(abspathname, 'r', encoding=encoding) as f:
+    with open(abspathname, mode, encoding=encoding) as f:
         return f.read()
+
 
 def write_txt_file(data, pathname: str):
     abspathname = absolute_file_name(pathname)
