@@ -618,7 +618,7 @@ def human_audio_processing(request, project_id):
                     uploaded_file = request.FILES['audio_zip']
                     zip_file = uploaded_file_to_file(uploaded_file)
                     if not local_file_exists(zip_file):
-                        messages.error(request, f"Error: unable to find uploaded file {zip_file}")
+                        messages.error(request, f"Error: unable to find uploaded zipfile {zip_file}")
                     else:
                         print(f"--- Found uploaded file {zip_file}")
                         # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
@@ -648,23 +648,20 @@ def human_audio_processing(request, project_id):
                 if 'metadata_file' in request.FILES:
                     uploaded_metadata = request.FILES['metadata_file']
                     metadata_file = uploaded_file_to_file(uploaded_metadata)
-                    if check_if_file_can_be_read(metadata_file):
-                        #copy_local_file_to_s3_if_necessary(metadata_file)
-                        human_audio_info.manual_align_metadata_file = metadata_file  
-                        human_audio_info.save()
-                        messages.success(request, "Uploaded metadata file saved.")
-                    else:
-                        messages.error(request, "Uploaded metadata file could not be read.")
+                    human_audio_info.manual_align_metadata_file = metadata_file  
+                    human_audio_info.save()
+                    messages.success(request, "Uploaded metadata file saved.")
 
                 # 5. If both files are available, trigger the manual alignment processing
                 if human_audio_info.audio_file and human_audio_info.manual_align_metadata_file and human_voice_id:
                     audio_file = human_audio_info.audio_file
                     metadata_file = human_audio_info.manual_align_metadata_file
-                    # We check using file_exists since we want to look for the S3 version if we are using S3
+                    # We may pass the audio file to the asynch process via S3, so use file_exists
                     if not file_exists(audio_file):
-                        messages.error(request, f"Error: unable to find uploaded file {audio_file}")
-                    elif not file_exists(metadata_file):
-                        messages.error(request, f"Error: unable to find uploaded file {metadata_file}")
+                        messages.error(request, f"Error: unable to find uploaded audio file {audio_file}")
+                    # But we are reading the metadata file now, so use local_file_exists
+                    elif not local_file_exists(metadata_file):
+                        messages.error(request, f"Error: unable to find uploaded metadata file {metadata_file}")
                     else:
                         # Create a callback
                         report_id = uuid.uuid4()
