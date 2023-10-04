@@ -10,6 +10,7 @@ from decimal import Decimal
 import datetime
 import time
 import tempfile
+import hashlib
 
 from .models import CLARAProject, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
 
@@ -127,13 +128,39 @@ def language_master_required(function):
 ##        temp_file.close()
 ##        return temp_file.name
 
+##def uploaded_file_to_file(uploaded_file):
+##    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+##        print(f'Type: {type(uploaded_file)}')
+##        print(f'Size: {uploaded_file.size} bytes')
+##        #file_content = uploaded_file.read()  # Read the entire content
+##        file_content = uploaded_file.open("rb").read()
+##        temp_file.write(file_content)
+##        return temp_file.name
+
+def compute_md5_of_content(content):
+    """Compute the MD5 checksum of content."""
+    return hashlib.md5(content).hexdigest()
+
 def uploaded_file_to_file(uploaded_file):
+    # Read the content from the uploaded file
+    file_content = uploaded_file.open("rb").read()
+    uploaded_md5 = compute_md5_of_content(file_content)
+    
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         print(f'Type: {type(uploaded_file)}')
         print(f'Size: {uploaded_file.size} bytes')
-        #file_content = uploaded_file.read()  # Read the entire content
-        file_content = uploaded_file.open("rb").read()
+        
+        # Write the content to the temp file
         temp_file.write(file_content)
+        
+        # Go back to the start of the temp file to read its content
+        temp_file.seek(0)
+        temp_file_content = temp_file.read()
+        temp_file_md5 = compute_md5_of_content(temp_file_content)
+
+        # Check if the MD5 checksums match
+        if uploaded_md5 != temp_file_md5:
+            print(f'*** Checksum mismatch. Uploaded MD5: {uploaded_md5}, Temp File MD5: {temp_file_md5}')
+            return None
+
         return temp_file.name
-
-
