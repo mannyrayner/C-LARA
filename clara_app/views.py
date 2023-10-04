@@ -52,6 +52,7 @@ import mimetypes
 import logging
 import pprint
 import uuid
+import traceback
 
 # Create a new account    
 def register(request):
@@ -604,32 +605,75 @@ def human_audio_processing(request, project_id):
         form = HumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info)
 
         if form.is_valid():
-            # 1. Update the model with any new values from the form
+            # 1. Update the model with any new values from the form. Get the method and human_voice_id
             form.save()
 
-            # 2. Upload and internalise a LiteDevTools zipfile if there is one.
+            method = request.POST['method']
             human_voice_id = request.POST['voice_talent_id']
-            if 'audio_zip' in request.FILES and human_voice_id: 
-                uploaded_file = request.FILES['audio_zip']
-                zip_file = uploaded_file_to_file(uploaded_file)
-                if not local_file_exists(zip_file):
-                    messages.error(request, f"Error: unable to find uploaded file {zip_file}")
-                else:
-                    print(f"--- Found uploaded file {zip_file}")
-                    # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
-                    copy_local_file_to_s3_if_necessary(zip_file)
-                    # Create a callback
-                    report_id = uuid.uuid4()
-                    callback = [post_task_update_in_db, report_id]
 
-                    async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
-
-                    # Redirect to the monitor view, passing the task ID and report ID as parameters
-                    return redirect('process_ldt_zipfile_monitor', project_id, report_id)
+            # 2. Upload and internalise a LiteDevTools zipfile if there is one and we're doing recording.
             
-            else:
-                messages.success(request, "Human Audio Info updated successfully!")
+            if method == 'record':
+                if 'audio_zip' in request.FILES and human_voice_id:
+                    uploaded_file = request.FILES['audio_zip']
+                    zip_file = uploaded_file_to_file(uploaded_file)
+                    if not local_file_exists(zip_file):
+                        messages.error(request, f"Error: unable to find uploaded file {zip_file}")
+                    else:
+                        print(f"--- Found uploaded file {zip_file}")
+                        # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
+                        copy_local_file_to_s3_if_necessary(zip_file)
+                        # Create a callback
+                        report_id = uuid.uuid4()
+                        callback = [post_task_update_in_db, report_id]
 
+                        async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
+
+                        # Redirect to the monitor view, passing the task ID and report ID as parameters
+                        return redirect('process_ldt_zipfile_monitor', project_id, report_id)
+                else:
+                    messages.success(request, "Human Audio Info updated successfully!")
+
+            if method == 'manual_align':
+                # 3. Handle the original audio file upload
+                if 'manual_align_audio_file' in request.FILES:
+                    uploaded_audio = request.FILES['manual_align_audio_file']
+                    audio_file = uploaded_file_to_file(uploaded_audio)
+                    copy_local_file_to_s3_if_necessary(audio_file)
+                    human_audio_info.audio_file = audio_file  
+                    human_audio_info.save()
+                    messages.success(request, "Uploaded audio file saved.")
+
+                # 4. Handle the metadata file upload
+                if 'metadata_file' in request.FILES:
+                    uploaded_metadata = request.FILES['metadata_file']
+                    metadata_file = uploaded_file_to_file(uploaded_metadata)
+                    copy_local_file_to_s3_if_necessary(metadata_file)
+                    human_audio_info.manual_align_metadata_file = metadata_file  
+                    human_audio_info.save()
+                    messages.success(request, "Uploaded metadata file saved.")
+
+                # 5. If both files are available, trigger the manual alignment processing
+                if human_audio_info.audio_file and human_audio_info.manual_align_metadata_file and human_voice_id:
+                    audio_file = human_audio_info.audio_file
+                    metadata_file = human_audio_info.manual_align_metadata_file
+                    # We check using file_exists since we want to look for the S3 version if we are using S3
+                    if not file_exists(audio_file):
+                        messages.error(request, f"Error: unable to find uploaded file {audio_file}")
+                    elif not file_exists(metadata_file):
+                        messages.error(request, f"Error: unable to find uploaded file {metadata_file}")
+                    else:
+                        # Create a callback
+                        report_id = uuid.uuid4()
+                        callback = [post_task_update_in_db, report_id]
+                        
+                        async_task(process_manual_alignment, clara_project_internal, audio_file, metadata_file, human_voice_id, callback=callback)
+                        print("--- Started async task to process manual alignment data")
+
+                        # Redirect to a monitor view 
+                        return redirect('process_manual_alignment_monitor', project_id, report_id)
+                else:
+                    messages.success(request, "Need all three out of human voice ID, audio and metadata files to proceed.")
         else:
             messages.error(request, "There was an error processing the form. Please check your input.")
 
@@ -640,6 +684,7 @@ def human_audio_processing(request, project_id):
     context = {
         'project': project,
         'form': form,
+        'human_audio_info': human_audio_info
         # Any other context data you want to send to the template
     }
     return render(request, 'clara_app/human_audio_processing.html', context)
@@ -659,16 +704,52 @@ def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callba
             else:
                 post_task_update(callback, f"error")
     except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
     finally:
         # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
         remove_file(zip_file)
 
+def process_manual_alignment(clara_project_internal, audio_file, metadata_file, human_voice_id, callback=None):
+    post_task_update(callback, "--- Started process_manual_alignment in async thread")
+    try:
+        # Retrieve files from S3 to local
+        copy_s3_file_to_local_if_necessary(audio_file, callback=callback)
+        copy_s3_file_to_local_if_necessary(metadata_file, callback=callback)
+
+        # Process the manual alignment
+        result = clara_project_internal.process_manual_alignment(audio_file, metadata_file, human_voice_id, callback=callback)
+        
+        if result:
+            post_task_update(callback, f"finished")
+        else:
+            post_task_update(callback, f"error")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+    finally:
+        # Clean up: remove files from local and S3
+        remove_file(audio_file)
+        remove_file(metadata_file)
+
 # This is the API endpoint that the JavaScript will poll
 @login_required
 @user_has_a_project_role
 def process_ldt_zipfile_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_has_a_project_role
+def process_manual_alignment_status(request, project_id, report_id):
     messages = get_task_updates(report_id)
     print(f'{len(messages)} messages received')
     if 'error' in messages:
@@ -687,7 +768,15 @@ def process_ldt_zipfile_monitor(request, project_id, report_id):
     return render(request, 'clara_app/process_ldt_zipfile_monitor.html',
                   {'report_id': report_id, 'project_id': project_id, 'project': project})
 
-# Display the final result of rendering
+# Render the monitoring page, which will use JavaScript to poll the task status API
+@login_required
+@user_has_a_project_role
+def process_manual_alignment_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/process_manual_alignment_monitor.html',
+                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+
+# Confirm the final result of processing the zipfile
 @login_required
 @user_has_a_project_role
 def process_ldt_zipfile_complete(request, project_id, status):
@@ -705,6 +794,26 @@ def process_ldt_zipfile_complete(request, project_id, status):
     return render(request, 'clara_app/process_ldt_zipfile_complete.html',
                   {'project': project})
 
+# Confirm the final result of uploading the manual alignment data
+@login_required
+@user_has_a_project_role
+def process_manual_alignment_complete(request, project_id, status):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    if status == 'error':
+        succeeded = False
+    else:
+        succeeded = True
+    
+    if succeeded:
+        messages.success(request, "Manual alignment data processed successfully!")
+    else:
+        messages.error(request, "Something went wrong when trying to install manual alignment data")
+        
+    return render(request, 'clara_app/process_manual_alignment_complete.html',
+                  {'project': project})
+
+
+# Used for Voice Recorder functionality
 @login_required
 def generate_audio_metadata(request, project_id, metadata_type, human_voice_id):
     # Ensure the metadata type is valid
@@ -723,6 +832,22 @@ def generate_audio_metadata(request, project_id, metadata_type, human_voice_id):
     # Create a response object for file download
     response = JsonResponse(lite_metadata_content, safe=False, json_dumps_params={'indent': 4})
     file_name = f"metadata_{metadata_type}_{project_id}.json"
+    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+
+    return response
+
+# Used by Manual Text/Audio Alignment functionality
+@login_required
+def generate_annotated_segmented_file(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    # Get the "labelled segmented" version of the text
+    labelled_segmented_text = clara_project_internal.get_labelled_segmented_text()
+
+    # Create a response object for file download
+    response = HttpResponse(labelled_segmented_text, content_type='text/plain')
+    file_name = f"labelled_segmented_text_{project_id}.txt"
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
 
     return response
