@@ -16,6 +16,7 @@ import botocore
 import os
 import zipfile
 import tempfile
+import chardet
 
 from asgiref.sync import sync_to_async
 
@@ -417,6 +418,20 @@ def read_local_txt_file(pathname: str):
     abspathname = absolute_local_file_name(pathname)
 
     with open(abspathname, 'r', encoding='utf-8') as f:
+        return f.read()
+
+# Version that can be used when we're uncertain about the encoding
+def robust_read_local_txt_file(pathname: str) -> str:
+    abspathname = absolute_local_file_name(pathname)
+    
+    # Detect the file's encoding
+    with open(abspathname, 'rb') as f:
+        rawdata = f.read()
+        result = chardet.detect(rawdata)
+        encoding = result['encoding']
+
+    # Read the file using the detected encoding
+    with open(abspathname, 'r', encoding=encoding) as f:
         return f.read()
 
 def write_txt_file(data, pathname: str):
