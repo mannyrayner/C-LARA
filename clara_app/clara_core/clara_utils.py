@@ -121,7 +121,7 @@ def make_directory(pathname, parents=False, exist_ok=False):
         abspathname.mkdir(parents=parents, exist_ok=exist_ok)
 
 def make_local_directory(pathname, parents=False, exist_ok=False):
-    abspathname = Path(absolute_file_name(pathname))
+    abspathname = Path(absolute_local_file_name(pathname))
     
     abspathname.mkdir(parents=parents, exist_ok=exist_ok)
 
