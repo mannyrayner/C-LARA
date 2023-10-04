@@ -26,13 +26,6 @@
         {{ form.voice_talent_id }}
     </p>
 
-    {% if form.method.value == "manual_align" or form.method.value == "automatic_align" %}
-    <p>
-        <label for="{{ form.audio_file.id_for_label }}">Audio File:</label>
-        {{ form.audio_file }}
-    </p>
-    {% endif %}
-
 	{% if form.method.value == "record" %}
 		<!-- Control to download a metadata file in LiteDevTools format -->
 		<p>
@@ -51,6 +44,36 @@
 		  <input type="file" name="audio_zip" accept=".zip">
 		</p>
 	{% endif %}
+	
+	{% if form.method.value == "manual_align" %}
+    <!-- Control to download the annotated segmented file -->
+    <p>
+      <strong>Download Annotated Segmented File:</strong>
+      <a href="{% url 'generate_annotated_segmented_file' project.id %}" class="btn">Download</a>
+    </p>
+
+    <!-- Control to upload the original audio file -->
+    <p>
+      <strong>Upload Original Audio File:</strong>
+	  <input type="file" name="manual_align_audio_file" accept=".mp3"> 
+	  {% if form.audio_file.value %}
+		[Audio file uploaded]
+      {% endif %}
+
+    </p>
+
+    <!-- Control to upload the metadata file from the audio/text alignment tool -->
+    <p>
+      <strong>Upload Metadata File:</strong>
+	  <!--  <input type="file" name="manual_align_metadata_file" accept=".json"> -->
+	  <!--  Use Audacity label file in initial testing -->
+      <input type="file" name="metadata_file" accept=".txt">
+	  {% if form.manual_align_metadata_file.value %}
+		[Alignment metadata uploaded]
+      {% endif %}
+    </p>
+	{% endif %}
+
 
     <button type="submit" id="submit-button">Update & Process</button>
   </form>
