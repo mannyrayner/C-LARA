@@ -80,7 +80,14 @@ class HumanAudioInfo(models.Model):
     use_for_segments = models.BooleanField(default=False)
     use_for_words = models.BooleanField(default=False)
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
-    audio_file = models.FileField(upload_to='audio_files/', blank=True, null=True)
+    #audio_file = models.FileField(upload_to='audio_files/', blank=True, null=True)
+    #manual_align_metadata_file = models.FileField(upload_to='metadata_files/', blank=True, null=True)
+    # We are just using these two fields to store pathnames temporarily before
+    # passing them to the async process. Using FileField turns out to create many complications
+    # and doesn't help us.
+    audio_file = models.CharField(max_length=500, blank=True, null=True)
+    manual_align_metadata_file = models.CharField(max_length=500, blank=True, null=True)
+
     
     # Relationship with CLARAProject
     project = models.OneToOneField(

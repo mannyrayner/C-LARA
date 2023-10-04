@@ -54,7 +54,8 @@ class ProjectCreationForm(forms.ModelForm):
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:
         model = HumanAudioInfo
-        fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id', 'audio_file']
+        fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id',
+                  'audio_file', 'manual_align_metadata_file']
         
 class AddProjectMemberForm(forms.Form):
     ROLE_CHOICES = [
