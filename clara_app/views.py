@@ -38,7 +38,7 @@ from .clara_core.clara_conventional_tagging import fully_supported_treetagger_la
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
 from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file
-from .clara_core.clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary
+from .clara_core.clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, check_if_file_can_be_read
 from .clara_core.clara_utils import output_dir_for_project_id, post_task_update, is_rtl_language
 
 from pathlib import Path
@@ -648,10 +648,13 @@ def human_audio_processing(request, project_id):
                 if 'metadata_file' in request.FILES:
                     uploaded_metadata = request.FILES['metadata_file']
                     metadata_file = uploaded_file_to_file(uploaded_metadata)
-                    copy_local_file_to_s3_if_necessary(metadata_file)
-                    human_audio_info.manual_align_metadata_file = metadata_file  
-                    human_audio_info.save()
-                    messages.success(request, "Uploaded metadata file saved.")
+                    if check_if_file_can_be_read(metadata_file):
+                        copy_local_file_to_s3_if_necessary(metadata_file)
+                        human_audio_info.manual_align_metadata_file = metadata_file  
+                        human_audio_info.save()
+                        messages.success(request, "Uploaded metadata file saved.")
+                    else:
+                        messages.error(request, "Uploaded metadata file could not be read.")
 
                 # 5. If both files are available, trigger the manual alignment processing
                 if human_audio_info.audio_file and human_audio_info.manual_align_metadata_file and human_voice_id:
