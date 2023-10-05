@@ -645,3 +645,17 @@ def post_task_update(callback, message):
     else:
         print(f"Could not post task update '{message}'. Callback = {callback}")
     
+def canonical_word_for_audio(text):
+    return text.lower()
+
+def canonical_text_for_audio(text):
+    # Remove HTML markup
+    text = re.sub(r'<[^>]*>', '', text)
+
+    # Consolidate sequences of whitespaces to a single space
+    text = re.sub(r'\s+', ' ', text)
+
+    # Trim leading and trailing spaces
+    text = text.strip()
+
+    return text

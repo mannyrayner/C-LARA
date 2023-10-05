@@ -4,6 +4,7 @@ Code to support the manual audio/text alignment functionality.
 """
 
 from .clara_utils import local_directory_exists, make_local_directory, read_local_json_file, post_task_update
+from .clara_utils import canonical_word_for_audio, canonical_text_for_audio
 from .clara_classes import InternalCLARAError
 
 import os
@@ -68,7 +69,7 @@ def process_alignment_metadata(metadata, audio_file, output_dir, callback=None):
         
         try:
             subprocess.run(cmd, check=True)
-            post_task_update(callback, f'--- Extracted audio for "{text}"')
+            post_task_update(callback, f'--- Extracted audio for "{text}, start_time = {start_time}, duration = {duration}"')
         except Exception as e:
             post_task_update(callback, f'--- Error when trying to extract audio for "{text}": {str(e)}')
             raise InternalCLARAError( message=f'*** Error: something went wrong when trying to extract audio for "{text}"') 
@@ -87,28 +88,26 @@ def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_cont
     try:        
         # Parse the annotated segmented file using regex
         segments = re.findall(r'\|\d+\|([^|]+)', segmented_file_content)
-        segments = [segment.strip() for segment in segments]
+        segments = [canonical_text_for_audio(segment) for segment in segments]
 
         post_task_update(callback, f'--- Found {len(segments)} segments')
 
         # Parse the Audacity label file
-        times = []
-        for line in audacity_label_content.split("\n"):
-            if line:
-                start_time, end_time, _ = line.split("\t")
-                times.append((float(start_time), float(end_time)))
+        times = [float(line.split("\t")[0]) for line in audacity_label_content.split("\n") if line]
 
         post_task_update(callback, f'--- Found {len(times)} Audacity labels')
 
         # Combine the two to produce the metadata
         metadata = []
         for i, text in enumerate(segments):
-            if i < len(times):
+            if i < len(times) - 1:
+                start_time = times[i]
+                end_time = times[i + 1]
                 metadata.append({
                     'text': text,
-                    'start_time': times[i][0],
-                    'end_time': times[i][1]
-            })
+                    'start_time': start_time,
+                    'end_time': end_time
+                })
 
         post_task_update(callback, f'--- Created {len(metadata)} alignment metadata items')
         return metadata
@@ -117,4 +116,4 @@ def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_cont
         post_task_update(callback, f'*** Error when trying to create text/audio alignment metadata')
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         post_task_update(callback, error_message)
-        raise InternalCLARAError( message='Error when creating text/audio alignment metadata')
+        raise InternalCLARAError(message='Error when creating text/audio alignment metadata')

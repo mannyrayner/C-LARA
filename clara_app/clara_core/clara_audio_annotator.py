@@ -16,6 +16,7 @@ It uses the audio repository to store and retrieve audio files.
 
 from .clara_classes import Text, InternalCLARAError
 from .clara_utils import absolute_local_file_name, basename, make_tmp_file, file_exists, remove_file, read_json_local_file, unzip_file, post_task_update
+from .clara_utils import canonical_word_for_audio, canonical_text_for_audio
 from .clara_tts_api import get_tts_engine, get_default_voice, get_language_id, create_tts_engine
 from .clara_audio_repository import AudioRepository
 from .clara_ldt import convert_ldt_data_to_mp3
@@ -288,21 +289,6 @@ class AudioAnnotator:
             return word_voice_str
         else:
             return 'No audio voice'
-
-def canonical_word_for_audio(text):
-    return text.lower()
-
-def canonical_text_for_audio(text):
-    # Remove HTML markup
-    text = re.sub(r'<[^>]*>', '', text)
-
-    # Consolidate sequences of whitespaces to a single space
-    text = re.sub(r'\s+', ' ', text)
-
-    # Trim leading and trailing spaces
-    text = text.strip()
-
-    return text
 
 def format_audio_metadata_item(item, format, words_or_segments):
     if format == 'lite_dev_tools':

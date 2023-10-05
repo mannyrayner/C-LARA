@@ -691,7 +691,7 @@ class CLARAProjectInternal:
             annotated_segment_data = self.get_labelled_segmented_text()
             post_task_update(callback, f'--- Found labelled segmented text')
                         
-            metadata = annotated_segmented_data_and_label_file_data_to_metadata(annotated_segment_data, audacity_label_data)
+            metadata = annotated_segmented_data_and_label_file_data_to_metadata(annotated_segment_data, audacity_label_data, callback=callback)
                 
             audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
             post_task_update(callback, f'--- Calling process_manual_alignment')
