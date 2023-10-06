@@ -1,0 +1,25 @@
+Initial Support for Images in C-LARA
+
+Overview
+
+We are working on adding initial support for images in the C-LARA project. This feature aims to allow users to upload and display images within the text, as well as associate specific text with areas of the image. The functionality is particularly important for one of the Melbourne Uni student projects focused on "annotated images."
+
+Objectives
+
+1. Upload and Display Images: Enable users to upload images that can be displayed within the text.
+
+2. Associated Text: Allow users to associate specific text with the uploaded images.
+
+3. Integration with Annotated Images Tool: Ensure compatibility with the graphical tool developed by Melbourne Uni students for annotating areas of an image with text.
+
+Implementation Plan
+
+1. Image Repository: Create a new class similar to the existing AudioRepository class (https://github.com/mannyrayner/C-LARA/blob/main/clara_app/clara_core/clara_audio_repository.py) to manage the storage and retrieval of images. Like AudioRepository, this class will work with both local files and S3 files, and with both sqlite3 and postgres DBs.
+
+2. Image View: Introduce a new 'image' view in the annotation sequence, allowing users to add images to the text as HTML img tags.
+
+3. Image Upload Interface: The new view will display a list of items, one for each img tag in the text. It will show currently included images and allow the upload of new/altered images. Each item will also contain a field for the associated text.
+
+Code
+
+The initial code for ImageRepository is checked in as https://github.com/mannyrayner/C-LARA/blob/main/clara_app/clara_core/clara_image_repository.py
