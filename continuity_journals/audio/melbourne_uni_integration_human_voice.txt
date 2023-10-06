@@ -1,0 +1,216 @@
+INTEGRATION WITH C-LARA: HUMAN VOICE PROJECTS
+
+0. Overview
+
+This document provides information needed to organise the integration
+of the Voice Recorder and Manual Text/Audio Alignment projects into
+C-LARA. If the Automatic Text/Audio Alignment project can use the same
+API spec as Manual Text/Audio Alignment, it will be very easy to extend it
+to cover that too.
+
+There are some questions that need to be resolved about the exact form
+of the APIs.
+
+1. Overview of C-LARA work
+
+On the C-LARA side, we have started by implementing preliminary manual
+integrations, where we have used the tools available from the LARA
+project to carry out the relevant audio processing. This has let us
+debug the code, and our understanding is that the Melbourne Uni
+modules will offer very similar functionality.
+
+For Voice Recorder, we have used LiteDevTools (LDT) to record audio.
+
+For Manual Text/Audio Alignment, we have used Audacity to do the
+manual alignment.
+
+The current integration is incorporated into the Heroku deployment of
+C-LARA, https://c-lara-758a4f81c1ff.herokuapp.com/.
+
+The high-level workflow is as follows:
+
+a. Create a C-LARA project. In the usual way, create plain text, then
+add segmentation, gloss and lemma annotations.
+
+b. Specify relevant parameters in the Human Audio Processing view.
+
+For Voice Recorder, do the following:
+
+c. Download metadata for segments/words.
+
+d. Upload metadata to LDT.
+
+e. Record audio on LDT.
+
+f. Download results zipfile (audio + instantiated metadata) from LDT.
+
+g. Upload results zipfile through Human Audio Processing view.
+
+h. Press Submit to add the recorded human audio to the project.
+
+For Manual Text/Audio Alignment, do following:
+
+c. Download annotated segmented file.
+
+d. Upload audio file to Audacity.
+
+e. Use Audacity to create a labels file with a numbered label for each numbered
+segment break in the annotated segmented file. 
+
+f. Upload audio and labels file through Human Audio Processing view.
+
+g. Press Submit to add the uploaded aligned human audio into project.
+
+3. Data formats and example for Voice Recorder with LDT
+
+a. Formal spec of current LDT-based data formats
+
+- The downloaded metadata is a JSON-formatted file containing a
+list of structures of the form
+
+    {
+        "text": "... the text ...",
+        "file": "... the audio file ..."
+    }
+
+If there is no current audio file, "file" will be null.
+
+- The uploaded results file is a zipfile containing the recorded mp3 and
+instantiated metadata.
+
+b. Toy example ("Mary had a little lamb")
+
+The initial uninstantiated segment metadata looks like this:
+
+[
+    {
+        "text": "Mary had a little lamb",
+        "file": ""
+    },
+    {
+        "text": "Its fleece was white as snow",
+        "file": ""
+    },
+    {
+        "text": "And everywhere that Mary went",
+        "file": ""
+    },
+    {
+        "text": "That lamb was sure to go",
+        "file": ""
+    }
+]
+
+The final instantiated metadata looks like this:
+
+[
+    {
+        "text": "Mary had a little lamb",
+        "file": "2676569_230925_141412968.mp3"
+    },
+    {
+        "text": "Its fleece was white as snow",
+        "file": "2676570_230925_141421014.mp3"
+    },
+    {
+        "text": "And everywhere that Mary went",
+        "file": "2676571_230925_141425357.mp3"
+    },
+    {
+        "text": "That lamb was sure to go",
+        "file": "2676572_230925_141432770.mp3"
+    }
+]
+
+
+4. Data formats and example for Manual Text/Audio Alignment with Audacity.
+
+[This could be used for Automatic Text/Audio Alignment as well]
+
+a. Formal spec of current Audacity-based data formats
+
+- The downloaded annotated segmented file is a text file with numbered
+segment breaks of the form |... index ...|, i.e. the content is of the form
+
+|0| ... first segment ... |1| ... second segment ... |2| ... third segment ...
+...|n-1| ... last segment |n|
+
+- The uploaded Audacity labels file is a text file with one tab-separated line for
+each label, in the format
+
+... time ...  [tab] ... time ... [tab] label
+
+In Audacity's format, the two times are the same. This is so
+that labels can refer to segments as well as points.
+
+b. Toy example ("You are old, Father William")
+
+- The annotated segmented file looks like this:
+
+|0|"You are old, Father William", the young man said|1|
+"And your hair has become very white.|2|
+And yet you incessantly stand on your head.|3|
+Do you think at your age it is right?"|4|
+
+"In my youth," Father William replied to his son,|5|
+"I feared it might injure the brain.|6|
+But now that I'm perfectly sure I have none|7|
+Why, I do it again and again!"|8||9|
+
+- The uploaded Audacity labels file looks like this:
+
+1.369090	1.369090	0
+4.107269	4.107269	1
+6.503176	6.503176	2
+9.369707	9.369707	3
+11.936750	11.936750	4
+14.717714	14.717714	5
+16.707172	16.707172	6
+18.910551	18.910551	7
+21.081841	21.081841	8
+
+5. APIs
+
+We need to discuss the exact form of the APIs used, so that
+we can add appropriate calls in C-LARA. We anticipate that they
+will be something like the following:
+
+a. Voice Recorder
+
+- API to post a recording task.
+
+C-LARA passes a task-ID, a user-ID, and a list of metadata
+items. Voice Recorder posts the recording task so that it is available
+to the user voice-ID.
+
+- API to retrieve the results of a recording task.
+
+C-LARA passes a task-ID.  The Voice Recorder module returns a set of
+audio files and a further instantiated list of metadata
+items. Recording does not need to be complete. If it is incomplete,
+Voice Recorder returns the currently available results.
+
+We need to agree on the details. How do we make the calls? What are
+the exact data formats?
+
+Given that audio files are large, it will be most efficient if we can incorporate
+Voice Recorder in a way that lets it share a file system with C-LARA. Then when we
+retrieve the results of a recording task, we will just pass pathnames of files.
+
+b. Manual Text/Audio Alignment
+
+[This can probably also be used for Automatic Text/Audio Alignment]
+
+- API to post a manual alignment task.
+
+C-LARA passes a task-ID, a user-ID, and an annotated segmented file.
+
+- API to retrieve the results of performing a manual alignment task.
+
+C-LARA passes a task-ID.  The Manual Text/Audio Alignment module
+returns a list of breakpoint/time pairs if the task has been
+completed, otherwise a null value.
+
+We need to agree on the details. How do we make the calls? What are
+the exact data formats?
+
