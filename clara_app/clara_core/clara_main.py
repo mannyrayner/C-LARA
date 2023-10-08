@@ -137,6 +137,7 @@ from .clara_diff import diff_text_objects
 from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
+from .clara_image_repository import ImageRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, output_dir_for_project_id
@@ -172,6 +173,7 @@ class CLARAProjectInternal:
             "lemma_and_gloss": None,
         }
         self.internalised_and_annotated_text = None
+        self.image_repository = ImageRepository()
         self._ensure_directories()
         self._store_information_in_dir()
         self._load_existing_text_versions()
@@ -702,6 +704,64 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             return False
 
+    # Adds an image to the ImageRepository and associates it with the project
+    def add_project_image(self, project_id, image_name, image_file_path, callback=None):
+        try:
+            post_task_update(callback, f"--- Adding image {image_name} to project {project_id}")            
+            
+            # Logic to store the image in the repository
+            stored_image_path = self.image_repository.store_image(project_id, image_file_path)
+            
+            # Logic to add the image entry to the repository
+            self.image_repository.add_entry(project_id, image_name, stored_image_path)
+            
+            post_task_update(callback, f"--- Image {image_name} added successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when adding image: {str(e)}")
+            # Handle the exception as needed
+
+    # Retrieves the image associated with the project
+    def get_project_image(self, project_id, image_name, callback=None):
+        try:
+            post_task_update(callback, f"--- Retrieving image {image_name} for project {project_id}")
+            
+            # Logic to get the image entry from the repository
+            image_file_path = self.image_repository.get_entry(project_id, image_name)
+            
+            post_task_update(callback, f"--- Image retrieved successfully")
+            return image_file_path
+        except Exception as e:
+            post_task_update(callback, f"*** Error when retrieving image: {str(e)}")
+            # Handle the exception as needed
+            return None
+
+    # Removes an image from the ImageRepository associated with the project
+    def remove_project_image(self, project_id, image_name, callback=None):
+        try:
+            post_task_update(callback, f"--- Removing image {image_name} from project {project_id}")
+
+            # Logic to remove the image entry from the repository
+            self.image_repository.remove_entry(project_id, image_name)
+
+            post_task_update(callback, f"--- Image {image_name} removed successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when removing image: {str(e)}")
+            # Handle the exception as needed
+
+    # Retrieves the current image associated with the project (temporary for initial version)
+    def get_current_project_image(self, project_id, callback=None):
+        try:
+            post_task_update(callback, f"--- Retrieving current image for project {project_id}")
+
+            # Logic to get the current image entry from the repository
+            current_image_file_path = self.image_repository.get_current_entry(project_id)
+
+            post_task_update(callback, f"--- Current image retrieved successfully")
+            return current_image_file_path
+        except Exception as e:
+            post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
+            # Handle the exception as needed
+            return None
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

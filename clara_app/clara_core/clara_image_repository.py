@@ -154,3 +154,32 @@ class ImageRepository:
         destination_path = str(Path(project_dir) / file_name)
         copy_local_file(source_file, destination_path)
         return destination_path
+
+    def remove_entry(self, project_id, image_name, callback=None):
+        try:
+            post_task_update(callback, f'--- Removing entry for image {image_name} in project {project_id}')
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            cursor.execute(localise_sql_query("DELETE FROM metadata WHERE project_id = %s AND image_name = %s"),
+                           (project_id, image_name))
+            connection.commit()
+            connection.close()
+            post_task_update(callback, f'--- Entry for image {image_name} removed successfully')
+        except Exception as e:
+            post_task_update(callback, f'*** Error when removing entry for image {image_name}: {str(e)}')
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def get_current_entry(self, project_id, callback=None):
+        try:
+            post_task_update(callback, f'--- Retrieving current entry for project {project_id}')
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            cursor.execute(localise_sql_query("SELECT file_path FROM metadata WHERE project_id = %s LIMIT 1"),
+                           (project_id,))
+            result = cursor.fetchone()
+            connection.close()
+            return result[0] if result else None
+        except Exception as e:
+            post_task_update(callback, f'*** Error when retrieving current entry for project {project_id}: {str(e)}')
+            raise InternalCLARAError(message='Image database inconsistency')
+
