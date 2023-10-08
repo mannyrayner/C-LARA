@@ -7,6 +7,7 @@ from django_q.models import OrmQ
 
 from functools import wraps
 from decimal import Decimal
+import os
 import datetime
 import time
 import tempfile
@@ -145,8 +146,12 @@ def uploaded_file_to_file(uploaded_file):
     # Read the content from the uploaded file
     file_content = uploaded_file.open("rb").read()
     uploaded_md5 = compute_md5_of_content(file_content)
+
+    # Get the file extension
+    file_extension = os.path.splitext(uploaded_file.name)[1]
+    print(f'Extension: {file_extension}')
     
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+    with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temp_file:
         print(f'Type: {type(uploaded_file)}')
         print(f'Size: {uploaded_file.size} bytes')
         

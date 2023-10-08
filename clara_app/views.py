@@ -37,9 +37,9 @@ from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file
+from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_core.clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, robust_read_local_txt_file, check_if_file_can_be_read
-from .clara_core.clara_utils import output_dir_for_project_id, post_task_update, is_rtl_language
+from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language
 
 from pathlib import Path
 from decimal import Decimal
@@ -1460,20 +1460,24 @@ def images_view(request, project_id):
                 messages.error(request, "Both image name and file are required.")
         
         elif 'remove_image' in request.POST:
-            image_name = request.POST.get('image_name')
-            if image_name:
-                clara_project_internal.remove_project_image(project_id_str, image_name)
-                messages.success(request, "Image removed successfully!")
-                current_image = None
+##            image_name = request.POST.get('image_name')
+##            if image_name:
+##                clara_project_internal.remove_project_image(project_id_str, image_name)
+##                messages.success(request, "Image removed successfully!")
+##                current_image = None
+            clara_project_internal.remove_all_project_images(project_id_str)
+            messages.success(request, "All project images removed successfully!")
+            current_image = None
 
     # Handle GET request
     else:
         # In the initial version of this view function, we have at most one image in a project
         current_image = clara_project_internal.get_current_project_image(project_id_str)
 
+    base_current_image = basename(current_image) if current_image else None
     context = {
         'project': project,
-        'current_image': current_image,
+        'current_image': base_current_image,
     }
     return render(request, 'clara_app/images.html', context)
 
@@ -1678,4 +1682,20 @@ def serve_zipfile(request, project_id):
         raise Http404("Zipfile does not exist")
 
     return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
+
+@login_required
+def serve_project_image(request, project_id, base_filename):
+    file_path = absolute_file_name(Path(image_dir_for_project_id(project_id)) / base_filename)
+    if file_exists(file_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+        if _s3_storage:
+            s3_file = _s3_bucket.Object(key=file_path).get()
+            return HttpResponse(s3_file['Body'].read(), content_type=content_type)
+        else:
+            return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    else:
+        raise Http404
+
+
+
 
