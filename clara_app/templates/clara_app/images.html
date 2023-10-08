@@ -7,7 +7,7 @@
 
   <!-- Image Display Area -->
   {% if current_image %}
-    <p><img src="{{ current_image }}" alt="Current Project Image"></p>
+    <p><img src="{% url 'serve_project_image' project.id current_image %}" alt="Current Project Image"></p>
   {% else %}
     <p>No image currently associated with this project.</p>
   {% endif %}
