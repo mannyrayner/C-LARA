@@ -1435,6 +1435,48 @@ def render_text_start(request, project_id):
         form = RenderTextForm()
         return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
 
+@login_required
+@user_has_a_project_role
+def images_view(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    # project_id will be an int, so we need to turn it into a str before we pass it to the CLARAProjectInternal methods
+    project_id_str = str(project_id)
+
+    current_image = None
+
+    # Handle POST request
+    if request.method == 'POST':
+        if 'save_image' in request.POST:
+            image_name = request.POST.get('image_name')
+            uploaded_image = request.FILES.get('new_image')
+
+            if image_name and uploaded_image:
+                image_file_path = uploaded_file_to_file(uploaded_image)
+                clara_project_internal.add_project_image(project_id_str, image_name, image_file_path)
+                messages.success(request, "Image added successfully!")
+                current_image = clara_project_internal.get_project_image(project_id_str, image_name)
+            else:
+                messages.error(request, "Both image name and file are required.")
+        
+        elif 'remove_image' in request.POST:
+            image_name = request.POST.get('image_name')
+            if image_name:
+                clara_project_internal.remove_project_image(project_id_str, image_name)
+                messages.success(request, "Image removed successfully!")
+                current_image = None
+
+    # Handle GET request
+    else:
+        # In the initial version of this view function, we have at most one image in a project
+        current_image = clara_project_internal.get_current_project_image(project_id_str)
+
+    context = {
+        'project': project,
+        'current_image': current_image,
+    }
+    return render(request, 'clara_app/images.html', context)
+
 # This is the API endpoint that the JavaScript will poll
 @login_required
 @user_has_a_project_role
