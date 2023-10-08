@@ -1,11 +1,13 @@
 {% extends "clara_app/base.html" %}
 
+{% block title %}Add/Delete images{% endblock %}
+
 {% block content %}
-  <h1>Images for {{ project.title }}</h1> <!-- Title Section -->
+  <h1>Add/Delete images ("{{ project.title }}")</h1> <!-- Title Section -->
 
   <!-- Image Display Area -->
   {% if current_image %}
-    <img src="{{ current_image }}" alt="Current Project Image">
+    <p><img src="{{ current_image }}" alt="Current Project Image"></p>
   {% else %}
     <p>No image currently associated with this project.</p>
   {% endif %}
@@ -14,22 +16,31 @@
     {% csrf_token %}
 
     <!-- Image Upload Button -->
-    <label for="new_image">Upload New Image:</label>
-    <input type="file" id="new_image" name="new_image">
+	<p>
+       <label for="new_image">Upload New Image:</label>
+       <input type="file" id="new_image" name="new_image">
+	</p>
     
     <!-- Image Name Input -->
-    <label for="image_name">Image Name:</label>
-    <input type="text" id="image_name" name="image_name">
+	<p>
+       <label for="image_name">Image Name:</label>
+       <input type="text" id="image_name" name="image_name">
+	</p>
     
-    <!-- Save Button -->
-    <button type="submit" name="save_image">Save Image</button>
+       <!-- Save Button -->
+	<p>
+       <button type="submit" name="save_image">Save Image</button>
+	
 
-    <!-- Remove Button -->
-    {% if current_image %}
-      <button type="submit" name="remove_image">Remove Image</button>
-    {% endif %}
+       <!-- Remove Button -->
+       {% if current_image %}
+          <button type="submit" name="remove_image">Remove Image</button>
+       {% endif %}
+	</p>
 
     <!-- Back to Project Details -->
-    <a href="{% url 'project_detail' project.id %}">Back to Project Details</a>
+	<p>
+       <a href="{% url 'project_detail' project.id %}">Back to Project Details</a>
+	</p>
   </form>
 {% endblock %}
