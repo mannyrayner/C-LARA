@@ -578,6 +578,10 @@ def output_dir_for_project_id(id):
     config = get_config()
     return str( Path(absolute_file_name(config.get('renderer', 'output_dir'))) / str(id) )
 
+def image_dir_for_project_id(id):
+    config = get_config()
+    return str( Path(absolute_file_name(config.get('image_repository', 'base_dir'))) / str(id) )
+
 def is_rtl_language(language):
     rtl_languages = ['arabic', 'hebrew', 'farsi', 'urdu', 'yemeni']
     return language in rtl_languages

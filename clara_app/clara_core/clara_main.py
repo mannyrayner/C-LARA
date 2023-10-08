@@ -707,10 +707,10 @@ class CLARAProjectInternal:
     # Adds an image to the ImageRepository and associates it with the project
     def add_project_image(self, project_id, image_name, image_file_path, callback=None):
         try:
-            post_task_update(callback, f"--- Adding image {image_name} to project {project_id}")            
+            post_task_update(callback, f"--- Adding image {image_name} (file path = {image_file_path}) to project {project_id}")            
             
             # Logic to store the image in the repository
-            stored_image_path = self.image_repository.store_image(project_id, image_file_path)
+            stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
             
             # Logic to add the image entry to the repository
             self.image_repository.add_entry(project_id, image_name, stored_image_path)
@@ -726,7 +726,7 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Retrieving image {image_name} for project {project_id}")
             
             # Logic to get the image entry from the repository
-            image_file_path = self.image_repository.get_entry(project_id, image_name)
+            image_file_path = self.image_repository.get_entry(project_id, image_name, callback=callback)
             
             post_task_update(callback, f"--- Image retrieved successfully")
             return image_file_path
@@ -741,9 +741,22 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Removing image {image_name} from project {project_id}")
 
             # Logic to remove the image entry from the repository
-            self.image_repository.remove_entry(project_id, image_name)
+            self.image_repository.remove_entry(project_id, image_name, callback=callback)
 
             post_task_update(callback, f"--- Image {image_name} removed successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when removing image: {str(e)}")
+            # Handle the exception as needed
+
+    # Removes all images associated with the project from the ImageRepository 
+    def remove_all_project_images(self, project_id, callback=None):
+        try:
+            post_task_update(callback, f"--- Removing all images from project {project_id}")
+
+            # Logic to remove the image entries from the repository
+            self.image_repository.delete_entries_for_project(project_id, callback=callback)
+
+            post_task_update(callback, f"--- Images for {project_id} removed successfully")
         except Exception as e:
             post_task_update(callback, f"*** Error when removing image: {str(e)}")
             # Handle the exception as needed
