@@ -35,12 +35,17 @@ single units, but we have still not found reliable ways to give the AI the right
 teacher collaborators consider that this is currently one of the platform's most serious shortcomings, and
 we are investigating various ways to address it.
 
-**"Continuity journals"**
+**ChatGPT-4 and long-term memory**
 
 One of the biggest practical problems when working with ChatGPT-4 as a software collaborator is that the AI has
 a limited memory window, forgetting interactions that may have occurred only the previous day and being unable
-to keep a global view of their activities in the project. We are investigating an intriguing idea originally 
-suggested by Rina Zviel-Girshin and inspired by the movie "Fifty First Dates", where we help the AI keep journals that 
-summarise its activities and use them to refresh its understanding of what it has been doing. A refinement is
+to keep a global view of their activities in the project. Our first attempt to address this problem
+was an intriguing idea originally  suggested by Rina Zviel-Girshin and inspired by the movie "Fifty First Dates", 
+where we help the AI keep journals that summarise its activities and use them to refresh its understanding of what it has been doing. A refinement is
 to divide up the work between multiple instances of ChatGPT-4, each one maintaining its own topic-specific context
 journal.
+
+More recently, the ChatGPT plugin store has made available a plugin, 
+<a href="https://www.papr.ai/memory" target="_blank">Papr Memory</a>, whose purpose is to automate the process
+of keeping an external long-term memory which ChatGPT can access autonomously. Initial experiments with this 
+seem promising. 
