@@ -1440,38 +1440,34 @@ def render_text_start(request, project_id):
 def images_view(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    # project_id will be an int, so we need to turn it into a str before we pass it to the CLARAProjectInternal methods
-    project_id_str = str(project_id)
+    project_id_str = str(project_id)  # Convert project_id to string
 
     current_image = None
 
     # Handle POST request
     if request.method == 'POST':
         if 'save_image' in request.POST:
-            image_name = request.POST.get('image_name')
             uploaded_image = request.FILES.get('new_image')
+            associated_text = request.POST.get('associated_text')
+            associated_areas = request.POST.get('associated_areas')
 
-            if image_name and uploaded_image:
+            if uploaded_image:
+                image_name = basename(uploaded_image.name)
                 image_file_path = uploaded_file_to_file(uploaded_image)
-                clara_project_internal.add_project_image(project_id_str, image_name, image_file_path)
+                clara_project_internal.add_project_image(project_id_str, image_name, image_file_path,
+                                                         associated_text=associated_text, associated_areas=associated_areas)
                 messages.success(request, "Image added successfully!")
                 current_image = clara_project_internal.get_project_image(project_id_str, image_name)
             else:
-                messages.error(request, "Both image name and file are required.")
+                messages.error(request, "Image file is required.")
         
         elif 'remove_image' in request.POST:
-##            image_name = request.POST.get('image_name')
-##            if image_name:
-##                clara_project_internal.remove_project_image(project_id_str, image_name)
-##                messages.success(request, "Image removed successfully!")
-##                current_image = None
             clara_project_internal.remove_all_project_images(project_id_str)
             messages.success(request, "All project images removed successfully!")
             current_image = None
 
     # Handle GET request
     else:
-        # In the initial version of this view function, we have at most one image in a project
         current_image = clara_project_internal.get_current_project_image(project_id_str)
 
     base_current_image = basename(current_image) if current_image else None
@@ -1480,6 +1476,7 @@ def images_view(request, project_id):
         'current_image': base_current_image,
     }
     return render(request, 'clara_app/images.html', context)
+
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
