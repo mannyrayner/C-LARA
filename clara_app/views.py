@@ -1440,7 +1440,6 @@ def render_text_start(request, project_id):
 def images_view(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    project_id_str = str(project_id)  # Convert project_id to string
 
     current_image = None
 
@@ -1454,21 +1453,21 @@ def images_view(request, project_id):
             if uploaded_image:
                 image_name = basename(uploaded_image.name)
                 image_file_path = uploaded_file_to_file(uploaded_image)
-                clara_project_internal.add_project_image(project_id_str, image_name, image_file_path,
+                clara_project_internal.add_project_image(project_id, image_name, image_file_path,
                                                          associated_text=associated_text, associated_areas=associated_areas)
                 messages.success(request, "Image added successfully!")
-                current_image = clara_project_internal.get_project_image(project_id_str, image_name)
+                current_image = clara_project_internal.get_project_image(project_id, image_name)
             else:
                 messages.error(request, "Image file is required.")
         
         elif 'remove_image' in request.POST:
-            clara_project_internal.remove_all_project_images(project_id_str)
+            clara_project_internal.remove_all_project_images(project_id)
             messages.success(request, "All project images removed successfully!")
             current_image = None
 
     # Handle GET request
     else:
-        current_image = clara_project_internal.get_current_project_image(project_id_str)
+        current_image = clara_project_internal.get_current_project_image(project_id)
 
     base_current_image = basename(current_image) if current_image else None
     context = {
