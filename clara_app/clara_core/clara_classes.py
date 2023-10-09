@@ -166,6 +166,20 @@ class Text:
             "pages": json_list
         })
 
+    def add_to_end_of_last_segment(self, content_element):
+        if not self.pages:
+            # If there are no pages, create a new one with an empty segment
+            new_page = Page([Segment([])])
+            self.pages.append(new_page)
+        
+        last_page = self.pages[-1]
+        if not last_page.segments:
+            # If the last page has no segments, add an empty one
+            last_page.segments.append(Segment([]))
+        
+        last_segment = last_page.segments[-1]
+        last_segment.content_elements.append(content_element)
+
     @classmethod
     def from_json(cls, json_str):
         data = json.loads(json_str)

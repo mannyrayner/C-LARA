@@ -704,8 +704,7 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             return False
 
-    # Adds an image to the ImageRepository and associates it with the project
-    def add_project_image(self, project_id, image_name, image_file_path, callback=None):
+    def add_project_image(self, project_id, image_name, image_file_path, associated_text=None, associated_areas=None, callback=None):
         try:
             post_task_update(callback, f"--- Adding image {image_name} (file path = {image_file_path}) to project {project_id}")            
             
@@ -713,7 +712,8 @@ class CLARAProjectInternal:
             stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
             
             # Logic to add the image entry to the repository
-            self.image_repository.add_entry(project_id, image_name, stored_image_path)
+            self.image_repository.add_entry(project_id, image_name, stored_image_path,
+                                            associated_text=associated_text, associated_areas=associated_areas, callback=callback)
             
             post_task_update(callback, f"--- Image {image_name} added successfully")
         except Exception as e:
@@ -786,6 +786,13 @@ class CLARAProjectInternal:
         text_object = self.get_internalised_and_annotated_text(tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
                                                                audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                                callback=callback)
+
+        # Add image if it exists. Temporary code while we only have a maximum of one image, added at the end.
+        current_image_file_path = self.get_current_project_image(project_id)
+        if current_image_file_path:
+            image_element = ContentElement("Image", {'src': basename(current_image_file_path)})
+            text_object.add_to_end_of_last_segment(image_element)
+    
         post_task_update(callback, f"--- Created internalised and annotated text")
         renderer = StaticHTMLRenderer(project_id)
         post_task_update(callback, f"--- Start creating pages")

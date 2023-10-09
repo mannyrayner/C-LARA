@@ -145,7 +145,7 @@ class ImageRepository:
 
     def get_project_directory(self, project_id):
         # Returns the directory path where images for a specific project are stored
-        return absolute_file_name(Path(self.base_dir) / project_id)
+        return absolute_file_name(Path(self.base_dir) / str(project_id))
 
     def store_image(self, project_id, source_file, keep_file_name=True, callback=None):
         project_dir = self.get_project_directory(project_id)
