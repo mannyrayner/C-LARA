@@ -21,23 +21,28 @@
        <input type="file" id="new_image" name="new_image">
 	</p>
     
-    <!-- Image Name Input -->
+    <!-- Associated Text Input -->
 	<p>
-       <label for="image_name">Image Name:</label>
-       <input type="text" id="image_name" name="image_name">
+       <label for="associated_text">Associated Text:</label>
+       <textarea id="associated_text" name="associated_text"></textarea>
+	</p>
+
+    <!-- Associated Areas Input -->
+	<p>
+       <label for="associated_areas">Associated Areas:</label>
+       <textarea id="associated_areas" name="associated_areas"></textarea>
 	</p>
     
-       <!-- Save Button -->
+    <!-- Save Button -->
 	<p>
        <button type="submit" name="save_image">Save Image</button>
-	
-
-       <!-- Remove Button -->
-       {% if current_image %}
-          <button type="submit" name="remove_image">Remove Image</button>
-       {% endif %}
 	</p>
 
+    <!-- Remove Button -->
+    {% if current_image %}
+       <button type="submit" name="remove_image">Remove Image</button>
+    {% endif %}
+	
     <!-- Back to Project Details -->
 	<p>
        <a href="{% url 'project_detail' project.id %}">Back to Project Details</a>
