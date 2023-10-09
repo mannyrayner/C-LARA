@@ -140,7 +140,7 @@ from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository import ImageRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
-from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, output_dir_for_project_id
+from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp
 from .clara_utils import post_task_update
