@@ -25,7 +25,9 @@
 			  data-segment-uid="{{ segment.annotations.segment_uid }}" 
 			  data-segment-audio="{{ segment.annotations.tts.file_path if segment.annotations.tts else '' }}">
 		  {%- for element in segment.content_elements -%}
-			{%- if element.type == "Word" -%}
+		    {%- if element.type == "Image" -%}
+              <img src="{% url 'serve_project_image' project.id element.content.src %}" alt="Project Image">
+			{%- elif element.type == "Word" -%}
 			  <span class="word" data-gloss="{{ element.annotations.gloss }}" 
 					data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
 					data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
