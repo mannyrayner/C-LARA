@@ -27,7 +27,8 @@ class StaticHTMLRenderer:
     def __init__(self, project_id):
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
         self.template_env.filters['replace_punctuation'] = replace_punctuation_with_underscores
-        
+
+        self.project_id = str(project_id)
         self.output_dir = Path(output_dir_for_project_id(project_id))
         
         # Remove the existing output_dir if we're not on S3 and it exists
@@ -48,8 +49,10 @@ class StaticHTMLRenderer:
     def render_page(self, page, page_number, total_pages, l2_language, l1_language):
         is_rtl = is_rtl_language(l2_language)
         template = self.template_env.get_template('clara_page.html')
+        project_id = self.project_id
         rendered_page = template.render(page=page,
                                         total_pages=total_pages,
+                                        project_id=project_id,
                                         l2_language=l2_language,
                                         is_rtl=is_rtl,
                                         l1_language=l1_language,
