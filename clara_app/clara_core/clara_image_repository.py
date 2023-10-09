@@ -143,6 +143,36 @@ class ImageRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 
+    def get_current_entry(self, project_id, callback=None):
+        try:
+            post_task_update(callback, f'--- Retrieving current entry for project {project_id}')
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT file_path FROM image_metadata WHERE project_id = ? LIMIT 1",
+                               (project_id,))
+            else:
+                # Assume postgres
+                cursor.execute("""SELECT file_path FROM image_metadata 
+                                  WHERE project_id = %(project_id)s 
+                                  LIMIT 1""",
+                               {
+                                  'project_id': project_id
+                               })
+            
+            result = cursor.fetchone()
+            connection.close()
+            
+            if os.getenv('DB_TYPE') == 'sqlite':
+                return result[0] if result else None
+            else:  # Assuming PostgreSQL
+                return result['file_path'] if result else None
+                
+        except Exception as e:
+            post_task_update(callback, f'*** Error when retrieving current entry for project {project_id}: {str(e)}')
+            raise InternalCLARAError(message='Image database inconsistency')
+
     def get_project_directory(self, project_id):
         # Returns the directory path where images for a specific project are stored
         return absolute_file_name(Path(self.base_dir) / str(project_id))
@@ -169,17 +199,4 @@ class ImageRepository:
             post_task_update(callback, f'*** Error when removing entry for image {image_name}: {str(e)}')
             raise InternalCLARAError(message='Image database inconsistency')
 
-    def get_current_entry(self, project_id, callback=None):
-        try:
-            post_task_update(callback, f'--- Retrieving current entry for project {project_id}')
-            connection = connect(self.db_file)
-            cursor = connection.cursor()
-            cursor.execute(localise_sql_query("SELECT file_path FROM image_metadata WHERE project_id = %s LIMIT 1"),
-                           (project_id,))
-            result = cursor.fetchone()
-            connection.close()
-            return result[0] if result else None
-        except Exception as e:
-            post_task_update(callback, f'*** Error when retrieving current entry for project {project_id}: {str(e)}')
-            raise InternalCLARAError(message='Image database inconsistency')
 
