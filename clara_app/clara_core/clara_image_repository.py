@@ -84,6 +84,7 @@ class ImageRepository:
 
     def delete_entries_for_project(self, project_id, callback=None):
         try:
+            project_id = str(project_id)
             post_task_update(callback, f'--- Deleting image repository DB entries for {project_id}')
             connection = connect(self.db_file)
             cursor = connection.cursor()
@@ -105,6 +106,7 @@ class ImageRepository:
 
     def add_entry(self, project_id, image_name, file_path, associated_text=None, associated_areas=None, callback=None):
         try:
+            project_id = str(project_id)
             connection = connect(self.db_file)
             cursor = connection.cursor()
             cursor.execute(localise_sql_query("INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (%s, %s, %s, %s, %s)"),
@@ -117,6 +119,7 @@ class ImageRepository:
 
     def get_entry(self, project_id, image_name, callback=None):
         try:
+            project_id = str(project_id)
             connection = connect(self.db_file)
             cursor = connection.cursor()
             if os.getenv('DB_TYPE') == 'sqlite':
@@ -145,6 +148,7 @@ class ImageRepository:
 
     def get_current_entry(self, project_id, callback=None):
         try:
+            project_id = str(project_id)
             post_task_update(callback, f'--- Retrieving current entry for project {project_id}')
             connection = connect(self.db_file)
             cursor = connection.cursor()
@@ -178,6 +182,7 @@ class ImageRepository:
         return absolute_file_name(Path(self.base_dir) / str(project_id))
 
     def store_image(self, project_id, source_file, keep_file_name=True, callback=None):
+        project_id = str(project_id)
         project_dir = self.get_project_directory(project_id)
         make_directory(project_dir, parents=True, exist_ok=True)
         file_name = basename(source_file) if keep_file_name else f"{project_id}_{len(list_files_in_directory(project_dir)) + 1}.png"
@@ -187,6 +192,7 @@ class ImageRepository:
 
     def remove_entry(self, project_id, image_name, callback=None):
         try:
+            project_id = str(project_id)
             post_task_update(callback, f'--- Removing entry for image {image_name} in project {project_id}')
             connection = connect(self.db_file)
             cursor = connection.cursor()
