@@ -787,10 +787,13 @@ class CLARAProjectInternal:
                                                                audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                                callback=callback)
 
-        # Add image if it exists. Temporary code while we only have a maximum of one image, added at the end.
+        # Add image if it exists, with some line-breaks before it.
+        # Temporary code while we only have a maximum of one image, added at the end.
         current_image_file_path = self.get_current_project_image(project_id)
         if current_image_file_path:
+            line_break_element = ContentElement("NonWordText", "\n\n")
             image_element = ContentElement("Image", {'src': basename(current_image_file_path)})
+            text_object.add_to_end_of_last_segment(line_break_element)
             text_object.add_to_end_of_last_segment(image_element)
     
         post_task_update(callback, f"--- Created internalised and annotated text")
