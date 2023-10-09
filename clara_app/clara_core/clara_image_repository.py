@@ -56,7 +56,7 @@ class ImageRepository:
             cursor = connection.cursor()
 
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute('''CREATE TABLE IF NOT EXISTS metadata
+                cursor.execute('''CREATE TABLE IF NOT EXISTS image_metadata
                                   (id INTEGER PRIMARY KEY,
                                    project_id TEXT,
                                    image_name TEXT,
@@ -65,7 +65,7 @@ class ImageRepository:
                                    associated_areas TEXT)''')
             else:
                 # Assume Postgres, which does auto-incrementing differently
-                cursor.execute('''CREATE TABLE IF NOT EXISTS metadata
+                cursor.execute('''CREATE TABLE IF NOT EXISTS image_metadata
                                   (id SERIAL PRIMARY KEY,
                                    project_id TEXT,
                                    image_name TEXT,
@@ -87,7 +87,7 @@ class ImageRepository:
             post_task_update(callback, f'--- Deleting image repository DB entries for {project_id}')
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("DELETE FROM metadata WHERE project_id = %s"), (project_id,))
+            cursor.execute(localise_sql_query("DELETE FROM image_metadata WHERE project_id = %s"), (project_id,))
             connection.commit()
             connection.close()
             post_task_update(callback, f'--- DB entries for {project_id} deleted')
@@ -107,7 +107,7 @@ class ImageRepository:
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("INSERT INTO metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (%s, %s, %s, %s, %s)"),
+            cursor.execute(localise_sql_query("INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (%s, %s, %s, %s, %s)"),
                            (project_id, image_name, file_path, associated_text, associated_areas))
             connection.commit()
             connection.close()
@@ -120,11 +120,11 @@ class ImageRepository:
             connection = connect(self.db_file)
             cursor = connection.cursor()
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT file_path FROM metadata WHERE project_id = ? AND image_name = ?",
+                cursor.execute("SELECT file_path FROM image_metadata WHERE project_id = ? AND image_name = ?",
                                (project_id, image_name))
             else:
                 # Assume postgres
-                cursor.execute("""SELECT file_path FROM metadata 
+                cursor.execute("""SELECT file_path FROM image_metadata 
                                   WHERE project_id = %(project_id)s 
                                   AND image_name = %(image_name)s""",
                                {
@@ -160,7 +160,7 @@ class ImageRepository:
             post_task_update(callback, f'--- Removing entry for image {image_name} in project {project_id}')
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("DELETE FROM metadata WHERE project_id = %s AND image_name = %s"),
+            cursor.execute(localise_sql_query("DELETE FROM image_metadata WHERE project_id = %s AND image_name = %s"),
                            (project_id, image_name))
             connection.commit()
             connection.close()
@@ -174,7 +174,7 @@ class ImageRepository:
             post_task_update(callback, f'--- Retrieving current entry for project {project_id}')
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("SELECT file_path FROM metadata WHERE project_id = %s LIMIT 1"),
+            cursor.execute(localise_sql_query("SELECT file_path FROM image_metadata WHERE project_id = %s LIMIT 1"),
                            (project_id,))
             result = cursor.fetchone()
             connection.close()
