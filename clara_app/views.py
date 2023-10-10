@@ -1444,7 +1444,7 @@ def images_view(request, project_id):
 
     associated_text = ''
     associated_areas = ''
-    current_image, image_name = clara_project_internal.get_current_project_image(project_id)
+    current_image, image_name, associated_areas = clara_project_internal.get_current_project_image(project_id)
 
     # Handle POST request
     if request.method == 'POST':
@@ -1460,8 +1460,9 @@ def images_view(request, project_id):
                                                          associated_text=associated_text, associated_areas=associated_areas)
                 messages.success(request, "Image added successfully!")
                 current_image = clara_project_internal.get_project_image(project_id, image_name)
-                
-            if associated_text and image_name:  # Check if there's any text in 'associated_text'
+
+            # Try to fill in 'associated_areas' using 'associated_text'
+            if not associated_areas and associated_text and image_name:  
                 # Generate the uninstantiated annotated image structure
                 structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
                 # Convert the structure to a string and store it in 'associated_areas'
@@ -1471,6 +1472,14 @@ def images_view(request, project_id):
                 messages.error(request, "There is no image to attach the text to")
             elif not uploaded_image and not associated_text:
                 messages.error(request, "Nothing to process. Upload an image or provide some text")
+
+        elif 'save_areas' in request.POST:
+            associated_areas = request.POST.get('associated_areas')
+            if associated_areas and image_name:
+                clara_project_internal.store_project_annotated_areas(project_id, image_name, associated_areas)
+                messages.success(request, "Annotated areas saved successfully!")
+            else:
+                messages.error(request, "Need both image and areas to save.")
         
         elif 'remove_image' in request.POST:
             clara_project_internal.remove_all_project_images(project_id)
