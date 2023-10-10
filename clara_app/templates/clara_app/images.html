@@ -37,6 +37,11 @@
 	<p>
        <button type="submit" name="save_image">Save Image</button>
 	</p>
+	
+	<!-- New Save Areas Button -->
+    {% if current_image %}
+       <button type="submit" name="save_areas">Save Areas</button>
+    {% endif %}
 
     <!-- Remove Button -->
     {% if current_image %}
