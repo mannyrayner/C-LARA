@@ -704,7 +704,7 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             return False
 
-    def add_project_image(self, project_id, image_name, image_file_path, associated_text=None, associated_areas=None, callback=None):
+    def add_project_image(self, project_id, image_name, image_file_path, associated_text='', associated_areas='', callback=None):
         try:
             post_task_update(callback, f"--- Adding image {image_name} (file path = {image_file_path}) to project {project_id}")            
             
@@ -786,7 +786,7 @@ class CLARAProjectInternal:
         except Exception as e:
             post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
             # Handle the exception as needed
-            return (None, None, None, None)
+            return (None, None, '', '')
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

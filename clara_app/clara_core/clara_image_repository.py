@@ -106,19 +106,6 @@ class ImageRepository:
             post_task_update(callback, error_message)
             post_task_update(callback, f'error')
 
-##    def add_entry(self, project_id, image_name, file_path, associated_text=None, associated_areas=None, callback=None):
-##        try:
-##            project_id = str(project_id)
-##            connection = connect(self.db_file)
-##            cursor = connection.cursor()
-##            cursor.execute(localise_sql_query("INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (%s, %s, %s, %s, %s)"),
-##                           (project_id, image_name, file_path, associated_text, associated_areas))
-##            connection.commit()
-##            connection.close()
-##        except Exception as e:
-##            post_task_update(callback, f'*** Error when inserting "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
-##            raise InternalCLARAError(message='Image database inconsistency')
-
     def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='', callback=None):
         try:
             post_task_update(callback, f'--- Storing image for project {project_id}: name = {image_name}, file = {file_path}, areas = "{associated_areas}"')
@@ -220,7 +207,7 @@ class ImageRepository:
                 else:  # Assuming PostgreSQL
                     to_return = ( result['file_path'], result['image_name'], result['associated_text'], result['associated_areas'] )
             else:
-                to_return = ( None, None, None, None )
+                to_return = ( None, None, '', '' )
             post_task_update(callback, f'--- Current image for project {project_id}: name = {to_return[1]}, file = {to_return[0]}, text = "{to_return[2]}", areas = "{to_return[3]}"')
             return to_return
                     
