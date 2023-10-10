@@ -154,11 +154,11 @@ class ImageRepository:
             cursor = connection.cursor()
             
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT file_path FROM image_metadata WHERE project_id = ? LIMIT 1",
+                cursor.execute("SELECT file_path, image_name FROM image_metadata WHERE project_id = ? LIMIT 1",
                                (project_id,))
             else:
                 # Assume postgres
-                cursor.execute("""SELECT file_path FROM image_metadata 
+                cursor.execute("""SELECT file_path, image_name FROM image_metadata 
                                   WHERE project_id = %(project_id)s 
                                   LIMIT 1""",
                                {
@@ -168,11 +168,14 @@ class ImageRepository:
             result = cursor.fetchone()
             connection.close()
             
-            if os.getenv('DB_TYPE') == 'sqlite':
-                return result[0] if result else None
-            else:  # Assuming PostgreSQL
-                return result['file_path'] if result else None
-                
+            if result:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    return result[0], result[1]  # file_path, image_name
+                else:  # Assuming PostgreSQL
+                    return result['file_path'], result['image_name']
+            else:
+                return None, None
+                    
         except Exception as e:
             post_task_update(callback, f'*** Error when retrieving current entry for project {project_id}: {str(e)}')
             raise InternalCLARAError(message='Image database inconsistency')
