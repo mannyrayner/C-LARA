@@ -119,7 +119,7 @@ class ImageRepository:
 ##            post_task_update(callback, f'*** Error when inserting "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
 ##            raise InternalCLARAError(message='Image database inconsistency')
 
-    def add_entry(self, project_id, image_name, file_path, associated_text=None, associated_areas=None, callback=None):
+    def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='', callback=None):
         try:
             project_id = str(project_id)
             connection = connect(self.db_file)
