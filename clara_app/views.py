@@ -1442,8 +1442,9 @@ def images_view(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
+    associated_text = ''
     associated_areas = ''
-    current_image = None
+    current_image, image_name = clara_project_internal.get_current_project_image(project_id)
 
     # Handle POST request
     if request.method == 'POST':
@@ -1460,27 +1461,29 @@ def images_view(request, project_id):
                 messages.success(request, "Image added successfully!")
                 current_image = clara_project_internal.get_project_image(project_id, image_name)
                 
-                if associated_text:  # Check if there's any text in 'associated_text'
-                    # Generate the uninstantiated annotated image structure
-                    structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
-                    # Convert the structure to a string and store it in 'associated_areas'
-                    associated_areas = json.dumps(structure)
-            else:
-                messages.error(request, "Image file is required.")
+            if associated_text and image_name:  # Check if there's any text in 'associated_text'
+                # Generate the uninstantiated annotated image structure
+                structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
+                # Convert the structure to a string and store it in 'associated_areas'
+                associated_areas = json.dumps(structure)
+
+            if associated_text and not image_name:
+                messages.error(request, "There is no image to attach the text to")
+            elif not uploaded_image and not associated_text:
+                messages.error(request, "Nothing to process. Upload an image or provide some text")
         
         elif 'remove_image' in request.POST:
             clara_project_internal.remove_all_project_images(project_id)
             messages.success(request, "All project images removed successfully!")
             current_image = None
 
-    # Handle GET request
-    else:
-        current_image = clara_project_internal.get_current_project_image(project_id)
-
+    # Nothing to do for GET request
+        
     base_current_image = basename(current_image) if current_image else None
     context = {
         'project': project,
         'current_image': base_current_image,
+        'associated_text': associated_text,
         'associated_areas': associated_areas
     }
     return render(request, 'clara_app/images.html', context)
