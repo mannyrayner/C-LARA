@@ -1456,17 +1456,19 @@ def images_view(request, project_id):
             if uploaded_image:
                 image_name = basename(uploaded_image.name)
                 image_file_path = uploaded_file_to_file(uploaded_image)
-                clara_project_internal.add_project_image(project_id, image_name, image_file_path,
-                                                         associated_text=associated_text, associated_areas=associated_areas)
-                messages.success(request, "Image added successfully!")
-                current_image = clara_project_internal.get_project_image(project_id, image_name)
 
-            # Try to fill in 'associated_areas' using 'associated_text'
+            # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
             if not associated_areas and associated_text and image_name:  
                 # Generate the uninstantiated annotated image structure
                 structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
                 # Convert the structure to a string and store it in 'associated_areas'
                 associated_areas = json.dumps(structure)
+
+            if uploaded_image:
+                clara_project_internal.add_project_image(project_id, image_name, image_file_path,
+                                                         associated_text=associated_text, associated_areas=associated_areas)
+                messages.success(request, "Image added successfully!")
+                current_image = clara_project_internal.get_project_image(project_id, image_name)
 
             if associated_text and not image_name:
                 messages.error(request, "There is no image to attach the text to")
@@ -1476,8 +1478,8 @@ def images_view(request, project_id):
         elif 'save_areas' in request.POST:
             associated_areas = request.POST.get('associated_areas')
             if associated_areas and image_name:
-                clara_project_internal.store_project_annotated_areas(project_id, image_name, associated_areas)
-                messages.success(request, "Annotated areas saved successfully!")
+                clara_project_internal.store_project_associated_areas(project_id, image_name, associated_areas)
+                messages.success(request, "Associated areas saved successfully!")
             else:
                 messages.error(request, "Need both image and areas to save.")
         
