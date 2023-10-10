@@ -39,6 +39,7 @@ Basic functionality
 
 Reading functionality
   Linking multiple texts into a single "reading progress" document
+  Colour-coding by frequency
 
 Naming, renaming and deleting
   Functionality for deleting a piece of external (LARA) content
