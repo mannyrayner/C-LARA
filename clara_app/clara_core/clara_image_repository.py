@@ -62,7 +62,8 @@ class ImageRepository:
                                    image_name TEXT,
                                    file_path TEXT,
                                    associated_text TEXT,
-                                   associated_areas TEXT)''')
+                                   associated_areas TEXT,
+                                   UNIQUE(project_id, image_name))''')
             else:
                 # Assume Postgres, which does auto-incrementing differently
                 cursor.execute('''CREATE TABLE IF NOT EXISTS image_metadata
@@ -71,7 +72,8 @@ class ImageRepository:
                                    image_name TEXT,
                                    file_path TEXT,
                                    associated_text TEXT,
-                                   associated_areas TEXT)''')
+                                   associated_areas TEXT,
+                                   UNIQUE(project_id, image_name))''')
 
             connection.commit()
             connection.close()
