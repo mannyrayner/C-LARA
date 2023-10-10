@@ -104,18 +104,47 @@ class ImageRepository:
             post_task_update(callback, error_message)
             post_task_update(callback, f'error')
 
+##    def add_entry(self, project_id, image_name, file_path, associated_text=None, associated_areas=None, callback=None):
+##        try:
+##            project_id = str(project_id)
+##            connection = connect(self.db_file)
+##            cursor = connection.cursor()
+##            cursor.execute(localise_sql_query("INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (%s, %s, %s, %s, %s)"),
+##                           (project_id, image_name, file_path, associated_text, associated_areas))
+##            connection.commit()
+##            connection.close()
+##        except Exception as e:
+##            post_task_update(callback, f'*** Error when inserting "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
+##            raise InternalCLARAError(message='Image database inconsistency')
+
     def add_entry(self, project_id, image_name, file_path, associated_text=None, associated_areas=None, callback=None):
         try:
             project_id = str(project_id)
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (%s, %s, %s, %s, %s)"),
-                           (project_id, image_name, file_path, associated_text, associated_areas))
+            
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("INSERT OR REPLACE INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (?, ?, ?, ?, ?)",
+                               (project_id, image_name, file_path, associated_text, associated_areas))
+            else:  # Assume postgres
+                cursor.execute("""INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) 
+                                  VALUES (%(project_id)s, %(image_name)s, %(file_path)s, %(associated_text)s, %(associated_areas)s)
+                                  ON CONFLICT (project_id, image_name) 
+                                  DO UPDATE SET file_path = %(file_path)s, associated_text = %(associated_text)s, associated_areas = %(associated_areas)s""",
+                               {
+                                  'project_id': project_id,
+                                  'image_name': image_name,
+                                  'file_path': file_path,
+                                  'associated_text': associated_text,
+                                  'associated_areas': associated_areas
+                               })
+            
             connection.commit()
             connection.close()
         except Exception as e:
             post_task_update(callback, f'*** Error when inserting "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
             raise InternalCLARAError(message='Image database inconsistency')
+
 
     def store_annotated_areas(self, project_id, image_name, annotated_areas, callback=None):
         try:
