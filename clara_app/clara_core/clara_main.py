@@ -779,29 +779,14 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Retrieving current image for project {project_id}")
 
             # Logic to get the current image entry from the repository
-            current_image_file_path, image_name = self.image_repository.get_current_entry(project_id)
+            current_image_file_path, image_name, associated_text, associated_areas = self.image_repository.get_current_entry(project_id)
 
             post_task_update(callback, f"--- Current image retrieved successfully")
-            return ( current_image_file_path, image_name)
+            return (current_image_file_path, image_name, associated_text, associated_areas)
         except Exception as e:
             post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
             # Handle the exception as needed
-            return ( None, None )
-
-    # Retrieves the current image associated with the project (temporary for initial version)
-    def get_current_project_image(self, project_id, callback=None):
-        try:
-            post_task_update(callback, f"--- Retrieving current image for project {project_id}")
-
-            # Logic to get the current image entry from the repository
-            current_image_file_path, image_name, associated_areas = self.image_repository.get_current_entry(project_id)
-
-            post_task_update(callback, f"--- Current image retrieved successfully")
-            return (current_image_file_path, image_name, associated_areas)
-        except Exception as e:
-            post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
-            # Handle the exception as needed
-            return (None, None, None)
+            return (None, None, None, None)
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

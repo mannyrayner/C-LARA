@@ -200,11 +200,11 @@ class ImageRepository:
             cursor = connection.cursor()
             
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT file_path, image_name, associated_areas FROM image_metadata WHERE project_id = ? LIMIT 1",
+                cursor.execute("SELECT file_path, image_name, associated_text, associated_areas FROM image_metadata WHERE project_id = ? LIMIT 1",
                                (project_id,))
             else:
                 # Assume postgres
-                cursor.execute("""SELECT file_path, image_name, associated_areas FROM image_metadata 
+                cursor.execute("""SELECT file_path, image_name, associated_text, associated_areas FROM image_metadata 
                                   WHERE project_id = %(project_id)s 
                                   LIMIT 1""",
                                {
@@ -216,12 +216,12 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    to_return = ( result[0], result[1], result[2] )  # file_path, image_name, associated_areas
+                    to_return = ( result[0], result[1], result[2], result[3] )  # file_path, image_name, associated_text, associated_areas
                 else:  # Assuming PostgreSQL
-                    to_return = ( result['file_path'], result['image_name'], result['associated_areas'] )
+                    to_return = ( result['file_path'], result['image_name'], result['associated_text'], result['associated_areas'] )
             else:
-                to_return = ( None, None, None )
-            post_task_update(callback, f'--- Current image for project {project_id}: name = {to_return[1]}, file = {to_return[0]}, areas = "{to_return[2]}"')
+                to_return = ( None, None, None, None )
+            post_task_update(callback, f'--- Current image for project {project_id}: name = {to_return[1]}, file = {to_return[0]}, text = "{to_return[2]}", areas = "{to_return[3]}"')
             return to_return
                     
         except Exception as e:
