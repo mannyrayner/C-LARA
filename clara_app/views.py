@@ -1438,9 +1438,13 @@ def render_text_start(request, project_id):
 @login_required
 @user_has_a_project_role
 def images_view(request, project_id):
+    from clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure  # Import the new function
+    import json  # For converting the structure to a string
+
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
+    associated_areas = ''
     current_image = None
 
     # Handle POST request
@@ -1457,6 +1461,12 @@ def images_view(request, project_id):
                                                          associated_text=associated_text, associated_areas=associated_areas)
                 messages.success(request, "Image added successfully!")
                 current_image = clara_project_internal.get_project_image(project_id, image_name)
+                
+                if associated_text:  # Check if there's any text in 'associated_text'
+                    # Generate the uninstantiated annotated image structure
+                    structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
+                    # Convert the structure to a string and store it in 'associated_areas'
+                    associated_areas = json.dumps(structure)
             else:
                 messages.error(request, "Image file is required.")
         
@@ -1473,6 +1483,7 @@ def images_view(request, project_id):
     context = {
         'project': project,
         'current_image': base_current_image,
+        'associated_areas': associated_areas
     }
     return render(request, 'clara_app/images.html', context)
 
