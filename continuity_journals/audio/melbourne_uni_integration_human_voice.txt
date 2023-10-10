@@ -27,6 +27,8 @@ manual alignment.
 The current integration is incorporated into the Heroku deployment of
 C-LARA, https://c-lara-758a4f81c1ff.herokuapp.com/.
 
+2. Current workflow
+
 The high-level workflow is as follows:
 
 a. Create a C-LARA project. In the usual way, create plain text, then

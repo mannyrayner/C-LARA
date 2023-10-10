@@ -1,0 +1,124 @@
+INTEGRATION WITH C-LARA: ANNOTATED IMAGES PROJECT
+
+0. Overview
+
+This document provides information needed to organise the integration
+of the Annotated Images project into C-LARA. The C-LARA side of the
+current integration is still in a preliminary state.
+
+There are some questions that need to be resolved about the exact form
+of the APIs.
+
+1. Overview of C-LARA work
+
+On the C-LARA side, we have started by implementing a preliminary
+manual integration. This supports minimal image processing
+functionality, where a C-LARA document can optionally include one
+normal (i.e. not mouse/touch sensitive) image which can be associated
+with C-LARA text. It is possible to export data created from the
+associated text so that it can be imported into the Annotated Images
+drawing tool.
+
+In the next version, which will be released soon, it will be
+possible to manually import data created by the visual annotation tool
+to make the image mouse/touch sensitive. It will also be possible to
+include multiple images.
+
+In the final version, the communication between C-LARA and the
+visual annotation tool will be carried out programmatically,
+with C-LARA invoking the drawing tool through the drawing tool's
+API.
+
+The current integration is incorporated into the Heroku deployment of
+C-LARA, https://c-lara-758a4f81c1ff.herokuapp.com/.
+
+2. Current workflow
+
+The high-level workflow is as follows:
+
+a. Create a C-LARA project. In the usual way, create plain text, then
+add segmentation annotations.
+
+b. Go to the Add/Remove Images view.
+
+c. Select an image to upload in Upload New Image.
+
+d. Add some segmented text in Associated Text.
+
+e. Hit Save Image. This should display the image and also an
+uninstantiated version of the annotation tool metadata in the
+Associated Areas field.
+
+f. Instantiate the annotation tool metadata in Associated Areas with
+nontrivial values.
+
+g. Hit Save Areas.
+
+After uploading an image, it is possible to complete the annotation
+and rendering sequence and have the image included in the final
+multimodal text. The image is not yet mouse-sensitive even if
+instantiated Areas data is added. This functionality will be in the
+next version.
+
+3. Data formats and example 
+
+a. Spec of 'Associated Areas' metadata
+
+Note that this is slightly different from the version used in the LARA project.
+If the rationalised format poses problems, we can revert to the previous one.
+They are equivalent, but the rationalised version is easier to read.
+
+The metadata is a list of items of the following form
+
+{  "image_id": "... image name ...",
+   "segments": [[{"item": "... word ...", "coordinates": ... list of coordinate pairs or null ...},
+                 ... more items like the one above ...
+		 {"item": "SPEAKER-CONTROL", "coordinates": ... list of coordinate pairs or null ...},
+		 {"item": "TRANSLATION-CONTROL", "coordinates": ... list of coordinate pairs or null ...}]
+	       ]
+}
+
+In the uninstantiated version produced by C-LARA, the values of
+"coordinates" will all be null.
+
+In the instantiated version produced by the tool, the values of
+"coordinates" will be lists of coordinate pairs defining a polygon.
+
+b. Toy example ("You are old, Father William")
+
+- The segmented text looks like this:
+
+@Father William@ son||
+
+- The uninstantiated 'Associated Areas' metadata looks like this:
+
+{  "image_id": "FatherWilliam.png",
+   "segments": [[{"item": "Father William", "coordinates": null},
+                 {"item": "son", "coordinates": null},
+		 {"item": "SPEAKER-CONTROL", "coordinates": null},
+		 {"item": "TRANSLATION-CONTROL", "coordinates": null}]
+	       ]
+}
+
+5. APIs
+
+We need to discuss the exact form of the APIs used, so that
+we can add appropriate calls in C-LARA. We anticipate that they
+will be something like the following:
+
+- API to post an annotation task
+
+C-LARA passes a task-ID, a user-ID, and an uninstantiated 'Associated
+Areas' metadata structure.
+
+The graphical tool posts the annotation task so that it is available
+to user-ID.
+
+- API to retrieve the results of an annotation task.
+
+C-LARA passes a task-ID.  The graphical tool returns the instantiated 'Associated
+Areas' metadata structure.
+
+We need to agree on the details. How do we make the calls? What are
+the exact data formats?
+
