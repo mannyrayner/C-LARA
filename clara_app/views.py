@@ -36,6 +36,7 @@ from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
+from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure  
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
 from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_core.clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, robust_read_local_txt_file, check_if_file_can_be_read
@@ -1438,9 +1439,6 @@ def render_text_start(request, project_id):
 @login_required
 @user_has_a_project_role
 def images_view(request, project_id):
-    from clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure  # Import the new function
-    import json  # For converting the structure to a string
-
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
