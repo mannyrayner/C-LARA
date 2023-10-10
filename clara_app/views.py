@@ -1444,7 +1444,7 @@ def images_view(request, project_id):
 
     associated_text = ''
     associated_areas = ''
-    current_image, image_name, associated_areas = clara_project_internal.get_current_project_image(project_id)
+    current_image, image_name, associated_text, associated_areas = clara_project_internal.get_current_project_image(project_id)
 
     # Handle POST request
     if request.method == 'POST':
