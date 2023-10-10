@@ -121,6 +121,7 @@ class ImageRepository:
 
     def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='', callback=None):
         try:
+            post_task_update(callback, f'--- Storing image for project {project_id}: name = {image_name}, file = {file_path}, areas = "{associated_areas}"')
             project_id = str(project_id)
             connection = connect(self.db_file)
             cursor = connection.cursor()
@@ -143,22 +144,23 @@ class ImageRepository:
             
             connection.commit()
             connection.close()
+            self.get_current_entry(project_id, callback=callback)
         except Exception as e:
             post_task_update(callback, f'*** Error when inserting "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
             raise InternalCLARAError(message='Image database inconsistency')
 
 
-    def store_annotated_areas(self, project_id, image_name, annotated_areas, callback=None):
+    def store_associated_areas(self, project_id, image_name, associated_areas, callback=None):
         try:
             project_id = str(project_id)
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("UPDATE image_metadata SET annotated_areas = %s WHERE project_id = %s AND image_name = %s"),
-                           (annotated_areas, project_id, image_name))
+            cursor.execute(localise_sql_query("UPDATE image_metadata SET associated_areas = %s WHERE project_id = %s AND image_name = %s"),
+                           (associated_areas, project_id, image_name))
             connection.commit()
             connection.close()
         except Exception as e:
-            post_task_update(callback, f'*** Error when updating annotated_areas for "{project_id}/{image_name}": "{str(e)}"')
+            post_task_update(callback, f'*** Error when updating associated_areas for "{project_id}/{image_name}": "{str(e)}"')
             raise InternalCLARAError(message='Image database inconsistency')
 
     def get_entry(self, project_id, image_name, callback=None):
@@ -193,7 +195,7 @@ class ImageRepository:
     def get_current_entry(self, project_id, callback=None):
         try:
             project_id = str(project_id)
-            post_task_update(callback, f'--- Retrieving current entry for project {project_id}')
+            post_task_update(callback, f'--- Retrieving current image for project {project_id}')
             connection = connect(self.db_file)
             cursor = connection.cursor()
             
@@ -214,11 +216,13 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    return result[0], result[1], result[2]  # file_path, image_name, associated_areas
+                    to_return = ( result[0], result[1], result[2] )  # file_path, image_name, associated_areas
                 else:  # Assuming PostgreSQL
-                    return result['file_path'], result['image_name'], result['associated_areas']
+                    to_return = ( result['file_path'], result['image_name'], result['associated_areas'] )
             else:
-                return None, None
+                to_return = ( None, None, None )
+            post_task_update(callback, f'--- Current image for project {project_id}: name = {to_return[1]}, file = {to_return[0]}, areas = "{to_return[2]}"')
+            return to_return
                     
         except Exception as e:
             post_task_update(callback, f'*** Error when retrieving current entry for project {project_id}: {str(e)}')

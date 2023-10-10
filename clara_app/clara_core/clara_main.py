@@ -720,16 +720,16 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when adding image: {str(e)}")
             # Handle the exception as needed
 
-    def store_project_annotated_areas(self, project_id, image_name, annotated_areas, callback=None):
+    def store_project_associated_areas(self, project_id, image_name, associated_areas, callback=None):
         try:
-            post_task_update(callback, f"--- Storing annotated areas for image {image_name} in project {project_id}")
+            post_task_update(callback, f"--- Storing associated areas for image {image_name} in project {project_id}")
 
-            # Logic to store the annotated areas in the repository
-            self.image_repository.store_annotated_areas(project_id, image_name, annotated_areas, callback=callback)
+            # Logic to store the associated areas in the repository
+            self.image_repository.store_annotated_areas(project_id, image_name, associated_areas, callback=callback)
 
-            post_task_update(callback, f"--- Annotated areas for image {image_name} stored successfully")
+            post_task_update(callback, f"--- Associated areas for image {image_name} stored successfully")
         except Exception as e:
-            post_task_update(callback, f"*** Error when storing annotated areas: {str(e)}")
+            post_task_update(callback, f"*** Error when storing associated areas: {str(e)}")
             # Handle the exception as needed
 
     # Retrieves the image associated with the project
