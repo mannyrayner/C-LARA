@@ -720,6 +720,18 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when adding image: {str(e)}")
             # Handle the exception as needed
 
+    def store_project_annotated_areas(self, project_id, image_name, annotated_areas, callback=None):
+        try:
+            post_task_update(callback, f"--- Storing annotated areas for image {image_name} in project {project_id}")
+
+            # Logic to store the annotated areas in the repository
+            self.image_repository.store_annotated_areas(project_id, image_name, annotated_areas, callback=callback)
+
+            post_task_update(callback, f"--- Annotated areas for image {image_name} stored successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when storing annotated areas: {str(e)}")
+            # Handle the exception as needed
+
     # Retrieves the image associated with the project
     def get_project_image(self, project_id, image_name, callback=None):
         try:
@@ -775,6 +787,21 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
             # Handle the exception as needed
             return ( None, None )
+
+    # Retrieves the current image associated with the project (temporary for initial version)
+    def get_current_project_image(self, project_id, callback=None):
+        try:
+            post_task_update(callback, f"--- Retrieving current image for project {project_id}")
+
+            # Logic to get the current image entry from the repository
+            current_image_file_path, image_name, associated_areas = self.image_repository.get_current_entry(project_id)
+
+            post_task_update(callback, f"--- Current image retrieved successfully")
+            return (current_image_file_path, image_name, associated_areas)
+        except Exception as e:
+            post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
+            # Handle the exception as needed
+            return (None, None, None)
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

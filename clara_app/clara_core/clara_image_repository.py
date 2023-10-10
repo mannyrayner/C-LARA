@@ -117,6 +117,19 @@ class ImageRepository:
             post_task_update(callback, f'*** Error when inserting "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
             raise InternalCLARAError(message='Image database inconsistency')
 
+    def store_annotated_areas(self, project_id, image_name, annotated_areas, callback=None):
+        try:
+            project_id = str(project_id)
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            cursor.execute(localise_sql_query("UPDATE image_metadata SET annotated_areas = %s WHERE project_id = %s AND image_name = %s"),
+                           (annotated_areas, project_id, image_name))
+            connection.commit()
+            connection.close()
+        except Exception as e:
+            post_task_update(callback, f'*** Error when updating annotated_areas for "{project_id}/{image_name}": "{str(e)}"')
+            raise InternalCLARAError(message='Image database inconsistency')
+
     def get_entry(self, project_id, image_name, callback=None):
         try:
             project_id = str(project_id)
@@ -154,11 +167,11 @@ class ImageRepository:
             cursor = connection.cursor()
             
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT file_path, image_name FROM image_metadata WHERE project_id = ? LIMIT 1",
+                cursor.execute("SELECT file_path, image_name, associated_areas FROM image_metadata WHERE project_id = ? LIMIT 1",
                                (project_id,))
             else:
                 # Assume postgres
-                cursor.execute("""SELECT file_path, image_name FROM image_metadata 
+                cursor.execute("""SELECT file_path, image_name, associated_areas FROM image_metadata 
                                   WHERE project_id = %(project_id)s 
                                   LIMIT 1""",
                                {
@@ -170,9 +183,9 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    return result[0], result[1]  # file_path, image_name
+                    return result[0], result[1], result[2]  # file_path, image_name, associated_areas
                 else:  # Assuming PostgreSQL
-                    return result['file_path'], result['image_name']
+                    return result['file_path'], result['image_name'], result['associated_areas']
             else:
                 return None, None
                     
