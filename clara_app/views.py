@@ -1487,6 +1487,8 @@ def images_view(request, project_id):
             clara_project_internal.remove_all_project_images(project_id)
             messages.success(request, "All project images removed successfully!")
             current_image = None
+            associated_text = ''
+            associated_areas = ''
 
     # Nothing to do for GET request
         
