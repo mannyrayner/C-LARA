@@ -801,7 +801,7 @@ class CLARAProjectInternal:
 
         # Add image if it exists, with some line-breaks before it.
         # Temporary code while we only have a maximum of one image, added at the end.
-        current_image_file_path = self.get_current_project_image(project_id)
+        current_image_file_path, image_name, associated_text, associated_areas = self.get_current_project_image(project_id)
         if current_image_file_path:
             line_break_element = ContentElement("NonWordText", "\n\n")
             image_element = ContentElement("Image", {'src': basename(current_image_file_path)})
