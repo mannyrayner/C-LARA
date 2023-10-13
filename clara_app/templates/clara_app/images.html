@@ -48,6 +48,21 @@
        <button type="submit" name="remove_image">Remove Image</button>
     {% endif %}
 	
+	<!-- Page Input -->
+	<p>
+	   <label for="page">Page:</label>
+	   <input type="number" id="page" name="page" value="{{ page }}">
+	</p>
+
+	<!-- Position Input -->
+	<p>
+	   <label for="position">Position:</label>
+	   <select id="position" name="position">
+		   <option value="top">Top</option>
+		   <option value="bottom">Bottom</option>
+	   </select>
+	</p>
+	
     <!-- Back to Project Details -->
 	<p>
        <a href="{% url 'project_detail' project.id %}">Back to Project Details</a>
