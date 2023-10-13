@@ -455,6 +455,12 @@ class CLARAProjectInternal:
         text = make_line_breaks_canonical_n(text)
         return text
 
+    # Get text consisting of "segmented" text plus suitably tagged segmented text for any images
+    def get_segmented_with_images_text(project_id, callback=None):
+        segmented_text = self.load_text_version("segmented")
+        images_text = self.image_repository.get_annotated_image_text(project_id, callback=callback)
+        return segmented_text + '\n' + images_text
+
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
     def _create_and_load_lemma_and_gloss_file(self) -> str:
         internalised_lemma_and_gloss_text = self.get_internalised_text()
@@ -704,7 +710,8 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             return False
 
-    def add_project_image(self, project_id, image_name, image_file_path, associated_text='', associated_areas='', callback=None):
+    def add_project_image(self, project_id, image_name, image_file_path, associated_text='', associated_areas='',
+                          page=1, position='bottom', callback=None):
         try:
             post_task_update(callback, f"--- Adding image {image_name} (file path = {image_file_path}) to project {project_id}")            
             
@@ -713,12 +720,15 @@ class CLARAProjectInternal:
             
             # Logic to add the image entry to the repository
             self.image_repository.add_entry(project_id, image_name, stored_image_path,
-                                            associated_text=associated_text, associated_areas=associated_areas, callback=callback)
+                                            associated_text=associated_text, associated_areas=associated_areas,
+                                            page=page, position=position, callback=callback)
             
             post_task_update(callback, f"--- Image {image_name} added successfully")
+            return stored_image_path
         except Exception as e:
             post_task_update(callback, f"*** Error when adding image: {str(e)}")
             # Handle the exception as needed
+            return None
 
     def store_project_associated_areas(self, project_id, image_name, associated_areas, callback=None):
         try:
@@ -738,14 +748,14 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Retrieving image {image_name} for project {project_id}")
             
             # Logic to get the image entry from the repository
-            image_file_path = self.image_repository.get_entry(project_id, image_name, callback=callback)
+            image_file_path, image_name, associated_text, associated_areas, page, position = self.image_repository.get_entry(project_id, image_name, callback=callback)
             
             post_task_update(callback, f"--- Image retrieved successfully")
-            return image_file_path
+            return image_file_path, image_name, associated_text, associated_areas, page, position
         except Exception as e:
             post_task_update(callback, f"*** Error when retrieving image: {str(e)}")
             # Handle the exception as needed
-            return None
+            return (None, None, '', '', '', '')
 
     # Removes an image from the ImageRepository associated with the project
     def remove_project_image(self, project_id, image_name, callback=None):
@@ -779,14 +789,14 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Retrieving current image for project {project_id}")
 
             # Logic to get the current image entry from the repository
-            current_image_file_path, image_name, associated_text, associated_areas = self.image_repository.get_current_entry(project_id)
+            current_image_file_path, image_name, associated_text, associated_areas, page, position = self.image_repository.get_current_entry(project_id)
 
             post_task_update(callback, f"--- Current image retrieved successfully")
-            return (current_image_file_path, image_name, associated_text, associated_areas)
+            return (current_image_file_path, image_name, associated_text, associated_areas, page, position)
         except Exception as e:
             post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
             # Handle the exception as needed
-            return (None, None, '', '')
+            return (None, None, '', '', '', '')
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

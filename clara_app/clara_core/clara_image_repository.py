@@ -42,16 +42,6 @@ class ImageRepository:
             make_directory(self.base_dir, parents=True, exist_ok=True)
 
         try:
-            if os.getenv('DB_TYPE') == 'sqlite':
-                # If we're using sqlite, check if db_file exists and if not create it
-                db_dir = config.get('image_repository', 'db_dir')
-                if not local_directory_exists(db_dir):
-                    post_task_update(callback, f'--- Creating empty DB dir for image repository, {db_dir}')
-                    make_local_directory(db_dir)
-                if not local_file_exists(self.db_file):
-                    post_task_update(callback, f'--- Creating empty DB file for image repository, {self.db_file}')
-                    open(self.db_file, 'a').close()
-
             connection = connect(self.db_file)
             cursor = connection.cursor()
 
@@ -63,6 +53,8 @@ class ImageRepository:
                                    file_path TEXT,
                                    associated_text TEXT,
                                    associated_areas TEXT,
+                                   page INTEGER DEFAULT 1,
+                                   position TEXT DEFAULT 'bottom',
                                    UNIQUE(project_id, image_name))''')
             else:
                 # Assume Postgres, which does auto-incrementing differently
@@ -73,6 +65,8 @@ class ImageRepository:
                                    file_path TEXT,
                                    associated_text TEXT,
                                    associated_areas TEXT,
+                                   page INTEGER DEFAULT 1,
+                                   position TEXT DEFAULT 'bottom',
                                    UNIQUE(project_id, image_name))''')
 
             connection.commit()
@@ -106,27 +100,30 @@ class ImageRepository:
             post_task_update(callback, error_message)
             post_task_update(callback, f'error')
 
-    def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='', callback=None):
+    def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='', page=1, position='bottom', callback=None):
         try:
             post_task_update(callback, f'--- Storing image for project {project_id}: name = {image_name}, file = {file_path}, areas = "{associated_areas}"')
-            project_id = str(project_id)
+            project_id = str(project_id) # Ensure project_id is a string
+            page = str(page)  # Ensure page is a string
             connection = connect(self.db_file)
             cursor = connection.cursor()
             
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("INSERT OR REPLACE INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) VALUES (?, ?, ?, ?, ?)",
-                               (project_id, image_name, file_path, associated_text, associated_areas))
+                cursor.execute("INSERT OR REPLACE INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas, page, position) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                               (project_id, image_name, file_path, associated_text, associated_areas, page, position))
             else:  # Assume postgres
-                cursor.execute("""INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas) 
-                                  VALUES (%(project_id)s, %(image_name)s, %(file_path)s, %(associated_text)s, %(associated_areas)s)
+                cursor.execute("""INSERT INTO image_metadata (project_id, image_name, file_path, associated_text, associated_areas, page, position) 
+                                  VALUES (%(project_id)s, %(image_name)s, %(file_path)s, %(associated_text)s, %(associated_areas)s, %(page)s, %(position)s)
                                   ON CONFLICT (project_id, image_name) 
-                                  DO UPDATE SET file_path = %(file_path)s, associated_text = %(associated_text)s, associated_areas = %(associated_areas)s""",
+                                  DO UPDATE SET file_path = %(file_path)s, associated_text = %(associated_text)s, associated_areas = %(associated_areas)s, page = %(page)s, position = %(position)s""",
                                {
                                   'project_id': project_id,
                                   'image_name': image_name,
                                   'file_path': file_path,
                                   'associated_text': associated_text,
-                                  'associated_areas': associated_areas
+                                  'associated_areas': associated_areas,
+                                  'page': page,
+                                  'position': position
                                })
             
             connection.commit()
@@ -135,7 +132,6 @@ class ImageRepository:
         except Exception as e:
             post_task_update(callback, f'*** Error when inserting "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
             raise InternalCLARAError(message='Image database inconsistency')
-
 
     def store_associated_areas(self, project_id, image_name, associated_areas, callback=None):
         try:
@@ -155,29 +151,37 @@ class ImageRepository:
             project_id = str(project_id)
             connection = connect(self.db_file)
             cursor = connection.cursor()
+            
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT file_path FROM image_metadata WHERE project_id = ? AND image_name = ?",
+                cursor.execute("SELECT file_path, associated_text, associated_areas, page, position FROM image_metadata WHERE project_id = ? AND image_name = ?",
                                (project_id, image_name))
             else:
                 # Assume postgres
-                cursor.execute("""SELECT file_path FROM image_metadata 
+                cursor.execute("""SELECT file_path, associated_text, associated_areas, page, position FROM image_metadata 
                                   WHERE project_id = %(project_id)s 
                                   AND image_name = %(image_name)s""",
                                {
                                   'project_id': project_id,
                                   'image_name': image_name
                                })
+            
             result = cursor.fetchone()
             connection.close()
-            if os.getenv('DB_TYPE') == 'sqlite':
-                return result[0] if result else None
-            else:  # Assuming PostgreSQL
-                return result['file_path'] if result else None
-
+            
+            if result:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    to_return = ( result[0], result[1], result[2], result[3], result[4] )  # file_path, associated_text, associated_areas, page, position
+                else:  # Assuming PostgreSQL
+                    to_return = ( result['file_path'], result['associated_text'], result['associated_areas'], result['page'], result['position'] )
+            else:
+                to_return = ( None, '', '', None, None, None )
+            
+            return to_return
+                
         except Exception as e:
-            error_message = f'*** Error when looking for "{image_name}" in Image database: "{str(e)}"\n{traceback.format_exc()}'
-            post_task_update(callback, error_message)
+            post_task_update(callback, f'*** Error when looking for "{image_name}" in Image database: "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Image database inconsistency')
+
 
     def get_current_entry(self, project_id, callback=None):
         try:
@@ -187,11 +191,11 @@ class ImageRepository:
             cursor = connection.cursor()
             
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT file_path, image_name, associated_text, associated_areas FROM image_metadata WHERE project_id = ? LIMIT 1",
+                cursor.execute("SELECT file_path, image_name, associated_text, associated_areas, page, position FROM image_metadata WHERE project_id = ? LIMIT 1",
                                (project_id,))
             else:
                 # Assume postgres
-                cursor.execute("""SELECT file_path, image_name, associated_text, associated_areas FROM image_metadata 
+                cursor.execute("""SELECT file_path, image_name, associated_text, associated_areas, page, position FROM image_metadata 
                                   WHERE project_id = %(project_id)s 
                                   LIMIT 1""",
                                {
@@ -203,17 +207,20 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    to_return = ( result[0], result[1], result[2], result[3] )  # file_path, image_name, associated_text, associated_areas
+                    # file_path, image_name, associated_text, associated_areas, page, position
+                    to_return = ( result[0], result[1], result[2], result[3], result[4], result[5] )  
                 else:  # Assuming PostgreSQL
-                    to_return = ( result['file_path'], result['image_name'], result['associated_text'], result['associated_areas'] )
+                    to_return = ( result['file_path'], result['image_name'], result['associated_text'],
+                                  result['associated_areas'], result['page'], result['position'] )
             else:
-                to_return = ( None, None, '', '' )
-            post_task_update(callback, f'--- Current image for project {project_id}: name = {to_return[1]}, file = {to_return[0]}, text = "{to_return[2]}", areas = "{to_return[3]}"')
+                to_return = ( None, None, '', '', None, None )
+            post_task_update(callback, f'--- Current image for project {project_id}: name = {to_return[1]}, file = {to_return[0]}, text = "{to_return[2]}", areas = "{to_return[3]}", page = {to_return[4]}, position = {to_return[5]}')
             return to_return
                     
         except Exception as e:
             post_task_update(callback, f'*** Error when retrieving current entry for project {project_id}: {str(e)}')
             raise InternalCLARAError(message='Image database inconsistency')
+
 
     def get_project_directory(self, project_id):
         # Returns the directory path where images for a specific project are stored
@@ -243,4 +250,43 @@ class ImageRepository:
             post_task_update(callback, f'*** Error when removing entry for image {image_name}: {str(e)}')
             raise InternalCLARAError(message='Image database inconsistency')
 
+    def get_annotated_image_text(self, project_id, callback=None):
+        try:
+            project_id = str(project_id)
+            post_task_update(callback, f'--- Retrieving annotated image text for project {project_id}')
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT image_name, associated_text, page, position FROM image_metadata WHERE project_id = ?",
+                               (project_id,))
+            else:
+                # Assume postgres
+                cursor.execute("""SELECT image_name, associated_text, page, position FROM image_metadata 
+                                  WHERE project_id = %(project_id)s""",
+                               {
+                                  'project_id': project_id
+                               })
+
+            results = cursor.fetchall()
+            connection.close()
+
+            annotated_image_text = ""
+            for result in results:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    image_name, associated_text, page, position = result
+                else:  # Assuming PostgreSQL
+                    image_name = result['image_name']
+                    associated_text = result['associated_text']
+                    page = result['page']
+                    position = result['position']
+
+                annotated_image_text += f"<page img='{image_name}' page='{page}' position='{position}'>\n{associated_text}\n"
+
+            post_task_update(callback, f'--- Annotated image text for project {project_id} generated')
+            return annotated_image_text
+
+        except Exception as e:
+            post_task_update(callback, f'*** Error when retrieving annotated image text for project {project_id}: {str(e)}')
+            raise InternalCLARAError(message='Image database inconsistency')
 
