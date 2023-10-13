@@ -20,12 +20,46 @@ from .clara_classes import *
 from . import clara_utils
 
 import regex
+import re
+import pprint
+
+##def internalize_text(input_text, l2_language, l1_language, text_type):
+##    pages = input_text.split("<page>")
+##    internalized_pages = []
+##
+##    for page_text in pages:
+##        segments_text = page_text.split("||")
+##        internalized_segments = []
+##
+##        for segment_text in segments_text:
+##            content_elements = parse_content_elements(segment_text, text_type)
+##            internalized_segments.append(Segment(content_elements))
+##
+##        internalized_pages.append(Page(internalized_segments))
+##
+##    internalized_text = Text(internalized_pages, l2_language=l2_language, l1_language=l1_language)
+##    return internalized_text
 
 def internalize_text(input_text, l2_language, l1_language, text_type):
-    pages = input_text.split("<page>")
+    # Check if the first page starts with a <page> tag, if not prepend one
+    if not input_text.startswith('<page'):
+        input_text = '<page>' + input_text
+
+    # Use re.split to also capture the attributes within the <page> tags
+    split_text = re.split(r'<page\s*(.*?)>', input_text)
+    
+    # Remove the first empty string if it exists
+    if split_text and not split_text[0]:
+        split_text.pop(0)
+
+    #print(f'split_text: {split_text}')
+
     internalized_pages = []
 
-    for page_text in pages:
+    for i in range(0, len(split_text), 2):
+        page_attributes = split_text[i]
+        page_text = split_text[i + 1] if i + 1 < len(split_text) else ''
+        
         segments_text = page_text.split("||")
         internalized_segments = []
 
@@ -33,11 +67,16 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
             content_elements = parse_content_elements(segment_text, text_type)
             internalized_segments.append(Segment(content_elements))
 
-        internalized_pages.append(Page(internalized_segments))
+        # Create a Page object with the internalized_segments and page_attributes
+        page = Page(internalized_segments)
+        if page_attributes:
+            attributes = dict(re.findall(r"(\w+)='(.*?)'", page_attributes))
+            page.annotations = attributes
+
+        internalized_pages.append(page)
 
     internalized_text = Text(internalized_pages, l2_language=l2_language, l1_language=l1_language)
     return internalized_text
-
 def parse_content_elements(segment_text, type):
     if type in ( 'plain', 'summary', 'cefr_level', 'segmented'):
         return parse_content_elements_segmented(segment_text)

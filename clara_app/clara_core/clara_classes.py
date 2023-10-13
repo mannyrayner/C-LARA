@@ -89,8 +89,9 @@ class Segment:
         return sum([ element.word_count() for element in self.content_elements ])
 
 class Page:
-    def __init__(self, segments):
+    def __init__(self, segments, annotations=None):
         self.segments = segments
+        self.annotations = annotations or {}  # This could contain 'img', 'page_number', and 'position'
 
     def content_elements(self):
         elements = []
@@ -98,8 +99,16 @@ class Page:
             elements.extend(segment.content_elements)
         return elements
 
+##    def to_text(self, annotation_type=None):
+##        return "||".join([segment.to_text(annotation_type) for segment in self.segments])
+
     def to_text(self, annotation_type=None):
-        return "||".join([segment.to_text(annotation_type) for segment in self.segments])
+        segment_texts = "||".join([segment.to_text(annotation_type) for segment in self.segments])
+        if self.annotations:
+            attributes_str = ' '.join([f"{key}='{value}'" for key, value in self.annotations.items()])
+            return f"<page {attributes_str}>\n{segment_texts}"
+        else:
+            return f"<page>\n{segment_texts}"
 
     def word_count(self):
         return sum([ segment.word_count() for segment in self.segments ])
@@ -155,8 +164,11 @@ class Text:
     def add_page(self, page):
         self.pages.append(page)
 
+##    def to_text(self, annotation_type=None):
+##        return "\n<page>\n".join([page.to_text(annotation_type) for page in self.pages])
+
     def to_text(self, annotation_type=None):
-        return "\n<page>\n".join([page.to_text(annotation_type) for page in self.pages])
+        return "\n".join([page.to_text(annotation_type) for page in self.pages])
 
     def to_json(self):
         json_list = [json.loads(page.to_json()) for page in self.pages]
