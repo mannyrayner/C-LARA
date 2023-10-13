@@ -1444,7 +1444,9 @@ def images_view(request, project_id):
 
     associated_text = ''
     associated_areas = ''
-    current_image, image_name, associated_text, associated_areas = clara_project_internal.get_current_project_image(project_id)
+    page = 1
+    position = 'bottom'
+    current_image, image_name, associated_text, associated_areas, page, position = clara_project_internal.get_current_project_image(project_id)
 
     # Handle POST request
     if request.method == 'POST':
@@ -1452,6 +1454,9 @@ def images_view(request, project_id):
             uploaded_image = request.FILES.get('new_image')
             associated_text = request.POST.get('associated_text')
             associated_areas = request.POST.get('associated_areas')
+            page_str = request.POST.get('page', '1')  # Default to '1' if not provided
+            page = int(page_str) if page_str.strip() else 1  # Convert to int if not empty, else default to 1
+            position = request.POST.get('position', 'bottom')  # Default to 'bottom' if not provided
 
             if uploaded_image:
                 image_name = basename(uploaded_image.name)
@@ -1465,10 +1470,10 @@ def images_view(request, project_id):
                 associated_areas = json.dumps(structure)
 
             if uploaded_image:
-                clara_project_internal.add_project_image(project_id, image_name, image_file_path,
-                                                         associated_text=associated_text, associated_areas=associated_areas)
+                current_image = clara_project_internal.add_project_image(project_id, image_name, image_file_path,
+                                                                         associated_text=associated_text, associated_areas=associated_areas,
+                                                                         page=page, position=position)
                 messages.success(request, "Image added successfully!")
-                current_image = clara_project_internal.get_project_image(project_id, image_name)
 
             if associated_text and not image_name:
                 messages.error(request, "There is no image to attach the text to")
@@ -1489,6 +1494,8 @@ def images_view(request, project_id):
             current_image = None
             associated_text = ''
             associated_areas = ''
+            page = ''
+            position = None
 
     # Nothing to do for GET request
         
@@ -1497,7 +1504,9 @@ def images_view(request, project_id):
         'project': project,
         'current_image': base_current_image,
         'associated_text': associated_text,
-        'associated_areas': associated_areas
+        'associated_areas': associated_areas,
+        'page': page,
+        'position': position
     }
     return render(request, 'clara_app/images.html', context)
 
