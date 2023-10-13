@@ -456,7 +456,7 @@ class CLARAProjectInternal:
         return text
 
     # Get text consisting of "segmented" text plus suitably tagged segmented text for any images
-    def get_segmented_with_images_text(project_id, callback=None):
+    def get_segmented_with_images_text(self, project_id, callback=None):
         segmented_text = self.load_text_version("segmented")
         images_text = self.image_repository.get_annotated_image_text(project_id, callback=callback)
         return segmented_text + '\n' + images_text
