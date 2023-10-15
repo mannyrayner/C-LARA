@@ -800,9 +800,10 @@ def process_manual_alignment(clara_project_internal, audio_file, metadata, human
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
-    finally:
-        # Clean up: remove files from local and S3
-        remove_file(audio_file)
+    # Keep file for now, we may need to export it
+    #finally:
+    #    # Clean up: remove files from local and S3
+    #    remove_file(audio_file)
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
