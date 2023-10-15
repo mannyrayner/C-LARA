@@ -56,8 +56,8 @@
     <p>
       <strong>Upload Original Audio File:</strong>
 	  <input type="file" name="manual_align_audio_file" accept=".mp3"> 
-	  {% if form.audio_file.value %}
-		[{{ form.audio_file.value }}]
+	  {% if human_audio_info.audio_file.value %}
+		[{{ human_audio_info.audio_file.value }}]
       {% endif %}
 
     </p>
@@ -68,8 +68,8 @@
 	  <!--  <input type="file" name="manual_align_metadata_file" accept=".json"> -->
 	  <!--  Use Audacity label file in initial testing -->
       <input type="file" name="metadata_file" accept=".txt">
-	  {% if form.manual_align_metadata_file.value %}
-		[{{ form.manual_align_metadata_file.value }}]
+	  {% if human_audio_info.manual_align_metadata_file.value %}
+		[{{ human_audio_info.manual_align_metadata_file.value }}]
       {% endif %}
     </p>
 	{% endif %}
