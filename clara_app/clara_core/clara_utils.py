@@ -19,6 +19,7 @@ import tempfile
 import chardet
 import hashlib
 import traceback
+import requests
 
 from asgiref.sync import sync_to_async
 
@@ -110,6 +111,32 @@ def replace_local_path_prefixes_for_s3(pathname):
         pathname = pathname[1:]
     
     return pathname
+
+def generate_s3_presigned_url(file_path, expiration=3600):
+    """
+    Generate a presigned URL for an S3 object.
+
+    Parameters:
+        file_path (str): The path to the file in the S3 bucket.
+        expiration (int): Time in seconds for the presigned URL to remain valid.
+
+    Returns:
+        str: Presigned URL, or None if an error occurred.
+    """
+    if not s3_is_initialised():
+        print(f'--- S3 storage is not initialised: unable to create presigned URL')
+        return None
+
+    try:
+        response = _s3_client.generate_presigned_url('get_object',
+                                                     Params={'Bucket': _s3_bucket_name,
+                                                             'Key': file_path},
+                                                     ExpiresIn=expiration)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+    return response
 
 def make_directory(pathname, parents=False, exist_ok=False):
     if _s3_storage:
@@ -232,6 +259,7 @@ def copy_local_file_to_s3(local_pathname, s3_pathname=None, callback=None):
         return
 
     post_task_update(callback, f'--- Copied local file {abs_local_pathname} to S3 file {abs_s3_pathname}, bucket = {_s3_bucket_name}')
+
 # If we're in S3 mode, retrieve a file which probably came from another file system.
 # If we're not in S3 mode, we don't need to do anything: we just use the file as it is.
 def copy_s3_file_to_local_if_necessary(s3_pathname, callback=None):
@@ -524,6 +552,19 @@ def write_json_or_txt_file(data, file_path: str):
         write_txt_file(data, file_path)
     else:
         raise ValueError(f'Unsupported file type {extension} for {file_path}')
+
+def download_file_from_url(url, file_path):
+    abs_file_path = absolute_local_file_name(file_path)
+    
+    response = requests.get(url)
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Save the content to a local file
+        with open(abs_file_path, "wb") as f:
+            f.write(response.content)
+        print(f"File downloaded successfully to {abs_file_path}.")
+    else:
+        print(f"Failed to download the file. Status code: {response.status_code}")
 
 def extension_for_file_path(file_path: str):
     if isinstance(file_path, Path):
