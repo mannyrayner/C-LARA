@@ -626,7 +626,7 @@ def manual_audio_alignment_integration_endpoint1(request, project_id):
     # In this case, we pass it back so that it can be edited on the Text/Audio Alignment server
     breakpoint_text = None
     if metadata_file:
-        breakpoint_text = robust_read_local_txt_file(metadata_file)
+        breakpoint_text = read_txt_file(metadata_file)
     
     # Create JSON response
     response_data = {
