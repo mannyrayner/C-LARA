@@ -57,7 +57,7 @@
       <strong>Upload Original Audio File:</strong>
 	  <input type="file" name="manual_align_audio_file" accept=".mp3"> 
 	  {% if form.audio_file.value %}
-		[Audio file uploaded]
+		[form.audio_file.value]
       {% endif %}
 
     </p>
@@ -69,7 +69,7 @@
 	  <!--  Use Audacity label file in initial testing -->
       <input type="file" name="metadata_file" accept=".txt">
 	  {% if form.manual_align_metadata_file.value %}
-		[Alignment metadata uploaded]
+		[form.manual_align_metadata_file.value]
       {% endif %}
     </p>
 	{% endif %}
