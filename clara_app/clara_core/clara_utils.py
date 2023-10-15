@@ -242,23 +242,27 @@ def copy_local_file_to_s3(local_pathname, s3_pathname=None, callback=None):
 
     fail_if_no_s3_bucket()
 
-    s3_pathname = s3_pathname if s3_pathname else local_pathname
-    abs_local_pathname = absolute_local_file_name(local_pathname)
-    abs_s3_pathname = s3_file_name(s3_pathname)
+    try:
+        s3_pathname = s3_pathname if s3_pathname else local_pathname
+        abs_local_pathname = absolute_local_file_name(local_pathname)
+        abs_s3_pathname = s3_file_name(s3_pathname)
 
-    # Compute the MD5 checksum of the local file before uploading
-    local_md5 = compute_md5(abs_local_pathname)
+        # Compute the MD5 checksum of the local file before uploading
+        local_md5 = compute_md5(abs_local_pathname)
 
-    with open(abs_local_pathname, "rb") as data:
-        response = _s3_client.put_object(Bucket=_s3_bucket_name, Key=abs_s3_pathname, Body=data)
+        with open(abs_local_pathname, "rb") as data:
+            response = _s3_client.put_object(Bucket=_s3_bucket_name, Key=abs_s3_pathname, Body=data)
 
-    # Verify the MD5 checksum with the one returned by S3
-    s3_md5 = response.get('ETag', '').replace('"', '')
-    if local_md5 != s3_md5:
-        post_task_update(callback, f'*** Checksum mismatch for {abs_local_pathname}. Local MD5: {local_md5}, S3 MD5: {s3_md5}')
-        return
+        # Verify the MD5 checksum with the one returned by S3
+        s3_md5 = response.get('ETag', '').replace('"', '')
+        if local_md5 != s3_md5:
+            post_task_update(callback, f'*** Checksum mismatch for {abs_local_pathname}. Local MD5: {local_md5}, S3 MD5: {s3_md5}')
+            return
 
-    post_task_update(callback, f'--- Copied local file {abs_local_pathname} to S3 file {abs_s3_pathname}, bucket = {_s3_bucket_name}')
+        post_task_update(callback, f'--- Copied local file {abs_local_pathname} to S3 file {abs_s3_pathname}, bucket = {_s3_bucket_name}')
+    except Exception as e:
+        post_task_update(callback, f'*** Error: something went wrong when trying to local file {abs_local_pathname} to S3 file {abs_s3_pathname}: {str(e)}')
+        raise InternalCLARAError( message=f'*** Error: something went wrong when trying to local file {abs_local_pathname} to S3') 
 
 # If we're in S3 mode, retrieve a file which probably came from another file system.
 # If we're not in S3 mode, we don't need to do anything: we just use the file as it is.
@@ -358,6 +362,20 @@ def local_file_exists(pathname):
     abspathname = absolute_local_file_name(pathname)
     
     return os.path.isfile(abspathname)
+
+def s3_file_exists(pathname):
+    abspathname = s3_file_name(pathname)
+    
+    fail_if_no_s3_bucket()
+    try:
+        _s3_client.head_object(Bucket=_s3_bucket_name, Key=abspathname)
+        return True
+    except botocore.exceptions.ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            return False
+        else:
+            # something else has gone wrong that we weren't expecting
+            raise InternalCLARAError( message=f'Error in S3 when trying to access {abspathname}' )
 
 def local_directory_exists(pathname):
     abspathname = absolute_local_file_name(pathname)
