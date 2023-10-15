@@ -694,6 +694,7 @@ def human_audio_processing(request, project_id):
                 if 'metadata_file' in request.FILES:
                     uploaded_metadata = request.FILES['metadata_file']
                     metadata_file = uploaded_file_to_file(uploaded_metadata)
+                    copy_local_file_to_s3_if_necessary(metadata_file)
                     human_audio_info.manual_align_metadata_file = metadata_file  
                     human_audio_info.save()
                     messages.success(request, "Uploaded metadata file saved.")
