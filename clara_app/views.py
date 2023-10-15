@@ -38,8 +38,9 @@ from .clara_core.clara_conventional_tagging import fully_supported_treetagger_la
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure  
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
-from .clara_core.clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, robust_read_local_txt_file, check_if_file_can_be_read
+from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
+from .clara_core.clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
+from .clara_core.clara_utils import robust_read_local_txt_file, check_if_file_can_be_read
 from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language
 
 from pathlib import Path
@@ -591,6 +592,49 @@ def get_audio_metadata_view(request, project_id):
     
     return render(request, 'clara_app/audio_metadata.html', 
                   { 'project': project, 'form': form })
+
+# First integration endpoint for Manual Text/Audio Alignment.
+# Used by Text/Audio Alignment server to download
+#   - labelled segmented text
+#   - S3 link to mp3 file
+#   - breakpoint text if it exists
+# Note that the @login_required or @user_has_a_project_role decorators are intentionally omittted.
+# This view is intended to be accessed externally from a server which won't have logged in.
+def manual_audio_alignment_integration_endpoint1(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    # Get the "labelled segmented" version of the text
+    labelled_segmented_text = clara_project_internal.get_labelled_segmented_text()
+    
+    # Try to get existing HumanAudioInfo for this project or create a new one
+    human_audio_info, created = HumanAudioInfo.objects.get_or_create(project=project)
+    
+    # Access the audio_file and manual_align_metadata_file
+    audio_file = human_audio_info.audio_file
+    metadata_file = human_audio_info.manual_align_metadata_file
+    
+    # Copy the audio_file to S3 and get a download URL
+    copy_local_file_to_s3_if_necessary(audio_file)
+    s3_audio_file = s3_file_name(audio_file)
+    s3_audio_link = generate_s3_presigned_url(s3_audio_file)
+    
+    # Read the metadata_file if it already exists to get the breakpoint data
+    # It will not exist the first time the endpoint is accessed
+    # In subsequent accesses, the Text/Audio Alignment server may have uploaded existing breakpoint data
+    # In this case, we pass it back so that it can be edited on the Text/Audio Alignment server
+    breakpoint_text = None
+    if metadata_file:
+        breakpoint_text = robust_read_local_txt_file(metadata_file)
+    
+    # Create JSON response
+    response_data = {
+        'labelled_segmented_text': labelled_segmented_text,
+        's3_audio_link': s3_audio_link,
+        'breakpoint_text': breakpoint_text    
+    }
+    
+    return JsonResponse(response_data)
 
 @login_required
 @user_has_a_project_role

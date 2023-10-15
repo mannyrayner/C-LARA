@@ -48,14 +48,11 @@ urlpatterns = [
     path('project/<int:project_id>/process_ldt_zipfile_monitor/<str:report_id>/', views.process_ldt_zipfile_monitor, name='process_ldt_zipfile_monitor'),
     path('project/<int:project_id>/process_ldt_zipfile_complete/<str:status>/', views.process_ldt_zipfile_complete, name='process_ldt_zipfile_complete'),
     path('project/<int:project_id>/generate_audio_metadata/<str:metadata_type>/<str:human_voice_id>/', views.generate_audio_metadata, name='generate_audio_metadata'),
-
     path('project/<int:project_id>/process_manual_alignment_status/<str:report_id>/', views.process_manual_alignment_status, name='process_manual_alignment_status'),
     path('project/<int:project_id>/process_manual_alignment_monitor/<str:report_id>/', views.process_manual_alignment_monitor, name='process_manual_alignment_monitor'),
     path('project/<int:project_id>/process_manual_alignment_complete/<str:status>/', views.process_manual_alignment_complete, name='process_manual_alignment_complete'),
     path('project/<int:project_id>/generate_annotated_segmented_file/', views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
-
     path('project/<int:project_id>/images_view/', views.images_view, name='images_view'),
-    
     path('project/<int:project_id>/render_text_start/', views.render_text_start, name='render_text_start'),
     path('project/<int:project_id>/render_text_status/<str:task_id>/<str:report_id>/', views.render_text_status, name='render_text_status'),
     path('project/<int:project_id>/render_text_monitor/<str:task_id>/<str:report_id>/', views.render_text_monitor, name='render_text_monitor'),
@@ -71,8 +68,9 @@ urlpatterns = [
     path('rendered_texts/<int:project_id>/multimedia/<path:filename>', views.serve_rendered_text_multimedia, name='serve_rendered_text'),
     path('rendered_texts/<int:project_id>/<path:filename>', views.serve_rendered_text, name='serve_rendered_text'),
     path('serve_zipfile/<int:project_id>/', views.serve_zipfile, name='serve_zipfile'),
-
     path('projects/serve_project_image/<int:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
+
+    path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
 
 ]
 
