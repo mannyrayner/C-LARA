@@ -614,8 +614,9 @@ def manual_audio_alignment_integration_endpoint1(request, project_id):
     audio_file = human_audio_info.audio_file
     metadata_file = human_audio_info.manual_align_metadata_file
     
-    # Copy the audio_file to S3 and get a download URL
-    copy_local_file_to_s3_if_necessary(audio_file)
+    # Copy the audio_file to S3 if it exists as a local file and get a download URL
+    if local_file_exists(audio_file):
+        copy_local_file_to_s3(audio_file)
     s3_audio_file = s3_file_name(audio_file)
     s3_audio_link = generate_s3_presigned_url(s3_audio_file)
     
