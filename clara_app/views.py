@@ -734,9 +734,11 @@ def human_audio_processing(request, project_id):
     context = {
         'project': project,
         'form': form,
-        'human_audio_info': human_audio_info
+        'audio_file': human_audio_info.audio_file,
+        'manual_align_metadata_file': human_audio_info.manual_align_metadata_file,
         # Any other context data you want to send to the template
     }
+
     return render(request, 'clara_app/human_audio_processing.html', context)
 
 def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
