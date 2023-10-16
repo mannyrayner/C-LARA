@@ -44,15 +44,15 @@ We have said the server will released Oct/Nov.
 The current informal system is not scalable. This is probably
 needed for the UniSA server.
 
-6. Integration of some version of "phonetic text" into C-LARA, porting
-this functionality from the LARA code. Pauline Welby will be visiting
-Adelaide Nov 22-25, and we said phonetic text would be the main item to
-discuss.
-
-7. Improve design aspects of C-LARA. It will be easier to do this when
+6. Improve design aspects of C-LARA. It will be easier to do this when
 the vision-enabled ChatGPT-4V becomes generally available. OpenAI says
 this will happen soon, probably during October. At least an initial
 version is probably needed for the UniSA server.
+
+7. Integration of some version of "phonetic text" into C-LARA, porting
+this functionality from the LARA code. Pauline Welby will be visiting
+Adelaide Nov 22-25, and we said phonetic text would be the main item to
+discuss.
 
 8. Prepare our presentation for WorldCALL, Nov 9-13.
 
