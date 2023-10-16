@@ -40,7 +40,7 @@ from .clara_core.clara_annotated_images import make_uninstantiated_annotated_ima
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
 from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
-from .clara_core.clara_utils import robust_read_local_txt_file, check_if_file_can_be_read
+from .clara_core.clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
 from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language
 
 from pathlib import Path
@@ -637,6 +637,40 @@ def manual_audio_alignment_integration_endpoint1(request, project_id):
     
     return JsonResponse(response_data)
 
+# Second integration endpoint for Manual Text/Audio Alignment.
+# Used by Text/Audio Alignment server to upload a JSON file.
+# The Text/Audio Alignment server also passes a project_id to say where data should be stored.
+#
+# Note that the @login_required or @user_has_a_project_role decorators are intentionally omittted.
+# This view is intended to be accessed externally from a server which won't have logged in.
+@csrf_exempt
+def manual_audio_alignment_integration_endpoint2(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'failed',
+                             'error': 'only POST method is allowed'})
+    
+    try:
+        project_id = request.POST.get('project_id')
+        uploaded_file = request.FILES.get('json_file')
+        
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        human_audio_info, created = HumanAudioInfo.objects.get_or_create(project=project)
+        
+        # Convert the JSON file to Audacity txt form
+        json_file = uploaded_file_to_file(uploaded_file)
+        copy_local_file_to_s3_if_necessary(json_file)
+        
+        # Save the json_file and update human_audio_info
+        human_audio_info.manual_align_metadata_file = json_file
+        human_audio_info.save()
+    
+        return JsonResponse({'status': 'success'})
+    
+    except Exception as e:
+        return JsonResponse({'status': 'failed',
+                             'error': f'Exception: {str(e)}\n{traceback.format_exc()}'})  # Corrected traceback formatting
+
 @login_required
 @user_has_a_project_role
 def human_audio_processing(request, project_id):
@@ -703,19 +737,18 @@ def human_audio_processing(request, project_id):
                 if human_audio_info.audio_file and human_audio_info.manual_align_metadata_file and human_voice_id:
                     audio_file = human_audio_info.audio_file
                     metadata_file = human_audio_info.manual_align_metadata_file
-                    # We may pass the audio file to the asynch process via S3, so use file_exists
+                    # Check that we really do have the files
                     if not file_exists(audio_file):
                         messages.error(request, f"Error: unable to find uploaded audio file {audio_file}")
-                    # But we are reading the metadata file now, so use local_file_exists
-                    elif not local_file_exists(metadata_file):
+                    elif not file_exists(metadata_file):
                         messages.error(request, f"Error: unable to find uploaded metadata file {metadata_file}")
                     else:
                         # Create a callback
                         report_id = uuid.uuid4()
                         callback = [post_task_update_in_db, report_id]
                         
-                        #async_task(process_manual_alignment, clara_project_internal, audio_file, metadata_file, human_voice_id, callback=callback)
-                        metadata = robust_read_local_txt_file(metadata_file)
+                        # The metadata file can either be a .json file with start and end times, or a .txt file of Audacity labels
+                        metadata = read_json_or_txt_file(metadata_file)
                         async_task(process_manual_alignment, clara_project_internal, audio_file, metadata, human_voice_id, callback=callback)
                         
                         print("--- Started async task to process manual alignment data")
@@ -1491,11 +1524,21 @@ def images_view(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
+    current_image = None
+    image_name = ''
     associated_text = ''
     associated_areas = ''
     page = 1
     position = 'bottom'
-    current_image, image_name, associated_text, associated_areas, page, position = clara_project_internal.get_current_project_image(project_id)
+    #current_image, image_name, associated_text, associated_areas, page, position = clara_project_internal.get_current_project_image(project_id)
+    image_object = clara_project_internal.get_current_project_image()
+    if image_object:
+        current_image = image_object.image_file_path
+        image_name = image_object.image_name
+        associated_text = image_object.associated_text
+        associated_areas = image_object.associated_areas
+        page = image_object.page
+        position = image_object.position
 
     # Handle POST request
     if request.method == 'POST':
@@ -1519,7 +1562,7 @@ def images_view(request, project_id):
                 associated_areas = json.dumps(structure)
 
             if uploaded_image:
-                current_image = clara_project_internal.add_project_image(project_id, image_name, image_file_path,
+                current_image = clara_project_internal.add_project_image(image_name, image_file_path,
                                                                          associated_text=associated_text, associated_areas=associated_areas,
                                                                          page=page, position=position)
                 messages.success(request, "Image added successfully!")
@@ -1532,13 +1575,13 @@ def images_view(request, project_id):
         elif 'save_areas' in request.POST:
             associated_areas = request.POST.get('associated_areas')
             if associated_areas and image_name:
-                clara_project_internal.store_project_associated_areas(project_id, image_name, associated_areas)
+                clara_project_internal.store_project_associated_areas(image_name, associated_areas)
                 messages.success(request, "Associated areas saved successfully!")
             else:
                 messages.error(request, "Need both image and areas to save.")
         
         elif 'remove_image' in request.POST:
-            clara_project_internal.remove_all_project_images(project_id)
+            clara_project_internal.remove_all_project_images()
             messages.success(request, "All project images removed successfully!")
             current_image = None
             associated_text = ''

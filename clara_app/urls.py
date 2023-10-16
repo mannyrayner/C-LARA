@@ -68,9 +68,10 @@ urlpatterns = [
     path('rendered_texts/<int:project_id>/multimedia/<path:filename>', views.serve_rendered_text_multimedia, name='serve_rendered_text'),
     path('rendered_texts/<int:project_id>/<path:filename>', views.serve_rendered_text, name='serve_rendered_text'),
     path('serve_zipfile/<int:project_id>/', views.serve_zipfile, name='serve_zipfile'),
-    path('projects/serve_project_image/<int:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
+    path('projects/serve_project_image/<str:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
 
     path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
+    path('manual_audio_alignment_integration_endpoint2/', views.manual_audio_alignment_integration_endpoint2, name='manual_audio_alignment_integration_endpoint2'),
 
 ]
 
