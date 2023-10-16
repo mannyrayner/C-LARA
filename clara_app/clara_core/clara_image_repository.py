@@ -22,7 +22,7 @@ from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_l
 from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory
 from .clara_utils import list_files_in_directory, post_task_update
 
-from .clara_classes import InternalCLARAError
+from .clara_classes import Image, InternalCLARAError
 
 from pathlib import Path
 
@@ -170,13 +170,14 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    to_return = ( result[0], result[1], result[2], result[3], result[4] )  # file_path, associated_text, associated_areas, page, position
+                    image = Image(result[0], image_name, result[1], result[2], result[3], result[4])
                 else:  # Assuming PostgreSQL
-                    to_return = ( result['file_path'], result['associated_text'], result['associated_areas'], result['page'], result['position'] )
+                    image = Image(result['file_path'], image_name, result['associated_text'], 
+                                  result['associated_areas'], result['page'], result['position'])
             else:
-                to_return = ( None, '', '', None, None, None )
+                image = None
             
-            return to_return
+            return image
                 
         except Exception as e:
             post_task_update(callback, f'*** Error when looking for "{image_name}" in Image database: "{str(e)}"\n{traceback.format_exc()}')
@@ -207,13 +208,14 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    # file_path, image_name, associated_text, associated_areas, page, position
-                    to_return = ( result[0], result[1], result[2], result[3], result[4], result[5] )  
+                    image = Image(result[0], result[1], result[2], result[3], result[4], result[5])
                 else:  # Assuming PostgreSQL
-                    to_return = ( result['file_path'], result['image_name'], result['associated_text'],
-                                  result['associated_areas'], result['page'], result['position'] )
+                    image = Image(result['file_path'], result['image_name'], result['associated_text'],
+                                  result['associated_areas'], result['page'], result['position'])
             else:
-                to_return = ( None, None, '', '', None, None )
+                image = None
+            
+            return image
             post_task_update(callback, f'--- Current image for project {project_id}: name = {to_return[1]}, file = {to_return[0]}, text = "{to_return[2]}", areas = "{to_return[3]}", page = {to_return[4]}, position = {to_return[5]}')
             return to_return
                     

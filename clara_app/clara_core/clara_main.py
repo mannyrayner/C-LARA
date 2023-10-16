@@ -447,7 +447,9 @@ class CLARAProjectInternal:
     def load_text_version(self, version: str) -> str:
         file_path = self.text_versions[version]
         if not file_path or not file_exists(Path(file_path)):
-            if version == 'lemma_and_gloss':
+            if version == 'segmented_with_images':
+                return self._get_segmented_with_images_text()
+            elif version == 'lemma_and_gloss':
                 return self._create_and_load_lemma_and_gloss_file()
             else:    
                 raise FileNotFoundError(f"'{version}' text not found.")
@@ -455,10 +457,10 @@ class CLARAProjectInternal:
         text = make_line_breaks_canonical_n(text)
         return text
 
-    # Get text consisting of "segmented" text plus suitably tagged segmented text for any images
-    def get_segmented_with_images_text(self, project_id, callback=None):
+    # Get text consisting of "segmented" text, plus suitably tagged segmented text for any images that may be present
+    def _get_segmented_with_images_text(self, callback=None):
         segmented_text = self.load_text_version("segmented")
-        images_text = self.image_repository.get_annotated_image_text(project_id, callback=callback)
+        images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
         return segmented_text + '\n' + images_text
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
@@ -683,9 +685,10 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             return False
 
-    # Process a metadata file and audio file received from manual audio/text alignment.
+    # Process content of a metadata file and audio file received from manual audio/text alignment.
+    # The content of the metadata file can be a list (JSON metadata file) or a string (Audacity label file)
     # Use the metadata to extract audio segments and store them in the audio repository.
-    def process_manual_alignment(self, audio_file, audacity_label_data, human_voice_id, callback=None):
+    def process_manual_alignment(self, audio_file, metadata_or_audacity_label_data, human_voice_id, callback=None):
         post_task_update(callback, f"--- Trying to process manual alignment with audio_file {audio_file} and human voice ID {human_voice_id}")
         
         if not local_file_exists(audio_file):
@@ -698,8 +701,13 @@ class CLARAProjectInternal:
             # During initial testing, the metadata is the contents of an Audacity label file. Temporary code to convert it to the real form.
             annotated_segment_data = self.get_labelled_segmented_text()
             post_task_update(callback, f'--- Found labelled segmented text')
-                        
-            metadata = annotated_segmented_data_and_label_file_data_to_metadata(annotated_segment_data, audacity_label_data, callback=callback)
+
+            if isinstance(metadata_or_audacity_label_data, ( str )):
+                # It's Audacity label data
+                metadata = annotated_segmented_data_and_label_file_data_to_metadata(annotated_segment_data, metadata_or_audacity_label_data, callback=callback)
+            else:
+                # It's JSON metadata
+                metadata = metadata_or_audacity_label_data
                 
             audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
             post_task_update(callback, f'--- Calling process_manual_alignment')
@@ -710,9 +718,11 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             return False
 
-    def add_project_image(self, project_id, image_name, image_file_path, associated_text='', associated_areas='',
+    def add_project_image(self, image_name, image_file_path, associated_text='', associated_areas='',
                           page=1, position='bottom', callback=None):
         try:
+            project_id = self.id
+            
             post_task_update(callback, f"--- Adding image {image_name} (file path = {image_file_path}) to project {project_id}")            
             
             # Logic to store the image in the repository
@@ -730,8 +740,10 @@ class CLARAProjectInternal:
             # Handle the exception as needed
             return None
 
-    def store_project_associated_areas(self, project_id, image_name, associated_areas, callback=None):
+    def store_project_associated_areas(self, image_name, associated_areas, callback=None):
         try:
+            project_id = self.id
+            
             post_task_update(callback, f"--- Storing associated areas for image {image_name} in project {project_id}")
 
             # Logic to store the associated areas in the repository
@@ -743,23 +755,27 @@ class CLARAProjectInternal:
             # Handle the exception as needed
 
     # Retrieves the image associated with the project
-    def get_project_image(self, project_id, image_name, callback=None):
+    def get_project_image(self, image_name, callback=None):
         try:
+            project_id = self.id
+            
             post_task_update(callback, f"--- Retrieving image {image_name} for project {project_id}")
             
             # Logic to get the image entry from the repository
-            image_file_path, image_name, associated_text, associated_areas, page, position = self.image_repository.get_entry(project_id, image_name, callback=callback)
+            image = self.image_repository.get_entry(project_id, image_name, callback=callback)
             
             post_task_update(callback, f"--- Image retrieved successfully")
-            return image_file_path, image_name, associated_text, associated_areas, page, position
+            return image
         except Exception as e:
             post_task_update(callback, f"*** Error when retrieving image: {str(e)}")
             # Handle the exception as needed
-            return (None, None, '', '', '', '')
+            return None
 
     # Removes an image from the ImageRepository associated with the project
-    def remove_project_image(self, project_id, image_name, callback=None):
+    def remove_project_image(self, image_name, callback=None):
         try:
+            project_id = self.id
+            
             post_task_update(callback, f"--- Removing image {image_name} from project {project_id}")
 
             # Logic to remove the image entry from the repository
@@ -771,8 +787,10 @@ class CLARAProjectInternal:
             # Handle the exception as needed
 
     # Removes all images associated with the project from the ImageRepository 
-    def remove_all_project_images(self, project_id, callback=None):
+    def remove_all_project_images(self, callback=None):
         try:
+            project_id = self.id
+            
             post_task_update(callback, f"--- Removing all images from project {project_id}")
 
             # Logic to remove the image entries from the repository
@@ -784,19 +802,21 @@ class CLARAProjectInternal:
             # Handle the exception as needed
 
     # Retrieves the current image associated with the project (temporary for initial version)
-    def get_current_project_image(self, project_id, callback=None):
+    def get_current_project_image(self, callback=None):
         try:
+            project_id = self.id
+            
             post_task_update(callback, f"--- Retrieving current image for project {project_id}")
 
             # Logic to get the current image entry from the repository
-            current_image_file_path, image_name, associated_text, associated_areas, page, position = self.image_repository.get_current_entry(project_id)
+            current_image = self.image_repository.get_current_entry(project_id)
 
             post_task_update(callback, f"--- Current image retrieved successfully")
-            return (current_image_file_path, image_name, associated_text, associated_areas, page, position)
+            return current_image
         except Exception as e:
             post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
             # Handle the exception as needed
-            return (None, None, '', '', '', '')
+            return None
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.
@@ -811,10 +831,11 @@ class CLARAProjectInternal:
 
         # Add image if it exists, with some line-breaks before it.
         # Temporary code while we only have a maximum of one image, added at the end.
-        current_image_file_path, image_name, associated_text, associated_areas = self.get_current_project_image(project_id)
-        if current_image_file_path:
+        # Next step: add the image with the page and position given by those fields
+        image = self.get_current_project_image()
+        if image:
             line_break_element = ContentElement("NonWordText", "\n\n")
-            image_element = ContentElement("Image", {'src': basename(current_image_file_path)})
+            image_element = ContentElement("Image", {'src': basename(image.image_file_path)})
             text_object.add_to_end_of_last_segment(line_break_element)
             text_object.add_to_end_of_last_segment(image_element)
     

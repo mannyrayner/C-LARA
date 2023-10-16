@@ -199,6 +199,18 @@ class Text:
         text.pages = [Page.from_json(page_json) for page_json in data["pages"]]
         return text
 
+class Image:
+    def __init__(self, image_file_path, image_name, associated_text, associated_areas, page, position):
+        self.image_file_path = image_file_path
+        self.image_name = image_name
+        self.associated_text = associated_text
+        self.associated_areas = associated_areas
+        self.page = page
+        self.position = position
+
+    def __repr__(self):
+        return f"Image(image_file_path={self.image_file_path}, image_name={self.image_name})"
+
 class APICall:
     def __init__(self, prompt, response, cost, duration, timestamp, retries):
         self.prompt = prompt

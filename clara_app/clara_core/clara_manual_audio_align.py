@@ -3,14 +3,15 @@
 Code to support the manual audio/text alignment functionality.
 """
 
-from .clara_utils import local_directory_exists, make_local_directory, read_local_json_file, post_task_update
-from .clara_utils import canonical_word_for_audio, canonical_text_for_audio
+from .clara_utils import local_directory_exists, make_local_directory, read_local_json_file, post_task_update, absolute_local_file_name
+from .clara_utils import canonical_word_for_audio, canonical_text_for_audio, read_json_or_txt_file, write_json_to_file_plain_utf8
 from .clara_classes import InternalCLARAError
 
 import os
 import subprocess
 import traceback
 import re
+import requests
 
 def add_indices_to_segmented_text(segmented_text):
     """
@@ -117,3 +118,35 @@ def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_cont
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         post_task_update(callback, error_message)
         raise InternalCLARAError(message='Error when creating text/audio alignment metadata')
+
+def annotated_segmented_file_and_label_file_to_metadata_file(segmented_file, audacity_label_file, metadata_file):
+    segmented_file_content = read_json_or_txt_file(segmented_file)
+    audacity_label_content = read_json_or_txt_file(audacity_label_file)
+    metadata = annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_content, audacity_label_content)
+    write_json_to_file_plain_utf8(metadata, metadata_file)
+
+def annotated_segmented_file_and_label_file_to_metadata_file_sample():
+    segmented_file = '$CLARA/tmp/FatherWilliamSegmentedAnnotated.txt'
+    audacity_label_file = '$CLARA/tmp/FatherWilliamLabels.txt'
+    metadata_file = '$CLARA/tmp/FatherWilliamBreakpoints.json'
+    annotated_segmented_file_and_label_file_to_metadata_file(segmented_file, audacity_label_file, metadata_file)
+    
+def test_endpoint2(project_id=16, json_file_path="$CLARA/tmp/FatherWilliamBreakpoints.json"):
+    
+    url = "http://localhost:8000/accounts/manual_audio_alignment_integration_endpoint2/"
+
+    # Path to the JSON file you've created
+    abs_json_file_path = absolute_local_file_name(json_file_path)
+
+   # Prepare the data
+    data = {'project_id': project_id}
+    
+    # Make the POST request
+    with open(abs_json_file_path, 'rb') as f:
+        files = {'json_file': f}
+        response = requests.post(url, data=data, files=files)
+
+    # Print the response
+    print("Status Code:", response.status_code)
+    print("Response JSON:", response.json()) 
+
