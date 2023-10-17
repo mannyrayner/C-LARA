@@ -15,8 +15,9 @@ It also defines the following classes:
 
 7. Various kinds of exceptions
 """
-
+ 
 import json
+import os
 
 class ContentElement:
     def __init__(self, element_type, content, annotations=None):
@@ -99,9 +100,6 @@ class Page:
             elements.extend(segment.content_elements)
         return elements
 
-##    def to_text(self, annotation_type=None):
-##        return "||".join([segment.to_text(annotation_type) for segment in self.segments])
-
     def to_text(self, annotation_type=None):
         segment_texts = "||".join([segment.to_text(annotation_type) for segment in self.segments])
         if self.annotations:
@@ -164,9 +162,6 @@ class Text:
     def add_page(self, page):
         self.pages.append(page)
 
-##    def to_text(self, annotation_type=None):
-##        return "\n<page>\n".join([page.to_text(annotation_type) for page in self.pages])
-
     def to_text(self, annotation_type=None):
         return "\n".join([page.to_text(annotation_type) for page in self.pages])
 
@@ -178,19 +173,33 @@ class Text:
             "pages": json_list
         })
 
-    def add_to_end_of_last_segment(self, content_element):
-        if not self.pages:
-            # If there are no pages, create a new one with an empty segment
+    def add_image(self, image):
+        target_page_index = image.page - 1  # Assuming page numbers start from 1
+        line_break_element = ContentElement("NonWordText", "\n\n")
+        image_element = ContentElement("Image", {'src': basename(image.image_file_path)})
+
+        # Create new pages if the target page doesn't exist
+        while len(self.pages) <= target_page_index:
             new_page = Page([Segment([])])
             self.pages.append(new_page)
         
-        last_page = self.pages[-1]
-        if not last_page.segments:
-            # If the last page has no segments, add an empty one
-            last_page.segments.append(Segment([]))
+        target_page = self.pages[target_page_index]
+
+        # If the target page has no segments, add an empty one
+        if not target_page.segments:
+            target_page.segments.append(Segment([]))
         
-        last_segment = last_page.segments[-1]
-        last_segment.content_elements.append(content_element)
+        if image.position == 'top':
+            # Insert the image element at the beginning of the first segment
+            target_segment = target_page.segments[0]
+            target_segment.content_elements.insert(0, line_break_element)
+            target_segment.content_elements.insert(0, image_element)
+        elif image.position == 'bottom':
+            # Insert the image element at the end of the last segment
+            target_segment = target_page.segments[-1]
+            target_segment.content_elements.append(line_break_element)
+            target_segment.content_elements.append(image_element)
+
 
     @classmethod
     def from_json(cls, json_str):
@@ -245,3 +254,7 @@ class ChatGPTError(Exception):
 class TreeTaggerError(Exception):
     def __init__(self, message = 'TreeTagger error'):
         self.message = message
+
+# Can't import from clara_utils because we get a circular import
+def basename(pathname):
+    return os.path.basename(pathname)
