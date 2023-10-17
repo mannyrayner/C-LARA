@@ -16,6 +16,8 @@ dj-database-url
 psycopg2
 psycopg2-binary
 django-storages
+django-cors-headers
 django_q
 jieba
 chardet
+
