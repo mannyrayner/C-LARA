@@ -679,17 +679,44 @@ def human_audio_processing(request, project_id):
     
     # Try to get existing HumanAudioInfo for this project or create a new one
     human_audio_info, created = HumanAudioInfo.objects.get_or_create(project=project)
+##    print(f'--- Entry: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
+##    print(f'--- Entry: human_audio_info.audio_file = {human_audio_info.audio_file}')
+##    print(f'--- Entry: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
+
+    # Temporarily store existing file data
+    existing_audio_file = human_audio_info.audio_file
+    existing_metadata_file = human_audio_info.manual_align_metadata_file
+
+    # Initialize the form with the current instance of HumanAudioInfo
+    form = HumanAudioInfoForm(instance=human_audio_info)
 
     # Handle POST request
     if request.method == 'POST':
         form = HumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info)
+##        print(f'--- After getting form: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
+##        print(f'--- After getting form: human_audio_info.audio_file = {human_audio_info.audio_file}')
+##        print(f'--- After getting form: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
         if form.is_valid():
+    
             # 1. Update the model with any new values from the form. Get the method and human_voice_id
             form.save()
+##            print(f'--- After saving form: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
+##            print(f'--- After saving form: human_audio_info.audio_file = {human_audio_info.audio_file}')
+##            print(f'--- After saving form: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
             method = request.POST['method']
             human_voice_id = request.POST['voice_talent_id']
+            # Restore existing file data if no new files are uploaded
+            if 'manual_align_audio_file' not in request.FILES:
+                human_audio_info.audio_file = existing_audio_file
+            if 'metadata_file' not in request.FILES:
+                human_audio_info.manual_align_metadata_file = existing_metadata_file
+##            print(f'--- After restoring values: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
+##            print(f'--- After restoring values: human_audio_info.audio_file = {human_audio_info.audio_file}')
+##            print(f'--- After restoring values: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
+
+            human_audio_info.save()  # Save the restored data back to the database
 
             # 2. Upload and internalise a LiteDevTools zipfile if there is one and we're doing recording.
             
@@ -723,6 +750,9 @@ def human_audio_processing(request, project_id):
                     human_audio_info.audio_file = audio_file  
                     human_audio_info.save()
                     messages.success(request, "Uploaded audio file saved.")
+##                    print(f'--- Step 3: human_voice_id = {human_voice_id}')
+##                    print(f'--- Step 3: human_audio_info.audio_file = {human_audio_info.audio_file}')
+##                    print(f'--- Step 3: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
                 # 4. Handle the metadata file upload
                 if 'metadata_file' in request.FILES:
@@ -732,8 +762,15 @@ def human_audio_processing(request, project_id):
                     human_audio_info.manual_align_metadata_file = metadata_file  
                     human_audio_info.save()
                     messages.success(request, "Uploaded metadata file saved.")
+                    print(f'--- Step 4: human_voice_id = {human_voice_id}')
+                    print(f'--- Step 4: human_audio_info.audio_file = {human_audio_info.audio_file}')
+                    print(f'--- Step 4: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
                 # 5. If both files are available, trigger the manual alignment processing
+##                print(f'--- Step 5: human_voice_id = {human_voice_id}')
+##                print(f'--- Step 5: human_audio_info.audio_file = {human_audio_info.audio_file}')
+##                print(f'--- Step 5: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
+
                 if human_audio_info.audio_file and human_audio_info.manual_align_metadata_file and human_voice_id:
                     audio_file = human_audio_info.audio_file
                     metadata_file = human_audio_info.manual_align_metadata_file
