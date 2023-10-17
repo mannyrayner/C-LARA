@@ -130,10 +130,16 @@ def annotated_segmented_file_and_label_file_to_metadata_file_sample():
     audacity_label_file = '$CLARA/tmp/FatherWilliamLabels.txt'
     metadata_file = '$CLARA/tmp/FatherWilliamBreakpoints.json'
     annotated_segmented_file_and_label_file_to_metadata_file(segmented_file, audacity_label_file, metadata_file)
+
+def test_endpoint2_heroku():
+    test_endpoint2(local='heroku', project_id=139, json_file_path="$CLARA/tmp/FatherWilliamBreakpoints.json")
     
-def test_endpoint2(project_id=16, json_file_path="$CLARA/tmp/FatherWilliamBreakpoints.json"):
-    
-    url = "http://localhost:8000/accounts/manual_audio_alignment_integration_endpoint2/"
+def test_endpoint2(local='local', project_id=16, json_file_path="$CLARA/tmp/FatherWilliamBreakpoints.json"):
+
+    if local == 'local':
+        url = "http://localhost:8000/accounts/manual_audio_alignment_integration_endpoint2/"
+    else:
+        url = "https://c-lara-758a4f81c1ff.herokuapp.com/accounts/manual_audio_alignment_integration_endpoint2/"
 
     # Path to the JSON file you've created
     abs_json_file_path = absolute_local_file_name(json_file_path)
