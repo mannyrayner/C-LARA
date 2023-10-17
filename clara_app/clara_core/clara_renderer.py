@@ -24,11 +24,12 @@ import traceback
 config = get_config()
 
 class StaticHTMLRenderer:
-    def __init__(self, project_id):
+    def __init__(self, project_id, project_id_internal):
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
         self.template_env.filters['replace_punctuation'] = replace_punctuation_with_underscores
 
         self.project_id = str(project_id)
+        self.project_id_internal = str(project_id_internal)
         self.output_dir = Path(output_dir_for_project_id(project_id))
         
         # Remove the existing output_dir if we're not on S3 and it exists
@@ -49,10 +50,10 @@ class StaticHTMLRenderer:
     def render_page(self, page, page_number, total_pages, l2_language, l1_language):
         is_rtl = is_rtl_language(l2_language)
         template = self.template_env.get_template('clara_page.html')
-        project_id = self.project_id
+        project_id_internal = self.project_id_internal
         rendered_page = template.render(page=page,
                                         total_pages=total_pages,
-                                        project_id=project_id,
+                                        project_id_internal=project_id_internal,
                                         l2_language=l2_language,
                                         is_rtl=is_rtl,
                                         l1_language=l1_language,
@@ -77,7 +78,7 @@ class StaticHTMLRenderer:
         rendered_page = template.render(vocabulary_list=vocabulary_list,
                                         l2_language=l2_language)
         return rendered_page 
-
+ 
     def render_text(self, text, self_contained=False, callback=None):
         post_task_update(callback, f"--- Rendering_text") 
         # Create multimedia directory if self-contained is True

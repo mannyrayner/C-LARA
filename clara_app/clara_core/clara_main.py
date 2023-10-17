@@ -840,7 +840,8 @@ class CLARAProjectInternal:
             text_object.add_to_end_of_last_segment(image_element)
     
         post_task_update(callback, f"--- Created internalised and annotated text")
-        renderer = StaticHTMLRenderer(project_id)
+        # Pass both Django-level and internal IDs
+        renderer = StaticHTMLRenderer(project_id, self.id)
         post_task_update(callback, f"--- Start creating pages")
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
