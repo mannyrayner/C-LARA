@@ -168,6 +168,7 @@ class CLARAProjectInternal:
             "summary": None,
             "cefr_level": None,
             "segmented": None,
+            "segmented_with_images": None,
             "gloss": None,
             "lemma": None,
             "lemma_and_gloss": None,
@@ -448,7 +449,7 @@ class CLARAProjectInternal:
         file_path = self.text_versions[version]
         if not file_path or not file_exists(Path(file_path)):
             if version == 'segmented_with_images':
-                return self._get_segmented_with_images_text()
+                return self._create_and_load_segmented_with_images_text()
             elif version == 'lemma_and_gloss':
                 return self._create_and_load_lemma_and_gloss_file()
             else:    
@@ -458,10 +459,12 @@ class CLARAProjectInternal:
         return text
 
     # Get text consisting of "segmented" text, plus suitably tagged segmented text for any images that may be present
-    def _get_segmented_with_images_text(self, callback=None):
+    def _create_and_load_segmented_with_images_text(self, callback=None):
         segmented_text = self.load_text_version("segmented")
         images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
-        return segmented_text + '\n' + images_text
+        segmented_with_images_text = segmented_text + '\n' + images_text
+        self.save_text_version('segmented_with_images', segmented_with_images_text, source='merged', user='system')
+        return segmented_with_images_text
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
     def _create_and_load_lemma_and_gloss_file(self) -> str:
@@ -570,7 +573,7 @@ class CLARAProjectInternal:
 
     # Call ChatGPT-4 to create a version of the text with gloss annotations
     def create_glossed_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented")
+        segmented_text = self.load_text_version("segmented_with_images")
         glossed_text, api_calls = generate_glossed_version(segmented_text, self.l1_language, self.l2_language, callback=callback)
         self.save_text_version("gloss", glossed_text, user=user, label=label, source='ai_generated')
         return api_calls
@@ -584,7 +587,7 @@ class CLARAProjectInternal:
 
     # Call Treetagger to create a version of the text with lemma annotations
     def create_lemma_tagged_text_with_treetagger(self, user='Unknown', label='', callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented")
+        segmented_text = self.load_text_version("segmented_with_images")
         lemma_tagged_text = generate_tagged_version_with_treetagger(segmented_text, self.l2_language, callback=callback)
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='tagger_generated')
         api_calls = []
@@ -592,7 +595,7 @@ class CLARAProjectInternal:
 
     # Call ChatGPT-4 to create a version of the text with lemma annotations
     def create_lemma_tagged_text(self, user='Unknown', label='', callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented")
+        segmented_text = self.load_text_version("segmented_with_images")
         lemma_tagged_text, api_calls = generate_tagged_version(segmented_text, self.l2_language, callback=callback)
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='ai_generated')
         return api_calls
