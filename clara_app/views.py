@@ -679,9 +679,6 @@ def human_audio_processing(request, project_id):
     
     # Try to get existing HumanAudioInfo for this project or create a new one
     human_audio_info, created = HumanAudioInfo.objects.get_or_create(project=project)
-##    print(f'--- Entry: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
-##    print(f'--- Entry: human_audio_info.audio_file = {human_audio_info.audio_file}')
-##    print(f'--- Entry: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
     # Temporarily store existing file data
     existing_audio_file = human_audio_info.audio_file
@@ -693,17 +690,11 @@ def human_audio_processing(request, project_id):
     # Handle POST request
     if request.method == 'POST':
         form = HumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info)
-##        print(f'--- After getting form: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
-##        print(f'--- After getting form: human_audio_info.audio_file = {human_audio_info.audio_file}')
-##        print(f'--- After getting form: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
         if form.is_valid():
     
             # 1. Update the model with any new values from the form. Get the method and human_voice_id
             form.save()
-##            print(f'--- After saving form: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
-##            print(f'--- After saving form: human_audio_info.audio_file = {human_audio_info.audio_file}')
-##            print(f'--- After saving form: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
             method = request.POST['method']
             human_voice_id = request.POST['voice_talent_id']
@@ -712,9 +703,6 @@ def human_audio_processing(request, project_id):
                 human_audio_info.audio_file = existing_audio_file
             if 'metadata_file' not in request.FILES:
                 human_audio_info.manual_align_metadata_file = existing_metadata_file
-##            print(f'--- After restoring values: human_audio_info.voice_talent_id = {human_audio_info.voice_talent_id}')
-##            print(f'--- After restoring values: human_audio_info.audio_file = {human_audio_info.audio_file}')
-##            print(f'--- After restoring values: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
             human_audio_info.save()  # Save the restored data back to the database
 
@@ -750,9 +738,6 @@ def human_audio_processing(request, project_id):
                     human_audio_info.audio_file = audio_file  
                     human_audio_info.save()
                     messages.success(request, "Uploaded audio file saved.")
-##                    print(f'--- Step 3: human_voice_id = {human_voice_id}')
-##                    print(f'--- Step 3: human_audio_info.audio_file = {human_audio_info.audio_file}')
-##                    print(f'--- Step 3: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
                 # 4. Handle the metadata file upload
                 if 'metadata_file' in request.FILES:
@@ -767,9 +752,6 @@ def human_audio_processing(request, project_id):
                     print(f'--- Step 4: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
                 # 5. If both files are available, trigger the manual alignment processing
-##                print(f'--- Step 5: human_voice_id = {human_voice_id}')
-##                print(f'--- Step 5: human_audio_info.audio_file = {human_audio_info.audio_file}')
-##                print(f'--- Step 5: human_audio_info.manual_align_metadata_file = {human_audio_info.manual_align_metadata_file}')
 
                 if human_audio_info.audio_file and human_audio_info.manual_align_metadata_file and human_voice_id:
                     audio_file = human_audio_info.audio_file
@@ -832,28 +814,6 @@ def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callba
         # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
         remove_file(zip_file)
 
-##def process_manual_alignment(clara_project_internal, audio_file, metadata_file, human_voice_id, callback=None):
-##    post_task_update(callback, "--- Started process_manual_alignment in async thread")
-##    try:
-##        # Retrieve files from S3 to local
-##        copy_s3_file_to_local_if_necessary(audio_file, callback=callback)
-##        copy_s3_file_to_local_if_necessary(metadata_file, callback=callback)
-##
-##        # Process the manual alignment
-##        result = clara_project_internal.process_manual_alignment(audio_file, metadata_file, human_voice_id, callback=callback)
-##        
-##        if result:
-##            post_task_update(callback, f"finished")
-##        else:
-##            post_task_update(callback, f"error")
-##    except Exception as e:
-##        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
-##        post_task_update(callback, f"error")
-##    finally:
-##        # Clean up: remove files from local and S3
-##        remove_file(audio_file)
-##        remove_file(metadata_file)
-
 def process_manual_alignment(clara_project_internal, audio_file, metadata, human_voice_id, callback=None):
     post_task_update(callback, "--- Started process_manual_alignment in async thread")
     try:
@@ -870,10 +830,6 @@ def process_manual_alignment(clara_project_internal, audio_file, metadata, human
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
-    # Keep file for now, we may need to export it
-    #finally:
-    #    # Clean up: remove files from local and S3
-    #    remove_file(audio_file)
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
@@ -1399,9 +1355,9 @@ def previous_version_and_template_for_version(this_version):
     elif this_version == 'segmented':
         return ( 'plain', 'clara_app/create_segmented_text.html' )
     elif this_version == 'gloss':
-        return ( 'segmented', 'clara_app/create_glossed_text.html' )
+        return ( 'segmented_with_images', 'clara_app/create_glossed_text.html' )
     elif this_version == 'lemma':
-        return ( 'segmented', 'clara_app/create_lemma_tagged_text.html' )
+        return ( 'segmented_with_images', 'clara_app/create_lemma_tagged_text.html' )
     elif this_version == 'lemma_and_gloss':
         return ( 'lemma_and_gloss', 'clara_app/create_lemma_and_gloss_tagged_text.html' )
     else:
@@ -1412,8 +1368,6 @@ def previous_version_and_template_for_version(this_version):
 @user_has_a_project_role
 def create_plain_text(request, project_id):
     this_version = 'plain'
-    #previous_version = 'plain'
-    #template = 'clara_app/create_plain_text.html'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -1423,8 +1377,6 @@ def create_plain_text(request, project_id):
 @user_has_a_project_role
 def create_summary(request, project_id):
     this_version = 'summary'
-    #previous_version = 'plain'
-    #template = 'clara_app/create_summary.html'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -1441,8 +1393,6 @@ def create_cefr_level(request, project_id):
 @user_has_a_project_role
 def create_segmented_text(request, project_id):
     this_version = 'segmented'
-    #previous_version = 'plain'
-    #template = 'clara_app/create_segmented_text.html'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -1451,8 +1401,6 @@ def create_segmented_text(request, project_id):
 @user_has_a_project_role
 def create_glossed_text(request, project_id):
     this_version = 'gloss'
-    #previous_version = 'segmented'
-    #template = 'clara_app/create_glossed_text.html'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -1461,8 +1409,6 @@ def create_glossed_text(request, project_id):
 @user_has_a_project_role
 def create_lemma_tagged_text(request, project_id):
     this_version = 'lemma'
-    #previous_version = 'segmented'
-    #template = 'clara_app/create_lemma_tagged_text.html'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -1471,8 +1417,6 @@ def create_lemma_tagged_text(request, project_id):
 @user_has_a_project_role
 def create_lemma_and_gloss_tagged_text(request, project_id):
     this_version = 'lemma_and_gloss'
-    #previous_version = 'lemma_and_gloss'
-    #template = 'clara_app/create_lemma_and_gloss_tagged_text.html'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
