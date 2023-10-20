@@ -835,6 +835,13 @@ class CLARAProjectInternal:
         # Add image if it exists
         image = self.get_current_project_image()
         if image:
+            # Find the corresponding Page object, if there is one.
+            page_object = text_object.find_page_by_image(image)
+            if page_object:
+                # Merge the Page object into the Image object
+                image.merge_page(page_object)
+                # Remove the Page object from the Text object
+                text_object.remove_page(page_object)
             text_object.add_image(image)
     
         post_task_update(callback, f"--- Created internalised and annotated text")

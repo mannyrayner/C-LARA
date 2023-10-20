@@ -162,6 +162,10 @@ class Text:
     def add_page(self, page):
         self.pages.append(page)
 
+    def remove_page(self, page_object):
+        if page_object in self.pages:
+            self.pages.remove(page_object)
+
     def to_text(self, annotation_type=None):
         return "\n".join([page.to_text(annotation_type) for page in self.pages])
 
@@ -172,6 +176,12 @@ class Text:
             "l1_language": self.l1_language,
             "pages": json_list
         })
+
+    def find_page_by_image(self, image):
+        for page in self.pages:
+            if 'img' in page.annotations and page.annotations['img'] == image.image_name:
+                return page
+        return None
 
     def add_image(self, image):
         target_page_index = image.page - 1  # Assuming page numbers start from 1
@@ -209,16 +219,21 @@ class Text:
         return text
 
 class Image:
-    def __init__(self, image_file_path, image_name, associated_text, associated_areas, page, position):
+    def __init__(self, image_file_path, image_name, associated_text, associated_areas, page, position, page_object=None):
         self.image_file_path = image_file_path
         self.image_name = image_name
         self.associated_text = associated_text
         self.associated_areas = associated_areas
         self.page = page
         self.position = position
+        self.page_object = page_object
+
+    def merge_page(self, page_object):
+        self.page_object = page_object
 
     def __repr__(self):
         return f"Image(image_file_path={self.image_file_path}, image_name={self.image_name})"
+
 
 class APICall:
     def __init__(self, prompt, response, cost, duration, timestamp, retries):
