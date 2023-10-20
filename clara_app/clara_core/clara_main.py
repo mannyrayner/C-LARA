@@ -139,6 +139,7 @@ from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository import ImageRepository
 from .clara_renderer import StaticHTMLRenderer
+from .clara_annotated_images import add_image_to_text
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
@@ -842,7 +843,7 @@ class CLARAProjectInternal:
                 image.merge_page(page_object)
                 # Remove the Page object from the Text object
                 text_object.remove_page(page_object)
-            text_object.add_image(image)
+            add_image_to_text(text_object, image)
     
         post_task_update(callback, f"--- Created internalised and annotated text")
         # Pass both Django-level and internal IDs
