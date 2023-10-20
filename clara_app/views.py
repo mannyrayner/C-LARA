@@ -1511,7 +1511,6 @@ def images_view(request, project_id):
     associated_areas = ''
     page = 1
     position = 'bottom'
-    #current_image, image_name, associated_text, associated_areas, page, position = clara_project_internal.get_current_project_image(project_id)
     image_object = clara_project_internal.get_current_project_image()
     if image_object:
         current_image = image_object.image_file_path
