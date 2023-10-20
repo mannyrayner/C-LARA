@@ -46,11 +46,11 @@
 	{% endif %}
 	
 	{% if form.method.value == "manual_align" %}
-    <!-- Control to download the annotated segmented file -->
+    <!-- Control to download the annotated segmented file. Now picked up through endpoint 1 -->
     <p>
       <strong>Download Annotated Segmented File:</strong>
       <a href="{% url 'generate_annotated_segmented_file' project.id %}" class="btn">Download</a>
-    </p>
+    </p> 
 
     <!-- Control to upload the original audio file -->
     <p>
@@ -71,6 +71,11 @@
 	  {% if manual_align_metadata_file %}
 		[{{ manual_align_metadata_file }}]
       {% endif %}
+    </p>
+	
+	<p>
+      <strong>Access Uni Melbourne Alignment Tool:</strong>
+      <a href="https://manual-alignment.netlify.app/project/{{ project.id }}" class="btn btn-special" target="_blank">Go to Alignment Tool</a>
     </p>
 	{% endif %}
 
