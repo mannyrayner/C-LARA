@@ -750,7 +750,7 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Storing associated areas for image {image_name} in project {project_id}")
 
             # Logic to store the associated areas in the repository
-            self.image_repository.store_annotated_areas(project_id, image_name, associated_areas, callback=callback)
+            self.image_repository.store_associated_areas(project_id, image_name, associated_areas, callback=callback)
 
             post_task_update(callback, f"--- Associated areas for image {image_name} stored successfully")
         except Exception as e:
