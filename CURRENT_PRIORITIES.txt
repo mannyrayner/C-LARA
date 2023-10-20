@@ -25,7 +25,9 @@ deadlines as (1) above.
 
 5. Ongoing discussions about strategies and tools for improving
 ChatGPT-4's long-term memory/coherence. We contacted Papr who make the
-Papr memory plugin, and they replied, but we need to follow up.
+Papr memory plugin, and they replied. Following up is probably less urgent
+since it seems we don't have a problem with Papr Memory: the issue
+was really the length of the previous conversation.
 
 6. Ongoing email discussion with Denis about AskTheCode plugin.
 No deadline.
