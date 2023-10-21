@@ -65,6 +65,9 @@ class ContentElement:
 
     def word_count(self):
         return 1 if self.type == "Word" else 0
+
+    def __repr__(self):
+        return f"ContentElement(type={self.type}, content={self.content}, annotations={self.annotations})"
         
 class Segment:
     def __init__(self, content_elements, annotations=None):
@@ -88,6 +91,9 @@ class Segment:
 
     def word_count(self):
         return sum([ element.word_count() for element in self.content_elements ])
+
+    def __repr__(self):
+        return f"Segment(content_elements={self.content_elements}, annotations={self.annotations})"
 
 class Page:
     def __init__(self, segments, annotations=None):

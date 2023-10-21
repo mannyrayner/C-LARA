@@ -46,7 +46,8 @@ def merge_glossed_and_tagged(glossed_text, tagged_text):
 
             merged_segments.append(Segment(merged_elements))
 
-        merged_pages.append(Page(merged_segments))
+        # Assume that glossed_page and tagged_page have the same annotations
+        merged_pages.append(Page(merged_segments, annotations=glossed_page.annotations))
 
     merged_text = Text(merged_pages, glossed_text.l2_language, glossed_text.l1_language)
     return merged_text

@@ -5,6 +5,7 @@ from .clara_classes import Text, Page, Segment, ContentElement
 from .clara_utils import basename
 
 from difflib import SequenceMatcher
+import json
 
 def make_uninstantiated_annotated_image_structure(image_id, segmented_text):
     # Initialize the top-level structure
@@ -53,7 +54,8 @@ def make_uninstantiated_annotated_image_structure(image_id, segmented_text):
 def add_image_to_text(text_object, image):
     target_page_index = image.page - 1  # Assuming page numbers start from 1
     line_break_element = ContentElement("NonWordText", "\n\n")
-    image_element = ContentElement("Image", {'src': basename(image.image_file_path)})
+    #image_element = ContentElement("Image", {'src': basename(image.image_file_path)})
+    image_element = image_to_content_element(image)
 
     # Create new pages if the target page doesn't exist
     while len(text_object.pages) <= target_page_index:
@@ -79,11 +81,14 @@ def add_image_to_text(text_object, image):
 
 def image_to_content_element(image):
     # Check if page_object or associated_areas exists
+    #print(f'--- Calling image_to_content_element. page_object = {image.page_object}, associated_areas = {image.associated_areas}') 
     if not image.page_object or not image.associated_areas:
         return ContentElement('Image', {'src': image.image_file_path, 'transformed_segments': None})
     
+    page_object_segments = image.page_object.segments
+    associated_areas_segments = json.loads(image.associated_areas)['segments']
     transformed_segments = []
-    for segment, associated_segment in zip(image.page_object.segments, image.associated_areas['segments']):
+    for segment, associated_segment in zip(page_object_segments, associated_areas_segments):
         # Remove all non-word ContentElements
         words_only = [ce for ce in segment.content_elements if ce.type == 'Word']
         
@@ -100,5 +105,6 @@ def image_to_content_element(image):
         # Create a new segment with the transformed words
         transformed_segment = Segment(words_only)
         transformed_segments.append(transformed_segment)
-    
-    return ContentElement('Image', {'src': image.image_file_path, 'transformed_segments': transformed_segments})
+    result = ContentElement('Image', {'src': image.image_file_path, 'transformed_segments': transformed_segments})
+    #print(f'--- Produced {result}') 
+    return result
