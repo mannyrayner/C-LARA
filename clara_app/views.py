@@ -1437,7 +1437,7 @@ def clara_project_internal_render_text(clara_project_internal, project_id,
                                            human_voice_id=human_voice_id, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
     except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
 
 # Start the async process that will do the rendering
