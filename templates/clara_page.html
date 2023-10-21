@@ -26,7 +26,18 @@
 			  data-segment-audio="{{ segment.annotations.tts.file_path if segment.annotations.tts else '' }}">
 		  {%- for element in segment.content_elements -%}
 		    {%- if element.type == "Image" -%}
-			  <img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.src }}" alt="Project Image">
+			  <div class="image-container">
+				<img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.src }}" alt="Project Image">
+				{%- if element.content.transformed_segments -%}
+				  {%- for segment in element.content.transformed_segments -%}
+					{%- for content_element in segment.content_elements -%}
+					  {%- if content_element.annotations.coordinates -%}
+						<svg></svg>
+					  {%- endif -%}
+					{%- endfor -%}
+				  {%- endfor -%}
+				{%- endif -%}
+			  </div>
 			{%- elif element.type == "Word" -%}
 			  <span class="word" data-gloss="{{ element.annotations.gloss }}" 
 					data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
