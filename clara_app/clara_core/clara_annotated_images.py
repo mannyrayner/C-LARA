@@ -4,6 +4,8 @@ from .clara_internalise import internalize_text
 from .clara_classes import Text, Page, Segment, ContentElement
 from .clara_utils import basename
 
+from difflib import SequenceMatcher
+
 def make_uninstantiated_annotated_image_structure(image_id, segmented_text):
     # Initialize the top-level structure
     annotated_image_structure = {
@@ -74,3 +76,29 @@ def add_image_to_text(text_object, image):
         target_segment = target_page.segments[-1]
         target_segment.content_elements.append(line_break_element)
         target_segment.content_elements.append(image_element)
+
+def image_to_content_element(image):
+    # Check if page_object or associated_areas exists
+    if not image.page_object or not image.associated_areas:
+        return ContentElement('Image', {'src': image.image_file_path, 'transformed_segments': None})
+    
+    transformed_segments = []
+    for segment, associated_segment in zip(image.page_object.segments, image.associated_areas['segments']):
+        # Remove all non-word ContentElements
+        words_only = [ce for ce in segment.content_elements if ce.type == 'Word']
+        
+        # Add speaker_control and translation_control to words_only for coordinate transfer
+        words_only.extend([ContentElement('Word', 'SPEAKER-CONTROL', {}), ContentElement('Word', 'TRANSLATION-CONTROL', {})])
+        
+        # Use difflib to match words in segment with associated areas
+        s = SequenceMatcher(None, [ce.content for ce in words_only], [area['item'] for area in associated_segment])
+        for opcode, a0, a1, b0, b1 in s.get_opcodes():
+            if opcode == 'equal':
+                for i, j in zip(range(a0, a1), range(b0, b1)):
+                    words_only[i].annotations['coordinates'] = associated_segment[j]['coordinates']
+        
+        # Create a new segment with the transformed words
+        transformed_segment = Segment(words_only)
+        transformed_segments.append(transformed_segment)
+    
+    return ContentElement('Image', {'src': image.image_file_path, 'transformed_segments': transformed_segments})
