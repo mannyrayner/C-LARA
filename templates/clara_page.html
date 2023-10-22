@@ -31,9 +31,29 @@
 				{%- if element.content.transformed_segments -%}
 				  {%- for segment in element.content.transformed_segments -%}
 					{%- for content_element in segment.content_elements -%}
-					  {%- if content_element.annotations.coordinates -%}
-						<svg></svg>
-					  {%- endif -%}
+						{%- if content_element.annotations.coordinates -%}
+							{% set data_attributes = [] %}
+							{% if content_element.annotations.gloss %}
+								{% set data_attributes = data_attributes + ['data-gloss="' + content_element.annotations.gloss +'"'] %}
+							{% endif %}
+							{% if content_element.annotations.lemma %}
+								{% set data_attributes = data_attributes + ['data-lemma="' + content_element.annotations.lemma +'"'] %}
+							{% endif %}
+							{% if content_element.annotations.tts and content_element.annotations.tts.file_path %}
+								{% set data_attributes = data_attributes + ['data-audio="' + content_element.annotations.tts.file_path +'"'] %}
+							{% endif %}
+							{% if content_element.annotations.shape == 'rectangle' %}
+								<svg {{ data_attributes|join(' ') }} viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
+								  <rect x="{{ content_element.annotations.coordinates.x }}" y="{{ content_element.annotations.coordinates.y }}" 
+								  width="{{ content_element.annotations.coordinates.width }}" height="{{ content_element.annotations.coordinates.height}}" 
+								  fill="none" stroke="black"></rect>
+								</svg>
+							{% elif content_element.annotations.shape == 'polygon' %}
+								<svg {{ data_attributes|join(' ') }} viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
+								  <polygon points="{{ content_element.annotations.coordinates|join(' ') }}" fill="none" stroke="black"></polygon>
+								</svg>
+							{% endif %}
+						{% endif %}
 					{%- endfor -%}
 				  {%- endfor -%}
 				{%- endif -%}
