@@ -2,7 +2,7 @@
 
 from .clara_internalise import internalize_text
 from .clara_classes import Text, Page, Segment, ContentElement
-from .clara_utils import basename
+from .clara_utils import basename, get_image_dimensions
 
 from difflib import SequenceMatcher
 import json
@@ -54,7 +54,6 @@ def make_uninstantiated_annotated_image_structure(image_id, segmented_text):
 def add_image_to_text(text_object, image):
     target_page_index = image.page - 1  # Assuming page numbers start from 1
     line_break_element = ContentElement("NonWordText", "\n\n")
-    #image_element = ContentElement("Image", {'src': basename(image.image_file_path)})
     image_element = image_to_content_element(image)
 
     # Create new pages if the target page doesn't exist
@@ -71,19 +70,20 @@ def add_image_to_text(text_object, image):
     if image.position == 'top':
         # Insert the image element at the beginning of the first segment
         target_segment = target_page.segments[0]
-        target_segment.content_elements.insert(0, line_break_element)
+        #target_segment.content_elements.insert(0, line_break_element)
         target_segment.content_elements.insert(0, image_element)
     elif image.position == 'bottom':
         # Insert the image element at the end of the last segment
         target_segment = target_page.segments[-1]
-        target_segment.content_elements.append(line_break_element)
+        #target_segment.content_elements.append(line_break_element)
         target_segment.content_elements.append(image_element)
 
 def image_to_content_element(image):
     # Check if page_object or associated_areas exists
-    #print(f'--- Calling image_to_content_element. page_object = {image.page_object}, associated_areas = {image.associated_areas}') 
+    #print(f'--- Calling image_to_content_element. page_object = {image.page_object}, associated_areas = {image.associated_areas}')
+    width, height = get_image_dimensions(image.image_file_path)
     if not image.page_object or not image.associated_areas:
-        return ContentElement('Image', {'src': image.image_file_path, 'transformed_segments': None})
+        return ContentElement('Image', {'src': image.image_file_path, 'width': width, 'height': height, 'transformed_segments': None})
     
     page_object_segments = image.page_object.segments
     associated_areas_segments = json.loads(image.associated_areas)['segments']
@@ -100,11 +100,21 @@ def image_to_content_element(image):
         for opcode, a0, a1, b0, b1 in s.get_opcodes():
             if opcode == 'equal':
                 for i, j in zip(range(a0, a1), range(b0, b1)):
-                    words_only[i].annotations['coordinates'] = associated_segment[j]['coordinates']
+                    #words_only[i].annotations['coordinates'] = associated_segment[j]['coordinates']
+                    coordinates = associated_segment[j]['coordinates']
+                    if coordinates:
+                        if len(coordinates) == 2:  # Rectangle
+                            x1, y1 = coordinates[0]
+                            x2, y2 = coordinates[1]
+                            words_only[i].annotations['shape'] = 'rectangle'
+                            words_only[i].annotations['coordinates'] = {'x': x1, 'y': y1, 'width': x2 - x1, 'height': y2 - y1}
+                        else:  # Polygon
+                            words_only[i].annotations['shape'] = 'polygon'
+                            words_only[i].annotations['coordinates'] = coordinates
         
         # Create a new segment with the transformed words
         transformed_segment = Segment(words_only)
         transformed_segments.append(transformed_segment)
-    result = ContentElement('Image', {'src': image.image_file_path, 'transformed_segments': transformed_segments})
+    result = ContentElement('Image', {'src': image.image_file_path, 'width': width, 'height': height, 'transformed_segments': transformed_segments})
     #print(f'--- Produced {result}') 
     return result

@@ -21,6 +21,8 @@ import hashlib
 import traceback
 import requests
 
+from PIL import Image
+
 from asgiref.sync import sync_to_async
 
 from .clara_classes import InternalCLARAError
@@ -583,6 +585,25 @@ def download_file_from_url(url, file_path):
         print(f"File downloaded successfully to {abs_file_path}.")
     else:
         print(f"Failed to download the file. Status code: {response.status_code}")
+
+def get_image_dimensions(image_path):
+    """Get the dimensions of an image file.
+    
+    Args:
+        image_path (str): The path to the image file.
+    
+    Returns:
+        tuple: The dimensions of the image as (width, height).
+    """
+    abspathname = absolute_file_name(image_path)
+    
+    if _s3_storage:
+        obj = _s3_client.get_object(Bucket=_s3_bucket, Key=abspathname)
+        image = Image.open(obj['Body'])
+    else:
+        image = Image.open(abspathname)
+    
+    return image.size
 
 def extension_for_file_path(file_path: str):
     if isinstance(file_path, Path):
