@@ -82,7 +82,8 @@ class Segment:
             # When producing 'segmented' text, we need to add | markers between continuous Words.
             if annotation_type == 'segmented' and this_type == 'Word' and last_type == 'Word':
                 out_text += '|'
-            out_text += element.to_text(annotation_type)
+            if element.type in ( 'Word', 'NonWordText' ):
+                out_text += element.to_text(annotation_type)
             last_type = this_type
         return out_text
 
