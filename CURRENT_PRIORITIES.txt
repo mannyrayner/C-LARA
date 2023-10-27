@@ -2,65 +2,61 @@
 This file contains a short list of current and near-future priority
 activities. It should be updated often, if possible daily.
 
-Last updated Oct 20 2023
+Last updated Oct 28 2023
 
 CURRENTLY ACTIVE PRIORITIES
 
-1. Integration with Melbourne Uni student project Manual Text/Audio
-Alignment. First version is now almost working. The students
-officially finish on Oct 25 but can continue, if they wish, until Nov
-17.
+1. Prepare our presentation for WorldCALL, Nov 9-13.
 
-2. Integration with Melbourne Uni student project Automatic Text/Audio
-Alignment. We are currently discussing with the team. The integration
-should be very similar to (1) above. Same deadlines.
+2. Installation of C-LARA on UniSA server. Since this has local file
+storage, it should be much faster than Heroku, which relies on S3.
+We have said the server will be released before ALTA, Nov 29.
 
 3. Extension of C-LARA code to support annotated images. This will
 enable integration with a second Melbourne Uni project, which is
 producing a graphical editing tool for this task. We are working on
-adding the relevant extensions and are now perhaps 70% done. Same
-deadlines as (1) above.
+adding the relevant extensions and are now perhaps 80% done. We want
+this to be ready for when the students come back after exams mid-Nov.
 
-4. Prepare final version of our paper for ALTA 2023. Deadline is Oct 28.
+4. Ongoing email discussion with Denis about AskTheCode plugin.
+No deadline but frequent exchanges.
 
-5. Ongoing discussions about strategies and tools for improving
+PROBABLY ACTIVE SOON
+
+1. Integration with Melbourne Uni student project Manual Text/Audio
+Alignment. First version is now almost working. Currently on hold
+while students do exams.
+
+2. Integration with Melbourne Uni student project Automatic Text/Audio
+Alignment. We are currently discussing with the team. The integration
+should be very similar to (1) above. Currently on hold while students
+do exams.
+
+3. Integration with a third Melbourne Uni student project, Voice
+Recorder.  An initial API has been added on the C-LARA side. Currently
+on hold while students do exams.
+
+4. Explore possibilities for making annotation of multi-words more
+accurate. Several ideas have been discussed. No deadline.
+
+5. Integration of an automatic payment method into the C-LARA server.
+The current informal system is not scalable. This is probably
+needed for the UniSA server.
+
+6. Improve design aspects of C-LARA. It will be easier to do this now that
+the vision-enabled ChatGPT-4V is available. 
+
+7. Integration of some version of "phonetic text" into C-LARA, porting
+this functionality from the LARA code. Pauline Welby will be visiting
+Adelaide Nov 22-25, and we said phonetic text would be the main item to
+discuss.
+
+8. Prepare our presentation for "Literacy and Contemporary Society:
+Creativity, Equity, Social Action", Dec 4-6.
+
+9. Ongoing discussions about strategies and tools for improving
 ChatGPT-4's long-term memory/coherence. We contacted Papr who make the
 Papr memory plugin, and they replied. Following up is probably less urgent
 since it seems we don't have a problem with Papr Memory: the issue
 was really the length of the previous conversation.
 
-6. Ongoing email discussion with Denis about AskTheCode plugin.
-No deadline.
-
-PROBABLY ACTIVE SOON
-
-1. Integration with a third Melbourne Uni student project, Voice
-Recorder.  An initial API has been added on the C-LARA side. We have
-sent doc to the Melbourne Uni team and are waiting for a response.
-Same deadlines as Current-1.
-
-2. Explore possibilities for making annotation of multi-words more
-accurate. Several ideas have been discussed. No deadline.
-
-3. Installation of C-LARA on UniSA server. Since this has local file
-storage, it should be much faster than Heroku, which relies on S3.
-We have said the server will released Oct/Nov.
-
-4. Integration of an automatic payment method into the C-LARA server.
-The current informal system is not scalable. This is probably
-needed for the UniSA server.
-
-5. Improve design aspects of C-LARA. It will be easier to do this when
-the vision-enabled ChatGPT-4V becomes generally available. OpenAI says
-this will happen soon, probably during October. At least an initial
-version is probably needed for the UniSA server.
-
-6. Integration of some version of "phonetic text" into C-LARA, porting
-this functionality from the LARA code. Pauline Welby will be visiting
-Adelaide Nov 22-25, and we said phonetic text would be the main item to
-discuss.
-
-7. Prepare our presentation for WorldCALL, Nov 9-13.
-
-8. Prepare our presentation for "Literacy and Contemporary Society:
-Creativity, Equity, Social Action", Dec 4-6.
