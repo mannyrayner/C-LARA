@@ -843,7 +843,7 @@ class CLARAProjectInternal:
                 image.merge_page(page_object)
                 # Remove the Page object from the Text object
                 text_object.remove_page(page_object)
-            add_image_to_text(text_object, image)
+            add_image_to_text(text_object, image, callback=callback)
     
         post_task_update(callback, f"--- Created internalised and annotated text")
         # Pass both Django-level and internal IDs

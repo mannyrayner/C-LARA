@@ -51,10 +51,10 @@ def make_uninstantiated_annotated_image_structure(image_id, segmented_text):
     
     return annotated_image_structure
 
-def add_image_to_text(text_object, image):
+def add_image_to_text(text_object, image, callback=None):
     target_page_index = image.page - 1  # Assuming page numbers start from 1
     line_break_element = ContentElement("NonWordText", "\n\n")
-    image_element = image_to_content_element(image)
+    image_element = image_to_content_element(image, callback=callback)
 
     # Create new pages if the target page doesn't exist
     while len(text_object.pages) <= target_page_index:
@@ -78,10 +78,10 @@ def add_image_to_text(text_object, image):
         #target_segment.content_elements.append(line_break_element)
         target_segment.content_elements.append(image_element)
 
-def image_to_content_element(image):
+def image_to_content_element(image, callback=None):
     # Check if page_object or associated_areas exists
     #print(f'--- Calling image_to_content_element. page_object = {image.page_object}, associated_areas = {image.associated_areas}')
-    width, height = get_image_dimensions(image.image_file_path)
+    width, height = get_image_dimensions(image.image_file_path, callback=callback)
     if not image.page_object or not image.associated_areas:
         return ContentElement('Image', {'src': basename(image.image_file_path),
                                         'width': width,

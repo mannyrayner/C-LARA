@@ -586,7 +586,7 @@ def download_file_from_url(url, file_path):
     else:
         print(f"Failed to download the file. Status code: {response.status_code}")
 
-def get_image_dimensions(image_path):
+def get_image_dimensions(image_path, callback=None):
     """Get the dimensions of an image file.
     
     Args:
@@ -595,15 +595,20 @@ def get_image_dimensions(image_path):
     Returns:
         tuple: The dimensions of the image as (width, height).
     """
-    abspathname = absolute_file_name(image_path)
-    
-    if _s3_storage:
-        obj = _s3_client.get_object(Bucket=_s3_bucket, Key=abspathname)
-        image = Image.open(obj['Body'])
-    else:
-        image = Image.open(abspathname)
-    
-    return image.size
+    try:
+        abspathname = absolute_file_name(image_path)
+        
+        if _s3_storage:
+            obj = _s3_client.get_object(Bucket=_s3_bucket, Key=abspathname)
+            image = Image.open(obj['Body'])
+        else:
+            image = Image.open(abspathname)
+        
+        return image.size
+    except Exception as e:
+        post_task_update(callback, f"An error occurred while processing the image at path: {image_path}")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        return None
 
 def extension_for_file_path(file_path: str):
     if isinstance(file_path, Path):
