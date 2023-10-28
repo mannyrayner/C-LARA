@@ -41,11 +41,17 @@ function postMessageToParent(type, data) {
 function setUpEventListeners(contextDocument) {
   console.log("Setting up event listeners");
   const words = contextDocument.querySelectorAll('.word');
+  const svgWords = contextDocument.querySelectorAll('.svg-word');
   const speakerIcons = contextDocument.querySelectorAll('.speaker-icon');
-
-  words.forEach(word => {
+  
+  words.forEach(setUpWordEventListener);
+  svgWords.forEach(setUpWordEventListener);
+  speakerIcons.forEach(setUpSpeakerIconEventListener);
+  
+  function setUpWordEventListener(word) {
     word.addEventListener('click', async () => {
       const audioSrc = word.getAttribute('data-audio');
+	  console.log("Setting up audio event listener for: " + audioSrc);
       if (audioSrc) {
         const audio = new Audio(audioSrc);
         await new Promise(resolve => {
@@ -60,9 +66,9 @@ function setUpEventListeners(contextDocument) {
         postMessageToParent('loadConcordance', { lemma });
       }
     });
-  });
+  }
 
-  speakerIcons.forEach(icon => {
+  function setUpSpeakerIconEventListener(icon) {
     icon.addEventListener('click', () => {
       const segment = icon.parentElement;
       const audioSrc = segment.getAttribute('data-segment-audio');
@@ -71,7 +77,7 @@ function setUpEventListeners(contextDocument) {
         audio.play();
       }
     });
-  });
+  };
 }
 
 function setUpBackArrowEventListeners(contextDocument) {
