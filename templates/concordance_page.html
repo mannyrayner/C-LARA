@@ -22,7 +22,7 @@
                 data-gloss="{{ element.annotations.gloss }}"
                 data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
                 data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
-        {%- else -%}{{ element.content }}
+        {%- elif element.type == "NonWordText" -%}{{ element.content }}
         {%- endif -%}
       {%- endfor -%}
       {%- if segment.annotations.tts -%}

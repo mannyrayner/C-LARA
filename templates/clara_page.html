@@ -26,9 +26,10 @@
 			  data-segment-audio="{{ segment.annotations.tts.file_path if segment.annotations.tts else '' }}">
 		  {%- for element in segment.content_elements -%}
 		    {%- if element.type == "Image" -%}
-			  <div class="image-container">
+			  <div class="image-container" style="width: {{ element.content.width }}px; height: {{ element.content.height }}px;">
 				<img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.src }}" alt="Project Image">
 				{%- if element.content.transformed_segments -%}
+				  <svg viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
 				  {%- for segment in element.content.transformed_segments -%}
 					{%- for content_element in segment.content_elements -%}
 						{%- if content_element.annotations.coordinates -%}
@@ -42,20 +43,21 @@
 							{% if content_element.annotations.tts and content_element.annotations.tts.file_path %}
 								{% set data_attributes = data_attributes + ['data-audio="' + content_element.annotations.tts.file_path +'"'] %}
 							{% endif %}
-							{% if content_element.annotations.shape == 'rectangle' %}
-								<svg {{ data_attributes|join(' ') }} viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
-								  <rect x="{{ content_element.annotations.coordinates.x }}" y="{{ content_element.annotations.coordinates.y }}" 
-								  width="{{ content_element.annotations.coordinates.width }}" height="{{ content_element.annotations.coordinates.height}}" 
-								  fill="none" stroke="black"></rect>
-								</svg>
-							{% elif content_element.annotations.shape == 'polygon' %}
-								<svg {{ data_attributes|join(' ') }} viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
-								  <polygon points="{{ content_element.annotations.coordinates|join(' ') }}" fill="none" stroke="black"></polygon>
-								</svg>
-							{% endif %}
+							<g class="svg-word" {{ data_attributes|join(' ') }}>
+							  {% if content_element.annotations.shape == 'rectangle' %}
+							    <!-- We need fill="rgba(0, 0, 0, 0)" to get mouse-sensitivity inside the shape. fill="none" doesn't work. -->
+								<rect x="{{ content_element.annotations.coordinates.x }}" y="{{ content_element.annotations.coordinates.y }}" 
+								width="{{ content_element.annotations.coordinates.width }}" height="{{ content_element.annotations.coordinates.height}}" 
+								fill="rgba(0, 0, 0, 0)" stroke="black"></rect>
+							  {% elif content_element.annotations.shape == 'polygon' %}
+								<polygon points="{{ content_element.annotations.coordinates|join(' ') }}" 
+								fill="rgba(0, 0, 0, 0)" stroke="black"></polygon>
+							  {% endif %}
+							</g>
 						{% endif %}
 					{%- endfor -%}
 				  {%- endfor -%}
+				  </svg>
 				{%- endif -%}
 			  </div>
 			{%- elif element.type == "Word" -%}
@@ -85,7 +87,7 @@
 	}
 
 	document.addEventListener('DOMContentLoaded', () => {
-    window.addEventListener('message', (event) => {
+	  window.addEventListener('message', (event) => {
       if (event.data.type === 'loadConcordance') {
         const concordancePane = document.getElementById("concordance-pane");
         concordancePane.src = `concordance_${event.data.data.lemma}.html`;
@@ -93,9 +95,41 @@
         const { segmentUid, pageNumber } = event.data.data;
         scrollToSegmentHandler(segmentUid, pageNumber);
       }
-    });
-  });
+	});
 
+	  // Add event listeners for SVG gloss popups
+		document.querySelectorAll('.svg-word').forEach(svgWord => {
+		  let popup;
+
+		  svgWord.addEventListener('mouseenter', function(event) {
+			console.log('Mouse entered:', event.target, 'at', event.clientX, event.clientY);
+
+			// Show gloss popup
+			const glossText = this.getAttribute('data-gloss');
+			popup = document.createElement('div');
+			popup.classList.add('svg-gloss-popup');
+			popup.textContent = glossText;
+			popup.style.position = 'absolute';
+			popup.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+			popup.style.color = '#fff';
+			popup.style.padding = '4px 10px';
+			popup.style.borderRadius = '3px';
+			popup.style.fontSize = '1em';
+			popup.style.top = `${event.clientY - 30}px`;
+			popup.style.left = `${event.clientX + 10}px`;
+			document.body.appendChild(popup);
+		  });
+
+		  svgWord.addEventListener('mouseleave', function(event) {
+			console.log('Mouse left:', event.target, 'at', event.clientX, event.clientY);
+
+			// Hide gloss popup
+			if (popup) {
+			  document.body.removeChild(popup);
+			}
+		  });
+		});
+	});
   </script>
 </body>
 </html>
