@@ -9,7 +9,25 @@
   background-color: rgba(255, 255, 0, 0.5); /* Yellow with 50% opacity */
 }
 
+.svg-word:hover {
+  fill: rgba(255, 255, 0, 0.5); /* Yellow with 50% opacity */
+}
+
 .word:hover::after {
+  content: attr(data-gloss);
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 3px;
+  font-size: 1em; /* Increase font size for better readability */
+  top: -2em;
+  left: 0;
+  min-width: 100%; /* Ensure the gloss popup is never smaller than the word it is glossing */
+  white-space: nowrap; /* Prevent the gloss from wrapping to a new line */
+}
+
+.svg-word:hover::after {
   content: attr(data-gloss);
   position: absolute;
   background-color: rgba(0, 0, 0, 0.8);
@@ -29,6 +47,17 @@ body {
   /* Add other body styles if needed */
 }
 
+.image-container {
+    position: relative;
+}
+
+.image-container svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
 
 /* Navigation Bar */
 nav {
