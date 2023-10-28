@@ -652,6 +652,18 @@ class CLARAProjectInternal:
                                          audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, callback=callback)
         audio_annotator.annotate_text(text_object, callback=callback)
         post_task_update(callback, f"--- Audio annotations done")
+
+        # Add image if it exists
+        image = self.get_current_project_image()
+        if image:
+            # Find the corresponding Page object, if there is one.
+            page_object = text_object.find_page_by_image(image)
+            if page_object:
+                # Merge the Page object into the Image object
+                image.merge_page(page_object)
+                # Remove the Page object from the Text object
+                text_object.remove_page(page_object)
+            add_image_to_text(text_object, image, callback=callback)
         
         post_task_update(callback, f"--- Adding concordance annotations")
         concordance_annotator = ConcordanceAnnotator()
@@ -832,19 +844,7 @@ class CLARAProjectInternal:
         text_object = self.get_internalised_and_annotated_text(tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
                                                                audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                                callback=callback)
-
-        # Add image if it exists
-        image = self.get_current_project_image()
-        if image:
-            # Find the corresponding Page object, if there is one.
-            page_object = text_object.find_page_by_image(image)
-            if page_object:
-                # Merge the Page object into the Image object
-                image.merge_page(page_object)
-                # Remove the Page object from the Text object
-                text_object.remove_page(page_object)
-            add_image_to_text(text_object, image, callback=callback)
-    
+ 
         post_task_update(callback, f"--- Created internalised and annotated text")
         # Pass both Django-level and internal IDs
         renderer = StaticHTMLRenderer(project_id, self.id)

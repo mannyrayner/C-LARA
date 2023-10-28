@@ -36,6 +36,17 @@ class ConcordanceAnnotator:
                         if lemma:
                             concordance[lemma]["segments"].add(segment.annotations['segment_uid'])  # Add the segment UID to the set
                             concordance[lemma]["frequency"] += 1
+                    elif element.type == "Image" and 'transformed_segments' in element.content:
+                        # We have an annotated image
+                        image_segments = element.content['transformed_segments']
+                        for image_segment in image_segments:
+                            for image_element in image_segment.content_elements:
+                                if image_element.type == "Word":
+                                    image_lemma = image_element.annotations.get('lemma')
+                                    if image_lemma:
+                                        # The segment that image_lemma is deemed to belong to is the TEXT segment we are in
+                                        concordance[image_lemma]["segments"].add(segment.annotations['segment_uid'])  
+                                        concordance[image_lemma]["frequency"] += 1
 
             page_number += 1
 
