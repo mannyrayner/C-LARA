@@ -102,7 +102,7 @@
 		  let popup;
 
 		  svgWord.addEventListener('mouseenter', function(event) {
-			console.log('Mouse entered:', event.target, 'at', event.clientX, event.clientY);
+			//console.log('Mouse entered:', event.target, 'at', event.clientX, event.clientY);
 
 			// Show gloss popup
 			const glossText = this.getAttribute('data-gloss');
@@ -121,7 +121,7 @@
 		  });
 
 		  svgWord.addEventListener('mouseleave', function(event) {
-			console.log('Mouse left:', event.target, 'at', event.clientX, event.clientY);
+			//console.log('Mouse left:', event.target, 'at', event.clientX, event.clientY);
 
 			// Hide gloss popup
 			if (popup) {
