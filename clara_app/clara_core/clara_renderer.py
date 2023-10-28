@@ -90,22 +90,7 @@ class StaticHTMLRenderer:
             # Traverse the Text object, replacing each multimedia file with a
             # reference to the new multimedia directory and storing the copy operations
             for page in text.pages:
-                for segment in page.segments:
-                    if 'tts' in segment.annotations and 'file_path' in segment.annotations['tts']:
-                        old_audio_file_path = segment.annotations['tts']['file_path']
-                        if old_audio_file_path != 'placeholder.mp3':
-                            new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
-                            new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
-                            copy_operations[old_audio_file_path] = new_audio_file_path
-                            segment.annotations['tts']['file_path'] = new_audio_file_path_relative
-                    for element in segment.content_elements:
-                        if element.type == "Word" and 'tts' in element.annotations and 'file_path' in element.annotations['tts']:
-                            old_audio_file_path = element.annotations['tts']['file_path']
-                            if old_audio_file_path != 'placeholder.mp3':
-                                new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
-                                new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
-                                copy_operations[old_audio_file_path] = new_audio_file_path
-                                element.annotations['tts']['file_path'] = new_audio_file_path_relative                                  
+                adjust_audio_file_paths_in_segment_list(page.segments, copy_operations, multimedia_dir)                     
             n_files_to_copy = len(copy_operations)
             n_files_copied = 0
             post_task_update(callback, f"--- Copying {n_files_to_copy} audio files")
@@ -158,6 +143,24 @@ class StaticHTMLRenderer:
         write_txt_file(rendered_page, output_file_path)
         post_task_update(callback, f"--- Vocabulary lists created")
         
-
+def adjust_audio_file_paths_in_segment_list(segments, copy_operations, multimedia_dir):
+    for segment in segments:
+        if 'tts' in segment.annotations and 'file_path' in segment.annotations['tts']:
+            old_audio_file_path = segment.annotations['tts']['file_path']
+            if old_audio_file_path != 'placeholder.mp3':
+                new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
+                new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
+                copy_operations[old_audio_file_path] = new_audio_file_path
+                segment.annotations['tts']['file_path'] = new_audio_file_path_relative
+        for element in segment.content_elements:
+            if element.type == "Word" and 'tts' in element.annotations and 'file_path' in element.annotations['tts']:
+                old_audio_file_path = element.annotations['tts']['file_path']
+                if old_audio_file_path != 'placeholder.mp3':
+                    new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
+                    new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
+                    copy_operations[old_audio_file_path] = new_audio_file_path
+                    element.annotations['tts']['file_path'] = new_audio_file_path_relative
+            if element.type == "Image" and 'transformed_segments' in element.content:
+                adjust_audio_file_paths_in_segment_list(element.content['transformed_segments'], copy_operations, multimedia_dir)
 
 

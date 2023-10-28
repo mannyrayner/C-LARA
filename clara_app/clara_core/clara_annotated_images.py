@@ -83,7 +83,10 @@ def image_to_content_element(image):
     #print(f'--- Calling image_to_content_element. page_object = {image.page_object}, associated_areas = {image.associated_areas}')
     width, height = get_image_dimensions(image.image_file_path)
     if not image.page_object or not image.associated_areas:
-        return ContentElement('Image', {'src': image.image_file_path, 'width': width, 'height': height, 'transformed_segments': None})
+        return ContentElement('Image', {'src': basename(image.image_file_path),
+                                        'width': width,
+                                        'height': height,
+                                        'transformed_segments': None})
     
     page_object_segments = image.page_object.segments
     associated_areas_segments = json.loads(image.associated_areas)['segments']
@@ -115,6 +118,6 @@ def image_to_content_element(image):
         # Create a new segment with the transformed words
         transformed_segment = Segment(words_only)
         transformed_segments.append(transformed_segment)
-    result = ContentElement('Image', {'src': image.image_file_path, 'width': width, 'height': height, 'transformed_segments': transformed_segments})
+    result = ContentElement('Image', {'src': basename(image.image_file_path), 'width': width, 'height': height, 'transformed_segments': transformed_segments})
     #print(f'--- Produced {result}') 
     return result
