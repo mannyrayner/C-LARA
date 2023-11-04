@@ -1,24 +1,38 @@
 
 This file contains a short list of current and near-future priority
-activities. It should be updated often, if possible daily.
+activities. It should be updated often, if possible at least twice
+a week.
 
-Last updated Oct 28 2023
+Last updated Nov 5 2023
 
 CURRENTLY ACTIVE PRIORITIES
 
-1. Prepare our presentation for WorldCALL, Nov 9-13.
+1. Prepare our presentation for WorldCALL, Nov 9-13. Catia has been
+sent a draft, we are waiting for some input from Alex on the student
+projects.
 
-2. Installation of C-LARA on UniSA server. Since this has local file
+2. Prepare our presentation for ALTA, Nov 29-Dec 2. The paper will
+be presented by Alex. We will give him a draft presentation before
+Thu Nov 9.
+
+3. Installation of C-LARA on UniSA server. Since this has local file
 storage, it should be much faster than Heroku, which relies on S3.
-We have said the server will be released before ALTA, Nov 29.
+We have said the server will be released before ALTA, Nov 29. We have
+installed a lot of material (Python, Python packages, PostreSQL, Git,
+repository, ffmpeg, TreeTagger). We need to set environment variables
+and possibly take care of some other small things, before contacting
+the UniSA sysadmins to discuss the rest of the stack.
 
-3. Extension of C-LARA code to support annotated images. This will
+4. Extension of C-LARA code to support annotated images. This will
 enable integration with a second Melbourne Uni project, which is
 producing a graphical editing tool for this task. We are working on
 adding the relevant extensions and are now perhaps 80% done. We want
 this to be ready for when the students come back after exams mid-Nov.
+We have two things left to do: add thumbnails to concordance entries
+with images, and make it possible to include multiple images in a
+C-LARA text.
 
-4. Ongoing email discussion with Denis about AskTheCode plugin.
+5. Ongoing email discussion with Denis about AskTheCode plugin.
 No deadline but frequent exchanges.
 
 PROBABLY ACTIVE SOON
@@ -37,7 +51,9 @@ Recorder.  An initial API has been added on the C-LARA side. Currently
 on hold while students do exams.
 
 4. Explore possibilities for making annotation of multi-words more
-accurate. Several ideas have been discussed. No deadline.
+accurate. Several ideas have been discussed. This is highly relevant for
+our upcoming presentation at  "Literacy and Contemporary Society:
+Creativity, Equity, Social Action"
 
 5. Integration of an automatic payment method into the C-LARA server.
 The current informal system is not scalable. This is probably
