@@ -21,7 +21,7 @@
 
 - <a href="https://github.com/mannyrayner/C-LARA/blob/main/FUNCTIONALITY.txt" target="_blank">FUNCTIONALITIES file</a>. List of all top-level platform functionalities.
 
-- <a href="https://github.com/mannyrayner/C-LARA/blob/main/CURRENT_PRIORITIES.txt" target="_blank">README file</a>. Current and planned near-future tasks. Updated frequently.
+- <a href="https://github.com/mannyrayner/C-LARA/blob/main/CURRENT_PRIORITIES.txt" target="_blank">CURRENT PRIORITIES file</a>. Current and planned near-future tasks. Updated frequently.
 
 - <a href="https://github.com/mannyrayner/C-LARA/blob/main/TODO.txt" target="_blank">TODO file</a>. Remaining and completed to-do items.
 
