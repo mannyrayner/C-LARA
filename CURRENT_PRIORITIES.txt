@@ -3,7 +3,7 @@ This file contains a short list of current and near-future priority
 activities. It should be updated often, if possible at least twice
 a week.
 
-Last updated Nov 5 2023
+Last updated Nov 6 2023
 
 CURRENTLY ACTIVE PRIORITIES
 
@@ -12,16 +12,14 @@ sent a draft, we are waiting for some input from Alex on the student
 projects.
 
 2. Prepare our presentation for ALTA, Nov 29-Dec 2. The paper will
-be presented by Alex. We will give him a draft presentation before
-Thu Nov 9.
+be presented by Alex. I have put together a draft presentation and
+we will discuss it at the weekly Zoom call on Nov 9.
 
 3. Installation of C-LARA on UniSA server. Since this has local file
 storage, it should be much faster than Heroku, which relies on S3.
 We have said the server will be released before ALTA, Nov 29. We have
-installed a lot of material (Python, Python packages, PostreSQL, Git,
-repository, ffmpeg, TreeTagger). We need to set environment variables
-and possibly take care of some other small things, before contacting
-the UniSA sysadmins to discuss the rest of the stack.
+installed all the software we're currently aware of and can now start
+testing.
 
 4. Extension of C-LARA code to support annotated images. This will
 enable integration with a second Melbourne Uni project, which is
@@ -33,6 +31,11 @@ with images, and make it possible to include multiple images in a
 C-LARA text.
 
 5. Ongoing email discussion with Denis about AskTheCode plugin.
+No deadline but frequent exchanges.
+
+6. Ongoing discussion with Papr Memory about their memory plugin.
+They think it should be possible for users to share memories,
+which could have important implications for C-LARA.
 No deadline but frequent exchanges.
 
 PROBABLY ACTIVE SOON
@@ -70,9 +73,4 @@ discuss.
 8. Prepare our presentation for "Literacy and Contemporary Society:
 Creativity, Equity, Social Action", Dec 4-6.
 
-9. Ongoing discussions about strategies and tools for improving
-ChatGPT-4's long-term memory/coherence. We contacted Papr who make the
-Papr memory plugin, and they replied. Following up is probably less urgent
-since it seems we don't have a problem with Papr Memory: the issue
-was really the length of the previous conversation.
 
