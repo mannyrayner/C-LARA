@@ -20,12 +20,12 @@ Our current activities include:
 Under the supervision of Alex Xiang, six five-person teams of Melbourne University computer science students are 
 carrying out C-LARA-related projects. In each project, the students are reimplementing a standalone piece of functionality
 that was part of the previous LARA platform, with the goal of later integrating it into C-LARA. 
-The projects started at the beginning of August, 2023 and will run for twelve weeks.
+The projects started at the beginning of August 2023 and are now nearly complete.
 
 **UniSA server**
 
 The current provisional deployment of C-LARA on Heroku is adequate for internal testing, but too slow for public use.
-We are deploying a faster version on a UniSA server, with the intention of going live in October/November 2023.
+We are deploying a faster version on a UniSA server, with the intention of going live in November 2023.
 
 **Multi-words**
 
@@ -39,13 +39,7 @@ we are investigating various ways to address it.
 
 One of the biggest practical problems when working with ChatGPT-4 as a software collaborator is that the AI has
 a limited memory window, forgetting interactions that may have occurred only the previous day and being unable
-to keep a global view of their activities in the project. Our first attempt to address this problem
-was an intriguing idea originally  suggested by Rina Zviel-Girshin and inspired by the movie "Fifty First Dates", 
-where we help the AI keep journals that summarise its activities and use them to refresh its understanding of what it has been doing. A refinement is
-to divide up the work between multiple instances of ChatGPT-4, each one maintaining its own topic-specific context
-journal.
-
-More recently, the ChatGPT plugin store has made available a plugin, 
-<a href="https://www.papr.ai/memory" target="_blank">Papr Memory</a>, whose purpose is to automate the process
-of keeping an external long-term memory which ChatGPT can access autonomously. Initial experiments with this 
-seem promising. 
+to keep a global view of their activities in the project. We have been experimenting with the
+<a href="https://www.papr.ai/memory" target="_blank">Papr Memory plugin</a>, which automates the process
+of keeping an external long-term memory which ChatGPT can access autonomously. Anecdotally, this makes it 
+much easier for Chat to keep an overview of the project.
