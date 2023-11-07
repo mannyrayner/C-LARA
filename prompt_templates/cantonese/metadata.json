@@ -1,0 +1,18 @@
+[
+    {
+        "file": "prompt_templates/cantonese/segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230822234736"
+    },
+    {
+        "file": "prompt_templates/cantonese/segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230822234841"
+    }
+]

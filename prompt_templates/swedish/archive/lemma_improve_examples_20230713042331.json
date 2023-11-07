@@ -1,0 +1,18 @@
+[
+    [
+        "till#till/ADP# och#och/CCONJ# med#med/ADP# Marie#Marie/PROPN#",
+        "till#till och med/ADV# och#till och med/ADV# med#till och med/ADV# Marie#Marie/PROPN#"
+    ],
+    [
+        "Jag#jag/PRON# ger#ge/VERB# mig#mig/PRON#",
+        "Jag#I/PRON# ger#ge mig/VERB# mig#ge mig/VERB#"
+    ],
+    [
+        "Hon#I/PRON# är#vara/AUX# trött#trött/ADJ#",
+        "Hon#I/PRON# är#vara/VERB# trött#trött/ADJ#"
+    ],
+    [
+        "Hon#hon/PRON# ska#skola/AUX# ta#ta/VERB# det#det/PRON# med#med/PRON#",
+        "Hon#hon/PRON# ska#skola/AUX# ta#ta med/VERB# det#det/PRON# med#ta med/VERB#"
+    ]
+]

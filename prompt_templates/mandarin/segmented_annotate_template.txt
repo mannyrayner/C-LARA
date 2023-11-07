@@ -1,0 +1,13 @@
+Annotate the following Chinese text, dividing it up in a natural way into sentence-like segments separated by double vertical bars, ||.
+
+Also, divide the text in each segment into words, separating them with single vertical bars, |.
+
+Here are some examples:
+
+{examples}
+
+Here is the text to annotate:
+
+"{text}"
+
+The output will be read by a Python script, so produce just the text without any comments or introduction.

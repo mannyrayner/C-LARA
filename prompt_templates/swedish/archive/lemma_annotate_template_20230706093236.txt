@@ -1,0 +1,36 @@
+I am going to give you a short passage in {l2_language}, presented in a JSON format.
+I want you to add {l2_language} root forms and part-of-speech (POS) tags in the following way.
+
+The JSON is a list of strings. Each string is either a {l2_language} word or a punctuation mark.
+
+Please replace each string with a three-element list in which the first element is the original string, the second is a root form in {l2_language}, and the third is a POS tag taken from the Universal Dependencies version 2 tagset. This has the following tags:
+
+ADJ: adjective
+ADP: adposition
+ADV: adverb
+AUX: auxiliary verb
+CCONJ: coordinating conjunction
+DET: determiner
+INTJ: interjection
+NOUN: noun
+NUM: numeral
+PART: particle
+PRON: pronoun
+PROPN: proper noun
+PUNCT: punctuation
+SCONJ: subordinating conjunction
+SYM: symbol
+VERB: verb
+X: other
+
+Note in particular that "ha" and "vara" may be either AUX or VERB depending on the context.
+
+For example, you might annotate
+
+{examples}
+
+Here are the items to annotate:
+
+{simplified_elements_json}
+
+Write out just the annotated JSON with no introduction or comments, since it will be processed by a Python script.

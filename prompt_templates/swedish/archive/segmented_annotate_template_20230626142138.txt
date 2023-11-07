@@ -1,0 +1,17 @@
+Annotate the following Swedish text, dividing it up in a natural way into pages, and each page into sentence-like segments. 
+
+Pages are separated using instances of the <page> tag.
+
+Segments are separated using instance of a double bar, ||.
+
+Also, if a word in the text is composed of smaller words, separate them with vertical bars, and if a multi-word expression is better treated as a single unit, enclose it inside @ signs.
+
+Here are some examples:
+
+{examples}
+
+Here is the text to annotate:
+
+"{text}"
+
+The output will be read by a Python script, so produce just the text without any comments or introduction.

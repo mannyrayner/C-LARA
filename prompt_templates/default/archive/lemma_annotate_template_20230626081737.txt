@@ -1,0 +1,16 @@
+I am going to give you a short passage in {l2_language}, presented in a JSON format.
+I want you to add {l2_language} root forms in the following way.
+
+The JSON is a list of strings. Each string is either a {l2_language} word or a punctuation mark.
+
+Please replace each string with a two-element list in which the first element is the original string and the second is a root form in {l2_language}.
+
+For example, if the passage is in French, you might annotate
+
+{examples}
+
+Here are the items to annotate:
+
+{simplified_elements_json}
+
+Write out just the annotated JSON with no introduction or comments, since it will be processed by a Python script.

@@ -1,0 +1,17 @@
+Annotate the following Swedish text, dividing it up in a natural way into pages, and each page into sentence-like segments. 
+
+Pages are separated using instances of the <page> tag.
+
+Segments are separated using instance of a double bar, ||.
+
+Also, divide up compound words using single bars, |. Note: *only* divide up compound words. Do not split endings off inflected verbs, nouns and adjectives.
+
+Here are some examples:
+
+{examples}
+
+Here is the text to annotate:
+
+"{text}"
+
+The output will be read by a Python script, so produce just the text without any comments or introduction.

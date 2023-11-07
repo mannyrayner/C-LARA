@@ -1,0 +1,22 @@
+[
+    [
+        "Bien#bien/ADV# sûr#sûr/ADJ#.",
+        "Bien#bien sûr/ADV# sûr#bien sûr/ADV#."
+    ],
+    [
+        "En#en/ADP# revanche#revanche/NOUN#, il#il/PRON# ne#ne/ADV# l'#le/PRON#aime#aimer/VERB# pas#pas/ANV#.",
+        "En#en revanche/ADV# revanche#en revanche/ADV#, il#il/PRON# ne#ne/ADV# l'#le/PRON#aime#aimer/VERB# pas#pas/ANV#."
+    ],
+    [
+        "je#je/PRON# me#me/PRON# souviens#souvenir/VERB#.",
+        "je#je/PRON# me#se souvenir/PRON# souviens#se souvenir/VERB#."
+    ],
+    [
+        "elle#elle/PRON# s'#se/PRON#est#être/AUX# promenée#promemer/VERB# dans#dans/PRON# le#le/DET# parc#parc/PRON#",
+        "elle#elle/PRON# s'#se promener/VERB#est#être/AUX# promenée#se promemer/VERB# dans#dans/PRON# le#le/DET# parc#parc/PRON#"
+    ],
+    [
+        "il#il/PRON# n'#ne/ADV#y#y/PRON# en#en/PRON# a#avoir/VERB# pas#pas/ADV#",
+        "il#il y a/VERB# n'#ne/ADV#y#il y a/VERB# en#en/PRON# a#il y a/VERB# pas#pas/ADV#"
+    ]
+]

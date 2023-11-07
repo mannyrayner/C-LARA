@@ -1,0 +1,17 @@
+The following {l2_language} text has been annotated with segmentation information as follows:
+- Pages should be separated using instances of the <page> tag.
+
+- Sentence-like segments should be separated using instance of a double bar, ||.
+
+- Words in the text composed of smaller words should be separated with vertical bars,
+and multi-word expressions should be enclosed inside @ signs.
+
+Here are two French examples:
+
+{examples}
+
+Please read through the text and try to correct/improve the annotations. Here is the text to reannotate:
+
+"{text}"
+
+The output will be read by a Python script, so produce just the text without any comments or introduction.

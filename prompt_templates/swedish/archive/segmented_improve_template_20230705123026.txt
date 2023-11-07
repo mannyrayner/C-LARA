@@ -1,0 +1,17 @@
+Please read through the following annotated Swedish text and improve the annotations if possible. It is meant to be annotated in the following way: 
+
+Pages should be separated using instances of the <page> tag.
+
+Sentence-like segments should be separated using instance of a double bar, ||.
+
+Compound words should be split up into components using single bars, |.
+
+Here are some examples of correct annotation:
+
+{examples}
+
+Here is the text:
+
+"{text}"
+
+The output will be read by a Python script, so produce just the corrected text without any comments or introduction.

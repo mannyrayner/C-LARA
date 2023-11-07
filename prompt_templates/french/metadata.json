@@ -1,0 +1,170 @@
+[
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230706060010"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230706060023"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\segmented_improve_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230706060211"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\segmented_improve_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230706060231"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\gloss_annotate_template.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230706060322"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\gloss_annotate_examples.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230706060335"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\gloss_improve_template_20230713044812.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230706060417"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\gloss_improve_examples_20230706062134.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230706060436"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\gloss_improve_examples_20230707121610.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230706062134"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\lemma_annotate_template.txt",
+        "annotation_type": "lemma",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230706062225"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\lemma_annotate_examples.json",
+        "annotation_type": "lemma",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230706062247"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\lemma_improve_template_20230713042849.txt",
+        "annotation_type": "lemma",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230706062324"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\lemma_improve_examples_20230713043838.json",
+        "annotation_type": "lemma",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230706062814"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\gloss_improve_examples_20230713045103.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230707121610"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\lemma_improve_template.txt",
+        "annotation_type": "lemma",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230713042849"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\lemma_improve_examples_20230713044257.json",
+        "annotation_type": "lemma",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230713043838"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\lemma_improve_examples_20230713045645.json",
+        "annotation_type": "lemma",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230713044257"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\archive\\gloss_improve_template_20230713044826.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230713044812"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\gloss_improve_template.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230713044826"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\gloss_improve_examples.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230713045103"
+    },
+    {
+        "file": "C:/cygwin64/home/sf/c-lara-svn/prompt_templates\\french\\lemma_improve_examples.json",
+        "annotation_type": "lemma",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20230713045645"
+    }
+]

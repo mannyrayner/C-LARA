@@ -1,0 +1,34 @@
+[
+    {
+        "file": "prompt_templates/chinese/segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230815115554"
+    },
+    {
+        "file": "prompt_templates/chinese/archive/segmented_annotate_examples_20230903113900.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230815115746"
+    },
+    {
+        "file": "prompt_templates/chinese/segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "Alex",
+        "timestamp": "20230903113902"
+    },
+    {
+        "file": "prompt_templates/chinese/segmented_improve_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "Alex",
+        "timestamp": "20230903120854"
+    }
+]

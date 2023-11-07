@@ -1,0 +1,36 @@
+I am going to give you a short passage in {l2_language}, annotated with root forms, part-of-speech (POS) tags and {l1_language} glosses and presented in a JSON format.
+
+The JSON is a list of 4-tuples. The first element of each tuple is a {l2_language} word/punctuation mark, the second should be the root form, the third should be a POS tag, and the fourth should be the {l1_language} gloss.
+
+Please read the annotated passage and reproduce it in the same JSON format, keeping the words/punctuation marks the same but correcting any root forms or glosses that appear to be incorrect and making POS tags conform to the conventions of the Universal Dependencies version 2 tagset, which uses the following tags:
+
+ADJ: adjective
+ADP: adposition
+ADV: adverb
+AUX: auxiliary verb
+CCONJ: coordinating conjunction
+DET: determiner
+INTJ: interjection
+NOUN: noun
+NUM: numeral
+PART: particle
+PRON: pronoun
+PROPN: proper noun
+PUNCT: punctuation
+SCONJ: subordinating conjunction
+SYM: symbol
+VERB: verb
+X: other
+
+In particular, if two or more words (possibly with other words in between) appear to be a multi-word expression,
+make the root form annotating each component word be the whole multi-word expression, the POS tag annotating each component word be the one appropriate to the whole expression and the gloss one which is appropriate for the whole expression.
+
+For example, in English glossed in French, you might correct
+
+{examples}
+
+Here is the JSON to correct:
+
+{simplified_elements_json}
+
+Write out just the corrected JSON with no introduction or comments, since it will be processed by a Python script.

@@ -1,0 +1,18 @@
+I am going to give you a short passage in {l2_language}, glossed in {l1_language}, presented in a JSON format.
+
+The JSON is a list of pairs. The first element of each pair is a {l2_language} word/punctuation mark and the second should be an {l1_language} gloss.
+
+Please read the annotated passage and reproduce it in the same JSON format, keeping the words/punctuation marks the same but correcting any glosses that appear to be incorrect.
+
+In particular, if two or more words (possibly with other words in between) appear to be a multi-word expression,
+make the gloss annotating each component word a gloss for the whole multi-word expression.
+
+For example, you might correct
+
+{examples}
+
+Here is the JSON to correct:
+
+{simplified_elements_json}
+
+Write out just the corrected JSON with no introduction, since it will be processed by a Python script.

@@ -1,0 +1,10 @@
+[
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\norwegian\\segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20230905151325"
+    }
+]
