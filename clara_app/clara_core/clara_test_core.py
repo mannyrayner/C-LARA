@@ -1,6 +1,5 @@
 
 from .clara_main import CLARAProjectInternal
-from .clara_utils import make_local_directory
 
 projects = { 'test_english1': { 'id': 'test_english1',
                                 'external_id': '10000',
