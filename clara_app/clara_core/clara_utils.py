@@ -320,28 +320,51 @@ def copy_directory_to_s3(local_pathname, s3_pathname=None):
             with open(local_file, "rb") as data:
                 _s3_client.put_object(Bucket=_s3_bucket_name, Key=s3_file, Body=data)
 
-# This function will normally be run on a local machine to sync a local directory with an S3 one
 def copy_directory_from_s3(s3_pathname, local_pathname=None):
+    initialise_s3()
+    
     fail_if_no_s3_bucket()
 
     local_pathname = local_pathname if local_pathname else s3_pathname
     s3_pathname = s3_file_name(s3_pathname)
     local_pathname = absolute_local_file_name(local_pathname)
+    print(f'--- Initialised, downloading "{s3_pathname}" to "{local_pathname}"')
 
     if not s3_pathname.endswith("/"):
         s3_pathname += "/"
 
-    s3_objects = _s3_client.list_objects_v2(Bucket=_s3_bucket_name, Prefix=s3_pathname)
-    
-    for s3_object in s3_objects.get("Contents", []):
-        s3_file = s3_object["Key"]
-        local_file = os.path.join(local_pathname, os.path.relpath(s3_file, s3_pathname))
-        local_file = local_file.replace("/", os.path.sep)  # Ensure we use the correct OS path separator
+    continuation_token = None
+    while True:
+        list_objects_v2_params = {
+            'Bucket': _s3_bucket_name,
+            'Prefix': s3_pathname
+        }
+        if continuation_token:
+            list_objects_v2_params['ContinuationToken'] = continuation_token
 
-        os.makedirs(os.path.dirname(local_file), exist_ok=True)
+        s3_objects = _s3_client.list_objects_v2(**list_objects_v2_params)
 
-        with open(local_file, "wb") as data:
-            _s3_client.download_fileobj(_s3_bucket_name, s3_file, data)
+        if 'Contents' not in s3_objects:
+            print(f"No objects found with prefix {s3_pathname}")
+            break
+
+        print(f'--- Found {len(s3_objects["Contents"])} files for Bucket={_s3_bucket_name}, Prefix={s3_pathname}')
+
+        for s3_object in s3_objects['Contents']:
+            s3_file = s3_object['Key']
+            print(f'--- Copying {s3_file}')
+            local_file = os.path.join(local_pathname, os.path.relpath(s3_file, s3_pathname))
+            local_file = local_file.replace("/", os.path.sep)  # Ensure we use the correct OS path separator
+
+            os.makedirs(os.path.dirname(local_file), exist_ok=True)
+
+            copy_s3_file_to_local(s3_file, local_pathname=local_file)
+
+        if not s3_objects.get('IsTruncated'):  # No more pages
+            break
+
+        continuation_token = s3_objects.get('NextContinuationToken')
+
 
 def file_exists(pathname):
     abspathname = absolute_file_name(pathname)
