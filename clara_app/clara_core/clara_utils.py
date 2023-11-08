@@ -674,12 +674,22 @@ def os_environ_or_none(environment_variable):
     except:
         return None
 
+##def get_config():
+##    file = '$CLARA/clara_app/clara_core/config.ini'
+##    if not local_file_exists(file):
+##        raise InternalCLARAError( message=f'Unable to find config file {file}')
+##    config = configparser.ConfigParser()
+##    config.read(absolute_local_file_name(file))
+##    return config
+
 def get_config():
     file = '$CLARA/clara_app/clara_core/config.ini'
-    if not local_file_exists(file):
-        raise InternalCLARAError( message=f'Unable to find config file {file}')
+    absfile = absolute_local_file_name(file)
+    if not local_file_exists(absfile):
+        message = f'Unable to find config file {absfile}'
+        raise InternalCLARAError( message=message )
     config = configparser.ConfigParser()
-    config.read(absolute_local_file_name(file))
+    config.read(absfile)
     return config
 
 def output_dir_for_project_id(id):
