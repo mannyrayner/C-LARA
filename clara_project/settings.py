@@ -32,9 +32,14 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-default-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.getenv('DJANGO_DEBUG', False))
 
-# For Heroku
-ALLOWED_HOSTS = ['localhost',
-                 'c-lara-758a4f81c1ff.herokuapp.com']
+# Local machine, Heroku, UniSA server
+ALLOWED_HOSTS = [
+    'localhost',
+    'c-lara-758a4f81c1ff.herokuapp.com',
+    'stmpl-lara2.ml.unisa.edu.au',
+    '127.0.0.1',
+    '[::1]',
+]
 
 # Application definition
 
