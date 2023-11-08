@@ -686,8 +686,7 @@ def get_config():
     file = '$CLARA/clara_app/clara_core/config.ini'
     absfile = absolute_local_file_name(file)
     if not local_file_exists(absfile):
-        message = f'Unable to find config file {absfile}'
-        raise InternalCLARAError( message=message )
+        raise InternalCLARAError(f'Unable to find config file {absfile}')
     config = configparser.ConfigParser()
     config.read(absfile)
     return config
