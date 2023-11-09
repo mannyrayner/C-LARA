@@ -42,6 +42,13 @@ ALLOWED_HOSTS = [
     '[::1]',
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://c-lara.unisa.edu.au',
+    'https://stmpl-lara2.ml.unisa.edu.au',
+    'https://c-lara-758a4f81c1ff.herokuapp.com',
+    'https://localhost',
+]
+
 # Application definition
 
 INSTALLED_APPS = [
