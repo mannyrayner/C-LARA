@@ -36,6 +36,7 @@ DEBUG = bool(os.getenv('DJANGO_DEBUG', False))
 ALLOWED_HOSTS = [
     'localhost',
     'c-lara-758a4f81c1ff.herokuapp.com',
+    'c-lara.unisa.edu.au',
     'stmpl-lara2.ml.unisa.edu.au',
     '127.0.0.1',
     '[::1]',
