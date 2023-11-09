@@ -57,14 +57,16 @@ accurate. Several ideas have been discussed. This is highly relevant for
 our upcoming presentation at  "Literacy and Contemporary Society:
 Creativity, Equity, Social Action"
 
-5. Integration of an automatic payment method into the C-LARA server.
+5. Make it possible to add C-LARA images using DALL-E-3
+
+6. Integration of an automatic payment method into the C-LARA server.
 The current informal system is not scalable. This is probably
 needed for the UniSA server.
 
-6. Improve design aspects of C-LARA. It will be easier to do this now that
+7. Improve design aspects of C-LARA. It will be easier to do this now that
 the vision-enabled ChatGPT-4V is available. 
 
-7. Prepare our presentation for "Literacy and Contemporary Society:
+8. Prepare our presentation for "Literacy and Contemporary Society:
 Creativity, Equity, Social Action", Dec 4-6.
 
 
