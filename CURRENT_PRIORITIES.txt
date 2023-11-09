@@ -3,25 +3,17 @@ This file contains a short list of current and near-future priority
 activities. It should be updated often, if possible at least twice
 a week.
 
-Last updated Nov 6 2023
+Last updated Nov 9 2023
 
 CURRENTLY ACTIVE PRIORITIES
 
-1. Prepare our presentation for WorldCALL, Nov 9-13. Catia has been
-sent a draft, we are waiting for some input from Alex on the student
-projects.
-
-2. Prepare our presentation for ALTA, Nov 29-Dec 2. The paper will
-be presented by Alex. I have put together a draft presentation and
-we will discuss it at the weekly Zoom call on Nov 9.
-
-3. Installation of C-LARA on UniSA server. Since this has local file
+1. Installation of C-LARA on UniSA server. Since this has local file
 storage, it should be much faster than Heroku, which relies on S3.
-We have said the server will be released before ALTA, Nov 29. We have
-installed all the software we're currently aware of and can now start
-testing.
+We have said the server will be released before ALTA, Nov 29. Nearly
+everything is now working, though we need to test properly and do some
+cleaning up. In particular, the JavaScript is still not quite right.
 
-4. Extension of C-LARA code to support annotated images. This will
+2. Extension of C-LARA code to support annotated images. This will
 enable integration with a second Melbourne Uni project, which is
 producing a graphical editing tool for this task. We are working on
 adding the relevant extensions and are now perhaps 80% done. We want
@@ -30,10 +22,15 @@ We have two things left to do: add thumbnails to concordance entries
 with images, and make it possible to include multiple images in a
 C-LARA text.
 
-5. Ongoing email discussion with Denis about AskTheCode plugin.
+3. Integration of some version of "phonetic text" into C-LARA, porting
+this functionality from the LARA code. Pauline Welby will be visiting
+Adelaide Nov 22-25, and we said phonetic text would be the main item to
+discuss.
+
+4. Ongoing email discussion with Denis about AskTheCode plugin.
 No deadline but frequent exchanges.
 
-6. Ongoing discussion with Papr Memory about their memory plugin.
+5. Ongoing discussion with Papr Memory about their memory plugin.
 They think it should be possible for users to share memories,
 which could have important implications for C-LARA.
 No deadline but frequent exchanges.
@@ -65,12 +62,7 @@ needed for the UniSA server.
 6. Improve design aspects of C-LARA. It will be easier to do this now that
 the vision-enabled ChatGPT-4V is available. 
 
-7. Integration of some version of "phonetic text" into C-LARA, porting
-this functionality from the LARA code. Pauline Welby will be visiting
-Adelaide Nov 22-25, and we said phonetic text would be the main item to
-discuss.
-
-8. Prepare our presentation for "Literacy and Contemporary Society:
+7. Prepare our presentation for "Literacy and Contemporary Society:
 Creativity, Equity, Social Action", Dec 4-6.
 
 
