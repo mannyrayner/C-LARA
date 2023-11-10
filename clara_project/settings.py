@@ -197,8 +197,14 @@ STORAGES = {"default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
 
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 
-STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+#STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
+# Check the environment variable to determine the correct STATIC_URL
+if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+    STATIC_URL = '/static/'
+else:
+    # Assuming AWS_S3_CUSTOM_DOMAIN and AWS_LOCATION are set for Heroku
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
