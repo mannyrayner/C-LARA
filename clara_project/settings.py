@@ -240,3 +240,23 @@ Q_CLUSTER = {
     'bulk': 10,
     'orm': 'default'  # Using Django's ORM
 }
+
+if os.getenv('CLARA_ENVIRONMENT') != 'heroku':
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'file': {
+                'level': 'ERROR',
+                'class': 'logging.FileHandler',
+                'filename': BASE_DIR / 'logs/django.log',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file'],
+                'level': 'ERROR',
+                'propagate': True,
+            },
+        },
+    }
