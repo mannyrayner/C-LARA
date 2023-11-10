@@ -206,11 +206,12 @@ STATICFILES_FINDERS = [
 if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
     STATIC_URL = '/static/'
     MEDIA_URL = '/media/'  # Local media URL
+    MEDIA_ROOT = BASE_DIR / 'mediafiles'
     # Use local storage for static and media files
     STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "LOCATION": os.path.join(BASE_DIR, 'mediafiles'),  
+            "LOCATION": MEDIA_ROOT,  
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
