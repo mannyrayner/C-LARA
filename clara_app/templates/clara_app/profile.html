@@ -8,6 +8,6 @@
   <p>Location: {{ profile.location }}</p>
   <p>Birth date: {{ profile.birth_date }}</p>
   {% if profile.profile_picture %}
-    <img src="{{ profile.profile_picture.url }}" alt="Profile picture">
+    <img src="{{ profile.profile_picture.url }}" alt="Profile picture" style="max-width: 200px; max-height: 200px;">
   {% endif %}
 {% endblock %}
