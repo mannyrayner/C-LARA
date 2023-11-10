@@ -210,7 +210,7 @@ if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
     STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
-            "LOCATION": os.path.join(BASE_DIR, 'media'),  
+            "LOCATION": os.path.join(BASE_DIR, 'mediafiles'),  
         },
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
