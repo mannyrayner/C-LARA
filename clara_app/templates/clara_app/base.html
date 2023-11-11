@@ -44,6 +44,7 @@
         {% if user.is_authenticated %}
 		  <li><a href="{% url 'profile' %}">Display user profile</a></li>
 		  <li><a href="{% url 'edit_profile' %}">Edit user profile</a></li>
+		  <li><a href="{% url 'user_config' %}">Set GPT-4 version</a></li>
 		  <li><a href="{% url 'credit_balance' %}">Credit balance for ChatGPT-4 API calls</a></li>
 		  {% if user.userprofile.is_admin %}
             <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>
