@@ -7,11 +7,7 @@ Last updated Nov 9 2023
 
 CURRENTLY ACTIVE PRIORITIES
 
-1. Installation of C-LARA on UniSA server. Since this has local file
-storage, it should be much faster than Heroku, which relies on S3.
-We have said the server will be released before ALTA, Nov 29. Nearly
-everything is now working, though we need to test properly and do some
-cleaning up. In particular, the JavaScript is still not quite right.
+1. Make gpt-4-turbo available in C-LARA.
 
 2. Extension of C-LARA code to support annotated images. This will
 enable integration with a second Melbourne Uni project, which is
@@ -22,17 +18,15 @@ We have two things left to do: add thumbnails to concordance entries
 with images, and make it possible to include multiple images in a
 C-LARA text.
 
-3. Make gpt-4-turbo available in C-LARA.
-
-4. Integration of some version of "phonetic text" into C-LARA, porting
+3. Integration of some version of "phonetic text" into C-LARA, porting
 this functionality from the LARA code. Pauline Welby will be visiting
 Adelaide Nov 22-25, and we said phonetic text would be the main item to
 discuss.
 
-5. Ongoing email discussion with Denis about AskTheCode plugin.
+4. Ongoing email discussion with Denis about AskTheCode plugin.
 No deadline but frequent exchanges.
 
-6. Ongoing discussion with Papr Memory about their memory plugin.
+5. Ongoing discussion with Papr Memory about their memory plugin.
 They think it should be possible for users to share memories,
 which could have important implications for C-LARA.
 No deadline but frequent exchanges.
