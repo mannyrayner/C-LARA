@@ -10,19 +10,19 @@ from .clara_classes import InternalCLARAError, ChatGPTError
 
 config = get_config()
 
-def correct_syntax_in_string(text, text_type, l2, l1=None, callback=None):
+def correct_syntax_in_string(text, text_type, l2, l1=None, config_info={}, callback=None):
     if not text_type in ( 'segmented', 'gloss', 'lemma' ):
         raise InternalCLARAError(message = f'Unknown text_type "{text_type}" in correct_syntax_in_string' )
     segments = text.split('||')
     segments_out = []
     all_api_calls = []
     for segment in segments:
-        segment_out, api_calls = correct_syntax_in_segment(segment, text_type, l2, l1=l1, callback=callback)
+        segment_out, api_calls = correct_syntax_in_segment(segment, text_type, l2, l1=l1, config_info=config_info, callback=callback)
         all_api_calls += api_calls
         segments_out += [ segment_out ]
     return ( '||'.join(segments_out), all_api_calls )
 
-def correct_syntax_in_segment(segment_text, text_type, l2, l1=None, callback=None):
+def correct_syntax_in_segment(segment_text, text_type, l2, l1=None, config_info={}, callback=None):
     try:
         parse_content_elements(segment_text, text_type)
         # We didn't raise an exception, so it's okay. Return the original text with null API calls
@@ -30,9 +30,9 @@ def correct_syntax_in_segment(segment_text, text_type, l2, l1=None, callback=Non
         return ( segment_text, api_calls )
     except:
         # We did get an exception, so try to fix it
-        return call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=l1, callback=callback)
+        return call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=l1, config_info=config_info, callback=callback)
 
-def call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=None, callback=None):
+def call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=None, config_info={}, callback=None):
     prompt = prompt_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=l1)
     n_attempts = 0
     api_calls = []
@@ -43,7 +43,7 @@ def call_chatgpt4_to_correct_syntax_in_segment(segment_text, text_type, l2, l1=N
         n_attempts += 1
         post_task_update(callback, f'--- Calling ChatGPT-4 to try to correct syntax in "{segment_text}" considered as {text_type} text (attempt {n_attempts})')
         try:
-            api_call = call_chat_gpt4(prompt, callback=callback)
+            api_call = call_chat_gpt4(prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
             corrected_segment_text = api_call.response
             try:

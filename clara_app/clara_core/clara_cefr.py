@@ -11,7 +11,7 @@ The main function is:
 
 from . import clara_chatgpt4
 
-def estimate_cefr_reading_level(text, l2_language, callback=None):
+def estimate_cefr_reading_level(text, l2_language, config_info={}, callback=None):
     l2_language = l2_language.capitalize()
     prompt = f"""Read the following {l2_language} text and estimate its reading level.
 Use the standard CEFR levels: A1, A2, B1, B2, C1, C2.
@@ -21,5 +21,5 @@ Here is the text to annotate:
 
 Just give the CEFR level and nothing else, since the output will be read by a Python script.
 """
-    api_call = clara_chatgpt4.call_chat_gpt4(prompt, callback=callback)
+    api_call = clara_chatgpt4.call_chat_gpt4(prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )

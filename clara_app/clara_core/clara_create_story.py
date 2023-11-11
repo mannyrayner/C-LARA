@@ -18,7 +18,7 @@ The default prompt is:
 
 from . import clara_chatgpt4
 
-def generate_story(language, prompt=None, callback=None):
+def generate_story(language, prompt=None, config_info={}, callback=None):
     if not prompt:
         prompt = f"Write a short, quirky news story in {language.capitalize()} suitable for use in an intermediate language class."
 
@@ -26,10 +26,10 @@ def generate_story(language, prompt=None, callback=None):
 Do not include any introduction, translation, explanation or similar."""
 
     full_prompt = prompt + clarification
-    api_call = clara_chatgpt4.call_chat_gpt4(full_prompt, callback=callback)
+    api_call = clara_chatgpt4.call_chat_gpt4(full_prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )
 
-def improve_story(language, current_version, callback=None):
+def improve_story(language, current_version, config_info={}, callback=None):
     prompt = f"""Please read through the following {language.capitalize()} text and reproduce it, correcting any mistakes you may find.
 Here is the text:
 
@@ -41,6 +41,6 @@ Here is the text:
 Do not include any introduction, translation, explanation or similar."""
 
     full_prompt = prompt + clarification
-    api_call = clara_chatgpt4.call_chat_gpt4(full_prompt, callback=callback)
+    api_call = clara_chatgpt4.call_chat_gpt4(full_prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )
 

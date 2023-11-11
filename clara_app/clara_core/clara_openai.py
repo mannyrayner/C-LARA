@@ -23,10 +23,21 @@ def print_openai_models():
     for model in models['data']:
         print(f"Model ID: {model.id}")
 
-def cost_of_gpt4_api_call(messages, response_string):
-    """Returns the cost in dollars of a gpt-4 API call, defined by a prompt in the form of a list of messages and a response string"""
-    input_cost = ( num_gpt4_tokens_for_messages(messages) / 1000.0 ) * float(config.get('chatgpt4_costs', 'prompt_per_thousand_tokens')) 
-    response_cost = ( num_gpt4_tokens_for_response(response_string) / 1000.0 ) * float(config.get('chatgpt4_costs', 'response_per_thousand_tokens'))
+def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4'):
+    """Returns the cost in dollars of an OpenAI API call, defined by a prompt in the form of a list of messages and a response string"""
+    n_message_tokens = ( num_gpt4_tokens_for_messages(messages) / 1000.0 )
+    n_response_tokens = ( num_gpt4_tokens_for_response(response_string) / 1000.0 )
+    
+    if gpt_model == 'gpt-4-1106-preview':
+        message_rate = float(config.get('chatgpt4_turbo_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('chatgpt4_turbo_costs', 'response_per_thousand_tokens'))
+    # Default is gpt-4
+    else:
+        message_rate = float(config.get('chatgpt4_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('chatgpt4_costs', 'response_per_thousand_tokens'))
+       
+    input_cost = n_message_tokens * message_rate
+    response_cost = n_response_tokens * response_rate
     return input_cost + response_cost
  
 def num_gpt4_tokens_for_messages(messages):

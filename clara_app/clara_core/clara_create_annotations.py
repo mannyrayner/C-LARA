@@ -61,42 +61,43 @@ def invoke_templates_on_trivial_text(annotate_or_improve, version, l1_language, 
         return joint_tagging_and_glossing_prompt(simplified_elements_json, l1_language, l2_language)
     
 # Annotate the text with pages and segments
-def generate_segmented_version(text, l2_language, callback=None):
-    return generate_or_improve_segmented_version('annotate', text, l2_language, callback=callback)
+def generate_segmented_version(text, l2_language, config_info={}, callback=None):
+    return generate_or_improve_segmented_version('annotate', text, l2_language, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with pages and segments
-def improve_segmented_version(text, l2_language, callback=None):
-    return generate_or_improve_segmented_version('improve', text, l2_language, callback=callback)
+def improve_segmented_version(text, l2_language, config_info={}, callback=None):
+    return generate_or_improve_segmented_version('improve', text, l2_language, config_info=config_info, callback=callback)
 
 # Annotate the text with pages and segments
-def generate_glossed_version(segmented_text, l1_language, l2_language, callback=None):
-    return generate_or_improve_annotated_version('annotate', 'gloss', segmented_text, l1_language, l2_language, callback=callback)
+def generate_glossed_version(segmented_text, l1_language, l2_language, config_info={}, callback=None):
+    return generate_or_improve_annotated_version('annotate', 'gloss', segmented_text, l1_language, l2_language, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with pages and segments
-def improve_glossed_version(glossed_text, l1_language, l2_language, callback=None):
-    return generate_or_improve_annotated_version('improve', 'gloss', glossed_text, l1_language, l2_language, callback=callback)
+def improve_glossed_version(glossed_text, l1_language, l2_language, config_info={}, callback=None):
+    return generate_or_improve_annotated_version('improve', 'gloss', glossed_text, l1_language, l2_language, config_info=config_info, callback=callback)
 
 # Annotate the text with lemmas
-def generate_tagged_version(segmented_text, l2_language, callback=None):
+def generate_tagged_version(segmented_text, l2_language, config_info={}, callback=None):
     l1_language = 'irrelevant'
-    return generate_or_improve_annotated_version('annotate', 'lemma', segmented_text, l1_language, l2_language, callback=callback)
+    return generate_or_improve_annotated_version('annotate', 'lemma', segmented_text, l1_language, l2_language, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with lemmas
-def improve_tagged_version(tagged_text, l2_language, callback=None):
+def improve_tagged_version(tagged_text, l2_language, config_info={}, callback=None):
     l1_language = 'irrelevant'
-    return generate_or_improve_annotated_version('improve', 'lemma', tagged_text, l1_language, l2_language, callback=callback)
+    return generate_or_improve_annotated_version('improve', 'lemma', tagged_text, l1_language, l2_language, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with lemmas and glosses
-def improve_lemma_and_gloss_tagged_version(tagged_text, l1_language, l2_language, callback=None):
-    return generate_or_improve_annotated_version('improve', 'lemma_and_gloss', tagged_text, l1_language, l2_language, callback=callback)
+def improve_lemma_and_gloss_tagged_version(tagged_text, l1_language, l2_language, config_info={}, callback=None):
+    return generate_or_improve_annotated_version('improve', 'lemma_and_gloss', tagged_text, l1_language, l2_language, config_info=config_info, callback=callback)
 
-def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language, callback=None):
+def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language, config_info={}, callback=None):
     l2_language = l2_language.capitalize()
     annotate_prompt =  segmentation_prompt(annotate_or_improve, text, l2_language)
-    api_call = clara_chatgpt4.call_chat_gpt4(annotate_prompt, callback=callback)
+    api_call = clara_chatgpt4.call_chat_gpt4(annotate_prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )
 
-def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, annotated_text, l1_language, l2_language, callback=None):
+def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, annotated_text, l1_language, l2_language,
+                                          config_info={}, callback=None):
     source_version = 'segmented' if annotate_or_improve == 'annotate' else gloss_or_lemma
     internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
     l1_language = l1_language.capitalize()
@@ -117,7 +118,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, a
     all_api_calls = []
     for chunk in chunks:
         annotated_chunk, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma, chunk,
-                                                                                   l1_language, l2_language, callback=callback)
+                                                                                   l1_language, l2_language, config_info=config_info, callback=callback)
         annotated_elements += annotated_chunk
         all_api_calls += api_calls
 
@@ -132,7 +133,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, a
     human_readable_text = internalised_annotated_text.to_text(gloss_or_lemma)
     return ( human_readable_text, all_api_calls )
 
-def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma, elements, l1_language, l2_language, callback=None):
+def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma, elements, l1_language, l2_language, config_info={}, callback=None):
     if annotate_or_improve == 'annotate':
         simplified_elements0 = [ simplify_element_to_string(element) for element in elements ]
     else:
@@ -160,7 +161,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
         post_task_update(callback, f'--- Calling ChatGPT-4 to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
         n_attempts += 1
         try:
-            api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, callback=callback)
+            api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
             annotated_simplified_elements = parse_chatgpt_gloss_response(api_call.response, simplified_elements, gloss_or_lemma)
             nontrivial_annotated_elements = [ unsimplify_element(element, gloss_or_lemma) for element in annotated_simplified_elements ]
