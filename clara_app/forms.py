@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Content, UserProfile, LanguageMaster, CLARAProject, HumanAudioInfo, Rating, Comment
+from .models import Content, UserProfile, UserConfiguration, LanguageMaster
+from .models import CLARAProject, HumanAudioInfo, Rating, Comment
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
@@ -30,6 +31,15 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['bio', 'location', 'birth_date', 'profile_picture']
+
+class UserConfigForm(forms.ModelForm):
+    class Meta:
+        model = UserConfiguration
+        fields = ['gpt_model']
+        widgets = {
+            'gpt_model': forms.Select(choices=[('gpt-4', 'GPT-4'),
+                                               ('gpt-4-1106-preview', 'GPT-4 Turbo')])
+        }
         
 class AssignLanguageMasterForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())

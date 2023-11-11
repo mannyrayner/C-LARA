@@ -12,19 +12,20 @@ from django.db.models import Avg, Q
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 
-from .models import UserProfile, LanguageMaster, Content, CLARAProject, HumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
+from .models import UserProfile, UserConfiguration, LanguageMaster, Content
+from .models import CLARAProject, HumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
 from django_q.models import Task
 
-from .forms import RegistrationForm, UserForm, UserProfileForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
+from .forms import RegistrationForm, UserForm, UserProfileForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm, HumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
-from .utils import create_internal_project_id, store_api_calls
+from .utils import get_user_config, create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates, delete_all_tasks
@@ -65,8 +66,11 @@ def register(request):
             user.email = form.cleaned_data.get('email')  # This will save email.
             user.save()  # Save the user object again.
             
-            # Create the UserProfile instance and associate it with the new user.
+            # Create the UserProfile instance
             UserProfile.objects.create(user=user)
+
+            # Create the UserConfiguration instance
+            UserConfiguration.objects.create(user=user)
 
             username = form.cleaned_data.get('username')
             messages.success(request, f'Account created for {username}!')
@@ -108,7 +112,21 @@ def edit_profile(request):
     }
 
     return render(request, 'clara_app/edit_profile.html', context)
-    
+
+def user_config(request):
+    # In the legacy case, we won't have a UserConfiguration object yet, so create one if necessary
+    user_config, created = UserConfiguration.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        form = UserConfigForm(request.POST, instance=user_config)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Configuration information has been updated')
+            return redirect('user_config')
+    else:
+        form = UserConfigForm(instance=user_config)
+
+    return render(request, 'clara_app/user_config.html', {'form': form})
+
 # Credit balance for money spent on API calls    
 @login_required
 def credit_balance(request):
@@ -1158,7 +1176,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     annotated_text = ''
                 except Exception as e:
                     raise e
-                    messages.error(request, f"An error occurred while producing the text. Error details: {str(e)}")
+                    messages.error(request, f"An error occurred while producing the text. Error details: {str(e)}\n{traceback.format_exc()}")
                     annotated_text = ''
             # If something happened, log it
             if action:
@@ -1279,69 +1297,76 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
 
 def perform_correct_operation_and_store_api_calls(annotated_text, version, project, clara_project_internal,
                                                   user_object, label, callback=None):
-    try:                                               
-        operation, api_calls = perform_correct_operation(annotated_text, version, clara_project_internal, user_object.username, label, callback=callback)
+    try:
+        config_info = get_user_config(user_object)
+        operation, api_calls = perform_correct_operation(annotated_text, version, clara_project_internal, user_object.username, label,
+                                                         config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         #raise e
         post_task_update(callback, f"error")
 
-def perform_correct_operation(annotated_text, version, clara_project_internal, user, label, callback=None):
+def perform_correct_operation(annotated_text, version, clara_project_internal, user, label, config_info={}, callback=None):
     #print(f'clara_project_internal.correct_syntax_and_save({annotated_text}, {version}, user={user}, label={label}, callback={callback})')
-    return ( 'correct', clara_project_internal.correct_syntax_and_save(annotated_text, version, user=user, label=label, callback=callback) )
+    return ( 'correct', clara_project_internal.correct_syntax_and_save(annotated_text, version, user=user, label=label,
+                                                                       config_info=config_info, callback=callback) )
 
 def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
                                                    user_object, label, prompt=None, callback=None):
-    try:                                               
-        operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label, prompt=prompt, callback=callback)
+    try:
+        config_info = get_user_config(user_object)
+        operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label, prompt=prompt,
+                                                          config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
     
-def perform_generate_operation(version, clara_project_internal, user, label, prompt=None, callback=None):
+def perform_generate_operation(version, clara_project_internal, user, label, prompt=None, config_info={}, callback=None):
     if version == 'plain':
-        return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'summary':
-        return ( 'generate', clara_project_internal.create_summary(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.create_summary(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'cefr_level':
-        return ( 'generate', clara_project_internal.get_cefr_level(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.get_cefr_level(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
-        return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'gloss':
-        return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
-        return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     # There is no generate operation for lemma_and_gloss, since we make it by merging lemma and gloss
     else:
         raise InternalCLARAError(message = f'Unknown first argument in perform_generate_operation: {version}')
 
 def perform_improve_operation_and_store_api_calls(version, project, clara_project_internal,
                                                    user_object, label, callback=None):
-    try:                                               
-        operation, api_calls = perform_improve_operation(version, clara_project_internal, user_object.username, label, callback=callback)
+    try:
+        config_info = get_user_config(user_object)
+        operation, api_calls = perform_improve_operation(version, clara_project_internal, user_object.username, label,
+                                                         config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
  
-def perform_improve_operation(version, clara_project_internal, user, label, callback=None):
+def perform_improve_operation(version, clara_project_internal, user, label, config_info={}, callback=None):
     if version == 'plain':
-        return ( 'generate', clara_project_internal.improve_plain_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_plain_text(user=user, label=label, config_info=config_info, callback=callback) )
     if version == 'summary':
-        return ( 'generate', clara_project_internal.improve_summary(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_summary(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
-        return ( 'generate', clara_project_internal.improve_segmented_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_segmented_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'gloss':
-        return ( 'generate', clara_project_internal.improve_glossed_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
-        return ( 'generate', clara_project_internal.improve_lemma_tagged_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_lemma_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma_and_gloss':
-        return ( 'generate', clara_project_internal.improve_lemma_and_gloss_tagged_text(user=user, label=label, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_lemma_and_gloss_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     else:
         raise InternalCLARAError(message = f'Unknown first argument in perform_improve_operation: {version}')
 
@@ -1371,7 +1396,6 @@ def create_plain_text(request, project_id):
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
-    
 #Create or edit "summary" version of the text     
 @login_required
 @user_has_a_project_role
@@ -1492,7 +1516,7 @@ def render_text_start(request, project_id):
                 form = RenderTextForm()
                 return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
             except Exception as e:
-                messages.error(request, f"An internal error occurred in rendering. Error details: {str(e)}")
+                messages.error(request, f"An internal error occurred in rendering. Error details: {str(e)}\n{traceback.format_exc()}")
                 form = RenderTextForm()
                 return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
     else:

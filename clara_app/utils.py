@@ -13,9 +13,27 @@ import time
 import tempfile
 import hashlib
 
-from .models import CLARAProject, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
+from .models import CLARAProject, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
 
 import re
+
+def get_user_config(user):
+    """
+    Returns a dictionary of configuration settings for the given user.
+    """
+    try:
+        user_config = UserConfiguration.objects.get(user=user)
+    except UserConfiguration.DoesNotExist:
+        # Default configuration if UserConfiguration does not exist
+        return {
+            'gpt_model': 'gpt-4',
+            # Add more default configurations here as needed
+        }
+
+    return {
+        'gpt_model': user_config.gpt_model,
+        # Add more configurations here as they are added to the model
+    }
 
 # Used in callback function passed to asynchronous processes,
 # so that they can report progress. 

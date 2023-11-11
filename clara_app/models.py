@@ -37,6 +37,10 @@ class UserProfile(models.Model):
     def is_language_master(self):
         return self.user.language_master_set.exists()
 
+class UserConfiguration(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    gpt_model = models.CharField(max_length=50, default='gpt-4')
+
 class LanguageMaster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='language_master_set')
     language = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES_AND_DEFAULT)

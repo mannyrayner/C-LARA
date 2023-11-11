@@ -14,6 +14,7 @@ urlpatterns = [
     path('home/', views.home, name='home'),  
     path('profile/', views.profile, name='profile'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
+    path('user_config/', views.user_config, name='user_config'),
     path('add_credit/', views.add_credit, name='add_credit'),
     path('credit_balance/', views.credit_balance, name='credit_balance'),
     path('delete_tts_data/', views.delete_tts_data, name='delete_tts_data'),
