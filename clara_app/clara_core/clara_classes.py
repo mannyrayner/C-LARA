@@ -198,8 +198,10 @@ class Text:
         return text
 
 class Image:
-    def __init__(self, image_file_path, image_name, associated_text, associated_areas, page, position, page_object=None):
+    def __init__(self, image_file_path, thumbnail_file_path, image_name,
+                 associated_text, associated_areas, page, position, page_object=None):
         self.image_file_path = image_file_path
+        self.thumbnail_file_path = thumbnail_file_path
         self.image_name = image_name
         self.associated_text = associated_text
         self.associated_areas = associated_areas
