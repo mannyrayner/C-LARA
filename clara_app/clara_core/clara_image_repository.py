@@ -26,6 +26,8 @@ from .clara_classes import Image, InternalCLARAError
 
 from pathlib import Path
 
+from PIL import Image as PILImage
+
 import os
 import traceback
 
@@ -170,9 +172,11 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    image = Image(result[0], image_name, result[1], result[2], result[3], result[4])
+                    thumbnail = self._generate_thumbnail_name(result[0])
+                    image = Image(result[0], thumbnail, image_name, result[1], result[2], result[3], result[4])
                 else:  # Assuming PostgreSQL
-                    image = Image(result['file_path'], image_name, result['associated_text'], 
+                    thumbnail = self._generate_thumbnail_name(result['file_path'])
+                    image = Image(result['file_path'], thumbnail, image_name, result['associated_text'], 
                                   result['associated_areas'], result['page'], result['position'])
             else:
                 image = None
@@ -208,9 +212,11 @@ class ImageRepository:
             
             if result:
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    image = Image(result[0], result[1], result[2], result[3], result[4], result[5])
+                    thumbnail = self._generate_thumbnail_name(result[0])
+                    image = Image(result[0], thumbnail, result[1], result[2], result[3], result[4], result[5])
                 else:  # Assuming PostgreSQL
-                    image = Image(result['file_path'], result['image_name'], result['associated_text'],
+                    thumbnail = self._generate_thumbnail_name(result['file_path'])
+                    image = Image(result['file_path'], thumbnail, result['image_name'], result['associated_text'],
                                   result['associated_areas'], result['page'], result['position'])
             else:
                 image = None
@@ -235,6 +241,23 @@ class ImageRepository:
         file_name = basename(source_file) if keep_file_name else f"{project_id}_{len(list_files_in_directory(project_dir)) + 1}.png"
         destination_path = str(Path(project_dir) / file_name)
         copy_local_file(source_file, destination_path)
+
+        try:
+            original_image = PILImage.open(source_file)
+            thumbnail_size = (100, 100)  # Example size, adjust as needed
+            original_image.thumbnail(thumbnail_size)
+            thumbnail_source_file = self._generate_thumbnail_name(source_file)
+            original_image.save(thumbnail_source_file)
+
+            thumbnail_file_name = self._generate_thumbnail_name(file_name)
+            thumbnail_destination_path = str(Path(project_dir) / thumbnail_file_name)
+            copy_local_file(thumbnail_source_file, thumbnail_destination_path)
+
+            post_task_update(callback, f'--- Thumbnail stored at {thumbnail_destination_path}')
+        except Exception as e:
+            post_task_update(callback, f'*** Error when generating thumbnail for {file_name}: {str(e)}')
+            # Handle the error appropriately
+            
         return destination_path
 
     def remove_entry(self, project_id, image_name, callback=None):
@@ -292,3 +315,6 @@ class ImageRepository:
             post_task_update(callback, f'*** Error when retrieving annotated image text for project {project_id}: {str(e)}')
             raise InternalCLARAError(message='Image database inconsistency')
 
+    def _generate_thumbnail_name(self, original_file_name):
+        name, ext = os.path.splitext(original_file_name)
+        return f"{name}_thumbnail{ext}"
