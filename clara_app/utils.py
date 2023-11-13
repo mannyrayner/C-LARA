@@ -32,7 +32,7 @@ def get_user_config(user):
 
     return {
         'gpt_model': user_config.gpt_model,
-        # Add more configurations here as they are added to the model
+        'max_annotation_words': user_config.max_annotation_words,
     }
 
 # Used in callback function passed to asynchronous processes,
