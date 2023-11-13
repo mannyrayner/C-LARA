@@ -35,10 +35,14 @@ class UserProfileForm(forms.ModelForm):
 class UserConfigForm(forms.ModelForm):
     class Meta:
         model = UserConfiguration
-        fields = ['gpt_model']
+        fields = ['gpt_model', 'max_annotation_words']  
         widgets = {
             'gpt_model': forms.Select(choices=[('gpt-4', 'GPT-4'),
-                                               ('gpt-4-1106-preview', 'GPT-4 Turbo')])
+                                               ('gpt-4-1106-preview', 'GPT-4 Turbo')]),
+            'max_annotation_words': forms.Select(choices=[(100, '100'),
+                                                          (250, '250'),
+                                                          (500, '500'),
+                                                          (1000, '1000')])
         }
         
 class AssignLanguageMasterForm(forms.Form):

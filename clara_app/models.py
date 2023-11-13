@@ -40,6 +40,7 @@ class UserProfile(models.Model):
 class UserConfiguration(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     gpt_model = models.CharField(max_length=50, default='gpt-4')
+    max_annotation_words = models.IntegerField(default=100)
 
 class LanguageMaster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='language_master_set')
