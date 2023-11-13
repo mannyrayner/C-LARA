@@ -203,7 +203,15 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+if os.getenv('CLARA_ENVIRONMENT') == 'heroku':
+    # Assuming AWS_S3_CUSTOM_DOMAIN and AWS_LOCATION are set for Heroku
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/static/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/media/'
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
+        "staticfiles": {"BACKEND": "storages.backends.s3boto3.S3StaticStorage"},
+    }
+else:
     STATIC_URL = '/static/'
     MEDIA_URL = '/media/'  # Local media URL
     MEDIA_ROOT = BASE_DIR / 'mediafiles'
@@ -216,14 +224,6 @@ if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
         "staticfiles": {
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
-    }
-else:
-    # Assuming AWS_S3_CUSTOM_DOMAIN and AWS_LOCATION are set for Heroku
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/static/'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/media/'
-    STORAGES = {
-        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
-        "staticfiles": {"BACKEND": "storages.backends.s3boto3.S3StaticStorage"},
     }
 
 # Default primary key field type
