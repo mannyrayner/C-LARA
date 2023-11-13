@@ -98,10 +98,19 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
 
 def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, annotated_text, l1_language, l2_language,
                                           config_info={}, callback=None):
+
+    post_task_update(callback, f'--- Call generate_or_improve_annotated_version, config_info = {config_info}')
+    
     source_version = 'segmented' if annotate_or_improve == 'annotate' else gloss_or_lemma
     internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
+
+    # Use max_annotation_words from config_info if available, otherwise default to a preset value
+    if 'max_annotation_words' in config_info:
+        max_elements = config_info['max_annotation_words']
+    else:
+        max_elements = int(config.get('chatgpt4_annotation', 'max_elements_to_annotate'))
 
     # Extract a list of Word and NonWordText items 
     elements = internalised_annotated_text.content_elements()
@@ -110,7 +119,6 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, a
     def split_elements(elements, max_elements):
         return [elements[i:i + max_elements] for i in range(0, len(elements), max_elements)]
 
-    max_elements = int(config.get('chatgpt4_annotation', 'max_elements_to_annotate'))
     chunks = split_elements(elements, max_elements)
 
     # Annotate each chunk separately and store the results in the annotated_elements list
