@@ -7,26 +7,23 @@ Last updated Nov 9 2023
 
 CURRENTLY ACTIVE PRIORITIES
 
-1. Make gpt-4-turbo available in C-LARA.
-
-2. Extension of C-LARA code to support annotated images. This will
+1. Extension of C-LARA code to support annotated images. This will
 enable integration with a second Melbourne Uni project, which is
 producing a graphical editing tool for this task. We are working on
 adding the relevant extensions and are now perhaps 80% done. We want
 this to be ready for when the students come back after exams mid-Nov.
-We have two things left to do: add thumbnails to concordance entries
-with images, and make it possible to include multiple images in a
-C-LARA text.
+We have one thing left to do: make it possible to include multiple
+images in a C-LARA text.
 
-3. Integration of some version of "phonetic text" into C-LARA, porting
+2. Integration of some version of "phonetic text" into C-LARA, porting
 this functionality from the LARA code. Pauline Welby will be visiting
 Adelaide Nov 22-25, and we said phonetic text would be the main item to
 discuss.
 
-4. Ongoing email discussion with Denis about AskTheCode plugin.
+3. Ongoing email discussion with Denis about AskTheCode plugin.
 No deadline but frequent exchanges.
 
-5. Ongoing discussion with Papr Memory about their memory plugin.
+4. Ongoing discussion with Papr Memory about their memory plugin.
 They think it should be possible for users to share memories,
 which could have important implications for C-LARA.
 No deadline but frequent exchanges.
@@ -47,9 +44,7 @@ Recorder.  An initial API has been added on the C-LARA side. Currently
 on hold while students do exams.
 
 4. Explore possibilities for making annotation of multi-words more
-accurate. Several ideas have been discussed. This is highly relevant for
-our upcoming presentation at  "Literacy and Contemporary Society:
-Creativity, Equity, Social Action"
+accurate. Several ideas have been discussed. 
 
 5. Make it possible to add C-LARA images using DALL-E-3
 
@@ -62,5 +57,8 @@ the vision-enabled ChatGPT-4V is available.
 
 8. Prepare our presentation for "Literacy and Contemporary Society:
 Creativity, Equity, Social Action", Dec 4-6.
+
+9. Implement some version of the "Reading histories" idea from LARA.
+This should be significantly easier in C-LARA.
 
 
