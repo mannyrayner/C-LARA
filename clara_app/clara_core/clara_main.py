@@ -660,9 +660,9 @@ class CLARAProjectInternal:
         audio_annotator.annotate_text(text_object, callback=callback)
         post_task_update(callback, f"--- Audio annotations done")
 
-        # Add image if it exists
-        image = self.get_current_project_image()
-        if image:
+        images = self.get_all_project_images()
+        post_task_update(callback, f"--- Found {len(images)} images")
+        for image in images:
             # Find the corresponding Page object, if there is one.
             page_object = text_object.find_page_by_image(image)
             if page_object:
@@ -838,6 +838,23 @@ class CLARAProjectInternal:
             return current_image
         except Exception as e:
             post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
+            # Handle the exception as needed
+            return None
+
+    # Retrieves all images associated with the project
+    def get_all_project_images(self, callback=None):
+        try:
+            project_id = self.id
+            
+            post_task_update(callback, f"--- Retrieving all images for project {project_id}")
+
+            # Logic to get all image entries from the repository
+            all_images = self.image_repository.get_all_entries(project_id)
+
+            post_task_update(callback, f"--- All images retrieved successfully, total: {len(all_images)}")
+            return all_images
+        except Exception as e:
+            post_task_update(callback, f"*** Error when retrieving images: {str(e)}")
             # Handle the exception as needed
             return None
 

@@ -187,7 +187,8 @@ class ImageRepository:
             post_task_update(callback, f'*** Error when looking for "{image_name}" in Image database: "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Image database inconsistency')
 
-
+    # This method will be retired as soon as we have moved from the initial one-image scenario
+    # to the general multi-image scenario.
     def get_current_entry(self, project_id, callback=None):
         try:
             project_id = str(project_id)
@@ -227,6 +228,45 @@ class ImageRepository:
                     
         except Exception as e:
             post_task_update(callback, f'*** Error when retrieving current entry for project {project_id}: {str(e)}')
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def get_all_entries(self, project_id, callback=None):
+        try:
+            project_id = str(project_id)
+            post_task_update(callback, f'--- Retrieving all images for project {project_id}')
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT file_path, image_name, associated_text, associated_areas, page, position FROM image_metadata WHERE project_id = ?",
+                               (project_id,))
+            else:
+                # Assume postgres
+                cursor.execute("""SELECT file_path, image_name, associated_text, associated_areas, page, position FROM image_metadata 
+                                  WHERE project_id = %(project_id)s""",
+                               {
+                                  'project_id': project_id
+                               })
+            
+            results = cursor.fetchall()
+            connection.close()
+
+            images = []
+            for result in results:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    thumbnail = self._generate_thumbnail_name(result[0])
+                    image = Image(result[0], thumbnail, result[1], result[2], result[3], result[4], result[5])
+                else:  # Assuming PostgreSQL
+                    thumbnail = self._generate_thumbnail_name(result['file_path'])
+                    image = Image(result['file_path'], thumbnail, result['image_name'], result['associated_text'],
+                                  result['associated_areas'], result['page'], result['position'])
+                images.append(image)
+
+            post_task_update(callback, f'--- Retrieved {len(images)} images for project {project_id}')
+            return images
+                
+        except Exception as e:
+            post_task_update(callback, f'*** Error when retrieving images for project {project_id}: {str(e)}')
             raise InternalCLARAError(message='Image database inconsistency')
 
 
