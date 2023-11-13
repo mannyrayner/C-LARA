@@ -62,8 +62,10 @@ class StaticHTMLRenderer:
 
     def render_concordance_page(self, lemma, concordance_segments, l2_language):
         template = self.template_env.get_template('concordance_page.html')
+        project_id_internal = self.project_id_internal
         rendered_page = template.render(lemma=lemma,
                                         concordance_segments=concordance_segments,
+                                        project_id_internal=project_id_internal,
                                         l2_language=l2_language)
         return rendered_page
 

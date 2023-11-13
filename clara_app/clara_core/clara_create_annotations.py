@@ -99,7 +99,7 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
 def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, annotated_text, l1_language, l2_language,
                                           config_info={}, callback=None):
 
-    post_task_update(callback, f'--- Call generate_or_improve_annotated_version, config_info = {config_info}')
+    #post_task_update(callback, f'--- Call generate_or_improve_annotated_version, config_info = {config_info}')
     
     source_version = 'segmented' if annotate_or_improve == 'annotate' else gloss_or_lemma
     internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)

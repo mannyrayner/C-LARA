@@ -82,42 +82,46 @@ def image_to_content_element(image, callback=None):
     # Check if page_object or associated_areas exists
     #print(f'--- Calling image_to_content_element. page_object = {image.page_object}, associated_areas = {image.associated_areas}')
     width, height = get_image_dimensions(image.image_file_path, callback=callback)
+    thumbnail_width, thumbnail_height = get_image_dimensions(image.thumbnail_file_path, callback=callback)
     if not image.page_object or not image.associated_areas:
-        return ContentElement('Image', {'src': basename(image.image_file_path),
-                                        'width': width,
-                                        'height': height,
-                                        'transformed_segments': None})
-    
-    page_object_segments = image.page_object.segments
-    associated_areas_segments = json.loads(image.associated_areas)['segments']
-    transformed_segments = []
-    for segment, associated_segment in zip(page_object_segments, associated_areas_segments):
-        # Remove all non-word ContentElements
-        words_only = [ce for ce in segment.content_elements if ce.type == 'Word']
-        
-        # Add speaker_control and translation_control to words_only for coordinate transfer
-        words_only.extend([ContentElement('Word', 'SPEAKER-CONTROL', {}), ContentElement('Word', 'TRANSLATION-CONTROL', {})])
-        
-        # Use difflib to match words in segment with associated areas
-        s = SequenceMatcher(None, [ce.content for ce in words_only], [area['item'] for area in associated_segment])
-        for opcode, a0, a1, b0, b1 in s.get_opcodes():
-            if opcode == 'equal':
-                for i, j in zip(range(a0, a1), range(b0, b1)):
-                    #words_only[i].annotations['coordinates'] = associated_segment[j]['coordinates']
-                    coordinates = associated_segment[j]['coordinates']
-                    if coordinates:
-                        if len(coordinates) == 2:  # Rectangle
-                            x1, y1 = coordinates[0]
-                            x2, y2 = coordinates[1]
-                            words_only[i].annotations['shape'] = 'rectangle'
-                            words_only[i].annotations['coordinates'] = {'x': x1, 'y': y1, 'width': x2 - x1, 'height': y2 - y1}
-                        else:  # Polygon
-                            words_only[i].annotations['shape'] = 'polygon'
-                            words_only[i].annotations['coordinates'] = coordinates
-        
-        # Create a new segment with the transformed words
-        transformed_segment = Segment(words_only)
-        transformed_segments.append(transformed_segment)
-    result = ContentElement('Image', {'src': basename(image.image_file_path), 'width': width, 'height': height, 'transformed_segments': transformed_segments})
+        transformed_segments = None
+    else:
+        page_object_segments = image.page_object.segments
+        associated_areas_segments = json.loads(image.associated_areas)['segments']
+        transformed_segments = []
+        for segment, associated_segment in zip(page_object_segments, associated_areas_segments):
+            # Remove all non-word ContentElements
+            words_only = [ce for ce in segment.content_elements if ce.type == 'Word']
+            
+            # Add speaker_control and translation_control to words_only for coordinate transfer
+            words_only.extend([ContentElement('Word', 'SPEAKER-CONTROL', {}), ContentElement('Word', 'TRANSLATION-CONTROL', {})])
+            
+            # Use difflib to match words in segment with associated areas
+            s = SequenceMatcher(None, [ce.content for ce in words_only], [area['item'] for area in associated_segment])
+            for opcode, a0, a1, b0, b1 in s.get_opcodes():
+                if opcode == 'equal':
+                    for i, j in zip(range(a0, a1), range(b0, b1)):
+                        #words_only[i].annotations['coordinates'] = associated_segment[j]['coordinates']
+                        coordinates = associated_segment[j]['coordinates']
+                        if coordinates:
+                            if len(coordinates) == 2:  # Rectangle
+                                x1, y1 = coordinates[0]
+                                x2, y2 = coordinates[1]
+                                words_only[i].annotations['shape'] = 'rectangle'
+                                words_only[i].annotations['coordinates'] = {'x': x1, 'y': y1, 'width': x2 - x1, 'height': y2 - y1}
+                            else:  # Polygon
+                                words_only[i].annotations['shape'] = 'polygon'
+                                words_only[i].annotations['coordinates'] = coordinates
+            
+            # Create a new segment with the transformed words
+            transformed_segment = Segment(words_only)
+            transformed_segments.append(transformed_segment)
+    result = ContentElement('Image', {'src': basename(image.image_file_path),
+                                      'width': width,
+                                      'height': height,
+                                      'thumbnail_src': basename(image.thumbnail_file_path),
+                                      'thumbnail_width': thumbnail_width,
+                                      'thumbnail_height': thumbnail_height,
+                                      'transformed_segments': transformed_segments})
     #print(f'--- Produced {result}') 
     return result
