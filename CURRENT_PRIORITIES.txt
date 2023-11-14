@@ -3,17 +3,15 @@ This file contains a short list of current and near-future priority
 activities. It should be updated often, if possible at least twice
 a week.
 
-Last updated Nov 9 2023
+Last updated Nov 13 2023
 
 CURRENTLY ACTIVE PRIORITIES
 
 1. Extension of C-LARA code to support annotated images. This will
-enable integration with a second Melbourne Uni project, which is
-producing a graphical editing tool for this task. We are working on
-adding the relevant extensions and are now perhaps 80% done. We want
-this to be ready for when the students come back after exams mid-Nov.
-We have one thing left to do: make it possible to include multiple
-images in a C-LARA text.
+enable integration with a Melbourne Uni project which has produced a
+graphical editing tool for this task. We are working on adding the
+relevant extensions and are now almost done. The students will soon
+hand over the code and doc, after which we will do the integration.
 
 2. Integration of some version of "phonetic text" into C-LARA, porting
 this functionality from the LARA code. Pauline Welby will be visiting
@@ -31,17 +29,14 @@ No deadline but frequent exchanges.
 PROBABLY ACTIVE SOON
 
 1. Integration with Melbourne Uni student project Manual Text/Audio
-Alignment. First version is now almost working. Currently on hold
-while students do exams.
+Alignment. First version is now almost working. 
 
 2. Integration with Melbourne Uni student project Automatic Text/Audio
 Alignment. We are currently discussing with the team. The integration
-should be very similar to (1) above. Currently on hold while students
-do exams.
+should be very similar to (1) above. 
 
-3. Integration with a third Melbourne Uni student project, Voice
-Recorder.  An initial API has been added on the C-LARA side. Currently
-on hold while students do exams.
+3. Integration with Melbourne Uni student project, Voice Recorder.  An
+initial API has been added on the C-LARA side. 
 
 4. Explore possibilities for making annotation of multi-words more
 accurate. Several ideas have been discussed. 
