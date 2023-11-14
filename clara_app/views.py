@@ -25,6 +25,7 @@ from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextFor
 from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
+from .forms import ImageForm, ImageFormSet
 from .utils import get_user_config, create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
@@ -1606,6 +1607,54 @@ def images_view(request, project_id):
     }
     return render(request, 'clara_app/images.html', context)
 
+@login_required
+@user_has_a_project_role
+def edit_images(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    if request.method == 'POST':
+        formset = ImageFormSet(request.POST, request.FILES)
+        print(f'--- Found {len(formset)} images')
+        if formset.is_valid():
+            for form in formset:
+                uploaded_image_file_path = form.cleaned_data.get('image_file_path')
+                image_name = form.cleaned_data.get('image_name')
+                associated_text = form.cleaned_data.get('associated_text')
+                associated_areas = form.cleaned_data.get('associated_areas')
+                page = form.cleaned_data.get('page')
+                position = form.cleaned_data.get('position')
+                print(f'--- uploaded_image_file_path = {uploaded_image_file_path}, image_name = {image_name}')
+
+                if uploaded_image_file_path:
+                    real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
+                    print(f'--- real_image_file_path = {real_image_file_path}')
+
+                    # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
+                    if not associated_areas and associated_text and image_name:  
+                        # Generate the uninstantiated annotated image structure
+                        structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
+                        # Convert the structure to a string and store it in 'associated_areas'
+                        associated_areas = json.dumps(structure)
+
+                    clara_project_internal.add_project_image(image_name, real_image_file_path,
+                                                             associated_text=associated_text, associated_areas=associated_areas,
+                                                             page=page, position=position)
+        messages.success(request, "Image data saved")
+        return redirect('edit_images', project_id=project_id)
+    else:
+        # Retrieve existing images
+        images = clara_project_internal.get_all_project_images()
+        initial_data = [{'image_file_path': img.image_file_path,
+                         'image_name': img.image_name,
+                         'associated_text': img.associated_text,
+                         'associated_areas': img.associated_areas,
+                         'page': img.page,
+                         'position': img.position}
+                        for img in images]  
+        formset = ImageFormSet(initial=initial_data)
+
+    return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project})
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
