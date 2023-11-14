@@ -36,7 +36,7 @@ class ConcordanceAnnotator:
                         if lemma:
                             concordance[lemma]["segments"].add(segment.annotations['segment_uid'])  # Add the segment UID to the set
                             concordance[lemma]["frequency"] += 1
-                    elif element.type == "Image" and 'transformed_segments' in element.content:
+                    elif element.type == "Image" and 'transformed_segments' in element.content and element.content['transformed_segments']:
                         # We have an annotated image
                         image_segments = element.content['transformed_segments']
                         for image_segment in image_segments:

@@ -146,6 +146,8 @@ class StaticHTMLRenderer:
         post_task_update(callback, f"--- Vocabulary lists created")
         
 def adjust_audio_file_paths_in_segment_list(segments, copy_operations, multimedia_dir):
+    if not segments:
+        return
     for segment in segments:
         if 'tts' in segment.annotations and 'file_path' in segment.annotations['tts']:
             old_audio_file_path = segment.annotations['tts']['file_path']
