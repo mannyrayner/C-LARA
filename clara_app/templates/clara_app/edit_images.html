@@ -1,0 +1,16 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form in formset %}
+      {{ form.as_p }}
+    {% endfor %}
+    <button type="submit">Save changes</button>
+  </form>
+  
+  <p>
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  </p>
+{% endblock %}
