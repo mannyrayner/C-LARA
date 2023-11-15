@@ -333,6 +333,10 @@ class AudioMetadataForm(forms.Form):
 
 class ImageForm(forms.Form):
     image_file_path = forms.ImageField(label='Image File', required=False)
+    image_base_name = forms.CharField(label='Image File Base Name',
+                                      max_length=100,
+                                      widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+                                      required=False)
     image_name = forms.CharField(label='Image Name', max_length=100, required=True)
     associated_text = forms.CharField(label='Associated Text', widget=forms.Textarea, required=False)
     associated_areas = forms.CharField(label='Associated Areas', widget=forms.Textarea, required=False)

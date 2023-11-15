@@ -1615,6 +1615,7 @@ def edit_images(request, project_id):
     # Retrieve existing images
     images = clara_project_internal.get_all_project_images()
     initial_data = [{'image_file_path': img.image_file_path,
+                     'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
                      'image_name': img.image_name,
                      'associated_text': img.associated_text,
                      'associated_areas': img.associated_areas,
