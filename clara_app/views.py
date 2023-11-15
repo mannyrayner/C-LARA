@@ -1524,113 +1524,141 @@ def render_text_start(request, project_id):
         form = RenderTextForm()
         return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
 
-@login_required
-@user_has_a_project_role
-def images_view(request, project_id):
-    project = get_object_or_404(CLARAProject, pk=project_id)
-    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-
-    current_image = None
-    image_name = ''
-    associated_text = ''
-    associated_areas = ''
-    page = 1
-    position = 'bottom'
-    image_object = clara_project_internal.get_current_project_image()
-    if image_object:
-        current_image = image_object.image_file_path
-        image_name = image_object.image_name
-        associated_text = image_object.associated_text
-        associated_areas = image_object.associated_areas
-        page = image_object.page
-        position = image_object.position
-
-    # Handle POST request
-    if request.method == 'POST':
-        if 'save_image' in request.POST:
-            uploaded_image = request.FILES.get('new_image')
-            associated_text = request.POST.get('associated_text')
-            associated_areas = request.POST.get('associated_areas')
-            page_str = request.POST.get('page', '1')  # Default to '1' if not provided
-            page = int(page_str) if page_str.strip() else 1  # Convert to int if not empty, else default to 1
-            position = request.POST.get('position', 'bottom')  # Default to 'bottom' if not provided
-
-            if uploaded_image:
-                image_name = basename(uploaded_image.name)
-                image_file_path = uploaded_file_to_file(uploaded_image)
-
-            # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
-            if not associated_areas and associated_text and image_name:  
-                # Generate the uninstantiated annotated image structure
-                structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
-                # Convert the structure to a string and store it in 'associated_areas'
-                associated_areas = json.dumps(structure)
-
-            if uploaded_image:
-                current_image = clara_project_internal.add_project_image(image_name, image_file_path,
-                                                                         associated_text=associated_text, associated_areas=associated_areas,
-                                                                         page=page, position=position)
-                messages.success(request, "Image added successfully!")
-
-            if associated_text and not image_name:
-                messages.error(request, "There is no image to attach the text to")
-            elif not uploaded_image and not associated_text:
-                messages.error(request, "Nothing to process. Upload an image or provide some text")
-
-        elif 'save_areas' in request.POST:
-            associated_areas = request.POST.get('associated_areas')
-            if associated_areas and image_name:
-                clara_project_internal.store_project_associated_areas(image_name, associated_areas)
-                messages.success(request, "Associated areas saved successfully!")
-            else:
-                messages.error(request, "Need both image and areas to save.")
-        
-        elif 'remove_image' in request.POST:
-            clara_project_internal.remove_all_project_images()
-            messages.success(request, "All project images removed successfully!")
-            current_image = None
-            associated_text = ''
-            associated_areas = ''
-            page = ''
-            position = None
-
-    # Nothing to do for GET request
-        
-    base_current_image = basename(current_image) if current_image else None
-    context = {
-        'project': project,
-        'current_image': base_current_image,
-        'associated_text': associated_text,
-        'associated_areas': associated_areas,
-        'page': page,
-        'position': position
-    }
-    return render(request, 'clara_app/images.html', context)
+##@login_required
+##@user_has_a_project_role
+##def images_view(request, project_id):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##
+##    current_image = None
+##    image_name = ''
+##    associated_text = ''
+##    associated_areas = ''
+##    page = 1
+##    position = 'bottom'
+##    image_object = clara_project_internal.get_current_project_image()
+##    if image_object:
+##        current_image = image_object.image_file_path
+##        image_name = image_object.image_name
+##        associated_text = image_object.associated_text
+##        associated_areas = image_object.associated_areas
+##        page = image_object.page
+##        position = image_object.position
+##
+##    # Handle POST request
+##    if request.method == 'POST':
+##        if 'save_image' in request.POST:
+##            uploaded_image = request.FILES.get('new_image')
+##            associated_text = request.POST.get('associated_text')
+##            associated_areas = request.POST.get('associated_areas')
+##            page_str = request.POST.get('page', '1')  # Default to '1' if not provided
+##            page = int(page_str) if page_str.strip() else 1  # Convert to int if not empty, else default to 1
+##            position = request.POST.get('position', 'bottom')  # Default to 'bottom' if not provided
+##
+##            if uploaded_image:
+##                image_name = basename(uploaded_image.name)
+##                image_file_path = uploaded_file_to_file(uploaded_image)
+##
+##            # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
+##            if not associated_areas and associated_text and image_name:  
+##                # Generate the uninstantiated annotated image structure
+##                structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
+##                # Convert the structure to a string and store it in 'associated_areas'
+##                associated_areas = json.dumps(structure)
+##
+##            if uploaded_image:
+##                current_image = clara_project_internal.add_project_image(image_name, image_file_path,
+##                                                                         associated_text=associated_text, associated_areas=associated_areas,
+##                                                                         page=page, position=position)
+##                messages.success(request, "Image added successfully!")
+##
+##            if associated_text and not image_name:
+##                messages.error(request, "There is no image to attach the text to")
+##            elif not uploaded_image and not associated_text:
+##                messages.error(request, "Nothing to process. Upload an image or provide some text")
+##
+##        elif 'save_areas' in request.POST:
+##            associated_areas = request.POST.get('associated_areas')
+##            if associated_areas and image_name:
+##                clara_project_internal.store_project_associated_areas(image_name, associated_areas)
+##                messages.success(request, "Associated areas saved successfully!")
+##            else:
+##                messages.error(request, "Need both image and areas to save.")
+##        
+##        elif 'remove_image' in request.POST:
+##            clara_project_internal.remove_all_project_images()
+##            messages.success(request, "All project images removed successfully!")
+##            current_image = None
+##            associated_text = ''
+##            associated_areas = ''
+##            page = ''
+##            position = None
+##
+##    # Nothing to do for GET request
+##        
+##    base_current_image = basename(current_image) if current_image else None
+##    context = {
+##        'project': project,
+##        'current_image': base_current_image,
+##        'associated_text': associated_text,
+##        'associated_areas': associated_areas,
+##        'page': page,
+##        'position': position
+##    }
+##    return render(request, 'clara_app/images.html', context)
 
 @login_required
 @user_has_a_project_role
 def edit_images(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    # Retrieve existing images
+    images = clara_project_internal.get_all_project_images()
+    initial_data = [{'image_file_path': img.image_file_path,
+                     'image_name': img.image_name,
+                     'associated_text': img.associated_text,
+                     'associated_areas': img.associated_areas,
+                     'page': img.page,
+                     'position': img.position}
+                    for img in images]  
 
     if request.method == 'POST':
         formset = ImageFormSet(request.POST, request.FILES)
-        print(f'--- Found {len(formset)} images')
-        if formset.is_valid():
-            for form in formset:
-                uploaded_image_file_path = form.cleaned_data.get('image_file_path')
+        for i in range(0, len(formset)):
+            form = formset[i]
+            previous_record = initial_data[i] if i < len(initial_data) else None
+            # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
+            print(f"--- form #{i}: form.changed_data = {form.changed_data}")
+            if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data ):
+                if not form.is_valid():
+                    print(f'--- Invalid form data (form #{i}): {form}')
+                    messages.error(request, "Invalid form data.")
+                    return redirect('edit_images', project_id=project_id)
+                
                 image_name = form.cleaned_data.get('image_name')
+                # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
+                # If there is no file upload, the value is null
+                if form.cleaned_data.get('image_file_path'):
+                    uploaded_image_file_path = form.cleaned_data.get('image_file_path')
+                    real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
+                    print(f'--- real_image_file_path for {image_name} (from upload) = {real_image_file_path}')
+                elif previous_record:
+                    real_image_file_path = previous_record['image_file_path']
+                    print(f'--- real_image_file_path for {image_name} (previously stored) = {real_image_file_path}')
+                else:
+                    real_image_file_path = None
                 associated_text = form.cleaned_data.get('associated_text')
                 associated_areas = form.cleaned_data.get('associated_areas')
-                page = form.cleaned_data.get('page')
-                position = form.cleaned_data.get('position')
-                print(f'--- uploaded_image_file_path = {uploaded_image_file_path}, image_name = {image_name}')
+                page = form.cleaned_data.get('page', 1)
+                position = form.cleaned_data.get('position', 'bottom')
+                delete = form.cleaned_data.get('delete')
+                print(f'--- real_image_file_path = {real_image_file_path}, image_name = {image_name}, page = {page}, delete = {delete}')
 
-                if uploaded_image_file_path:
-                    real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
-                    print(f'--- real_image_file_path = {real_image_file_path}')
-
-                    # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
+                if image_name and delete:
+                    clara_project_internal.remove_project_image(image_name)
+                    messages.success(request, f"Deleted image: {image_name}")
+                elif image_name and real_image_file_path:
+                   # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
                     if not associated_areas and associated_text and image_name:  
                         # Generate the uninstantiated annotated image structure
                         structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
@@ -1640,18 +1668,9 @@ def edit_images(request, project_id):
                     clara_project_internal.add_project_image(image_name, real_image_file_path,
                                                              associated_text=associated_text, associated_areas=associated_areas,
                                                              page=page, position=position)
-        messages.success(request, "Image data saved")
+        messages.success(request, "Image data updated")
         return redirect('edit_images', project_id=project_id)
     else:
-        # Retrieve existing images
-        images = clara_project_internal.get_all_project_images()
-        initial_data = [{'image_file_path': img.image_file_path,
-                         'image_name': img.image_name,
-                         'associated_text': img.associated_text,
-                         'associated_areas': img.associated_areas,
-                         'page': img.page,
-                         'position': img.position}
-                        for img in images]  
         formset = ImageFormSet(initial=initial_data)
 
     return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project})

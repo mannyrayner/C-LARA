@@ -333,11 +333,12 @@ class AudioMetadataForm(forms.Form):
 
 class ImageForm(forms.Form):
     image_file_path = forms.ImageField(label='Image File', required=False)
-    image_name = forms.CharField(label='Image Name', max_length=100)
+    image_name = forms.CharField(label='Image Name', max_length=100, required=True)
     associated_text = forms.CharField(label='Associated Text', widget=forms.Textarea, required=False)
     associated_areas = forms.CharField(label='Associated Areas', widget=forms.Textarea, required=False)
-    page = forms.IntegerField(label='Page Number', min_value=1)
-    position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')])
+    page = forms.IntegerField(label='Page Number', min_value=1, required=True)
+    position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=True)
+    delete = forms.BooleanField(label='Delete Image', required=False)
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
     
