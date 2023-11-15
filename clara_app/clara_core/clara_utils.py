@@ -169,6 +169,9 @@ def copy_file(pathname1, pathname2):
     abspathname1 = absolute_file_name(pathname1)
     abspathname2 = absolute_file_name(pathname2)
 
+    if abspathname1 == abspathname2:
+        return
+
     if _s3_storage:
         fail_if_no_s3_bucket()
         _s3_bucket.copy({'Bucket': _s3_bucket_name, 'Key': abspathname1}, abspathname2)
@@ -180,6 +183,9 @@ def copy_file(pathname1, pathname2):
 def copy_local_file(pathname1, pathname2):
     abspathname1 = absolute_local_file_name(pathname1)
     abspathname2 = absolute_file_name(pathname2)
+
+    if abspathname1 == abspathname2:
+        return
 
     if _s3_storage:
         fail_if_no_s3_bucket()

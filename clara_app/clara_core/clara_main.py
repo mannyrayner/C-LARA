@@ -759,23 +759,23 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Image {image_name} added successfully")
             return stored_image_path
         except Exception as e:
-            post_task_update(callback, f"*** Error when adding image: {str(e)}")
+            post_task_update(callback, f"*** CLARAProjectInternal: error when adding/updating image: {str(e)}")
             # Handle the exception as needed
             return None
 
-    def store_project_associated_areas(self, image_name, associated_areas, callback=None):
-        try:
-            project_id = self.id
-            
-            post_task_update(callback, f"--- Storing associated areas for image {image_name} in project {project_id}")
-
-            # Logic to store the associated areas in the repository
-            self.image_repository.store_associated_areas(project_id, image_name, associated_areas, callback=callback)
-
-            post_task_update(callback, f"--- Associated areas for image {image_name} stored successfully")
-        except Exception as e:
-            post_task_update(callback, f"*** Error when storing associated areas: {str(e)}")
-            # Handle the exception as needed
+##    def store_project_associated_areas(self, image_name, associated_areas, callback=None):
+##        try:
+##            project_id = self.id
+##            
+##            post_task_update(callback, f"--- Storing associated areas for image {image_name} in project {project_id}")
+##
+##            # Logic to store the associated areas in the repository
+##            self.image_repository.store_associated_areas(project_id, image_name, associated_areas, callback=callback)
+##
+##            post_task_update(callback, f"--- Associated areas for image {image_name} stored successfully")
+##        except Exception as e:
+##            post_task_update(callback, f"*** Error when storing associated areas: {str(e)}")
+##            # Handle the exception as needed
 
     # Retrieves the image associated with the project
     def get_project_image(self, image_name, callback=None):
@@ -824,22 +824,22 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when removing image: {str(e)}")
             # Handle the exception as needed
 
-    # Retrieves the current image associated with the project (temporary for initial version)
-    def get_current_project_image(self, callback=None):
-        try:
-            project_id = self.id
-            
-            post_task_update(callback, f"--- Retrieving current image for project {project_id}")
-
-            # Logic to get the current image entry from the repository
-            current_image = self.image_repository.get_current_entry(project_id)
-
-            post_task_update(callback, f"--- Current image retrieved successfully")
-            return current_image
-        except Exception as e:
-            post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
-            # Handle the exception as needed
-            return None
+##    # Retrieves the current image associated with the project (temporary for initial version)
+##    def get_current_project_image(self, callback=None):
+##        try:
+##            project_id = self.id
+##            
+##            post_task_update(callback, f"--- Retrieving current image for project {project_id}")
+##
+##            # Logic to get the current image entry from the repository
+##            current_image = self.image_repository.get_current_entry(project_id)
+##
+##            post_task_update(callback, f"--- Current image retrieved successfully")
+##            return current_image
+##        except Exception as e:
+##            post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
+##            # Handle the exception as needed
+##            return None
 
     # Retrieves all images associated with the project
     def get_all_project_images(self, callback=None):
