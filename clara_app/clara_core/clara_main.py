@@ -140,6 +140,7 @@ from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository import ImageRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
+from .clara_phonetic_text import segmented_text_to_phonetic_text
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
@@ -170,6 +171,7 @@ class CLARAProjectInternal:
             "cefr_level": None,
             "segmented": None,
             "segmented_with_images": None,
+            "phonetic": None,
             "gloss": None,
             "lemma": None,
             "lemma_and_gloss": None,
@@ -231,6 +233,7 @@ class CLARAProjectInternal:
             self._copy_text_version_if_it_exists("cefr_level", new_project)
             self._copy_text_version_if_it_exists("summary", new_project)
             self._copy_text_version_if_it_exists("segmented", new_project)
+            self._copy_text_version_if_it_exists("phonetic", new_project)
             self._copy_text_version_if_it_exists("lemma", new_project)
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
@@ -345,7 +348,7 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["plain", "summary", "cefr_level", "segmented", "gloss", "lemma"]
+        versions = ["plain", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
 
         # Check if any metadata entries are missing for the existing files
         for version in versions:
@@ -571,6 +574,14 @@ class CLARAProjectInternal:
         segmented_text = self.load_text_version("segmented")
         new_segmented_text, api_calls = improve_segmented_version(segmented_text, self.l2_language, config_info=config_info, callback=callback)
         self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')
+        return api_calls
+
+    # Create a "phonetic" version of the text - so far, no use of AI
+    def create_phonetic_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        segmented_text = self.load_text_version("segmented_with_images")
+        phonetic_text = segmented_text_to_phonetic_text(segmented_text, self.l2_language)
+        self.save_text_version("phonetic", phonetic_text, user=user, label=label, source='generated')
+        api_calls = []
         return api_calls
 
     # Call ChatGPT-4 to create a version of the text with gloss annotations

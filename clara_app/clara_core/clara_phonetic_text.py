@@ -3,15 +3,6 @@ from .clara_internalise import internalize_text
 from .clara_classes import Text, Page, Segment, ContentElement
 from .clara_utils import basename, get_image_dimensions
 
-def test(id):
-    if id == 'barngarla_welcome_to_country':
-        input_file = '$CLARA/tmp/welcome_to_country_segmented.txt'
-        output_file = '$CLARA/tmp/welcome_to_country_phonetic.txt'
-        language = 'barngarla'
-        segmented_text_file_to_phonetic_text_file(input_file, output_file, language)
-    else:
-        print(f'*** Error: unknown id "{Id}"')
-
 # ------------------------------------------
 
 def segmented_text_to_phonetic_text(segmented_text, l2_language):
