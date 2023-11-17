@@ -79,8 +79,8 @@ class Segment:
         last_type = None
         for element in self.content_elements:
             this_type = element.type
-            # When producing 'segmented' text, we need to add | markers between continuous Words.
-            if annotation_type == 'segmented' and this_type == 'Word' and last_type == 'Word':
+            # When producing 'segmented' or 'phonetic' text, we need to add | markers between continuous Words.
+            if annotation_type in ( 'segmented', 'phonetic' ) and this_type == 'Word' and last_type == 'Word':
                 out_text += '|'
             if element.type in ( 'Word', 'NonWordText' ):
                 out_text += element.to_text(annotation_type)
