@@ -1,4 +1,5 @@
 
+from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 from .clara_internalise import internalize_text
 from .clara_classes import Text, Page, Segment, ContentElement
 from .clara_utils import basename, get_image_dimensions
@@ -6,30 +7,34 @@ from .clara_utils import basename, get_image_dimensions
 # ------------------------------------------
 
 def segmented_text_to_phonetic_text(segmented_text, l2_language):
+    repository = PhoneticOrthographyRepository()
+    orthography, accents = repository.get_parsed_entry(l2_language)
+    if not orthography:
+        return ''
+    alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(orthography + _hyphens_and_apostrophes)
+    parameters = ( 'phonetic_orthography', alphabet_internalised, accents )
     l1_language = None
     segmented_text_object = internalize_text(segmented_text, l2_language, l1_language, 'segmented')
-    phonetic_text_object = segmented_text_object_to_phonetic_text_object(segmented_text_object)
+    phonetic_text_object = segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters)
     return phonetic_text_object.to_text(annotation_type='phonetic')
                                 
-def segmented_text_object_to_phonetic_text_object(segmented_text_object):
-    language = segmented_text_object.l2_language
-    l1_language = segmented_text_object.l1_language
+def segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters):
     phonetic_pages = []
     for page in segmented_text_object.pages:
         phonetic_segments = []
         for segment in page.segments:
             for content_element in segment.content_elements:
                 if content_element.type == 'Word':
-                    phonetic_segment = word_to_phonetic_segment(content_element.content, language)
+                    phonetic_segment = word_to_phonetic_segment(content_element.content, parameters)
                 else:
                     phonetic_segment = Segment([content_element])
                 phonetic_segments += [ phonetic_segment ]
         phonetic_pages += [ Page(phonetic_segments) ]
-    return Text(phonetic_pages, language, l1_language)
+    return Text(phonetic_pages, segmented_text_object.l2_language, segmented_text_object.l1_language)
 
-def word_to_phonetic_segment(word, language):
+def word_to_phonetic_segment(word, parameters):
     word1 = normalise_word_for_phonetic_decomposition(word)
-    aligned_word, aligned_phonetic = guess_alignment_for_word(word1, language)
+    aligned_word, aligned_phonetic = guess_alignment_for_word(word1, parameters)
     aligned_word1 = transfer_casing_to_aligned_word(word, aligned_word)
     word_components = aligned_word1.split('|')
     phonetic_components = aligned_phonetic.split('|')
@@ -62,40 +67,15 @@ def transfer_casing_to_aligned_word1(word, aligned_word):
             word = word[1:]
     return aligned_word1
 
-def guess_alignment_for_word(word, language):
-    if phonetically_spelled_language(language):
-        return alignment_for_phonetically_spelled_language(word, language)
-
+def guess_alignment_for_word(word, parameters):
+    if parameters[0] == 'phonetic_orthography':
+        alphabet_internalised, accents = parameters[1:]
+        return alignment_for_phonetically_spelled_language(word, alphabet_internalised, accents)
+    
 # ------------------------------------------
 
-# Temporary solution. Really we want some kind of repository object with content that can be edited through a view
-_phonetically_spelled_languages = { 'barngarla': [ 'a', 'ai', 'aw',
-                                                   'b', 'd',
-                                                   'dy', 'dh', 'g', 'i',
-                                                   'ii', 'l', 'ly', 'm',
-                                                   'n', 'ng', 'nh', 'ny',
-                                                   'oo', 'r', 'rr', 'rd',
-                                                   'rl', 'rn', 'w', 'y'
-                                                   ]
-                                    }
-
-_accent_chars = {}
-
-def phonetically_spelled_language(language):
-    if not language in _phonetically_spelled_languages:
-        return False
-    alphabet = _phonetically_spelled_languages[language]
-    alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(alphabet + _hyphens_and_apostrophes)
-    if alphabet_internalised == False:
-        print(f'*** Error: malformed phonetic list for "{Language}"')
-        return False
-    else:
-        return True
-
-def alignment_for_phonetically_spelled_language(word, language):
-    alphabet = _phonetically_spelled_languages[language]
-    accent_chars = _accent_chars[language] if language in _accent_chars else []
-    ( decomposition_word, decomposition_phonetic ) = greedy_decomposition_of_word(word, alphabet, accent_chars)
+def alignment_for_phonetically_spelled_language(word, alphabet_internalised, accent_chars):
+    ( decomposition_word, decomposition_phonetic ) = greedy_decomposition_of_word(word, alphabet_internalised, accent_chars)
     if decomposition_word == False:
         print(f'*** Warning: unable to spell out "{word}" as {language} word')
         return ( word, word )
@@ -107,9 +87,8 @@ _half_space = "\u200c"
 
 _hyphens_and_apostrophes = [ "-", "'", "’", _half_space ]
 
-def greedy_decomposition_of_word(word, alphabet, accent_chars):
+def greedy_decomposition_of_word(word, alphabet_internalised, accent_chars):
     ( decomposition_word, decomposition_phonetic ) = ( [], [] )
-    alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(alphabet + _hyphens_and_apostrophes)
     while True:
         if word == '':
             return ( decomposition_word, decomposition_phonetic )
@@ -145,7 +124,7 @@ def internalise_alphabet_for_phonetically_spelled_language(alphabet):
         elif isinstance(item, ( list, tuple )) and len(item) != 0:
             main_letter = item[0]
             for letter in item:
-                internalised[Letter] = main_letter
+                internalised[letter] = main_letter
         else:
             print(f'*** Error: bad item in alphabet for phonetically spelled language: {item}')
             return False

@@ -33,41 +33,50 @@ class PhoneticOrthographyRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Phonetic orthography repository inconsistency')
 
-    def save_entry(self, language, text):
+    def save_entry(self, language, orthography_text, accents_text, callback=None):
         try:
-            file = self._pathname_for_language(language)
-            write_txt_file(text, file)
+            orthography_file = self._orthography_pathname_for_language(language)
+            accents_file = self._accents_pathname_for_language(language)
+            
+            write_txt_file(orthography_text, orthography_file)
+            write_txt_file(accents_text, accents_file)
             
         except Exception as e:
             post_task_update(callback, f'*** Error when saving phonetic orthography repository entry for "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic orthography repository inconsistency')
 
-    def get_text_entry(self, language):
+    def get_text_entry(self, language, callback=None):
         try:
-            file = self._pathname_for_language(language)
-            if file_exists(file):
-                return read_txt_file(file)
+            orthography_file = self._orthography_pathname_for_language(language)
+            accents_file = self._accents_pathname_for_language(language)
+            
+            if file_exists(orthography_file) and file_exists(accents_file):
+                return ( read_txt_file(orthography_file), read_txt_file(accents_file) )
             else:
-                return None
+                return ( None, None )
             
         except Exception as e:
             post_task_update(callback, f'*** Error when getting plain phonetic orthography repository entry for "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic orthography repository inconsistency')
 
-    def get_parsed_entry(self, language):
+    def get_parsed_entry(self, language, callback=None):
         try:
-            text = self.get_text_entry(language)
-            if not text:
-                return None
+            orthography_text, accents_text = self.get_text_entry(language)
+            if not orthography_text:
+                return ( None, None )
             else:
-                return self._parse_phonetic_orthography_entry(text)
+                return ( self._parse_phonetic_orthography_entry(orthography_text),
+                         self._parse_accents_entry(accents_text) )
             
         except Exception as e:
             post_task_update(callback, f'*** Error when getting parsed phonetic orthography repository entry for "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic orthography repository inconsistency')
 
-    def _pathname_for_language(self, language):
-        return absolute_file_name(Path(self.base_dir) / f'{language}.txt')
+    def _orthography_pathname_for_language(self, language):
+        return absolute_file_name(Path(self.base_dir) / f'{language}_orthography.txt')
+
+    def _accents_pathname_for_language(self, language):
+        return absolute_file_name(Path(self.base_dir) / f'{language}_accents.txt')
 
     def _parse_phonetic_orthography_entry(self, text):
         lines = text.split('\n')
@@ -77,6 +86,15 @@ class PhoneticOrthographyRepository:
             if len(parsed_line) != 0:
                 parsed_lines += [ parsed_line ]
         return parsed_lines
+
+    def _parse_accents_entry(self, text):
+        lines = text.split('\n')
+        accents = []
+        for line in lines:
+            parsed_line = line.split()
+            if len(parsed_line) != 0:
+                accents += [ parsed_line ]
+        return accents
     
 
 

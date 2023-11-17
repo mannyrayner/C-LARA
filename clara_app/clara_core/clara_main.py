@@ -869,6 +869,7 @@ class CLARAProjectInternal:
             # Handle the exception as needed
             return None
 
+
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
