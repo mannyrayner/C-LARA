@@ -129,8 +129,8 @@ def parse_content_elements_glossed_or_tagged(segment_text, text_type):
             # Word with smaller pieces
             pieces = word_with_annotation.split("|")
             for piece in pieces:
-                content_element = word_with_annotation_to_content_element(piece, annotation_key)
-                if content_element:
+                if len(piece) != 0:
+                    content_element = word_with_annotation_to_content_element(piece, annotation_key)
                     content_elements.append(content_element)
         elif word_with_annotation.startswith("<img") or word_with_annotation.startswith("<audio"):
             # Embedded image or audio

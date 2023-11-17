@@ -22,6 +22,7 @@ def segmented_text_to_phonetic_text(segmented_text, l2_language):
                                 
 def segmented_text_object_to_phonetic_text_object(segmented_text_object):
     language = segmented_text_object.l2_language
+    l1_language = segmented_text_object.l1_language
     phonetic_pages = []
     for page in segmented_text_object.pages:
         phonetic_segments = []
@@ -33,7 +34,7 @@ def segmented_text_object_to_phonetic_text_object(segmented_text_object):
                     phonetic_segment = Segment([content_element])
                 phonetic_segments += [ phonetic_segment ]
         phonetic_pages += [ Page(phonetic_segments) ]
-    return Text(phonetic_pages)
+    return Text(phonetic_pages, language, l1_language)
 
 def word_to_phonetic_segment(word, language):
     word1 = normalise_word_for_phonetic_decomposition(word)
@@ -42,8 +43,11 @@ def word_to_phonetic_segment(word, language):
     word_components = aligned_word1.split('|')
     phonetic_components = aligned_phonetic.split('|')
     phonetic_pairs = zip(word_components, phonetic_components)
-    phonetic_elements = [ word_phonetic_pair_to_element for phonetic_pair in phonetic_pairs ]
+    phonetic_elements = [ word_phonetic_pair_to_element(phonetic_pair) for phonetic_pair in phonetic_pairs ]
     return Segment(phonetic_elements)
+
+def normalise_word_for_phonetic_decomposition(word):
+    return word.lower().replace("’", "'")
 
 def word_phonetic_pair_to_element(pair):
     word, phonetic = pair
@@ -53,7 +57,7 @@ def transfer_casing_to_aligned_word(word, aligned_word):
     try:
         return transfer_casing_to_aligned_word1(word, aligned_word)
     except:
-        lara_utils.print_and_flush(f'*** Error: bad call: transfer_casing_to_aligned_word({word}, {aligned_word})')
+        print(f'*** Error: bad call: transfer_casing_to_aligned_word({word}, {aligned_word})')
         return aligned_word
 
 def transfer_casing_to_aligned_word1(word, aligned_word):
@@ -87,7 +91,7 @@ _phonetically_spelled_languages = { 'barngarla': [ 'a', 'ai', 'aw',
 _accent_chars = {}
 
 def phonetically_spelled_language(language):
-    if not Language in _phonetically_spelled_languages:
+    if not language in _phonetically_spelled_languages:
         return False
     alphabet = _phonetically_spelled_languages[language]
     alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(alphabet + _hyphens_and_apostrophes)
@@ -100,9 +104,9 @@ def phonetically_spelled_language(language):
 def alignment_for_phonetically_spelled_language(word, language):
     alphabet = _phonetically_spelled_languages[language]
     accent_chars = _accent_chars[language] if language in _accent_chars else []
-    ( decomposition_word, decomposition_phonetic ) = greedy_decomposition_of_word(Word, alphabet, accent_chars)
+    ( decomposition_word, decomposition_phonetic ) = greedy_decomposition_of_word(word, alphabet, accent_chars)
     if decomposition_word == False:
-        print_and_flush(f'*** Warning: unable to spell out "{word}" as {language} word')
+        print(f'*** Warning: unable to spell out "{word}" as {language} word')
         return ( word, word )
     word_with_separators = '|'.join(decomposition_word)
     phonetic_with_separators = '|'.join(decomposition_phonetic)
@@ -120,7 +124,7 @@ def greedy_decomposition_of_word(word, alphabet, accent_chars):
             return ( decomposition_word, decomposition_phonetic )
         possible_next_components = [ letter for letter in alphabet_internalised if word.startswith(letter) == True ] 
         if possible_next_components == []:
-            lara_utils.print_and_flush(f'*** Warning: unable to match "{word}" against alphabet')
+            print(f'*** Warning: unable to match "{word}" against alphabet')
             return ( False, False )
         sorted_possible_next_components = sorted(possible_next_components, key=lambda x: len(x), reverse=True)
         next_component = sorted_possible_next_components[0]
@@ -133,7 +137,7 @@ def greedy_decomposition_of_word(word, alphabet, accent_chars):
             decomposition_phonetic += [ '' ]
         word = word[len(next_component_with_accents):]
     # Shouldn't ever get here, but just in case...
-    print_and_flush(f'*** Warning: unable to match "{word}" against alphabet')
+    print(f'*** Warning: unable to match "{word}" against alphabet')
     return ( False, False )
 
 def initial_accent_chars(string, accent_chars):
