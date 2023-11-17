@@ -22,7 +22,7 @@ from django_q.models import Task
 from .forms import RegistrationForm, UserForm, UserProfileForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm, HumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
-from .forms import CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
+from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet
@@ -1287,6 +1287,8 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreateCEFRTextForm(*args, **kwargs)
     elif version == 'segmented':
         return CreateSegmentedTextForm(*args, **kwargs)
+    elif version == 'phonetic':
+        return CreatePhoneticTextForm(*args, **kwargs)
     elif version == 'gloss':
         return CreateGlossedTextForm(*args, **kwargs)
     elif version == 'lemma':
@@ -1335,6 +1337,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
         return ( 'generate', clara_project_internal.get_cefr_level(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
         return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'phonetic':
+        return ( 'generate', clara_project_internal.create_phonetic_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'gloss':
         return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
@@ -1380,6 +1384,8 @@ def previous_version_and_template_for_version(this_version):
         return ( 'plain', 'clara_app/get_cefr_level.html' )
     elif this_version == 'segmented':
         return ( 'plain', 'clara_app/create_segmented_text.html' )
+    elif this_version == 'phonetic':
+        return ( 'segmented_with_images', 'clara_app/create_phonetic_text.html' )
     elif this_version == 'gloss':
         return ( 'segmented_with_images', 'clara_app/create_glossed_text.html' )
     elif this_version == 'lemma':
@@ -1418,6 +1424,14 @@ def create_cefr_level(request, project_id):
 @user_has_a_project_role
 def create_segmented_text(request, project_id):
     this_version = 'segmented'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
+# Create or edit "phonetic" version of the text     
+@login_required
+@user_has_a_project_role
+def create_phonetic_text(request, project_id):
+    this_version = 'phonetic'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 

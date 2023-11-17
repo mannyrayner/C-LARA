@@ -188,6 +188,17 @@ class CreateCEFRTextForm(CreateAnnotatedTextForm):
     def __init__(self, *args, prompt=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
+
+class CreatePhoneticTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Generate phonetic text'),
+        ('manual', 'Manually edit/enter phonetic text'),
+        ('load_archived', 'Load archived version')
+    ]
+
+    def __init__(self, *args, prompt=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
     
 class CreateGlossedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
