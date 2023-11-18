@@ -15,6 +15,7 @@
 	<p><a href="{% url 'create_cefr_level' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Estimate/Edit CEFR Level</a></p>
 	<p><a href="{% url 'create_segmented_text' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Create/Edit Segmented Text</a></p>
 	<p><a href="{% url 'edit_images' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Add/Remove Images</a></p>
+	<p><a href="{% url 'create_phonetic_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Create/Edit Phonetic Text</a></p>
 	<p><a href="{% url 'create_glossed_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Create/Edit Glossed Text</a></p>
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">Create/Edit Lemma Tagged Text</a></p>
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->

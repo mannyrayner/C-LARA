@@ -1,0 +1,11 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+    <h1>Edit Phonetic Lexicon</h1>
+	<form method="POST">
+	  {% csrf_token %}
+	  {{ form.as_p }}
+	  <input type="submit" name="action" value="Load">
+	  <input type="submit" name="action" value="Save">
+    </form>
+{% endblock %}

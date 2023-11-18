@@ -53,6 +53,7 @@
           {% endif %}
 		  {% if user.userprofile.is_language_master %}
 			<li><a href="{% url 'edit_prompt' %}">Edit annotation prompts</a></li>
+			<li><a href="{% url 'edit_phonetic_lexicon' %}">Edit phonetic lexicon</a></li>
 		  {% endif %}
 		  <li><a href="{% url 'create_project' %}">Create new C-LARA project</a></li>
 		  <li><a href="{% url 'project_list' %}">List your C-LARA projects</a></li>
