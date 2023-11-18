@@ -357,3 +357,16 @@ class ImageForm(forms.Form):
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
     
+class PhoneticLexiconForm(forms.Form):
+    language = forms.ChoiceField(choices=[])  # Empty choices initially
+    letter_groups = forms.CharField(label='Letter Groups', widget=forms.Textarea, required=False)
+    accents = forms.CharField(label='Accents', widget=forms.Textarea, required=False)
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(PhoneticLexiconForm, self).__init__(*args, **kwargs)
+
+        if user:
+            # Query the languages for which the user is a language master
+            languages = LanguageMaster.objects.filter(user=user).values_list('language', flat=True)
+            self.fields['language'].choices = [(lang, lang.capitalize()) for lang in languages]

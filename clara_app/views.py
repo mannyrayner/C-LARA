@@ -25,7 +25,7 @@ from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextFor
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
-from .forms import ImageForm, ImageFormSet
+from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm
 from .utils import get_user_config, create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
@@ -35,6 +35,7 @@ from .utils import uploaded_file_to_file
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
+from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
@@ -257,6 +258,37 @@ def remove_language_master(request, pk):
         return redirect('manage_language_masters')
     else:
         return render(request, 'clara_app/remove_language_master_confirm.html', {'language_master': language_master})
+
+# Allow a language master to edit a phonetic lexicon
+@login_required
+@language_master_required
+def edit_phonetic_lexicon(request):
+    repository = PhoneticOrthographyRepository()
+    if request.method == 'POST':
+        form = PhoneticLexiconForm(request.POST, user=request.user)
+        if form.is_valid():
+            language = form.cleaned_data['language']
+            letter_groups = form.cleaned_data['letter_groups']
+            accents = form.cleaned_data['accents']
+            if request.POST.get('action') == 'Load':
+                if not language:
+                    messages.error(request, "Language is not specified, cannot load data")
+                    return redirect('edit_phonetic_lexicon')
+                else:
+                    ( letter_groups, accents ) = repository.get_text_entry(language)
+                    messages.success(request, "Data loaded")
+            elif request.POST.get('action') == 'Save':
+                if not letter_groups:
+                    messages.error(request, "Not saving, orthography list is empty")
+                else:
+                    repository.save_entry(language, letter_groups, accents)
+                    messages.success(request, "Data saved")
+            form = PhoneticLexiconForm(user=request.user, initial = { 'language': language, 'letter_groups': letter_groups, 'accents': accents })
+    else:
+        form = PhoneticLexiconForm(user=request.user)
+
+    return render(request, 'clara_app/edit_phonetic_lexicon.html', {'form': form})
+
 ##
 # Allow a language master to edit templates and examples
 @login_required

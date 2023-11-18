@@ -24,6 +24,7 @@ urlpatterns = [
     path('manage_language_masters/', views.manage_language_masters, name='manage_language_masters'),
     path('remove_language_master/<int:pk>/', views.remove_language_master, name='remove_language_master'),
     path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
+    path('edit_phonetic_lexicon/', views.edit_phonetic_lexicon, name='edit_phonetic_lexicon'),
     path('register_content/', views.register_content, name='register_content'),
     path('content_success/', views.content_success, name='content_success'),
     path('content_list/', views.content_list, name='content_list'),
