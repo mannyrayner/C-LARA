@@ -28,7 +28,7 @@
 		    {%- if element.type == "Image" -%}
 			  <div class="image-container" style="width: {{ element.content.width }}px; height: {{ element.content.height }}px;">
 				<img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.src }}" alt="Project Image">
-				{%- if element.content.transformed_segments -%}
+				{%- if not phonetic and element.content.transformed_segments -%}
 				  <svg viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
 				  {%- for segment in element.content.transformed_segments -%}
 					{%- for content_element in segment.content_elements -%}
@@ -61,9 +61,15 @@
 				{%- endif -%}
 			  </div>
 			{%- elif element.type == "Word" -%}
-			  <span class="word" data-gloss="{{ element.annotations.gloss }}" 
-					data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
-					data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
+				{%- if not phonetic -%}
+					<span class="word" data-gloss="{{ element.annotations.gloss }}" 
+						data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
+						data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
+				{%- elif phonetic and element.annotations.phonetic -%}
+					<span class="word" data-gloss="{{ element.annotations.phonetic }}" 
+						data-lemma="{{ element.annotations.phonetic|replace_punctuation }}" 
+						data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
+				{%- endif -%}
 			{%- else -%}{{ element.content|replace('\n', '<br>')|safe }}
 			{%- endif -%}
 		  {%- endfor -%}
