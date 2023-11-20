@@ -366,6 +366,9 @@ class PhoneticLexiconForm(forms.Form):
         user = kwargs.pop('user', None)
         super(PhoneticLexiconForm, self).__init__(*args, **kwargs)
 
+        self.fields['letter_groups'].help_text = 'Use one line per character. If there are several forms for a character, separate them with spaces and put the canonical form first.'
+        self.fields['accents'].help_text = 'Use one line per accent character. Enter Unicode code points (e.g., U+064B) for non-printable characters.'
+
         if user:
             # Query the languages for which the user is a language master
             languages = LanguageMaster.objects.filter(user=user).values_list('language', flat=True)
