@@ -2,6 +2,11 @@
 
 {% block content %}
   <h2>Registered Content</h2>
+  <form method="get" action="{% url 'content_list' %}">
+    {{ search_form.as_p }}
+    <button type="submit">Search</button>
+  </form>
+
   <ul>
     {% for content in contents %}
       <li><a href="{{ content.get_absolute_url }}">{{ content.title }}</a></li>
@@ -9,6 +14,7 @@
       <li>No content has been registered yet.</li>
     {% endfor %}
   </ul>
+  
   <div class="pagination">
     <span class="step-links">
         {% if contents.has_previous %}

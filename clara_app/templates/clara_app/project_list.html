@@ -2,6 +2,11 @@
 
 {% block content %}
   <h1>Your Projects</h1>
+  <form method="GET">
+    {{ search_form.as_p }}
+    <input type="submit" value="Search">
+  </form>
+
   <button id="toggleCosts">Show/hide costs</button>
   <button id="toggleDurations">Show/hide durations</button>
   <ul>
