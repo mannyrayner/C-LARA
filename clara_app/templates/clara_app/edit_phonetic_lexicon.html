@@ -8,4 +8,23 @@
 	  <input type="submit" name="action" value="Load">
 	  <input type="submit" name="action" value="Save">
     </form>
+	
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var languageField = document.querySelector('select[name="language"]');
+            var letterGroupsField = document.querySelector('textarea[name="letter_groups"]');
+            var accentsField = document.querySelector('textarea[name="accents"]');
+
+            function adjustTextDirection() {
+                var isRTL = ['arabic', 'hebrew', 'farsi', 'urdu', 'yemeni'].includes(languageField.value); 
+                var direction = isRTL ? 'rtl' : 'ltr';
+                letterGroupsField.style.direction = direction;
+				// In fact, we normally want to present the accents in the form U+064B
+                //accentsField.style.direction = direction;
+            }
+
+            languageField.addEventListener('change', adjustTextDirection);
+            adjustTextDirection(); // Initial adjustment
+        });
+    </script>
 {% endblock %}
