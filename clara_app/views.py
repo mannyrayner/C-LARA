@@ -19,8 +19,9 @@ from django.contrib.auth.models import User
 from django_q.tasks import async_task
 from django_q.models import Task
 
-from .forms import RegistrationForm, UserForm, UserProfileForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm, HumanAudioInfoForm
+from .forms import RegistrationForm, UserForm, UserProfileForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
+from .forms import ContentSearchForm, ContentRegistrationForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm, HumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
@@ -403,14 +404,38 @@ def content_success(request):
    
 # List currently registered content
 @login_required
+##def content_list(request):
+##    content_list = Content.objects.all().order_by(Lower('title'))
+##    paginator = Paginator(content_list, 10)  # Show 10 content items per page
+##
+##    page = request.GET.get('page')
+##    contents = paginator.get_page(page)
+##    
+##    return render(request, 'clara_app/content_list.html', {'contents': contents})
+
 def content_list(request):
-    content_list = Content.objects.all().order_by(Lower('title'))
+    search_form = ContentSearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        l2 = search_form.cleaned_data.get('l2')
+        l1 = search_form.cleaned_data.get('l1')
+        title = search_form.cleaned_data.get('title')
+
+        if l2:
+            query &= Q(l2__icontains=l2)
+        if l1:
+            query &= Q(l1__icontains=l1)
+        if title:
+            query &= Q(title__icontains=title)
+
+    content_list = Content.objects.filter(query).order_by(Lower('title'))
     paginator = Paginator(content_list, 10)  # Show 10 content items per page
 
     page = request.GET.get('page')
     contents = paginator.get_page(page)
-    
-    return render(request, 'clara_app/content_list.html', {'contents': contents})
+
+    return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form})
 
 # Show a piece of registered content. Users can add ratings and comments.    
 @login_required
@@ -566,7 +591,22 @@ def remove_project_member(request, permission_id):
 @login_required
 def project_list(request):
     user = request.user
-    projects = CLARAProject.objects.filter(Q(user=user) | Q(projectpermissions__user=user)).order_by(Lower('title'))
+    search_form = ProjectSearchForm(request.GET or None)
+    query = Q((Q(user=user) | Q(projectpermissions__user=user)))
+
+    if search_form.is_valid():
+        title = search_form.cleaned_data.get('title')
+        l2 = search_form.cleaned_data.get('l2')
+        l1 = search_form.cleaned_data.get('l1')
+
+        if title:
+            query &= Q(title__icontains=title)
+        if l2:
+            query &= Q(l2__icontains=l2)
+        if l1:
+            query &= Q(l1__icontains=l1)
+
+    projects = CLARAProject.objects.filter(query).order_by(Lower('title'))
     
     project_data = {}
     for project in projects:
@@ -583,7 +623,7 @@ def project_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'clara_app/project_list.html', {'page_obj': page_obj})
+    return render(request, 'clara_app/project_list.html', {'search_form': search_form, 'page_obj': page_obj})
 
 # Delete a project
 @login_required

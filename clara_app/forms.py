@@ -61,10 +61,20 @@ class ContentRegistrationForm(forms.ModelForm):
             'voice', 'annotator', 'difficulty_level'
         ]
 
+class ContentSearchForm(forms.Form):
+    l2 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)
+    l1 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)
+    title = forms.CharField(max_length=255, required=False)
+
 class ProjectCreationForm(forms.ModelForm):
     class Meta:
         model = CLARAProject
         fields = ['title', 'l2', 'l1']
+
+class ProjectSearchForm(forms.Form):
+    title = forms.CharField(required=False)
+    l2 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)
+    l1 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)
 
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:
