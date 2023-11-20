@@ -17,8 +17,8 @@ class ConcordanceAnnotator:
     def __init__(self):
         pass
 
-    def annotate_text(self, text):
-        concordance = defaultdict(lambda: {"segments": set(), "frequency": 0})  # Change the default value to a custom dictionary
+    def annotate_text(self, text, phonetic=False):
+        concordance = defaultdict(lambda: {"segments": set(), "frequency": 0})
         page_number = 1
         segment_uid = 1
         segment_id_mapping = {}
@@ -32,25 +32,22 @@ class ConcordanceAnnotator:
 
                 for element in segment.content_elements:
                     if element.type == "Word":
-                        lemma = element.annotations.get('lemma')
-                        if lemma:
-                            concordance[lemma]["segments"].add(segment.annotations['segment_uid'])  # Add the segment UID to the set
-                            concordance[lemma]["frequency"] += 1
-                    elif element.type == "Image" and 'transformed_segments' in element.content and element.content['transformed_segments']:
-                        # We have an annotated image
+                        key = element.annotations.get('phonetic') if phonetic else element.annotations.get('lemma')
+                        if key:
+                            concordance[key]["segments"].add(segment.annotations['segment_uid'])
+                            concordance[key]["frequency"] += 1
+                    elif not phonetic and element.type == "Image" and 'transformed_segments' in element.content and element.content['transformed_segments']:
                         image_segments = element.content['transformed_segments']
                         for image_segment in image_segments:
                             for image_element in image_segment.content_elements:
                                 if image_element.type == "Word":
-                                    image_lemma = image_element.annotations.get('lemma')
-                                    if image_lemma:
-                                        # The segment that image_lemma is deemed to belong to is the TEXT segment we are in
-                                        concordance[image_lemma]["segments"].add(segment.annotations['segment_uid'])  
-                                        concordance[image_lemma]["frequency"] += 1
+                                    image_key = image_element.annotations.get('lemma')
+                                    if image_key:
+                                        concordance[image_key]["segments"].add(segment.annotations['segment_uid'])
+                                        concordance[image_key]["frequency"] += 1
 
             page_number += 1
 
-        # Convert the sets of segment UIDs back to lists of unique segments
         for lemma, lemma_data in concordance.items():
             unique_segments = [segment_id_mapping[seg_uid] for seg_uid in lemma_data["segments"]]
             concordance[lemma]["segments"] = unique_segments

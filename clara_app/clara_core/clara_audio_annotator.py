@@ -84,10 +84,10 @@ class AudioAnnotator:
     def delete_entries_for_language(self, callback=None):
         self.audio_repository.delete_entries_for_language(self.engine_id, self.language_id, callback=callback)
 
-    def annotate_text(self, text_obj, callback=None):
+    def annotate_text(self, text_obj, phonetic=False, callback=None):
         if self.tts_engine:
         
-            missing_words, missing_segments = self._get_missing_audio(text_obj, callback=callback)
+            missing_words, missing_segments = self._get_missing_audio(text_obj, phonetic=phonetic, callback=callback)
 
             if missing_words and self.audio_type_for_words == 'tts':
                 post_task_update(callback, f"--- Creating TTS audio for words")
@@ -102,7 +102,7 @@ class AudioAnnotator:
         post_task_update(callback, f"--- All TTS files should be there")
         self._add_audio_annotations(text_obj, callback=callback)
 
-    def _get_all_audio_data(self, text_obj, callback=None):
+    def _get_all_audio_data(self, text_obj, phonetic=False, callback=None):
         words_data = []
         segments_data = []
         for page in text_obj.pages:
@@ -113,14 +113,21 @@ class AudioAnnotator:
                 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
-                        canonical_word = canonical_word_for_audio(content_element.content)
-                        file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
-                        words_data.append([canonical_word, file_word])
+                        if phonetic and 'phonetic' in content_element.annotations:
+                            audio_word = content_element.annotations['phonetic']
+                        elif not phonetic:
+                            audio_word = content_element.content
+                        else:
+                            audio_word = None
+                        if audio_word:
+                            canonical_word = canonical_word_for_audio(audio_word)
+                            file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
+                            words_data.append([canonical_word, file_word])
 
         return words_data, segments_data
 
-    def _get_missing_audio(self, text_obj, callback=None):
-        words_data, segments_data = self._get_all_audio_data(text_obj, callback=callback)
+    def _get_missing_audio(self, text_obj, phonetic=False, callback=None):
+        words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
 
         # We don't want to include trivial strings, so check using strip().
         missing_words = [word_data[0] for word_data in words_data if not word_data[1] and word_data[0].strip()]

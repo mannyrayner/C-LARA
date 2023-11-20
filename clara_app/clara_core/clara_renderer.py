@@ -24,19 +24,23 @@ import traceback
 config = get_config()
 
 class StaticHTMLRenderer:
-    def __init__(self, project_id, project_id_internal):
+    def __init__(self, project_id, project_id_internal, phonetic=False):
+        self.phonetic = phonetic
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
         self.template_env.filters['replace_punctuation'] = replace_punctuation_with_underscores
 
         self.project_id = str(project_id)
         self.project_id_internal = str(project_id_internal)
-        self.output_dir = Path(output_dir_for_project_id(project_id))
+        
+        # Create the new output_dir
+        # Define the output directory based on the phonetic parameter
+        phonetic_or_normal = "phonetic" if self.phonetic else "normal"
+        self.output_dir = Path(output_dir_for_project_id(project_id, phonetic_or_normal))
         
         # Remove the existing output_dir if we're not on S3 and it exists
         if not _s3_storage and directory_exists(self.output_dir):
             remove_directory(self.output_dir)
         
-        # Create the new output_dir
         make_directory(self.output_dir, parents=True)
 
         # Copy the 'static' folder to the output_dir
@@ -57,7 +61,8 @@ class StaticHTMLRenderer:
                                         l2_language=l2_language,
                                         is_rtl=is_rtl,
                                         l1_language=l1_language,
-                                        page_number=page_number)
+                                        page_number=page_number,
+                                        phonetic=self.phonetic)
         return rendered_page
 
     def render_concordance_page(self, lemma, concordance_segments, l2_language):
@@ -66,7 +71,8 @@ class StaticHTMLRenderer:
         rendered_page = template.render(lemma=lemma,
                                         concordance_segments=concordance_segments,
                                         project_id_internal=project_id_internal,
-                                        l2_language=l2_language)
+                                        l2_language=l2_language,
+                                        phonetic=self.phonetic)
         return rendered_page
 
     def render_alphabetical_vocabulary_list(self, vocabulary_list, l2_language):

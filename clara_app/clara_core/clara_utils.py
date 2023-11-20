@@ -697,9 +697,12 @@ def get_config():
     config.read(absfile)
     return config
 
-def output_dir_for_project_id(id):
+def output_dir_for_project_id(id, phonetic_or_normal):
     config = get_config()
-    return str( Path(absolute_file_name(config.get('renderer', 'output_dir'))) / str(id) )
+    if phonetic_or_normal == 'normal':
+        return str( Path(absolute_file_name(config.get('renderer', 'output_dir'))) / str(id) )
+    else:
+        return str( Path(absolute_file_name(config.get('renderer', 'output_dir_phonetic'))) / str(id) )
 
 def image_dir_for_project_id(id):
     config = get_config()

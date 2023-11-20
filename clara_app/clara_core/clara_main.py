@@ -645,30 +645,37 @@ class CLARAProjectInternal:
         return all_api_calls
 
     # Create an internalised version of the text including gloss and lemma annotations 
-    # Requires 'gloss' and 'lemma' texts 
-    def get_internalised_text(self) -> str:
-        glossed_text = self.load_text_version("gloss")
-        lemma_tagged_text = self.load_text_version("lemma")
-        internalised_glossed_text = internalize_text(glossed_text, self.l2_language, self.l1_language, 'gloss')
-        internalised_tagged_text = internalize_text(lemma_tagged_text, self.l2_language, self.l1_language, 'lemma')
-        merged_text = merge_glossed_and_tagged(internalised_glossed_text, internalised_tagged_text)
-        return merged_text
+    # Requires 'gloss' and 'lemma' texts
+    # If we are processing phonetic text, we just internalise that.
+    def get_internalised_text(self, phonetic=False) -> str:
+        if phonetic:
+            phonetic_text = self.load_text_version("phonetic")
+            internalised_phonetic_text = internalize_text(phonetic_text, self.l2_language, self.l1_language, 'phonetic')
+            return internalised_phonetic_text
+        else:
+            glossed_text = self.load_text_version("gloss")
+            lemma_tagged_text = self.load_text_version("lemma")
+            internalised_glossed_text = internalize_text(glossed_text, self.l2_language, self.l1_language, 'gloss')
+            internalised_tagged_text = internalize_text(lemma_tagged_text, self.l2_language, self.l1_language, 'lemma')
+            merged_text = merge_glossed_and_tagged(internalised_glossed_text, internalised_tagged_text)
+            return merged_text
 
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     # Caches the internalised version.
     def get_internalised_and_annotated_text(self, tts_engine_type=None, human_voice_id=None,
-                                            audio_type_for_words='tts', audio_type_for_segments='tts', callback=None) -> str:
+                                            audio_type_for_words='tts', audio_type_for_segments='tts',
+                                            phonetic=False, callback=None) -> str:
         if self.internalised_and_annotated_text:
             return self.internalised_and_annotated_text
         post_task_update(callback, f"--- Creating internalised text")
-        text_object = self.get_internalised_text()
+        text_object = self.get_internalised_text(phonetic=phonetic) 
         post_task_update(callback, f"--- Internalised text created")
         
         post_task_update(callback, f"--- Adding audio annotations")
         audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
                                          audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, callback=callback)
-        audio_annotator.annotate_text(text_object, callback=callback)
+        audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"--- Audio annotations done")
 
         images = self.get_all_project_images()
@@ -685,7 +692,7 @@ class CLARAProjectInternal:
         
         post_task_update(callback, f"--- Adding concordance annotations")
         concordance_annotator = ConcordanceAnnotator()
-        concordance_annotator.annotate_text(text_object)
+        concordance_annotator.annotate_text(text_object, phonetic=phonetic)
         post_task_update(callback, f"--- Concordance annotations done")
         self.internalised_and_annotated_text = text_object
         return text_object
@@ -875,15 +882,16 @@ class CLARAProjectInternal:
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
     # Requires 'gloss' and 'lemma' texts.
     def render_text(self, project_id, self_contained=False, tts_engine_type=None, human_voice_id=None,
-                    audio_type_for_words='tts', audio_type_for_segments='tts', callback=None) -> None:
-        post_task_update(callback, f"--- Start rendering text")
+                    audio_type_for_words='tts', audio_type_for_segments='tts',
+                    phonetic=False, callback=None) -> None:
+        post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
         text_object = self.get_internalised_and_annotated_text(tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
                                                                audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                                               callback=callback)
+                                                               phonetic=phonetic, callback=callback)
  
         post_task_update(callback, f"--- Created internalised and annotated text")
         # Pass both Django-level and internal IDs
-        renderer = StaticHTMLRenderer(project_id, self.id)
+        renderer = StaticHTMLRenderer(project_id, self.id, phonetic=phonetic)
         post_task_update(callback, f"--- Start creating pages")
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
@@ -891,15 +899,23 @@ class CLARAProjectInternal:
 
     # Determine whether the rendered HTML has been created
     def rendered_html_exists(self, project_id):
-        output_dir = output_dir_for_project_id(project_id)
+        output_dir = output_dir_for_project_id(project_id, 'normal')
+        page_1_file = str( Path(output_dir) / 'page_1.html' )
+        print(f'--- Checking first page of rendered text: {page_1_file}')
+        # If the first page exists, at least some HTML has been created
+        return file_exists(page_1_file)
+
+    # Determine whether the rendered HTML has been created
+    def rendered_phonetic_html_exists(self, project_id):
+        output_dir = output_dir_for_project_id(project_id, 'phonetic')
         page_1_file = str( Path(output_dir) / 'page_1.html' )
         print(f'--- Checking first page of rendered text: {page_1_file}')
         # If the first page exists, at least some HTML has been created
         return file_exists(page_1_file)
 
     # Get the word-count
-    def get_word_count(self) -> int:
-        text_object = self.get_internalised_text()
+    def get_word_count(self, phonetic=False) -> int:
+        text_object = self.get_internalised_text(phonetic=phonetic)
         return None if not text_object else text_object.word_count()
 
     # Get the voice
