@@ -8,12 +8,12 @@
   
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 	<script>
-		var task_id = "{{ task_id }}";  // The task ID, passed from the Django template context
+		var phonetic_or_normal = "{{ phonetic_or_normal }}";  // Whether this is a phonetic or a normal text
 		var interval_id = setInterval(getTaskStatus, 5000);  // Call getTaskStatus every 5 seconds
 
 		function getTaskStatus() {
 			$.ajax({
-				url: "{% url 'render_text_status' project_id task_id report_id %}",  // The URL of the render_text_status endpoint
+				url: "{% url 'render_text_status' project_id report_id %}",  // The URL of the render_text_status endpoint
 				type: "get",
 				success: function(response) {
 					// Check if there are new messages
@@ -34,10 +34,10 @@
 					// If the task is finished, stop polling the server and redirect to the 'complete' view
 					if (response.status == 'finished') {
 						clearInterval(interval_id);
-						window.location = "{% url 'render_text_complete' project_id 'finished' %}";
+						window.location = "{% url 'render_text_complete' project_id phonetic_or_normal 'finished' %}";
 					} else if (response.status == 'error') {
 						clearInterval(interval_id);
-						window.location = "{% url 'render_text_complete' project_id 'error' %}";
+						window.location = "{% url 'render_text_complete' project_id phonetic_or_normal 'error' %}";
 					}
 				}
 			});
