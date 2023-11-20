@@ -82,20 +82,44 @@ class PhoneticOrthographyRepository:
         lines = text.split('\n')
         parsed_lines = []
         for line in lines:
-            parsed_line = line.split()
+            parsed_line = self._parse_phonetic_orthography_line(line)
             if len(parsed_line) != 0:
                 parsed_lines += [ parsed_line ]
         return parsed_lines
+
+    def _parse_phonetic_orthography_line(self, line):
+        components = line.split()
+        return components
 
     def _parse_accents_entry(self, text):
         lines = text.split('\n')
         accents = []
         for line in lines:
-            parsed_line = line.split()
-            if len(parsed_line) != 0:
+            parsed_line = self._parse_accents_line(line)
+            if len(parsed_line) == 1:
                 accents += [ parsed_line ]
         return accents
     
+    def _parse_accents_line(self, line):
+        components = line.split()
+        if len(components) == 0:
+            return []
+        elif len(components) > 1:
+            raise InternalCLARAError(message='Bad line in accents file (length greater than 1), "{line}"')
+        else:
+            return [ self._parse_accents_line_item(components[0]) ]
+
+    def _parse_accents_line_item(self, string):
+        if len(string) == 1:
+            return string
+        elif string.startswith('U+') or unicode_str.startswith('u+'):
+            try:
+                hex_value = string[2:]
+                return str(chr(int(hex_value, 16)))
+            except:
+                InternalCLARAError(message='Bad item in accents file, "{string}"')
+        else:
+            raise InternalCLARAError(message='Bad item in accents file, "{string}"')
 
 
     
