@@ -606,8 +606,10 @@ def project_detail(request, project_id):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
-    can_render = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
+    can_render_normal = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
+    can_render_phonetic = clara_project_internal.text_versions["phonetic"] 
     rendered_html_exists = clara_project_internal.rendered_html_exists(project_id)
+    rendered_phonetic_html_exists = clara_project_internal.rendered_phonetic_html_exists(project_id)
     api_cost = get_project_api_cost(request.user, project)
     if request.method == 'POST':
         form = UpdateProjectTitleForm(request.POST)
@@ -620,8 +622,10 @@ def project_detail(request, project_id):
                   { 'project': project, 'form': form, 'api_cost': api_cost, 
                     'can_create_segmented_text': can_create_segmented_text, 
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
-                    'can_render': can_render,
-                    'rendered_html_exists': rendered_html_exists }
+                    'can_render_normal': can_render_normal,
+                    'can_render_phonetic': can_render_phonetic,
+                    'rendered_html_exists': rendered_html_exists,
+                    'rendered_phonetic_html_exists': rendered_phonetic_html_exists}
                     )
 
 @login_required
@@ -1499,160 +1503,6 @@ def project_history(request, project_id):
     actions = CLARAProjectAction.objects.filter(project=project).order_by('-timestamp')
     return render(request, 'clara_app/project_history.html', {'project': project, 'actions': actions})
 
-def clara_project_internal_render_text(clara_project_internal, project_id,
-                                       audio_type_for_words='tts', audio_type_for_segments='tts', human_voice_id=None,
-                                       self_contained=False, callback=None):
-    try:
-        clara_project_internal.render_text(project_id,
-                                           audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                           human_voice_id=human_voice_id, self_contained=self_contained, callback=callback)
-        post_task_update(callback, f"finished")
-    except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
-        post_task_update(callback, f"error")
-
-# Start the async process that will do the rendering
-@login_required
-@user_has_a_project_role
-def render_text_start(request, project_id):
-    project = get_object_or_404(CLARAProject, pk=project_id)
-    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-
-    if "gloss" not in clara_project_internal.text_versions or "lemma" not in clara_project_internal.text_versions:
-        messages.error(request, "Glossed and lemma-tagged versions of the text must exist to render it.")
-        return redirect('project_detail', project_id=project.id)
-
-    # Check if human audio info exists for the project and if voice_talent_id is set
-    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
-    if human_audio_info:
-        human_voice_id = human_audio_info.voice_talent_id
-        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
-        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
-    else:
-        audio_type_for_words = 'tts'
-        audio_type_for_segments = 'tts'
-        human_voice_id = None
-
-    if request.method == 'POST':
-        form = RenderTextForm(request.POST)
-        if form.is_valid():
-            # Remove any outstanding tasks, this should be the only one running
-            #delete_all_tasks() 
-            
-            # Create a unique ID to tag messages posted by this task
-            report_id = uuid.uuid4()
-
-            # Define a callback as list of the callback function and the first argument
-            # We can't use a lambda function or a closure because async_task can't apply pickle to them
-            callback = [post_task_update_in_db, report_id]
-        
-            # Enqueue the render_text task
-            self_contained = True
-            # First check that we can internalise and merge the gloss and lemma files, and give an error if we can't
-            try:
-                internalised_text = clara_project_internal.get_internalised_text()
-                task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id,
-                                     audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                     human_voice_id=human_voice_id, self_contained=self_contained, callback=callback)
-                print(f'--- Started task: task_id = {task_id}, self_contained={self_contained}')
-
-                # Redirect to the monitor view, passing the task ID and report ID as parameters
-                return redirect('render_text_monitor', project_id, task_id, report_id)
-            except InternalisationError as e:
-                messages.error(request, f'{e.message}')
-                form = RenderTextForm()
-                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
-            except Exception as e:
-                messages.error(request, f"An internal error occurred in rendering. Error details: {str(e)}\n{traceback.format_exc()}")
-                form = RenderTextForm()
-                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
-    else:
-        form = RenderTextForm()
-        return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
-
-##@login_required
-##@user_has_a_project_role
-##def images_view(request, project_id):
-##    project = get_object_or_404(CLARAProject, pk=project_id)
-##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-##
-##    current_image = None
-##    image_name = ''
-##    associated_text = ''
-##    associated_areas = ''
-##    page = 1
-##    position = 'bottom'
-##    image_object = clara_project_internal.get_current_project_image()
-##    if image_object:
-##        current_image = image_object.image_file_path
-##        image_name = image_object.image_name
-##        associated_text = image_object.associated_text
-##        associated_areas = image_object.associated_areas
-##        page = image_object.page
-##        position = image_object.position
-##
-##    # Handle POST request
-##    if request.method == 'POST':
-##        if 'save_image' in request.POST:
-##            uploaded_image = request.FILES.get('new_image')
-##            associated_text = request.POST.get('associated_text')
-##            associated_areas = request.POST.get('associated_areas')
-##            page_str = request.POST.get('page', '1')  # Default to '1' if not provided
-##            page = int(page_str) if page_str.strip() else 1  # Convert to int if not empty, else default to 1
-##            position = request.POST.get('position', 'bottom')  # Default to 'bottom' if not provided
-##
-##            if uploaded_image:
-##                image_name = basename(uploaded_image.name)
-##                image_file_path = uploaded_file_to_file(uploaded_image)
-##
-##            # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
-##            if not associated_areas and associated_text and image_name:  
-##                # Generate the uninstantiated annotated image structure
-##                structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
-##                # Convert the structure to a string and store it in 'associated_areas'
-##                associated_areas = json.dumps(structure)
-##
-##            if uploaded_image:
-##                current_image = clara_project_internal.add_project_image(image_name, image_file_path,
-##                                                                         associated_text=associated_text, associated_areas=associated_areas,
-##                                                                         page=page, position=position)
-##                messages.success(request, "Image added successfully!")
-##
-##            if associated_text and not image_name:
-##                messages.error(request, "There is no image to attach the text to")
-##            elif not uploaded_image and not associated_text:
-##                messages.error(request, "Nothing to process. Upload an image or provide some text")
-##
-##        elif 'save_areas' in request.POST:
-##            associated_areas = request.POST.get('associated_areas')
-##            if associated_areas and image_name:
-##                clara_project_internal.store_project_associated_areas(image_name, associated_areas)
-##                messages.success(request, "Associated areas saved successfully!")
-##            else:
-##                messages.error(request, "Need both image and areas to save.")
-##        
-##        elif 'remove_image' in request.POST:
-##            clara_project_internal.remove_all_project_images()
-##            messages.success(request, "All project images removed successfully!")
-##            current_image = None
-##            associated_text = ''
-##            associated_areas = ''
-##            page = ''
-##            position = None
-##
-##    # Nothing to do for GET request
-##        
-##    base_current_image = basename(current_image) if current_image else None
-##    context = {
-##        'project': project,
-##        'current_image': base_current_image,
-##        'associated_text': associated_text,
-##        'associated_areas': associated_areas,
-##        'page': page,
-##        'position': position
-##    }
-##    return render(request, 'clara_app/images.html', context)
-
 @login_required
 @user_has_a_project_role
 def edit_images(request, project_id):
@@ -1722,10 +1572,99 @@ def edit_images(request, project_id):
 
     return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project})
 
+def clara_project_internal_render_text(clara_project_internal, project_id,
+                                       audio_type_for_words='tts', audio_type_for_segments='tts', human_voice_id=None,
+                                       self_contained=False, phonetic=False, callback=None):
+    print(f'--- Asynchronous rendering task started: phonetic={phonetic}, self_contained={self_contained}')
+    try:
+        clara_project_internal.render_text(project_id,
+                                           audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                           human_voice_id=human_voice_id, self_contained=self_contained, phonetic=phonetic, callback=callback)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+# Start the async process that will do the rendering
+@login_required
+@user_has_a_project_role
+def render_text_start_normal(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    if "gloss" not in clara_project_internal.text_versions or "lemma" not in clara_project_internal.text_versions:
+        messages.error(request, "Glossed and lemma-tagged versions of the text must exist to render it.")
+        return redirect('project_detail', project_id=project.id)
+    
+    return render_text_start_phonetic_or_normal(request, project_id, 'normal')
+
+@login_required
+@user_has_a_project_role
+def render_text_start_phonetic(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    if "phonetic" not in clara_project_internal.text_versions:
+        messages.error(request, "Phonetic version of the text must exist to render it.")
+        return redirect('project_detail', project_id=project.id)
+    
+    return render_text_start_phonetic_or_normal(request, project_id, 'phonetic')
+      
+def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Check if human audio info exists for the project and if voice_talent_id is set
+    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    if human_audio_info:
+        human_voice_id = human_audio_info.voice_talent_id
+        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
+        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
+    else:
+        audio_type_for_words = 'tts'
+        audio_type_for_segments = 'tts'
+        human_voice_id = None
+
+    if request.method == 'POST':
+        form = RenderTextForm(request.POST)
+        if form.is_valid():
+            # Create a unique ID to tag messages posted by this task
+            report_id = uuid.uuid4()
+
+            # Define a callback as list of the callback function and the first argument
+            # We can't use a lambda function or a closure because async_task can't apply pickle to them
+            callback = [post_task_update_in_db, report_id]
+        
+            # Enqueue the render_text task
+            self_contained = True
+            # First check that we can internalise the appropriate files, and give an error if we can't
+            try:
+                phonetic = True if phonetic_or_normal == 'phonetic' else False
+                internalised_text = clara_project_internal.get_internalised_text(phonetic=phonetic)
+                task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id,
+                                     audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                     human_voice_id=human_voice_id, self_contained=self_contained,
+                                     phonetic=phonetic, callback=callback)
+                print(f'--- Asynchronous rendering task posted: phonetic={phonetic}, self_contained={self_contained}')
+
+                # Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('render_text_monitor', project_id, phonetic_or_normal, report_id)
+            except InternalisationError as e:
+                messages.error(request, f'{e.message}')
+                form = RenderTextForm()
+                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
+            except Exception as e:
+                messages.error(request, f"An internal error occurred in rendering. Error details: {str(e)}\n{traceback.format_exc()}")
+                form = RenderTextForm()
+                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
+    else:
+        form = RenderTextForm()
+        return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
+
 # This is the API endpoint that the JavaScript will poll
 @login_required
 @user_has_a_project_role
-def render_text_status(request, project_id, task_id, report_id):
+def render_text_status(request, project_id, report_id):
     messages = get_task_updates(report_id)
     print(f'{len(messages)} messages received')
     #if len(messages) != 0:
@@ -1741,15 +1680,15 @@ def render_text_status(request, project_id, task_id, report_id):
 # Render the monitoring page, which will use JavaScript to poll the task status API
 @login_required
 @user_has_a_project_role
-def render_text_monitor(request, project_id, task_id, report_id):
+def render_text_monitor(request, project_id, phonetic_or_normal, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     return render(request, 'clara_app/render_text_monitor.html',
-                  {'task_id': task_id, 'report_id': report_id, 'project_id': project_id, 'project': project})
+                  {'phonetic_or_normal': phonetic_or_normal, 'report_id': report_id, 'project_id': project_id, 'project': project})
 
 # Display the final result of rendering
 @login_required
 @user_has_a_project_role
-def render_text_complete(request, project_id, status):
+def render_text_complete(request, project_id, phonetic_or_normal, status):
     project = get_object_or_404(CLARAProject, pk=project_id)
     if status == 'error':
         succeeded = False
@@ -1757,10 +1696,10 @@ def render_text_complete(request, project_id, status):
         succeeded = True
     
     if succeeded:
-        # Define URLs for the first page of content and the zip file
-        content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
+        # Specify whether we have a content URL and a zipfile
+        content_url = True
         # Put back zipfile later
-        #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
+        #zipfile_url = True
         zipfile_url = None
         # Create the form for registering the project content
         register_form = RegisterAsContentForm()
@@ -1771,23 +1710,35 @@ def render_text_complete(request, project_id, status):
         register_form = None
         messages.error(request, "Rendered text not found")
         
-    return render(request, 'clara_app/render_text_complete.html',
-                  {'content_url': content_url, 'zipfile_url': zipfile_url,
+    return render(request, 'clara_app/render_text_complete.html', 
+                  {'phonetic_or_normal': phonetic_or_normal,
+                   'content_url': content_url, 'zipfile_url': zipfile_url,
                    'project': project, 'register_form': register_form})
 
 @login_required
 @user_has_a_project_role
-def offer_to_register_content(request, project_id):
+def offer_to_register_content_normal(request, project_id):
+    return offer_to_register_content(request, 'normal', project_id)
+
+@login_required
+@user_has_a_project_role
+def offer_to_register_content_phonetic(request, project_id):
+    return offer_to_register_content(request, 'phonetic', project_id)
+
+def offer_to_register_content(request, phonetic_or_normal, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    
-    succeeded = clara_project_internal.rendered_html_exists(project_id)
+
+    if phonetic_or_normal == 'normal':
+        succeeded = clara_project_internal.rendered_html_exists(project_id)
+    else:
+        succeeded = clara_project_internal.rendered_phonetic_html_exists(project_id)
 
     if succeeded:
         # Define URLs for the first page of content and the zip file
-        content_url = (settings.STATIC_URL + f"rendered_texts/{project.id}/page_1.html").replace('\\', '/')
+        content_url = True
         # Put back zipfile later
-        #zipfile_url = (settings.STATIC_URL + f"rendered_texts/{project.id}.zip").replace('\\', '/')
+        #zipfile_url = True
         zipfile_url = None
         # Create the form for registering the project content
         register_form = RegisterAsContentForm()
@@ -1799,13 +1750,15 @@ def offer_to_register_content(request, project_id):
         messages.error(request, "Rendered text not found")
         
     return render(request, 'clara_app/render_text_complete.html',
-                  {'content_url': content_url, 'zipfile_url': zipfile_url,
+                  {'phonetic_or_normal': phonetic_or_normal,
+                   'content_url': content_url, 'zipfile_url': zipfile_url,
                    'project': project, 'register_form': register_form})
 
 # Register content produced by rendering from a project        
 @login_required
 @user_has_a_project_role
-def register_project_content(request, project_id):
+def register_project_content(request, phonetic_or_normal, project_id):
+    phonetic = True if phonetic_or_normal == 'phonetic' else False
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
@@ -1820,7 +1773,7 @@ def register_project_content(request, project_id):
         audio_type_for_segments = 'tts'
         human_voice_id = None
 
-    word_count0 = clara_project_internal.get_word_count()
+    word_count0 = clara_project_internal.get_word_count(phonetic=phonetic)
     voice0 = clara_project_internal.get_voice(human_voice_id=human_voice_id, 
                                               audio_type_for_words=audio_type_for_words, 
                                               audio_type_for_segments=audio_type_for_segments)
@@ -1844,12 +1797,14 @@ def register_project_content(request, project_id):
         if form.is_valid() and form.cleaned_data.get('register_as_content'):
             if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                 raise PermissionDenied("You don't have permission to register a text.")
+            title = f'{project.title} (phonetic)' if phonetic_or_normal == 'phonetic' else project.title
             content, created = Content.objects.get_or_create(
                                     project = project,  
                                     defaults = {
-                                        'title': project.title,  
+                                        'title': title,  
                                         'l2': project.l2,  
                                         'l1': project.l1,
+                                        'text_type': phonetic_or_normal,
                                         'length_in_words': word_count,  
                                         'author': project.user.username,  
                                         'voice': voice,  
@@ -1860,9 +1815,10 @@ def register_project_content(request, project_id):
                                     )
             # Update any fields that might have changed
             if not created:
-                content.title = project.title
+                content.title = title
                 content.l2 = project.l2
                 content.l1 = project.l1
+                content.text_type = phonetic_or_normal
                 content.length_in_words = word_count  
                 content.author = project.user.username
                 content.voice = voice 
@@ -1876,8 +1832,8 @@ def register_project_content(request, project_id):
     return redirect('project_detail', project_id=project.id)
         
 @xframe_options_sameorigin
-def serve_rendered_text(request, project_id, filename):
-    file_path = absolute_file_name(Path(output_dir_for_project_id(project_id)) / f"{filename}")
+def serve_rendered_text(request, project_id, phonetic_or_normal, filename):
+    file_path = absolute_file_name(Path(output_dir_for_project_id(project_id, phonetic_or_normal)) / f"{filename}")
     if file_exists(file_path):
         content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
         if _s3_storage:
@@ -1888,8 +1844,8 @@ def serve_rendered_text(request, project_id, filename):
     else:
         raise Http404
 
-def serve_rendered_text_static(request, project_id, filename):
-    file_path = absolute_file_name(Path(output_dir_for_project_id(project_id)) / f"static/{filename}")
+def serve_rendered_text_static(request, project_id, phonetic_or_normal, filename):
+    file_path = absolute_file_name(Path(output_dir_for_project_id(project_id, phonetic_or_normal)) / f"static/{filename}")
     if file_exists(file_path):
         content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
         if _s3_storage:
@@ -1900,8 +1856,8 @@ def serve_rendered_text_static(request, project_id, filename):
     else:
         raise Http404
 
-def serve_rendered_text_multimedia(request, project_id, filename):
-    file_path = absolute_file_name(Path(output_dir_for_project_id(project_id)) / f"multimedia/{filename}")
+def serve_rendered_text_multimedia(request, project_id, phonetic_or_normal, filename):
+    file_path = absolute_file_name(Path(output_dir_for_project_id(project_id, phonetic_or_normal)) / f"multimedia/{filename}")
     if file_exists(file_path):
         content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
         if _s3_storage:

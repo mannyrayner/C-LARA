@@ -1,29 +1,11 @@
 from django.db import models
 from django.urls import reverse
 
-from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
+from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
 
-# Remove custom User
-#from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
-
-# Remove custom User and move fields to UserProfile
-# class User(AbstractUser):
-    # is_admin = models.BooleanField(default=False)
-    # is_moderator = models.BooleanField(default=False)
-    # credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    
-    # def is_language_master(self):
-        # return self.language_master_set.exists()
-        
-# class UserProfile(models.Model):
-    # user = models.OneToOneField(User, on_delete=models.CASCADE)
-    # bio = models.TextField(blank=True, null=True)
-    # location = models.CharField(max_length=100, blank=True, null=True)
-    # birth_date = models.DateField(blank=True, null=True)
-    # profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
-    
+ 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True, null=True)
@@ -124,13 +106,13 @@ class CLARAProjectAction(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     class Meta:
-        ordering = ['-timestamp']
-        
+        ordering = ['-timestamp']     
 
 class Content(models.Model):
     external_url = models.URLField(max_length=255, blank=True, null=True)
     project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, null=True, blank=True, unique=True)
     title = models.CharField(max_length=255)
+    text_type = models.CharField(max_length=10, choices=TEXT_TYPE_CHOICES, default='normal')
     l2 = models.CharField(max_length=100, verbose_name='L2 Language')
     l1 = models.CharField(max_length=100, verbose_name='L1 Language')
     length_in_words = models.IntegerField()
@@ -146,10 +128,9 @@ class Content(models.Model):
     def get_absolute_url(self):
         return reverse('content_detail', args=[str(self.id)])
         
-    @property
     def url(self):
         if self.project:
-            return reverse('serve_rendered_text', args=[self.project.id, 'page_1.html'])
+            return reverse('serve_rendered_text', args=[self.project.id, self.text_type, 'page_1.html'])
         else:
             return self.external_url
             

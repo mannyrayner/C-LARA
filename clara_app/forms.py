@@ -57,7 +57,7 @@ class ContentRegistrationForm(forms.ModelForm):
     class Meta:
         model = Content
         fields = [
-            'external_url', 'title', 'l2', 'l1', 'length_in_words', 'author',
+            'external_url', 'title', 'text_type', 'l2', 'l1', 'length_in_words', 'author',
             'voice', 'annotator', 'difficulty_level'
         ]
 

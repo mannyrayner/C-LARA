@@ -1,7 +1,13 @@
 # clara_app/constants.py
 
+TEXT_TYPE_CHOICES = [
+    ('normal', 'Normal'),
+    ('phonetic', 'Phonetic'),
+]   
+
 SUPPORTED_LANGUAGES = [
     ('arabic', 'Arabic'),
+    ('barngarla', 'Barngarla'),
     ('bengali', 'Bengali'),
     ('bulgarian', 'Bulgarian'),
     ('cantonese', 'Cantonese'),
@@ -9,6 +15,7 @@ SUPPORTED_LANGUAGES = [
     ('croatian', 'Croatian'),
     ('czech', 'Czech'),
     ('danish', 'Danish'),
+    ('drehu', 'Drehu'),
     ('dutch', 'Dutch'),
     ('english', 'English'),
     ('faroese', 'Faroese'),
@@ -20,6 +27,7 @@ SUPPORTED_LANGUAGES = [
     ('hebrew', 'Hebrew'),
     ('hindi', 'Hindi'),
     ('hungarian', 'Hungarian'),
+    ('iaai', 'Iaai'),
     ('icelandic', 'Icelandic'),
     ('italian', 'Italian'),
     ('japanese', 'Japanese'),
