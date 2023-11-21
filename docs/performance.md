@@ -6,7 +6,7 @@
   <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
   <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
   <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Technical issues</a>
-  <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog</a>
+  <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog and Discord</a>
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
 
 </div>
@@ -29,3 +29,5 @@ with errors most commonly being due to incorrect treatment of multi-words (phras
 on smaller and less highly prioritised languages is substantially worse. The platform offers
 many options for tuning language-specific performance, and we are actively investigating this topic.
 A paper describing these issues in more detail will be presented at the ALTA 2023 conference.
+
+Initial experiments suggest that performance with the new GPT-4 Turbo model is substantially better.

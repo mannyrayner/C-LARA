@@ -6,7 +6,7 @@
   <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
   <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
   <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Technical issues</a>
-  <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog</a>
+  <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog and Discord</a>
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
 
 </div>
@@ -17,15 +17,15 @@ Our current activities include:
 
 **Melbourne University student projects**
 
-Under the supervision of Alex Xiang, six five-person teams of Melbourne University computer science students are 
-carrying out C-LARA-related projects. In each project, the students are reimplementing a standalone piece of functionality
-that was part of the previous LARA platform, with the goal of later integrating it into C-LARA. 
-The projects started at the beginning of August 2023 and are now nearly complete.
+Under the supervision of Alex Xiang, six five-person teams of Melbourne University computer science students carried
+ out C-LARA-related projects. In each project, the students reimplemented a standalone piece of functionality
+that was part of the previous LARA platform. The projects started at the beginning of August 2023 and were completed in 
+mid-November. We are now working on integrating them into C-LARA.
 
 **UniSA server**
 
 The current provisional deployment of C-LARA on Heroku is adequate for internal testing, but too slow for public use.
-We are deploying a faster version on a UniSA server, with the intention of going live in November 2023.
+We have deployed a faster version on a UniSA server, and will be making it available to initial users at the end of November 2023.
 
 **Multi-words**
 
