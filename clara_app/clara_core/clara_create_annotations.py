@@ -164,10 +164,10 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
     n_attempts = 0
     limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
     while True:
-        if n_attempts > limit:
+        if n_attempts >= limit:
             raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
-        post_task_update(callback, f'--- Calling ChatGPT-4 to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
         n_attempts += 1
+        post_task_update(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
         try:
             api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
