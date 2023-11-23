@@ -12,17 +12,11 @@ this functionality from the LARA code. Pauline Welby will be visiting
 Adelaide Nov 22-25, and we said phonetic text would be the main item to
 discuss.
 
-2. Password retrieval. Needs decision on mail provider to use.
+2. Export/import of projects.
 
-3. Export/import of projects (allow multiple projects to be handled in one operation?).
+3. Integration of Melbourne Uni student projects.
 
-4. Ongoing email discussion with Denis about AskTheCode plugin.
-No deadline but frequent exchanges.
-
-5. Ongoing discussion with Papr Memory about their memory plugin.
-They think it should be possible for users to share memories,
-which could have important implications for C-LARA.
-No deadline but frequent exchanges.
+4. Get more data on how C-LARA works with GPT-4 Turbo.
 
 PROBABLY ACTIVE SOON
 
@@ -33,6 +27,7 @@ Creativity, Equity, Social Action", Dec 4-6.
 BASIC FUNCTIONALITY
 All of these should be fairly quick and straightforward. Perhaps 1-3 days of effort per task.
   - Basic online help
+  - Password retrieval. Needs mail to be installed.
   - Payment integration
 
 SOCIAL NETWORK 
@@ -63,3 +58,13 @@ I did notice however that things seems to be considerably better with GPT-4 Turb
 
 LOGGING
 Logging is an open-ended problem. There are many ways to do it - some simple ones will be quick to implement. Many people want it for running experiments. We should discuss
+
+PLUG-INS
+
+- Ongoing email discussion with Denis about AskTheCode plugin.
+  No deadline but frequent exchanges.
+
+- Ongoing discussion with Papr Memory about their memory plugin.
+  They think it should be possible for users to share memories,
+  which could have important implications for C-LARA.
+  No deadline but frequent exchanges.
