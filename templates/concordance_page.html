@@ -28,10 +28,10 @@
 					data-gloss="{{ element.annotations.phonetic }}"
 					data-lemma="{{ element.annotations.phonetic|replace_punctuation }}" 
 					data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
-		    {%- elif element.type == "NonWordText" -%}{{ element.content }}
-		    {%- elif element.type == "Image" -%} 
-			   <img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.thumbnail_src }}" alt="Thumbnail">
-		    {%- endif -%}
+	        {%- endif -%}
+		  {%- elif element.type == "NonWordText" -%}{{ element.content }}
+		  {%- elif element.type == "Image" -%} 
+			 <img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.thumbnail_src }}" alt="Thumbnail">
 	      {%- endif -%}  
       {%- endfor -%}
       {%- if segment.annotations.tts -%}
