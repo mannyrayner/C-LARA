@@ -13,7 +13,7 @@ from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 
 from .models import UserProfile, UserConfiguration, LanguageMaster, Content
-from .models import CLARAProject, HumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
+from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
@@ -21,7 +21,8 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserProfileForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm, HumanAudioInfoForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
+from .forms import HumanAudioInfoForm, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
@@ -888,6 +889,66 @@ def human_audio_processing(request, project_id):
 
     return render(request, 'clara_app/human_audio_processing.html', context)
 
+@login_required
+@user_has_a_project_role
+def human_audio_processing_phonetic(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    # Try to get existing HumanAudioInfo for this project or create a new one
+    human_audio_info, created = PhoneticHumanAudioInfo.objects.get_or_create(project=project)
+
+    # Initialize the form with the current instance of HumanAudioInfo
+    form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
+
+    # Handle POST request
+    if request.method == 'POST':
+        form = PhoneticHumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info)
+
+        if form.is_valid():
+    
+            # 1. Update the model with any new values from the form. Get the method and human_voice_id
+            human_voice_id = request.POST['voice_talent_id']
+
+            human_audio_info.save()  # Save the restored data back to the database
+
+            # 2. Upload and internalise a LiteDevTools zipfile if there is one 
+            
+            if 'audio_zip' in request.FILES and human_voice_id:
+                uploaded_file = request.FILES['audio_zip']
+                zip_file = uploaded_file_to_file(uploaded_file)
+                if not local_file_exists(zip_file):
+                    messages.error(request, f"Error: unable to find uploaded zipfile {zip_file}")
+                else:
+                    print(f"--- Found uploaded file {zip_file}")
+                    # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
+                    copy_local_file_to_s3_if_necessary(zip_file)
+                    # Create a callback
+                    report_id = uuid.uuid4()
+                    callback = [post_task_update_in_db, report_id]
+
+                    async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
+
+                    # Redirect to the monitor view, passing the task ID and report ID as parameters
+                    return redirect('process_ldt_zipfile_monitor', project_id, report_id)
+            else:
+                messages.success(request, "Human Audio Info updated successfully!")
+
+        else:
+            messages.error(request, "There was an error processing the form. Please check your input.")
+
+    # Handle GET request
+    else:
+        form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
+    
+    context = {
+        'project': project,
+        'form': form,
+        # Any other context data you want to send to the template
+    }
+
+    return render(request, 'clara_app/human_audio_processing_phonetic.html', context)
+
 def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
     try:
         # If we're on Heroku, the main thread should have copied the zipfile to S3 so that we can can get it
@@ -1010,6 +1071,13 @@ def process_manual_alignment_complete(request, project_id, status):
 # Used for Voice Recorder functionality
 @login_required
 def generate_audio_metadata(request, project_id, metadata_type, human_voice_id):
+    return generate_audio_metadata_phonetic_or_normal(request, project_id, metadata_type, human_voice_id, phonetic=False)
+
+@login_required
+def generate_audio_metadata_phonetic(request, project_id, metadata_type, human_voice_id):
+    return generate_audio_metadata_phonetic_or_normal(request, project_id, metadata_type, human_voice_id, phonetic=True)
+
+def generate_audio_metadata_phonetic_or_normal(request, project_id, metadata_type, human_voice_id, phonetic=False):
     # Ensure the metadata type is valid
     if metadata_type not in ['segments', 'words']:
         return HttpResponse("Invalid metadata type.", status=400)
@@ -1021,7 +1089,7 @@ def generate_audio_metadata(request, project_id, metadata_type, human_voice_id):
     lite_metadata_content = clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
                                                                       audio_type_for_segments='human' if metadata_type == 'segments' else 'tts',
                                                                       audio_type_for_words='human' if metadata_type == 'words' else 'tts',
-                                                                      type=metadata_type, format="lite_dev_tools")
+                                                                      type=metadata_type, format="lite_dev_tools", phonetic=phonetic)
 
     # Create a response object for file download
     response = JsonResponse(lite_metadata_content, safe=False, json_dumps_params={'indent': 4})

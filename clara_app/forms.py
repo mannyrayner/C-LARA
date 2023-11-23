@@ -3,7 +3,7 @@ from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
 from .models import Content, UserProfile, UserConfiguration, LanguageMaster
-from .models import CLARAProject, HumanAudioInfo, Rating, Comment
+from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
@@ -81,6 +81,11 @@ class HumanAudioInfoForm(forms.ModelForm):
         model = HumanAudioInfo
         fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id',
                   'audio_file', 'manual_align_metadata_file']
+
+class PhoneticHumanAudioInfoForm(forms.ModelForm):
+    class Meta:
+        model = PhoneticHumanAudioInfo
+        fields = ['use_for_segments', 'use_for_words', 'voice_talent_id']
         
 class AddProjectMemberForm(forms.Form):
     ROLE_CHOICES = [

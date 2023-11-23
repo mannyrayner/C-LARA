@@ -85,6 +85,24 @@ class HumanAudioInfo(models.Model):
 
     def __str__(self):
         return f"Human Audio Info for {self.project.title}"
+
+# Simpler version of above for phonetic info, where the only operation is recording.
+class PhoneticHumanAudioInfo(models.Model):
+    
+    # Fields
+    use_for_segments = models.BooleanField(default=False)
+    use_for_words = models.BooleanField(default=False)
+    voice_talent_id = models.CharField(max_length=200, default='anonymous')
+    
+    # Relationship with CLARAProject
+    project = models.OneToOneField(
+        'CLARAProject', 
+        on_delete=models.CASCADE, 
+        related_name='phonetic_human_audio_info'
+    )
+
+    def __str__(self):
+        return f"Phonetic Human Audio Info for {self.project.title}"
         
 class CLARAProjectAction(models.Model):
     ACTION_CHOICES = [
