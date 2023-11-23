@@ -16,7 +16,7 @@ It uses the audio repository to store and retrieve audio files.
 
 from .clara_classes import Text, InternalCLARAError
 from .clara_utils import absolute_local_file_name, basename, make_tmp_file, file_exists, remove_file, read_json_local_file, unzip_file, post_task_update
-from .clara_utils import canonical_word_for_audio, canonical_text_for_audio
+from .clara_utils import canonical_word_for_audio, canonical_text_for_audio, remove_duplicates_general
 from .clara_tts_api import get_tts_engine, get_default_voice, get_language_id, create_tts_engine
 from .clara_audio_repository import AudioRepository
 from .clara_ldt import convert_ldt_data_to_mp3
@@ -138,12 +138,17 @@ class AudioAnnotator:
 
         return missing_words, missing_segments
 
-    def generate_audio_metadata(self, text_obj, type='default', format='default', callback=None):
+    def generate_audio_metadata(self, text_obj, type='default', format='default', phonetic=False, callback=None):
         words_data, segments_data = self._get_all_audio_data(text_obj, callback)
 
         # Reformat the data as lists of dictionaries.
         words_metadata = [{"word": word_data[0], "file": word_data[1]} for word_data in words_data if word_data[0]]
         segments_metadata = [{"segment": segment_data[0], "file": segment_data[1]} for segment_data in segments_data if segment_data[0]]
+
+        
+        words_metadata = remove_duplicates_general(words_metadata)
+        if phonetic:
+            segments_metadata = remove_duplicates_general(segments_metadata)
 
         if format != 'default':
             words_metadata = [ format_audio_metadata_item(item, format, 'words') for item in words_metadata ]

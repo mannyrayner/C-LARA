@@ -1,7 +1,7 @@
 
 from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 from .clara_internalise import internalize_text
-from .clara_classes import Text, Page, Segment, ContentElement
+from .clara_classes import Text, Page, Segment, ContentElement, InternalCLARAError 
 from .clara_utils import basename, get_image_dimensions
 
 # ------------------------------------------
@@ -11,7 +11,7 @@ def segmented_text_to_phonetic_text(segmented_text, l2_language):
     orthography, accents = repository.get_parsed_entry(l2_language)
     if not orthography:
         return ''
-    alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(orthography + _hyphens_and_apostrophes)
+    alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(orthography)
     parameters = ( 'phonetic_orthography', alphabet_internalised, accents )
     l1_language = None
     segmented_text_object = internalize_text(segmented_text, l2_language, l1_language, 'segmented')
@@ -77,15 +77,11 @@ def guess_alignment_for_word(word, parameters):
 def alignment_for_phonetically_spelled_language(word, alphabet_internalised, accent_chars):
     ( decomposition_word, decomposition_phonetic ) = greedy_decomposition_of_word(word, alphabet_internalised, accent_chars)
     if decomposition_word == False:
-        print(f'*** Warning: unable to spell out "{word}" as {language} word')
+        print(f'*** Warning: unable to spell out "{word}"')
         return ( word, word )
     word_with_separators = '|'.join(decomposition_word)
     phonetic_with_separators = '|'.join(decomposition_phonetic)
     return ( word_with_separators, phonetic_with_separators )
-
-_half_space = "\u200c"
-
-_hyphens_and_apostrophes = [ "-", "'", "’", _half_space ]
 
 def greedy_decomposition_of_word(word, alphabet_internalised, accent_chars):
     ( decomposition_word, decomposition_phonetic ) = ( [], [] )
@@ -116,18 +112,20 @@ def initial_accent_chars(string, accent_chars):
     else:
         return ''
 
-def internalise_alphabet_for_phonetically_spelled_language(alphabet):
+_half_space = "\u200c"
+
+_hyphens_and_apostrophes = [ "-", "'", "’", _half_space ]
+
+def internalise_alphabet_for_phonetically_spelled_language(orthography_list):
+    orthography_list1 = orthography_list + [ { 'letter_variants': [ letter ], 'display_form': letter } for letter in _hyphens_and_apostrophes ]
     internalised = {}
-    for item in alphabet:
-        if isinstance(item, ( str )):
-            internalised[item] = item
-        elif isinstance(item, ( list, tuple )) and len(item) != 0:
-            main_letter = item[0]
-            for letter in item:
-                internalised[letter] = main_letter
-        else:
-            print(f'*** Error: bad item in alphabet for phonetically spelled language: {item}')
-            return False
-    return internalised
+    try:
+        for item in orthography_list1:
+            for letter in item['letter_variants']:
+                internalised[letter] = item['display_form']
+        return internalised
+    except:
+        raise InternalCLARAError(message = f'Malformed orthography data')
+    
 
 

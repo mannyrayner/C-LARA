@@ -789,3 +789,21 @@ def canonical_text_for_audio(text):
     text = text.strip()
 
     return text
+
+def remove_blank_lines(text):
+    lines = text.split('\n')
+    return '\n'.join([ line for line in lines if len(line.strip()) != 0 ])
+
+def remove_duplicates_from_list_of_hashable_items(items):
+    return list(dict.fromkeys(items))
+
+## Slower version for lists with non-hashable elements
+def remove_duplicates_general(items):
+    ( out, dictionary ) = ( [], {} )
+    for X in items:
+        string = str(X)
+        if not string in dictionary:
+            out += [ X ]
+            dictionary[string] = True
+    return out
+

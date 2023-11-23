@@ -7,9 +7,9 @@ clara_phonetic_orthography_repository.py
 
 from .clara_utils import get_config, absolute_file_name, absolute_local_file_name, file_exists, write_txt_file, read_txt_file
 from .clara_utils import make_directory, directory_exists
-from .clara_utils import post_task_update
+from .clara_utils import post_task_update, remove_blank_lines
 
-from .clara_classes import Image, InternalCLARAError
+from .clara_classes import InternalCLARAError
 
 from pathlib import Path
 
@@ -38,8 +38,8 @@ class PhoneticOrthographyRepository:
             orthography_file = self._orthography_pathname_for_language(language)
             accents_file = self._accents_pathname_for_language(language)
             
-            write_txt_file(orthography_text, orthography_file)
-            write_txt_file(accents_text, accents_file)
+            write_txt_file(remove_blank_lines(orthography_text), orthography_file)
+            write_txt_file(remove_blank_lines(accents_text), accents_file)
             
         except Exception as e:
             post_task_update(callback, f'*** Error when saving phonetic orthography repository entry for "{language}": "{str(e)}"\n{traceback.format_exc()}')
@@ -83,21 +83,32 @@ class PhoneticOrthographyRepository:
         parsed_lines = []
         for line in lines:
             parsed_line = self._parse_phonetic_orthography_line(line)
-            if len(parsed_line) != 0:
+            if parsed_line:
                 parsed_lines += [ parsed_line ]
         return parsed_lines
 
+    # An orthography line is a list of letter variants, optionally terminated by | and a display form.
+    # If the "|" is not present, the first letter variant is the display form.
     def _parse_phonetic_orthography_line(self, line):
-        components = line.split()
-        return components
+        components = line.split('|')
+        if len(components) == 0:
+            return None
+        if len(components) > 2:
+            print(f'Bad phonetic orthography line, "{line}"')
+            #return None
+            raise InternalCLARAError(message='Bad phonetic orthography line, "{line}"')
+        letter_variants = components[0].split()
+        if len(letter_variants) == 0:
+            return None
+        display_form = components[1].strip() if len(components) == 2 else letter_variants[0]
+        return { 'letter_variants': letter_variants, 'display_form': display_form }
 
     def _parse_accents_entry(self, text):
         lines = text.split('\n')
         accents = []
         for line in lines:
             parsed_line = self._parse_accents_line(line)
-            if len(parsed_line) == 1:
-                accents += [ parsed_line ]
+            accents += parsed_line 
         return accents
     
     def _parse_accents_line(self, line):
@@ -105,7 +116,7 @@ class PhoneticOrthographyRepository:
         if len(components) == 0:
             return []
         elif len(components) > 1:
-            raise InternalCLARAError(message='Bad line in accents file (length greater than 1), "{line}"')
+            raise InternalCLARAError(message='Bad line in accents file (length greater than 1): "{line}"')
         else:
             return [ self._parse_accents_line_item(components[0]) ]
 
@@ -117,7 +128,7 @@ class PhoneticOrthographyRepository:
                 hex_value = string[2:]
                 return str(chr(int(hex_value, 16)))
             except:
-                InternalCLARAError(message='Bad item in accents file, "{string}"')
+                raise InternalCLARAError(message='Bad item in accents file, "{string}"')
         else:
             raise InternalCLARAError(message='Bad item in accents file, "{string}"')
 

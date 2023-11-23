@@ -698,14 +698,15 @@ class CLARAProjectInternal:
         return text_object
 
     def get_audio_metadata(self, tts_engine_type=None, human_voice_id=None,
-                           audio_type_for_words='tts', audio_type_for_segments='tts', type='all', format='default', callback=None):
-        post_task_update(callback, f"--- Getting audio metadata")
-        text_object = self.get_internalised_text()
+                           audio_type_for_words='tts', audio_type_for_segments='tts', type='all', format='default',
+                           phonetic=False, callback=None):
+        post_task_update(callback, f"--- Getting audio metadata (phonetic = {phonetic})")
+        text_object = self.get_internalised_text(phonetic=phonetic)
         post_task_update(callback, f"--- Internalised text created")
         
         audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
                                          audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, callback=callback)
-        return audio_annotator.generate_audio_metadata(text_object, type=type, format=format, callback=callback)
+        return audio_annotator.generate_audio_metadata(text_object, type=type, format=format, phonetic=phonetic, callback=callback)
 
     # Unzip a zipfile received from LiteDevTools, which will include human audio files and metadata.
     # Use the metadata to install the files in the audio repository 
