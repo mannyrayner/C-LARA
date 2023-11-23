@@ -1,0 +1,55 @@
+{% extends 'clara_app/base.html' %}
+
+{% load static %}
+
+{% block title %}Human Audio Processing, phonetic{% endblock %}
+
+{% block content %}
+  <h2>Human Audio Processing, phonetic ("{{ project.title }}")</h2>
+  
+  <form method="post" enctype="multipart/form-data" id="human-audio-processing-form">
+    {% csrf_token %}
+    <p>
+        <label for="{{ form.use_for_segments.id_for_label }}">Use for words:</label>
+        {{ form.use_for_segments }}
+    </p>
+    <p>
+        <label for="{{ form.use_for_words.id_for_label }}">Use for letter groups:</label>
+        {{ form.use_for_words }}
+    </p>
+    <p>
+        <label for="{{ form.voice_talent_id.id_for_label }}">Voice Talent ID:</label>
+        {{ form.voice_talent_id }}
+    </p>
+
+	<!-- Control to download a metadata file in LiteDevTools format -->
+	<p>
+	  <strong>LiteDevTools Metadata Download:</strong>
+	  {% if form.use_for_segments.value %}
+		 <a href="{% url 'generate_audio_metadata_phonetic' project.id 'segments' form.voice_talent_id.value %}" class="btn">Download for words</a>
+	  {% endif %}
+	  {% if form.use_for_words.value %}
+		 <a href="{% url 'generate_audio_metadata_phonetic' project.id 'words' form.voice_talent_id.value %}" class="btn">Download for letter groups</a>
+	  {% endif %}
+	</p>
+
+	<!-- Control to upload a LiteDevTools zipfile -->
+	<p>
+	  <strong>Upload LiteDevTools Zipfile:</strong>
+	  <input type="file" name="audio_zip" accept=".zip">
+	</p>
+
+    <button type="submit" id="submit-button">Update & Process</button>
+  </form>
+
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+
+  <script type="text/javascript">
+    document.getElementById('human-audio-processing-form').onsubmit = function() {
+      document.getElementById('submit-button').textContent = "Processing...";
+    };
+  </script>
+
+  <script src="{% static 'clara_app/scripts/form-button-text.js' %}"></script>
+
+{% endblock %}
