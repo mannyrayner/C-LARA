@@ -49,6 +49,22 @@ That lamb was sure to go"""
         print('*** Error: unknown ID: {ID}')
         return
 
+# Tag each word with its surface form
+def generate_tagged_version_with_trivial_tags(segmented_text):
+    l1_language = 'irrelevant'
+    l2_language = 'irrelevant'
+    internalised_text = clara_internalise.internalize_text(segmented_text, l2_language, l1_language, 'segmented')
+    tag_internalised_text_with_trivial_tags(internalised_text)
+    return internalised_text.to_text('lemma')
+
+def tag_internalised_text_with_trivial_tags(internalised_text):
+    for page in internalised_text.pages:
+        for segment in page.segments:
+            for content_element in segment.content_elements:
+                if content_element.type == 'Word':
+                    content_element.annotations['lemma'] = content_element.content.lower()
+                    content_element.annotations['pos'] = 'X'
+
 def generate_tagged_version_with_treetagger(segmented_text, l2_language):
     l1_language = 'irrelevant'
     internalised_text = clara_internalise.internalize_text(segmented_text, l2_language, l1_language, 'segmented')

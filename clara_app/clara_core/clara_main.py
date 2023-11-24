@@ -125,7 +125,7 @@ from .clara_create_annotations import invoke_templates_on_trivial_text
 from .clara_create_annotations import generate_glossed_version, generate_segmented_version, generate_tagged_version
 from .clara_create_annotations import improve_glossed_version, improve_segmented_version, improve_tagged_version
 from .clara_create_annotations import improve_lemma_and_gloss_tagged_version
-from .clara_conventional_tagging import generate_tagged_version_with_treetagger
+from .clara_conventional_tagging import generate_tagged_version_with_treetagger, generate_tagged_version_with_trivial_tags
 from .clara_create_story import generate_story, improve_story
 from .clara_cefr import estimate_cefr_reading_level
 from .clara_summary import generate_summary, improve_summary
@@ -603,11 +603,22 @@ class CLARAProjectInternal:
     # Call Treetagger to create a version of the text with lemma annotations
     def create_lemma_tagged_text_with_treetagger(self, user='Unknown', label='', callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
-        lemma_tagged_text = generate_tagged_version_with_treetagger(segmented_text, self.l2_language,
-                                                                    callback=callback)
+        print(f'--- Calling generate_tagged_version_with_treetagger')
+        lemma_tagged_text = generate_tagged_version_with_treetagger(segmented_text, self.l2_language)
+        print(f'--- Result = {lemma_tagged_text}')
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='tagger_generated')
         api_calls = []
         return api_calls
+
+    # Create a version where each word is tagged with its surface form
+    def create_lemma_tagged_text_with_trivial_tags(self, user='Unknown', label='', callback=None) -> List[APICall]:
+        segmented_text = self.load_text_version("segmented_with_images")
+        lemma_tagged_text = generate_tagged_version_with_trivial_tags(segmented_text)
+        self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='trivial')
+        api_calls = []
+        return api_calls
+
+    generate_tagged_version_with_trivial_tags
 
     # Call ChatGPT-4 to create a version of the text with lemma annotations
     def create_lemma_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
