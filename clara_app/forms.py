@@ -230,6 +230,7 @@ class CreateGlossedTextForm(CreateAnnotatedTextForm):
 
 class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
+        ('trivial', 'Generate annotated text with trivial tags'),
         ('tree_tagger', 'Generate annotated text using TreeTagger'),
         ('generate', 'Generate annotated text using AI'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 

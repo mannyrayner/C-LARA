@@ -1219,7 +1219,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             username = request.user.username
             # We have an optional prompt when creating the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
-            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'tree_tagger', 'jieba' ):
+            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'tree_tagger', 'jieba' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
             # We're saving an edited version of a file
             elif text_choice == 'manual':
@@ -1260,7 +1260,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                 messages.error(request, f"Sorry, you need money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
-            elif text_choice in ( 'generate', 'correct', 'improve', 'tree_tagger', 'jieba' ):
+            elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'jieba' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
                 try:
@@ -1294,6 +1294,17 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         print(f'--- Started improvement task')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
+                    # We are creating the text using trivial tagging. This operation is only possible with lemma tagging
+                    elif text_choice == 'trivial':
+                        action, api_calls = ( 'generate', clara_project_internal.create_lemma_tagged_text_with_trivial_tags(user=username, label=label) )
+                        # These operations are handled elsewhere for generation and improvement, due to asynchrony
+                        store_api_calls(api_calls, project, request.user, this_version)
+                        annotated_text = clara_project_internal.load_text_version(this_version)
+                        text_choice = 'manual'
+                        success_message = f'Created {this_version} text with trivial tags'
+                        print(f'--- {success_message}')
+                        messages.success(request, success_message)
+                        current_version = clara_project_internal.get_file_description(this_version, 'current')
                     # We are creating the text using TreeTagger. This operation is only possible with lemma tagging
                     elif text_choice == 'tree_tagger':
                         action, api_calls = ( 'generate', clara_project_internal.create_lemma_tagged_text_with_treetagger(user=username, label=label) )
