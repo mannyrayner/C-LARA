@@ -957,7 +957,7 @@ def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callba
             post_task_update(callback, f"Error: unable to find uploaded file {zip_file}")
             post_task_update(callback, f"error")
         else:
-            post_task_update(callback, "--- Found uploaded file {zip_file}")
+            post_task_update(callback, f"--- Found uploaded file {zip_file}")
             result = clara_project_internal.process_lite_dev_tools_zipfile(zip_file, human_voice_id, callback=callback)
             if result:
                 post_task_update(callback, f"finished")
