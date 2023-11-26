@@ -22,7 +22,7 @@ from django_q.models import Task
 from .forms import RegistrationForm, UserForm, UserProfileForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
-from .forms import HumanAudioInfoForm, PhoneticHumanAudioInfoForm
+from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
@@ -38,6 +38,7 @@ from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository
+from .clara_core.clara_audio_repository import AudioRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
@@ -47,6 +48,7 @@ from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absol
 from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
 from .clara_core.clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
 from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language
+from .clara_core.clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from pathlib import Path
 from decimal import Decimal
@@ -782,6 +784,7 @@ def human_audio_processing(request, project_id):
 
     # Initialize the form with the current instance of HumanAudioInfo
     form = HumanAudioInfoForm(instance=human_audio_info)
+    audio_item_formset = None
 
     # Handle POST request
     if request.method == 'POST':
@@ -789,7 +792,7 @@ def human_audio_processing(request, project_id):
 
         if form.is_valid():
     
-            # 1. Update the model with any new values from the form. Get the method and human_voice_id
+            # 0. Update the model with any new values from the form. Get the method and human_voice_id
             form.save()
 
             method = request.POST['method']
@@ -801,6 +804,34 @@ def human_audio_processing(request, project_id):
                 human_audio_info.manual_align_metadata_file = existing_metadata_file
 
             human_audio_info.save()  # Save the restored data back to the database
+
+            # 1. If we're doing uploading, get the formset and save uploaded files
+
+            if method == 'upload' and human_voice_id:
+
+                audio_repository = AudioRepository()
+                formset = AudioItemFormSet(request.POST, request.FILES)
+                n_files_uploaded = 0
+                print(f'--- Updating from formset ({len(formset)} items)')
+                for form in formset:
+                    if form.changed_data:
+                        if not form.is_valid():
+                            print(f'--- Invalid form data: {form}')
+                            messages.error(request, "Invalid form data.")
+                            return redirect('human_audio_processing', project_id=project_id)
+                        
+                        if form.cleaned_data.get('audio_file_path'):
+                            text = form.cleaned_data.get('text')
+                            uploaded_audio_file_path = form.cleaned_data.get('audio_file_path')
+                            real_audio_file_path = uploaded_file_to_file(uploaded_audio_file_path)
+                            print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
+                            stored_audio_file_path = audio_repository.store_mp3('human_voice', project.l2, human_voice_id, real_audio_file_path)
+                            audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path)
+                            print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
+                            n_files_uploaded += 1
+                                
+                messages.success(request, f"{n_files_uploaded} audio files uploaded from {len(formset)} items")
+                return redirect('human_audio_processing', project_id=project_id)                             
 
             # 2. Upload and internalise a LiteDevTools zipfile if there is one and we're doing recording.
             
@@ -878,16 +909,40 @@ def human_audio_processing(request, project_id):
     # Handle GET request
     else:
         form = HumanAudioInfoForm(instance=human_audio_info)
+        if human_audio_info.method == 'upload':
+            audio_item_initial_data = initial_data_for_audio_upload_formset(clara_project_internal, human_audio_info)
+            audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
+        else:
+            audio_item_formset = None
     
     context = {
         'project': project,
         'form': form,
+        'formset': audio_item_formset,
         'audio_file': human_audio_info.audio_file,
         'manual_align_metadata_file': human_audio_info.manual_align_metadata_file,
         # Any other context data you want to send to the template
     }
 
     return render(request, 'clara_app/human_audio_processing.html', context)
+
+def initial_data_for_audio_upload_formset(clara_project_internal, human_audio_info):
+    metadata = []
+    human_voice_id = human_audio_info.voice_talent_id
+    if human_audio_info.use_for_words:
+        metadata += clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
+                                                              audio_type_for_words='human', type='words',
+                                                              format='text_and_full_file')
+    if human_audio_info.use_for_segments:
+        metadata += clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
+                                                              audio_type_for_segments='human', type='segments',
+                                                              format='text_and_full_file')
+    initial_data = [ { 'text': item['text'],
+                       'audio_file_path': item['full_file'],
+                       'audio_file_base_name': basename(item['full_file']) }
+                     for item in metadata ]
+    
+    return initial_data
 
 @login_required
 @user_has_a_project_role
@@ -912,42 +967,60 @@ def human_audio_processing_phonetic(request, project_id):
 
             human_audio_info.save()  # Save the restored data back to the database
 
-            # 2. Upload and internalise a LiteDevTools zipfile if there is one 
-            
-            if 'audio_zip' in request.FILES and human_voice_id:
-                uploaded_file = request.FILES['audio_zip']
-                zip_file = uploaded_file_to_file(uploaded_file)
-                if not local_file_exists(zip_file):
-                    messages.error(request, f"Error: unable to find uploaded zipfile {zip_file}")
-                else:
-                    print(f"--- Found uploaded file {zip_file}")
-                    # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
-                    copy_local_file_to_s3_if_necessary(zip_file)
-                    # Create a callback
-                    report_id = uuid.uuid4()
-                    callback = [post_task_update_in_db, report_id]
-
-                    async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
-
-                    # Redirect to the monitor view, passing the task ID and report ID as parameters
-                    return redirect('process_ldt_zipfile_monitor', project_id, report_id)
-            else:
-                messages.success(request, "Human Audio Info updated successfully!")
+            # 2. Update from the formset and save new files
+            audio_repository = AudioRepository()
+            formset = AudioItemFormSet(request.POST, request.FILES)
+            n_files_uploaded = 0
+            print(f'--- Updating from formset ({len(formset)} items)')
+            for form in formset:
+                if form.changed_data:
+                    if not form.is_valid():
+                        print(f'--- Invalid form data: {form}')
+                        messages.error(request, "Invalid form data.")
+                        return redirect('human_audio_processing', project_id=project_id)
+                    
+                    if form.cleaned_data.get('audio_file_path'):
+                        text = form.cleaned_data.get('text')
+                        uploaded_audio_file_path = form.cleaned_data.get('audio_file_path')
+                        real_audio_file_path = uploaded_file_to_file(uploaded_audio_file_path)
+                        print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
+                        stored_audio_file_path = audio_repository.store_mp3('human_voice', project.l2, human_voice_id, real_audio_file_path)
+                        audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path)
+                        print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
+                        n_files_uploaded += 1
+                            
+            messages.success(request, f"{n_files_uploaded} audio files uploaded from {len(formset)} items")
+            return redirect('human_audio_processing_phonetic', project_id=project_id)          
 
         else:
             messages.error(request, "There was an error processing the form. Please check your input.")
 
     # Handle GET request
-    else:
-        form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
+    form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
+    audio_item_initial_data = initial_data_for_audio_upload_formset_phonetic(clara_project_internal, human_audio_info)
+    audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
     
     context = {
         'project': project,
         'form': form,
+        'formset': audio_item_formset,
         # Any other context data you want to send to the template
     }
 
     return render(request, 'clara_app/human_audio_processing_phonetic.html', context)
+
+def initial_data_for_audio_upload_formset_phonetic(clara_project_internal, human_audio_info):
+    human_voice_id = human_audio_info.voice_talent_id
+    metadata = clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
+                                                         audio_type_for_words='human', type='words',
+                                                         format='text_and_full_file', phonetic=True)
+
+    initial_data = [ { 'text': item['text'],
+                       'audio_file_path': item['full_file'],
+                       'audio_file_base_name': basename(item['full_file']) }
+                     for item in metadata ]
+    
+    return initial_data
 
 def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callback=None):
     try:
@@ -2012,6 +2085,20 @@ def serve_project_image(request, project_id, base_filename):
     else:
         raise Http404
 
+@login_required
+def serve_audio_file(request, engine_id, l2, voice_id, base_filename):
+    audio_repository = AudioRepository()
+    base_dir = audio_repository.base_dir
+    file_path = absolute_file_name( Path(base_dir) / engine_id / l2 / voice_id / base_filename )
+    if file_exists(file_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+        if _s3_storage:
+            s3_file = _s3_bucket.Object(key=file_path).get()
+            return HttpResponse(s3_file['Body'].read(), content_type=content_type)
+        else:
+            return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    else:
+        raise Http404
 
 
 

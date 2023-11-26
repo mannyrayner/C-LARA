@@ -57,6 +57,7 @@ class ProjectPermissions(models.Model):
 class HumanAudioInfo(models.Model):
     # Choices for the 'method' field
     METHOD_CHOICES = [
+        ('upload', 'Upload'),
         ('record', 'Record'),
         ('manual_align', 'Manual Align'),
         ('automatic_align', 'Automatic Align'),
@@ -88,7 +89,7 @@ class HumanAudioInfo(models.Model):
 
 # Simpler version of above for phonetic info, where the only operation is recording.
 class PhoneticHumanAudioInfo(models.Model):
-    
+
     # Fields
     use_for_segments = models.BooleanField(default=False)
     use_for_words = models.BooleanField(default=False)

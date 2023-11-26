@@ -76,17 +76,6 @@ class ProjectSearchForm(forms.Form):
     l2 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)
     l1 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)
 
-class HumanAudioInfoForm(forms.ModelForm):
-    class Meta:
-        model = HumanAudioInfo
-        fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id',
-                  'audio_file', 'manual_align_metadata_file']
-
-class PhoneticHumanAudioInfoForm(forms.ModelForm):
-    class Meta:
-        model = PhoneticHumanAudioInfo
-        fields = ['use_for_segments', 'use_for_words', 'voice_talent_id']
-        
 class AddProjectMemberForm(forms.Form):
     ROLE_CHOICES = [
         ('VIEWER', 'Viewer'),
@@ -372,6 +361,37 @@ class ImageForm(forms.Form):
     delete = forms.BooleanField(label='Delete Image', required=False)
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
+
+class HumanAudioInfoForm(forms.ModelForm):
+    class Meta:
+        model = HumanAudioInfo
+        fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id',
+                  'audio_file', 'manual_align_metadata_file']
+
+class PhoneticHumanAudioInfoForm(forms.ModelForm):
+    class Meta:
+        model = PhoneticHumanAudioInfo
+        fields = ['use_for_segments', 'use_for_words', 'voice_talent_id']
+
+class AudioItemForm(forms.Form):
+    text = forms.CharField(
+        label='Text',
+        max_length=500,
+        widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+        required=True
+    )
+    audio_file_path = forms.FileField(
+        label='Audio File',
+        required=False
+    )
+    audio_file_base_name = forms.CharField(
+        label='Audio File Base Name',
+        max_length=100,
+        widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+        required=False
+    )
+
+AudioItemFormSet = formset_factory(AudioItemForm, extra=1)
     
 class PhoneticLexiconForm(forms.Form):
     language = forms.ChoiceField(choices=[])  # Empty choices initially

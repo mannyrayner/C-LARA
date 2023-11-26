@@ -79,6 +79,7 @@ urlpatterns = [
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/<path:filename>', views.serve_rendered_text, name='serve_rendered_text'),
     path('serve_zipfile/<int:project_id>/', views.serve_zipfile, name='serve_zipfile'),
     path('projects/serve_project_image/<str:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
+    path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', views.serve_audio_file, name='serve_audio_file'),
 
     path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
     path('manual_audio_alignment_integration_endpoint2/', views.manual_audio_alignment_integration_endpoint2, name='manual_audio_alignment_integration_endpoint2'),
