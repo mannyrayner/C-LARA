@@ -25,6 +25,22 @@
         <label for="{{ form.voice_talent_id.id_for_label }}">Voice Talent ID:</label>
         {{ form.voice_talent_id }}
     </p>
+	
+	{% if form.method.value == "upload" %}
+		{{ formset.management_form }}
+		{% for audio_form in formset %}
+		  <hr>
+		  {% if audio_form.audio_file_base_name.value %}
+		     <audio controls>
+			    <source src="{% url 'serve_audio_file' 'human_voice' project.l2 form.voice_talent_id.value audio_form.audio_file_base_name.value %}">
+                Your browser does not support the audio tag.
+             </audio>
+		  {% else %}
+			 <p>No audio</p>
+		  {% endif %}
+		  {{ audio_form.as_p }}
+		{% endfor %}
+	{% endif %}
 
 	{% if form.method.value == "record" %}
 		<!-- Control to download a metadata file in LiteDevTools format -->

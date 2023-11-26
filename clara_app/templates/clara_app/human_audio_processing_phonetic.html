@@ -10,34 +10,23 @@
   <form method="post" enctype="multipart/form-data" id="human-audio-processing-form">
     {% csrf_token %}
     <p>
-        <label for="{{ form.use_for_segments.id_for_label }}">Use for words:</label>
-        {{ form.use_for_segments }}
-    </p>
-    <p>
-        <label for="{{ form.use_for_words.id_for_label }}">Use for letter groups:</label>
-        {{ form.use_for_words }}
-    </p>
-    <p>
         <label for="{{ form.voice_talent_id.id_for_label }}">Voice Talent ID:</label>
         {{ form.voice_talent_id }}
     </p>
 
-	<!-- Control to download a metadata file in LiteDevTools format -->
-	<p>
-	  <strong>LiteDevTools Metadata Download:</strong>
-	  {% if form.use_for_segments.value %}
-		 <a href="{% url 'generate_audio_metadata_phonetic' project.id 'segments' form.voice_talent_id.value %}" class="btn">Download for words</a>
+	{{ formset.management_form }}
+	{% for audio_form in formset %}
+	  <hr>
+	  {% if audio_form.audio_file_base_name.value %}
+		 <audio controls>
+			<source src="{% url 'serve_audio_file' 'human_voice' project.l2 form.voice_talent_id.value audio_form.audio_file_base_name.value %}">
+			Your browser does not support the audio tag.
+		 </audio>
+	  {% else %}
+		 <p>No audio</p>
 	  {% endif %}
-	  {% if form.use_for_words.value %}
-		 <a href="{% url 'generate_audio_metadata_phonetic' project.id 'words' form.voice_talent_id.value %}" class="btn">Download for letter groups</a>
-	  {% endif %}
-	</p>
-
-	<!-- Control to upload a LiteDevTools zipfile -->
-	<p>
-	  <strong>Upload LiteDevTools Zipfile:</strong>
-	  <input type="file" name="audio_zip" accept=".zip">
-	</p>
+	  {{ audio_form.as_p }}
+	{% endfor %}
 
     <button type="submit" id="submit-button">Update & Process</button>
   </form>

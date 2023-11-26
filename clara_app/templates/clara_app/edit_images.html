@@ -9,7 +9,7 @@
 	  {% if form.image_base_name.value %}
          <p><img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;"></p>
       {% else %}
-         <p>No image currently associated with this project.</p>
+         <p>No image currently stored.</p>
       {% endif %}
       {{ form.as_p }}
     {% endfor %}
