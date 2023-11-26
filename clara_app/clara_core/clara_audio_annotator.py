@@ -172,7 +172,7 @@ class AudioAnnotator:
                 result = self.tts_engine.create_mp3(self.language_id, self.voice_id, audio, temp_file, callback=callback)
                 if result:
                     file_path = self.audio_repository.store_mp3(self.engine_id, self.language_id, self.voice_id, temp_file)
-                    self.audio_repository.add_entry(self.engine_id, self.language_id, self.voice_id, audio, file_path)
+                    self.audio_repository.add_or_update_entry(self.engine_id, self.language_id, self.voice_id, audio, file_path)
                 else:
                     post_task_update(callback, f"--- Failed to create mp3 for '{audio}'")
             except Exception as e:
@@ -241,7 +241,7 @@ class AudioAnnotator:
                     post_task_update(callback, f"--- Adding mp3 to repository for '{text}', ({i}/{len(metadata)})")
                     temp_file = os.path.join(temp_dir, file)
                     file_path = self.audio_repository.store_mp3('human_voice', self.language, self.human_voice_id, temp_file, keep_file_name=True)
-                    self.audio_repository.add_entry('human_voice', self.language, self.human_voice_id, text, file_path)
+                    self.audio_repository.add_or_update_entry('human_voice', self.language, self.human_voice_id, text, file_path)
             except Exception as e:
                 post_task_update(callback, f"*** Error trying to process metadata item {metadata_item}: {str(e)}")
 
@@ -303,13 +303,19 @@ class AudioAnnotator:
             return 'No audio voice'
 
 def format_audio_metadata_item(item, format, words_or_segments):
-    if format == 'lite_dev_tools':
-        try:
+    try:
+        if format == 'text_and_full_file':
+            file = item['file'] if isinstance(item['file'], ( str )) else ''
+            text = item['word'] if words_or_segments == 'words' else item['segment']
+            return { 'text': text, 'full_file': file }
+        elif format == 'lite_dev_tools':
             file = basename(item['file']) if isinstance(item['file'], ( str )) else ''
             text = item['word'] if words_or_segments == 'words' else item['segment']
             return { 'text': text, 'file': file }
-        except:
-            raise InternalCLARAError(message = f'Bad call: clara_audio_annotator.format_audio_metadata_item({item}, {format}, {words_or_segments})')
-    else:
-        raise InternalCLARAError(message = f'Bad call: unknown format {format} in call to clara_audio.annotator.format_audio_metadata_item')
+        else:
+            raise InternalCLARAError(message = f'Bad call: unknown format {format} in call to clara_audio.annotator.format_audio_metadata_item')
+        
+    except:
+        raise InternalCLARAError(message = f'Bad call: clara_audio_annotator.format_audio_metadata_item({item}, {format}, {words_or_segments})')
+    
     

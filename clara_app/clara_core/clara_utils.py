@@ -20,6 +20,7 @@ import chardet
 import hashlib
 import traceback
 import requests
+import subprocess
 
 from PIL import Image
 
@@ -455,6 +456,12 @@ def remove_file(pathname):
     else:
         os.remove(abspathname)
 
+def remove_local_file(pathname):
+    abspathname = absolute_local_file_name(pathname)
+
+    os.remove(abspathname)
+
+
 def rename_file(pathname1, pathname2):
     abspathname1 = absolute_file_name(pathname1)
     abspathname2 = absolute_file_name(pathname2)
@@ -807,3 +814,30 @@ def remove_duplicates_general(items):
             dictionary[string] = True
     return out
 
+def make_mp3_version_of_audio_file_if_necessary(source_file):
+    if extension_for_file_path(source_file) == 'mp3':
+        return source_file
+    else:
+        abssource_file = absolute_local_file_name(source_file)
+        # Create a temporary file with a .mp3 suffix
+        temp_file = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
+        temp_file_path = temp_file.name
+        temp_file.close()  # Close the file to allow ffmpeg to write to it
+
+        try:
+            # Run ffmpeg to convert the source file to MP3
+            result = subprocess.run(["ffmpeg", "-i", abssource_file, temp_file_path], capture_output=True, text=True)
+
+            if result.returncode != 0:
+                # If ffmpeg failed, delete the temporary file and raise an error
+                remove_local_file(temp_file_path)
+                raise InternalCLARAError(message=f'*** Error in ffmpeg conversion: {result.stderr}')
+
+            if not local_file_exists(temp_file_path):
+                raise InternalCLARAError(message=f'*** Error: MP3 file not created for {source_file}')
+
+            return temp_file_path
+        except Exception as e:
+            if local_file_exists(temp_file_path):
+                remove_local_file(temp_file_path)
+            raise InternalCLARAError(message=f'*** Error: Exception occurred during conversion of {source_file} to mp3: {str(e)}')

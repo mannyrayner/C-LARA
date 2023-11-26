@@ -708,6 +708,20 @@ class CLARAProjectInternal:
         self.internalised_and_annotated_text = text_object
         return text_object
 
+    # Get audio metadata for the project.
+    #
+    # audio_type_for_words and audio_type_for_segments can have values 'tts' or 'human'.
+    # type can have values 'words', 'segments' or 'all'.
+    # format can have values 'default' or 'lite_dev_tools'.
+    # phonetic can have values True or False
+    #
+    # This is mostly useful for getting human voice metadata.
+    # Typically we will call this with type = 'words' or 'segments',
+    # audio_type_for_words or audio_type_for_segments (whichever one matches the value of type) set to 'human'
+    # and format = 'lite_dev_tools'.
+    #
+    # The 'phonetic' parameter distinguishes between normal and phonetic versions of the text.
+    # With phonetic = True, 'words' actually means letter-groups, and 'segments' actually means words.
     def get_audio_metadata(self, tts_engine_type=None, human_voice_id=None,
                            audio_type_for_words='tts', audio_type_for_segments='tts', type='all', format='default',
                            phonetic=False, callback=None):
@@ -792,20 +806,6 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** CLARAProjectInternal: error when adding/updating image: {str(e)}")
             # Handle the exception as needed
             return None
-
-##    def store_project_associated_areas(self, image_name, associated_areas, callback=None):
-##        try:
-##            project_id = self.id
-##            
-##            post_task_update(callback, f"--- Storing associated areas for image {image_name} in project {project_id}")
-##
-##            # Logic to store the associated areas in the repository
-##            self.image_repository.store_associated_areas(project_id, image_name, associated_areas, callback=callback)
-##
-##            post_task_update(callback, f"--- Associated areas for image {image_name} stored successfully")
-##        except Exception as e:
-##            post_task_update(callback, f"*** Error when storing associated areas: {str(e)}")
-##            # Handle the exception as needed
 
     # Retrieves the image associated with the project
     def get_project_image(self, image_name, callback=None):

@@ -75,7 +75,7 @@ class AudioRepository:
                                    
             connection.commit()
             connection.close()
-            post_task_update(callback, f'--- Initialised audio repository')
+            #post_task_update(callback, f'--- Initialised audio repository')
                                    
         except Exception as e:
             error_message = f'*** Error when trying to initialise TTS database: "{str(e)}"\n{traceback.format_exc()}'
@@ -103,17 +103,64 @@ class AudioRepository:
             post_task_update(callback, error_message)
             post_task_update(callback, f'error')
 
-    def add_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
+##    def add_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
+##        try:
+##            connection = connect(self.db_file)
+##            cursor = connection.cursor()
+##            cursor.execute(localise_sql_query("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (%s, %s, %s, %s, %s)"),
+##                           (engine_id, language_id, voice_id, text, file_path))
+##            connection.commit()
+##            connection.close()
+##        except Exception as e:
+##            post_task_update(callback, f'*** Error when inserting "{language_id}/{text}/{file_path}" into TTS database: "{str(e)}"')
+##            raise InternalCLARAError(message='TTS database inconsistency')
+
+    def add_or_update_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
-            cursor.execute(localise_sql_query("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (%s, %s, %s, %s, %s)"),
-                           (engine_id, language_id, voice_id, text, file_path))
+
+            # Check if the entry already exists
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT COUNT(*) FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ?",
+                               (engine_id, language_id, voice_id, text))
+            else:  # Assume postgres
+                cursor.execute("SELECT COUNT(*) FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s",
+                               (engine_id, language_id, voice_id, text))
+
+            exists = cursor.fetchone()[0] > 0
+
+            if exists:
+                # Update existing entry
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("""UPDATE metadata SET file_path = ? WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ?""",
+                                   (file_path, engine_id, language_id, voice_id, text))
+                else:  # Assume postgres
+                    cursor.execute("""UPDATE metadata SET file_path = %s WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s""",
+                                   (file_path, engine_id, language_id, voice_id, text))
+            else:
+                # Insert new entry
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (?, ?, ?, ?, ?)",
+                                   (engine_id, language_id, voice_id, text, file_path))
+                else:  # Assume postgres
+                    cursor.execute("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (%s, %s, %s, %s, %s)",
+                                   (engine_id, language_id, voice_id, text, file_path))
+
             connection.commit()
             connection.close()
         except Exception as e:
-            post_task_update(callback, f'*** Error when inserting "{language_id}/{text}/{file_path}" into TTS database: "{str(e)}"')
+            post_task_update(callback, f'*** AudioRepository: error when inserting/updating "{language_id}/{text}/{file_path}" into TTS database: "{str(e)}"')
             raise InternalCLARAError(message='TTS database inconsistency')
+
+
+    def store_mp3(self, engine_id, language_id, voice_id, source_file, keep_file_name=False):
+        voice_dir = self.get_voice_directory(engine_id, language_id, voice_id)
+        make_directory(voice_dir, parents=True, exist_ok=True)
+        file_name = basename(source_file) if keep_file_name else f"{voice_id}_{len(list_files_in_directory(voice_dir)) + 1}.mp3"
+        destination_path = str(Path(voice_dir) / file_name)
+        copy_local_file(source_file, destination_path)
+        return destination_path
 
     def get_entry(self, engine_id, language_id, voice_id, text, callback=None):
         try:
@@ -153,11 +200,5 @@ class AudioRepository:
     def get_voice_directory(self, engine_id, language_id, voice_id):
         return absolute_file_name( Path(self.base_dir) / engine_id / language_id / voice_id )
 
-    def store_mp3(self, engine_id, language_id, voice_id, source_file, keep_file_name=False):
-        voice_dir = self.get_voice_directory(engine_id, language_id, voice_id)
-        make_directory(voice_dir, parents=True, exist_ok=True)
-        file_name = basename(source_file) if keep_file_name else f"{voice_id}_{len(list_files_in_directory(voice_dir)) + 1}.mp3"
-        destination_path = str(Path(voice_dir) / file_name)
-        copy_local_file(source_file, destination_path)
-        return destination_path
+    
     
