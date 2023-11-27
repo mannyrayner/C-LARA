@@ -1,0 +1,10054 @@
+{
+    "a": [
+        "a",
+        "æ"
+    ],
+    "about": [
+        "a|b|ou|t",
+        "ɐ|b|a‍ʊ|t"
+    ],
+    "active": [
+        "a|c|t|i|v|e",
+        "æ|k|t|ɪ|v|"
+    ],
+    "alike": [
+        "a|l|i|k|e",
+        "ɐ|l|a‍ɪ|k|"
+    ],
+    "all": [
+        "a|ll",
+        "ɔː|l"
+    ],
+    "amazing": [
+        "a|m|a|z|i|ng",
+        "ɐ|m|eɪ|z|ɪ|ŋ"
+    ],
+    "an": [
+        "a|n",
+        "ɐ|n"
+    ],
+    "and": [
+        "a|n|d",
+        "æ|n|d"
+    ],
+    "another": [
+        "a|n|o|th|er",
+        "ɐ|n|ʌ|ð|ɐ"
+    ],
+    "are": [
+        "are",
+        "ɑː"
+    ],
+    "arizona": [
+        "a|r|i|z|o|n|a",
+        "æ|ɹ|ɪ|z|əʊ|n|ɐ"
+    ],
+    "around": [
+        "a|r|ou|n|d",
+        "ɐ|ɹ|a‍ʊ|n|d"
+    ],
+    "asked": [
+        "a|s|k|ed",
+        "ɑː|s|k|t"
+    ],
+    "asteroid": [
+        "a|s|t|er|oi|d",
+        "ɑː|s|t|əɹ|ɔ‍ɪ|d"
+    ],
+    "astronomer": [
+        "a|s|t|r|o|n|o|m|er",
+        "ɐ|s|t|ɹ|ɒ|n|ə|m|ɐ"
+    ],
+    "at": [
+        "a|t",
+        "æ|t"
+    ],
+    "australia": [
+        "au|s|t|r|a|l|i|a",
+        "ɒ|s|t|ɹ|eɪ|l|i|ɐ"
+    ],
+    "away": [
+        "a|w|ay",
+        "ɐ|w|eɪ"
+    ],
+    "b": [
+        "b",
+        "biː"
+    ],
+    "baobab": [
+        "b|ao|b|a|b",
+        "b|a‍ʊ|b|æ|b"
+    ],
+    "baobabs": [
+        "b|ao|b|a|b|s",
+        "b|a‍ʊ|b|æ|b|z"
+    ],
+    "because": [
+        "b|e|c|au|s|e",
+        "b|ɪ|k|ʌ|z|"
+    ],
+    "been": [
+        "b|ee|n",
+        "b|iː|n"
+    ],
+    "bigger": [
+        "b|i|gg|er",
+        "b|ɪ|ɡ|ɐ"
+    ],
+    "book": [
+        "b|oo|k",
+        "b|ʊ|k"
+    ],
+    "boy": [
+        "b|oy",
+        "b|ɔ‍ɪ"
+    ],
+    "breakfast": [
+        "b|r|ea|k|f|a|s|t",
+        "b|ɹ|ɛ|k|f|ə|s|t"
+    ],
+    "but": [
+        "b|u|t",
+        "b|ʌ|t"
+    ],
+    "by": [
+        "b|y",
+        "b|a‍ɪ"
+    ],
+    "called": [
+        "c|a|ll|ed",
+        "k|ɔː|l|d"
+    ],
+    "came": [
+        "c|a|m|e",
+        "k|eɪ|m|"
+    ],
+    "can": [
+        "c|a|n",
+        "k|æ|n"
+    ],
+    "china": [
+        "ch|i|n|a",
+        "t‍ʃ|a‍ɪ|n|ɐ"
+    ],
+    "claws": [
+        "c|l|aw|s",
+        "k|l|ɔː|z"
+    ],
+    "climbed": [
+        "c|l|i|mb|ed",
+        "k|l|a‍ɪ|m|d"
+    ],
+    "colour": [
+        "c|o|l|our",
+        "k|ʌ|l|ɐ"
+    ],
+    "come": [
+        "c|o|m|e",
+        "k|ʌ|m|"
+    ],
+    "cooking": [
+        "c|oo|k|i|ng",
+        "k|ʊ|k|ɪ|ŋ"
+    ],
+    "covered": [
+        "c|o|v|er|ed",
+        "k|ʌ|v|ə|d"
+    ],
+    "day": [
+        "d|ay",
+        "d|eɪ"
+    ],
+    "details": [
+        "d|e|t|ai|l|s",
+        "d|iː|t|eɪ|l|z"
+    ],
+    "do": [
+        "d|o",
+        "d|uː"
+    ],
+    "doing": [
+        "d|o|i|ng",
+        "d|uː|ɪ|ŋ"
+    ],
+    "drunk": [
+        "d|r|u|n|k",
+        "d|ɹ|ʌ|ŋ|k"
+    ],
+    "during": [
+        "d|u|r|i|ng",
+        "d|jɔː|ɹ|ɪ|ŋ"
+    ],
+    "elephants": [
+        "e|l|e|ph|a|n|t|s",
+        "ɛ|l|ɪ|f|ə|n|t|s"
+    ],
+    "enough": [
+        "e|n|ough",
+        "ɪ|n|ʌf"
+    ],
+    "ermine": [
+        "er|m|i|n|e",
+        "ɜː|m|ɪ|n|"
+    ],
+    "even": [
+        "e|v|e|n",
+        "iː|v|ə|n"
+    ],
+    "every": [
+        "e|v|e|r|y",
+        "ɛ|v||ɹ|i"
+    ],
+    "exactly": [
+        "e|x|a|c|t|l|y",
+        "ɛ|ɡz|æ|k|t|l|i"
+    ],
+    "eyes": [
+        "eye|s",
+        "a‍ɪ|z"
+    ],
+    "far": [
+        "f|ar",
+        "f|ɑː"
+    ],
+    "first": [
+        "f|ir|s|t",
+        "f|ɜː|s|t"
+    ],
+    "five": [
+        "f|i|v|e",
+        "f|a‍ɪ|v|"
+    ],
+    "flower": [
+        "f|l|ow|er",
+        "f|l|a‍ʊ|ɐ"
+    ],
+    "for": [
+        "f|or",
+        "f|ɔː"
+    ],
+    "four": [
+        "f|our",
+        "f|ɔː"
+    ],
+    "fox": [
+        "f|o|x",
+        "f|ɒ|ks"
+    ],
+    "from": [
+        "f|r|o|m",
+        "f|ɹ|ɒ|m"
+    ],
+    "front": [
+        "f|r|o|n|t",
+        "f|ɹ|ʌ|n|t"
+    ],
+    "garden": [
+        "g|ar|d|e|n",
+        "ɡ|ɑː|d|ə|n"
+    ],
+    "geographer": [
+        "g|e|o|g|r|a|ph|er",
+        "d‍ʒ|ɪ|ɒ|ɡ|ɹ|ə|f|ɐ"
+    ],
+    "geography": [
+        "g|e|o|g|r|a|ph|y",
+        "d‍ʒ|ɪ|ɒ|ɡ|ɹ|ə|f|i"
+    ],
+    "given": [
+        "g|i|v|e|n",
+        "ɡ|ɪ|v|ə|n"
+    ],
+    "glance": [
+        "g|l|a|n|c|e",
+        "ɡ|l|ɑː|n|s|"
+    ],
+    "going": [
+        "g|o|i|ng",
+        "ɡ|əʊ|ɪ|ŋ"
+    ],
+    "got": [
+        "g|o|t",
+        "ɡ|ɒ|t"
+    ],
+    "grown-ups": [
+        "g|r|ow|n|-|u|p|s",
+        "ɡ|ɹ|əʊ|n||ʌ|p|s"
+    ],
+    "had": [
+        "h|a|d",
+        "h|æ|d"
+    ],
+    "handy": [
+        "h|a|n|d|y",
+        "h|æ|n|d|i"
+    ],
+    "has": [
+        "h|a|s",
+        "h|æ|z"
+    ],
+    "have": [
+        "h|a|ve",
+        "h|æ|v"
+    ],
+    "he": [
+        "h|e",
+        "h|iː"
+    ],
+    "head": [
+        "h|ea|d",
+        "h|ɛ|d"
+    ],
+    "hear": [
+        "h|ea|r",
+        "h|i|ə"
+    ],
+    "heart": [
+        "h|ear|t",
+        "h|ɑː|t"
+    ],
+    "her": [
+        "h|er",
+        "h|ɜː"
+    ],
+    "herd": [
+        "h|er|d",
+        "h|ɜː|d"
+    ],
+    "here": [
+        "h|ere",
+        "h|iə"
+    ],
+    "high": [
+        "h|igh",
+        "h|a‍ɪ"
+    ],
+    "him": [
+        "h|i|m",
+        "h|ɪ|m"
+    ],
+    "his": [
+        "h|i|s",
+        "h|ɪ|z"
+    ],
+    "house": [
+        "h|ou|se",
+        "h|a‍ʊ|s"
+    ],
+    "hunter": [
+        "h|u|n|t|er",
+        "h|ʌ|n|t|ɐ"
+    ],
+    "hunters": [
+        "h|u|n|t|er|s",
+        "h|ʌ|n|t|ə|z"
+    ],
+    "i": [
+        "i",
+        "a‍ɪ"
+    ],
+    "idea": [
+        "i|d|ea",
+        "a‍ɪ|d|iə"
+    ],
+    "if": [
+        "i|f",
+        "ɪ|f"
+    ],
+    "important": [
+        "i|m|p|or|t|a|n|t",
+        "ɪ|m|p|ɔː|t|ə|n|t"
+    ],
+    "in": [
+        "i|n",
+        "ɪ|n"
+    ],
+    "inhabited": [
+        "i|n|h|a|b|i|t|e|d",
+        "ɪ|n|h|æ|b|ɪ|t|ɪ|d"
+    ],
+    "invisible": [
+        "i|n|v|i|s|i|b|le",
+        "ɪ|n|v|ɪ|z|ə|b|əl"
+    ],
+    "is": [
+        "i|s",
+        "ɪ|z"
+    ],
+    "it": [
+        "i|t",
+        "ɪ|t"
+    ],
+    "its": [
+        "i|t|s",
+        "ɪ|t|s"
+    ],
+    "jungle": [
+        "j|u|ng|le",
+        "d‍ʒ|ʌ|ŋɡ|əl"
+    ],
+    "jupiter": [
+        "j|u|p|i|t|er",
+        "d‍ʒ|uː|p|ɪ|t|ɐ"
+    ],
+    "just": [
+        "j|u|s|t",
+        "d‍ʒ|ʌ|s|t"
+    ],
+    "kill": [
+        "k|i|ll",
+        "k|ɪ|l"
+    ],
+    "kind": [
+        "k|i|n|d",
+        "k|a‍ɪ|n|d"
+    ],
+    "king": [
+        "k|i|ng",
+        "k|ɪ|ŋ"
+    ],
+    "know": [
+        "kn|ow",
+        "n|əʊ"
+    ],
+    "lamplighter": [
+        "l|a|m|p|l|igh|t|er",
+        "l|æ|m|p|l|a‍ɪ|t|ɐ"
+    ],
+    "lamplighters": [
+        "l|a|m|p|l|igh|t|er|s",
+        "l|æ|m|p|l|a‍ɪ|t|ɐ|z"
+    ],
+    "laugh": [
+        "l|augh",
+        "l|ɑːf"
+    ],
+    "learned": [
+        "l|ear|n|ed",
+        "l|ɜː|n|t"
+    ],
+    "leon": [
+        "l|e|o|n",
+        "l|i|ɒ|n"
+    ],
+    "life": [
+        "l|i|f|e",
+        "l|a‍ɪ|f|"
+    ],
+    "lifted": [
+        "l|i|f|t|e|d",
+        "l|ɪ|f|t|ɪ|d"
+    ],
+    "little": [
+        "l|i|tt|le",
+        "l|ɪ|t|əl"
+    ],
+    "look": [
+        "l|oo|k",
+        "l|ʊ|k"
+    ],
+    "looked": [
+        "l|oo|k|ed",
+        "l|ʊ|k|t"
+    ],
+    "lost": [
+        "l|o|s|t",
+        "l|ɒ|s|t"
+    ],
+    "m": [
+        "m",
+        "m"
+    ],
+    "made": [
+        "m|a|d|e",
+        "m|eɪ|d|"
+    ],
+    "magnificent": [
+        "m|a|g|n|i|f|i|c|e|n|t",
+        "m|æ|ɡ|n|ɪ|f|ɪ|s|ə|n|t"
+    ],
+    "many": [
+        "m|a|n|y",
+        "m|ɛ|n|i"
+    ],
+    "matter": [
+        "m|a|tt|er",
+        "m|æ|t|ɐ"
+    ],
+    "me": [
+        "m|e",
+        "m|iː"
+    ],
+    "more": [
+        "m|ore",
+        "m|ɔː"
+    ],
+    "morning": [
+        "m|or|n|i|ng",
+        "m|ɔː|n|ɪ|ŋ"
+    ],
+    "mountain": [
+        "m|ou|n|t|ai|n",
+        "m|a‍ʊ|n|t|ɪ|n"
+    ],
+    "my": [
+        "m|y",
+        "m|a‍ɪ"
+    ],
+    "neck": [
+        "n|e|ck",
+        "n|ɛ|k"
+    ],
+    "never": [
+        "n|e|v|er",
+        "n|ɛ|v|ɐ"
+    ],
+    "new": [
+        "n|ew",
+        "n|juː"
+    ],
+    "night": [
+        "n|igh|t",
+        "n|a‍ɪ|t"
+    ],
+    "no": [
+        "n|o",
+        "n|əʊ"
+    ],
+    "number": [
+        "n|u|m|b|er",
+        "n|ʌ|m|b|ɐ"
+    ],
+    "observed": [
+        "o|b|s|er|v|ed",
+        "ɒ|b|z|ɜː|v|d"
+    ],
+    "of": [
+        "o|f",
+        "ɒ|v"
+    ],
+    "old": [
+        "o|l|d",
+        "əʊ|l|d"
+    ],
+    "on": [
+        "o|n",
+        "ɒ|n"
+    ],
+    "once": [
+        "o|n|c|e",
+        "wɒ|n|s|"
+    ],
+    "one": [
+        "o|n|e",
+        "wɒ|n|"
+    ],
+    "ones": [
+        "o|n|e|s",
+        "wɒ|n||z"
+    ],
+    "only": [
+        "o|n|l|y",
+        "əʊ|n|l|i"
+    ],
+    "out": [
+        "ou|t",
+        "a‍ʊ|t"
+    ],
+    "overhead": [
+        "o|v|er|h|ea|d",
+        "əʊ|v|ɐ|h|ɛ|d"
+    ],
+    "picture": [
+        "p|i|c|tu|re",
+        "p|ɪ|k|t‍ʃ|ɐ"
+    ],
+    "planet": [
+        "p|l|a|n|e|t",
+        "p|l|æ|n|ɪ|t"
+    ],
+    "pretty": [
+        "p|r|e|tt|y",
+        "p|ɹ|ɪ|t|i"
+    ],
+    "prince": [
+        "p|r|i|n|c|e",
+        "p|ɹ|ɪ|n|s|"
+    ],
+    "put": [
+        "p|u|t",
+        "p|ʌ|t"
+    ],
+    "question": [
+        "qu|e|s|tion",
+        "kw|ɛ|s|t‍ʃən"
+    ],
+    "questions": [
+        "qu|e|s|tion|s",
+        "kw|ɛ|s|t‍ʃən|z"
+    ],
+    "ready": [
+        "r|ea|d|y",
+        "ɹ|ɛ|d|i"
+    ],
+    "right": [
+        "r|igh|t",
+        "ɹ|a‍ɪ|t"
+    ],
+    "robe": [
+        "r|o|b|e",
+        "ɹ|əʊ|b|"
+    ],
+    "room": [
+        "r|oo|m",
+        "ɹ|uː|m"
+    ],
+    "round": [
+        "r|ou|n|d",
+        "ɹ|a‍ʊ|n|d"
+    ],
+    "s": [
+        "s",
+        "s"
+    ],
+    "said": [
+        "s|ai|d",
+        "s|ɛ|d"
+    ],
+    "saw": [
+        "s|aw",
+        "s|ɔː"
+    ],
+    "scarcely": [
+        "s|c|ar|c|e|l|y",
+        "s|k|eə|s||l|i"
+    ],
+    "scarf": [
+        "s|c|ar|f",
+        "s|k|ɑː|f"
+    ],
+    "seconds": [
+        "s|e|c|o|n|d|s",
+        "s|ɛ|k|ə|n|d|z"
+    ],
+    "see": [
+        "s|ee",
+        "s|iː"
+    ],
+    "seeds": [
+        "s|ee|d|s",
+        "s|iː|d|z"
+    ],
+    "seemed": [
+        "s|ee|m|ed",
+        "s|iː|m|d"
+    ],
+    "she": [
+        "sh|e",
+        "ʃ|iː"
+    ],
+    "single": [
+        "s|i|ng|le",
+        "s|ɪ|ŋɡ|əl"
+    ],
+    "sit": [
+        "s|i|t",
+        "s|ɪ|t"
+    ],
+    "six": [
+        "s|i|x",
+        "s|ɪ|ks"
+    ],
+    "small": [
+        "s|m|a|ll",
+        "s|m|ɔː|l"
+    ],
+    "snake": [
+        "s|n|a|k|e",
+        "s|n|eɪ|k|"
+    ],
+    "snakes": [
+        "s|n|a|k|e|s",
+        "s|n|eɪ|k||s"
+    ],
+    "so": [
+        "s|o",
+        "s|əʊ"
+    ],
+    "somewhere": [
+        "s|o|m|e|wh|ere",
+        "s|ʌ|m||w|eə"
+    ],
+    "still": [
+        "s|t|i|ll",
+        "s|t|ɪ|l"
+    ],
+    "stories": [
+        "s|t|o|r|ie|s",
+        "s|t|ɔː|ɹ|ɪ|z"
+    ],
+    "streetlight": [
+        "s|t|r|ee|t|l|igh|t",
+        "s|t|ɹ|iː|t|l|a‍ɪ|t"
+    ],
+    "take": [
+        "t|a|k|e",
+        "t|eɪ|k|"
+    ],
+    "talking": [
+        "t|al|k|i|ng",
+        "t|ɔː|k|ɪ|ŋ"
+    ],
+    "tell": [
+        "t|e|ll",
+        "t|ɛ|l"
+    ],
+    "terrible": [
+        "t|e|rr|i|b|le",
+        "t|ɛ|ɹ|ə|b|əl"
+    ],
+    "than": [
+        "th|a|n",
+        "ð|ɐ|n"
+    ],
+    "that": [
+        "th|a|t",
+        "ð|æ|t"
+    ],
+    "the": [
+        "th|e",
+        "ð|ə"
+    ],
+    "their": [
+        "th|eir",
+        "ð|eə"
+    ],
+    "them": [
+        "th|e|m",
+        "ð|ɛ|m"
+    ],
+    "there": [
+        "th|ere",
+        "ð|eə"
+    ],
+    "these": [
+        "th|e|s|e",
+        "ð|iː|z|"
+    ],
+    "they": [
+        "th|ey",
+        "ð|eɪ"
+    ],
+    "thing": [
+        "th|i|ng",
+        "θ|ɪ|ŋ"
+    ],
+    "things": [
+        "th|i|ng|s",
+        "θ|ɪ|ŋ|z"
+    ],
+    "thirty": [
+        "th|ir|t|y",
+        "θ|ɜː|t|i"
+    ],
+    "this": [
+        "th|i|s",
+        "ð|ɪ|s"
+    ],
+    "thorns": [
+        "th|or|n|s",
+        "θ|ɔː|n|z"
+    ],
+    "those": [
+        "th|o|s|e",
+        "ð|əʊ|z|"
+    ],
+    "thousand": [
+        "th|ou|s|a|n|d",
+        "θ|a‍ʊ|z|ə|n|d"
+    ],
+    "tiger": [
+        "t|i|g|er",
+        "t|a‍ɪ|ɡ|ɐ"
+    ],
+    "tigers": [
+        "t|i|g|er|s",
+        "t|a‍ɪ|ɡ|ə|z"
+    ],
+    "time": [
+        "t|i|m|e",
+        "t|a‍ɪ|m|"
+    ],
+    "to": [
+        "t|o",
+        "t|uː"
+    ],
+    "told": [
+        "t|o|l|d",
+        "t|əʊ|l|d"
+    ],
+    "towards": [
+        "t|o|w|ar|d|s",
+        "t|ʊ|w|ɔː|d|z"
+    ],
+    "true": [
+        "t|r|u|e",
+        "t|ɹ|uː|"
+    ],
+    "truly": [
+        "t|r|u|l|y",
+        "t|ɹ|uː|l|i"
+    ],
+    "try": [
+        "t|r|y",
+        "t|ɹ|a‍ɪ"
+    ],
+    "turkish": [
+        "t|ur|k|i|sh",
+        "t|ɜː|k|ɪ|ʃ"
+    ],
+    "two": [
+        "t|w|o",
+        "t||uː"
+    ],
+    "universe": [
+        "u|n|i|v|er|s|e",
+        "juː|n|ɪ|v|ɜː|s|"
+    ],
+    "useful": [
+        "u|s|e|f|u|l",
+        "juː|s||f|ə|l"
+    ],
+    "ve": [
+        "ve",
+        "v"
+    ],
+    "volcano": [
+        "v|o|l|c|a|n|o",
+        "v|ɒ|l|k|eɪ|n|əʊ"
+    ],
+    "volcanos": [
+        "v|o|l|c|a|n|o|s",
+        "v|ɒ|l|k|eɪ|n|əʊ|z"
+    ],
+    "was": [
+        "w|a|s",
+        "w|ɒ|z"
+    ],
+    "water": [
+        "w|a|t|er",
+        "w|ɔː|t|ɐ"
+    ],
+    "way": [
+        "w|ay",
+        "w|eɪ"
+    ],
+    "well": [
+        "w|e|ll",
+        "w|ɛ|l"
+    ],
+    "were": [
+        "w|er|e",
+        "w|ɜː|"
+    ],
+    "werth": [
+        "w|er|th",
+        "w|ɜː|θ"
+    ],
+    "what": [
+        "wh|a|t",
+        "w|ɒ|t"
+    ],
+    "wheat": [
+        "wh|ea|t",
+        "w|iː|t"
+    ],
+    "when": [
+        "wh|e|n",
+        "w|ɛ|n"
+    ],
+    "who": [
+        "wh|o",
+        "h|uː"
+    ],
+    "whole": [
+        "wh|o|l|e",
+        "h|əʊ|l|"
+    ],
+    "with": [
+        "w|i|th",
+        "w|ɪ|ð"
+    ],
+    "years": [
+        "y|ear|s",
+        "j|iə|z"
+    ],
+    "yellow": [
+        "y|e|ll|ow",
+        "j|ɛ|l|əʊ"
+    ],
+    "you": [
+        "y|ou",
+        "j|uː"
+    ],
+    "zealand": [
+        "z|ea|l|a|n|d",
+        "z|iː|l|ə|n|d"
+    ],
+    "aerobatics": [
+        "ae|r|o|b|a|t|i|c|s",
+        "eə|ɹ|əʊ|b|æ|t|ɪ|k|s"
+    ],
+    "bisection": [
+        "b|i|s|e|c|tion",
+        "b|aɪ|s|ɛ|k|ʃən"
+    ],
+    "comfortless": [
+        "c|o|m|f|or|t|l|e|ss",
+        "k|ʌ|m|f|ə|t|l|ə|s"
+    ],
+    "democrats": [
+        "d|e|m|o|c|r|a|t|s",
+        "d|ɛ|m|ə|k|ɹ|æ|t|s"
+    ],
+    "elimination": [
+        "e|l|i|m|i|n|a|tion",
+        "ɪ|l|ɪ|m|ɪ|n|eɪ|ʃən"
+    ],
+    "elucidating": [
+        "e|l|u|c|i|d|a|t|i|ng",
+        "ɪ|l|uː|s|ɪ|d|eɪ|t|ɪ|ŋ"
+    ],
+    "glazed": [
+        "g|l|a|z|ed",
+        "ɡ|l|eɪ|z|d"
+    ],
+    "grizzled": [
+        "g|r|i|zz|le|d",
+        "ɡ|ɹ|ɪ|z|əl|d"
+    ],
+    "insistently": [
+        "i|n|s|i|s|t|e|n|t|l|y",
+        "ɪ|n|s|ɪ|s|t|ə|n|t|l|i"
+    ],
+    "malady": [
+        "m|a|l|a|d|y",
+        "m|æ|l|ə|d|i"
+    ],
+    "merged": [
+        "m|er|g|ed",
+        "m|ɜː|dʒ|d"
+    ],
+    "resolution": [
+        "r|e|s|o|l|u|tion",
+        "ɹ|ɛ|z|ə|l|uː|ʃən"
+    ],
+    "shalt": [
+        "sh|a|l|t",
+        "ʃ|æ|l|t"
+    ],
+    "soberness": [
+        "s|o|b|er|n|e|ss",
+        "s|əʊ|b|ə|n|ə|s"
+    ],
+    "somerset": [
+        "s|o|m|er|s|e|t",
+        "s|ʌ|m|ə|s|ɛ|t"
+    ],
+    "soundproofing": [
+        "s|ou|n|d|p|r|oo|f|i|ng",
+        "s|aʊ|n|d|p|ɹ|uː|f|ɪ|ŋ"
+    ],
+    "subcontractors": [
+        "s|u|b|c|o|n|t|r|a|c|t|o|r|s",
+        "s|ʌ|b|k|ə|n|t|ɹ|æ|k|t||ə|z"
+    ],
+    "summitry": [
+        "s|u|m|m|i|t|r|y",
+        "s|ʌ||m|ɪ|t|ɹ|i"
+    ],
+    "talon": [
+        "t|a|l|o|n",
+        "t|æ|l|ɒ|n"
+    ],
+    "worldwide": [
+        "w|or|l|d|w|i|d|e",
+        "w|ɜː|l|d|w|aɪ|d|"
+    ],
+    "absurdities": [
+        "a|b|s|ur|d|i|t|ie|s",
+        "ɐ|b|s|ɜː|d|ɪ|t|i|z"
+    ],
+    "acquit": [
+        "a|cqu|i|t",
+        "ɐ|kw|ɪ|t"
+    ],
+    "augmenting": [
+        "au|g|m|e|n|t|i|ng",
+        "ɔː|ɡ|m|ɛ|n|t|ɪ|ŋ"
+    ],
+    "bachelorette": [
+        "b|a|ch|e|l|o|r|e|tt|e",
+        "b|ɑː|t‍ʃ|ɪ|l|ɔː|ɹ|ɛ|t|"
+    ],
+    "combusts": [
+        "c|o|m|b|u|s|t|s",
+        "k|ə|m|b|ʌ|s|t|s"
+    ],
+    "commonly": [
+        "c|o|mm|o|n|l|y",
+        "k|ɒ|m|ə|n|l|i"
+    ],
+    "drawback": [
+        "d|r|aw|b|a|ck",
+        "d|ɹ|ɔː|b|æ|k"
+    ],
+    "dreamless": [
+        "d|r|ea|m|l|e|ss",
+        "d|ɹ|iː|m|l|ə|s"
+    ],
+    "filmmakers": [
+        "f|i|l|m|m|a|k|er|s",
+        "f|ɪ|l|m|m|eɪ|k|ə|z"
+    ],
+    "flashover": [
+        "f|l|a|sh|o|v|er",
+        "f|l|æ|ʃ|əʊ|v|ɐ"
+    ],
+    "get": [
+        "g|e|t",
+        "ɡ|ɛ|t"
+    ],
+    "grandad": [
+        "g|r|a|n|d|a|d",
+        "ɡ|ɹ|æ|n|d|æ|d"
+    ],
+    "maim": [
+        "m|ai|m",
+        "m|eɪ|m"
+    ],
+    "oak": [
+        "o|a|k",
+        "əʊ||k"
+    ],
+    "panting": [
+        "p|a|n|t|i|ng",
+        "p|ɑː|n|t|ɪ|ŋ"
+    ],
+    "pleasantest": [
+        "p|l|ea|s|a|n|t|e|s|t",
+        "p|l|ɛ|z|ɑː|n|t|ə|s|t"
+    ],
+    "reformation": [
+        "r|e|f|or|m|a|tion",
+        "ɹ|ɪ|f|ɔː|m|eɪ|ʃən"
+    ],
+    "sagely": [
+        "s|a|g|e|l|y",
+        "s|eɪ|dʒ||l|i"
+    ],
+    "sensitivity": [
+        "s|e|n|s|i|t|i|v|i|t|y",
+        "s|ɛ|n|s|ɪ|t|ɪ|v|ɪ|t|i"
+    ],
+    "serials": [
+        "s|er|i|a|l|s",
+        "s|iəɹ|ɪ|ə|l|z"
+    ],
+    "delightfully": [
+        "d|e|l|igh|t|f|u|ll|y",
+        "d|ɪ|l|aɪ|t|f|ə|l|i"
+    ],
+    "dressmakers": [
+        "d|r|e|ss|m|a|k|er|s",
+        "d|ɹ|ɛ|s|m|eɪ|k|ə|z"
+    ],
+    "endorsable": [
+        "e|n|d|or|s|a|b|le",
+        "ɛ|n|d|ɔː|s|ə|b|əl"
+    ],
+    "greyback": [
+        "g|r|ey|b|a|ck",
+        "ɡ|ɹ|eɪ|b|æ|k"
+    ],
+    "hairgrip": [
+        "h|air|g|r|i|p",
+        "h|eə|ɡ|ɹ|ɪ|p"
+    ],
+    "him": [
+        "h|i|m",
+        "h|ɪ|m"
+    ],
+    "insurers": [
+        "i|n|su|r|er|s",
+        "ɪ|n|ʃɔː|ɹ|ə|z"
+    ],
+    "invisibility": [
+        "i|n|v|i|s|i|b|i|l|i|t|y",
+        "ɪ|n|v|ɪ|z|ə|b|ɪ|l|ɪ|t|i"
+    ],
+    "lumbered": [
+        "l|u|m|b|er|ed",
+        "l|ʌ|m|b|ə|d"
+    ],
+    "mandarin": [
+        "m|a|n|d|a|r|i|n",
+        "m|æ|n|d|ə|ɹ|ɪ|n"
+    ],
+    "medically": [
+        "m|e|d|i|c|a|ll|y",
+        "m|ɛ|d|ɪ|k||l|i"
+    ],
+    "ply": [
+        "p|l|y",
+        "p|l|aɪ"
+    ],
+    "politely": [
+        "p|o|l|i|t|e|l|y",
+        "p|ə|l|aɪ|t||l|i"
+    ],
+    "proceedings": [
+        "p|r|o|c|ee|d|i|ng|s",
+        "p|ɹ|ə|s|iː|d|ɪ|ŋ|z"
+    ],
+    "roiling": [
+        "r|oi|l|i|ng",
+        "ɹ|ɔɪ|l|ɪ|ŋ"
+    ],
+    "rub": [
+        "r|u|b",
+        "ɹ|ʌ|b"
+    ],
+    "sorry": [
+        "s|o|rr|y",
+        "s|ɒ|ɹ|i"
+    ],
+    "superseding": [
+        "s|u|p|er|s|e|d|i|ng",
+        "s|uː|p|ə|s|iː|d|ɪ|ŋ"
+    ],
+    "tarot": [
+        "t|a|r|o|t",
+        "t|æ|ɹ|ɒ|t"
+    ],
+    "underwear": [
+        "u|n|d|er|w|ear",
+        "ʌ|n|d|ə|w|eə"
+    ],
+    "airliner": [
+        "air|l|i|n|er",
+        "eə|l|aɪ|n|ɐ"
+    ],
+    "anuses": [
+        "a|n|u|s|e|s",
+        "eɪ|n|ʌ|s|ɪ|z"
+    ],
+    "bachelor": [
+        "b|a|ch|e|l||o|r",
+        "b|æ|tʃ|ə|l|ɐ||"
+    ],
+    "beefed": [
+        "b|ee|f|ed",
+        "b|iː|f|t"
+    ],
+    "bickered": [
+        "b|i|ck|er|ed",
+        "b|ɪ|k|ə|d"
+    ],
+    "carbonic": [
+        "c|ar|b|o|n|i|c",
+        "k|ɑː|b|ɒ|n|ɪ|k"
+    ],
+    "courses": [
+        "c|our|s|e|s",
+        "k|ɔː|s|ɪ|z"
+    ],
+    "desertions": [
+        "d|e|s|er|tion|s",
+        "d|ɪ|z|ɜː|ʃən|z"
+    ],
+    "double": [
+        "d|ou|b|le",
+        "d|ʌ|b|əl"
+    ],
+    "few": [
+        "f|ew",
+        "f|juː"
+    ],
+    "implacable": [
+        "i|m|p|l|a|c|a|b|le",
+        "ɪ|m|p|l|æ|k|ə|b|əl"
+    ],
+    "jawline": [
+        "j|aw|l|i|n|e",
+        "dʒ|ɔː|l|aɪ|n|"
+    ],
+    "justness": [
+        "j|u|s|t|n|e|ss",
+        "dʒ|ʌ|s|t|n|ə|s"
+    ],
+    "legionnaires": [
+        "l|e|g|io|nn|air|e|s",
+        "l|iː|dʒ|ə|n|eə||z"
+    ],
+    "marry": [
+        "m|a|rr|y",
+        "m|æ|ɹ|i"
+    ],
+    "multimillion": [
+        "m|u|l|t|i|m|i|ll|i|o|n",
+        "m|ʌ|l|t|ɪ|m|ɪ|l|i|ə|n"
+    ],
+    "scorelines": [
+        "s|c|ore|l|i|n|e|s",
+        "s|k|ɔː|l|aɪ|n||z"
+    ],
+    "servery": [
+        "s|er|v|er|y",
+        "s|ɜː|v|əɹ|i"
+    ],
+    "slingback": [
+        "s|l|i|ng|b|a|ck",
+        "s|l|ɪ|ŋ|b|æ|k"
+    ],
+    "stigmatises": [
+        "s|t|i|g|m|a|t|i|s|e|s",
+        "s|t|ɪ|ɡ|m|ɐ|t|aɪ|z|ɪ|z"
+    ],
+    "activations": [
+        "a|c|t|i|v|a|tion|s",
+        "æ|k|t|ɪ|v|eɪ|ʃən|z"
+    ],
+    "audiobook": [
+        "au|d|i|o|b|oo|k",
+        "ɔː|d|ɪ|əʊ|b|ʊ|k"
+    ],
+    "cowboys": [
+        "c|ow|b|oy|s",
+        "k|aʊ|b|ɔɪ|z"
+    ],
+    "creepers": [
+        "c|r|ee|p|er|s",
+        "k|ɹ|iː|p|ə|z"
+    ],
+    "deferring": [
+        "d|e|f|er|r|i|ng",
+        "d|ɪ|f|ɜː|ɹ|ɪ|ŋ"
+    ],
+    "feeble": [
+        "f|ee|b|le",
+        "f|iː|b|əl"
+    ],
+    "grasslands": [
+        "g|r|a|ss|l|a|n|d|s",
+        "ɡ|ɹ|ɑː|s|l|ə|n|d|z"
+    ],
+    "hanks": [
+        "h|a|n|k|s",
+        "h|æ|ŋ|k|s"
+    ],
+    "infallible": [
+        "i|n|f|a|ll|i|b|le",
+        "ɪ|n|f|æ|l|ə|b|əl"
+    ],
+    "kerbside": [
+        "k|er|b|s|i|d|e",
+        "k|ɜː|b|s|aɪ|d|"
+    ],
+    "prostates": [
+        "p|r|o|s|t|a|t|e|s",
+        "p|ɹ|ɒ|s|t|eɪ|t||s"
+    ],
+    "railwaymen": [
+        "r|ai|l|w|ay|m|e|n",
+        "ɹ|eɪ|l|w|eɪ|m|ɛ|n"
+    ],
+    "revenger": [
+        "r|e|v|e|n|g|er",
+        "ɹ|ɪ|v|ɛ|n|dʒ|ɐ"
+    ],
+    "rips": [
+        "r|i|p|s",
+        "ɹ|ɪ|p|s"
+    ],
+    "scrimshaw": [
+        "s|c|r|i|m|sh|aw",
+        "s|k|ɹ|ɪ|m|ʃ|ɔː"
+    ],
+    "seahorses": [
+        "s|ea|h|or|s|e|s",
+        "s|iː|h|ɔː|s|ɪ|z"
+    ],
+    "shrewdest": [
+        "sh|r|ew|d|e|s|t",
+        "ʃ|ɹ|uː|d|ə|s|t"
+    ],
+    "thoughtfulness": [
+        "th|ough|t|f|u|l|n|e|ss",
+        "θ|ɔː|t|f|ə|l|n|ə|s"
+    ],
+    "tiddlywinks": [
+        "t|i|dd|l|y|w|i|n|k|s",
+        "t|ɪ|d|l|ɪ|w|ɪ|ŋ|k|s"
+    ],
+    "universe": [
+        "u|n|i|v|er|se",
+        "juː|n|ɪ|v|ɜː|s"
+    ],
+    "agitating": [
+        "a|g|i|t|a|t|i|ng",
+        "æ|dʒ|ɪ|t|eɪ|t|ɪ|ŋ"
+    ],
+    "aglow": [
+        "a|g|l|ow",
+        "ɐ|ɡ|l|əʊ"
+    ],
+    "appeals": [
+        "a|pp|ea|l|s",
+        "ɐ|p|iː|l|z"
+    ],
+    "centring": [
+        "c|e|n|t|r|i|ng",
+        "s|ɛ|n|t|ɹ|ɪ|ŋ"
+    ],
+    "duple": [
+        "d|u|p|le",
+        "d|juː|p|əl"
+    ],
+    "fissionable": [
+        "f|i|ss|io|n|a|b|le",
+        "f|ɪ|ʒ|ə|n|ə|b|əl"
+    ],
+    "hemiplegia": [
+        "h|e|m|i|p|l|e|g|ia",
+        "h|ɛ|m|ɪ|p|l|iː|dʒ|ɐ"
+    ],
+    "location": [
+        "l|o|c|a|tion",
+        "l|əʊ|k|eɪ|ʃən"
+    ],
+    "mollies": [
+        "m|o|ll|ie|s",
+        "m|ɒ|l|i|z"
+    ],
+    "opposites": [
+        "o|pp|o|s|i|t|e|s",
+        "ɒ|p|ə|s|ɪ|t||s"
+    ],
+    "overexposure": [
+        "o|v|er|e|x|p|o|s|ure",
+        "əʊ|v|əɹ|ɛ|ks|p|əʊ|ʒ|ɐ"
+    ],
+    "prove": [
+        "p|r|o|ve",
+        "p|ɹ|uː|v"
+    ],
+    "roe": [
+        "r|o|e",
+        "ɹ|əʊ|"
+    ],
+    "slut": [
+        "s|l|u|t",
+        "s|l|ʌ|t"
+    ],
+    "sorriest": [
+        "s|o|rr|i|e|s|t",
+        "s|ɒ|ɹ|ɪ|ə|s|t"
+    ],
+    "steals": [
+        "s|t|ea|l|s",
+        "s|t|iː|l|z"
+    ],
+    "torturer": [
+        "t|or|tu|r|er",
+        "t|ɔː|tʃə|ɹ|ɐ"
+    ],
+    "wader": [
+        "w|a|d|er",
+        "w|eɪ|d|ɐ"
+    ],
+    "widen": [
+        "w|i|d|e|n",
+        "w|aɪ|d|ə|n"
+    ],
+    "wielder": [
+        "w|ie|l|d|er",
+        "w|iː|l|d|ɐ"
+    ],
+    "cursing": [
+        "c|ur|s|i|ng",
+        "k|ɜː|s|ɪ|ŋ"
+    ],
+    "dangerously": [
+        "d|a|n|g|er|ou|s|l|y",
+        "d|eɪ|n|dʒ|əɹ|ə|s|l|i"
+    ],
+    "discovers": [
+        "d|i|s|c|o|v|er|s",
+        "d|ɪ|s|k|ʌ|v|ə|z"
+    ],
+    "gorging": [
+        "g|or|g|i|ng",
+        "ɡ|ɔː|dʒ|ɪ|ŋ"
+    ],
+    "jetted": [
+        "j|e|tt|e|d",
+        "dʒ|ɛ|t|ɪ|d"
+    ],
+    "lodges": [
+        "l|o|dg|e|s",
+        "l|ɒ|dʒ|ɪ|z"
+    ],
+    "lotion": [
+        "l|o|tion",
+        "l|əʊ|ʃən"
+    ],
+    "parboiled": [
+        "p|ar|b|oi|l|ed",
+        "p|ɑː|b|ɔɪ|l|d"
+    ],
+    "pill": [
+        "p|i|ll",
+        "p|ɪ|l"
+    ],
+    "predefined": [
+        "p|r|e|d|e|f|i|n|ed",
+        "p|ɹ|iː|d|ɪ|f|aɪ|n|d"
+    ],
+    "prettied": [
+        "p|r|e|tt|i|ed",
+        "p|ɹ|ɪ|t|i|d"
+    ],
+    "profundities": [
+        "p|r|o|f|u|n|d|i|t|ie|s",
+        "p|ɹ|ə|f|ʌ|n|d|ɪ|t|i|z"
+    ],
+    "rightfully": [
+        "r|igh|t|f|u|ll|y",
+        "ɹ|aɪ|t|f|ə|l|i"
+    ],
+    "sapwood": [
+        "s|a|p|w|oo|d",
+        "s|æ|p|w|ʊ|d"
+    ],
+    "stoutly": [
+        "s|t|ou|t|l|y",
+        "s|t|aʊ|t|l|i"
+    ],
+    "unconstrained": [
+        "u|n|c|o|n|s|t|r|ai|n|ed",
+        "ʌ|n|k|ə|n|s|t|ɹ|eɪ|n|d"
+    ],
+    "unfriendly": [
+        "u|n|f|r|ie|n|d|l|y",
+        "ʌ|n|f|ɹ|ɛ|n|d|l|i"
+    ],
+    "unnerving": [
+        "u|n|n|er|v|i|ng",
+        "ʌ|n|n|ɜː|v|ɪ|ŋ"
+    ],
+    "wanted": [
+        "w|a|n|t|e|d",
+        "w|ɒ|n|t|ɪ|d"
+    ],
+    "yesteryear": [
+        "y|e|s|t|er|y|ear",
+        "j|ɛ|s|t|ə|j|iə"
+    ],
+    "antioxidants": [
+        "a|n|t|i|o|x|i|d|a|n|t|s",
+        "æ|n|t|ɪ|ɒ|ks|ɪ|d|ə|n|t|s"
+    ],
+    "bullaces": [
+        "b|u|ll|a|c|e|s",
+        "b|ʊ|l|eɪ|s|ɪ|z"
+    ],
+    "demise": [
+        "d|e|m|i|s|e",
+        "d|ɪ|m|aɪ|z|"
+    ],
+    "disinfectant": [
+        "d|i|s|i|n|f|e|c|t|a|n|t",
+        "d|ɪ|s|ɪ|n|f|ɛ|k|t|ə|n|t"
+    ],
+    "displeases": [
+        "d|i|s|p|l|ea|s|e|s",
+        "d|ɪ|s|p|l|iː|z|ɪ|z"
+    ],
+    "fakes": [
+        "f|a|k|e|s",
+        "f|eɪ|k||s"
+    ],
+    "fingertip": [
+        "f|i|ng|er|t|i|p",
+        "f|ɪ|ŋɡ|ə|t|ɪ|p"
+    ],
+    "flakiness": [
+        "f|l|a|k|i|n|e|ss",
+        "f|l|eɪ|k|ɪ|n|ə|s"
+    ],
+    "handshake": [
+        "h|a|n|d|sh|a|k|e",
+        "h|æ|n|d|ʃ|eɪ|k|"
+    ],
+    "ice": [
+        "i|c|e",
+        "aɪ|s|"
+    ],
+    "imprecision": [
+        "i|m|p|r|e|c|i|s|io|n",
+        "ɪ|m|p|ɹ|ɪ|s|ɪ|ʒ|ə|n"
+    ],
+    "inhale": [
+        "i|n|h|a|l|e",
+        "ɪ|n|h|eɪ|l|"
+    ],
+    "iron": [
+        "i|r|o|n",
+        "aɪ||ə|n"
+    ],
+    "ironclads": [
+        "i|r|o|n|c|l|a|d|s",
+        "aɪ||ə|ŋ|k|l|æ|d|z"
+    ],
+    "nightlife": [
+        "n|igh|t|l|i|f|e",
+        "n|aɪ|t|l|aɪ|f|"
+    ],
+    "pasts": [
+        "p|a|s|t|s",
+        "p|ɑː|s|t|s"
+    ],
+    "realest": [
+        "r|ea|l|e|s|t",
+        "ɹ|iə|l|ə|s|t"
+    ],
+    "scramblers": [
+        "s|c|r|a|m|b|l|er|s",
+        "s|k|ɹ|æ|m|b|l|ə|z"
+    ],
+    "uninterrupted": [
+        "u|n|i|n|t|e|rr|u|p|t|e|d",
+        "ʌ|n|ɪ|n|t|ə|ɹ|ʌ|p|t|ɪ|d"
+    ],
+    "unsecured": [
+        "u|n|s|e|c|ur|ed",
+        "ʌ|n|s|ɪ|k|jɔː|d"
+    ],
+    "ahoy": [
+        "a|h|oy",
+        "ɐ|h|ɔɪ"
+    ],
+    "bagginess": [
+        "b|a|gg|i|n|e|ss",
+        "b|æ|ɡ|ɪ|n|ə|s"
+    ],
+    "barbered": [
+        "b|ar|b|er|ed",
+        "b|ɑː|b|ə|d"
+    ],
+    "blindside": [
+        "b|l|i|n|d|s|i|d|e",
+        "b|l|aɪ|n|d|s|aɪ|d|"
+    ],
+    "commendably": [
+        "c|o|mm|e|n|d|a|b|l|y",
+        "k|ə|m|ɛ|n|d|ə|b|l|i"
+    ],
+    "floccinaucinihilipilification": [
+        "f|l|o|c|c|i|n|au|c|i|n|i|h|i|l|i|p|i|l|i|f|i|c|a|tion",
+        "f|l|ɒ|k|s|ɪ|n|ɔː|s|ɪ|n|aɪ||ə|l|ɪ|p|ɪ|l|ɪ|f|ɪ|k|eɪ|ʃən"
+    ],
+    "flue": [
+        "f|l|u|e",
+        "f|l|uː|"
+    ],
+    "occultation": [
+        "o|cc|u|l|t|a|tion",
+        "ɒ|k|ə|l|t|eɪ|ʃən"
+    ],
+    "overbook": [
+        "o|v|er|b|oo|k",
+        "əʊ|v|ə|b|ʊ|k"
+    ],
+    "procrastinated": [
+        "p|r|o|c|r|a|s|t|i|n|a|t|e|d",
+        "p|ɹ|ə|k|ɹ|ɑː|s|t|ɪ|n|eɪ|t|ɪ|d"
+    ],
+    "rets": [
+        "r|e|t|s",
+        "ɹ|ɛ|t|s"
+    ],
+    "spinach": [
+        "s|p|i|n|a|ch",
+        "s|p|ɪ|n|ɪ|tʃ"
+    ],
+    "stretchers": [
+        "s|t|r|e|tch|er|s",
+        "s|t|ɹ|ɛ|tʃ|ə|z"
+    ],
+    "titrate": [
+        "t|i|t|r|a|t|e",
+        "t|ɪ|t|ɹ|eɪ|t|"
+    ],
+    "traders": [
+        "t|r|a|d|er|s",
+        "t|ɹ|eɪ|d|ə|z"
+    ],
+    "volleying": [
+        "v|o|ll|ey|i|ng",
+        "v|ɒ|l|i:|ɪ|ŋ"
+    ],
+    "waxy": [
+        "w|a|x|y",
+        "w|æ|ks|i"
+    ],
+    "weans": [
+        "w|ea|n|s",
+        "w|iː|n|z"
+    ],
+    "wham": [
+        "wh|a|m",
+        "w|æ|m"
+    ],
+    "wills": [
+        "w|i|ll|s",
+        "w|ɪ|l|z"
+    ],
+    "absented": [
+        "a|b|s|e|n|t|e|d",
+        "æ|b|s|ɛ|n|t|ɪ|d"
+    ],
+    "cements": [
+        "c|e|m|e|n|t|s",
+        "s|ɪ|m|ɛ|n|t|s"
+    ],
+    "chainsaw": [
+        "ch|ai|n|s|aw",
+        "tʃ|eɪ|n|s|ɔː"
+    ],
+    "costings": [
+        "c|o|s|t|i|ng|s",
+        "k|ɒ|s|t|ɪ|ŋ|z"
+    ],
+    "elderberries": [
+        "e|l|d|er|b|e|rr|ie|s",
+        "ɛ|l|d|ə|b|ə|ɹ|ɪ|z"
+    ],
+    "finding": [
+        "f|i|n|d|i|ng",
+        "f|aɪ|n|d|ɪ|ŋ"
+    ],
+    "grands": [
+        "g|r|a|n|d|s",
+        "ɡ|ɹ|æ|n|d|z"
+    ],
+    "hijackings": [
+        "h|i|j|a|ck|i|ng|s",
+        "h|aɪ|dʒ|æ|k|ɪ|ŋ|z"
+    ],
+    "inglenooks": [
+        "i|n|g|l|e|n|oo|k|s",
+        "ɪ|n|ɡ|l|ɛ|n|ʊ|k|s"
+    ],
+    "minesweeper": [
+        "m|i|n|e|s|w|ee|p|er",
+        "m|aɪ|n||s|w|iː|p|ɐ"
+    ],
+    "monsoon": [
+        "m|o|n|s|oo|n",
+        "m|ə|n|s|uː|n"
+    ],
+    "pinnacle": [
+        "p|i|nn|a|c|le",
+        "p|ɪ|n|ə|k|əl"
+    ],
+    "poltergeist": [
+        "p|o|l|t|er|g|ei|s|t",
+        "p|əʊ|l|t|ə|ɡ|aɪ|s|t"
+    ],
+    "popper": [
+        "p|o|pp|er",
+        "p|ɒ|p|ɐ"
+    ],
+    "raviolis": [
+        "r|a|v|i|o|l|i|s",
+        "ɹ|æ|v|ɪ|əʊ|l|i|z"
+    ],
+    "rendezvousing": [
+        "r|e|n|d|ez|v|ous|i|ng",
+        "ɹ|ɒ|n|d|ə|v|uː|ɪ|ŋ"
+    ],
+    "reseated": [
+        "r|e|s|ea|t|e|d",
+        "ɹ|ɪ|s|iː|t|ɪ|d"
+    ],
+    "stroll": [
+        "s|t|r|o|ll",
+        "s|t|ɹ|əʊ|l"
+    ],
+    "upheaval": [
+        "u|p|h|ea|v|a|l",
+        "ʌ|p|h|iː|v|ə|l"
+    ],
+    "wellingtons": [
+        "w|e|ll|i|ng|t|o|n|s",
+        "w|ɛ|l|ɪ|ŋ|t|ə|n|z"
+    ],
+    "aka": [
+        "a|k|a",
+        "æ|k|ɐ"
+    ],
+    "authorial": [
+        "au|th|o|r|i|a|l",
+        "ɔː|θ|ɔː|ɹ|ɪ|ə|l"
+    ],
+    "cosmopolitan": [
+        "c|o|s|m|o|p|o|l|i|t|a|n",
+        "k|ɒ|z|m|ə|p|ɒ|l|ɪ|t|ə|n"
+    ],
+    "cuckolds": [
+        "c|u|ck|o|l|d|s",
+        "k|ʌ|k|əʊ|l|d|z"
+    ],
+    "dislocation": [
+        "d|i|s|l|o|c|a|tion",
+        "d|ɪ|s|l|əʊ|k|eɪ|ʃən"
+    ],
+    "encase": [
+        "e|n|c|a|se",
+        "ɛ|n|k|eɪ|s"
+    ],
+    "flashcards": [
+        "f|l|a|sh|c|ar|d|s",
+        "f|l|æ|ʃ|k|ɑː|d|z"
+    ],
+    "gleaner": [
+        "g|l|ea|n|er",
+        "ɡ|l|iː|n|ɐ"
+    ],
+    "hibernate": [
+        "h|i|b|er|n|a|t|e",
+        "h|aɪ|b|ə|n|eɪ|t|"
+    ],
+    "lecithin": [
+        "l|e|c|i|th|i|n",
+        "l|ɛ|s|ɪ|θ|ɪ|n"
+    ],
+    "makeover": [
+        "m|a|k|e|o|v|er",
+        "m|eɪ|k||əʊ|v|ɐ"
+    ],
+    "polka": [
+        "p|o|l|k|a",
+        "p|ɒ|l|k|ɐ"
+    ],
+    "precipitation": [
+        "p|r|e|c|i|p|i|t|a|tion",
+        "p|ɹ|ɪ|s|ɪ|p|ɪ|t|eɪ|ʃən"
+    ],
+    "racketing": [
+        "r|a|ck|e|t|i|ng",
+        "ɹ|æ|k|ɪ|t|ɪ|ŋ"
+    ],
+    "repayments": [
+        "r|e|p|ay|m|e|n|t|s",
+        "ɹ|ɪ|p|eɪ|m|ə|n|t|s"
+    ],
+    "response": [
+        "r|e|s|p|o|n|se",
+        "ɹ|ɪ|s|p|ɒ|n|s"
+    ],
+    "smothers": [
+        "s|m|o|th|er|s",
+        "s|m|ʌ|ð|ə|z"
+    ],
+    "throats": [
+        "th|r|oa|t|s",
+        "θ|ɹ|əʊ|t|s"
+    ],
+    "torso": [
+        "t|or|s|o",
+        "t|ɔː|s|əʊ"
+    ],
+    "wimping": [
+        "w|i|m|p|i|ng",
+        "w|ɪ|m|p|ɪ|ŋ"
+    ],
+    "amphibious": [
+        "a|m|ph|i|b|i|ou|s",
+        "æ|m|f|ɪ|b|ɪ|ə|s"
+    ],
+    "blackamoors": [
+        "b|l|a|ck|a|m|oor|s",
+        "b|l|æ|k|ɐ|m|ɔː|z"
+    ],
+    "climbs": [
+        "c|l|i|mb|s",
+        "k|l|aɪ|m|z"
+    ],
+    "cobbles": [
+        "c|o|bb|le|s",
+        "k|ɒ|b|əl|z"
+    ],
+    "consistencies": [
+        "c|o|n|s|i|s|t|e|n|c|ie|s",
+        "k|ə|n|s|ɪ|s|t|ə|n|s|i|z"
+    ],
+    "deliverance": [
+        "d|e|l|i|v|er|a|n|c|e",
+        "d|ɪ|l|ɪ|v|əɹ|ə|n|s|"
+    ],
+    "favours": [
+        "f|a|v|ou|r|s",
+        "f|eɪ|v|ə||z"
+    ],
+    "gentrification": [
+        "g|e|n|t|r|i|f|i|c|a|tion",
+        "dʒ|ɛ|n|t|ɹ|ɪ|f|ɪ|k|eɪ|ʃən"
+    ],
+    "induction": [
+        "i|n|d|u|c|tion",
+        "ɪ|n|d|ʌ|k|ʃən"
+    ],
+    "interruptions": [
+        "i|n|t|e|rr|u|p|tion|s",
+        "ɪ|n|t|ə|ɹ|ʌ|p|ʃən|z"
+    ],
+    "jovially": [
+        "j|o|v|i|a|ll|y",
+        "dʒ|əʊ|v|ɪ|ə|l|i"
+    ],
+    "middy": [
+        "m|i|dd|y",
+        "m|ɪ|d|i"
+    ],
+    "nonconformity": [
+        "n|o|n|c|o|n|f|or|m|i|t|y",
+        "n|ɒ|n|k|ə|n|f|ɔː|m|ɪ|t|i"
+    ],
+    "pomander": [
+        "p|o|m|a|n|d|er",
+        "p|ɒ|m|ɑː|n|d|ɐ"
+    ],
+    "samarium": [
+        "s|a|m|a|r|i|u|m",
+        "s|ɐ|m|eə|ɹ|i|ə|m"
+    ],
+    "serotonin": [
+        "s|e|r|o|t|o|n|i|n",
+        "s|ɛ|ɹ|ə|t|əʊ|n|ɪ|n"
+    ],
+    "so": [
+        "s|o",
+        "s|əʊ"
+    ],
+    "stairways": [
+        "s|t|air|w|ay|s",
+        "s|t|eə|w|eɪ|z"
+    ],
+    "swamp": [
+        "s|w|a|m|p",
+        "s|w|ɒ|m|p"
+    ],
+    "tinge": [
+        "t|i|n|g|e",
+        "t|ɪ|n|dʒ|"
+    ],
+    "beauticians": [
+        "b|eau|t|i|ci|a|n|s",
+        "b|juː|t|ɪ|ʃ|ə|n|z"
+    ],
+    "dice": [
+        "d|i|c|e",
+        "d|aɪ|s|"
+    ],
+    "dingo": [
+        "d|i|ng|o",
+        "d|ɪ|ŋɡ|əʊ"
+    ],
+    "downside": [
+        "d|ow|n|s|i|d|e",
+        "d|aʊ|n|s|aɪ|d|"
+    ],
+    "headstrong": [
+        "h|ea|d|s|t|r|o|ng",
+        "h|ɛ|d|s|t|ɹ|ɒ|ŋ"
+    ],
+    "hotplates": [
+        "h|o|t|p|l|a|t|e|s",
+        "h|ɒ|t|p|l|eɪ|t||s"
+    ],
+    "kidded": [
+        "k|i|dd|e|d",
+        "k|ɪ|d|ɪ|d"
+    ],
+    "liger": [
+        "l|i|g|er",
+        "l|aɪ|dʒ|ɐ"
+    ],
+    "livelihood": [
+        "l|i|ve|l|i|h|oo|d",
+        "l|aɪ|v|l|i|h|ʊ|d"
+    ],
+    "overspends": [
+        "o|v|er|s|p|e|n|d|s",
+        "əʊ|v|ə|s|p|ɛ|n|d|z"
+    ],
+    "redbrick": [
+        "r|e|d|b|r|i|ck",
+        "ɹ|ɛ|d|b|ɹ|ɪ|k"
+    ],
+    "retaining": [
+        "r|e|t|ai|n|i|ng",
+        "ɹ|ɪ|t|eɪ|n|ɪ|ŋ"
+    ],
+    "sheepish": [
+        "sh|ee|p|i|sh",
+        "ʃ|iː|p|ɪ|ʃ"
+    ],
+    "shipbuilding": [
+        "sh|i|p|b|ui|l|d|i|ng",
+        "ʃ|ɪ|p|b|ɪ|l|d|ɪ|ŋ"
+    ],
+    "sonny": [
+        "s|o|nn|y",
+        "s|ʌ|n|i"
+    ],
+    "stimulant": [
+        "s|t|i|m|u|l|a|n|t",
+        "s|t|ɪ|m|jʊ|l|ə|n|t"
+    ],
+    "symbiosis": [
+        "s|y|m|b|i|o|s|i|s",
+        "s|ɪ|m|b|aɪ|əʊ|s|ɪ|s"
+    ],
+    "vibrantly": [
+        "v|i|b|r|a|n|t|l|y",
+        "v|aɪ|b|ɹ|ə|n|t|l|i"
+    ],
+    "writing": [
+        "w|r|i|t|i|ng",
+        "|ɹ|aɪ|t|ɪ|ŋ"
+    ],
+    "wrought": [
+        "wr|ough|t",
+        "ɹ|ɔː|t"
+    ],
+    "bridals": [
+        "b|r|i|d|a|l|s",
+        "b|ɹ|aɪ|d|ə|l|z"
+    ],
+    "corroborate": [
+        "c|o|rr|o|b|o|r|a|t|e",
+        "k|ə|ɹ|ɒ|b|ə|ɹ|eɪ|t|"
+    ],
+    "crazily": [
+        "c|r|a|z|i|l|y",
+        "k|ɹ|eɪ|z|ɪ|l|i"
+    ],
+    "crushes": [
+        "c|r|u|sh|e|s",
+        "k|ɹ|ʌ|ʃ|ɪ|z"
+    ],
+    "decorously": [
+        "d|e|c|o|r|ou|s|l|y",
+        "d|ɛ|k|ə|ɹ|ə|s|l|i"
+    ],
+    "dieback": [
+        "d|ie|b|a|ck",
+        "d|aɪ|b|æ|k"
+    ],
+    "dragster": [
+        "d|r|a|g|s|t|er",
+        "d|ɹ|æ|ɡ|s|t|ɐ"
+    ],
+    "embryologist": [
+        "e|m|b|r|y|o|l|o|g|i|s|t",
+        "ɛ|m|b|ɹ|ɪ|ɒ|l|ə|dʒ|ɪ|s|t"
+    ],
+    "endoscopic": [
+        "e|n|d|o|s|c|o|p|i|c",
+        "ɛ|n|d|əʊ|s|k|ɒ|p|ɪ|k"
+    ],
+    "exhorted": [
+        "e|x|h|or|t|e|d",
+        "ɛ|ɡz||ɔː|t|ɪ|d"
+    ],
+    "fruited": [
+        "f|r|ui|t|e|d",
+        "f|ɹ|uː|t|ɪ|d"
+    ],
+    "glacier": [
+        "g|l|a|ci|er",
+        "ɡ|l|eɪ|ʃ|ɐ"
+    ],
+    "interrogator": [
+        "i|n|t|e|rr|o|g|a|t|or",
+        "ɪ|n|t|ɛ|ɹ|ə|ɡ|eɪ|t|ɐ"
+    ],
+    "ninths": [
+        "n|i|n|th|s",
+        "n|aɪ|n|θ|s"
+    ],
+    "nitwits": [
+        "n|i|t|w|i|t|s",
+        "n|ɪ|t|w|ɪ|t|s"
+    ],
+    "pea": [
+        "p|ea",
+        "p|iː"
+    ],
+    "prescriptive": [
+        "p|r|e|s|c|r|i|p|t|i|ve",
+        "p|ɹ|ɪ|s|k|ɹ|ɪ|p|t|ɪ|v"
+    ],
+    "revere": [
+        "r|e|v|ere",
+        "ɹ|ɪ|v|iə"
+    ],
+    "temporally": [
+        "t|e|m|p|o|r|a|ll|y",
+        "t|ɛ|m|p|ə|ɹ|ə|l|i"
+    ],
+    "terpsichorean": [
+        "t|er|p|s|i|ch|o|r|ea|n",
+        "t|ɜː|p|s|ɪ|k|ɔː|ɹ|iə|n"
+    ],
+    "arachnophobia": [
+        "a|r|a|ch|n|o|ph|o|b|i|a",
+        "ɐ|ɹ|æ|k|n|ə|f|əʊ|b|i|ə"
+    ],
+    "bawdy": [
+        "b|aw|d|y",
+        "b|ɔː|d|i"
+    ],
+    "bluing": [
+        "b|l|u|i|ng",
+        "b|l|uː|ɪ|ŋ"
+    ],
+    "bone": [
+        "b|o|n|e",
+        "b|əʊ|n|"
+    ],
+    "consciousnesses": [
+        "c|o|n|sci|ou|s|n|e|ss|e|s",
+        "k|ɒ|n|ʃ|ə|s|n|ə|s|ɪ|z"
+    ],
+    "fatty": [
+        "f|a|tt|y",
+        "f|æ|t|i"
+    ],
+    "haematite": [
+        "h|ae|m|a|t|i|t|e",
+        "h|iː|m|ɐ|t|aɪ|t|"
+    ],
+    "headway": [
+        "h|ea|d|w|ay",
+        "h|ɛ|d|w|eɪ"
+    ],
+    "lured": [
+        "l|ur|ed",
+        "l|ɔː|d"
+    ],
+    "motionless": [
+        "m|o|tion|l|e|ss",
+        "m|əʊ|ʃən|l|ə|s"
+    ],
+    "oriented": [
+        "o|r|i|e|n|t|e|d",
+        "ɔː|ɹ|i|ə|n|t|ɪ|d"
+    ],
+    "outstrip": [
+        "ou|t|s|t|r|i|p",
+        "aʊ|t|s|t|ɹ|ɪ|p"
+    ],
+    "plentifully": [
+        "p|l|e|n|t|i|f|u|ll|y",
+        "p|l|ɛ|n|t|ɪ|f|ə|l|i"
+    ],
+    "politics": [
+        "p|o|l|i|t|i|c|s",
+        "p|ɒ|l|ə|t|ɪ|k|s"
+    ],
+    "populations": [
+        "p|o|p|u|l|a|tion|s",
+        "p|ɒ|p|jʊ|l|eɪ|ʃən|z"
+    ],
+    "prettify": [
+        "p|r|e|tt|i|f|y",
+        "p|ɹ|ɛ|t|ɪ|f|aɪ"
+    ],
+    "spandrels": [
+        "s|p|a|n|d|r|e|l|s",
+        "s|p|æ|n|d|ɹ|ə|l|z"
+    ],
+    "stained": [
+        "s|t|ai|n|ed",
+        "s|t|eɪ|n|d"
+    ],
+    "superfluous": [
+        "s|u|p|er|f|l|u|ou|s",
+        "s|uː|p|ɜː|f|l|uː|ə|s"
+    ],
+    "turquoises": [
+        "t|ur|qu|oi|s|e|s",
+        "t|ɜː|kw|ɔɪ|s|ɪ|z"
+    ],
+    "basset": [
+        "b|a|ss|e|t",
+        "b|æ|s|ɛ|t"
+    ],
+    "browned": [
+        "b|r|ow|n|ed",
+        "b|ɹ|aʊ|n|d"
+    ],
+    "confectionary": [
+        "c|o|n|f|e|c|tion|a|r|y",
+        "k|ə|n|f|ɛ|k|ʃən|ə|ɹ|i"
+    ],
+    "cubed": [
+        "c|u|b|ed",
+        "k|juː|b|d"
+    ],
+    "flunked": [
+        "f|l|u|n|k|ed",
+        "f|l|ʌ|ŋ|k|t"
+    ],
+    "ideally": [
+        "i|d|ea|ll|y",
+        "aɪ|d|iə|l|i"
+    ],
+    "inventions": [
+        "i|n|v|e|n|tion|s",
+        "ɪ|n|v|ɛ|n|ʃən|z"
+    ],
+    "observes": [
+        "o|b|s|er|ve|s",
+        "ɒ|b|z|ɜː|v|z"
+    ],
+    "pallbearer": [
+        "p|a|ll|b|ea|r|er",
+        "p|æ|l|b|eə|ɹ|ɐ"
+    ],
+    "promiscuous": [
+        "p|r|o|m|i|s|c|u|ou|s",
+        "p|ɹ|ə|m|ɪ|s|k|juː|ə|s"
+    ],
+    "quartile": [
+        "qu|ar|t|i|l|e",
+        "kw|ɔː|t|aɪ|l|"
+    ],
+    "responsiveness": [
+        "r|e|s|p|o|n|s|i|ve|n|e|ss",
+        "ɹ|ɪ|s|p|ɒ|n|s|ɪ|v|n|ə|s"
+    ],
+    "restaurant": [
+        "r|e|s|t|au|r|a|n|t",
+        "ɹ|ɛ|s|t|ɔː|ɹ|ɒ|n|t"
+    ],
+    "scatterbrain": [
+        "s|c|a|tt|er|b|r|ai|n",
+        "s|k|æ|t|ə|b|ɹ|eɪ|n"
+    ],
+    "shinier": [
+        "sh|i|n|i|er",
+        "ʃ|aɪ|n|ɪ|ɐ"
+    ],
+    "spears": [
+        "s|p|ear|s",
+        "s|p|iə|z"
+    ],
+    "spica": [
+        "s|p|i|c|a",
+        "s|p|iː|k|ɐ"
+    ],
+    "stripe": [
+        "s|t|r|i|p|e",
+        "s|t|ɹ|aɪ|p|"
+    ],
+    "vampish": [
+        "v|a|m|p|i|sh",
+        "v|æ|m|p|ɪ|ʃ"
+    ],
+    "wager": [
+        "w|a|g|er",
+        "w|eɪ|dʒ|ɐ"
+    ],
+    "brioche": [
+        "b|r|i|o|ch|e",
+        "b|ɹ|iː|əʊ|ʃ|"
+    ],
+    "conspicuously": [
+        "c|o|n|s|p|i|c|u|ou|s|l|y",
+        "k|ə|n|s|p|ɪ|k|juː|ə|s|l|i"
+    ],
+    "dancer": [
+        "d|a|n|c|er",
+        "d|ɑː|n|s|ɐ"
+    ],
+    "downplaying": [
+        "d|ow|n|p|l|ay|i|ng",
+        "d|aʊ|n|p|l|eɪ|ɪ|ŋ"
+    ],
+    "ended": [
+        "e|n|d|e|d",
+        "ɛ|n|d|ɪ|d"
+    ],
+    "erudite": [
+        "e|r|u|d|i|t|e",
+        "ɛ|ɹ|uː|d|aɪ|t|"
+    ],
+    "expression": [
+        "e|x|p|r|e|ssio|n",
+        "ɛ|ks|p|ɹ|ɛ|ʃə|n"
+    ],
+    "goosed": [
+        "g|oo|s|ed",
+        "ɡ|uː|s|d"
+    ],
+    "handsful": [
+        "h|a|n|d|s|f|u|l",
+        "h|æ|n|d|z|f|ə|l"
+    ],
+    "husbands": [
+        "h|u|s|b|a|n|d|s",
+        "h|ʌ|s|b|ə|n|d|z"
+    ],
+    "questionnaires": [
+        "qu|e|s|tion|n|air|e|s",
+        "kw|ɛ|s|tʃən||eə||z"
+    ],
+    "recurrently": [
+        "r|e|c|u|rr|e|n|t|l|y",
+        "ɹ|ɪ|k|ʌ|ɹ|ə|n|t|l|i"
+    ],
+    "redesigned": [
+        "r|e|d|e|s|i|g|n|ed",
+        "ɹ|iː|d|ɪ|z|aɪ||n|d"
+    ],
+    "sabayon": [
+        "s|a|b|ay|o|n",
+        "s|æ|b|eɪ|ə|n"
+    ],
+    "scallion": [
+        "s|c|a|ll|i|o|n",
+        "s|k|æ|l|i|ə|n"
+    ],
+    "scariest": [
+        "s|c|a|r|i|e|s|t",
+        "s|k|eə|ɹ|i|ə|s|t"
+    ],
+    "sportsmanlike": [
+        "s|p|or|t|s|m|a|n|l|i|k|e",
+        "s|p|ɔː|t|s|m|ə|n|l|aɪ|k|"
+    ],
+    "thatch": [
+        "th|a|tch",
+        "θ|æ|tʃ"
+    ],
+    "trimming": [
+        "t|r|i|mm|i|ng",
+        "t|ɹ|ɪ|m|ɪ|ŋ"
+    ],
+    "unusual": [
+        "u|n|u|s|u|a|l",
+        "ʌ|n|juː|ʒ|uː|ə|l"
+    ],
+    "a": [
+        "a",
+        "æ"
+    ],
+    "abyss": [
+        "a|b|y|ss",
+        "ɐ|b|ɪ|s"
+    ],
+    "ache": [
+        "a|ch|e",
+        "eɪ|k|"
+    ],
+    "actual": [
+        "a|c|tu|a|l",
+        "æ|k|tʃuː|ə|l"
+    ],
+    "advice": [
+        "a|d|v|i|c|e",
+        "ɐ|d|v|aɪ|s|"
+    ],
+    "aerie": [
+        "ae|r|ie",
+        "iə|ɹ|i"
+    ],
+    "age": [
+        "a|g|e",
+        "eɪ|dʒ|"
+    ],
+    "ague": [
+        "a|g|u|e",
+        "eɪ|ɡ|juː|"
+    ],
+    "aisles": [
+        "ai|s|l|e|s",
+        "aɪ||l||z"
+    ],
+    "alas": [
+        "a|l|a|s",
+        "ɐ|l|æ|s"
+    ],
+    "alien": [
+        "a|l|i|e|n",
+        "eɪ|l|i|ə|n"
+    ],
+    "alive": [
+        "a|l|i|ve",
+        "ɐ|l|aɪ|v"
+    ],
+    "allowed": [
+        "a|ll|ow|ed",
+        "ɐ|l|aʊ|d"
+    ],
+    "ally": [
+        "a|ll|y",
+        "æ|l|aɪ"
+    ],
+    "and": [
+        "a|n|d",
+        "æ|n|d"
+    ],
+    "anemone": [
+        "a|n|e|m|o|n|e",
+        "ɐ|n|ɛ|m|ə|n|i"
+    ],
+    "anger": [
+        "a|ng|er",
+        "æ|ŋɡ|ɐ"
+    ],
+    "arabic": [
+        "a|r|a|b|i|c",
+        "æ|ɹ|ɐ|b|ɪ|k"
+    ],
+    "are": [
+        "are",
+        "ɑː"
+    ],
+    "area": [
+        "a|r|ea",
+        "eə|ɹ|iə"
+    ],
+    "arkansas": [
+        "ar|k|a|n|s|a|s",
+        "ɑː|k|ə|n|s|ɔː|"
+    ],
+    "as": [
+        "a|s",
+        "æ|z"
+    ],
+    "ask": [
+        "a|s|k",
+        "ɑː|s|k"
+    ],
+    "ass": [
+        "a|ss",
+        "æ|s"
+    ],
+    "ate": [
+        "a|t|e",
+        "eɪ|t|"
+    ],
+    "aunt": [
+        "au|n|t",
+        "ɑː|n|t"
+    ],
+    "aver": [
+        "a|v|er",
+        "ɐ|v|ɜː"
+    ],
+    "ay": [
+        "ay",
+        "aɪ"
+    ],
+    "aye": [
+        "ay|e",
+        "aɪ|"
+    ],
+    "ballet": [
+        "b|a|ll|et",
+        "b|æ|l|eɪ"
+    ],
+    "balmoral": [
+        "b|a|l|m|o|r|a|l",
+        "b|ɐ|l|m|ɒ|ɹ|ə|l"
+    ],
+    "bass [[instrument]]": [
+        "b|a|ss",
+        "b|eɪ|s"
+    ],
+    "battalion": [
+        "b|a|tt|a|l|i|o|n",
+        "b|ɐ|t|æ|l|i|ə|n"
+    ],
+    "be": [
+        "b|e",
+        "b|iː"
+    ],
+    "beard": [
+        "b|ear|d",
+        "b|iə|d"
+    ],
+    "between": [
+        "b|e|t|w|ee|n",
+        "b|ɪ|t|w|iː|n"
+    ],
+    "billet": [
+        "b|i|ll|e|t",
+        "b|ɪ|l|ɪ|t"
+    ],
+    "bleak": [
+        "b|l|ea|k",
+        "b|l|iː|k"
+    ],
+    "blood": [
+        "b|l|oo|d",
+        "b|l|ʌ|d"
+    ],
+    "bomb": [
+        "b|o|mb",
+        "b|ɒ|m"
+    ],
+    "bosom": [
+        "b|o|s|o|m",
+        "b|ʊ|s|ə|m"
+    ],
+    "bouquet": [
+        "b|ou|qu|et",
+        "b|uː|k|eɪ"
+    ],
+    "break": [
+        "b|r|ea|k",
+        "b|ɹ|eɪ|k"
+    ],
+    "breeches": [
+        "b|r|ee|ch|e|s",
+        "b|ɹ|ɪ|tʃ|ɪ|z"
+    ],
+    "britain": [
+        "b|r|i|t|ai|n",
+        "b|ɹ|ɪ|t|ə|n"
+    ],
+    "broad": [
+        "b|r|oa|d",
+        "b|ɹ|ɔː|d"
+    ],
+    "bull": [
+        "b|u|ll",
+        "b|ʊ|l"
+    ],
+    "bury": [
+        "b|u|r|y",
+        "b|ɛ|ɹ|i"
+    ],
+    "busy": [
+        "b|u|s|y",
+        "b|ɪ|z|i"
+    ],
+    "but": [
+        "b|u|t",
+        "b|ʌ|t"
+    ],
+    "camel": [
+        "c|a|m|e|l",
+        "k|æ|m|ə|l"
+    ],
+    "canal": [
+        "c|a|n|a|l",
+        "k|ə|n|æ|l"
+    ],
+    "canary": [
+        "c|a|n|a|r|y",
+        "k|ə|n|eə|ɹ|i"
+    ],
+    "careful": [
+        "c|are|f|u|l",
+        "k|eə|f|ə|l"
+    ],
+    "chair": [
+        "ch|air",
+        "tʃ|eə"
+    ],
+    "chaise": [
+        "ch|ai|s|e",
+        "ʃ|eɪ|z|"
+    ],
+    "chalet": [
+        "ch|a|l|et",
+        "ʃ|æ|l|eɪ"
+    ],
+    "chalice": [
+        "ch|a|l|i|c|e",
+        "tʃ|æ|l|ɪ|s|"
+    ],
+    "chaos": [
+        "ch|a|o|s",
+        "k|eɪ|ɒ|s"
+    ],
+    "cigar": [
+        "c|i|g|ar",
+        "s|ɪ|ɡ|ɑː"
+    ],
+    "clamour": [
+        "c|l|a|m|our",
+        "k|l|æ|m|ɐ"
+    ],
+    "clangour": [
+        "c|l|a|ng|our",
+        "k|l|æ|ŋɡ|ɐ"
+    ],
+    "clean": [
+        "c|l|ea|n",
+        "k|l|iː|n"
+    ],
+    "cleanse": [
+        "c|l|ea|n|s|e",
+        "k|l|ɛ|n|z|"
+    ],
+    "cloth": [
+        "c|l|o|th",
+        "k|l|ɒ|θ"
+    ],
+    "cloven": [
+        "c|l|o|v|e|n",
+        "k|l|əʊ|v|ə|n"
+    ],
+    "clover": [
+        "c|l|o|v|er",
+        "k|l|əʊ|v|ɐ"
+    ],
+    "comb": [
+        "c|o|mb",
+        "k|əʊ|m"
+    ],
+    "compare": [
+        "c|o|m|p|are",
+        "k|ə|m|p|eə"
+    ],
+    "conscience": [
+        "c|o|n|sci|e|n|c|e",
+        "k|ɒ|n|ʃ|ə|n|s|"
+    ],
+    "constable": [
+        "c|o|n|s|t|a|b|le",
+        "k|ɒ|n|s|t|ə|b|əl"
+    ],
+    "cork": [
+        "c|or|k",
+        "k|ɔː|k"
+    ],
+    "corps": [
+        "c|or|p|s",
+        "k|ɔː||"
+    ],
+    "corpse": [
+        "c|or|p|se",
+        "k|ɔː|p|s"
+    ],
+    "correctly": [
+        "c|o|rr|e|c|t|l|y",
+        "k|ə|ɹ|ɛ|k|t|l|i"
+    ],
+    "cough": [
+        "c|ough",
+        "k|ɒf"
+    ],
+    "cover": [
+        "c|o|v|er",
+        "k|ʌ|v|ɐ"
+    ],
+    "creation": [
+        "c|r|e|a|tion",
+        "k|ɹ|iː|eɪ|ʃən"
+    ],
+    "creature": [
+        "c|r|ea|tu|re",
+        "k|ɹ|iː|tʃ|ɐ"
+    ],
+    "crevice": [
+        "c|r|e|v|i|c|e",
+        "k|ɹ|ɛ|v|ɪ|s|"
+    ],
+    "croquet": [
+        "c|r|o|qu|et",
+        "k|ɹ|ɒ|k|eɪ"
+    ],
+    "cup": [
+        "c|u|p",
+        "k|ʌ|p"
+    ],
+    "dandelion": [
+        "d|a|n|d|e|l|i|o|n",
+        "d|æ|n|d|ɪ|l|aɪ|ə|n"
+    ],
+    "dark": [
+        "d|ar|k",
+        "d|ɑː|k"
+    ],
+    "daughter": [
+        "d|au|gh|t|er",
+        "d|ɔː||t|ɐ"
+    ],
+    "deafer": [
+        "d|ea|f|er",
+        "d|ɛ|f|ɐ"
+    ],
+    "dearest": [
+        "d|ea|r|e|s|t",
+        "d|iə|ɹ|ə|s|t"
+    ],
+    "deceiver": [
+        "d|e|c|ei|v|er",
+        "d|ɪ|s|iː|v|ɐ"
+    ],
+    "device": [
+        "d|e|v|i|c|e",
+        "d|ɪ|v|aɪ|s|"
+    ],
+    "devoid": [
+        "d|e|v|oi|d",
+        "d|ɪ|v|ɔɪ|d"
+    ],
+    "devour": [
+        "d|e|v|ou|r",
+        "d|ɪ|v|aʊ|ə"
+    ],
+    "dies": [
+        "d|ie|s",
+        "d|aɪ|z"
+    ],
+    "diet": [
+        "d|i|e|t",
+        "d|aɪ|ə|t"
+    ],
+    "differences": [
+        "d|i|ff|e|r|e|n|c|e|s",
+        "d|ɪ|f||ɹ|ə|n|s|ɪ|z"
+    ],
+    "disciple": [
+        "d|i|sc|i|p|le",
+        "d|ɪ|s|aɪ|p|əl"
+    ],
+    "dizzy": [
+        "d|i|zz|y",
+        "d|ɪ|z|i"
+    ],
+    "do": [
+        "d|o",
+        "d|uː"
+    ],
+    "doctrine": [
+        "d|o|c|t|r|i|n|e",
+        "d|ɒ|k|t|ɹ|ɪ|n|"
+    ],
+    "does": [
+        "d|oe|s",
+        "d|ʌ|z"
+    ],
+    "doll": [
+        "d|o|ll",
+        "d|ɒ|l"
+    ],
+    "donkey": [
+        "d|o|n|k|ey",
+        "d|ɒ|ŋ|k|i"
+    ],
+    "dost": [
+        "d|o|s|t",
+        "d|ɒ|s|t"
+    ],
+    "doth": [
+        "d|o|th",
+        "d|ʌ|θ"
+    ],
+    "dough": [
+        "d|o|u|gh",
+        "d|ə|ʊ|"
+    ],
+    "dress": [
+        "d|r|e|ss",
+        "d|ɹ|ɛ|s"
+    ],
+    "dull": [
+        "d|u|ll",
+        "d|ʌ|l"
+    ],
+    "ear": [
+        "ear",
+        "iə"
+    ],
+    "earn": [
+        "ear|n",
+        "ɜː|n"
+    ],
+    "efface": [
+        "e|ff|a|c|e",
+        "ɪ|f|eɪ|s|"
+    ],
+    "eleven": [
+        "e|l|e|v|e|n",
+        "ɪ|l|ɛ|v|ə|n"
+    ],
+    "enamour": [
+        "e|n|a|m|our",
+        "ɪ|n|æ|m|ə"
+    ],
+    "english": [
+        "e|ng|l|i|sh",
+        "ɪ|ŋɡ|l|ɪ|ʃ"
+    ],
+    "enough": [
+        "e|n|ough",
+        "ɪ|n|ʌf"
+    ],
+    "ere": [
+        "ere",
+        "eə"
+    ],
+    "even": [
+        "e|v|e|n",
+        "iː|v|ə|n"
+    ],
+    "ever": [
+        "e|v|er",
+        "ɛ|v|ɐ"
+    ],
+    "exiles": [
+        "e|x|i|l|e|s",
+        "ɛ|ɡz|aɪ|l||z"
+    ],
+    "eye": [
+        "eye",
+        "aɪ"
+    ],
+    "face": [
+        "f|a|c|e",
+        "f|eɪ|s|"
+    ],
+    "famous": [
+        "f|a|m|ou|s",
+        "f|eɪ|m|ə|s"
+    ],
+    "far": [
+        "f|ar",
+        "f|ɑː"
+    ],
+    "fever": [
+        "f|e|v|er",
+        "f|iː|v|ɐ"
+    ],
+    "fiend": [
+        "f|ie|n|d",
+        "f|iː|n|d"
+    ],
+    "finally": [
+        "f|i|n|a|ll|y",
+        "f|aɪ|n|ə|l|i"
+    ],
+    "finger": [
+        "f|i|ng|er",
+        "f|ɪ|ŋɡ|ɐ"
+    ],
+    "first": [
+        "f|ir|s|t",
+        "f|ɜː|s|t"
+    ],
+    "flood": [
+        "f|l|oo|d",
+        "f|l|ʌ|d"
+    ],
+    "foeffer": [
+        "f|oe|ff|er",
+        "f|ɛ|f|ɐ"
+    ],
+    "foliage": [
+        "f|o|l|i|a|g|e",
+        "f|əʊ|l|i|ɪ|dʒ|"
+    ],
+    "font": [
+        "f|o|n|t",
+        "f|ɒ|n|t"
+    ],
+    "food": [
+        "f|oo|d",
+        "f|uː|d"
+    ],
+    "forward": [
+        "f|or|w|ar|d",
+        "f|ɔː|w|ə|d"
+    ],
+    "foul": [
+        "f|ou|l",
+        "f|aʊ|l"
+    ],
+    "four": [
+        "f|our",
+        "f|ɔː"
+    ],
+    "friend": [
+        "f|r|ie|n|d",
+        "f|ɹ|ɛ|n|d"
+    ],
+    "front": [
+        "f|r|o|n|t",
+        "f|ɹ|ʌ|n|t"
+    ],
+    "fury": [
+        "f|u|r|y",
+        "f|jɔː|ɹ|i"
+    ],
+    "gas": [
+        "g|a|s",
+        "ɡ|æ|s"
+    ],
+    "gauge": [
+        "g|au|g|e",
+        "ɡ|eɪ|dʒ|"
+    ],
+    "gauze": [
+        "g|au|z|e",
+        "ɡ|ɔː|z|"
+    ],
+    "george": [
+        "g|e|or|g|e",
+        "dʒ||ɔː|dʒ|"
+    ],
+    "german": [
+        "g|er|m|a|n",
+        "dʒ|ɜː|m|ə|n"
+    ],
+    "gertrude": [
+        "g|er|t|r|u|d|e",
+        "ɡ|ɜː|t|ɹ|uː|d|"
+    ],
+    "gin": [
+        "g|i|n",
+        "dʒ|ɪ|n"
+    ],
+    "ginger": [
+        "g|i|n|g|er",
+        "dʒ|ɪ|n|dʒ|ɐ"
+    ],
+    "give": [
+        "g|i|ve",
+        "ɡ|ɪ|v"
+    ],
+    "glass": [
+        "g|l|a|ss",
+        "ɡ|l|ɑː|s"
+    ],
+    "goes": [
+        "g|oe|s",
+        "ɡ|əʊ|z"
+    ],
+    "gouge": [
+        "g|ou|g|e",
+        "ɡ|aʊ|dʒ|"
+    ],
+    "granary": [
+        "g|r|a|n|a|r|y",
+        "ɡ|ɹ|æ|n|ə|ɹ|i"
+    ],
+    "grand": [
+        "g|r|a|n|d",
+        "ɡ|ɹ|æ|n|d"
+    ],
+    "grant": [
+        "g|r|a|n|t",
+        "ɡ|ɹ|ɑː|n|t"
+    ],
+    "grasp": [
+        "g|r|a|s|p",
+        "ɡ|ɹ|ɑː|s|p"
+    ],
+    "grieve": [
+        "g|r|ie|ve",
+        "ɡ|ɹ|iː|v"
+    ],
+    "grits": [
+        "g|r|i|t|s",
+        "ɡ|ɹ|ɪ|t|s"
+    ],
+    "groats": [
+        "g|r|oa|t|s",
+        "ɡ|ɹ|əʊ|t|s"
+    ],
+    "grow": [
+        "g|r|ow",
+        "ɡ|ɹ|əʊ"
+    ],
+    "gunwale": [
+        "g|u|n|w|a|le",
+        "ɡ|ʌ|n|||əl"
+    ],
+    "hallowed": [
+        "h|a|ll|ow|ed",
+        "h|æ|l|əʊ|d"
+    ],
+    "hammer": [
+        "h|a|mm|er",
+        "h|æ|m|ɐ"
+    ],
+    "has": [
+        "h|a|s",
+        "h|æ|z"
+    ],
+    "haunt": [
+        "h|au|n|t",
+        "h|ɔː|n|t"
+    ],
+    "head": [
+        "h|ea|d",
+        "h|ɛ|d"
+    ],
+    "hear": [
+        "h|ea|r",
+        "h|i|ə"
+    ],
+    "heard": [
+        "h|ear|d",
+        "h|ɜː|d"
+    ],
+    "heart": [
+        "h|ear|t",
+        "h|ɑː|t"
+    ],
+    "heat": [
+        "h|ea|t",
+        "h|iː|t"
+    ],
+    "heave": [
+        "h|ea|ve",
+        "h|iː|v"
+    ],
+    "heaven": [
+        "h|ea|v|e|n",
+        "h|ɛ|v|ə|n"
+    ],
+    "heifer": [
+        "h|ei|f|er",
+        "h|ɛ|f|ɐ"
+    ],
+    "here": [
+        "h|ere",
+        "h|iə"
+    ],
+    "heron": [
+        "h|e|r|o|n",
+        "h|ɛ|ɹ|ə|n"
+    ],
+    "hiccough": [
+        "h|i|cc|ough",
+        "h|ɪ|k|ʌp"
+    ],
+    "home": [
+        "h|o|m|e",
+        "h|əʊ|m|"
+    ],
+    "horse": [
+        "h|or|se",
+        "h|ɔː|s"
+    ],
+    "housewife": [
+        "h|ou|se|w|i|f|e",
+        "h|aʊ|s|w|aɪ|f|"
+    ],
+    "how": [
+        "h|ow",
+        "h|aʊ"
+    ],
+    "hyphen": [
+        "h|y|ph|e|n",
+        "h|aɪ|f|ə|n"
+    ],
+    "i": [
+        "i",
+        "a‍ɪ"
+    ],
+    "idea": [
+        "i|d|ea",
+        "a‍ɪ|d|iə"
+    ],
+    "in": [
+        "i|n",
+        "ɪ|n"
+    ],
+    "indict": [
+        "i|n|d|i|c|t",
+        "ɪ|n|d|aɪ||t"
+    ],
+    "is": [
+        "i|s",
+        "ɪ|z"
+    ],
+    "isle of wight": [
+        "i|s|le| |o|f| |w|igh|t",
+        "aɪ||əl||ɒ|v||w|aɪ|t"
+    ],
+    "islington": [
+        "i|s|l|i|ng|t|o|n",
+        "ɪ|z|l|ɪ|ŋ|t|ə|n"
+    ],
+    "it": [
+        "i|t",
+        "ɪ|t"
+    ],
+    "italian": [
+        "i|t|a|l|i|a|n",
+        "ɪ|t|æ|l|i|ə|n"
+    ],
+    "ivy": [
+        "i|v|y",
+        "aɪ|v|i"
+    ],
+    "jerk": [
+        "j|er|k",
+        "dʒ|ɜː|k"
+    ],
+    "job": [
+        "j|o|b",
+        "dʒ|ɒ|b"
+    ],
+    "joust": [
+        "j|ou|s|t",
+        "dʒ|aʊ|s|t"
+    ],
+    "just": [
+        "j|u|s|t",
+        "d‍ʒ|ʌ|s|t"
+    ],
+    "keep": [
+        "k|ee|p",
+        "k|iː|p"
+    ],
+    "key": [
+        "k|ey",
+        "k|iː"
+    ],
+    "kitchen": [
+        "k|i|tch|e|n",
+        "k|ɪ|tʃ|ə|n"
+    ],
+    "korea": [
+        "k|o|r|ea",
+        "k|ɔː|ɹ|iə"
+    ],
+    "label": [
+        "l|a|b|e|l",
+        "l|eɪ|b|ə|l"
+    ],
+    "large": [
+        "l|ar|g|e",
+        "l|ɑː|dʒ|"
+    ],
+    "late": [
+        "l|a|t|e",
+        "l|eɪ|t|"
+    ],
+    "latter": [
+        "l|a|tt|er",
+        "l|æ|t|ɐ"
+    ],
+    "laughter": [
+        "l|augh|t|er",
+        "l|ɑːf|t|ɐ"
+    ],
+    "laundry": [
+        "l|au|n|d|r|y",
+        "l|ɔː|n|d|ɹ|i"
+    ],
+    "laurel": [
+        "l|au|r|e|l",
+        "l|ɔː|ɹ|ə|l"
+    ],
+    "leeches": [
+        "l|ee|ch|e|s",
+        "l|iː|tʃ|ɪ|z"
+    ],
+    "leisure": [
+        "l|ei|s|ure",
+        "l|ɛ|ʒ|ɐ"
+    ],
+    "leopard": [
+        "l|eo|p|ar|d",
+        "l|ɛ|p|ə|d"
+    ],
+    "liberty": [
+        "l|i|b|er|t|y",
+        "l|ɪ|b|ə|t|i"
+    ],
+    "library": [
+        "l|i|b|r|a|r|y",
+        "l|aɪ|b|ɹ|ə|ɹ|i"
+    ],
+    "lice": [
+        "l|i|c|e",
+        "l|aɪ|s|"
+    ],
+    "lichen": [
+        "l|i|ch|e|n",
+        "l|aɪ|k|ə|n"
+    ],
+    "like": [
+        "l|i|k|e",
+        "l|aɪ|k|"
+    ],
+    "linger": [
+        "l|i|ng|er",
+        "l|ɪ|ŋɡ|ɐ"
+    ],
+    "little": [
+        "l|i|tt|le",
+        "l|ɪ|t|əl"
+    ],
+    "live [[not be dead]]": [
+        "l|i|ve",
+        "l|ɪ|v"
+    ],
+    "load": [
+        "l|oa|d",
+        "l|əʊ|d"
+    ],
+    "lord": [
+        "l|or|d",
+        "l|ɔː|d"
+    ],
+    "lose": [
+        "l|o|s|e",
+        "l|uː|z|"
+    ],
+    "lost": [
+        "l|o|s|t",
+        "l|ɒ|s|t"
+    ],
+    "loth": [
+        "l|o|th",
+        "l|əʊ|θ"
+    ],
+    "low": [
+        "l|ow",
+        "l|əʊ"
+    ],
+    "make": [
+        "m|a|k|e",
+        "m|eɪ|k|"
+    ],
+    "malaria": [
+        "m|a|l|a|r|i|a",
+        "m|æ|l|eə|ɹ|i|ə"
+    ],
+    "mallet": [
+        "m|a|ll|e|t",
+        "m|æ|l|ɪ|t"
+    ],
+    "mankind": [
+        "m|a|n|k|i|n|d",
+        "m|æ|ŋ|k|aɪ|n|d"
+    ],
+    "maria": [
+        "m|a|r|i|a",
+        "m|æ|ɹ|i|ə"
+    ],
+    "marine": [
+        "m|a|r|i|n|e",
+        "m|ə|ɹ|iː|n|"
+    ],
+    "mark": [
+        "m|ar|k",
+        "m|ɑː|k"
+    ],
+    "marriage": [
+        "m|a|rr|ia|g|e",
+        "m|æ|ɹ|ɪ|dʒ|"
+    ],
+    "mauve": [
+        "m|au|ve",
+        "m|əʊ|v"
+    ],
+    "mayor": [
+        "m|ayor",
+        "m|eə"
+    ],
+    "me": [
+        "m|e",
+        "m|iː"
+    ],
+    "measles": [
+        "m|ea|s|le|s",
+        "m|iː|s|əl|z"
+    ],
+    "melpomene": [
+        "m|e|l|p|o|m|e|n|e",
+        "m|ɛ|l|p|ɒ|m|ɪ|n|i"
+    ],
+    "mica": [
+        "m|i|c|a",
+        "m|aɪ|k|ɐ"
+    ],
+    "mind": [
+        "m|i|n|d",
+        "m|aɪ|n|d"
+    ],
+    "mint": [
+        "m|i|n|t",
+        "m|ɪ|n|t"
+    ],
+    "mirage": [
+        "m|i|r|a|g|e",
+        "m|ɪ|ɹ|ɑː|ʒ|"
+    ],
+    "monkey": [
+        "m|o|n|k|ey",
+        "m|ʌ|n|k|i"
+    ],
+    "moreover": [
+        "m|o|r|e|o|v|er",
+        "m|ɔː|ɹ||əʊ|v|ɐ"
+    ],
+    "mould": [
+        "m|ou|l|d",
+        "m|əʊ|l|d"
+    ],
+    "moustache": [
+        "m|ou|s|t|a|ch|e",
+        "m|ə|s|t|ɑː|ʃ|"
+    ],
+    "mover": [
+        "m|o|v|er",
+        "m|uː|v|ɐ"
+    ],
+    "my": [
+        "m|y",
+        "m|a‍ɪ"
+    ],
+    "n't": [
+        "n|'|t",
+        "n||t"
+    ],
+    "neither": [
+        "n|ei|th|er",
+        "n|aɪ|ð|ɐ"
+    ],
+    "nephew": [
+        "n|e|ph|ew",
+        "n|ɛ|f|juː"
+    ],
+    "nob": [
+        "n|o|b",
+        "n|ɒ|b"
+    ],
+    "nor": [
+        "n|or",
+        "n|ɔː"
+    ],
+    "not": [
+        "n|o|t",
+        "n|ɒ|t"
+    ],
+    "now": [
+        "n|ow",
+        "n|aʊ"
+    ],
+    "oath": [
+        "oa|th",
+        "əʊ|θ"
+    ],
+    "of": [
+        "o|f",
+        "ɒ|v"
+    ],
+    "oh": [
+        "o|h",
+        "əʊ|"
+    ],
+    "ok": [
+        "o|k",
+        "əʊ|keɪ"
+    ],
+    "one": [
+        "o|n|e",
+        "wɒ|n|"
+    ],
+    "or": [
+        "or",
+        "ɔː"
+    ],
+    "ought": [
+        "ough|t",
+        "ɔː|t"
+    ],
+    "our": [
+        "ou|r",
+        "aʊ|ə"
+    ],
+    "out": [
+        "ou|t",
+        "a‍ʊ|t"
+    ],
+    "oven": [
+        "o|v|e|n",
+        "ʌ|v|ə|n"
+    ],
+    "pacific": [
+        "p|a|c|i|f|i|c",
+        "p|ɐ|s|ɪ|f|ɪ|k"
+    ],
+    "pal": [
+        "p|a|l",
+        "p|æ|l"
+    ],
+    "paling": [
+        "p|a|l|i|ng",
+        "p|eɪ|l|ɪ|ŋ"
+    ],
+    "panel": [
+        "p|a|n|e|l",
+        "p|æ|n|ə|l"
+    ],
+    "people": [
+        "p|eo|p|le",
+        "p|iː|p|əl"
+    ],
+    "petal": [
+        "p|e|t|a|l",
+        "p|ɛ|t|ə|l"
+    ],
+    "phlegm": [
+        "ph|l|e|g|m",
+        "f|l|ɛ||m"
+    ],
+    "phlegmatic": [
+        "ph|l|e|g|m|a|t|i|c",
+        "f|l|ɛ|ɡ|m|æ|t|ɪ|k"
+    ],
+    "pint": [
+        "p|i|n|t",
+        "p|aɪ|n|t"
+    ],
+    "plague": [
+        "p|l|a|g|ue",
+        "p|l|eɪ|ɡ|"
+    ],
+    "plait": [
+        "p|l|ai|t",
+        "p|l|eɪ|t"
+    ],
+    "plaque": [
+        "p|l|a|qu|e",
+        "p|l|æ|k|"
+    ],
+    "plough": [
+        "p|l|ou|gh",
+        "p|l|aʊ|"
+    ],
+    "poem": [
+        "p|o|e|m",
+        "p|əʊ|ɪ|m"
+    ],
+    "police": [
+        "p|o|l|i|c|e",
+        "p|ə|l|iː|s|"
+    ],
+    "post": [
+        "p|o|s|t",
+        "p|əʊ|s|t"
+    ],
+    "prayer": [
+        "p|r|ayer",
+        "p|ɹ|eə"
+    ],
+    "precise": [
+        "p|r|e|c|i|se",
+        "p|ɹ|ɪ|s|aɪ|s"
+    ],
+    "preface": [
+        "p|r|e|f|a|c|e",
+        "p|ɹ|ɛ|f|ə|s|"
+    ],
+    "principle": [
+        "p|r|i|n|c|i|p|le",
+        "p|ɹ|ɪ|n|s|ɪ|p|əl"
+    ],
+    "privy": [
+        "p|r|i|v|y",
+        "p|ɹ|ɪ|v|i"
+    ],
+    "promise": [
+        "p|r|o|m|i|se",
+        "p|ɹ|ɒ|m|ɪ|s"
+    ],
+    "pronunciation": [
+        "p|r|o|n|u|n|c|i|a|tion",
+        "p|ɹ|ə|n|ʌ|n|s|ɪ|eɪ|ʃən"
+    ],
+    "psalm": [
+        "p|s|a|l|m",
+        "|s|ɑː||m"
+    ],
+    "psyche": [
+        "p|s|y|ch|e",
+        "|s|aɪ|k|iː"
+    ],
+    "query": [
+        "qu|er|y",
+        "kw|iəɹ|i"
+    ],
+    "rachel": [
+        "r|a|ch|e|l",
+        "ɹ|eɪ|tʃ|ə|l"
+    ],
+    "real": [
+        "r|ea|l",
+        "ɹ|iə|l"
+    ],
+    "receipt": [
+        "r|e|c|ei|pt",
+        "ɹ|ɪ|s|iː|t"
+    ],
+    "refer": [
+        "r|e|f|er",
+        "ɹ|ɪ|f|ɜː"
+    ],
+    "retain": [
+        "r|e|t|ai|n",
+        "ɹ|ɪ|t|eɪ|n"
+    ],
+    "reviles": [
+        "r|e|v|i|l|e|s",
+        "ɹ|ɪ|v|aɪ|l||z"
+    ],
+    "reward": [
+        "r|e|w|ar|d",
+        "ɹ|ɪ|w|ɔː|d"
+    ],
+    "rhyme": [
+        "rh|y|m|e",
+        "ɹ|aɪ|m|"
+    ],
+    "rhymes": [
+        "rh|y|m|e|s",
+        "ɹ|aɪ|m||z"
+    ],
+    "right": [
+        "r|igh|t",
+        "ɹ|a‍ɪ|t"
+    ],
+    "rival": [
+        "r|i|v|a|l",
+        "ɹ|aɪ|v|ə|l"
+    ],
+    "river": [
+        "r|i|v|er",
+        "ɹ|ɪ|v|ə"
+    ],
+    "roll": [
+        "r|o|ll",
+        "ɹ|əʊ|l"
+    ],
+    "roughen": [
+        "r|ough|e|n",
+        "ɹ|ʌf|ə|n"
+    ],
+    "rounded": [
+        "r|ou|n|d|e|d",
+        "ɹ|aʊ|n|d|ɪ|d"
+    ],
+    "s": [
+        "s",
+        "s"
+    ],
+    "sally": [
+        "s|a|ll|y",
+        "s|æ|l|i"
+    ],
+    "say": [
+        "s|ay",
+        "s|eɪ"
+    ],
+    "saying": [
+        "s|ay|i|ng",
+        "s|eɪ|ɪ|ŋ"
+    ],
+    "scene": [
+        "sc|e|n|e",
+        "s|iː|n|"
+    ],
+    "scenic": [
+        "sc|e|n|i|c",
+        "s|iː|n|ɪ|k"
+    ],
+    "scholar": [
+        "s|ch|o|l|a|r",
+        "s|k|ɒ|l|ɐ|"
+    ],
+    "science": [
+        "sc|i|e|n|c|e",
+        "s|aɪ|ə|n|s|"
+    ],
+    "scientific": [
+        "sc|i|e|n|t|i|f|i|c",
+        "s|aɪ|ə|n|t|ɪ|f|ɪ|k"
+    ],
+    "scour": [
+        "s|c|ou|r",
+        "s|k|aʊ|ə"
+    ],
+    "scourging": [
+        "s|c|our|g|i|ng",
+        "s|k|ə|dʒ|ɪ|ŋ"
+    ],
+    "script": [
+        "s|c|r|i|p|t",
+        "s|k|ɹ|ɪ|p|t"
+    ],
+    "sea": [
+        "s|ea",
+        "s|iː"
+    ],
+    "sedate": [
+        "s|e|d|a|t|e",
+        "s|ɪ|d|eɪ|t|"
+    ],
+    "seem": [
+        "s|ee|m",
+        "s|iː|m"
+    ],
+    "senate": [
+        "s|e|n|a|t|e",
+        "s|ɛ|n|ə|t|"
+    ],
+    "senator": [
+        "s|e|n|a|t|or",
+        "s|ɛ|n|ə|t|ɐ"
+    ],
+    "seven": [
+        "s|e|v|e|n",
+        "s|ɛ|v|ə|n"
+    ],
+    "shall": [
+        "sh|a|ll",
+        "ʃ|æ|l"
+    ],
+    "shoes": [
+        "sh|oe|s",
+        "ʃ|uː|z"
+    ],
+    "should": [
+        "sh|ou|l|d",
+        "ʃ|ʊ||d"
+    ],
+    "show": [
+        "sh|ow",
+        "ʃ|əʊ"
+    ],
+    "sieve": [
+        "s|ie|ve",
+        "s|ɪ|v"
+    ],
+    "similes": [
+        "s|i|m|i|l|e|s",
+        "s|ɪ|m|ɪ|l|ɪ|z"
+    ],
+    "singer": [
+        "s|i|ng|er",
+        "s|ɪ|ŋ|ə"
+    ],
+    "skein": [
+        "s|k|ei|n",
+        "s|k|eɪ|n"
+    ],
+    "so": [
+        "s|o",
+        "s|əʊ"
+    ],
+    "solace": [
+        "s|o|l|a|c|e",
+        "s|ɒ|l|ɪ|s|"
+    ],
+    "solar": [
+        "s|o|l|a|r",
+        "s|əʊ|l|ɐ|"
+    ],
+    "some": [
+        "s|o|m|e",
+        "s|ʌ|m|"
+    ],
+    "souls": [
+        "s|ou|l|s",
+        "s|əʊ|l|z"
+    ],
+    "sound": [
+        "s|ou|n|d",
+        "s|aʊ|n|d"
+    ],
+    "sounds": [
+        "s|ou|n|d|s",
+        "s|aʊ|n|d|z"
+    ],
+    "south": [
+        "s|ou|th",
+        "s|aʊ|θ"
+    ],
+    "southern": [
+        "s|ou|th|er|n",
+        "s|ʌ|ð|ə|n"
+    ],
+    "speak": [
+        "s|p|ea|k",
+        "s|p|iː|k"
+    ],
+    "spectator": [
+        "s|p|e|c|t|a|t|or",
+        "s|p|ɛ|k|t|eɪ|t|ɐ"
+    ],
+    "spikey": [
+        "s|p|i|k|ey",
+        "s|p|aɪ|k|i"
+    ],
+    "steak": [
+        "s|t|ea|k",
+        "s|t|eɪ|k"
+    ],
+    "stephen": [
+        "s|t|e|ph|e|n",
+        "s|t|iː|v|ə|n"
+    ],
+    "stones": [
+        "s|t|o|n|e|s",
+        "s|t|əʊ|n||z"
+    ],
+    "storm": [
+        "s|t|or|m",
+        "s|t|ɔː|m"
+    ],
+    "stout": [
+        "s|t|ou|t",
+        "s|t|aʊ|t"
+    ],
+    "stowed": [
+        "s|t|ow|ed",
+        "s|t|əʊ|d"
+    ],
+    "stranger": [
+        "s|t|r|a|n|g|er",
+        "s|t|ɹ|eɪ|n|dʒ|ɐ"
+    ],
+    "streak": [
+        "s|t|r|ea|k",
+        "s|t|ɹ|iː|k"
+    ],
+    "strewn": [
+        "s|t|r|ew|n",
+        "s|t|ɹ|uː|n"
+    ],
+    "study": [
+        "s|t|u|d|y",
+        "s|t|ʌ|d|i"
+    ],
+    "succour": [
+        "s|u|cc|our",
+        "s|ə|k|ɜː"
+    ],
+    "such": [
+        "s|u|ch",
+        "s|ʌ|tʃ"
+    ],
+    "surely": [
+        "su|r|e|l|y",
+        "ʃɔː|||l|i"
+    ],
+    "surprise": [
+        "s|u|r|p|r|i|s|e",
+        "s|ə||p|ɹ|aɪ|z|"
+    ],
+    "suzy": [
+        "s|u|z|y",
+        "s|uː|z|i"
+    ],
+    "sward": [
+        "s|w|ar|d",
+        "s|w|ɔː|d"
+    ],
+    "sword": [
+        "s|w|or|d",
+        "s||ɔː|d"
+    ],
+    "target": [
+        "t|ar|g|e|t",
+        "t|ɑː|ɡ|ɪ|t"
+    ],
+    "teach": [
+        "t|ea|ch",
+        "t|iː|tʃ"
+    ],
+    "tear [[in eye]]": [
+        "t|ear",
+        "t|iə"
+    ],
+    "tear [[rip]]": [
+        "t|ear",
+        "t|eə"
+    ],
+    "terpsichore": [
+        "t|er|p|s|i|ch|o|r|e",
+        "t|ɜː|p|s|ɪ|k|ɔː|ɹ|i"
+    ],
+    "the": [
+        "th|e",
+        "ð|ə"
+    ],
+    "then": [
+        "th|e|n",
+        "ð|ɛ|n"
+    ],
+    "think": [
+        "th|i|n|k",
+        "θ|ɪ|ŋ|k"
+    ],
+    "though": [
+        "th|ough",
+        "ð|əʊ"
+    ],
+    "through": [
+        "th|r|ou|gh",
+        "θ|ɹ|uː|"
+    ],
+    "to": [
+        "t|o",
+        "t|uː"
+    ],
+    "toe": [
+        "t|o|e",
+        "t|əʊ|"
+    ],
+    "tomb": [
+        "t|o|mb",
+        "t|uː|m"
+    ],
+    "topsails": [
+        "t|o|p|s|ai|l|s",
+        "t|ɒ|p|s|ə|l|z"
+    ],
+    "tour": [
+        "t|our",
+        "t|ɔː"
+    ],
+    "toward": [
+        "t|o|w|ar|d",
+        "t|ʊ|w|ɔː|d"
+    ],
+    "towed": [
+        "t|ow|ed",
+        "t|əʊ|d"
+    ],
+    "transom": [
+        "t|r|a|n|s|o|m",
+        "t|ɹ|æ|n|s|ə|m"
+    ],
+    "trickery": [
+        "t|r|i|ck|er|y",
+        "t|ɹ|ɪ|k|əɹ|i"
+    ],
+    "tunnel": [
+        "t|u|nn|e|l",
+        "t|ʌ|n|ə|l"
+    ],
+    "turk": [
+        "t|ur|k",
+        "t|ɜː|k"
+    ],
+    "turpentine": [
+        "t|ur|p|e|n|t|i|n|e",
+        "t|ɜː|p|ɪ|n|t|aɪ|n|"
+    ],
+    "typhoid": [
+        "t|y|ph|oi|d",
+        "t|aɪ|f|ɔɪ|d"
+    ],
+    "unstable": [
+        "u|n|s|t|a|b|le",
+        "ʌ|n|s|t|eɪ|b|əl"
+    ],
+    "up": [
+        "u|p",
+        "ʌ|p"
+    ],
+    "verdict": [
+        "v|er|d|i|c|t",
+        "v|ɜː|d|ɪ|k|t"
+    ],
+    "verging": [
+        "v|er|g|i|ng",
+        "v|ɜː|dʒ|ɪ|ŋ"
+    ],
+    "verse": [
+        "v|er|se",
+        "v|ɜː|s"
+    ],
+    "very": [
+        "v|e|r|y",
+        "v|ɛ|ɹ|i"
+    ],
+    "vicar": [
+        "v|i|c|a|r",
+        "v|ɪ|k|ɐ|"
+    ],
+    "victual": [
+        "v|i|c|t|ua|l",
+        "v|ɪ||t|ə|l"
+    ],
+    "viscount": [
+        "v|i|s|c|ou|n|t",
+        "v|aɪ||k|aʊ|n|t"
+    ],
+    "viscous": [
+        "v|i|s|c|ou|s",
+        "v|ɪ|s|k|ə|s"
+    ],
+    "vowed": [
+        "v|ow|ed",
+        "v|aʊ|d"
+    ],
+    "wait": [
+        "w|ai|t",
+        "w|eɪ|t"
+    ],
+    "wallet": [
+        "w|a|ll|e|t",
+        "w|ɒ|l|ɪ|t"
+    ],
+    "want": [
+        "w|a|n|t",
+        "w|ɒ|n|t"
+    ],
+    "war": [
+        "w|ar",
+        "w|ɔː"
+    ],
+    "wasp": [
+        "w|a|s|p",
+        "w|ɒ|s|p"
+    ],
+    "we": [
+        "w|e",
+        "w|iː"
+    ],
+    "wear": [
+        "w|ea|r",
+        "w|eə|ɹ"
+    ],
+    "when": [
+        "wh|e|n",
+        "w|ɛ|n"
+    ],
+    "whey": [
+        "wh|ey",
+        "w|eɪ"
+    ],
+    "which": [
+        "wh|i|ch",
+        "w|ɪ|tʃ"
+    ],
+    "will": [
+        "w|i|ll",
+        "w|ɪ|l"
+    ],
+    "wind [[breeze]]": [
+        "w|i|n|d",
+        "w|ɪ|n|d"
+    ],
+    "wise": [
+        "w|i|s|e",
+        "w|aɪ|z|"
+    ],
+    "with": [
+        "w|i|th",
+        "w|ɪ|ð"
+    ],
+    "wits": [
+        "w|i|t|s",
+        "w|ɪ|t|s"
+    ],
+    "wo": [
+        "w|o",
+        "w|əʊ"
+    ],
+    "wont": [
+        "w|o|n|t",
+        "w|əʊ|n|t"
+    ],
+    "word": [
+        "w|or|d",
+        "w|ɜː|d"
+    ],
+    "words": [
+        "w|or|d|s",
+        "w|ɜː|d|z"
+    ],
+    "work": [
+        "w|or|k",
+        "w|ɜː|k"
+    ],
+    "worm": [
+        "w|or|m",
+        "w|ɜː|m"
+    ],
+    "worse": [
+        "w|or|se",
+        "w|ɜː|s"
+    ],
+    "would": [
+        "w|ou|l|d",
+        "w|ʊ||d"
+    ],
+    "wounded": [
+        "w|ou|n|d|e|d",
+        "w|uː|n|d|ɪ|d"
+    ],
+    "writing": [
+        "wr|i|t|i|ng",
+        "ɹ|aɪ|t|ɪ|ŋ"
+    ],
+    "written": [
+        "wr|i|tt|e|n",
+        "ɹ|ɪ|t|ə|n"
+    ],
+    "ye": [
+        "y|e",
+        "j|iː"
+    ],
+    "yea": [
+        "y|ea",
+        "j|eɪ"
+    ],
+    "you": [
+        "y|ou",
+        "j|uː"
+    ],
+    "your": [
+        "y|our",
+        "j|ɔː"
+    ],
+    "youth": [
+        "y|ou|th",
+        "j|uː|θ"
+    ],
+    "zeal": [
+        "z|ea|l",
+        "z|iː|l"
+    ],
+    "zephyr": [
+        "z|e|ph|yr",
+        "z|ɛ|f|ɐ"
+    ],
+    "1": [
+        "o|n|e",
+        "wɒ|n|"
+    ],
+    "10": [
+        "t|e|n",
+        "t|ɛ|n"
+    ],
+    "11": [
+        "e|l|e|v|e|n",
+        "ɪ|l|ɛ|v|ə|n"
+    ],
+    "12": [
+        "t|w|e|l|ve",
+        "t|w|ɛ|l|v"
+    ],
+    "13": [
+        "th|ir|t|ee|n",
+        "θ|ɜː|t|iː|n"
+    ],
+    "14": [
+        "f|our|t|ee|n",
+        "f|ɔː|t|iː|n"
+    ],
+    "15": [
+        "f|i|f|t|ee|n",
+        "f|ɪ|f|t|iː|n"
+    ],
+    "16": [
+        "s|i|x|t|ee|n",
+        "s|ɪ|ks|t|iː|n"
+    ],
+    "17": [
+        "s|e|v|e|n|t|ee|n",
+        "s|ɛ|v|ə|n|t|iː|n"
+    ],
+    "18": [
+        "ei|gh|t|ee|n",
+        "eɪ||t|iː|n"
+    ],
+    "19": [
+        "n|i|n|e|t|ee|n",
+        "n|aɪ|n||t|iː|n"
+    ],
+    "1920": [
+        "n|i|n|e|t|ee|n| |t|w|e|n|t|y",
+        "n|aɪ|n||t|iː|n||t|w|ɛ|n|t|i"
+    ],
+    "2": [
+        "t|w|o",
+        "t||uː"
+    ],
+    "20": [
+        "t|w|e|n|t|y",
+        "t|w|ɛ|n|t|i"
+    ],
+    "21": [
+        "t|w|e|n|t|y|-|o|n|e",
+        "t|w|ɛ|n|t|i||wɒ|n|"
+    ],
+    "22": [
+        "t|w|e|n|t|y|-|t|w|o",
+        "t|w|ɛ|n|t|i||t||uː"
+    ],
+    "23": [
+        "t|w|e|n|t|y|-|th|r|ee",
+        "t|w|ɛ|n|t|i||θ|ɹ|iː"
+    ],
+    "24": [
+        "t|w|e|n|t|y|-|f|our",
+        "t|w|ɛ|n|t|i||f|ɔː"
+    ],
+    "25": [
+        "t|w|e|n|t|y|-|f|i|v|e",
+        "t|w|ɛ|n|t|i||f|a‍ɪ|v|"
+    ],
+    "26": [
+        "t|w|e|n|t|y|-|s|i|x",
+        "t|w|ɛ|n|t|i||s|ɪ|ks"
+    ],
+    "27": [
+        "t|w|e|n|t|y|-|s|e|v|e|n",
+        "t|w|ɛ|n|t|i||s|ɛ|v|ə|n"
+    ],
+    "3": [
+        "th|r|ee",
+        "θ|ɹ|iː"
+    ],
+    "325": [
+        "th|r|ee| |h|u|n|d|r|e|d| |a|n|d| |t|w|e|n|t|y|-|f|i|v|e",
+        "θ|ɹ|iː||h|ʌ|n|d|ɹ|ə|d||æ|n|d||t|w|ɛ|n|t|i||f|a‍ɪ|v|"
+    ],
+    "3251": [
+        "th|r|ee| |th|ou|s|a|n|d,| |t|w|o| |h|u|n|d|r|e|d| |a|n|d| |f|i|f|t|y|-|o|n|e",
+        "θ|ɹ|iː||θ|aʊ|s|ə|n|d||t||uː||h|ʌ|n|d|ɹ|ə|d||æ|n|d||f|ɪ|f|t|i||wɒ|n|"
+    ],
+    "326": [
+        "th|r|ee| |h|u|n|d|r|e|d| |a|n|d| |t|w|e|n|t|y|-|s|i|x",
+        "θ|ɹ|iː||h|ʌ|n|d|ɹ|ə|d||æ|n|d||t|w|ɛ|n|t|i||s|ɪ|ks"
+    ],
+    "327": [
+        "th|r|ee| |h|u|n|d|r|e|d| |a|n|d| |t|w|e|n|t|y|-|s|e|v|e|n",
+        "θ|ɹ|iː||h|ʌ|n|d|ɹ|ə|d||æ|n|d||t|w|ɛ|n|t|i||s|ɛ|v|ə|n"
+    ],
+    "328": [
+        "th|r|ee| |h|u|n|d|r|e|d| |a|n|d| |t|w|e|n|t|y|-|ei|gh|t",
+        "θ|ɹ|iː||h|ʌ|n|d|ɹ|ə|d||æ|n|d||t|w|ɛ|n|t|i||eɪ||t"
+    ],
+    "329": [
+        "th|r|ee| |h|u|n|d|r|e|d| |a|n|d| |t|w|e|n|t|y|-|n|i|n|e",
+        "θ|ɹ|iː||h|ʌ|n|d|ɹ|ə|d||æ|n|d||t|w|ɛ|n|t|i||n|aɪ|n|"
+    ],
+    "330": [
+        "th|r|ee| |h|u|n|d|r|e|d| |a|n|d| |th|ir|t|y",
+        "θ|ɹ|iː||h|ʌ|n|d|ɹ|ə|d||æ|n|d||θ|ɜː|t|i"
+    ],
+    "4": [
+        "f|our",
+        "f|ɔː"
+    ],
+    "5": [
+        "f|i|v|e",
+        "f|a‍ɪ|v|"
+    ],
+    "6": [
+        "s|i|x",
+        "s|ɪ|ks"
+    ],
+    "7": [
+        "s|e|v|e|n",
+        "s|ɛ|v|ə|n"
+    ],
+    "8": [
+        "ei|gh|t",
+        "eɪ||t"
+    ],
+    "9": [
+        "n|i|n|e",
+        "n|aɪ|n|"
+    ],
+    "able": [
+        "a|b|le",
+        "eɪ|b|əl"
+    ],
+    "absolute": [
+        "a|b|s|o|l|u|t|e",
+        "æ|b|s|ə|l|uː|t|"
+    ],
+    "absolutely": [
+        "a|b|s|o|l|u|t|e|l|y",
+        "æ|b|s|ə|l|uː|t||l|i"
+    ],
+    "absorbed": [
+        "a|b|s|or|b|ed",
+        "ɐ|b|s|ɔː|b|d"
+    ],
+    "add": [
+        "a|dd",
+        "æ|d"
+    ],
+    "added": [
+        "a|dd|e|d",
+        "æ|d|ɪ|d"
+    ],
+    "adequate": [
+        "a|d|e|qu|a|t|e",
+        "æ|d|ɪ|kw|ə|t|"
+    ],
+    "admiration": [
+        "a|d|m|i|r|a|tion",
+        "æ|d|m|ə|ɹ|eɪ|ʃən"
+    ],
+    "admire": [
+        "a|d|m|i|r|e",
+        "ɐ|d|m|aɪ||ə"
+    ],
+    "admirer": [
+        "a|d|m|i|r|er|",
+        "ɐ|d|m|aɪ||əɹ|ɐ"
+    ],
+    "admit": [
+        "a|d|m|i|t",
+        "ɐ|d|m|ɪ|t"
+    ],
+    "adventures": [
+        "a|d|v|e|n|tu|r|e|s",
+        "ɐ|d|v|ɛ|n|tʃ||ə|z"
+    ],
+    "advise": [
+        "a|d|v|i|s|e",
+        "ɐ|d|v|aɪ|z|"
+    ],
+    "advised": [
+        "a|d|v|i|s|ed",
+        "ɐ|d|v|aɪ|z|d"
+    ],
+    "afraid": [
+        "a|f|r|ai|d",
+        "ɐ|f|ɹ|eɪ|d"
+    ],
+    "africa": [
+        "a|f|r|i|c|a",
+        "ɐ|f|ɹ|ɪ|k|ɐ"
+    ],
+    "after": [
+        "a|f|t|er",
+        "ɑː|f|t|ɐ"
+    ],
+    "afterwards": [
+        "a|f|t|er|w|ar|d|s",
+        "ɑː|f|t|ə|w|ə|d|z"
+    ],
+    "again": [
+        "a|g|ai|n",
+        "ɐ|ɡ|ɛ|n"
+    ],
+    "against": [
+        "a|g|ai|n|s|t",
+        "ɐ|ɡ|ɛ|n|s|t"
+    ],
+    "ago": [
+        "a|g|o",
+        "ɐ|ɡ|əʊ"
+    ],
+    "agree": [
+        "a|g|r|ee",
+        "ɐ|ɡ|ɹ|iː"
+    ],
+    "agreed": [
+        "a|g|r|ee|d",
+        "ɐ|ɡ|ɹ|iː|d"
+    ],
+    "agreements": [
+        "a|g|r|ee|m|e|n|t|s",
+        "ɐ|ɡ|ɹ|iː|m|ə|n|t|s"
+    ],
+    "ah": [
+        "a|h",
+        "ɑː|"
+    ],
+    "ahead": [
+        "a|h|ea|d",
+        "ɐ|h|ɛ|d"
+    ],
+    "air": [
+        "air",
+        "eə"
+    ],
+    "airplane": [
+        "air|p|l|a|n|e",
+        "eə|p|l|eɪ|n|"
+    ],
+    "almanac": [
+        "a|l|m|a|n|a|c",
+        "ɒ|l|m|ɐ|n|æ|k"
+    ],
+    "almost": [
+        "a|l|m|o|s|t",
+        "ɔː|l|m|əʊ|s|t"
+    ],
+    "alone": [
+        "a|l|o|n|e",
+        "ɐ|l|əʊ|n|"
+    ],
+    "along": [
+        "a|l|o|ng",
+        "ɐ|l|ɒ|ŋ"
+    ],
+    "already": [
+        "a|l|r|ea|d|y",
+        "ɔː|l|ɹ|ɛ|d|i"
+    ],
+    "also": [
+        "a|l|s|o",
+        "ɒ|l|s|əʊ"
+    ],
+    "although": [
+        "a|l|th|ough",
+        "ɒ|l|ð|əʊ"
+    ],
+    "altogether": [
+        "a|l|t|o|g|e|th|er",
+        "ɔː|l|t|ə|ɡ|ɛ|ð|ɐ"
+    ],
+    "always": [
+        "a|l|w|ay|s",
+        "ɔː|l|w|eɪ|z"
+    ],
+    "am": [
+        "a|m",
+        "ɐ|m"
+    ],
+    "amazed": [
+        "a|m|a|z|ed",
+        "ɐ|m|eɪ|z|d"
+    ],
+    "amazement": [
+        "a|m|a|z|e|m|e|n|t",
+        "ɐ|m|eɪ|z||m|ə|n|t"
+    ],
+    "ambassador": [
+        "a|m|b|a|ss|a|d|or",
+        "ɐ|m|b|æ|s|ə|d|ɐ"
+    ],
+    "america": [
+        "a|m|e|r|i|c|a",
+        "ɐ|m|ɛ|ɹ|ɪ|k|ɐ"
+    ],
+    "animal": [
+        "a|n|i|m|a|l",
+        "æ|n|ɪ|m|ə|l"
+    ],
+    "animals": [
+        "a|n|i|m|a|l|s",
+        "æ|n|ɪ|m|ə|l|z"
+    ],
+    "ankle": [
+        "a|n|k|le",
+        "æ|ŋ|k|əl"
+    ],
+    "annoyed": [
+        "a|nn|oy|ed",
+        "ɐ|n|ɔɪ|d"
+    ],
+    "annoying": [
+        "a|nn|oy|i|ng",
+        "ɐ|n|ɔɪ|ɪ|ŋ"
+    ],
+    "answer": [
+        "a|n|s|w|er",
+        "ɑː|n|s||ɐ"
+    ],
+    "answered": [
+        "a|n|s|w|er|ed",
+        "ɑː|n|s||ə|d"
+    ],
+    "answers": [
+        "a|n|s|w|er|s",
+        "ɑː|n|s||ə|z"
+    ],
+    "antoine": [
+        "a|n|t|oi|n|e",
+        "ɐ|n|t|wæ|n|"
+    ],
+    "any": [
+        "a|n|y",
+        "ɛ|n|i"
+    ],
+    "anymore": [
+        "a|n|y|m|ore",
+        "ɛ|n|ɪ|m|ɔː"
+    ],
+    "anyone": [
+        "a|n|y|o|n|e",
+        "ɛ|n|ɪ|wɒ|n|"
+    ],
+    "anything": [
+        "a|n|y|th|i|ng",
+        "ɛ|n|ɪ|θ|ɪ|ŋ"
+    ],
+    "anyway": [
+        "a|n|y|w|ay",
+        "ɛ|n|ɪ|w|eɪ"
+    ],
+    "anywhere": [
+        "a|n|y|wh|ere",
+        "ɛ|n|ɪ|w|eə"
+    ],
+    "apart": [
+        "a|p|ar|t",
+        "ɐ|p|ɑː|t"
+    ],
+    "apparition": [
+        "a|pp|a|r|i|tion",
+        "æ|p|ə|ɹ|ɪ|ʃən"
+    ],
+    "appeared": [
+        "a|pp|ear|ed",
+        "ɐ|p|iə|d"
+    ],
+    "appears": [
+        "a|pp|ear|s",
+        "ɐ|p|iə|z"
+    ],
+    "apple": [
+        "a|pp|le",
+        "æ|p|əl"
+    ],
+    "appreciate": [
+        "a|pp|r|e|c|i|a|t|e",
+        "ɐ|p|ɹ|iː|ʃ|ɪ|eɪ|t|"
+    ],
+    "approaching": [
+        "a|pp|r|oa|ch|i|ng",
+        "ɐ|p|ɹ|əʊ|tʃ|ɪ|ŋ"
+    ],
+    "arms": [
+        "ar|m|s",
+        "ɑː|m|z"
+    ],
+    "army": [
+        "ar|m|y",
+        "ɑː|m|i"
+    ],
+    "arrive": [
+        "a|rr|i|ve",
+        "ɐ|ɹ|aɪ|v"
+    ],
+    "arrived": [
+        "a|rr|i|v|ed",
+        "ɐ|ɹ|aɪ|v|d"
+    ],
+    "ashamed": [
+        "a|sh|a|m|ed",
+        "ɐ|ʃ|eɪ|m|d"
+    ],
+    "aside": [
+        "a|s|i|d|e",
+        "ɐ|s|aɪ|d|"
+    ],
+    "asking": [
+        "a|s|k|i|ng",
+        "ɑː|s|k|ɪ|ŋ"
+    ],
+    "asks": [
+        "a|s|k|s",
+        "ɑː|s|k|s"
+    ],
+    "asleep": [
+        "a|s|l|ee|p",
+        "ɐ|s|l|iː|p"
+    ],
+    "asteroids": [
+        "a|s|t|er|oi|d|s",
+        "ɑː|s|t|əɹ|ɔɪ|d|z"
+    ],
+    "astonished": [
+        "a|s|t|o|n|i|sh|ed",
+        "ɐ|s|t|ɒ|n|ɪ|ʃ|t"
+    ],
+    "astronomy": [
+        "a|s|t|r|o|n|o|m|y",
+        "ɐ|s|t|ɹ|ɒ|n|ə|m|i"
+    ],
+    "attack": [
+        "a|tt|a|ck",
+        "ɐ|t|æ|k"
+    ],
+    "attempt": [
+        "a|tt|e|m|p|t",
+        "ɐ|t|ɛ|m|p|t"
+    ],
+    "attention": [
+        "a|tt|e|n|tion",
+        "ɐ|t|ɛ|n|ʃən"
+    ],
+    "authority": [
+        "au|th|o|r|i|t|y",
+        "ɐ|θ|ɒ|ɹ|ɪ|t|i"
+    ],
+    "average": [
+        "a|ve|r|a|g|e",
+        "æ|v|ɹ|ɪ|dʒ|"
+    ],
+    "awake": [
+        "a|w|a|k|e",
+        "ɐ|w|eɪ|k|"
+    ],
+    "awakening": [
+        "a|w|a|k|e|n|i|ng",
+        "ɐ|w|eɪ|k||n|ɪ|ŋ"
+    ],
+    "back": [
+        "b|a|ck",
+        "b|æ|k"
+    ],
+    "bad": [
+        "b|a|d",
+        "b|æ|d"
+    ],
+    "ball": [
+        "b|a|ll",
+        "b|ɔː|l"
+    ],
+    "bank": [
+        "b|a|n|k",
+        "b|æ|ŋ|k"
+    ],
+    "based": [
+        "b|a|s|ed",
+        "b|eɪ|s|t"
+    ],
+    "beating": [
+        "b|ea|t|i|ng",
+        "b|iː|t|ɪ|ŋ"
+    ],
+    "beautiful": [
+        "b|eau|t|i|f|u|l",
+        "b|juː|t|ɪ|f|ə|l"
+    ],
+    "beauty": [
+        "b|eau|t|y",
+        "b|juː|t|i"
+    ],
+    "became": [
+        "b|e|c|a|m|e",
+        "b|ɪ|k|eɪ|m|"
+    ],
+    "become": [
+        "b|e|c|o|m|e",
+        "b|ɪ|k|ʌ|m|"
+    ],
+    "bed": [
+        "b|e|d",
+        "b|ɛ|d"
+    ],
+    "bedroom": [
+        "b|e|d|r|oo|m",
+        "b|ɛ|d|ɹ|uː|m"
+    ],
+    "bees": [
+        "b|ee|s",
+        "b|iː|z"
+    ],
+    "before": [
+        "b|e|f|ore",
+        "b|ɪ|f|ɔː"
+    ],
+    "beg": [
+        "b|e|g",
+        "b|ɛ|ɡ"
+    ],
+    "began": [
+        "b|e|g|a|n",
+        "b|ɪ|ɡ|æ|n"
+    ],
+    "beginning": [
+        "b|e|g|i|nn|i|ng",
+        "b|ɪ|ɡ|ɪ|n|ɪ|ŋ"
+    ],
+    "behave": [
+        "b|e|h|a|ve",
+        "b|ɪ|h|eɪ|v"
+    ],
+    "behind": [
+        "b|e|h|i|n|d",
+        "b|ɪ|h|aɪ|n|d"
+    ],
+    "being": [
+        "b|e|i|ng",
+        "b|iː|ɪ|ŋ"
+    ],
+    "believe": [
+        "b|e|l|ie|ve",
+        "b|ɪ|l|iː|v"
+    ],
+    "believed": [
+        "b|e|l|ie|v|ed",
+        "b|ɪ|l|iː|v|d"
+    ],
+    "bells": [
+        "b|e|ll|s",
+        "b|ɛ|l|z"
+    ],
+    "belong": [
+        "b|e|l|o|ng",
+        "b|ɪ|l|ɒ|ŋ"
+    ],
+    "belonged": [
+        "b|e|l|o|ng|ed",
+        "b|ɪ|l|ɒ|ŋ|d"
+    ],
+    "bent": [
+        "b|e|n|t",
+        "b|ɛ|n|t"
+    ],
+    "besides": [
+        "b|e|s|i|d|e|s",
+        "b|ɪ|s|aɪ|d||z"
+    ],
+    "best": [
+        "b|e|s|t",
+        "b|ɛ|s|t"
+    ],
+    "better": [
+        "b|e|tt|er",
+        "b|ɛ|t|ɐ"
+    ],
+    "big": [
+        "b|i|g",
+        "b|ɪ|ɡ"
+    ],
+    "billion": [
+        "b|i|ll|i|o|n",
+        "b|ɪ|l|i|ə|n"
+    ],
+    "bird": [
+        "b|ir|d",
+        "b|ɜː|d"
+    ],
+    "birds": [
+        "b|ir|d|s",
+        "b|ɜː|d|z"
+    ],
+    "bit": [
+        "b|i|t",
+        "b|ɪ|t"
+    ],
+    "bite": [
+        "b|i|t|e",
+        "b|aɪ|t|"
+    ],
+    "black": [
+        "b|l|a|ck",
+        "b|l|æ|k"
+    ],
+    "blind": [
+        "b|l|i|n|d",
+        "b|l|aɪ|n|d"
+    ],
+    "blow": [
+        "b|l|ow",
+        "b|l|əʊ"
+    ],
+    "blows": [
+        "b|l|ow|s",
+        "b|l|əʊ|z"
+    ],
+    "blue": [
+        "b|l|u|e",
+        "b|l|uː|"
+    ],
+    "blush": [
+        "b|l|u|sh",
+        "b|l|ʌ|ʃ"
+    ],
+    "blushed": [
+        "b|l|u|sh|ed",
+        "b|l|ʌ|ʃ|t"
+    ],
+    "boa": [
+        "b|o|a",
+        "b|əʊ|ɐ"
+    ],
+    "board": [
+        "b|o|ar|d",
+        "b||ɔː|d"
+    ],
+    "boasting": [
+        "b|oa|s|t|i|ng",
+        "b|əʊ|s|t|ɪ|ŋ"
+    ],
+    "body": [
+        "b|o|d|y",
+        "b|ɒ|d|i"
+    ],
+    "bolt": [
+        "b|o|l|t",
+        "b|əʊ|l|t"
+    ],
+    "books": [
+        "b|oo|k|s",
+        "b|ʊ|k|s"
+    ],
+    "bore": [
+        "b|ore",
+        "b|ɔː"
+    ],
+    "bored": [
+        "b|or|ed",
+        "b|ɔː|d"
+    ],
+    "boring": [
+        "b|o|r|i|ng",
+        "b|ɔː|ɹ|ɪ|ŋ"
+    ],
+    "born": [
+        "b|or|n",
+        "b|ɔː|n"
+    ],
+    "bothered": [
+        "b|o|th|er|ed",
+        "b|ɒ|ð|ə|d"
+    ],
+    "bottles": [
+        "b|o|tt|le|s",
+        "b|ɒ|t|əl|z"
+    ],
+    "bottom": [
+        "b|o|tt|o|m",
+        "b|ɒ|t|ə|m"
+    ],
+    "bought": [
+        "b|ough|t",
+        "b|ɔː|t"
+    ],
+    "box": [
+        "b|o|x",
+        "b|ɒ|ks"
+    ],
+    "boys": [
+        "b|oy|s",
+        "b|ɔɪ|z"
+    ],
+    "bracelet": [
+        "b|r|a|c|e|l|e|t",
+        "b|ɹ|eɪ|s||l|ə|t"
+    ],
+    "bread": [
+        "b|r|ea|d",
+        "b|ɹ|ɛ|d"
+    ],
+    "breath": [
+        "b|r|ea|th",
+        "b|ɹ|ɛ|θ"
+    ],
+    "breathed": [
+        "b|r|ea|th|ed",
+        "b|ɹ|iː|ð|d"
+    ],
+    "bricks": [
+        "b|r|i|ck|s",
+        "b|ɹ|ɪ|k|s"
+    ],
+    "bridge": [
+        "b|r|i|dg|e",
+        "b|ɹ|ɪ|dʒ|"
+    ],
+    "brilliant": [
+        "b|r|i|ll|i|a|n|t",
+        "b|ɹ|ɪ|l|ɪ|ə|n|t"
+    ],
+    "bring": [
+        "b|r|i|ng",
+        "b|ɹ|ɪ|ŋ"
+    ],
+    "broken": [
+        "b|r|o|k|e|n",
+        "b|ɹ|əʊ|k|ə|n"
+    ],
+    "brothers": [
+        "b|r|o|th|er|s",
+        "b|ɹ|ʌ|ð|ə|z"
+    ],
+    "brought": [
+        "b|r|ough|t",
+        "b|ɹ|ɔː|t"
+    ],
+    "bucket": [
+        "b|u|ck|e|t",
+        "b|ʌ|k|ɪ|t"
+    ],
+    "bud": [
+        "b|u|d",
+        "b|ʌ|d"
+    ],
+    "bunch": [
+        "b|u|n|ch",
+        "b|ʌ|n|tʃ"
+    ],
+    "buried": [
+        "b|u|r|i|ed",
+        "b|ɛ|ɹ|ɪ|d"
+    ],
+    "burn": [
+        "b|ur|n",
+        "b|ɜː|n"
+    ],
+    "burns": [
+        "b|ur|n|s",
+        "b|ɜː|n|z"
+    ],
+    "bushes": [
+        "b|u|sh|e|s",
+        "b|ʊ|ʃ|ɪ|z"
+    ],
+    "businessman": [
+        "b|u|s|i|n|e|ss|m|a|n",
+        "b|ɪ|z||n|ə|s|m|ə|n"
+    ],
+    "businessmen": [
+        "b|u|s|i|n|e|ss|m|e|n",
+        "b|ɪ|z||n|ə|s|m|ɛ|n"
+    ],
+    "butterflies": [
+        "b|u|tt|er|f|l|ie|s",
+        "b|ʌ|t|ə|f|l|aɪ|z"
+    ],
+    "butterfly": [
+        "b|u|tt|er|f|l|y",
+        "b|ʌ|t|ə|f|l|aɪ"
+    ],
+    "buy": [
+        "b|uy",
+        "b|aɪ"
+    ],
+    "ca": [
+        "c|a",
+        "k|æ"
+    ],
+    "cabbages": [
+        "c|a|bb|a|g|e|s",
+        "k|æ|b|ɪ|dʒ|ɪ|z"
+    ],
+    "cabin": [
+        "c|a|b|i|n",
+        "k|æ|b|ɪ|n"
+    ],
+    "cage": [
+        "c|a|g|e",
+        "k|eɪ|dʒ|"
+    ],
+    "call": [
+        "c|a|ll",
+        "k|ɔː|l"
+    ],
+    "calmer": [
+        "c|a|l|m|er",
+        "k|ɑː||m|ɐ"
+    ],
+    "calmly": [
+        "c|a|l|m|l|y",
+        "k|ɑː||m|l|i"
+    ],
+    "caravan": [
+        "c|a|r|a|v|a|n",
+        "k|æ|ɹ|ɐ|v|æ|n"
+    ],
+    "care": [
+        "c|are",
+        "k|eə"
+    ],
+    "cared": [
+        "c|ar|ed",
+        "k|eə|d"
+    ],
+    "career": [
+        "c|a|r|e|er",
+        "k|ə|ɹ|i|ə"
+    ],
+    "carefully": [
+        "c|are|f|u|ll|y",
+        "k|eə|f|ə|l|i"
+    ],
+    "careless": [
+        "c|are|l|e|ss",
+        "k|eə|l|ə|s"
+    ],
+    "cares": [
+        "c|are|s",
+        "k|eə|z"
+    ],
+    "carried": [
+        "c|a|rr|i|ed",
+        "k|æ|ɹ|ɪ|d"
+    ],
+    "carries": [
+        "c|a|rr|ie|s",
+        "k|æ|ɹ|ɪ|z"
+    ],
+    "carry": [
+        "c|a|rr|y",
+        "k|æ|ɹ|i"
+    ],
+    "carrying": [
+        "c|a|rr|y|i|ng",
+        "k|æ|ɹ|ɪ|ɪ|ŋ"
+    ],
+    "case": [
+        "c|a|se",
+        "k|eɪ|s"
+    ],
+    "cast": [
+        "c|a|s|t",
+        "k|ɑː|s|t"
+    ],
+    "catch": [
+        "c|a|tch",
+        "k|æ|tʃ"
+    ],
+    "caterpillars": [
+        "c|a|t|er|p|i|ll|ar|s",
+        "k|æ|t|ə|p|ɪ|l|ə|z"
+    ],
+    "caught": [
+        "c|au|gh|t",
+        "k|ɔː||t"
+    ],
+    "cause": [
+        "c|au|s|e",
+        "k|ɔː|z|"
+    ],
+    "celebration": [
+        "c|e|l|e|b|r|a|tion",
+        "s|ɛ|l|ə|b|ɹ|eɪ|ʃən"
+    ],
+    "certainly": [
+        "c|er|t|ai|n|l|y",
+        "s|ɜː|t|ə|n|l|i"
+    ],
+    "chance": [
+        "ch|a|n|c|e",
+        "tʃ|ɑː|n|s|"
+    ],
+    "chances": [
+        "ch|a|n|c|e|s",
+        "tʃ|ɑː|n|s|ɪ|z"
+    ],
+    "change": [
+        "ch|a|n|g|e",
+        "tʃ|eɪ|n|dʒ|"
+    ],
+    "changed": [
+        "ch|a|n|g|ed",
+        "tʃ|eɪ|n|dʒ|d"
+    ],
+    "changes": [
+        "ch|a|n|g|e|s",
+        "tʃ|eɪ|n|dʒ|ɪ|z"
+    ],
+    "chapter": [
+        "ch|a|p|t|er",
+        "tʃ|æ|p|t|ɐ"
+    ],
+    "character": [
+        "ch|a|r|a|c|t|er",
+        "k|æ|ɹ|ɪ|k|t|ɐ"
+    ],
+    "charming": [
+        "ch|ar|m|i|ng",
+        "tʃ|ɑː|m|ɪ|ŋ"
+    ],
+    "chasing": [
+        "ch|a|s|i|ng",
+        "tʃ|eɪ|s|ɪ|ŋ"
+    ],
+    "check": [
+        "ch|e|ck",
+        "tʃ|ɛ|k"
+    ],
+    "checked": [
+        "ch|e|ck|ed",
+        "tʃ|ɛ|k|t"
+    ],
+    "checking": [
+        "ch|e|ck|i|ng",
+        "tʃ|ɛ|k|ɪ|ŋ"
+    ],
+    "checks": [
+        "ch|e|ck|s",
+        "tʃ|ɛ|k|s"
+    ],
+    "chewing": [
+        "ch|ew|i|ng",
+        "tʃ|juː|ɪ|ŋ"
+    ],
+    "chickens": [
+        "ch|i|ck|e|n|s",
+        "tʃ|ɪ|k|ɪ|n|z"
+    ],
+    "child": [
+        "ch|i|l|d",
+        "tʃ|aɪ|l|d"
+    ],
+    "children": [
+        "ch|i|l|d|r|e|n",
+        "tʃ|ɪ|l|d|ɹ|ə|n"
+    ],
+    "chimney": [
+        "ch|i|m|n|ey",
+        "tʃ|ɪ|m|n|i"
+    ],
+    "choir": [
+        "ch|oi|r",
+        "k|waɪ|ə"
+    ],
+    "chores": [
+        "ch|ore|s",
+        "tʃ|ɔː|z"
+    ],
+    "christmas": [
+        "ch|r|i|s|t|m|a|s",
+        "k|ɹ|ɪ|s||m|ə|s"
+    ],
+    "churches": [
+        "ch|ur|ch|e|s",
+        "tʃ|ɜː|tʃ|ɪ|z"
+    ],
+    "cigarette": [
+        "c|i|g|a|r|e|tt|e",
+        "s|ɪ|ɡ|ə|ɹ|ɛ|t|"
+    ],
+    "cities": [
+        "c|i|t|ie|s",
+        "s|ɪ|t|i|z"
+    ],
+    "clap": [
+        "c|l|a|p",
+        "k|l|æ|p"
+    ],
+    "clapped": [
+        "c|l|a|pp|ed",
+        "k|l|æ|p|t"
+    ],
+    "cleaned": [
+        "c|l|ea|n|ed",
+        "k|l|iː|n|d"
+    ],
+    "clever": [
+        "c|l|e|v|er",
+        "k|l|ɛ|v|ɐ"
+    ],
+    "close [[near]]": [
+        "c|l|o|s|e",
+        "k|l|əʊ|s|"
+    ],
+    "close [[shut]]": [
+        "c|l|o|s|e",
+        "k|l|əʊ|z|"
+    ],
+    "closed": [
+        "c|l|o|s|ed",
+        "k|l|əʊ|z|d"
+    ],
+    "closer": [
+        "c|l|o|s|er",
+        "k|l|əʊ|s|ɐ"
+    ],
+    "clothes": [
+        "c|l|o|th|e|s",
+        "k|l|əʊ|ð||z"
+    ],
+    "coach": [
+        "c|oa|ch",
+        "k|əʊ|tʃ"
+    ],
+    "cold": [
+        "c|o|l|d",
+        "k|əʊ|l|d"
+    ],
+    "colleague": [
+        "c|o|ll|ea|g|ue",
+        "k|ɒ|l|iː|ɡ|"
+    ],
+    "collect": [
+        "c|o|ll|e|c|t",
+        "k|ɒ|l|ɛ|k|t"
+    ],
+    "collection": [
+        "c|o|ll|e|c|tion",
+        "k|ə|l|ɛ|k|ʃən"
+    ],
+    "coloured": [
+        "c|o|l|our|ed",
+        "k|ʌ|l|ə|d"
+    ],
+    "colours": [
+        "c|o|l|our|s",
+        "k|ʌ|l|ə|z"
+    ],
+    "comes": [
+        "c|o|m|e|s",
+        "k|ʌ|m||z"
+    ],
+    "coming": [
+        "c|o|m|i|ng",
+        "k|ʌ|m|ɪ|ŋ"
+    ],
+    "company": [
+        "c|o|m|p|a|n|y",
+        "k|ʌ|m|p|ə|n|i"
+    ],
+    "complaining": [
+        "c|o|m|p|l|ai|n|i|ng",
+        "k|ə|m|p|l|eɪ|n|ɪ|ŋ"
+    ],
+    "completely": [
+        "c|o|m|p|l|e|t|e|l|y",
+        "k|ə|m|p|l|iː|t||l|i"
+    ],
+    "complicated": [
+        "c|o|m|p|l|i|c|a|t|e|d",
+        "k|ɒ|m|p|l|ɪ|k|eɪ|t|ɪ|d"
+    ],
+    "concentrate": [
+        "c|o|n|c|e|n|t|r|a|t|e",
+        "k|ɒ|n|s|ə|n|t|ɹ|eɪ|t|"
+    ],
+    "concern": [
+        "c|o|n|c|er|n",
+        "k|ə|n|s|ɜː|n"
+    ],
+    "concluded": [
+        "c|o|n|c|l|u|d|e|d",
+        "k|ə|n|k|l|uː|d|ɪ|d"
+    ],
+    "condemn": [
+        "c|o|n|d|e|m|n",
+        "k|ə|n|d|ɛ|m|"
+    ],
+    "conditions": [
+        "c|o|n|d|i|tion|s",
+        "k|ə|n|d|ɪ|ʃən|z"
+    ],
+    "conference": [
+        "c|o|n|f|e|r|e|n|c|e",
+        "k|ɒ|n|f||ɹ|ə|n|s|"
+    ],
+    "confessed": [
+        "c|o|n|f|e|ss|ed",
+        "k|ə|n|f|ɛ|s|t"
+    ],
+    "confused": [
+        "c|o|n|f|u|s|ed",
+        "k|ə|n|f|juː|z|d"
+    ],
+    "confuses": [
+        "c|o|n|f|u|s|e|s",
+        "k|ə|n|f|juː|z|ɪ|z"
+    ],
+    "considerable": [
+        "c|o|n|s|i|d|er|a|b|le",
+        "k|ə|n|s|ɪ|d|əɹ|ə|b|əl"
+    ],
+    "console": [
+        "c|o|n|s|o|l|e",
+        "k|ə|n|s|əʊ|l|"
+    ],
+    "constrictor": [
+        "c|o|n|s|t|r|i|c|t|or",
+        "k|ə|n|s|t|ɹ|ɪ|k|t|ɐ"
+    ],
+    "constrictors": [
+        "c|o|n|s|t|r|i|c|t|or|s",
+        "k|ə|n|s|t|ɹ|ɪ|k|t|ə|z"
+    ],
+    "consulted": [
+        "c|o|n|s|u|l|t|e|d",
+        "k|ə|n|s|ʌ|l|t|ɪ|d"
+    ],
+    "contact": [
+        "c|o|n|t|a|c|t",
+        "k|ə|n|t|æ|k|t"
+    ],
+    "contain": [
+        "c|o|n|t|ai|n",
+        "k|ə|n|t|eɪ|n"
+    ],
+    "continents": [
+        "c|o|n|t|i|n|e|n|t|s",
+        "k|ɒ|n|t|ɪ|n|ə|n|t|s"
+    ],
+    "continued": [
+        "c|o|n|t|i|n|u|ed",
+        "k|ə|n|t|ɪ|n|juː|d"
+    ],
+    "continuing": [
+        "c|o|n|t|i|n|u|i|ng",
+        "k|ə|n|t|ɪ|n|juː|ɪ|ŋ"
+    ],
+    "contrary [[opposite]]": [
+        "c|o|n|t|r|a|r|y",
+        "k|ə|n|t|ɹ|ə|ɹ|i"
+    ],
+    "contrary [[willful]]": [
+        "c|o|n|t|r|a|r|y",
+        "k|ə|n|t|ɹ|eə|ɹ|i"
+    ],
+    "convinced": [
+        "c|o|n|v|i|n|c|ed",
+        "k|ə|n|v|ɪ|n|s|t"
+    ],
+    "convincing": [
+        "c|o|n|v|i|n|c|i|ng",
+        "k|ə|n|v|ɪ|n|s|ɪ|ŋ"
+    ],
+    "coordinated": [
+        "c|o|or|d|i|n|a|t|e|d",
+        "k|əʊ|ɔː|d|ɪ|n|eɪ|t|ɪ|d"
+    ],
+    "copy": [
+        "c|o|p|y",
+        "k|ɒ|p|i"
+    ],
+    "corner": [
+        "c|or|n|er",
+        "k|ɔː|n|ɐ"
+    ],
+    "corrected": [
+        "c|o|rr|e|c|t|e|d",
+        "k|ə|ɹ|ɛ|k|t|ɪ|d"
+    ],
+    "cost": [
+        "c|o|s|t",
+        "k|ɒ|s|t"
+    ],
+    "coughed": [
+        "c|ough|ed",
+        "k|ɒf|d"
+    ],
+    "coughing": [
+        "c|ough|i|ng",
+        "k|ɒf|ɪ|ŋ"
+    ],
+    "could": [
+        "c|ou|l|d",
+        "k|ʊ||d"
+    ],
+    "count": [
+        "c|ou|n|t",
+        "k|aʊ|n|t"
+    ],
+    "counts": [
+        "c|ou|n|t|s",
+        "k|aʊ|n|t|s"
+    ],
+    "course": [
+        "c|our|se",
+        "k|ɔː|s"
+    ],
+    "crazy": [
+        "c|r|a|z|y",
+        "k|ɹ|eɪ|z|i"
+    ],
+    "created": [
+        "c|r|e|a|t|e|d",
+        "k|ɹ|iː|eɪ|t|ɪ|d"
+    ],
+    "cried": [
+        "c|r|i|ed",
+        "k|ɹ|aɪ|d"
+    ],
+    "cross": [
+        "c|r|o|ss",
+        "k|ɹ|ɒ|s"
+    ],
+    "crossed": [
+        "c|r|o|ss|ed",
+        "k|ɹ|ɒ|s|t"
+    ],
+    "cry": [
+        "c|r|y",
+        "k|ɹ|aɪ"
+    ],
+    "crying": [
+        "c|r|y|i|ng",
+        "k|ɹ|aɪ|ɪ|ŋ"
+    ],
+    "curiosity": [
+        "c|u|r|i|o|s|i|t|y",
+        "k|jʊ|ɹ|ɪ|ɒ|s|ɪ|t|i"
+    ],
+    "curious": [
+        "c|u|r|i|ou|s",
+        "k|jʊ|ɹ|ɪ|ə|s"
+    ],
+    "curled": [
+        "c|ur|l|ed",
+        "k|ɜː|l|d"
+    ],
+    "custom": [
+        "c|u|s|t|o|m",
+        "k|ʌ|s|t|ə|m"
+    ],
+    "customs": [
+        "c|u|s|t|o|m|s",
+        "k|ʌ|s|t|ə|m|z"
+    ],
+    "d": [
+        "d",
+        "d"
+    ],
+    "damn": [
+        "d|a|m|n",
+        "d|æ|m|"
+    ],
+    "dance": [
+        "d|a|n|c|e",
+        "d|ɑː|n|s|"
+    ],
+    "danced": [
+        "d|a|n|c|ed",
+        "d|ɑː|n|s|t"
+    ],
+    "dancing": [
+        "d|a|n|c|i|ng",
+        "d|ɑː|n|s|ɪ|ŋ"
+    ],
+    "danger": [
+        "d|a|n|g|er",
+        "d|eɪ|n|dʒ|ɐ"
+    ],
+    "dangerous": [
+        "d|a|n|g|er|ou|s",
+        "d|eɪ|n|dʒ|əɹ|ə|s"
+    ],
+    "dangling": [
+        "d|a|ng|l|i|ng",
+        "d|æ|ŋɡ|əl|ɪ|ŋ"
+    ],
+    "dare": [
+        "d|are",
+        "d|eə"
+    ],
+    "date": [
+        "d|a|t|e",
+        "d|eɪ|t|"
+    ],
+    "daybreak": [
+        "d|ay|b|r|ea|k",
+        "d|eɪ|b|ɹ|eɪ|k"
+    ],
+    "days": [
+        "d|ay|s",
+        "d|eɪ|z"
+    ],
+    "de": [
+        "d|e",
+        "d|ɐ"
+    ],
+    "dead": [
+        "d|ea|d",
+        "d|ɛ|d"
+    ],
+    "deal": [
+        "d|ea|l",
+        "d|iː|l"
+    ],
+    "dear": [
+        "d|ear",
+        "d|iə"
+    ],
+    "death": [
+        "d|ea|th",
+        "d|ɛ|θ"
+    ],
+    "decided": [
+        "d|e|c|i|d|e|d",
+        "d|ɪ|s|aɪ|d|ɪ|d"
+    ],
+    "decision": [
+        "d|e|c|i|s|io|n",
+        "d|ɪ|s|ɪ|ʒ|ə|n"
+    ],
+    "dedicate": [
+        "d|e|d|i|c|a|t|e",
+        "d|ɛ|d|ɪ|k|eɪ|t|"
+    ],
+    "dedicated": [
+        "d|e|d|i|c|a|t|e|d",
+        "d|ɛ|d|ɪ|k|eɪ|t|ɪ|d"
+    ],
+    "dedication": [
+        "d|e|d|i|c|a|tion",
+        "d|ɛ|d|ɪ|k|eɪ|ʃən"
+    ],
+    "defend": [
+        "d|e|f|e|n|d",
+        "d|ɪ|f|ɛ|n|d"
+    ],
+    "demand": [
+        "d|e|m|a|n|d",
+        "d|ɪ|m|ɑː|n|d"
+    ],
+    "depart": [
+        "d|e|p|ar|t",
+        "d|ɪ|p|ɑː|t"
+    ],
+    "departure": [
+        "d|e|p|ar|tu|re",
+        "d|ɪ|p|ɑː|tʃ|ɐ"
+    ],
+    "depend": [
+        "d|e|p|e|n|d",
+        "d|ɪ|p|ɛ|n|d"
+    ],
+    "depending": [
+        "d|e|p|e|n|d|i|ng",
+        "d|ɪ|p|ɛ|n|d|ɪ|ŋ"
+    ],
+    "depressed": [
+        "d|e|p|r|e|ss|ed",
+        "d|ɪ|p|ɹ|ɛ|s|t"
+    ],
+    "depths": [
+        "d|e|p|th|s",
+        "d|ɛ|p|θ|s"
+    ],
+    "describe": [
+        "d|e|s|c|r|i|b|e",
+        "d|ɪ|s|k|ɹ|aɪ|b|"
+    ],
+    "description": [
+        "d|e|s|c|r|i|p|tion",
+        "d|ɪ|s|k|ɹ|ɪ|p|ʃən"
+    ],
+    "desert": [
+        "d|e|s|er|t",
+        "d|ɪ|z|ɜː|t"
+    ],
+    "deserts": [
+        "d|e|s|er|t|s",
+        "d|ɪ|z|ɜː|t|s"
+    ],
+    "desires": [
+        "d|e|s|i|r|e|s",
+        "d|ɪ|z|aɪ||ə|z"
+    ],
+    "diamond": [
+        "d|i|a|m|o|n|d",
+        "d|aɪ|ə|m|ə|n|d"
+    ],
+    "dictator": [
+        "d|i|c|t|a|t|or",
+        "d|ɪ|k|t|eɪ|t|ɐ"
+    ],
+    "did": [
+        "d|i|d",
+        "d|ɪ|d"
+    ],
+    "die": [
+        "d|ie",
+        "d|aɪ"
+    ],
+    "difference": [
+        "d|i|ff|e|r|e|n|c|e",
+        "d|ɪ|f||ɹ|ə|n|s|"
+    ],
+    "different": [
+        "d|i|ff|e|r|e|n|t",
+        "d|ɪ|f||ɹ|ə|n|t"
+    ],
+    "difficult": [
+        "d|i|ff|i|c|u|l|t",
+        "d|ɪ|f|ɪ|k|ə|l|t"
+    ],
+    "digest": [
+        "d|i|g|e|s|t",
+        "d|a‍ɪ|d‍ʒ|ɛ|s|t"
+    ],
+    "direction": [
+        "d|i|r|e|c|tion",
+        "d|aɪ|ɹ|ɛ|k|ʃən"
+    ],
+    "directly": [
+        "d|i|r|e|c|t|l|y",
+        "d|aɪ|ɹ|ɛ|k|t|l|i"
+    ],
+    "disappearance": [
+        "d|i|s|a|pp|ea|r|a|n|c|e",
+        "d|ɪ|s|ɐ|p|iə|ɹ|ə|n|s|"
+    ],
+    "disappeared": [
+        "d|i|s|a|pp|ear|ed",
+        "d|ɪ|s|ɐ|p|iə|d"
+    ],
+    "disappointed": [
+        "d|i|s|a|pp|oi|n|t|e|d",
+        "d|ɪ|s|ɐ|p|ɔɪ|n|t|ɪ|d"
+    ],
+    "discipline": [
+        "d|i|sc|i|p|l|i|n|e",
+        "d|ɪ|s|ɪ|p|l|ɪ|n|"
+    ],
+    "discouraged": [
+        "d|i|s|c|ou|r|a|g|ed",
+        "d|ɪ|s|k|ʌ|ɹ|ɪ|dʒ|d"
+    ],
+    "discover": [
+        "d|i|s|c|o|v|er",
+        "d|ɪ|s|k|ʌ|v|ɐ"
+    ],
+    "discovered": [
+        "d|i|s|c|o|v|er|ed",
+        "d|ɪ|s|k|ʌ|v|ə|d"
+    ],
+    "discovery": [
+        "d|i|s|c|o|v|er|y",
+        "d|ɪ|s|k|ʌ|v|əɹ|i"
+    ],
+    "discreet": [
+        "d|i|s|c|r|ee|t",
+        "d|ɪ|s|k|ɹ|iː|t"
+    ],
+    "disobedience": [
+        "d|i|s|o|b|e|d|i|e|n|c|e",
+        "d|ɪ|s|əʊ|b|iː|d|i|ə|n|s|"
+    ],
+    "disobey": [
+        "d|i|s|o|b|ey",
+        "d|ɪ|s|əʊ|b|eɪ"
+    ],
+    "distance": [
+        "d|i|s|t|a|n|c|e",
+        "d|ɪ|s|t|ə|n|s|"
+    ],
+    "distraction": [
+        "d|i|s|t|r|a|c|tion",
+        "d|ɪ|s|t|ɹ|æ|k|ʃən"
+    ],
+    "done": [
+        "d|o|n|e",
+        "d|ʌ|n|"
+    ],
+    "doubt": [
+        "d|ou|b|t",
+        "d|aʊ||t"
+    ],
+    "doves": [
+        "d|o|ve|s",
+        "d|ʌ|v|z"
+    ],
+    "down": [
+        "d|ow|n",
+        "d|aʊ|n"
+    ],
+    "drafts": [
+        "d|r|a|f|t|s",
+        "d|ɹ|ɑː|f|t|s"
+    ],
+    "drank": [
+        "d|r|a|n|k",
+        "d|ɹ|æ|ŋ|k"
+    ],
+    "draw": [
+        "d|r|aw",
+        "d|ɹ|ɔː"
+    ],
+    "drawer": [
+        "d|r|aw|er",
+        "d|ɹ|ɔː|ɐ"
+    ],
+    "drawing": [
+        "d|r|aw|i|ng",
+        "d|ɹ|ɔːɹ|ɪ|ŋ"
+    ],
+    "drawings": [
+        "d|r|aw|i|ng|s",
+        "d|ɹ|ɔːɹ|ɪ|ŋ|z"
+    ],
+    "drawn": [
+        "d|r|aw|n",
+        "d|ɹ|ɔː|n"
+    ],
+    "dream": [
+        "d|r|ea|m",
+        "d|ɹ|iː|m"
+    ],
+    "dreaming": [
+        "d|r|ea|m|i|ng",
+        "d|ɹ|iː|m|ɪ|ŋ"
+    ],
+    "dressed": [
+        "d|r|e|ss|ed",
+        "d|ɹ|ɛ|s|t"
+    ],
+    "drew": [
+        "d|r|ew",
+        "d|ɹ|uː"
+    ],
+    "drink": [
+        "d|r|i|n|k",
+        "d|ɹ|ɪ|ŋ|k"
+    ],
+    "drinking": [
+        "d|r|i|n|k|i|ng",
+        "d|ɹ|ɪ|ŋ|k|ɪ|ŋ"
+    ],
+    "driving": [
+        "d|r|i|v|i|ng",
+        "d|ɹ|aɪ|v|ɪ|ŋ"
+    ],
+    "dropped": [
+        "d|r|o|pp|ed",
+        "d|ɹ|ɒ|p|t"
+    ],
+    "drunks": [
+        "d|r|u|n|k|s",
+        "d|ɹ|ʌ|ŋ|k|s"
+    ],
+    "dry": [
+        "d|r|y",
+        "d|ɹ|aɪ"
+    ],
+    "duck": [
+        "d|u|ck",
+        "d|ʌ|k"
+    ],
+    "dug": [
+        "d|u|g",
+        "d|ʌ|ɡ"
+    ],
+    "dumb": [
+        "d|u|mb",
+        "d|ʌ|m"
+    ],
+    "dune": [
+        "d|u|n|e",
+        "d|juː|n|"
+    ],
+    "dying": [
+        "d|y|i|ng",
+        "d|aɪ|ɪ|ŋ"
+    ],
+    "each": [
+        "ea|ch",
+        "iː|tʃ"
+    ],
+    "ears": [
+        "ear|s",
+        "iə|z"
+    ],
+    "earth": [
+        "ear|th",
+        "ɜː|θ"
+    ],
+    "easily": [
+        "ea|s|i|l|y",
+        "iː|z|ɪ|l|i"
+    ],
+    "easy": [
+        "ea|s|y",
+        "iː|z|i"
+    ],
+    "eat": [
+        "ea|t",
+        "iː|t"
+    ],
+    "eaten": [
+        "ea|t|e|n",
+        "iː|t|ə|n"
+    ],
+    "eating": [
+        "ea|t|i|ng",
+        "iː|t|ɪ|ŋ"
+    ],
+    "eats": [
+        "ea|t|s",
+        "iː|t|s"
+    ],
+    "echo": [
+        "e|ch|o",
+        "ɛ|k|əʊ"
+    ],
+    "effort": [
+        "e|ff|or|t",
+        "ɛ|f|ə|t"
+    ],
+    "eight": [
+        "ei|gh|t",
+        "eɪ||t"
+    ],
+    "eighth": [
+        "ei|gh|th",
+        "eɪ||tθ"
+    ],
+    "either": [
+        "ei|th|er",
+        "aɪ|ð|ɐ"
+    ],
+    "elaborate [[complicated]]": [
+        "e|l|a|b|o|r|a|t|e",
+        "ɪ|l|æ|b|ə|ɹ|ə|t|"
+    ],
+    "elaborate [[explain]]": [
+        "e|l|a|b|o|r|a|t|e",
+        "ɪ|l|æ|b|ə|ɹ|eɪ|t|"
+    ],
+    "electricity": [
+        "e|l|e|c|t|r|i|c|i|t|y",
+        "ɪ|l|ɛ|k|t|ɹ|ɪ|s|ɪ|t|i"
+    ],
+    "elephant": [
+        "e|l|e|ph|a|n|t",
+        "ɛ|l|ɪ|f|ə|n|t"
+    ],
+    "else": [
+        "e|l|se",
+        "ɛ|l|s"
+    ],
+    "embarrassed": [
+        "e|m|b|a|rr|a|ss|ed",
+        "ɛ|m|b|æ|ɹ|ə|s|t"
+    ],
+    "emerge": [
+        "e|m|er|g|e",
+        "ɪ|m|ɜː|dʒ|"
+    ],
+    "empty": [
+        "e|m|p|t|y",
+        "ɛ|m|p|t|i"
+    ],
+    "end": [
+        "e|n|d",
+        "ɛ|n|d"
+    ],
+    "engine-driver": [
+        "e|n|g|i|n|e|-|d|r|i|v|er",
+        "ɛ|n|dʒ|ɪ|n|||d|ɹ|aɪ|v|ɐ"
+    ],
+    "entirely": [
+        "e|n|t|i|r|e|l|y",
+        "ɛ|n|t|aɪ||ə|l|i"
+    ],
+    "entry": [
+        "e|n|t|r|y",
+        "ɛ|n|t|ɹ|i"
+    ],
+    "ephemeral": [
+        "e|ph|e|m|er|a|l",
+        "ɪ|f|ɛ|m|əɹ|ə|l"
+    ],
+    "eruptions": [
+        "e|r|u|p|tion|s",
+        "ɪ|ɹ|ʌ|p|ʃən|z"
+    ],
+    "escape": [
+        "e|s|c|a|p|e",
+        "ɛ|s|k|eɪ|p|"
+    ],
+    "escaped": [
+        "e|s|c|a|p|ed",
+        "ɛ|s|k|eɪ|p|t"
+    ],
+    "eternal": [
+        "e|t|er|n|a|l",
+        "ɪ|t|ɜː|n|ə|l"
+    ],
+    "etiquette": [
+        "e|t|i|qu|e|tt|e",
+        "ɛ|t|ɪ|k|ɛ|t|"
+    ],
+    "europe": [
+        "eu|r|o|p|e",
+        "juː|ɹ|ʌ|p|"
+    ],
+    "european": [
+        "eu|r|o|p|e|a|n",
+        "juː|ɹ|ʌ|p|i|ə|n"
+    ],
+    "euros": [
+        "e|u|r|o|s",
+        "|jɔː|ɹ|əʊ|z"
+    ],
+    "evening": [
+        "e|ve|n|i|ng",
+        "iː|v|n|ɪ|ŋ"
+    ],
+    "evening [[making smooth]]": [
+        "e|v|e|n|i|ng",
+        "iː|v|ə|n|ɪ|ŋ"
+    ],
+    "everybody": [
+        "e|ve|r|y|b|o|d|y",
+        "ɛ|v|ɹ|ɪ|b|ɒ|d|i"
+    ],
+    "everyone": [
+        "e|ve|r|y|o|n|e",
+        "ɛ|v|ɹ|ɪ|wɒ|n|"
+    ],
+    "everything": [
+        "e|ve|r|y|th|i|ng",
+        "ɛ|v|ɹ|ɪ|θ|ɪ|ŋ"
+    ],
+    "evidence": [
+        "e|v|i|d|e|n|c|e",
+        "ɛ|v|ɪ|d|ə|n|s|"
+    ],
+    "example": [
+        "e|x|a|m|p|le",
+        "ɛ|ɡz|ɑː|m|p|əl"
+    ],
+    "except": [
+        "e|x|c|e|p|t",
+        "ɛ|ks||ɛ|p|t"
+    ],
+    "exchange": [
+        "e|x|ch|a|n|g|e",
+        "ɛ|ks|tʃ|eɪ|n|dʒ|"
+    ],
+    "excited": [
+        "e|xc|i|t|e|d",
+        "ɛ|ks|aɪ|t|ɪ|d"
+    ],
+    "exclaimed": [
+        "e|x|c|l|ai|m|ed",
+        "ɛ|ks|k|l|eɪ|m|d"
+    ],
+    "excuse [[noun]]": [
+        "e|x|c|u|s|e",
+        "ɛ|ks|k|juː|s|"
+    ],
+    "excuse [[verb]]": [
+        "e|x|c|u|s|e",
+        "ɛ|ks|k|juː|z|"
+    ],
+    "excuses [[noun]]": [
+        "e|x|c|u|s|e|s",
+        "ɛ|ks|k|juː|s|ɪ|z"
+    ],
+    "excuses [[verb]]": [
+        "e|x|c|u|s|e|s",
+        "ɛ|ks|k|juː|z|ɪ|z"
+    ],
+    "exercise": [
+        "e|x|er|c|i|s|e",
+        "ɛ|ks|ə|s|aɪ|z|"
+    ],
+    "existed": [
+        "e|x|i|s|t|e|d",
+        "ɛ|ɡz|ɪ|s|t|ɪ|d"
+    ],
+    "exists": [
+        "e|x|i|s|t|s",
+        "ɛ|ɡz|ɪ|s|t|s"
+    ],
+    "expectation": [
+        "e|x|p|e|c|t|a|tion",
+        "ɛ|ks|p|ɪ|k|t|eɪ|ʃən"
+    ],
+    "experiment": [
+        "e|x|p|e|r|i|m|e|n|t",
+        "ɛ|ks|p|ɛ|ɹ|ɪ|m|ə|n|t"
+    ],
+    "expert": [
+        "e|x|p|er|t",
+        "ɛ|ks|p|ɜː|t"
+    ],
+    "experts": [
+        "e|x|p|er|t|s",
+        "ɛ|ks|p|ɜː|t|s"
+    ],
+    "explain": [
+        "e|x|p|l|ai|n",
+        "ɛ|ks|p|l|eɪ|n"
+    ],
+    "explained": [
+        "e|x|p|l|ai|n|ed",
+        "ɛ|ks|p|l|eɪ|n|d"
+    ],
+    "explaining": [
+        "e|x|p|l|ai|n|i|ng",
+        "ɛ|ks|p|l|eɪ|n|ɪ|ŋ"
+    ],
+    "explanation": [
+        "e|x|p|l|a|n|a|tion",
+        "ɛ|ks|p|l|ɐ|n|eɪ|ʃən"
+    ],
+    "explorer": [
+        "e|x|p|l|o|r|er",
+        "ɛ|ks|p|l|ɔː|ɹ|ɐ"
+    ],
+    "explorers": [
+        "e|x|p|l|o|r|er|s",
+        "ɛ|ks|p|l|ɔː|ɹ|ə|z"
+    ],
+    "express": [
+        "e|x|p|r|e|ss",
+        "ɛ|ks|p|ɹ|ɛ|s"
+    ],
+    "extinct": [
+        "e|x|t|i|n|c|t",
+        "ɛ|ks|t|ɪ|ŋ|k|t"
+    ],
+    "extraordinary": [
+        "e|x|t|r|a|or|d|i|n|a|r|y",
+        "ɛ|ks|t|ɹ||ɔː|d|ɪ|n|ə|ɹ|i"
+    ],
+    "extremely": [
+        "e|x|t|r|e|m|e|l|y",
+        "ɛ|ks|t|ɹ|iː|m||l|i"
+    ],
+    "eyelids": [
+        "eye|l|i|d|s",
+        "aɪ|l|ɪ|d|z"
+    ],
+    "faced": [
+        "f|a|c|ed",
+        "f|eɪ|s|d"
+    ],
+    "fact": [
+        "f|a|c|t",
+        "f|æ|k|t"
+    ],
+    "fair": [
+        "f|air",
+        "f|eə"
+    ],
+    "fairly": [
+        "f|air|l|y",
+        "f|eə|l|i"
+    ],
+    "fairy": [
+        "f|air|y",
+        "f|eəɹ|i"
+    ],
+    "faithfully": [
+        "f|ai|th|f|u|ll|y",
+        "f|eɪ|θ|f|ə|l|i"
+    ],
+    "faithfulness": [
+        "f|ai|th|f|u|l|n|e|ss",
+        "f|eɪ|θ|f|ə|l|n|ə|s"
+    ],
+    "fall": [
+        "f|a|ll",
+        "f|ɔː|l"
+    ],
+    "fallen": [
+        "f|a|ll|e|n",
+        "f|ɔː|l|ə|n"
+    ],
+    "falling": [
+        "f|a|ll|i|ng",
+        "f|ɔː|l|ɪ|ŋ"
+    ],
+    "falls": [
+        "f|a|ll|s",
+        "f|ɔː|l|z"
+    ],
+    "false": [
+        "f|a|l|se",
+        "f|ɒ|l|s"
+    ],
+    "familiar": [
+        "f|a|m|i|l|i|ar",
+        "f|ə|m|ɪ|l|i|ə"
+    ],
+    "faster": [
+        "f|a|s|t|er",
+        "f|ɑː|s|t|ɐ"
+    ],
+    "father": [
+        "f|a|th|er",
+        "f|ɑː|ð|ɐ"
+    ],
+    "fault": [
+        "f|au|l|t",
+        "f|ɒ|l|t"
+    ],
+    "favour": [
+        "f|a|v|our",
+        "f|eɪ|v|ɐ"
+    ],
+    "favourable": [
+        "f|a|v|ou|r|a|b|le",
+        "f|eɪ|v|ə|ɹ|ə|b|əl"
+    ],
+    "favourite": [
+        "f|a|v|o|u|r|i|t|e",
+        "f|eɪ|v|||ɹ|ɪ|t|"
+    ],
+    "feared": [
+        "f|ear|ed",
+        "f|iə|d"
+    ],
+    "feel": [
+        "f|ee|l",
+        "f|iː|l"
+    ],
+    "feeling": [
+        "f|ee|l|i|ng",
+        "f|iː|l|ɪ|ŋ"
+    ],
+    "feelings": [
+        "f|ee|l|i|ng|s",
+        "f|iː|l|ɪ|ŋ|z"
+    ],
+    "feels": [
+        "f|ee|l|s",
+        "f|iː|l|z"
+    ],
+    "feet": [
+        "f|ee|t",
+        "f|iː|t"
+    ],
+    "fell": [
+        "f|e|ll",
+        "f|ɛ|l"
+    ],
+    "felt": [
+        "f|e|l|t",
+        "f|ɛ|l|t"
+    ],
+    "feverish": [
+        "f|e|v|er|i|sh",
+        "f|iː|v|əɹ|ɪ|ʃ"
+    ],
+    "field": [
+        "f|ie|l|d",
+        "f|iː|l|d"
+    ],
+    "fields": [
+        "f|ie|l|d|s",
+        "f|iː|l|d|z"
+    ],
+    "fifteen": [
+        "f|i|f|t|ee|n",
+        "f|ɪ|f|t|iː|n"
+    ],
+    "fifth": [
+        "f|i|f|th",
+        "f|ɪ|f|θ"
+    ],
+    "fifty-four": [
+        "f|i|f|t|y|-|f|our",
+        "f|ɪ|f|t|i||f|ɔː"
+    ],
+    "fifty-three": [
+        "f|i|f|t|y|-|th|r|ee",
+        "f|ɪ|f|t|i||θ|ɹ|iː"
+    ],
+    "figure": [
+        "f|i|g|ure",
+        "f|ɪ|ɡ|ɐ"
+    ],
+    "figures": [
+        "f|i|g|u|r|e|s",
+        "f|ɪ|ɡ|ə|||z"
+    ],
+    "fill": [
+        "f|i|ll",
+        "f|ɪ|l"
+    ],
+    "filled": [
+        "f|i|ll|ed",
+        "f|ɪ|l|d"
+    ],
+    "fills": [
+        "f|i|ll|s",
+        "f|ɪ|l|z"
+    ],
+    "find": [
+        "f|i|n|d",
+        "f|aɪ|n|d"
+    ],
+    "finds": [
+        "f|i|n|d|s",
+        "f|aɪ|n|d|z"
+    ],
+    "fine": [
+        "f|i|n|e",
+        "f|a‍ɪ|n|"
+    ],
+    "fingers": [
+        "f|i|ng|er|s",
+        "f|ɪ|ŋɡ|ə|z"
+    ],
+    "finished": [
+        "f|i|n|i|sh|ed",
+        "f|ɪ|n|ɪ|ʃ|t"
+    ],
+    "fires": [
+        "f|i|r|e|s",
+        "f|aɪ||ə|z"
+    ],
+    "firmly": [
+        "f|ir|m|l|y",
+        "f|ɜː|m|l|i"
+    ],
+    "fit": [
+        "f|i|t",
+        "f|ɪ|t"
+    ],
+    "fixed": [
+        "f|i|x|ed",
+        "f|ɪ|ks|t"
+    ],
+    "flame": [
+        "f|l|a|m|e",
+        "f|l|eɪ|m|"
+    ],
+    "flash": [
+        "f|l|a|sh",
+        "f|l|æ|ʃ"
+    ],
+    "flies": [
+        "f|l|ie|s",
+        "f|l|aɪ|z"
+    ],
+    "flit": [
+        "f|l|i|t",
+        "f|l|ɪ|t"
+    ],
+    "flock": [
+        "f|l|o|ck",
+        "f|l|ɒ|k"
+    ],
+    "flowers": [
+        "f|l|ow|er|s",
+        "f|l|a‍ʊ|ə|z"
+    ],
+    "flown": [
+        "f|l|ow|n",
+        "f|l|əʊ|n"
+    ],
+    "fluttering": [
+        "f|l|u|tt|er|i|ng",
+        "f|l|ʌ|t|əɹ|ɪ|ŋ"
+    ],
+    "fly": [
+        "f|l|y",
+        "f|l|aɪ"
+    ],
+    "fold": [
+        "f|o|l|d",
+        "f|əʊ|l|d"
+    ],
+    "folds": [
+        "f|o|l|d|s",
+        "f|əʊ|l|d|z"
+    ],
+    "followed": [
+        "f|o|ll|ow|ed",
+        "f|ɒ|l|əʊ|d"
+    ],
+    "following": [
+        "f|o|ll|ow|i|ng",
+        "f|ɒ|l|əʊ|ɪ|ŋ"
+    ],
+    "footsteps": [
+        "f|oo|t|s|t|e|p|s",
+        "f|ʊ|t|s|t|ɛ|p|s"
+    ],
+    "forbid": [
+        "f|or|b|i|d",
+        "f|ə|b|ɪ|d"
+    ],
+    "forced": [
+        "f|or|c|ed",
+        "f|ɔː|s|t"
+    ],
+    "forehead": [
+        "f|ore|h|ea|d",
+        "f|ɔː|h|ɛ|d"
+    ],
+    "forever": [
+        "f|o|r|e|v|er",
+        "f|ə|ɹ|ɛ|v|ɐ"
+    ],
+    "forget": [
+        "f|or|g|e|t",
+        "f|ə|ɡ|ɛ|t"
+    ],
+    "forgetting": [
+        "f|or|g|e|tt|i|ng",
+        "f|ə|ɡ|ɛ|t|ɪ|ŋ"
+    ],
+    "forgive": [
+        "f|or|g|i|ve",
+        "f|ə|ɡ|ɪ|v"
+    ],
+    "forgot": [
+        "f|or|g|o|t",
+        "f|ə|ɡ|ɒ|t"
+    ],
+    "forgotten": [
+        "f|or|g|o|tt|e|n",
+        "f|ə|ɡ|ɒ|t|ə|n"
+    ],
+    "forty": [
+        "f|or|t|y",
+        "f|ɔː|t|i"
+    ],
+    "forty-four": [
+        "f|or|t|y|-|f|our",
+        "f|ɔː|t|i||f|ɔː"
+    ],
+    "forty-three": [
+        "f|or|t|y|-|th|r|ee",
+        "f|ɔː|t|i||θ|ɹ|iː"
+    ],
+    "found": [
+        "f|ou|n|d",
+        "f|aʊ|n|d"
+    ],
+    "fountain": [
+        "f|ou|n|t|ai|n",
+        "f|aʊ|n|t|ɪ|n"
+    ],
+    "fountains": [
+        "f|ou|n|t|ai|n|s",
+        "f|aʊ|n|t|ɪ|n|z"
+    ],
+    "fourth": [
+        "f|our|th",
+        "f|ɔː|θ"
+    ],
+    "foxes": [
+        "f|o|x|e|s",
+        "f|ɒ|ks|ɪ|z"
+    ],
+    "fragile": [
+        "f|r|a|g|i|l|e",
+        "f|ɹ|æ|dʒ|aɪ|l|"
+    ],
+    "france": [
+        "f|r|a|n|c|e",
+        "f|ɹ|ɑː|n|s|"
+    ],
+    "friends": [
+        "f|r|ie|n|d|s",
+        "f|ɹ|ɛ|n|d|z"
+    ],
+    "frightened": [
+        "f|r|igh|t|e|n|ed",
+        "f|ɹ|aɪ|t|ə|n|d"
+    ],
+    "frozen": [
+        "f|r|o|z|e|n",
+        "f|ɹ|əʊ|z|ə|n"
+    ],
+    "full": [
+        "f|u|ll",
+        "f|ʊ|l"
+    ],
+    "fun": [
+        "f|u|n",
+        "f|ʌ|n"
+    ],
+    "funny": [
+        "f|u|nn|y",
+        "f|ʌ|n|i"
+    ],
+    "furious": [
+        "f|u|r|i|ou|s",
+        "f|jɔː|ɹ|ɪ|ə|s"
+    ],
+    "further": [
+        "f|ur|th|er",
+        "f|ɜː|ð|ɐ"
+    ],
+    "gain": [
+        "g|ai|n",
+        "ɡ|eɪ|n"
+    ],
+    "game": [
+        "g|a|m|e",
+        "ɡ|eɪ|m|"
+    ],
+    "games": [
+        "g|a|m|e|s",
+        "ɡ|eɪ|m||z"
+    ],
+    "gave": [
+        "g|a|ve",
+        "ɡ|eɪ|v"
+    ],
+    "gaze": [
+        "g|a|z|e",
+        "ɡ|eɪ|z|"
+    ],
+    "general": [
+        "g|e|n|er|a|l",
+        "dʒ|ɛ|n|əɹ|ə|l"
+    ],
+    "gentle": [
+        "g|e|n|t|le",
+        "dʒ|ɛ|n|t|əl"
+    ],
+    "gentleman": [
+        "g|e|n|t|le|m|a|n",
+        "dʒ|ɛ|n|t|əl|m|ə|n"
+    ],
+    "gently": [
+        "g|e|n|t|l|y",
+        "dʒ|ɛ|n|t|l|i"
+    ],
+    "geographers": [
+        "g|e|o|g|r|a|ph|er|s",
+        "dʒ|ɪ|ɒ|ɡ|ɹ|ə|f|ə|z"
+    ],
+    "geraniums": [
+        "g|er|a|n|i|u|m|s",
+        "dʒ|əɹ|eɪ|n|i|ə|m|z"
+    ],
+    "gesture": [
+        "g|e|s|tu|re",
+        "dʒ|ɛ|s|tʃ|ɐ"
+    ],
+    "gets": [
+        "g|e|t|s",
+        "ɡ|ɛ|t|s"
+    ],
+    "getting": [
+        "g|e|tt|i|ng",
+        "ɡ|ɛ|t|ɪ|ŋ"
+    ],
+    "girls": [
+        "g|ir|l|s",
+        "ɡ|ɜː|l|z"
+    ],
+    "gives": [
+        "g|i|ve|s",
+        "ɡ|ɪ|v|z"
+    ],
+    "giving": [
+        "g|i|v|i|ng",
+        "ɡ|ɪ|v|ɪ|ŋ"
+    ],
+    "glow": [
+        "g|l|ow",
+        "ɡ|l|əʊ"
+    ],
+    "go": [
+        "g|o",
+        "ɡ|əʊ"
+    ],
+    "god": [
+        "g|o|d",
+        "ɡ|ɒ|d"
+    ],
+    "gold": [
+        "g|o|l|d",
+        "ɡ|əʊ|l|d"
+    ],
+    "golden": [
+        "g|o|l|d|e|n",
+        "ɡ|əʊ|l|d|ə|n"
+    ],
+    "golf": [
+        "g|o|l|f",
+        "ɡ|ɒ|l|f"
+    ],
+    "gone": [
+        "g|o|n|e",
+        "ɡ|ɒ|n|"
+    ],
+    "good": [
+        "g|oo|d",
+        "ɡ|ʊ|d"
+    ],
+    "goodbye": [
+        "g|oo|d|b|y|e",
+        "ɡ|ʊ|d|b|aɪ|"
+    ],
+    "government": [
+        "g|o|v|er|n|m|e|n|t",
+        "ɡ|ʌ|v|ə|n|m|ə|n|t"
+    ],
+    "gradually": [
+        "g|r|a|d||u|a|ll|y",
+        "ɡ|ɹ|æ|d|ʒ|uː|ə|l|i"
+    ],
+    "granite": [
+        "g|r|a|n|i|t|e",
+        "ɡ|ɹ|æ|n|ɪ|t|"
+    ],
+    "grapevines": [
+        "g|r|a|p|e|v|i|n|e|s",
+        "ɡ|ɹ|eɪ|p||v|aɪ|n||z"
+    ],
+    "grass": [
+        "g|r|a|ss",
+        "ɡ|ɹ|ɑː|s"
+    ],
+    "gravely": [
+        "g|r|a|ve|l|y",
+        "ɡ|ɹ|eɪ|v|l|i"
+    ],
+    "grease": [
+        "g|r|ea|se",
+        "ɡ|ɹ|iː|s"
+    ],
+    "great": [
+        "g|r|ea|t",
+        "ɡ|ɹ|eɪ|t"
+    ],
+    "green": [
+        "g|r|ee|n",
+        "ɡ|ɹ|iː|n"
+    ],
+    "greeted": [
+        "g|r|ee|t|e|d",
+        "ɡ|ɹ|iː|t|ɪ|d"
+    ],
+    "grew": [
+        "g|r|ew",
+        "ɡ|ɹ|uː"
+    ],
+    "groaned": [
+        "g|r|oa|n|ed",
+        "ɡ|ɹ|əʊ|n|d"
+    ],
+    "groping": [
+        "g|r|o|p|i|ng",
+        "ɡ|ɹ|əʊ|p|ɪ|ŋ"
+    ],
+    "ground": [
+        "g|r|ou|n|d",
+        "ɡ|ɹ|aʊ|n|d"
+    ],
+    "growing": [
+        "g|r|ow|i|ng",
+        "ɡ|ɹ|əʊ|ɪ|ŋ"
+    ],
+    "grown-up": [
+        "g|r|ow|n|-|u|p",
+        "ɡ|ɹ|əʊ|n||ʌ|p"
+    ],
+    "grumpily": [
+        "g|r|u|m|p|i|l|y",
+        "ɡ|ɹ|ʌ|m|p|ɪ|l|i"
+    ],
+    "guess": [
+        "g|ue|ss",
+        "ɡ|ɛ|s"
+    ],
+    "guessed": [
+        "g|ue|ss|ed",
+        "ɡ|ɛ|s|t"
+    ],
+    "guides": [
+        "g|ui|d|e|s",
+        "ɡ|aɪ|d||z"
+    ],
+    "guns": [
+        "g|u|n|s",
+        "ɡ|ʌ|n|z"
+    ],
+    "gust": [
+        "g|u|s|t",
+        "ɡ|ʌ|s|t"
+    ],
+    "guy": [
+        "g|uy",
+        "ɡ|aɪ"
+    ],
+    "habitation": [
+        "h|a|b|i|t|a|tion",
+        "h|æ|b|ɪ|t|eɪ|ʃən"
+    ],
+    "hair": [
+        "h|air",
+        "h|eə"
+    ],
+    "half": [
+        "h|a|l|f",
+        "h|ɑː||f"
+    ],
+    "half-expressed": [
+        "h|a|l|f|-|e|x|p|r|e|ss|ed",
+        "h|ɑː||f||ɛ|ks|p|ɹ|ɛ|s|t"
+    ],
+    "half-smile": [
+        "h|a|l|f|-|s|m|i|l|e",
+        "h|ɑː||f||s|m|aɪ|l|"
+    ],
+    "hand": [
+        "h|a|n|d",
+        "h|æ|n|d"
+    ],
+    "handkerchief": [
+        "h|a|n|d|k|er|ch|ie|f",
+        "h|æ|n||k|ə|tʃ|iː|f"
+    ],
+    "hands": [
+        "h|a|n|d|s",
+        "h|æ|n|d|z"
+    ],
+    "handsomest": [
+        "h|a|n|d|s|o|m|e|s|t",
+        "h|æ|n|d|s|əʊ|m|ə|s|t"
+    ],
+    "hang": [
+        "h|a|ng",
+        "h|æ|ŋ"
+    ],
+    "hanging": [
+        "h|a|ng|i|ng",
+        "h|æ|ŋ|ɪ|ŋ"
+    ],
+    "happened": [
+        "h|a|pp|e|n|ed",
+        "h|æ|p|ə|n|d"
+    ],
+    "happening": [
+        "h|a|pp|e|n|i|ng",
+        "h|æ|p|ə|n|ɪ|ŋ"
+    ],
+    "happier": [
+        "h|a|pp|i|er",
+        "h|æ|p|ɪ|ɐ"
+    ],
+    "happiness": [
+        "h|a|pp|i|n|e|ss",
+        "h|æ|p|ɪ|n|ə|s"
+    ],
+    "happy": [
+        "h|a|pp|y",
+        "h|æ|p|i"
+    ],
+    "hard": [
+        "h|ar|d",
+        "h|ɑː|d"
+    ],
+    "hardest": [
+        "h|ar|d|e|s|t",
+        "h|ɑː|d|ə|s|t"
+    ],
+    "hardly": [
+        "h|ar|d|l|y",
+        "h|ɑː|d|l|i"
+    ],
+    "harmless-looking": [
+        "h|ar|m|l|e|ss|-|l|oo|k|i|ng",
+        "h|ɑː|m|l|ə|s||l|ʊ|k|ɪ|ŋ"
+    ],
+    "hat": [
+        "h|a|t",
+        "h|æ|t"
+    ],
+    "hate": [
+        "h|a|t|e",
+        "h|eɪ|t|"
+    ],
+    "hates": [
+        "h|a|t|e|s",
+        "h|eɪ|t||s"
+    ],
+    "having": [
+        "h|a|v|i|ng",
+        "h|æ|v|ɪ|ŋ"
+    ],
+    "hearing": [
+        "h|ea|r|i|ng",
+        "h|iə|ɹ|ɪ|ŋ"
+    ],
+    "heart-stoppingly": [
+        "h|ear|t|-|s|t|o|pp|i|ng|l|y",
+        "h|ɑː|t||s|t|ɒ|p|ɪ|ŋ|l|i"
+    ],
+    "heating": [
+        "h|ea|t|i|ng",
+        "h|iː|t|ɪ|ŋ"
+    ],
+    "heavy": [
+        "h|ea|v|y",
+        "h|ɛ|v|i"
+    ],
+    "height": [
+        "h|e|igh|t",
+        "h||aɪ|t"
+    ],
+    "held": [
+        "h|e|l|d",
+        "h|ɛ|l|d"
+    ],
+    "hello": [
+        "h|e|ll|o",
+        "h|ə|l|əʊ"
+    ],
+    "help": [
+        "h|e|l|p",
+        "h|ɛ|l|p"
+    ],
+    "helped": [
+        "h|e|l|p|ed",
+        "h|ɛ|l|p|t"
+    ],
+    "helpless": [
+        "h|e|l|p|l|e|ss",
+        "h|ɛ|l|p|l|ə|s"
+    ],
+    "henceforth": [
+        "h|e|n|c|e|f|or|th",
+        "h|ɛ|n|s||f|ɔː|θ"
+    ],
+    "herself": [
+        "h|er|s|e|l|f",
+        "h|ɜː|s|ɛ|l|f"
+    ],
+    "hesitated": [
+        "h|e|s|i|t|a|t|e|d",
+        "h|ɛ|s|ɪ|t|eɪ|t|ɪ|d"
+    ],
+    "hey": [
+        "h|ey",
+        "h|eɪ"
+    ],
+    "hid": [
+        "h|i|d",
+        "h|ɪ|d"
+    ],
+    "hidden": [
+        "h|i|dd|e|n",
+        "h|ɪ|d|ə|n"
+    ],
+    "hide": [
+        "h|i|d|e",
+        "h|aɪ|d|"
+    ],
+    "hiding": [
+        "h|i|d|i|ng",
+        "h|aɪ|d|ɪ|ŋ"
+    ],
+    "himself": [
+        "h|i|m|s|e|l|f",
+        "h|ɪ|m|s|ɛ|l|f"
+    ],
+    "history": [
+        "h|i|s|t|o|r|y",
+        "h|ɪ|s|t|ə|ɹ|i"
+    ],
+    "hm": [
+        "h|m",
+        "h|əm"
+    ],
+    "hold": [
+        "h|o|l|d",
+        "h|əʊ|l|d"
+    ],
+    "hole": [
+        "h|o|l|e",
+        "h|əʊ|l|"
+    ],
+    "holes": [
+        "h|o|l|e|s",
+        "h|əʊ|l||z"
+    ],
+    "homework": [
+        "h|o|m|e|w|or|k",
+        "h|əʊ|m||w|ɜː|k"
+    ],
+    "honey": [
+        "h|o|n|ey",
+        "h|ʌ|n|i"
+    ],
+    "hope": [
+        "h|o|p|e",
+        "h|əʊ|p|"
+    ],
+    "hoping": [
+        "h|o|p|i|ng",
+        "h|əʊ|p|ɪ|ŋ"
+    ],
+    "horns": [
+        "h|or|n|s",
+        "h|ɔː|n|z"
+    ],
+    "hour": [
+        "h|ou|r",
+        "|aʊ|ə"
+    ],
+    "hours": [
+        "h|ou|r|s",
+        "|aʊ|ə|z"
+    ],
+    "houses": [
+        "h|ou|s|e|s",
+        "h|aʊ|z|ɪ|z"
+    ],
+    "huge": [
+        "h|u|g|e",
+        "h|juː|dʒ|"
+    ],
+    "huh": [
+        "h|u|h",
+        "h|ʌ|"
+    ],
+    "human": [
+        "h|u|m|a|n",
+        "h|juː|m|ə|n"
+    ],
+    "humanity": [
+        "h|u|m|a|n|i|t|y",
+        "h|juː|m|æ|n|ɪ|t|i"
+    ],
+    "hundred": [
+        "h|u|n|d|r|e|d",
+        "h|ʌ|n|d|ɹ|ə|d"
+    ],
+    "hundreds": [
+        "h|u|n|d|r|e|d|s",
+        "h|ʌ|n|d|ɹ|ə|d|z"
+    ],
+    "hunger": [
+        "h|u|ng|er",
+        "h|ʌ|ŋɡ|ɐ"
+    ],
+    "hungry": [
+        "h|u|ng|r|y",
+        "h|ʌ|ŋɡ|ɹ|i"
+    ],
+    "hunt": [
+        "h|u|n|t",
+        "h|ʌ|n|t"
+    ],
+    "hurry": [
+        "h|u|rr|y",
+        "h|ʌ|ɹ|i"
+    ],
+    "hurrying": [
+        "h|u|rr|y|i|ng",
+        "h|ʌ|ɹ|ɪ|ɪ|ŋ"
+    ],
+    "hurt": [
+        "h|ur|t",
+        "h|ɜː|t"
+    ],
+    "hurts": [
+        "h|ur|t|s",
+        "h|ɜː|t|s"
+    ],
+    "ideas": [
+        "i|d|ea|s",
+        "aɪ|d|iə|z"
+    ],
+    "idiot": [
+        "i|d|i|o|t",
+        "ɪ|d|ɪ|ə|t"
+    ],
+    "idiots": [
+        "i|d|i|o|t|s",
+        "ɪ|d|ɪ|ə|t|s"
+    ],
+    "idle": [
+        "i|d|le",
+        "aɪ|d|əl"
+    ],
+    "image": [
+        "i|m|a|g|e",
+        "ɪ|m|ɪ|dʒ|"
+    ],
+    "imagination": [
+        "i|m|a|g|i|n|a|tion",
+        "ɪ|m|æ|dʒ|ɪ|n|eɪ|ʃən"
+    ],
+    "imagine": [
+        "i|m|a|g|i|n|e",
+        "ɪ|m|æ|dʒ|ɪ|n|"
+    ],
+    "immediate": [
+        "i|mm|e|d|i|a|t|e",
+        "ɪ|m|iː|d|ɪ|ə|t|"
+    ],
+    "impatient": [
+        "i|m|p|a|ti|e|n|t",
+        "ɪ|m|p|eɪ|ʃ|ə|n|t"
+    ],
+    "importance": [
+        "i|m|p|or|t|a|n|c|e",
+        "ɪ|m|p|ɔː|t|ə|n|s|"
+    ],
+    "impression": [
+        "i|m|p|r|e|ss|io|n",
+        "ɪ|m|p|ɹ|ɛ|ʃ|ə|n"
+    ],
+    "impressive": [
+        "i|m|p|r|e|ss|i|ve",
+        "ɪ|m|p|ɹ|ɛ|s|ɪ|v"
+    ],
+    "improved": [
+        "i|m|p|r|o|v|ed",
+        "ɪ|m|p|ɹ|uː|v|d"
+    ],
+    "include": [
+        "i|n|c|l|u|d|e",
+        "ɪ|n|k|l|uː|d|"
+    ],
+    "indeed": [
+        "i|n|d|ee|d",
+        "ɪ|n|d|iː|d"
+    ],
+    "indicated": [
+        "i|n|d|i|c|a|t|e|d",
+        "ɪ|n|d|ɪ|k|eɪ|t|ɪ|d"
+    ],
+    "indiscipline": [
+        "i|n|d|i|sc|i|p|l|i|n|e",
+        "ɪ|n|d|ɪ|s|ɪ|p|l|ɪ|n|"
+    ],
+    "infested": [
+        "i|n|f|e|s|t|e|d",
+        "ɪ|n|f|ɛ|s|t|ɪ|d"
+    ],
+    "inhabitants": [
+        "i|n|h|a|b|i|t|a|n|t|s",
+        "ɪ|n|h|æ|b|ɪ|t|ə|n|t|s"
+    ],
+    "ink": [
+        "i|n|k",
+        "ɪ|ŋ|k"
+    ],
+    "inside": [
+        "i|n|s|i|d|e",
+        "ɪ|n|s|a‍ɪ|d|"
+    ],
+    "instead": [
+        "i|n|s|t|ea|d",
+        "ɪ|n|s|t|ɛ|d"
+    ],
+    "interested": [
+        "i|n|t|e|r|e|s|t|e|d",
+        "ɪ|n|t||ɹ|ə|s|t|ɪ|d"
+    ],
+    "interesting": [
+        "i|n|t|e|r|e|s|t|i|ng",
+        "ɪ|n|t||ɹ|ə|s|t|ɪ|ŋ"
+    ],
+    "international": [
+        "i|n|t|er|n|a|tion|a|l",
+        "ɪ|n|t|ə|n|æ|ʃən|ə|l"
+    ],
+    "interrupted": [
+        "i|n|t|e|rr|u|p|t|e|d",
+        "ɪ|n|t|ə|ɹ|ʌ|p|t|ɪ|d"
+    ],
+    "into": [
+        "i|n|t|o",
+        "ɪ|n|t|ʊ"
+    ],
+    "introduced": [
+        "i|n|t|r|o|d|u|c|ed",
+        "ɪ|n|t|ɹ|ə|d|juː|s|t"
+    ],
+    "invented": [
+        "i|n|v|e|n|t|e|d",
+        "ɪ|n|v|ɛ|n|t|ɪ|d"
+    ],
+    "invention": [
+        "i|n|v|e|n|tion",
+        "ɪ|n|v|ɛ|n|ʃən"
+    ],
+    "island": [
+        "i|s|l|a|n|d",
+        "aɪ||l|ə|n|d"
+    ],
+    "islands": [
+        "i|s|l|a|n|d|s",
+        "aɪ||l|ə|n|d|z"
+    ],
+    "itself": [
+        "i|t|s|e|l|f",
+        "ɪ|t|s|ɛ|l|f"
+    ],
+    "jet": [
+        "j|e|t",
+        "dʒ|ɛ|t"
+    ],
+    "judge": [
+        "j|u|dg|e",
+        "dʒ|ʌ|dʒ|"
+    ],
+    "jump": [
+        "j|u|m|p",
+        "dʒ|ʌ|m|p"
+    ],
+    "jumped": [
+        "j|u|m|p|ed",
+        "dʒ|ʌ|m|p|t"
+    ],
+    "jungles": [
+        "j|u|ng|le|s",
+        "dʒ|ʌ|ŋɡ|əl|z"
+    ],
+    "justice": [
+        "j|u|s|t|i|c|e",
+        "dʒ|ʌ|s|t|ɪ|s|"
+    ],
+    "keeps": [
+        "k|ee|p|s",
+        "k|iː|p|s"
+    ],
+    "kept": [
+        "k|e|p|t",
+        "k|ɛ|p|t"
+    ],
+    "kid": [
+        "k|i|d",
+        "k|ɪ|d"
+    ],
+    "kids": [
+        "k|i|d|s",
+        "k|ɪ|d|z"
+    ],
+    "killed": [
+        "k|i|ll|ed",
+        "k|ɪ|l|d"
+    ],
+    "kindness": [
+        "k|i|n|d|n|e|ss",
+        "k|aɪ|n|d|n|ə|s"
+    ],
+    "kingdom": [
+        "k|i|ng|d|o|m",
+        "k|ɪ|ŋ|d|ə|m"
+    ],
+    "kings": [
+        "k|i|ng|s",
+        "k|ɪ|ŋ|z"
+    ],
+    "knees": [
+        "kn|ee|s",
+        "n|iː|z"
+    ],
+    "knew": [
+        "kn|ew",
+        "n|juː"
+    ],
+    "knock": [
+        "kn|o|ck",
+        "n|ɒ|k"
+    ],
+    "knotted": [
+        "kn|o|tt|e|d",
+        "n|ɒ|t|ɪ|d"
+    ],
+    "knowing": [
+        "kn|ow|i|ng",
+        "n|əʊ|ɪ|ŋ"
+    ],
+    "known": [
+        "kn|ow|n",
+        "n|əʊ|n"
+    ],
+    "knows": [
+        "kn|ow|s",
+        "n|əʊ|z"
+    ],
+    "lamp": [
+        "l|a|m|p",
+        "l|æ|m|p"
+    ],
+    "lamps": [
+        "l|a|m|p|s",
+        "l|æ|m|p|s"
+    ],
+    "land": [
+        "l|a|n|d",
+        "l|æ|n|d"
+    ],
+    "landed": [
+        "l|a|n|d|e|d",
+        "l|æ|n|d|ɪ|d"
+    ],
+    "landing": [
+        "l|a|n|d|i|ng",
+        "l|æ|n|d|ɪ|ŋ"
+    ],
+    "landscape": [
+        "l|a|n|d|s|c|a|p|e",
+        "l|æ|n|d|s|k|eɪ|p|"
+    ],
+    "last": [
+        "l|a|s|t",
+        "l|ɑː|s|t"
+    ],
+    "later": [
+        "l|a|t|er",
+        "l|eɪ|t|ɐ"
+    ],
+    "laughed": [
+        "l|augh|ed",
+        "l|ɑːf|d"
+    ],
+    "laughing": [
+        "l|augh|i|ng",
+        "l|ɑːf|ɪ|ŋ"
+    ],
+    "laughs": [
+        "l|augh|s",
+        "l|ɑːf|z"
+    ],
+    "law": [
+        "l|aw",
+        "l|ɔː"
+    ],
+    "lay": [
+        "l|ay",
+        "l|eɪ"
+    ],
+    "lazy": [
+        "l|a|z|y",
+        "l|eɪ|z|i"
+    ],
+    "lead [[noun]]": [
+        "l|ea|d",
+        "l|ɛ|d"
+    ],
+    "lead [[verb]]": [
+        "l|ea|d",
+        "l|iː|d"
+    ],
+    "leading": [
+        "l|ea|d|i|ng",
+        "l|iː|d|ɪ|ŋ"
+    ],
+    "learn": [
+        "l|ear|n",
+        "l|ɜː|n"
+    ],
+    "least": [
+        "l|ea|s|t",
+        "l|iː|s|t"
+    ],
+    "leave": [
+        "l|ea|ve",
+        "l|iː|v"
+    ],
+    "leaving": [
+        "l|ea|v|i|ng",
+        "l|iː|v|ɪ|ŋ"
+    ],
+    "left": [
+        "l|e|f|t",
+        "l|ɛ|f|t"
+    ],
+    "legs": [
+        "l|e|g|s",
+        "l|ɛ|ɡ|z"
+    ],
+    "less": [
+        "l|e|ss",
+        "l|ɛ|s"
+    ],
+    "let": [
+        "l|e|t",
+        "l|ɛ|t"
+    ],
+    "lets": [
+        "l|e|t|s",
+        "l|ɛ|t|s"
+    ],
+    "level": [
+        "l|e|v|e|l",
+        "l|ɛ|v|ə|l"
+    ],
+    "liar": [
+        "l|i|ar",
+        "l|aɪ|ə"
+    ],
+    "lie": [
+        "l|ie",
+        "l|aɪ"
+    ],
+    "light": [
+        "l|igh|t",
+        "l|aɪ|t"
+    ],
+    "lightly": [
+        "l|igh|t|l|y",
+        "l|aɪ|t|l|i"
+    ],
+    "lightning": [
+        "l|igh|t|n|i|ng",
+        "l|aɪ|t|n|ɪ|ŋ"
+    ],
+    "lights": [
+        "l|igh|t|s",
+        "l|aɪ|t|s"
+    ],
+    "likes": [
+        "l|i|k|e|s",
+        "l|aɪ|k||s"
+    ],
+    "lips": [
+        "l|i|p|s",
+        "l|ɪ|p|s"
+    ],
+    "listen": [
+        "l|i|s|t|e|n",
+        "l|ɪ|s||ə|n"
+    ],
+    "listened": [
+        "l|i|s|t|e|n|ed",
+        "l|ɪ|s||ə|n|d"
+    ],
+    "lit": [
+        "l|i|t",
+        "l|ɪ|t"
+    ],
+    "live [[adjective]]": [
+        "l|i|ve",
+        "l|aɪ|v"
+    ],
+    "live [[verb]]": [
+        "l|i|ve",
+        "l|ɪ|v"
+    ],
+    "lived": [
+        "l|i|v|ed",
+        "l|ɪ|v|d"
+    ],
+    "lives [[noun]]": [
+        "l|i|ve|s",
+        "l|aɪ|v|z"
+    ],
+    "lives [[verb]]": [
+        "l|i|ve|s",
+        "l|ɪ|v|z"
+    ],
+    "living": [
+        "l|i|v|i|ng",
+        "l|ɪ|v|ɪ|ŋ"
+    ],
+    "ll": [
+        "ll",
+        "l"
+    ],
+    "lock": [
+        "l|o|ck",
+        "l|ɒ|k"
+    ],
+    "locks": [
+        "l|o|ck|s",
+        "l|ɒ|k|s"
+    ],
+    "lonely": [
+        "l|o|n|e|l|y",
+        "l|əʊ|n||l|i"
+    ],
+    "long": [
+        "l|o|ng",
+        "l|ɒ|ŋ"
+    ],
+    "longer": [
+        "l|o|ng|er",
+        "l|ɒ|ŋɡ|ɐ"
+    ],
+    "looking": [
+        "l|oo|k|i|ng",
+        "l|ʊ|k|ɪ|ŋ"
+    ],
+    "looks": [
+        "l|oo|k|s",
+        "l|ʊ|k|s"
+    ],
+    "lot": [
+        "l|o|t",
+        "l|ɒ|t"
+    ],
+    "love": [
+        "l|o|ve",
+        "l|ʌ|v"
+    ],
+    "loved": [
+        "l|o|v|ed",
+        "l|ʌ|v|d"
+    ],
+    "lovely": [
+        "l|o|ve|l|y",
+        "l|ʌ|v|l|i"
+    ],
+    "loves": [
+        "l|o|ve|s",
+        "l|ʌ|v|z"
+    ],
+    "lowered": [
+        "l|ow|er|ed",
+        "l|əʊ|ə|d"
+    ],
+    "luckily": [
+        "l|u|ck|i|l|y",
+        "l|ʌ|k|i|l|i"
+    ],
+    "lucky": [
+        "l|u|ck|y",
+        "l|ʌ|k|i"
+    ],
+    "lying": [
+        "l|y|i|ng",
+        "l|aɪ|ɪ|ŋ"
+    ],
+    "maintain": [
+        "m|ai|n|t|ai|n",
+        "m|eɪ|n|t|eɪ|n"
+    ],
+    "majestic": [
+        "m|a|j|e|s|t|i|c",
+        "m|æ|dʒ|ɛ|s|t|ɪ|k"
+    ],
+    "majestically": [
+        "m|a|j|e|s|t|i|c|a|ll|y",
+        "m|æ|dʒ|ɛ|s|t|ɪ|k||l|i"
+    ],
+    "majesty": [
+        "m|a|j|e|s|t|y",
+        "m|æ|dʒ|ə|s|t|i"
+    ],
+    "makes": [
+        "m|a|k|e|s",
+        "m|eɪ|k||s"
+    ],
+    "making": [
+        "m|a|k|i|ng",
+        "m|eɪ|k|ɪ|ŋ"
+    ],
+    "man": [
+        "m|a|n",
+        "m|æ|n"
+    ],
+    "manage": [
+        "m|a|n|a|g|e",
+        "m|æ|n|ɪ|dʒ|"
+    ],
+    "managed": [
+        "m|a|n|a|g|ed",
+        "m|æ|n|ɪ|dʒ|d"
+    ],
+    "mars": [
+        "m|ar|s",
+        "m|ɑː|z"
+    ],
+    "mass": [
+        "m|a|ss",
+        "m|æ|s"
+    ],
+    "masterpiece": [
+        "m|a|s|t|er|p|ie|c|e",
+        "m|ɑː|s|t|ə|p|iː|s|"
+    ],
+    "math": [
+        "m|a|th",
+        "m|æ|θ"
+    ],
+    "maths": [
+        "m|a|th|s",
+        "m|æ|θ|s"
+    ],
+    "may": [
+        "m|ay",
+        "m|eɪ"
+    ],
+    "maybe": [
+        "m|ay|b|e",
+        "m|eɪ|b|iː"
+    ],
+    "mean": [
+        "m|ea|n",
+        "m|iː|n"
+    ],
+    "means": [
+        "m|ea|n|s",
+        "m|iː|n|z"
+    ],
+    "meant": [
+        "m|ea|n|t",
+        "m|ɛ|n|t"
+    ],
+    "mechanic": [
+        "m|e|ch|a|n|i|c",
+        "m|ɪ|k|æ|n|ɪ|k"
+    ],
+    "meet": [
+        "m|ee|t",
+        "m|iː|t"
+    ],
+    "meeting": [
+        "m|ee|t|i|ng",
+        "m|iː|t|ɪ|ŋ"
+    ],
+    "melancholy": [
+        "m|e|l|a|n|ch|o|l|y",
+        "m|ɛ|l|ə|n|k|ɒ|l|i"
+    ],
+    "memories": [
+        "m|e|m|o|r|ie|s",
+        "m|ɛ|m|ə|ɹ|i|z"
+    ],
+    "memory": [
+        "m|e|m|o|r|y",
+        "m|ɛ|m|ə|ɹ|i"
+    ],
+    "mention": [
+        "m|e|n|tion",
+        "m|ɛ|n|ʃən"
+    ],
+    "mess": [
+        "m|e|ss",
+        "m|ɛ|s"
+    ],
+    "message": [
+        "m|e|ss|a|g|e",
+        "m|ɛ|s|ɪ|dʒ|"
+    ],
+    "messed": [
+        "m|e|ss|ed",
+        "m|ɛ|s|t"
+    ],
+    "met": [
+        "m|e|t",
+        "m|ɛ|t"
+    ],
+    "metallic": [
+        "m|e|t|a|ll|i|c",
+        "m|ə|t|æ|l|ɪ|k"
+    ],
+    "metres": [
+        "m|e|t|r|e|s",
+        "m|iː|t||ə|z"
+    ],
+    "middle": [
+        "m|i|dd|le",
+        "m|ɪ|d|əl"
+    ],
+    "midnight": [
+        "m|i|d|n|igh|t",
+        "m|ɪ|d|n|aɪ|t"
+    ],
+    "might": [
+        "m|igh|t",
+        "m|aɪ|t"
+    ],
+    "migrating": [
+        "m|i|g|r|a|t|i|ng",
+        "m|aɪ|ɡ|ɹ|eɪ|t|ɪ|ŋ"
+    ],
+    "miles": [
+        "m|i|l|e|s",
+        "m|aɪ|l||z"
+    ],
+    "million": [
+        "m|i|ll|i|o|n",
+        "m|ɪ|l|i|ə|n"
+    ],
+    "millions": [
+        "m|i|ll|i|o|n|s",
+        "m|ɪ|l|i|ə|n|z"
+    ],
+    "mine": [
+        "m|i|n|e",
+        "m|aɪ|n|"
+    ],
+    "minister": [
+        "m|i|n|i|s|t|er",
+        "m|ɪ|n|ɪ|s|t|ɐ"
+    ],
+    "minute [[adjective]]": [
+        "m|i|n|u|t|e",
+        "m|a‍ɪ|n|juː|t|"
+    ],
+    "minute [[noun]]": [
+        "m|i|n|u|t|e",
+        "m|ɪ|n|ɪ|t|"
+    ],
+    "minutes": [
+        "m|i|n|u|t|e|s",
+        "m|ɪ|n|ɪ|t||s"
+    ],
+    "misfortunes": [
+        "m|i|s|f|or|tu|n|e|s",
+        "m|ɪ|s|f|ɔː|tʃuː|n||z"
+    ],
+    "miss": [
+        "m|i|ss",
+        "m|ɪ|s"
+    ],
+    "missed": [
+        "m|i|ss|ed",
+        "m|ɪ|s|t"
+    ],
+    "missing": [
+        "m|i|ss|i|ng",
+        "m|ɪ|s|ɪ|ŋ"
+    ],
+    "mistake": [
+        "m|i|s|t|a|k|e",
+        "m|ɪ|s|t|eɪ|k|"
+    ],
+    "mix": [
+        "m|i|x",
+        "m|ɪ|ks"
+    ],
+    "modest": [
+        "m|o|d|e|s|t",
+        "m|ɒ|d|ə|s|t"
+    ],
+    "modestly": [
+        "m|o|d|e|s|t|l|y",
+        "m|ɒ|d|ə|s|t|l|i"
+    ],
+    "moistened": [
+        "m|oi|s|t|e|n|ed",
+        "m|ɔɪ|s|t|ə|n|d"
+    ],
+    "moment": [
+        "m|o|m|e|n|t",
+        "m|əʊ|m|ə|n|t"
+    ],
+    "monarch": [
+        "m|o|n|ar|ch",
+        "m|ɒ|n|ə|k"
+    ],
+    "money": [
+        "m|o|n|ey",
+        "m|ʌ|n|i"
+    ],
+    "month": [
+        "m|o|n|th",
+        "m|ʌ|n|θ"
+    ],
+    "months": [
+        "m|o|n|th|s",
+        "m|ʌ|n|θ|s"
+    ],
+    "moon": [
+        "m|oo|n",
+        "m|uː|n"
+    ],
+    "moonlight": [
+        "m|oo|n|l|igh|t",
+        "m|uː|n|l|aɪ|t"
+    ],
+    "mopped": [
+        "m|o|pp|ed",
+        "m|ɒ|p|t"
+    ],
+    "most": [
+        "m|o|s|t",
+        "m|əʊ|s|t"
+    ],
+    "mostly": [
+        "m|o|s|t|l|y",
+        "m|əʊ|s|t|l|i"
+    ],
+    "motor": [
+        "m|o|t|or",
+        "m|əʊ|t|ɐ"
+    ],
+    "mountains": [
+        "m|ou|n|t|ai|n|s",
+        "m|aʊ|n|t|ɪ|n|z"
+    ],
+    "mouth": [
+        "m|ou|th",
+        "m|a‍ʊ|θ"
+    ],
+    "mouthful": [
+        "m|ou|th|f|u|l",
+        "m|aʊ|θ|f|ə|l"
+    ],
+    "move": [
+        "m|o|ve",
+        "m|uː|v"
+    ],
+    "moved": [
+        "m|o|v|ed",
+        "m|uː|v|d"
+    ],
+    "movements": [
+        "m|o|ve|m|e|n|t|s",
+        "m|uː|v|m|ə|n|t|s"
+    ],
+    "moves": [
+        "m|o|ve|s",
+        "m|uː|v|z"
+    ],
+    "moving": [
+        "m|o|v|i|ng",
+        "m|uː|v|ɪ|ŋ"
+    ],
+    "much": [
+        "m|u|ch",
+        "m|ʌ|tʃ"
+    ],
+    "mushroom": [
+        "m|u|sh|r|oo|m",
+        "m|ʌ|ʃ|ɹ|uː|m"
+    ],
+    "music": [
+        "m|u|s|i|c",
+        "m|juː|z|ɪ|k"
+    ],
+    "must": [
+        "m|u|s|t",
+        "m|ʌ|s|t"
+    ],
+    "muzzle": [
+        "m|u|zz|le",
+        "m|ʌ|z|əl"
+    ],
+    "myself": [
+        "m|y|s|e|l|f",
+        "m|aɪ|s|ɛ|l|f"
+    ],
+    "mysterious": [
+        "m|y|s|t|er|i|ou|s",
+        "m|ɪ|s|t|iəɹ|ɪ|ə|s"
+    ],
+    "mystery": [
+        "m|y|s|t|er|y",
+        "m|ɪ|s|t|əɹ|i"
+    ],
+    "naively": [
+        "n||a|i|ve|l|y",
+        "n|ɑː|ɪ|iː|v|l|i"
+    ],
+    "name": [
+        "n|a|m|e",
+        "n|eɪ|m|"
+    ],
+    "names": [
+        "n|a|m|e|s",
+        "n|eɪ|m||z"
+    ],
+    "nature": [
+        "n|a|tu|re",
+        "n|eɪ|tʃ|ɐ"
+    ],
+    "naïve": [
+        "n|a|ï|ve",
+        "n|ɑː|iː|v"
+    ],
+    "near": [
+        "n|ear",
+        "n|iə"
+    ],
+    "nearest": [
+        "n|ea|r|e|s|t",
+        "n|iə|ɹ|ə|s|t"
+    ],
+    "necessary": [
+        "n|e|c|e|ss|a|r|y",
+        "n|ɛ|s|ə|s|ə|ɹ|i"
+    ],
+    "neckties": [
+        "n|e|ck|t|ie|s",
+        "n|ɛ|k|t|ɪ|z"
+    ],
+    "need": [
+        "n|ee|d",
+        "n|iː|d"
+    ],
+    "needed": [
+        "n|ee|d|e|d",
+        "n|iː|d|ɪ|d"
+    ],
+    "needs": [
+        "n|ee|d|s",
+        "n|iː|d|z"
+    ],
+    "nervous": [
+        "n|er|v|ou|s",
+        "n|ɜː|v|ə|s"
+    ],
+    "next": [
+        "n|e|x|t",
+        "n|ɛ|ks|t"
+    ],
+    "nine": [
+        "n|i|n|e",
+        "n|aɪ|n|"
+    ],
+    "noise": [
+        "n|oi|s|e",
+        "n|ɔɪ|z|"
+    ],
+    "none": [
+        "n|o|n|e",
+        "n|ʌ|n|"
+    ],
+    "nonsense": [
+        "n|o|n|s|e|n|se",
+        "n|ɒ|n|s|ə|n|s"
+    ],
+    "noon": [
+        "n|oo|n",
+        "n|uː|n"
+    ],
+    "normally": [
+        "n|or|m|a|ll|y",
+        "n|ɔː|m|ə|l|i"
+    ],
+    "north": [
+        "n|or|th",
+        "n|ɔː|θ"
+    ],
+    "noses": [
+        "n|o|s|e|s",
+        "n|əʊ|z|ɪ|z"
+    ],
+    "notebook": [
+        "n|o|t|e|b|oo|k",
+        "n|əʊ|t||b|ʊ|k"
+    ],
+    "nothing": [
+        "n|o|th|i|ng",
+        "n|ʌ|θ|ɪ|ŋ"
+    ],
+    "notice": [
+        "n|o|t|i|c|e",
+        "n|əʊ|t|ɪ|s|"
+    ],
+    "noticed": [
+        "n|o|t|i|c|ed",
+        "n|əʊ|t|ɪ|s|d"
+    ],
+    "nowhere": [
+        "n|o|wh|ere",
+        "n|əʊ|w|eə"
+    ],
+    "numbers": [
+        "n|u|m|b|er|s",
+        "n|ʌ|m|b|ə|z"
+    ],
+    "o'clock": [
+        "o|'|c|l|o|ck",
+        "ə||k|l|ɒ|k"
+    ],
+    "obedience": [
+        "o|b|e|d|i|e|n|c|e",
+        "əʊ|b|iː|d|i|ə|n|s|"
+    ],
+    "obey": [
+        "o|b|ey",
+        "əʊ|b|eɪ"
+    ],
+    "obeyed": [
+        "o|b|ey|ed",
+        "əʊ|b|eɪ|d"
+    ],
+    "object": [
+        "o|b|j|e|c|t",
+        "ɒ|b|d‍ʒ|ɛ|k|t"
+    ],
+    "obliged": [
+        "o|b|l|i|g|ed",
+        "ə|b|l|aɪ|dʒ|d"
+    ],
+    "obvious": [
+        "o|b|v|i|ou|s",
+        "ɒ|b|v|ɪ|ə|s"
+    ],
+    "obviously": [
+        "o|b|v|i|ou|s|l|y",
+        "ɒ|b|v|ɪ|ə|s|l|i"
+    ],
+    "occupy": [
+        "o|cc|u|p|y",
+        "ɒ|k|jʊ|p|aɪ"
+    ],
+    "occurred": [
+        "o|cc|ur|r|ed",
+        "ə|k|ɜː||d"
+    ],
+    "ocean": [
+        "o|c|ea|n",
+        "əʊ|ʃ|ə|n"
+    ],
+    "oceans": [
+        "o|c|ea|n|s",
+        "əʊ|ʃ|ə|n|z"
+    ],
+    "odd": [
+        "o|dd",
+        "ɒ|d"
+    ],
+    "off": [
+        "o|ff",
+        "ɒ|f"
+    ],
+    "offended": [
+        "o|ff|e|n|d|e|d",
+        "ə|f|ɛ|n|d|ɪ|d"
+    ],
+    "office": [
+        "o|ff|i|c|e",
+        "ɒ|f|ɪ|s|"
+    ],
+    "often": [
+        "o|f|t|e|n",
+        "ɒ|f||ə|n"
+    ],
+    "okay": [
+        "o|k|ay",
+        "əʊ|k|eɪ"
+    ],
+    "onto": [
+        "o|n|t|o",
+        "ɒ|n|t|ʊ"
+    ],
+    "open": [
+        "o|p|e|n",
+        "əʊ|p|ə|n"
+    ],
+    "opened": [
+        "o|p|e|n|ed",
+        "əʊ|p|ə|n|d"
+    ],
+    "opinion": [
+        "o|p|i|n|i|o|n",
+        "ə|p|ɪ|n|i|ə|n"
+    ],
+    "opposite": [
+        "o|pp|o|s|i|t|e",
+        "ɒ|p|ə|s|ɪ|t|"
+    ],
+    "order": [
+        "or|d|er",
+        "ɔː|d|ɐ"
+    ],
+    "ordered": [
+        "or|d|er|ed",
+        "ɔː|d|ə|d"
+    ],
+    "orders": [
+        "or|d|er|s",
+        "ɔː|d|ə|z"
+    ],
+    "ordinary": [
+        "or|d|i|n|a|r|y",
+        "ɔː|d|ɪ|n|ə|ɹ|i"
+    ],
+    "original": [
+        "o|r|i|g|i|n|a|l",
+        "ə|ɹ|ɪ|dʒ|ɪ|n|ə|l"
+    ],
+    "other": [
+        "o|th|er",
+        "ʌ|ð|ɐ"
+    ],
+    "others": [
+        "o|th|er|s",
+        "ʌ|ð|ə|z"
+    ],
+    "otherwise": [
+        "o|th|er|w|i|s|e",
+        "ʌ|ð|ə|w|aɪ|z|"
+    ],
+    "outside": [
+        "ou|t|s|i|d|e",
+        "a‍ʊ|t|s|a‍ɪ|d|"
+    ],
+    "over": [
+        "o|v|er",
+        "əʊ|v|ɐ"
+    ],
+    "overexert": [
+        "o|v|er|e|x|er|t",
+        "əʊ|v|əɹ|ɛ|ɡz|ɜː|t"
+    ],
+    "own": [
+        "ow|n",
+        "əʊ|n"
+    ],
+    "owning": [
+        "ow|n|i|ng",
+        "əʊ|n|ɪ|ŋ"
+    ],
+    "owns": [
+        "ow|n|s",
+        "əʊ|n|z"
+    ],
+    "packages": [
+        "p|a|ck|a|g|e|s",
+        "p|æ|k|ɪ|dʒ|ɪ|z"
+    ],
+    "page": [
+        "p|a|g|e",
+        "p|eɪ|dʒ|"
+    ],
+    "pain": [
+        "p|ai|n",
+        "p|eɪ|n"
+    ],
+    "painstakingly": [
+        "p|ai|n|s|t|a|k|i|ng|l|y",
+        "p|eɪ|n|s|t|eɪ|k|ɪ|ŋ|l|i"
+    ],
+    "paint-box": [
+        "p|ai|n|t|-|b|o|x",
+        "p|eɪ|n|t||b|ɒ|ks"
+    ],
+    "painter": [
+        "p|ai|n|t|er",
+        "p|eɪ|n|t|ɐ"
+    ],
+    "pale": [
+        "p|a|l|e",
+        "p|eɪ|l|"
+    ],
+    "paper": [
+        "p|a|p|er",
+        "p|eɪ|p|ɐ"
+    ],
+    "pardon": [
+        "p|ar|d|o|n",
+        "p|ɑː|d|ə|n"
+    ],
+    "particular": [
+        "p|ar|t|i|c|u|l|a|r",
+        "p|ə|t|ɪ|k|jʊ|l|ɐ|"
+    ],
+    "pass": [
+        "p|a|ss",
+        "p|ɑː|s"
+    ],
+    "passed": [
+        "p|a|ss|ed",
+        "p|ɑː|s|t"
+    ],
+    "passengers": [
+        "p|a|ss|e|n|g|er|s",
+        "p|æ|s|ɪ|n|dʒ|ə|z"
+    ],
+    "passes": [
+        "p|a|ss|e|s",
+        "p|ɑː|s|ɪ|z"
+    ],
+    "patent": [
+        "p|a|t|e|n|t",
+        "p|eɪ|t|ə|n|t"
+    ],
+    "patient": [
+        "p|a|ti|e|n|t",
+        "p|eɪ|ʃ|ə|n|t"
+    ],
+    "patiently": [
+        "p|a|ti|e|n|t|l|y",
+        "p|eɪ|ʃ|ə|n|t|l|i"
+    ],
+    "pay": [
+        "p|ay",
+        "p|eɪ"
+    ],
+    "peaks": [
+        "p|ea|k|s",
+        "p|iː|k|s"
+    ],
+    "pencil": [
+        "p|e|n|c|i|l",
+        "p|ɛ|n|s|ə|l"
+    ],
+    "pencils": [
+        "p|e|n|c|i|l|s",
+        "p|ɛ|n|s|ə|l|z"
+    ],
+    "perfect [[adjective]]": [
+        "p|er|f|e|c|t",
+        "p|ɜː|f|ə|k|t"
+    ],
+    "perfect [[verb]]": [
+        "p|er|f|e|c|t",
+        "p|ɜː|f|ɛ|k|t"
+    ],
+    "perfectly": [
+        "p|er|f|e|c|t|l|y",
+        "p|ɜː|f|ɛ|k|t|l|i"
+    ],
+    "performs": [
+        "p|er|f|or|m|s",
+        "p|ə|f|ɔː|m|z"
+    ],
+    "perfume": [
+        "p|er|f|u|m|e",
+        "p|ɜː|f|juː|m|"
+    ],
+    "perhaps": [
+        "p|er|h|a|p|s",
+        "p|ə|h|æ|p|s"
+    ],
+    "permission": [
+        "p|er|m|i|ss|io|n",
+        "p|ə|m|ɪ|ʃ|ə|n"
+    ],
+    "person": [
+        "p|er|s|o|n",
+        "p|ɜː|s|ə|n"
+    ],
+    "petals": [
+        "p|e|t|a|l|s",
+        "p|ɛ|t|ə|l|z"
+    ],
+    "pick": [
+        "p|i|ck",
+        "p|ɪ|k"
+    ],
+    "pictures": [
+        "p|i|c|tu|r|e|s",
+        "p|ɪ|k|tʃ||ə|z"
+    ],
+    "piece": [
+        "p|ie|c|e",
+        "p|iː|s|"
+    ],
+    "pieces": [
+        "p|ie|c|e|s",
+        "p|iː|s|ɪ|z"
+    ],
+    "pills": [
+        "p|i|ll|s",
+        "p|ɪ|l|z"
+    ],
+    "pitilessly": [
+        "p|i|t|i|l|e|ss|l|y",
+        "p|ɪ|t|i|l|ə|s|l|i"
+    ],
+    "place": [
+        "p|l|a|c|e",
+        "p|l|eɪ|s|"
+    ],
+    "plainly": [
+        "p|l|ai|n|l|y",
+        "p|l|eɪ|n|l|i"
+    ],
+    "plane": [
+        "p|l|a|n|e",
+        "p|l|eɪ|n|"
+    ],
+    "planes": [
+        "p|l|a|n|e|s",
+        "p|l|eɪ|n||z"
+    ],
+    "planets": [
+        "p|l|a|n|e|t|s",
+        "p|l|æ|n|ɪ|t|s"
+    ],
+    "planning": [
+        "p|l|a|nn|i|ng",
+        "p|l|æ|n|ɪ|ŋ"
+    ],
+    "plant": [
+        "p|l|a|n|t",
+        "p|l|æ|n|t"
+    ],
+    "plants": [
+        "p|l|a|n|t|s",
+        "p|l|æ|n|t|s"
+    ],
+    "play": [
+        "p|l|ay",
+        "p|l|eɪ"
+    ],
+    "played": [
+        "p|l|ay|ed",
+        "p|l|eɪ|d"
+    ],
+    "playing": [
+        "p|l|ay|i|ng",
+        "p|l|eɪ|ɪ|ŋ"
+    ],
+    "please": [
+        "p|l|ea|s|e",
+        "p|l|iː|z|"
+    ],
+    "pocket": [
+        "p|o|ck|e|t",
+        "p|ɒ|k|ɪ|t"
+    ],
+    "poetic": [
+        "p|o|e|t|i|c",
+        "p|əʊ|ɛ|t|ɪ|k"
+    ],
+    "point": [
+        "p|oi|n|t",
+        "p|ɔɪ|n|t"
+    ],
+    "pointy": [
+        "p|oi|n|t|y",
+        "p|ɔɪ|n|t|i"
+    ],
+    "pole": [
+        "p|o|l|e",
+        "p|əʊ|l|"
+    ],
+    "poppy": [
+        "p|o|pp|y",
+        "p|ɒ|p|i"
+    ],
+    "possessed": [
+        "p|o|ss|e|ss|ed",
+        "p|ə|z|ɛ|s|t"
+    ],
+    "possible": [
+        "p|o|ss|i|b|le",
+        "p|ɒ|s|ə|b|əl"
+    ],
+    "power": [
+        "p|ow|er",
+        "p|aʊ|ɐ"
+    ],
+    "powerful": [
+        "p|ow|er|f|u|l",
+        "p|aʊ|ə|f|ə|l"
+    ],
+    "preachy": [
+        "p|r|ea|ch|y",
+        "p|ɹ|iː|tʃ|i"
+    ],
+    "precious": [
+        "p|r|e|ci|ou|s",
+        "p|ɹ|ɛ|ʃ|ə|s"
+    ],
+    "preparations": [
+        "p|r|e|p|a|r|a|tion|s",
+        "p|ɹ|ɛ|p|ə|ɹ|eɪ|ʃən|z"
+    ],
+    "prepare": [
+        "p|r|e|p|are",
+        "p|ɹ|ɪ|p|eə"
+    ],
+    "prepared": [
+        "p|r|e|p|ar|ed",
+        "p|ɹ|ɪ|p|eə|d"
+    ],
+    "presence": [
+        "p|r|e|s|e|n|c|e",
+        "p|ɹ|ɛ|z|ə|n|s|"
+    ],
+    "present [[gift]]": [
+        "p|r|e|s|e|n|t",
+        "p|ɹ|ɛ|z|ə|n|t"
+    ],
+    "present [[give]]": [
+        "p|r|e|s|e|n|t",
+        "p|ɹ|ɛ|z|ɛ|n|t"
+    ],
+    "present [[now]]": [
+        "p|r|e|s|e|n|t",
+        "p|ɹ|ɛ|z|ə|n|t"
+    ],
+    "presentation": [
+        "p|r|e|s|e|n|t|a|tion",
+        "p|ɹ|ɛ|z|ə|n|t|eɪ|ʃən"
+    ],
+    "presented": [
+        "p|r|e|s|e|n|t|e|d",
+        "p|ɹ|ɪ|z|ɛ|n|t|ɪ|d"
+    ],
+    "pressing": [
+        "p|r|e|ss|i|ng",
+        "p|ɹ|ɛ|s|ɪ|ŋ"
+    ],
+    "pretend": [
+        "p|r|e|t|e|n|d",
+        "p|ɹ|ɪ|t|ɛ|n|d"
+    ],
+    "prettily": [
+        "p|r|e|tt|i|l|y",
+        "p|ɹ|ɪ|t|i|l|i"
+    ],
+    "prey": [
+        "p|r|ey",
+        "p|ɹ|eɪ"
+    ],
+    "price": [
+        "p|r|i|c|e",
+        "p|ɹ|aɪ|s|"
+    ],
+    "pride": [
+        "p|r|i|d|e",
+        "p|ɹ|aɪ|d|"
+    ],
+    "principles": [
+        "p|r|i|n|c|i|p|le|s",
+        "p|ɹ|ɪ|n|s|ɪ|p|əl|z"
+    ],
+    "problem": [
+        "p|r|o|b|l|e|m",
+        "p|ɹ|ɒ|b|l|ə|m"
+    ],
+    "problems": [
+        "p|r|o|b|l|e|m|s",
+        "p|ɹ|ɒ|b|l|ə|m|z"
+    ],
+    "promptly": [
+        "p|r|o|m|p|t|l|y",
+        "p|ɹ|ɒ|m|p|t|l|i"
+    ],
+    "proof": [
+        "p|r|oo|f",
+        "p|ɹ|uː|f"
+    ],
+    "proper": [
+        "p|r|o|p|er",
+        "p|ɹ|ɒ|p|ɐ"
+    ],
+    "properly": [
+        "p|r|o|p|er|l|y",
+        "p|ɹ|ɒ|p|ə|l|i"
+    ],
+    "proud": [
+        "p|r|ou|d",
+        "p|ɹ|aʊ|d"
+    ],
+    "public": [
+        "p|u|b|l|i|c",
+        "p|ʌ|b|l|ɪ|k"
+    ],
+    "pull": [
+        "p|u|ll",
+        "p|ʊ|l"
+    ],
+    "pulled": [
+        "p|u|ll|ed",
+        "p|ʊ|l|d"
+    ],
+    "pulley": [
+        "p|u|ll|ey",
+        "p|ʊ|l|i"
+    ],
+    "pulling": [
+        "p|u|ll|i|ng",
+        "p|ʊ|l|ɪ|ŋ"
+    ],
+    "pure": [
+        "p|ur|e",
+        "p|jɔː|"
+    ],
+    "purple": [
+        "p|ur|p|le",
+        "p|ɜː|p|əl"
+    ],
+    "pushes": [
+        "p|u|sh|e|s",
+        "p|ʊ|ʃ|ɪ|z"
+    ],
+    "puts": [
+        "p|u|t|s",
+        "p|ʊ|t|s"
+    ],
+    "putting": [
+        "p|u|tt|i|ng",
+        "p|ʊ|t|ɪ|ŋ"
+    ],
+    "quick": [
+        "qu|i|ck",
+        "kw|ɪ|k"
+    ],
+    "quickly": [
+        "qu|i|ck|l|y",
+        "kw|ɪ|k|l|i"
+    ],
+    "quiet": [
+        "qu|i|e|t",
+        "kw|aɪ|ə|t"
+    ],
+    "quietly": [
+        "qu|i|e|t|l|y",
+        "kw|aɪ|ə|t|l|i"
+    ],
+    "quite": [
+        "qu|i|t|e",
+        "kw|a‍ɪ|t|"
+    ],
+    "radiance": [
+        "r|a|d|i|a|n|c|e",
+        "ɹ|eɪ|d|i|ə|n|s|"
+    ],
+    "radish": [
+        "r|a|d|i|sh",
+        "ɹ|æ|d|ɪ|ʃ"
+    ],
+    "raft": [
+        "r|a|f|t",
+        "ɹ|ɑː|f|t"
+    ],
+    "rag": [
+        "r|a|g",
+        "ɹ|æ|ɡ"
+    ],
+    "rage": [
+        "r|a|g|e",
+        "ɹ|eɪ|dʒ|"
+    ],
+    "raise": [
+        "r|ai|s|e",
+        "ɹ|eɪ|z|"
+    ],
+    "raised": [
+        "r|ai|s|ed",
+        "ɹ|eɪ|z|d"
+    ],
+    "raising": [
+        "r|ai|s|i|ng",
+        "ɹ|eɪ|z|ɪ|ŋ"
+    ],
+    "ram": [
+        "r|a|m",
+        "ɹ|æ|m"
+    ],
+    "rare": [
+        "r|are",
+        "ɹ|eə"
+    ],
+    "rat": [
+        "r|a|t",
+        "ɹ|æ|t"
+    ],
+    "rather": [
+        "r|a|th|er",
+        "ɹ|ɑː|ð|ɐ"
+    ],
+    "ray": [
+        "r|ay",
+        "ɹ|eɪ"
+    ],
+    "re": [
+        "re",
+        "ɹ"
+    ],
+    "reach": [
+        "r|ea|ch",
+        "ɹ|iː|tʃ"
+    ],
+    "reached": [
+        "r|ea|ch|ed",
+        "ɹ|iː|tʃ|t"
+    ],
+    "ready-made": [
+        "r|ea|d|y|-|m|a|d|e",
+        "ɹ|ɛ|d|i||m|eɪ|d|"
+    ],
+    "realised": [
+        "r|ea|l|i|s|ed",
+        "ɹ|iə|l|aɪ|z|d"
+    ],
+    "really": [
+        "r|ea|ll|y",
+        "ɹ|iə|l|i"
+    ],
+    "reason": [
+        "r|ea|s|o|n",
+        "ɹ|iː|z|ə|n"
+    ],
+    "reasonable": [
+        "r|ea|s|o|n|a|b|le",
+        "ɹ|iː|z|ə|n|ə|b|əl"
+    ],
+    "reassured": [
+        "r|e|a|ss|ur|ed",
+        "ɹ|iː|ə|ʃ|jɔː|d"
+    ],
+    "received": [
+        "r|e|c|ei|v|ed",
+        "ɹ|ɪ|s|iː|v|d"
+    ],
+    "recognise": [
+        "r|e|c|o|g|n|i|s|e",
+        "ɹ|ɛ|k|ə|ɡ|n|aɪ|z|"
+    ],
+    "recognised": [
+        "r|e|c|o|g|n|i|s|ed",
+        "ɹ|ɛ|k|ə|ɡ|n|aɪ|z|d"
+    ],
+    "recoiled": [
+        "r|e|c|oi|l|ed",
+        "ɹ|ɪ|k|ɔɪ|l|d"
+    ],
+    "red": [
+        "r|e|d",
+        "ɹ|ɛ|d"
+    ],
+    "red-faced": [
+        "r|e|d|-|f|a|c|ed",
+        "ɹ|ɛ|d||f|eɪ|s|d"
+    ],
+    "region": [
+        "r|e|g|io|n",
+        "ɹ|iː|dʒ|ə|n"
+    ],
+    "regret": [
+        "r|e|g|r|e|t",
+        "ɹ|ɪ|ɡ|ɹ|ɛ|t"
+    ],
+    "regretted": [
+        "r|e|g|r|e|tt|e|d",
+        "ɹ|ɪ|ɡ|ɹ|ɛ|t|ɪ|d"
+    ],
+    "regularly": [
+        "r|e|g|u|l|ar|l|y",
+        "ɹ|ɛ|ɡ|juː|l|ə|l|i"
+    ],
+    "reign": [
+        "r|ei|g|n",
+        "ɹ|eɪ||n"
+    ],
+    "reliable": [
+        "r|e|l|i|a|b|le",
+        "ɹ|ɪ|l|aɪ|ə|b|əl"
+    ],
+    "remained": [
+        "r|e|m|ai|n|ed",
+        "ɹ|ɪ|m|eɪ|n|d"
+    ],
+    "remember": [
+        "r|e|m|e|m|b|er",
+        "ɹ|ɪ|m|ɛ|m|b|ɐ"
+    ],
+    "remembered": [
+        "r|e|m|e|m|b|er|ed",
+        "ɹ|ɪ|m|ɛ|m|b|ə|d"
+    ],
+    "remind": [
+        "r|e|m|i|n|d",
+        "ɹ|ɪ|m|aɪ|n|d"
+    ],
+    "remove": [
+        "r|e|m|o|ve",
+        "ɹ|ɪ|m|uː|v"
+    ],
+    "repairs": [
+        "r|e|p|air|s",
+        "ɹ|ɪ|p|eə|z"
+    ],
+    "repeat": [
+        "r|e|p|ea|t",
+        "ɹ|ɪ|p|iː|t"
+    ],
+    "repeated": [
+        "r|e|p|ea|t|e|d",
+        "ɹ|ɪ|p|iː|t|ɪ|d"
+    ],
+    "replied": [
+        "r|e|p|l|i|ed",
+        "ɹ|ɪ|p|l|aɪ|d"
+    ],
+    "reply": [
+        "r|e|p|l|y",
+        "ɹ|ɪ|p|l|aɪ"
+    ],
+    "reputation": [
+        "r|e|p|u|t|a|tion",
+        "ɹ|ɛ|p|juː|t|eɪ|ʃən"
+    ],
+    "request": [
+        "r|e|qu|e|s|t",
+        "ɹ|ɪ|kw|ɛ|s|t"
+    ],
+    "require": [
+        "r|e|qu|i|r|e",
+        "ɹ|ɪ|kw|aɪ||ə"
+    ],
+    "resentfully": [
+        "r|e|s|e|n|t|f|u|ll|y",
+        "ɹ|ɪ|s|ɛ|n|t|f|ə|l|i"
+    ],
+    "respected": [
+        "r|e|s|p|e|c|t|e|d",
+        "ɹ|ɪ|s|p|ɛ|k|t|ɪ|d"
+    ],
+    "respectfully": [
+        "r|e|s|p|e|c|t|f|u|ll|y",
+        "ɹ|ɪ|s|p|ɛ|k|t|f|ə|l|i"
+    ],
+    "responsible": [
+        "r|e|s|p|o|n|s|i|b|le",
+        "ɹ|ɪ|s|p|ɒ|n|s|ə|b|əl"
+    ],
+    "rest": [
+        "r|e|s|t",
+        "ɹ|ɛ|s|t"
+    ],
+    "return": [
+        "r|e|t|ur|n",
+        "ɹ|ɪ|t|ɜː|n"
+    ],
+    "returned": [
+        "r|e|t|ur|n|ed",
+        "ɹ|ɪ|t|ɜː|n|d"
+    ],
+    "revealed": [
+        "r|e|v|ea|l|ed",
+        "ɹ|ɪ|v|iː|l|d"
+    ],
+    "revolution": [
+        "r|e|v|o|l|u|tion",
+        "ɹ|ɛ|v|ə|l|uː|ʃən"
+    ],
+    "revolver": [
+        "r|e|v|o|l|v|er",
+        "ɹ|ɪ|v|ɒ|l|v|ɐ"
+    ],
+    "rheumatism": [
+        "rh|eu|m|a|t|i|s|m",
+        "ɹ|uː|m|ə|t|ɪ|z|əm"
+    ],
+    "rich": [
+        "r|i|ch",
+        "ɹ|ɪ|tʃ"
+    ],
+    "richest": [
+        "r|i|ch|e|s|t",
+        "ɹ|ɪ|tʃ|ə|s|t"
+    ],
+    "rid": [
+        "r|i|d",
+        "ɹ|ɪ|d"
+    ],
+    "riddles": [
+        "r|i|dd|le|s",
+        "ɹ|ɪ|d|əl|z"
+    ],
+    "ridiculous": [
+        "r|i|d|i|c|u|l|ou|s",
+        "ɹ|ɪ|d|ɪ|k|jʊ|l|ə|s"
+    ],
+    "rim": [
+        "r|i|m",
+        "ɹ|ɪ|m"
+    ],
+    "ring": [
+        "r|i|ng",
+        "ɹ|ɪ|ŋ"
+    ],
+    "rising": [
+        "r|i|s|i|ng",
+        "ɹ|aɪ|z|ɪ|ŋ"
+    ],
+    "risks": [
+        "r|i|s|k|s",
+        "ɹ|ɪ|s|k|s"
+    ],
+    "rivers": [
+        "r|i|v|er|s",
+        "ɹ|ɪ|v|ə|z"
+    ],
+    "road": [
+        "r|oa|d",
+        "ɹ|əʊ|d"
+    ],
+    "roads": [
+        "r|oa|d|s",
+        "ɹ|əʊ|d|z"
+    ],
+    "roaring": [
+        "r|oa|r|i|ng",
+        "ɹ|ɔː|ɹ|ɪ|ŋ"
+    ],
+    "robed": [
+        "r|o|b|ed",
+        "ɹ|əʊ|b|d"
+    ],
+    "rock": [
+        "r|o|ck",
+        "ɹ|ɒ|k"
+    ],
+    "rocked": [
+        "r|o|ck|ed",
+        "ɹ|ɒ|k|t"
+    ],
+    "rocks": [
+        "r|o|ck|s",
+        "ɹ|ɒ|k|s"
+    ],
+    "rocky": [
+        "r|o|ck|y",
+        "ɹ|ɒ|k|i"
+    ],
+    "roof": [
+        "r|oo|f",
+        "ɹ|uː|f"
+    ],
+    "roots": [
+        "r|oo|t|s",
+        "ɹ|uː|t|s"
+    ],
+    "rope": [
+        "r|o|p|e",
+        "ɹ|əʊ|p|"
+    ],
+    "rose": [
+        "r|o|s|e",
+        "ɹ|əʊ|z|"
+    ],
+    "roses": [
+        "r|o|s|e|s",
+        "ɹ|əʊ|z|ɪ|z"
+    ],
+    "rosy": [
+        "r|o|s|y",
+        "ɹ|əʊ|z|i"
+    ],
+    "routine": [
+        "r|ou|t|i|n|e",
+        "ɹ|uː|t|iː|n|"
+    ],
+    "rubbed": [
+        "r|u|bb|ed",
+        "ɹ|ʌ|b|d"
+    ],
+    "ruin": [
+        "r|u|i|n",
+        "ɹ|uː|ɪ|n"
+    ],
+    "rule": [
+        "r|u|l|e",
+        "ɹ|uː|l|"
+    ],
+    "rumpled": [
+        "r|u|m|p|le|d",
+        "ɹ|ʌ|m|p|əl|d"
+    ],
+    "run": [
+        "r|u|n",
+        "ɹ|ʌ|n"
+    ],
+    "running": [
+        "r|u|nn|i|ng",
+        "ɹ|ʌ|n|ɪ|ŋ"
+    ],
+    "rusty": [
+        "r|u|s|t|y",
+        "ɹ|ʌ|s|t|i"
+    ],
+    "sad": [
+        "s|a|d",
+        "s|æ|d"
+    ],
+    "saddest": [
+        "s|a|dd|e|s|t",
+        "s|æ|d|ə|s|t"
+    ],
+    "sadly": [
+        "s|a|d|l|y",
+        "s|æ|d|l|i"
+    ],
+    "sadness": [
+        "s|a|d|n|e|ss",
+        "s|æ|d|n|ə|s"
+    ],
+    "sahara": [
+        "s|a|h|a|r|a",
+        "s|ɑː|h|ɑː|ɹ|ɐ"
+    ],
+    "sailor": [
+        "s|ai|l|or",
+        "s|eɪ|l|ɐ"
+    ],
+    "saint-exupery": [
+        "s|ai|n|t|-|e|x|u|p|e|r|y",
+        "s|ɑː|n|t||ɛ|ks|uː|p|ɛ|ɹ|i"
+    ],
+    "salesman": [
+        "s|a|l|e|s|m|a|n",
+        "s|eɪ|l||z|m|ə|n"
+    ],
+    "salute": [
+        "s|a|l|u|t|e",
+        "s|ə|l|uː|t|"
+    ],
+    "saluted": [
+        "s|a|l|u|t|e|d",
+        "s|ə|l|uː|t|ɪ|d"
+    ],
+    "saluting": [
+        "s|a|l|u|t|i|ng",
+        "s|ə|l|uː|t|ɪ|ŋ"
+    ],
+    "same": [
+        "s|a|m|e",
+        "s|eɪ|m|"
+    ],
+    "sand": [
+        "s|a|n|d",
+        "s|æ|n|d"
+    ],
+    "sands": [
+        "s|a|n|d|s",
+        "s|æ|n|d|z"
+    ],
+    "sat": [
+        "s|a|t",
+        "s|æ|t"
+    ],
+    "satisfied": [
+        "s|a|t|i|s|f|i|ed",
+        "s|æ|t|ɪ|s|f|aɪ|d"
+    ],
+    "save": [
+        "s|a|ve",
+        "s|eɪ|v"
+    ],
+    "says": [
+        "s|ay|s",
+        "s|ɛ|z"
+    ],
+    "scared": [
+        "s|c|ar|ed",
+        "s|k|eə|d"
+    ],
+    "scaring": [
+        "s|c|a|r|i|ng",
+        "s|k|eə|ɹ|ɪ|ŋ"
+    ],
+    "scenes": [
+        "sc|e|n|e|s",
+        "s|iː|n||z"
+    ],
+    "scientists": [
+        "sc|i|e|n|t|i|s|t|s",
+        "s|aɪ|ə|n|t|ɪ|s|t|s"
+    ],
+    "screen": [
+        "s|c|r|ee|n",
+        "s|k|ɹ|iː|n"
+    ],
+    "scribbled": [
+        "s|c|r|i|bb|le|d",
+        "s|k|ɹ|ɪ|b|əl|d"
+    ],
+    "scrupulous": [
+        "s|c|r|u|p|u|l|ou|s",
+        "s|k|ɹ|uː|p|jʊ|l|ə|s"
+    ],
+    "scrupulously": [
+        "s|c|r|u|p|u|l|ou|s|l|y",
+        "s|k|ɹ|uː|p|jʊ|l|ə|s|l|i"
+    ],
+    "sea-bird": [
+        "s|ea|-|b|ir|d",
+        "s|iː||b|ɜː|d"
+    ],
+    "seas": [
+        "s|ea|s",
+        "s|iː|z"
+    ],
+    "second": [
+        "s|e|c|o|n|d",
+        "s|ɛ|k|ə|n|d"
+    ],
+    "secret": [
+        "s|e|c|r|e|t",
+        "s|iː|k|ɹ|ə|t"
+    ],
+    "securely": [
+        "s|e|c|ur|e|l|y",
+        "s|ɪ|k|jɔː||l|i"
+    ],
+    "seed": [
+        "s|ee|d",
+        "s|iː|d"
+    ],
+    "seems": [
+        "s|ee|m|s",
+        "s|iː|m|z"
+    ],
+    "seen": [
+        "s|ee|n",
+        "s|iː|n"
+    ],
+    "selected": [
+        "s|e|l|e|c|t|e|d",
+        "s|ɪ|l|ɛ|k|t|ɪ|d"
+    ],
+    "selling": [
+        "s|e|ll|i|ng",
+        "s|ɛ|l|ɪ|ŋ"
+    ],
+    "send": [
+        "s|e|n|d",
+        "s|ɛ|n|d"
+    ],
+    "sensation": [
+        "s|e|n|s|a|tion",
+        "s|ɛ|n|s|eɪ|ʃən"
+    ],
+    "sense": [
+        "s|e|n|se",
+        "s|ɛ|n|s"
+    ],
+    "sensibly": [
+        "s|e|n|s|i|b|l|y",
+        "s|ɛ|n|s|ə|b|l|i"
+    ],
+    "serious": [
+        "s|er|i|ou|s",
+        "s|iəɹ|ɪ|ə|s"
+    ],
+    "seriously": [
+        "s|er|i|ou|s|l|y",
+        "s|iəɹ|ɪ|ə|s|l|i"
+    ],
+    "seriousness": [
+        "s|er|i|ou|s|n|e|ss",
+        "s|iəɹ|ɪ|ə|s|n|ə|s"
+    ],
+    "set": [
+        "s|e|t",
+        "s|ɛ|t"
+    ],
+    "setting": [
+        "s|e|tt|i|ng",
+        "s|ɛ|t|ɪ|ŋ"
+    ],
+    "seventh": [
+        "s|e|v|e|n|th",
+        "s|ɛ|v|ə|n|θ"
+    ],
+    "seventy-two": [
+        "s|e|v|e|n|t|y|-|t|w|o",
+        "s|ɛ|v|ə|n|t|i||t||uː"
+    ],
+    "shake": [
+        "sh|a|k|e",
+        "ʃ|eɪ|k|"
+    ],
+    "shame": [
+        "sh|a|m|e",
+        "ʃ|eɪ|m|"
+    ],
+    "sharp": [
+        "sh|ar|p",
+        "ʃ|ɑː|p"
+    ],
+    "sharpened": [
+        "sh|ar|p|e|n|ed",
+        "ʃ|ɑː|p|ə|n|d"
+    ],
+    "sheep": [
+        "sh|ee|p",
+        "ʃ|iː|p"
+    ],
+    "sheet": [
+        "sh|ee|t",
+        "ʃ|iː|t"
+    ],
+    "shell": [
+        "sh|e|ll",
+        "ʃ|ɛ|l"
+    ],
+    "shells": [
+        "sh|e|ll|s",
+        "ʃ|ɛ|l|z"
+    ],
+    "shelter": [
+        "sh|e|l|t|er",
+        "ʃ|ɛ|l|t|ɐ"
+    ],
+    "sheltered": [
+        "sh|e|l|t|er|ed",
+        "ʃ|ɛ|l|t|ə|d"
+    ],
+    "shining": [
+        "sh|i|n|i|ng",
+        "ʃ|aɪ|n|ɪ|ŋ"
+    ],
+    "shiny": [
+        "sh|i|n|y",
+        "ʃ|aɪ|n|i"
+    ],
+    "ship": [
+        "sh|i|p",
+        "ʃ|ɪ|p"
+    ],
+    "shipwrecked": [
+        "sh|i|p|wr|e|ck|ed",
+        "ʃ|ɪ|p|ɹ|ɛ|k|t"
+    ],
+    "shock": [
+        "sh|o|ck",
+        "ʃ|ɒ|k"
+    ],
+    "shook": [
+        "sh|oo|k",
+        "ʃ|ʊ|k"
+    ],
+    "shoot": [
+        "sh|oo|t",
+        "ʃ|uː|t"
+    ],
+    "shoots": [
+        "sh|oo|t|s",
+        "ʃ|uː|t|s"
+    ],
+    "shops": [
+        "sh|o|p|s",
+        "ʃ|ɒ|p|s"
+    ],
+    "short": [
+        "sh|or|t",
+        "ʃ|ɔː|t"
+    ],
+    "shot": [
+        "sh|o|t",
+        "ʃ|ɒ|t"
+    ],
+    "shoulders": [
+        "sh|ou|l|d|er|s",
+        "ʃ|əʊ|l|d|ə|z"
+    ],
+    "shouted": [
+        "sh|ou|t|e|d",
+        "ʃ|aʊ|t|ɪ|d"
+    ],
+    "showed": [
+        "sh|ow|ed",
+        "ʃ|əʊ|d"
+    ],
+    "showing": [
+        "sh|ow|i|ng",
+        "ʃ|əʊ|ɪ|ŋ"
+    ],
+    "shrug": [
+        "sh|r|u|g",
+        "ʃ|ɹ|ʌ|ɡ"
+    ],
+    "shrugging": [
+        "sh|r|u|gg|i|ng",
+        "ʃ|ɹ|ʌ|ɡ|ɪ|ŋ"
+    ],
+    "shyly": [
+        "sh|y|l|y",
+        "ʃ|aɪ|l|i"
+    ],
+    "siberia": [
+        "s|i|b|e|r|i|a",
+        "s|a‍ɪ|b|iə|ɹ|i|ɐ"
+    ],
+    "sick": [
+        "s|i|ck",
+        "s|ɪ|k"
+    ],
+    "side": [
+        "s|i|d|e",
+        "s|aɪ|d|"
+    ],
+    "sigh": [
+        "s|igh",
+        "s|aɪ"
+    ],
+    "sighed": [
+        "s|igh|ed",
+        "s|aɪ|d"
+    ],
+    "silence": [
+        "s|i|l|e|n|c|e",
+        "s|aɪ|l|ə|n|s|"
+    ],
+    "silent": [
+        "s|i|l|e|n|t",
+        "s|aɪ|l|ə|n|t"
+    ],
+    "silently": [
+        "s|i|l|e|n|t|l|y",
+        "s|aɪ|l|ə|n|t|l|i"
+    ],
+    "silly": [
+        "s|i|ll|y",
+        "s|ɪ|l|i"
+    ],
+    "simple": [
+        "s|i|m|p|le",
+        "s|ɪ|m|p|əl"
+    ],
+    "simpler": [
+        "s|i|m|p|l|er",
+        "s|ɪ|m|p|l|ɐ"
+    ],
+    "simplicity": [
+        "s|i|m|p|l|i|c|i|t|y",
+        "s|ɪ|m|p|l|ɪ|s|ɪ|t|i"
+    ],
+    "since": [
+        "s|i|n|c|e",
+        "s|ɪ|n|s|"
+    ],
+    "singing": [
+        "s|i|ng|i|ng",
+        "s|ɪ|ŋ|ɪ|ŋ"
+    ],
+    "sire": [
+        "s|i|r|e",
+        "s|aɪ||ə"
+    ],
+    "sitting": [
+        "s|i|tt|i|ng",
+        "s|ɪ|t|ɪ|ŋ"
+    ],
+    "sixth": [
+        "s|i|x|th",
+        "s|ɪ|ks|θ"
+    ],
+    "sixty-two": [
+        "s|i|x|t|y|-|t|w|o",
+        "s|ɪ|ks|t|i||t||uː"
+    ],
+    "size": [
+        "s|i|z|e",
+        "s|aɪ|z|"
+    ],
+    "sketched": [
+        "s|k|e|tch|ed",
+        "s|k|ɛ|tʃ|t"
+    ],
+    "sketches": [
+        "s|k|e|tch|e|s",
+        "s|k|ɛ|tʃ|ɪ|z"
+    ],
+    "sky": [
+        "s|k|y",
+        "s|k|aɪ"
+    ],
+    "sleep": [
+        "s|l|ee|p",
+        "s|l|iː|p"
+    ],
+    "sleeping": [
+        "s|l|ee|p|i|ng",
+        "s|l|iː|p|ɪ|ŋ"
+    ],
+    "slept": [
+        "s|l|e|p|t",
+        "s|l|ɛ|p|t"
+    ],
+    "slid": [
+        "s|l|i|d",
+        "s|l|ɪ|d"
+    ],
+    "slightly": [
+        "s|l|igh|t|l|y",
+        "s|l|aɪ|t|l|i"
+    ],
+    "slowly": [
+        "s|l|ow|l|y",
+        "s|l|əʊ|l|i"
+    ],
+    "smallest": [
+        "s|m|a|ll|e|s|t",
+        "s|m|ɔː|l|ə|s|t"
+    ],
+    "smart": [
+        "s|m|ar|t",
+        "s|m|ɑː|t"
+    ],
+    "smartest": [
+        "s|m|ar|t|e|s|t",
+        "s|m|ɑː|t|ə|s|t"
+    ],
+    "smell": [
+        "s|m|e|ll",
+        "s|m|ɛ|l"
+    ],
+    "smelled": [
+        "s|m|e|ll|ed",
+        "s|m|ɛ|l|d"
+    ],
+    "smile": [
+        "s|m|i|l|e",
+        "s|m|aɪ|l|"
+    ],
+    "smiled": [
+        "s|m|i|l|ed",
+        "s|m|aɪ|l|d"
+    ],
+    "smiles": [
+        "s|m|i|l|e|s",
+        "s|m|aɪ|l||z"
+    ],
+    "smoothing": [
+        "s|m|oo|th|i|ng",
+        "s|m|uː|ð|ɪ|ŋ"
+    ],
+    "snow": [
+        "s|n|ow",
+        "s|n|əʊ"
+    ],
+    "sob": [
+        "s|o|b",
+        "s|ɒ|b"
+    ],
+    "softly": [
+        "s|o|f|t|l|y",
+        "s|ɒ|f|t|l|i"
+    ],
+    "softness": [
+        "s|o|f|t|n|e|ss",
+        "s|ɒ|f|t|n|ə|s"
+    ],
+    "sold": [
+        "s|o|l|d",
+        "s|əʊ|l|d"
+    ],
+    "solve": [
+        "s|o|l|ve",
+        "s|ɒ|l|v"
+    ],
+    "someone": [
+        "s|o|m|e|o|n|e",
+        "s|ʌ|m||wɒ|n|"
+    ],
+    "something": [
+        "s|o|m|e|th|i|ng",
+        "s|ʌ|m||θ|ɪ|ŋ"
+    ],
+    "sometimes": [
+        "s|o|m|e|t|i|m|e|s",
+        "s|ʌ|m||t|aɪ|m||z"
+    ],
+    "song": [
+        "s|o|ng",
+        "s|ɒ|ŋ"
+    ],
+    "soon": [
+        "s|oo|n",
+        "s|uː|n"
+    ],
+    "sort": [
+        "s|or|t",
+        "s|ɔː|t"
+    ],
+    "sorts": [
+        "s|or|t|s",
+        "s|ɔː|t|s"
+    ],
+    "sounded": [
+        "s|ou|n|d|e|d",
+        "s|aʊ|n|d|ɪ|d"
+    ],
+    "space": [
+        "s|p|a|c|e",
+        "s|p|eɪ|s|"
+    ],
+    "speaking": [
+        "s|p|ea|k|i|ng",
+        "s|p|iː|k|ɪ|ŋ"
+    ],
+    "special": [
+        "s|p|e|ci|a|l",
+        "s|p|ɛ|ʃ|ə|l"
+    ],
+    "spectacle": [
+        "s|p|e|c|t|a|c|le",
+        "s|p|ɛ|k|t|ə|k|əl"
+    ],
+    "spell": [
+        "s|p|e|ll",
+        "s|p|ɛ|l"
+    ],
+    "split": [
+        "s|p|l|i|t",
+        "s|p|l|ɪ|t"
+    ],
+    "spoke": [
+        "s|p|o|k|e",
+        "s|p|əʊ|k|"
+    ],
+    "sprouted": [
+        "s|p|r|ou|t|e|d",
+        "s|p|ɹ|aʊ|t|ɪ|d"
+    ],
+    "square": [
+        "s|qu|are",
+        "s|kw|eə"
+    ],
+    "stammered": [
+        "s|t|a|mm|er|ed",
+        "s|t|æ|m|ə|d"
+    ],
+    "stand": [
+        "s|t|a|n|d",
+        "s|t|æ|n|d"
+    ],
+    "standing": [
+        "s|t|a|n|d|i|ng",
+        "s|t|æ|n|d|ɪ|ŋ"
+    ],
+    "star": [
+        "s|t|ar",
+        "s|t|ɑː"
+    ],
+    "stared": [
+        "s|t|ar|ed",
+        "s|t|eə|d"
+    ],
+    "stars": [
+        "s|t|ar|s",
+        "s|t|ɑː|z"
+    ],
+    "start": [
+        "s|t|ar|t",
+        "s|t|ɑː|t"
+    ],
+    "started": [
+        "s|t|ar|t|e|d",
+        "s|t|ɑː|t|ɪ|d"
+    ],
+    "starting": [
+        "s|t|ar|t|i|ng",
+        "s|t|ɑː|t|ɪ|ŋ"
+    ],
+    "stay": [
+        "s|t|ay",
+        "s|t|eɪ"
+    ],
+    "stayed": [
+        "s|t|ay|ed",
+        "s|t|eɪ|d"
+    ],
+    "stays": [
+        "s|t|ay|s",
+        "s|t|eɪ|z"
+    ],
+    "steadily": [
+        "s|t|ea|d|i|l|y",
+        "s|t|ɛ|d|ɪ|l|i"
+    ],
+    "step": [
+        "s|t|e|p",
+        "s|t|ɛ|p"
+    ],
+    "steps": [
+        "s|t|e|p|s",
+        "s|t|ɛ|p|s"
+    ],
+    "stone": [
+        "s|t|o|n|e",
+        "s|t|əʊ|n|"
+    ],
+    "stood": [
+        "s|t|oo|d",
+        "s|t|ʊ|d"
+    ],
+    "stool": [
+        "s|t|oo|l",
+        "s|t|uː|l"
+    ],
+    "stop": [
+        "s|t|o|p",
+        "s|t|ɒ|p"
+    ],
+    "stopped": [
+        "s|t|o|pp|ed",
+        "s|t|ɒ|p|t"
+    ],
+    "story": [
+        "s|t|o|r|y",
+        "s|t|ɔː|ɹ|i"
+    ],
+    "straight": [
+        "s|t|r|ai|gh|t",
+        "s|t|ɹ|eɪ||t"
+    ],
+    "straightforward": [
+        "s|t|r|ai|gh|t|f|or|w|ar|d",
+        "s|t|ɹ|eɪ||t|f|ɔː|w|ə|d"
+    ],
+    "strange": [
+        "s|t|r|a|n|g|e",
+        "s|t|ɹ|eɪ|n|dʒ|"
+    ],
+    "strangest": [
+        "s|t|r|a|n|g|e|s|t",
+        "s|t|ɹ|eɪ|n|dʒ|ə|s|t"
+    ],
+    "strap": [
+        "s|t|r|a|p",
+        "s|t|ɹ|æ|p"
+    ],
+    "strength": [
+        "s|t|r|e|ng|th",
+        "s|t|ɹ|ɛ|ŋ|θ"
+    ],
+    "stretches": [
+        "s|t|r|e|tch|e|s",
+        "s|t|ɹ|ɛ|tʃ|ɪ|z"
+    ],
+    "struck": [
+        "s|t|r|u|ck",
+        "s|t|ɹ|ʌ|k"
+    ],
+    "stuck": [
+        "s|t|u|ck",
+        "s|t|ʌ|k"
+    ],
+    "stuff": [
+        "s|t|u|ff",
+        "s|t|ʌ|f"
+    ],
+    "stumbling": [
+        "s|t|u|m|b|l|i|ng",
+        "s|t|ʌ|m|b|l|ɪ|ŋ"
+    ],
+    "stunned": [
+        "s|t|u|nn|ed",
+        "s|t|ʌ|n|d"
+    ],
+    "stupid": [
+        "s|t|u|p|i|d",
+        "s|t|juː|p|ɪ|d"
+    ],
+    "subject": [
+        "s|u|b|j|e|c|t",
+        "s|ʌ|b|d‍ʒ|ɛ|k|t"
+    ],
+    "succeeded": [
+        "s|u|c|c|ee|d|e|d",
+        "s|ə|k|s|iː|d|ɪ|d"
+    ],
+    "suddenly": [
+        "s|u|dd|e|n|l|y",
+        "s|ʌ|d|ə|n|l|i"
+    ],
+    "suffer": [
+        "s|u|ff|er",
+        "s|ʌ|f|ɐ"
+    ],
+    "suit": [
+        "s|ui|t",
+        "s|uː|t"
+    ],
+    "sums": [
+        "s|u|m|s",
+        "s|ʌ|m|z"
+    ],
+    "sun": [
+        "s|u|n",
+        "s|ʌ|n"
+    ],
+    "sunlight": [
+        "s|u|n|l|igh|t",
+        "s|ʌ|n|l|aɪ|t"
+    ],
+    "sunset": [
+        "s|u|n|s|e|t",
+        "s|ʌ|n|s|ɛ|t"
+    ],
+    "sunsets": [
+        "s|u|n|s|e|t|s",
+        "s|ʌ|n|s|ɛ|t|s"
+    ],
+    "sunshine": [
+        "s|u|n|sh|i|n|e",
+        "s|ʌ|n|ʃ|aɪ|n|"
+    ],
+    "superb": [
+        "s|u|p|er|b",
+        "s|uː|p|ɜː|b"
+    ],
+    "supposed [[assumed]]": [
+        "s|u|pp|o|s|ed",
+        "s|ʌ|p|əʊ|z|d"
+    ],
+    "supposed [[meant]]": [
+        "s|u|pp|o|s|ed",
+        "s|ʌ|p|əʊ|s|t"
+    ],
+    "sure": [
+        "su|r|e",
+        "ʃɔː||"
+    ],
+    "surface": [
+        "s|ur|f|a|c|e",
+        "s|ɜː|f|ɪ|s|"
+    ],
+    "surprised": [
+        "s|u|r|p|r|i|s|ed",
+        "s|ə||p|ɹ|aɪ|z|d"
+    ],
+    "surrounded": [
+        "s|u|rr|ou|n|d|e|d",
+        "s|ə|ɹ|aʊ|n|d|ɪ|d"
+    ],
+    "swallow": [
+        "s|w|a|ll|ow",
+        "s|w|ɒ|l|əʊ"
+    ],
+    "swallowed": [
+        "s|w|a|ll|ow|ed",
+        "s|w|ɒ|l|əʊ|d"
+    ],
+    "swallowing": [
+        "s|w|a|ll|ow|i|ng",
+        "s|w|ɒ|l|əʊ|ɪ|ŋ"
+    ],
+    "sweet": [
+        "s|w|ee|t",
+        "s|w|iː|t"
+    ],
+    "sweetly": [
+        "s|w|ee|t|l|y",
+        "s|w|iː|t|l|i"
+    ],
+    "sweetness": [
+        "s|w|ee|t|n|e|ss",
+        "s|w|iː|t|n|ə|s"
+    ],
+    "swell": [
+        "s|w|e|ll",
+        "s|w|ɛ|l"
+    ],
+    "swelling": [
+        "s|w|e|ll|i|ng",
+        "s|w|ɛ|l|ɪ|ŋ"
+    ],
+    "switched": [
+        "s|w|i|tch|ed",
+        "s|w|ɪ|tʃ|t"
+    ],
+    "switchman": [
+        "s|w|i|tch|m|a|n",
+        "s|w|ɪ|tʃ|m|æ|n"
+    ],
+    "table": [
+        "t|a|b|le",
+        "t|eɪ|b|əl"
+    ],
+    "taken": [
+        "t|a|k|e|n",
+        "t|eɪ|k|ə|n"
+    ],
+    "takes": [
+        "t|a|k|e|s",
+        "t|eɪ|k||s"
+    ],
+    "taking": [
+        "t|a|k|i|ng",
+        "t|eɪ|k|ɪ|ŋ"
+    ],
+    "talk": [
+        "t|al|k",
+        "t|ɔː|k"
+    ],
+    "talked": [
+        "t|al|k|ed",
+        "t|ɔː|k|t"
+    ],
+    "tall": [
+        "t|a|ll",
+        "t|ɔː|l"
+    ],
+    "taller": [
+        "t|a|ll|er",
+        "t|ɔː|l|ɐ"
+    ],
+    "tame": [
+        "t|a|m|e",
+        "t|eɪ|m|"
+    ],
+    "tamed": [
+        "t|a|m|ed",
+        "t|eɪ|m|d"
+    ],
+    "tears [[in eye]]": [
+        "t|ear|s",
+        "t|iə|z"
+    ],
+    "tears [[rips]]": [
+        "t|ear|s",
+        "t|eə|z"
+    ],
+    "telescope": [
+        "t|e|l|e|s|c|o|p|e",
+        "t|ɛ|l|ɪ|s|k|əʊ|p|"
+    ],
+    "telling": [
+        "t|e|ll|i|ng",
+        "t|ɛ|l|ɪ|ŋ"
+    ],
+    "tells": [
+        "t|e|ll|s",
+        "t|ɛ|l|z"
+    ],
+    "temples": [
+        "t|e|m|p|le|s",
+        "t|ɛ|m|p|əl|z"
+    ],
+    "ten": [
+        "t|e|n",
+        "t|ɛ|n"
+    ],
+    "tenderness": [
+        "t|e|n|d|er|n|e|ss",
+        "t|ɛ|n|d|ə|n|ə|s"
+    ],
+    "terribly": [
+        "t|e|rr|i|b|l|y",
+        "t|ɛ|ɹ|ə|b|l|i"
+    ],
+    "terrified": [
+        "t|e|rr|i|f|i|ed",
+        "t|ɛ|ɹ|ɪ|f|aɪ|d"
+    ],
+    "tether": [
+        "t|e|th|er",
+        "t|ɛ|ð|ɐ"
+    ],
+    "thanks": [
+        "th|a|n|k|s",
+        "θ|æ|ŋ|k|s"
+    ],
+    "themselves": [
+        "th|e|m|s|e|l|ve|s",
+        "ð|ɛ|m|s|ɛ|l|v|z"
+    ],
+    "thin": [
+        "th|i|n",
+        "θ|ɪ|n"
+    ],
+    "thinking": [
+        "th|i|n|k|i|ng",
+        "θ|ɪ|ŋ|k|ɪ|ŋ"
+    ],
+    "thinks": [
+        "th|i|n|k|s",
+        "θ|ɪ|ŋ|k|s"
+    ],
+    "third": [
+        "th|ir|d",
+        "θ|ɜː|d"
+    ],
+    "thirst": [
+        "th|ir|s|t",
+        "θ|ɜː|s|t"
+    ],
+    "thirst-quenching": [
+        "th|ir|s|t|-|qu|e|n|ch|i|ng",
+        "θ|ɜː|s|t||kw|ɛ|n|tʃ|ɪ|ŋ"
+    ],
+    "thirsty": [
+        "th|ir|s|t|y",
+        "θ|ɜː|s|t|i"
+    ],
+    "thirty-one": [
+        "th|ir|t|y|-|o|n|e",
+        "θ|ɜː|t|i||wɒ|n|"
+    ],
+    "thoroughly": [
+        "th|o|r|ou|gh|l|y",
+        "θ|ʌ|ɹ|ə||l|i"
+    ],
+    "thought": [
+        "th|ough|t",
+        "θ|ɔː|t"
+    ],
+    "thoughtful": [
+        "th|ough|t|f|u|l",
+        "θ|ɔː|t|f|ə|l"
+    ],
+    "thoughts": [
+        "th|ough|t|s",
+        "θ|ɔː|t|s"
+    ],
+    "thread": [
+        "th|r|ea|d",
+        "θ|ɹ|ɛ|d"
+    ],
+    "threatened": [
+        "th|r|ea|t|e|n|ed",
+        "θ|ɹ|ɛ|t|ə|n|d"
+    ],
+    "three": [
+        "th|r|ee",
+        "θ|ɹ|iː"
+    ],
+    "throat": [
+        "th|r|oa|t",
+        "θ|ɹ|əʊ|t"
+    ],
+    "throne": [
+        "th|r|o|n|e",
+        "θ|ɹ|əʊ|n|"
+    ],
+    "thunder": [
+        "th|u|n|d|er",
+        "θ|ʌ|n|d|ɐ"
+    ],
+    "thundered": [
+        "th|u|n|d|er|ed",
+        "θ|ʌ|n|d|ə|d"
+    ],
+    "thursday": [
+        "th|ur|s|d|ay",
+        "θ|ɜː|z|d|eɪ"
+    ],
+    "tidied": [
+        "t|i|d|i|ed",
+        "t|aɪ|d|i|d"
+    ],
+    "ties": [
+        "t|ie|s",
+        "t|aɪ|z"
+    ],
+    "times": [
+        "t|i|m|e|s",
+        "t|aɪ|m||z"
+    ],
+    "timidly": [
+        "t|i|m|i|d|l|y",
+        "t|ɪ|m|ɪ|d|l|i"
+    ],
+    "tiny": [
+        "t|i|n|y",
+        "t|aɪ|n|i"
+    ],
+    "tired": [
+        "t|i|r|ed",
+        "t|aɪ|ə|d"
+    ],
+    "tiring": [
+        "t|i|r|i|ng",
+        "t|aɪə|ɹ|ɪ|ŋ"
+    ],
+    "today": [
+        "t|o|d|ay",
+        "t|ə|d|eɪ"
+    ],
+    "together": [
+        "t|o|g|e|th|er",
+        "t|ə|ɡ|ɛ|ð|ɐ"
+    ],
+    "tolerant": [
+        "t|o|l|er|a|n|t",
+        "t|ɒ|l|əɹ|ə|n|t"
+    ],
+    "tolerate": [
+        "t|o|l|er|a|t|e",
+        "t|ɒ|l|əɹ|eɪ|t|"
+    ],
+    "tomorrow": [
+        "t|o|m|o|rr|ow",
+        "t|ə|m|ɒ|ɹ|əʊ"
+    ],
+    "tone": [
+        "t|o|n|e",
+        "t|əʊ|n|"
+    ],
+    "tonight": [
+        "t|o|n|igh|t",
+        "t|ə|n|aɪ|t"
+    ],
+    "too": [
+        "t|oo",
+        "t|uː"
+    ],
+    "took": [
+        "t|oo|k",
+        "t|ʊ|k"
+    ],
+    "tools": [
+        "t|oo|l|s",
+        "t|uː|l|z"
+    ],
+    "top": [
+        "t|o|p",
+        "t|ɒ|p"
+    ],
+    "totally": [
+        "t|o|t|a|ll|y",
+        "t|əʊ|t|ə|l|i"
+    ],
+    "touch": [
+        "t|ou|ch",
+        "t|ʌ|tʃ"
+    ],
+    "tragedy": [
+        "t|r|a|g|e|d|y",
+        "t|ɹ|æ|dʒ|ə|d|i"
+    ],
+    "train": [
+        "t|r|ai|n",
+        "t|ɹ|eɪ|n"
+    ],
+    "trains": [
+        "t|r|ai|n|s",
+        "t|ɹ|eɪ|n|z"
+    ],
+    "travel": [
+        "t|r|a|v|e|l",
+        "t|ɹ|æ|v|ə|l"
+    ],
+    "travelled": [
+        "t|r|a|v|e|ll|ed",
+        "t|ɹ|æ|v|ə|l|d"
+    ],
+    "travellers": [
+        "t|r|a|v|e|ll|er|s",
+        "t|ɹ|æ|v|ɛ|l|ə|z"
+    ],
+    "travelling": [
+        "t|r|a|v|e|ll|i|ng",
+        "t|ɹ|æ|v|ə|l|ɪ|ŋ"
+    ],
+    "treasure": [
+        "t|r|ea|s|ure",
+        "t|ɹ|ɛ|ʒ|ɐ"
+    ],
+    "treat": [
+        "t|r|ea|t",
+        "t|ɹ|iː|t"
+    ],
+    "treated": [
+        "t|r|ea|t|e|d",
+        "t|ɹ|iː|t|ɪ|d"
+    ],
+    "tree": [
+        "t|r|ee",
+        "t|ɹ|iː"
+    ],
+    "trees": [
+        "t|r|ee|s",
+        "t|ɹ|iː|z"
+    ],
+    "trembling": [
+        "t|r|e|m|b|l|i|ng",
+        "t|ɹ|ɛ|m|b|l|ɪ|ŋ"
+    ],
+    "tribal": [
+        "t|r|i|b|a|l",
+        "t|ɹ|aɪ|b|ə|l"
+    ],
+    "trick": [
+        "t|r|i|ck",
+        "t|ɹ|ɪ|k"
+    ],
+    "tried": [
+        "t|r|i|ed",
+        "t|ɹ|aɪ|d"
+    ],
+    "trip": [
+        "t|r|i|p",
+        "t|ɹ|ɪ|p"
+    ],
+    "trouble": [
+        "t|r|ou|b|le",
+        "t|ɹ|ʌ|b|əl"
+    ],
+    "trust": [
+        "t|r|u|s|t",
+        "t|ɹ|ʌ|s|t"
+    ],
+    "truths": [
+        "t|r|u|th|s",
+        "t|ɹ|uː|θ|s"
+    ],
+    "trying": [
+        "t|r|y|i|ng",
+        "t|ɹ|aɪ|ɪ|ŋ"
+    ],
+    "turn": [
+        "t|ur|n",
+        "t|ɜː|n"
+    ],
+    "turned": [
+        "t|ur|n|ed",
+        "t|ɜː|n|d"
+    ],
+    "turning": [
+        "t|ur|n|i|ng",
+        "t|ɜː|n|ɪ|ŋ"
+    ],
+    "turns": [
+        "t|ur|n|s",
+        "t|ɜː|n|z"
+    ],
+    "twelve": [
+        "t|w|e|l|ve",
+        "t|w|ɛ|l|v"
+    ],
+    "twenty": [
+        "t|w|e|n|t|y",
+        "t|w|ɛ|n|t|i"
+    ],
+    "twenty-eight": [
+        "t|w|e|n|t|y|-|ei|gh|t",
+        "t|w|ɛ|n|t|i||eɪ||t"
+    ],
+    "twenty-four": [
+        "t|w|e|n|t|y|-|f|our",
+        "t|w|ɛ|n|t|i||f|ɔː"
+    ],
+    "twenty-six": [
+        "t|w|e|n|t|y|-|s|i|x",
+        "t|w|ɛ|n|t|i||s|ɪ|ks"
+    ],
+    "twenty-two": [
+        "t|w|e|n|t|y|-|t|w|o",
+        "t|w|ɛ|n|t|i||t||uː"
+    ],
+    "twice": [
+        "t|w|i|c|e",
+        "t|w|aɪ|s|"
+    ],
+    "ugly": [
+        "u|g|l|y",
+        "ʌ|ɡ|l|i"
+    ],
+    "uh": [
+        "u|h",
+        "ʌ|"
+    ],
+    "unable": [
+        "u|n|a|b|le",
+        "ʌ|n|eɪ|b|əl"
+    ],
+    "uncertain": [
+        "u|n|c|er|t|ai|n",
+        "ʌ|n|s|ɜː|t|ə|n"
+    ],
+    "under": [
+        "u|n|d|er",
+        "ʌ|n|d|ɐ"
+    ],
+    "underground": [
+        "u|n|d|er|g|r|ou|n|d",
+        "ʌ|n|d|ɐ|ɡ|ɹ|a‍ʊ|n|d"
+    ],
+    "understand": [
+        "u|n|d|er|s|t|a|n|d",
+        "ʌ|n|d|ə|s|t|æ|n|d"
+    ],
+    "understands": [
+        "u|n|d|er|s|t|a|n|d|s",
+        "ʌ|n|d|ə|s|t|æ|n|d|z"
+    ],
+    "understood": [
+        "u|n|d|er|s|t|oo|d",
+        "ʌ|n|d|ə|s|t|ʊ|d"
+    ],
+    "undid": [
+        "u|n|d|i|d",
+        "ʌ|n|d|ɪ|d"
+    ],
+    "unfortunately": [
+        "u|n|f|or|tu|n|a|t|e|l|y",
+        "ʌ|n|f|ɔː|tʃə|n|ə|t||l|i"
+    ],
+    "unhappy": [
+        "u|n|h|a|pp|y",
+        "ʌ|n|h|æ|p|i"
+    ],
+    "unique": [
+        "u|n|i|qu|e",
+        "juː|n|iː|k|"
+    ],
+    "universal": [
+        "u|n|i|v|er|s|a|l",
+        "juː|n|ɪ|v|ɜː|s|ə|l"
+    ],
+    "unscrew": [
+        "u|n|s|c|r|ew",
+        "ʌ|n|s|k|ɹ|uː"
+    ],
+    "until": [
+        "u|n|t|i|l",
+        "ʌ|n|t|ɪ|l"
+    ],
+    "upon": [
+        "u|p|o|n",
+        "ə|p|ɒ|n"
+    ],
+    "upset": [
+        "u|p|s|e|t",
+        "ʌ|p|s|ɛ|t"
+    ],
+    "urgent": [
+        "ur|g|e|n|t",
+        "ɜː|dʒ|ə|n|t"
+    ],
+    "us": [
+        "u|s",
+        "ʌ|s"
+    ],
+    "use [[noun]]": [
+        "u|s|e",
+        "juː|s|"
+    ],
+    "use [[verb]]": [
+        "u|s|e",
+        "juː|z|"
+    ],
+    "used": [
+        "u|s|ed",
+        "juː|z|d"
+    ],
+    "useless": [
+        "u|se|l|e|ss",
+        "juː|s|l|ə|s"
+    ],
+    "usual": [
+        "u|s|u|a|l",
+        "juː|ʒ|uː|ə|l"
+    ],
+    "usually": [
+        "u|s|u|a|ll|y",
+        "juː|ʒ|uː|ə|l|i"
+    ],
+    "vacation": [
+        "v|a|c|a|tion",
+        "v|eɪ|k|eɪ|ʃən"
+    ],
+    "vain": [
+        "v|ai|n",
+        "v|eɪ|n"
+    ],
+    "venom": [
+        "v|e|n|o|m",
+        "v|ɛ|n|ə|m"
+    ],
+    "venus": [
+        "v|e|n|u|s",
+        "v|iː|n|ə|s"
+    ],
+    "veritable": [
+        "v|e|r|i|t|a|b|le",
+        "v|ɛ|ɹ|ɪ|t|ə|b|əl"
+    ],
+    "village": [
+        "v|i|ll|a|g|e",
+        "v|ɪ|l|ɪ|dʒ|"
+    ],
+    "visit": [
+        "v|i|s|i|t",
+        "v|ɪ|z|ɪ|t"
+    ],
+    "visited": [
+        "v|i|s|i|t|e|d",
+        "v|ɪ|z|ɪ|t|ɪ|d"
+    ],
+    "visits": [
+        "v|i|s|i|t|s",
+        "v|ɪ|z|ɪ|t|s"
+    ],
+    "voice": [
+        "v|oi|c|e",
+        "v|ɔɪ|s|"
+    ],
+    "volcanic": [
+        "v|o|l|c|a|n|i|c",
+        "v|ɒ|l|k|æ|n|ɪ|k"
+    ],
+    "volcanoes": [
+        "v|o|l|c|a|n|oe|s",
+        "v|ɒ|l|k|eɪ|n|əʊ|z"
+    ],
+    "voyage": [
+        "v|oy|a|g|e",
+        "v|ɔɪ|ɪ|dʒ|"
+    ],
+    "vulgar": [
+        "v|u|l|g|a|r",
+        "v|ʌ|l|ɡ|ɐ|"
+    ],
+    "waited": [
+        "w|ai|t|e|d",
+        "w|eɪ|t|ɪ|d"
+    ],
+    "walk": [
+        "w|al|k",
+        "w|ɔː|k"
+    ],
+    "walked": [
+        "w|al|k|ed",
+        "w|ɔː|k|t"
+    ],
+    "walking": [
+        "w|al|k|i|ng",
+        "w|ɔː|k|ɪ|ŋ"
+    ],
+    "wall": [
+        "w|a|ll",
+        "w|ɔː|l"
+    ],
+    "wander": [
+        "w|a|n|d|er",
+        "w|ɒ|n|d|ɐ"
+    ],
+    "wants": [
+        "w|a|n|t|s",
+        "w|ɒ|n|t|s"
+    ],
+    "warm": [
+        "w|ar|m",
+        "w|ɔː|m"
+    ],
+    "waste": [
+        "w|a|s|t|e",
+        "w|eɪ|s|t|"
+    ],
+    "wasted": [
+        "w|a|s|t|e|d",
+        "w|eɪ|s|t|ɪ|d"
+    ],
+    "watch": [
+        "w|a|tch",
+        "w|ɒ|tʃ"
+    ],
+    "watched": [
+        "w|a|tch|ed",
+        "w|ɒ|tʃ|t"
+    ],
+    "watching": [
+        "w|a|tch|i|ng",
+        "w|ɒ|tʃ|ɪ|ŋ"
+    ],
+    "watered": [
+        "w|a|t|er|ed",
+        "w|ɔː|t|ə|d"
+    ],
+    "watering": [
+        "w|a|t|er|i|ng",
+        "w|ɔː|t|əɹ|ɪ|ŋ"
+    ],
+    "weak": [
+        "w|ea|k",
+        "w|iː|k"
+    ],
+    "weapons": [
+        "w|ea|p|o|n|s",
+        "w|ɛ|p|ə|n|z"
+    ],
+    "wearing": [
+        "w|ea|r|i|ng",
+        "w|eə|ɹ|ɪ|ŋ"
+    ],
+    "weather-vane": [
+        "w|ea|th|er|-|v|a|n|e",
+        "w|ɛ|ð|ɐ||v|eɪ|n|"
+    ],
+    "week": [
+        "w|ee|k",
+        "w|iː|k"
+    ],
+    "weigh": [
+        "w|ei|gh",
+        "w|eɪ|"
+    ],
+    "weird": [
+        "w|e|i|r|d",
+        "w||i|ə|d"
+    ],
+    "wells": [
+        "w|e|ll|s",
+        "w|ɛ|l|z"
+    ],
+    "went": [
+        "w|e|n|t",
+        "w|ɛ|n|t"
+    ],
+    "whatever": [
+        "wh|a|t|e|v|er",
+        "w|ɒ|t|ɛ|v|ɐ"
+    ],
+    "where": [
+        "wh|ere",
+        "w|eə"
+    ],
+    "whether": [
+        "wh|e|th|er",
+        "w|ɛ|ð|ɐ"
+    ],
+    "while": [
+        "wh|i|l|e",
+        "w|aɪ|l|"
+    ],
+    "white": [
+        "wh|i|t|e",
+        "w|aɪ|t|"
+    ],
+    "whose": [
+        "wh|o|s|e",
+        "h|uː|z|"
+    ],
+    "why": [
+        "wh|y",
+        "w|aɪ"
+    ],
+    "wide": [
+        "w|i|d|e",
+        "w|aɪ|d|"
+    ],
+    "wild": [
+        "w|i|l|d",
+        "w|aɪ|l|d"
+    ],
+    "wind [[noun]]": [
+        "w|i|n|d",
+        "w|ɪ|n|d"
+    ],
+    "wind [[verb]]": [
+        "w|i|n|d",
+        "w|a‍ɪ|n|d"
+    ],
+    "window": [
+        "w|i|n|d|ow",
+        "w|ɪ|n|d|əʊ"
+    ],
+    "windows": [
+        "w|i|n|d|ow|s",
+        "w|ɪ|n|d|əʊ|z"
+    ],
+    "wisdom": [
+        "w|i|s|d|o|m",
+        "w|ɪ|s|d|ə|m"
+    ],
+    "without": [
+        "w|i|th|ou|t",
+        "w|ɪ|ð|aʊ|t"
+    ],
+    "woken": [
+        "w|o|k|e|n",
+        "w|əʊ|k|ə|n"
+    ],
+    "wonder": [
+        "w|o|n|d|er",
+        "w|ʌ|n|d|ɐ"
+    ],
+    "wondered": [
+        "w|o|n|d|er|ed",
+        "w|ʌ|n|d|ə|d"
+    ],
+    "wonderful": [
+        "w|o|n|d|er|f|u|l",
+        "w|ʌ|n|d|ə|f|ə|l"
+    ],
+    "wore": [
+        "w|ore",
+        "w|ɔː"
+    ],
+    "worked": [
+        "w|or|k|ed",
+        "w|ɜː|k|t"
+    ],
+    "working": [
+        "w|or|k|i|ng",
+        "w|ɜː|k|ɪ|ŋ"
+    ],
+    "world": [
+        "w|or|l|d",
+        "w|ɜː|l|d"
+    ],
+    "worried": [
+        "w|o|rr|i|ed",
+        "w|ʌ|ɹ|ɪ|d"
+    ],
+    "worry": [
+        "w|o|rr|y",
+        "w|ʌ|ɹ|i"
+    ],
+    "worst": [
+        "w|or|s|t",
+        "w|ɜː|s|t"
+    ],
+    "worth": [
+        "w|or|th",
+        "w|ɜː|θ"
+    ],
+    "wow": [
+        "w|ow",
+        "w|aʊ"
+    ],
+    "write": [
+        "wr|i|t|e",
+        "ɹ|aɪ|t|"
+    ],
+    "writes": [
+        "wr|i|t|e|s",
+        "ɹ|aɪ|t||s"
+    ],
+    "wrong": [
+        "wr|o|ng",
+        "ɹ|ɒ|ŋ"
+    ],
+    "wrote": [
+        "wr|o|t|e",
+        "ɹ|əʊ|t|"
+    ],
+    "yawn": [
+        "y|aw|n",
+        "j|ɔː|n"
+    ],
+    "yawned": [
+        "y|aw|n|ed",
+        "j|ɔː|n|d"
+    ],
+    "yawning": [
+        "y|aw|n|i|ng",
+        "j|ɔː|n|ɪ|ŋ"
+    ],
+    "yawns": [
+        "y|aw|n|s",
+        "j|ɔː|n|z"
+    ],
+    "yeah": [
+        "y|ea|h",
+        "j|ɛ|h"
+    ],
+    "year": [
+        "y|ear",
+        "j|iə"
+    ],
+    "yes": [
+        "y|e|s",
+        "j|ɛ|s"
+    ],
+    "yet": [
+        "y|e|t",
+        "j|ɛ|t"
+    ],
+    "young": [
+        "y|ou|ng",
+        "j|ʌ|ŋ"
+    ],
+    "yours": [
+        "y|our|s",
+        "j|ɔː|z"
+    ],
+    "yourself": [
+        "y|our|s|e|l|f",
+        "j|ɔː|s|ɛ|l|f"
+    ],
+    "yup": [
+        "y|u|p",
+        "j|ʌ|p"
+    ],
+    "1909": [
+        "n|i|n|e|t|ee|n| |o|h|-|n|i|n|e",
+        "n|aɪ|n||t|iː|n||əʊ|||n|aɪ|n|"
+    ],
+    "612": [
+        "s|i|x| |h|u|n|d|r|e|d| |a|n|d| |t|w|e|l|ve",
+        "s|ɪ|ks||h|ʌ|n|d|ɹ|ə|d||æ|n|d||t|w|ɛ|l|v"
+    ]
+}
