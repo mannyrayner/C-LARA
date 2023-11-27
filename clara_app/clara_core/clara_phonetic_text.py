@@ -1,4 +1,6 @@
 
+from .clara_grapheme_phoneme_align import find_grapheme_phoneme_alignment_using_lexical_resources
+from .clara_grapheme_phoneme_resources import grapheme_phoneme_alignment_available, load_grapheme_phoneme_lexical_resources
 from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 from .clara_internalise import internalize_text
 from .clara_classes import Text, Page, Segment, ContentElement, InternalCLARAError 
@@ -9,10 +11,14 @@ from .clara_utils import basename, get_image_dimensions
 def segmented_text_to_phonetic_text(segmented_text, l2_language):
     repository = PhoneticOrthographyRepository()
     orthography, accents = repository.get_parsed_entry(l2_language)
-    if not orthography:
+    if orthography:
+        alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(orthography)
+        parameters = ( 'phonetic_orthography', alphabet_internalised, accents )
+    elif grapheme_phoneme_alignment_available(l2_language):
+        load_grapheme_phoneme_lexical_resources(l2_language)
+        parameters = ( 'grapheme_phoneme_alignment', l2_language )
+    else:
         return ''
-    alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(orthography)
-    parameters = ( 'phonetic_orthography', alphabet_internalised, accents )
     l1_language = None
     segmented_text_object = internalize_text(segmented_text, l2_language, l1_language, 'segmented')
     phonetic_text_object = segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters)
@@ -38,7 +44,10 @@ def word_to_phonetic_segment(word, parameters):
     aligned_word1 = transfer_casing_to_aligned_word(word, aligned_word)
     word_components = aligned_word1.split('|')
     phonetic_components = aligned_phonetic.split('|')
-    phonetic_pairs = zip(word_components, phonetic_components)
+    phonetic_components1 = [ '(silent)' if not component else component for component in phonetic_components ]
+    #print(f'word_components: {word_components}')
+    #print(f'phonetic_components1: {phonetic_components1}')
+    phonetic_pairs = zip(word_components, phonetic_components1)
     phonetic_elements = [ word_phonetic_pair_to_element(phonetic_pair) for phonetic_pair in phonetic_pairs ]
     return Segment(phonetic_elements)
 
@@ -71,6 +80,13 @@ def guess_alignment_for_word(word, parameters):
     if parameters[0] == 'phonetic_orthography':
         alphabet_internalised, accents = parameters[1:]
         return alignment_for_phonetically_spelled_language(word, alphabet_internalised, accents)
+    elif parameters[0] == 'grapheme_phoneme_alignment':
+        l2_language = parameters[1]
+        result = find_grapheme_phoneme_alignment_using_lexical_resources(word, l2_language)
+        if result:
+            return result
+        else:
+            return ( word, word )
     
 # ------------------------------------------
 

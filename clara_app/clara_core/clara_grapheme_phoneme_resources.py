@@ -2,6 +2,9 @@
 from .clara_classes import InternalCLARAError
 from .clara_utils import local_file_exists, read_local_json_file
 
+def grapheme_phoneme_alignment_available(l2):
+    return l2 in _plain_lexicon_files and l2 in _aligned_lexicon_files
+
 def load_grapheme_phoneme_lexical_resources(l2):
     load_plain_grapheme_phoneme_lexicon(l2)
     load_aligned_grapheme_phoneme_lexicon(l2)

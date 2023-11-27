@@ -1,5 +1,6 @@
 
-from .clara_grapheme_phoneme_resources import load_grapheme_phoneme_lexical_resources, get_phonetic_representation_for_word, grapheme_phoneme_alignments_for_key
+from .clara_grapheme_phoneme_resources import grapheme_phoneme_alignment_available, load_grapheme_phoneme_lexical_resources
+from .clara_grapheme_phoneme_resources import get_phonetic_representation_for_word, grapheme_phoneme_alignments_for_key
 
 from .clara_classes import InternalCLARAError
 
