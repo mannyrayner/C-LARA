@@ -260,6 +260,7 @@ class AudioAnnotator:
                 if not segment_file_path:
                     #post_task_update(callback, f"--- Warning: no audio annotation available for segment '{segment_text}'")
                     #segment_file_path = 'placeholder.mp3'
+                    pass
                 else:
                     segment.annotations['tts'] = {
                         "engine_id": self.segment_engine_id,
