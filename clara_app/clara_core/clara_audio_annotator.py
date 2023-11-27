@@ -90,9 +90,13 @@ class AudioAnnotator:
             missing_words, missing_segments = self._get_missing_audio(text_obj, phonetic=phonetic, callback=callback)
 
             if missing_words and self.audio_type_for_words == 'tts':
-                post_task_update(callback, f"--- Creating TTS audio for words")
-                self._create_and_store_missing_mp3s(missing_words, callback=callback)
-                post_task_update(callback, f"--- TTS audio for words created")
+                # Don't try to use TTS for phonetic words, it is not likely to work
+                if phonetic:
+                    post_task_update(callback, f"--- Do not try to use TTS to create audio for phonetic items")
+                else:
+                    post_task_update(callback, f"--- Creating TTS audio for words")
+                    self._create_and_store_missing_mp3s(missing_words, callback=callback)
+                    post_task_update(callback, f"--- TTS audio for words created")
 
             if missing_segments and self.audio_type_for_segments == 'tts':
                 post_task_update(callback, f"--- Creating TTS audio for segments")
@@ -254,7 +258,7 @@ class AudioAnnotator:
                 segment_text = canonical_text_for_audio(segment.to_text())
                 segment_file_path = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text)
                 if not segment_file_path:
-                    post_task_update(callback, f"--- Warning: no audio annotation available for segment '{segment_text}'")
+                    #post_task_update(callback, f"--- Warning: no audio annotation available for segment '{segment_text}'")
                     #segment_file_path = 'placeholder.mp3'
                 else:
                     segment.annotations['tts'] = {
@@ -269,7 +273,7 @@ class AudioAnnotator:
                         canonical_word = canonical_word_for_audio(content_element.content)
                         file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
                         if not file_path:
-                            post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
+                            #post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
                             file_path = 'placeholder.mp3'
                         content_element.annotations['tts'] = {
                             "engine_id": self.word_engine_id,
