@@ -150,9 +150,9 @@ class AudioRepository:
             connection.commit()
             connection.close()
         except Exception as e:
-            post_task_update(callback, f'*** AudioRepository: error when inserting/updating "{language_id}/{text}/{file_path}" into TTS database: "{str(e)}"')
+            post_task_update(callback, f'*** AudioRepository: error when inserting/updating "{language_id}; {text}; {file_path}" into audio database:')
+            post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='TTS database inconsistency')
-
 
     def store_mp3(self, engine_id, language_id, voice_id, source_file, keep_file_name=False):
         voice_dir = self.get_voice_directory(engine_id, language_id, voice_id)
