@@ -129,8 +129,15 @@ class AudioRepository:
                                (engine_id, language_id, voice_id, text))
 
             result = cursor.fetchone()
-            print(f'--- AudioRepository count operation, text = "{text}": result = {result}')
-            exists = result[0] > 0 if result is not None else False
+            if result is not None:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, result is a tuple
+                    exists = result[0] > 0
+                else:
+                    # For PostgreSQL, result is a RealDictRow
+                    exists = result['count'] > 0
+            else:
+                exists = False
 
             if exists:
                 # Update existing entry

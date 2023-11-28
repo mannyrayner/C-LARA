@@ -149,7 +149,15 @@ class ImageRepository:
                 cursor.execute("SELECT COUNT(*) FROM image_metadata WHERE project_id = %s AND image_name = %s", (project_id, image_name))
             
             result = cursor.fetchone()
-            exists = result[0] > 0 if result is not None else False
+            if result is not None:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, result is a tuple
+                    exists = result[0] > 0
+                else:
+                    # For PostgreSQL, result is a RealDictRow
+                    exists = result['count'] > 0
+            else:
+                exists = False
 
             if exists:
                 # Update existing entry
