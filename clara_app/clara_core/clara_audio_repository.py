@@ -129,6 +129,7 @@ class AudioRepository:
                                (engine_id, language_id, voice_id, text))
 
             result = cursor.fetchone()
+            print(f'--- AudioRepository count operation, text = "{text}": result = {result}')
             exists = result[0] > 0 if result is not None else False
 
             if exists:
