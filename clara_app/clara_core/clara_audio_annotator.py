@@ -29,6 +29,7 @@ import shutil
 import uuid
 import json
 import traceback
+import regex
 
 class AudioAnnotator:
     def __init__(self, language, tts_engine_type=None, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
@@ -112,8 +113,9 @@ class AudioAnnotator:
         for page in text_obj.pages:
             for segment in page.segments:
                 segment_text = canonical_text_for_audio(segment.to_text())
-                file_segment = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text, callback=callback)
-                segments_data.append([segment_text, file_segment])
+                if not string_has_no_audio_content(segment_text):
+                    file_segment = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text, callback=callback)
+                    segments_data.append([segment_text, file_segment])
                 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
@@ -123,7 +125,7 @@ class AudioAnnotator:
                             audio_word = content_element.content
                         else:
                             audio_word = None
-                        if audio_word:
+                        if audio_word and not string_has_no_audio_content(audio_word):
                             canonical_word = canonical_word_for_audio(audio_word)
                             file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
                             words_data.append([canonical_word, file_word])
@@ -261,6 +263,8 @@ class AudioAnnotator:
                     #post_task_update(callback, f"--- Warning: no audio annotation available for segment '{segment_text}'")
                     #segment_file_path = 'placeholder.mp3'
                     pass
+                if string_has_no_audio_content(segment_text):
+                    pass
                 else:
                     segment.annotations['tts'] = {
                         "engine_id": self.segment_engine_id,
@@ -276,6 +280,8 @@ class AudioAnnotator:
                         if not file_path:
                             #post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
                             file_path = 'placeholder.mp3'
+                        if string_has_no_audio_content(canonical_word):
+                            pass
                         content_element.annotations['tts'] = {
                             "engine_id": self.word_engine_id,
                             "language_id": self.word_language_id,
@@ -322,5 +328,8 @@ def format_audio_metadata_item(item, format, words_or_segments):
         
     except:
         raise InternalCLARAError(message = f'Bad call: clara_audio_annotator.format_audio_metadata_item({item}, {format}, {words_or_segments})')
-    
-    
+
+# String has no audio content if it's just punctuation marks and separators
+def string_has_no_audio_content(s):
+    return not s or all(regex.match(r"[\p{P} \n|]", c) for c in s)
+

@@ -67,4 +67,4 @@ def grapheme_phoneme_alignments_for_key(key, l2):
         return []
 
 def remove_accents_from_phonetic_string(Str):
-    return Str.replace('ˈ', '').replace('ˌ', '').replace('\u200d', '')
+    return Str.replace('ˈ', '').replace('ˌ', '').replace('.', '').replace('\u200d', '')

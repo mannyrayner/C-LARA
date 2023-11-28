@@ -6,13 +6,15 @@ from .clara_classes import InternalCLARAError
 
 _trace = 'off'
 
-def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, L2):
+def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, L2, ExtraPhoneticEntries={}):
     load_grapheme_phoneme_lexical_resources(L2)
 
-    Phonemes = get_phonetic_representation_for_word(Letters, L2)
+    LookedUpPhonemes = get_phonetic_representation_for_word(Letters, L2)
     #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
-    if Phonemes:
-        return dp_phonetic_align(Letters, Phonemes, L2)
+    if LookedUpPhonemes:
+        return dp_phonetic_align(Letters, LookedUpPhonemes, L2)
+    elif Letters in ExtraPhoneticEntries:
+        return dp_phonetic_align(Letters, ExtraPhoneticEntries[Letters], L2)
     else:
         return None
 
@@ -53,12 +55,16 @@ def extend(Letters, Phonemes, MatchLengthL, MatchLengthP, NL, NP, DPDict, L2):
                     for ( AlignedLetters, AlignedPhonemes ) in PossibleAlignments:
                         Cost = 2 if '' in ( AlignedLetters, AlignedPhonemes ) else 1
                         extend1(Letters, Phonemes, MatchLengthL, MatchLengthP, AlignedLetters, AlignedPhonemes, Cost, DPDict)
-            # If we extend by skipping a character in either Letters or Phonemes, we charge 5 
+            # If we extend by skipping a character in either Letters or Phonemes (i.e. deletion/insertion), we charge 5 
             elif KeyL == 'skip' and KeyP == '':
                 ( AlignedLetters, AlignedPhonemes, Cost ) = ( Letters[MatchLengthL], '', 5 )
                 extend1(Letters, Phonemes, MatchLengthL, MatchLengthP, AlignedLetters, AlignedPhonemes, Cost, DPDict)
             elif KeyL == '' and KeyP == 'skip':
                 ( AlignedLetters, AlignedPhonemes, Cost ) = ( '', Phonemes[MatchLengthP], 5 )
+                extend1(Letters, Phonemes, MatchLengthL, MatchLengthP, AlignedLetters, AlignedPhonemes, Cost, DPDict)
+            # If we skip in both (i.e. unknown substitution), we charge 5
+            elif KeyL == 'skip' and KeyP == 'skip':
+                ( AlignedLetters, AlignedPhonemes, Cost ) = ( Letters[MatchLengthL], Phonemes[MatchLengthP], 5 )
                 extend1(Letters, Phonemes, MatchLengthL, MatchLengthP, AlignedLetters, AlignedPhonemes, Cost, DPDict)
 
 def extend1(Letters, Phonemes, MatchLengthL, MatchLengthP, AlignedLetters, AlignedPhonemes, ExtraCost, DPDict):

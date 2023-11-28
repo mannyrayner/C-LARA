@@ -579,7 +579,7 @@ class CLARAProjectInternal:
     # Create a "phonetic" version of the text - so far, no use of AI
     def create_phonetic_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
-        phonetic_text = segmented_text_to_phonetic_text(segmented_text, self.l2_language)
+        phonetic_text = segmented_text_to_phonetic_text(segmented_text, self.l2_language, config_info=config_info, callback=callback)
         self.save_text_version("phonetic", phonetic_text, user=user, label=label, source='generated')
         api_calls = []
         return api_calls

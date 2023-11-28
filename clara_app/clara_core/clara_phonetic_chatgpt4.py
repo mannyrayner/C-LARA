@@ -1,6 +1,6 @@
 
 from .clara_chatgpt4 import call_chat_gpt4
-from .clara_utils import get_config, post_task_update
+from .clara_utils import get_config, post_task_update, remove_duplicates_from_list_of_hashable_items
 from .clara_classes import ChatGPTError
 
 import json
@@ -8,7 +8,7 @@ import traceback
 
 config = get_config()
 
-def get_phonetic_entries_for_words(words, l2_language, config_info={}, callback=None):
+def get_phonetic_entries_for_words_using_chatgpt4(words, l2_language, config_info={}, callback=None):
 
     # Use max_annotation_words from config_info if available, otherwise default to a preset value
     if 'max_annotation_words' in config_info:
@@ -27,10 +27,13 @@ def get_phonetic_entries_for_words(words, l2_language, config_info={}, callback=
     for chunk in chunks:
         annotated_chunk, api_calls = call_chatgpt4_to_get_phonetic_entries(chunk, l2_language,
                                                                            config_info=config_info, callback=callback)
-        annotated_words += annotated_words
+        annotated_words += annotated_chunk
         all_api_calls += api_calls
 
-    return ( annotated_words, all_api_calls )
+    annotated_words_dict = { item[0]: item[1] for item in annotated_words }
+
+    post_task_update(callback, f'--- Phonetic entries produced by GPT-4: {annotated_words_dict}')
+    return ( annotated_words_dict, all_api_calls )
 
 def call_chatgpt4_to_get_phonetic_entries(words, l2_language, config_info={}, callback=None):
     api_calls = []
@@ -56,8 +59,11 @@ def call_chatgpt4_to_get_phonetic_entries(words, l2_language, config_info={}, ca
             post_task_update(callback, error_message)
 
 def phonetic_lexical_annotation_prompt(words, l2_language):
-    return f"""I am going to give you a list of words in {l2_language}, presented in a JSON format.
-I want you to add phonetic lexicon entries in what is generally regarded as the standard dialect of {l2_language} in the following way.
+    l2_language_specific = make_l2_language_explicit(l2_language)
+    advice_and_examples_text = advice_and_examples(l2_language)
+    
+    return f"""I am going to give you a list of words in {l2_language_specific}, presented in a JSON format.
+I want you to add phonetic lexicon entries in what is generally regarded as the standard dialect of {l2_language_specific} in the following way.
 
 The JSON is a list of strings.
 
@@ -65,19 +71,57 @@ Please replace each string with a two-element list in which the first element is
 If the word is not a heteronym, make the second element an IPA string representing the pronunciation.
 If the word is a heteronym, make the second element a list of IPA strings representing the different pronunciations, putting the most common one first.
 
-For example, if you are creating phonetic entries for English, you might convert
-
-[ "course", "it", "of", "does" ]
-
-into
-
-[ [ "course", "kɔːs" ], [ "it", "ɪt" ], [ "of", "‍ɒv" ], [ "does", [ "dʌz", "doʊz"] ] ]
+{advice_and_examples_text}
 
 Here are the items to gloss:
 
 {words}
 
 Write out just the annotated JSON with no introduction, since it will be processed by a Python script."""
+
+def make_l2_language_explicit(language):
+    table = { 'english': 'UK English',
+              'french': 'Parisian French'
+              }
+    if language in table:
+        return table[language]
+    else:
+        return language
+
+def advice_and_examples(language):
+    if language == 'english':
+        return """Note that the English 'r' sound is usually represented in IPA as 'ɹ'.
+Note also that the English hard 'g' sound is usually represented in IPA as 'ɡ'.
+
+For example, you might convert
+
+[ "bright", "car", "course", "grab", "does" ]
+
+into
+
+[ [ "bright", "bɹaɪt" ], [ "car", "kɑːɹ" ], [ "course", "kɔːs" ], [ "grab", "ɡɹæb" ], [ "does", [ "dʌz", "doʊz"] ] ]
+"""
+    
+    elif language == 'french':
+        return """Note that the French 'r' sound is usually represented in IPA as 'ʁ'.
+
+For example, you might convert
+
+[ "bon", "défaut", "réussi", "est" ]
+
+into
+
+[ [ "bon", "bɔ̃" ], [ "défaut", "defo" ], [ "réussi", "ʁeysi" ], [ "est", [ "ɛ", "ɛst"] ] ]
+"""
+    else:
+        """For example, in English you might convert
+
+[ "bright", "car", "course", "grab", "does" ]
+
+into
+
+[ [ "bright", "bɹaɪt" ], [ "car", "kɑːɹ" ], [ "course", "kɔːs" ], [ "grab", "ɡɹæb" ], [ "does", [ "dʌz", "doʊz"] ] ]
+"""
 
 def parse_chatgpt_phonetic_lexicon_response(response, words):
     try:
