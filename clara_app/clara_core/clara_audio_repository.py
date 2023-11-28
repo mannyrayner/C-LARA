@@ -128,7 +128,8 @@ class AudioRepository:
                 cursor.execute("SELECT COUNT(*) FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s",
                                (engine_id, language_id, voice_id, text))
 
-            exists = cursor.fetchone()[0] > 0
+            result = cursor.fetchone()
+            exists = result[0] > 0 if result is not None else False
 
             if exists:
                 # Update existing entry

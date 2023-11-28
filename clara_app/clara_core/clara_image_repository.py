@@ -148,7 +148,8 @@ class ImageRepository:
             else:  # Assume postgres
                 cursor.execute("SELECT COUNT(*) FROM image_metadata WHERE project_id = %s AND image_name = %s", (project_id, image_name))
             
-            exists = cursor.fetchone()[0] > 0
+            result = cursor.fetchone()
+            exists = result[0] > 0 if result is not None else False
 
             if exists:
                 # Update existing entry
