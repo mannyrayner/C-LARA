@@ -1838,8 +1838,8 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
     if human_audio_info:
         human_voice_id = human_audio_info.voice_talent_id
         # Phonetic always uses human voice for "words" (actually letter groups) 
-        audio_type_for_words = 'human' if ( phonetic_or_normal == 'phonetic' or human_audio_info.use_for_words ) else 'tts'
-        audio_type_for_segments = 'human' if ( phonetic_or_normal == 'normal' and human_audio_info.use_for_segments ) else 'tts'
+        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
+        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
     else:
         audio_type_for_words = 'tts'
         audio_type_for_segments = 'tts'

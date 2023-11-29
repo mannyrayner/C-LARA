@@ -97,6 +97,8 @@ class PhoneticHumanAudioInfo(models.Model):
     
     # Fields
     method = models.CharField(max_length=40, choices=METHOD_CHOICES, default='upload_individual')
+    use_for_segments = models.BooleanField(default=False)
+    use_for_words = models.BooleanField(default=True)
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
     
     # Relationship with CLARAProject
