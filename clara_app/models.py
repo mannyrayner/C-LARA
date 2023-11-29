@@ -87,12 +87,16 @@ class HumanAudioInfo(models.Model):
     def __str__(self):
         return f"Human Audio Info for {self.project.title}"
 
-# Simpler version of above for phonetic info, where the only operation is recording.
+# Simpler version of above for phonetic info
 class PhoneticHumanAudioInfo(models.Model):
-
+    # Choices for the 'method' field
+    METHOD_CHOICES = [
+        ('upload_individual', 'Upload single files'),
+        ('upload_zipfile', 'Upload zipfile with metadata'),
+    ]
+    
     # Fields
-    use_for_segments = models.BooleanField(default=False)
-    use_for_words = models.BooleanField(default=False)
+    method = models.CharField(max_length=40, choices=METHOD_CHOICES, default='upload_individual')
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
     
     # Relationship with CLARAProject

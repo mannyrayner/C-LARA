@@ -955,6 +955,7 @@ def human_audio_processing_phonetic(request, project_id):
 
     # Initialize the form with the current instance of HumanAudioInfo
     form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
+    audio_item_formset = None
 
     # Handle POST request
     if request.method == 'POST':
@@ -963,34 +964,56 @@ def human_audio_processing_phonetic(request, project_id):
         if form.is_valid():
     
             # 1. Update the model with any new values from the form. Get the method and human_voice_id
+            method = request.POST['method']
             human_voice_id = request.POST['voice_talent_id']
 
             human_audio_info.save()  # Save the restored data back to the database
 
             # 2. Update from the formset and save new files
-            audio_repository = AudioRepository()
-            formset = AudioItemFormSet(request.POST, request.FILES)
-            n_files_uploaded = 0
-            print(f'--- Updating from formset ({len(formset)} items)')
-            for form in formset:
-                if form.changed_data:
-                    if not form.is_valid():
-                        print(f'--- Invalid form data: {form}')
-                        messages.error(request, "Invalid form data.")
-                        return redirect('human_audio_processing', project_id=project_id)
-                    
-                    if form.cleaned_data.get('audio_file_path'):
-                        text = form.cleaned_data.get('text')
-                        uploaded_audio_file_path = form.cleaned_data.get('audio_file_path')
-                        real_audio_file_path = uploaded_file_to_file(uploaded_audio_file_path)
-                        print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
-                        stored_audio_file_path = audio_repository.store_mp3('human_voice', project.l2, human_voice_id, real_audio_file_path)
-                        audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path)
-                        print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
-                        n_files_uploaded += 1
+            if method == 'upload_individual' and human_voice_id:
+                audio_repository = AudioRepository()
+                formset = AudioItemFormSet(request.POST, request.FILES)
+                n_files_uploaded = 0
+                print(f'--- Updating from formset ({len(formset)} items)')
+                for form in formset:
+                    if form.changed_data:
+                        if not form.is_valid():
+                            print(f'--- Invalid form data: {form}')
+                            messages.error(request, "Invalid form data.")
+                            return redirect('human_audio_processing', project_id=project_id)
+                        
+                        if form.cleaned_data.get('audio_file_path'):
+                            text = form.cleaned_data.get('text')
+                            uploaded_audio_file_path = form.cleaned_data.get('audio_file_path')
+                            real_audio_file_path = uploaded_file_to_file(uploaded_audio_file_path)
+                            print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
+                            stored_audio_file_path = audio_repository.store_mp3('human_voice', project.l2, human_voice_id, real_audio_file_path)
+                            audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path)
+                            print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
+                            n_files_uploaded += 1
                             
-            messages.success(request, f"{n_files_uploaded} audio files uploaded from {len(formset)} items")
-            return redirect('human_audio_processing_phonetic', project_id=project_id)          
+                messages.success(request, f"{n_files_uploaded} audio files uploaded from {len(formset)} items")
+                return redirect('human_audio_processing_phonetic', project_id=project_id)
+
+             # 2. If we're doing recording and there is a LiteDevTools zipfile, upload and internalise it
+            if method == 'upload_zipfile':
+                if 'audio_zip' in request.FILES and human_voice_id:
+                    uploaded_file = request.FILES['audio_zip']
+                    zip_file = uploaded_file_to_file(uploaded_file)
+                    if not local_file_exists(zip_file):
+                        messages.error(request, f"Error: unable to find uploaded zipfile {zip_file}")
+                    else:
+                        print(f"--- Found uploaded file {zip_file}")
+                        # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
+                        copy_local_file_to_s3_if_necessary(zip_file)
+                        # Create a callback
+                        report_id = uuid.uuid4()
+                        callback = [post_task_update_in_db, report_id]
+
+                        async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
+
+                        # Redirect to the monitor view, passing the task ID and report ID as parameters
+                        return redirect('process_ldt_zipfile_monitor', project_id, report_id)
 
         else:
             messages.error(request, "There was an error processing the form. Please check your input.")
@@ -1807,11 +1830,16 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     # Check if human audio info exists for the project and if voice_talent_id is set
-    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    if phonetic_or_normal == 'phonetic':
+        human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
+    else:
+        human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+        
     if human_audio_info:
         human_voice_id = human_audio_info.voice_talent_id
-        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
-        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
+        # Phonetic always uses human voice for "words" (actually letter groups) 
+        audio_type_for_words = 'human' if ( phonetic_or_normal == 'phonetic' or human_audio_info.use_for_words ) else 'tts'
+        audio_type_for_segments = 'human' if ( phonetic_or_normal == 'normal' and human_audio_info.use_for_segments ) else 'tts'
     else:
         audio_type_for_words = 'tts'
         audio_type_for_segments = 'tts'

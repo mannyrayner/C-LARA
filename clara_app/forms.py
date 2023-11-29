@@ -371,7 +371,7 @@ class HumanAudioInfoForm(forms.ModelForm):
 class PhoneticHumanAudioInfoForm(forms.ModelForm):
     class Meta:
         model = PhoneticHumanAudioInfo
-        fields = ['use_for_segments', 'use_for_words', 'voice_talent_id']
+        fields = ['method', 'voice_talent_id']
 
 class AudioItemForm(forms.Form):
     text = forms.CharField(
