@@ -13,6 +13,14 @@
         <label for="{{ form.method.id_for_label }}">Method:</label>
         {{ form.method }}
     </p>
+	<p>
+        <label for="{{ form.use_for_words.id_for_label }}">Use human audio for letter groups:</label>
+        {{ form.use_for_words }}
+    </p>
+	<p>
+        <label for="{{ form.use_for_segments.id_for_label }}">Use human audio for words:</label>
+        {{ form.use_for_segments }}
+    </p>
     <p>
         <label for="{{ form.voice_talent_id.id_for_label }}">Voice Talent ID:</label>
         {{ form.voice_talent_id }}
@@ -38,12 +46,17 @@
 		<!-- Control to download a metadata file in LiteDevTools format -->
 		<p>
 		  <strong>Metadata Download:</strong>
-		  <a href="{% url 'generate_audio_metadata_phonetic' project.id 'words' form.voice_talent_id.value %}" class="btn">Download for letter groups</a>
+		  {% if form.use_for_words.value %}
+			<a href="{% url 'generate_audio_metadata_phonetic' project.id 'words' form.voice_talent_id.value %}" class="btn">Download for letter groups</a>
+		  {% endif %}
+		  {% if form.use_for_segments.value %}
+			<a href="{% url 'generate_audio_metadata_phonetic' project.id 'segments' form.voice_talent_id.value %}" class="btn">Download for words</a>
+		  {% endif %}
 		</p>
 
 		<!-- Control to upload a LiteDevTools zipfile -->
 		<p>
-		  <strong>Upload LiteDevTools Zipfile:</strong>
+		  <strong>Upload zipfile with audio and metadata:</strong>
 		  <input type="file" name="audio_zip" accept=".zip">
 		</p>
 	{% endif %}
