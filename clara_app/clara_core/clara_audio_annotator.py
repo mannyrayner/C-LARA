@@ -105,7 +105,7 @@ class AudioAnnotator:
                 post_task_update(callback, f"--- TTS audio for segments created")
 
         post_task_update(callback, f"--- All TTS files should be there")
-        self._add_audio_annotations(text_obj, callback=callback)
+        self._add_audio_annotations(text_obj, phonetic=phonetic, callback=callback)
 
     def _get_all_audio_data(self, text_obj, phonetic=False, callback=None):
         words_data = []
@@ -145,7 +145,7 @@ class AudioAnnotator:
         return missing_words, missing_segments
 
     def generate_audio_metadata(self, text_obj, type='default', format='default', phonetic=False, callback=None):
-        words_data, segments_data = self._get_all_audio_data(text_obj, callback)
+        words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
 
         # Reformat the data as lists of dictionaries.
         words_metadata = [{"word": word_data[0], "file": word_data[1]} for word_data in words_data if word_data[0]]
@@ -251,7 +251,7 @@ class AudioAnnotator:
             except Exception as e:
                 post_task_update(callback, f"*** Error trying to process metadata item {metadata_item}: {str(e)}")
 
-    def _add_audio_annotations(self, text_obj, callback=None):
+    def _add_audio_annotations(self, text_obj, phonetic=False, callback=None):
         post_task_update(callback, f"--- Adding audio annotations to internalised text")
         text_obj.voice = self.printname_for_voice()
         
@@ -275,10 +275,21 @@ class AudioAnnotator:
 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
-                        canonical_word = canonical_word_for_audio(content_element.content)
-                        file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
+                        if phonetic and 'phonetic' in content_element.annotations:
+                            audio_word = content_element.annotations['phonetic']
+                        elif not phonetic:
+                            audio_word = content_element.content
+                        else:
+                            audio_word = None
+
+                        if audio_word:
+                            canonical_word = canonical_word_for_audio(audio_word)
+                            file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
+                        else:
+                            file_path = None
+                            
                         if not file_path:
-                            #post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
+                            post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
                             file_path = 'placeholder.mp3'
                         if string_has_no_audio_content(canonical_word):
                             pass

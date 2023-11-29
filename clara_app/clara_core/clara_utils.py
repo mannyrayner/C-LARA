@@ -651,6 +651,11 @@ def extension_for_file_path(file_path: str):
         file_path = str(file_path)
     return file_path.split('.')[-1]
 
+def remove_extension_from_file_path(file_path: str):
+    if isinstance(file_path, Path):
+        file_path = str(file_path)
+    return '.'.join(file_path.split('.')[:-1])
+
 def basename(pathname):
     return os.path.basename(pathname)
 
@@ -741,6 +746,20 @@ def format_timestamp(timestamp_string):
     
 def replace_punctuation_with_underscores(s):
     return re.sub(f"[{re.escape(string.punctuation)}]+", "_", s)
+
+## Zip up a directory
+def make_zipfile(directory, zipfile, callback=None):
+    absdirectory = absolute_local_file_name(directory)
+    abszipfile = absolute_local_file_name(zipfile)
+    # shutil.make_archive adds a .zip extension even if you already have one
+    abszipfile_without_extension = remove_extension_from_file_path(abszipfile)
+    try:
+        shutil.make_archive(abszipfile_without_extension, 'zip', absdirectory)
+        print(f'--- Zipped up {directory} as {zipfile}')
+        return True
+    except Exception as e:
+        post_task_update(callback, f'--- Error when trying to zip {directory} to {zipfile}: {str(e)}')
+        raise InternalCLARAError( message=f'*** Error: something went wrong when trying to unzip {pathname} to {dir}')
 
 ## Extract a zipfile to a directory
 def unzip_file(pathname, dir, callback=None):
