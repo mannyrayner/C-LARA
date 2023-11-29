@@ -9,24 +9,44 @@
   
   <form method="post" enctype="multipart/form-data" id="human-audio-processing-form">
     {% csrf_token %}
+	<p>
+        <label for="{{ form.method.id_for_label }}">Method:</label>
+        {{ form.method }}
+    </p>
     <p>
         <label for="{{ form.voice_talent_id.id_for_label }}">Voice Talent ID:</label>
         {{ form.voice_talent_id }}
     </p>
 
-	{{ formset.management_form }}
-	{% for audio_form in formset %}
-	  <hr>
-	  {% if audio_form.audio_file_base_name.value %}
-		 <audio controls>
-			<source src="{% url 'serve_audio_file' 'human_voice' project.l2 form.voice_talent_id.value audio_form.audio_file_base_name.value %}">
-			Your browser does not support the audio tag.
-		 </audio>
-	  {% else %}
-		 <p>No audio</p>
-	  {% endif %}
-	  {{ audio_form.as_p }}
-	{% endfor %}
+	{% if form.method.value == "upload_individual" %}
+		{{ formset.management_form }}
+		{% for audio_form in formset %}
+		  <hr>
+		  {% if audio_form.audio_file_base_name.value %}
+			 <audio controls>
+				<source src="{% url 'serve_audio_file' 'human_voice' project.l2 form.voice_talent_id.value audio_form.audio_file_base_name.value %}">
+				Your browser does not support the audio tag.
+			 </audio>
+		  {% else %}
+			 <p>No audio</p>
+		  {% endif %}
+		  {{ audio_form.as_p }}
+		{% endfor %}
+	{% endif %}
+	
+	{% if form.method.value == "upload_zipfile" %}
+		<!-- Control to download a metadata file in LiteDevTools format -->
+		<p>
+		  <strong>Metadata Download:</strong>
+		  <a href="{% url 'generate_audio_metadata_phonetic' project.id 'words' form.voice_talent_id.value %}" class="btn">Download for letter groups</a>
+		</p>
+
+		<!-- Control to upload a LiteDevTools zipfile -->
+		<p>
+		  <strong>Upload LiteDevTools Zipfile:</strong>
+		  <input type="file" name="audio_zip" accept=".zip">
+		</p>
+	{% endif %}
 
     <button type="submit" id="submit-button">Update & Process</button>
   </form>
