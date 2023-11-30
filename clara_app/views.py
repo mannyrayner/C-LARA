@@ -969,6 +969,9 @@ def human_audio_processing_phonetic(request, project_id):
 
             human_audio_info.save()  # Save the restored data back to the database
 
+            # Try forcing this choice to see if we still get 502 errors
+            method = 'upload_zipfile'
+
             # 2. Update from the formset and save new files
             if method == 'upload_individual' and human_voice_id:
                 audio_repository = AudioRepository()
