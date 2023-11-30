@@ -953,6 +953,9 @@ def human_audio_processing_phonetic(request, project_id):
     # Try to get existing HumanAudioInfo for this project or create a new one
     human_audio_info, created = PhoneticHumanAudioInfo.objects.get_or_create(project=project)
 
+    # Try forcing this choice to see if we still get 502 errors
+    human_audio_info.method = 'upload_zipfile'
+
     # Initialize the form with the current instance of HumanAudioInfo
     form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
     audio_item_formset = None
