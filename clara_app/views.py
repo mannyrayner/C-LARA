@@ -1020,8 +1020,11 @@ def human_audio_processing_phonetic(request, project_id):
 
     # Handle GET request
     form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
-    audio_item_initial_data = initial_data_for_audio_upload_formset_phonetic(clara_project_internal, human_audio_info)
-    audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
+    if human_audio_info.method == 'upload_individual':
+        audio_item_initial_data = initial_data_for_audio_upload_formset_phonetic(clara_project_internal, human_audio_info)
+        audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
+    else:
+        audio_item_formset = None
     
     context = {
         'project': project,
