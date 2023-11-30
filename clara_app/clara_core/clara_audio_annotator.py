@@ -267,6 +267,7 @@ class AudioAnnotator:
         post_task_update(callback, f"--- Adding audio annotations to internalised text")
         text_obj.voice = self.printname_for_voice()
         word_cache = {}
+        count = 0
         
         for page in text_obj.pages:
             for segment in page.segments:
@@ -284,7 +285,10 @@ class AudioAnnotator:
                         "language_id": self.segment_language_id,
                         "voice_id": self.segment_voice_id,
                         "file_path": segment_file_path,
-                    }                   
+                    }
+                count += 1
+                if count % 50 == 0:
+                    post_task_update(callback, f"--- Processed {count} text items")
 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
@@ -316,6 +320,9 @@ class AudioAnnotator:
                             "voice_id": self.word_voice_id,
                             "file_path": file_path,
                         }
+                        count += 1
+                        if count % 50 == 0:
+                            post_task_update(callback, f"--- Processed {count} text items")
         post_task_update(callback, f"--- Audio annotations added to internalised text")
 
     def printname_for_voice(self):
