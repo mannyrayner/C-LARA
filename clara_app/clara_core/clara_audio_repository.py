@@ -61,7 +61,8 @@ class AudioRepository:
                                    language_id TEXT,
                                    voice_id TEXT,
                                    text TEXT,
-                                   file_path TEXT)''')            
+                                   file_path TEXT)''')
+                cursor.execute('''CREATE INDEX IF NOT EXISTS idx_text ON metadata (text)''')
             # Assume Postgres, which does auto-incrementing differently
             # We need a suitable definition for the primary key
             else:
@@ -72,6 +73,7 @@ class AudioRepository:
                                    voice_id TEXT,
                                    text TEXT,
                                    file_path TEXT)''')
+                cursor.execute('''CREATE INDEX IF NOT EXISTS idx_text ON metadata (text)''')
                                    
             connection.commit()
             connection.close()
