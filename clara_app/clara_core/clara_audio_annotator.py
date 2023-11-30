@@ -108,14 +108,20 @@ class AudioAnnotator:
         self._add_audio_annotations(text_obj, phonetic=phonetic, callback=callback)
 
     def _get_all_audio_data(self, text_obj, phonetic=False, callback=None):
+        post_task_update(callback, f"--- Getting all audio data")
         words_data = []
         segments_data = []
+        words_cache = {}
+        count = 0
         for page in text_obj.pages:
             for segment in page.segments:
                 segment_text = canonical_text_for_audio(segment.to_text())
                 if not string_has_no_audio_content(segment_text):
                     file_segment = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text, callback=callback)
                     segments_data.append([segment_text, file_segment])
+                    count += 1
+                    if count % 50 == 0:
+                        post_task_update(callback, f"--- Checked {count} text items")
                 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
@@ -127,8 +133,14 @@ class AudioAnnotator:
                             audio_word = None
                         if audio_word and not string_has_no_audio_content(audio_word):
                             canonical_word = canonical_word_for_audio(audio_word)
-                            file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
-                            words_data.append([canonical_word, file_word])
+                            if canonical_word in words_cache:
+                                file_word = words_cache[canonical_word]
+                            else:
+                                file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
+                            words_data.append([canonical_word, file_word])    
+                            count += 1
+                            if count % 50 == 0:
+                                post_task_update(callback, f"--- Checked {count} text items")
 
         return words_data, segments_data
 
@@ -254,6 +266,7 @@ class AudioAnnotator:
     def _add_audio_annotations(self, text_obj, phonetic=False, callback=None):
         post_task_update(callback, f"--- Adding audio annotations to internalised text")
         text_obj.voice = self.printname_for_voice()
+        word_cache = {}
         
         for page in text_obj.pages:
             for segment in page.segments:
@@ -284,12 +297,16 @@ class AudioAnnotator:
 
                         if audio_word:
                             canonical_word = canonical_word_for_audio(audio_word)
-                            file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
+                            if canonical_word in word_cache:
+                                file_path = word_cache[canonical_word]
+                            else:
+                                file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
+                                word_cache[canonical_word] = file_path
                         else:
                             file_path = None
                             
                         if not file_path:
-                            post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
+                            #post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
                             file_path = 'placeholder.mp3'
                         if string_has_no_audio_content(canonical_word):
                             pass
