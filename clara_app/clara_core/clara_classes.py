@@ -18,6 +18,7 @@ It also defines the following classes:
  
 import json
 import os
+import regex
 
 class ContentElement:
     def __init__(self, element_type, content, annotations=None):
@@ -90,8 +91,12 @@ class Segment:
     def add_annotation(self, annotation_type, annotation_value):
         self.annotations[annotation_type] = annotation_value
 
-    def word_count(self):
-        return sum([ element.word_count() for element in self.content_elements ])
+    def word_count(self, phonetic=False):
+        if not phonetic:
+            return sum([ element.word_count() for element in self.content_elements ])
+        # In a phonetic text, a Segment represents a word.
+        else:
+            return 0 if string_is_only_punctuation_spaces_and_separators(self.to_text()) else 1
 
     def __repr__(self):
         return f"Segment(content_elements={self.content_elements}, annotations={self.annotations})"
@@ -115,8 +120,8 @@ class Page:
         else:
             return f"<page>\n{segment_texts}"
 
-    def word_count(self):
-        return sum([ segment.word_count() for segment in self.segments ])
+    def word_count(self, phonetic=False):
+        return sum([ segment.word_count(phonetic=phonetic) for segment in self.segments ])
 
     @classmethod
     def from_json(cls, json_str):
@@ -163,8 +168,8 @@ class Text:
             elements.extend(page.content_elements())
         return elements
     
-    def word_count(self):
-        return sum([ page.word_count() for page in self.pages ])
+    def word_count(self, phonetic=False):
+        return sum([ page.word_count(phonetic=phonetic) for page in self.pages ])
 
     def add_page(self, page):
         self.pages.append(page)
@@ -251,6 +256,9 @@ class TreeTaggerError(Exception):
     def __init__(self, message = 'TreeTagger error'):
         self.message = message
 
-# Can't import from clara_utils because we get a circular import
+# Can't import from these functions from other files because we get a circular import
 def basename(pathname):
     return os.path.basename(pathname)
+
+def string_is_only_punctuation_spaces_and_separators(s):
+    return all(regex.match(r"[\p{P} \n|]", c) for c in s)

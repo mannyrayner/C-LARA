@@ -928,7 +928,7 @@ class CLARAProjectInternal:
     # Get the word-count
     def get_word_count(self, phonetic=False) -> int:
         text_object = self.get_internalised_text(phonetic=phonetic)
-        return None if not text_object else text_object.word_count()
+        return None if not text_object else text_object.word_count(phonetic=phonetic)
 
     # Get the voice
     def get_voice(self, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts') -> str:

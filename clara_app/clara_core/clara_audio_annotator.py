@@ -126,7 +126,6 @@ class AudioAnnotator:
                 segment_text_plain = segment.to_text()
                 segment_text_canonical = canonical_text_for_audio(segment_text_plain)
                 if not string_has_no_audio_content(segment_text_canonical):
-                    #file_segment = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text, callback=callback)
                     segments_data.append([segment_text_plain, segment_text_canonical])
                 
                 for content_element in segment.content_elements:
@@ -140,7 +139,6 @@ class AudioAnnotator:
                             
                         if audio_word_plain and not string_has_no_audio_content(audio_word_plain):
                             audio_word_canonical = canonical_word_for_audio(audio_word_plain)
-                            #file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
                             words_data.append([audio_word_plain, audio_word_canonical])    
 
         segment_texts_canonical = [ item[1] for item in segments_data ]
