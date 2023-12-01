@@ -1992,7 +1992,10 @@ def register_project_content(request, phonetic_or_normal, project_id):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     # Check if human audio info exists for the project and if voice_talent_id is set
-    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    if phonetic_or_normal == 'phonetic':
+        human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
+    else:
+        human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
     if human_audio_info:
         human_voice_id = human_audio_info.voice_talent_id
         audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
