@@ -205,6 +205,46 @@ class AudioRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='TTS database inconsistency')
 
+    def get_entry_batch(self, engine_id, language_id, voice_id, text_items, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            results = {}
+            
+            for text in text_items:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("SELECT file_path FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ?",
+                                   (engine_id, language_id, voice_id, text))
+                else:
+                    # Assume postgres
+                    cursor.execute("""SELECT file_path FROM metadata 
+                                      WHERE engine_id = %(engine_id)s 
+                                      AND language_id = %(language_id)s 
+                                      AND voice_id = %(voice_id)s 
+                                      AND text = %(text)s""",
+                                   {
+                                      'engine_id': engine_id,
+                                      'language_id': language_id,
+                                      'voice_id': voice_id,
+                                      'text': text
+                                   })
+                result = cursor.fetchone()
+            
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    file_path = result[0] if result else None
+                else:  # Assuming PostgreSQL
+                    file_path = result['file_path'] if result else None
+
+                results[text] = file_path
+
+            connection.close()
+            return results
+
+        except Exception as e:
+            error_message = f'*** Error when performing get_entry_batch in TTS database: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='TTS database inconsistency')
+
     def get_language_directory(self, engine_id, language_id):
         return absolute_file_name( Path(self.base_dir) / engine_id / language_id )
 

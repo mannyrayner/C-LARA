@@ -87,69 +87,77 @@ class AudioAnnotator:
 
     def annotate_text(self, text_obj, phonetic=False, callback=None):
         if self.tts_engine:
-        
-            missing_words, missing_segments = self._get_missing_audio(text_obj, phonetic=phonetic, callback=callback)
+
+            words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
+            missing_words, missing_segments = self._get_missing_audio(words_data, segments_data, phonetic=phonetic, callback=callback)
 
             if missing_words and self.audio_type_for_words == 'tts':
-                # Don't try to use TTS for phonetic words, it is not likely to work
+                # Don't try to use TTS for phonetic "words" (actually letter groups), it is not likely to work
                 if phonetic:
-                    post_task_update(callback, f"--- Do not try to use TTS to create audio for phonetic items")
+                    post_task_update(callback, f"--- Do not try to use TTS to create audio for phonetic letter groups")
+                    new_words_data = []
                 else:
                     post_task_update(callback, f"--- Creating TTS audio for words")
-                    self._create_and_store_missing_mp3s(missing_words, callback=callback)
+                    new_words_data = self._create_and_store_missing_mp3s(missing_words, 'words', callback=callback)
                     post_task_update(callback, f"--- TTS audio for words created")
+            else:
+                new_words_data = []
 
             if missing_segments and self.audio_type_for_segments == 'tts':
-                post_task_update(callback, f"--- Creating TTS audio for segments")
-                self._create_and_store_missing_mp3s(missing_segments, callback=callback)
-                post_task_update(callback, f"--- TTS audio for segments created")
+                external_name_for_segments = 'words' if phonetic else 'segments'
+                post_task_update(callback, f"--- Creating TTS audio for {external_name_for_segments}")
+                new_segments_data = self._create_and_store_missing_mp3s(missing_segments, 'segments', callback=callback)
+                post_task_update(callback, f"--- TTS audio for {external_name_for_segments} created")
+            else:
+                new_segments_data = []
+
+        updated_words_data = words_data + new_words_data
+        updated_segments_data = segments_data + new_segments_data
 
         post_task_update(callback, f"--- All TTS files should be there")
-        self._add_audio_annotations(text_obj, phonetic=phonetic, callback=callback)
+        self._add_audio_annotations(text_obj, updated_words_data, updated_segments_data, phonetic=phonetic, callback=callback)
 
     def _get_all_audio_data(self, text_obj, phonetic=False, callback=None):
         post_task_update(callback, f"--- Getting all audio data")
         words_data = []
         segments_data = []
-        words_cache = {}
-        count = 0
         for page in text_obj.pages:
             for segment in page.segments:
-                segment_text = canonical_text_for_audio(segment.to_text())
-                if not string_has_no_audio_content(segment_text):
-                    file_segment = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text, callback=callback)
-                    segments_data.append([segment_text, file_segment])
-                    count += 1
-                    if count % 50 == 0:
-                        post_task_update(callback, f"--- Checked {count} text items")
+                segment_text_plain = segment.to_text()
+                segment_text_canonical = canonical_text_for_audio(segment_text_plain)
+                if not string_has_no_audio_content(segment_text_canonical):
+                    #file_segment = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text, callback=callback)
+                    segments_data.append([segment_text_plain, segment_text_canonical])
                 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
                         if phonetic and 'phonetic' in content_element.annotations:
-                            audio_word = content_element.annotations['phonetic']
+                            audio_word_plain = content_element.annotations['phonetic']
                         elif not phonetic:
-                            audio_word = content_element.content
+                            audio_word_plain = content_element.content
                         else:
-                            audio_word = None
-                        if audio_word and not string_has_no_audio_content(audio_word):
-                            canonical_word = canonical_word_for_audio(audio_word)
-                            if canonical_word in words_cache:
-                                file_word = words_cache[canonical_word]
-                            else:
-                                file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
-                            words_data.append([canonical_word, file_word])    
-                            count += 1
-                            if count % 50 == 0:
-                                post_task_update(callback, f"--- Checked {count} text items")
+                            audio_word_plain = None
+                            
+                        if audio_word_plain and not string_has_no_audio_content(audio_word_plain):
+                            audio_word_canonical = canonical_word_for_audio(audio_word_plain)
+                            #file_word = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word, callback=callback)
+                            words_data.append([audio_word_plain, audio_word_canonical])    
 
-        return words_data, segments_data
+        segment_texts_canonical = [ item[1] for item in segments_data ]
+        word_texts_canonical = [ item[1] for item in words_data ]
 
-    def _get_missing_audio(self, text_obj, phonetic=False, callback=None):
-        words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
+        segment_file_paths = self.audio_repository.get_entry_batch(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_texts_canonical, callback=callback)
+        word_file_paths = self.audio_repository.get_entry_batch(self.word_engine_id, self.word_language_id, self.word_voice_id, word_texts_canonical, callback=callback)
 
-        # We don't want to include trivial strings, so check using strip().
-        missing_words = [word_data[0] for word_data in words_data if not word_data[1] and word_data[0].strip()]
-        missing_segments = [segment_data[0] for segment_data in segments_data if not segment_data[1] and segment_data[0].strip()]
+        segments_and_file_paths = [ [ item[0], segment_file_paths[item[1]] ] for item in segments_data ]
+        words_and_file_paths = [ [ item[0], word_file_paths[item[1]] ] for item in words_data ]
+        
+        return words_and_file_paths, segments_and_file_paths
+
+    def _get_missing_audio(self, words_data, segments_data, phonetic=False, callback=None):
+        
+        missing_words = [word_data[0] for word_data in words_data if not word_data[1]]
+        missing_segments = [segment_data[0] for segment_data in segments_data if not segment_data[1]]
 
         post_task_update(callback, f"--- Found {len(missing_words)} words without audio")
         post_task_update(callback, f"--- Found {len(missing_segments)} segments without audio")
@@ -160,9 +168,12 @@ class AudioAnnotator:
         words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
 
         # Reformat the data as lists of dictionaries.
-        words_metadata = [{"word": word_data[0], "file": word_data[1]} for word_data in words_data if word_data[0]]
-        segments_metadata = [{"segment": segment_data[0], "file": segment_data[1]} for segment_data in segments_data if segment_data[0]]
-
+        words_metadata = [{"word": canonical_word_for_audio(word_data[0]), "file": word_data[1]}
+                          for word_data in words_data
+                          if word_data[0]]
+        segments_metadata = [{"segment": canonical_text_for_audio(segment_data[0]), "file": segment_data[1]}
+                             for segment_data in segments_data
+                             if segment_data[0]]
         
         words_metadata = remove_duplicates_general(words_metadata)
         if phonetic:
@@ -179,24 +190,29 @@ class AudioAnnotator:
         else:
             return { 'words': words_metadata, 'segments': segments_metadata }
 
-    def _create_and_store_missing_mp3s(self, missing_audio, callback=None):
+    def _create_and_store_missing_mp3s(self, text_items, words_or_segments, callback=None):
         temp_dir = tempfile.mkdtemp()
+        text_file_paths = []
 
-        for i, audio in enumerate(missing_audio, 1):
-            post_task_update(callback, f"--- Creating mp3 for '{audio}' ({i}/{len(missing_audio)})")
+        for i, text in enumerate(text_items, 1):
+            canonical_text = canonical_text_for_audio(text) if words_or_segments == 'segments' else canonical_word_for_audio(text)
+            post_task_update(callback, f"--- Creating mp3 for '{canonical_text}' ({i}/{len(text_items)})")
             try:
                 unique_filename = f"{uuid.uuid4()}.mp3"
                 temp_file = os.path.join(temp_dir, unique_filename)
-                result = self.tts_engine.create_mp3(self.language_id, self.voice_id, audio, temp_file, callback=callback)
+                result = self.tts_engine.create_mp3(self.language_id, self.voice_id, canonical_text, temp_file, callback=callback)
                 if result:
                     file_path = self.audio_repository.store_mp3(self.engine_id, self.language_id, self.voice_id, temp_file)
-                    self.audio_repository.add_or_update_entry(self.engine_id, self.language_id, self.voice_id, audio, file_path)
+                    self.audio_repository.add_or_update_entry(self.engine_id, self.language_id, self.voice_id, canonical_text, file_path)
                 else:
-                    post_task_update(callback, f"--- Failed to create mp3 for '{audio}'")
+                    file_path = None
+                    post_task_update(callback, f"--- Failed to create mp3 for '{text}'")
+                text_file_paths.append([text, file_path])
             except Exception as e:
                 post_task_update(callback, f"*** Error creating TTS file: {str(e)}")
                 
         shutil.rmtree(temp_dir)
+        return text_file_paths
 
     # Process a zipfile received from LiteDevTools. This should contain .wav files and metadata
     def process_lite_dev_tools_zipfile(self, zipfile, callback=None):
@@ -263,32 +279,24 @@ class AudioAnnotator:
             except Exception as e:
                 post_task_update(callback, f"*** Error trying to process metadata item {metadata_item}: {str(e)}")
 
-    def _add_audio_annotations(self, text_obj, phonetic=False, callback=None):
+    def _add_audio_annotations(self, text_obj, words_data, segments_data, phonetic=False, callback=None):
         post_task_update(callback, f"--- Adding audio annotations to internalised text")
         text_obj.voice = self.printname_for_voice()
-        word_cache = {}
-        count = 0
+        
+        word_cache = { item[0]: item[1] for item in words_data }
+        segment_cache = { item[0]: item[1] for item in segments_data }
         
         for page in text_obj.pages:
             for segment in page.segments:
-                segment_text = canonical_text_for_audio(segment.to_text())
-                segment_file_path = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id, segment_text)
-                if not segment_file_path:
-                    #post_task_update(callback, f"--- Warning: no audio annotation available for segment '{segment_text}'")
-                    #segment_file_path = 'placeholder.mp3'
-                    pass
-                if string_has_no_audio_content(segment_text):
-                    pass
-                else:
+                segment_text = segment.to_text()
+                segment_file_path = segment_cache[segment_text] if segment_text in segment_cache else None
+                if segment_file_path and not string_has_no_audio_content(segment_text):
                     segment.annotations['tts'] = {
                         "engine_id": self.segment_engine_id,
                         "language_id": self.segment_language_id,
                         "voice_id": self.segment_voice_id,
                         "file_path": segment_file_path,
                     }
-                count += 1
-                if count % 50 == 0:
-                    post_task_update(callback, f"--- Processed {count} text items")
 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
@@ -300,29 +308,20 @@ class AudioAnnotator:
                             audio_word = None
 
                         if audio_word:
-                            canonical_word = canonical_word_for_audio(audio_word)
-                            if canonical_word in word_cache:
-                                file_path = word_cache[canonical_word]
-                            else:
-                                file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
-                                word_cache[canonical_word] = file_path
+                            #file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
+                            file_path = word_cache[audio_word] if audio_word in word_cache else None
                         else:
                             file_path = None
                             
-                        if not file_path:
-                            #post_task_update(callback, f"--- Warning: no audio annotation available for word '{canonical_word}'")
-                            file_path = 'placeholder.mp3'
-                        if string_has_no_audio_content(canonical_word):
-                            pass
-                        content_element.annotations['tts'] = {
-                            "engine_id": self.word_engine_id,
-                            "language_id": self.word_language_id,
-                            "voice_id": self.word_voice_id,
-                            "file_path": file_path,
-                        }
-                        count += 1
-                        if count % 50 == 0:
-                            post_task_update(callback, f"--- Processed {count} text items")
+                        if not string_has_no_audio_content(audio_word):
+                            if not file_path:
+                                file_path = 'placeholder.mp3'
+                            content_element.annotations['tts'] = {
+                                "engine_id": self.word_engine_id,
+                                "language_id": self.word_language_id,
+                                "voice_id": self.word_voice_id,
+                                "file_path": file_path,
+                            }
         post_task_update(callback, f"--- Audio annotations added to internalised text")
 
     def printname_for_voice(self):

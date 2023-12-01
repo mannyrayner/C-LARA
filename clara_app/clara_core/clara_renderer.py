@@ -157,7 +157,7 @@ def adjust_audio_file_paths_in_segment_list(segments, copy_operations, multimedi
     for segment in segments:
         if 'tts' in segment.annotations and 'file_path' in segment.annotations['tts']:
             old_audio_file_path = segment.annotations['tts']['file_path']
-            if old_audio_file_path != 'placeholder.mp3':
+            if old_audio_file_path and old_audio_file_path != 'placeholder.mp3':
                 new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
                 new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                 copy_operations[old_audio_file_path] = new_audio_file_path
@@ -165,7 +165,7 @@ def adjust_audio_file_paths_in_segment_list(segments, copy_operations, multimedi
         for element in segment.content_elements:
             if element.type == "Word" and 'tts' in element.annotations and 'file_path' in element.annotations['tts']:
                 old_audio_file_path = element.annotations['tts']['file_path']
-                if old_audio_file_path != 'placeholder.mp3':
+                if old_audio_file_path and old_audio_file_path != 'placeholder.mp3':
                     new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
                     new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                     copy_operations[old_audio_file_path] = new_audio_file_path
