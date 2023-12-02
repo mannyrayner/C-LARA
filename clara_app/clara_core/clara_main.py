@@ -854,23 +854,6 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when removing image: {str(e)}")
             # Handle the exception as needed
 
-##    # Retrieves the current image associated with the project (temporary for initial version)
-##    def get_current_project_image(self, callback=None):
-##        try:
-##            project_id = self.id
-##            
-##            post_task_update(callback, f"--- Retrieving current image for project {project_id}")
-##
-##            # Logic to get the current image entry from the repository
-##            current_image = self.image_repository.get_current_entry(project_id)
-##
-##            post_task_update(callback, f"--- Current image retrieved successfully")
-##            return current_image
-##        except Exception as e:
-##            post_task_update(callback, f"*** Error when retrieving current image: {str(e)}")
-##            # Handle the exception as needed
-##            return None
-
     # Retrieves all images associated with the project
     def get_all_project_images(self, callback=None):
         try:
@@ -903,7 +886,11 @@ class CLARAProjectInternal:
  
         post_task_update(callback, f"--- Created internalised and annotated text")
         # Pass both Django-level and internal IDs
-        renderer = StaticHTMLRenderer(project_id, self.id, phonetic=phonetic)
+        normal_html_exists = self.rendered_html_exists(project_id)
+        post_task_update(callback, f"--- normal_html_exists: {normal_html_exists}")
+        phonetic_html_exists = self.rendered_phonetic_html_exists(project_id)
+        post_task_update(callback, f"--- phonetic_html_exists: {phonetic_html_exists}")
+        renderer = StaticHTMLRenderer(project_id, self.id, phonetic=phonetic, normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists)
         post_task_update(callback, f"--- Start creating pages")
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
@@ -913,17 +900,19 @@ class CLARAProjectInternal:
     def rendered_html_exists(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'normal')
         page_1_file = str( Path(output_dir) / 'page_1.html' )
-        print(f'--- Checking first page of rendered text: {page_1_file}')
+        result = file_exists(page_1_file)
+        print(f'--- Checking first page of rendered text: {page_1_file}: status = {result}')
         # If the first page exists, at least some HTML has been created
-        return file_exists(page_1_file)
+        return result
 
     # Determine whether the rendered HTML has been created
     def rendered_phonetic_html_exists(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'phonetic')
         page_1_file = str( Path(output_dir) / 'page_1.html' )
-        print(f'--- Checking first page of rendered text: {page_1_file}')
+        result = file_exists(page_1_file)
+        print(f'--- Checking first page of rendered text: {page_1_file}: status = {result}')
         # If the first page exists, at least some HTML has been created
-        return file_exists(page_1_file)
+        return result
 
     # Get the word-count
     def get_word_count(self, phonetic=False) -> int:

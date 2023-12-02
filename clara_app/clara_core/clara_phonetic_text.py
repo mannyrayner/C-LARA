@@ -42,7 +42,7 @@ def segmented_text_object_to_phonetic_text_object(segmented_text_object, paramet
                 else:
                     phonetic_segment = Segment([content_element])
                 phonetic_segments += [ phonetic_segment ]
-        phonetic_pages += [ Page(phonetic_segments) ]
+        phonetic_pages += [ Page(phonetic_segments, annotations=page.annotations) ]
     return Text(phonetic_pages, segmented_text_object.l2_language, segmented_text_object.l1_language)
 
 def word_to_phonetic_segment(word, parameters):

@@ -24,13 +24,15 @@ import traceback
 config = get_config()
 
 class StaticHTMLRenderer:
-    def __init__(self, project_id, project_id_internal, phonetic=False):
+    def __init__(self, project_id, project_id_internal, phonetic=False, normal_html_exists=False, phonetic_html_exists=False):
         self.phonetic = phonetic
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
         self.template_env.filters['replace_punctuation'] = replace_punctuation_with_underscores
 
         self.project_id = str(project_id)
         self.project_id_internal = str(project_id_internal)
+        self.normal_html_exists = normal_html_exists
+        self.phonetic_html_exists = phonetic_html_exists
         
         # Create the new output_dir
         # Define the output directory based on the phonetic parameter
@@ -54,16 +56,19 @@ class StaticHTMLRenderer:
     def render_page(self, page, page_number, total_pages, l2_language, l1_language):
         is_rtl = is_rtl_language(l2_language)
         template = self.template_env.get_template('clara_page.html')
-        project_id_internal = self.project_id_internal
         rendered_page = template.render(page=page,
                                         total_pages=total_pages,
-                                        project_id_internal=project_id_internal,
+                                        project_id=self.project_id,
+                                        project_id_internal=self.project_id_internal,
                                         l2_language=l2_language,
                                         is_rtl=is_rtl,
                                         l1_language=l1_language,
                                         page_number=page_number,
-                                        phonetic=self.phonetic)
-        return rendered_page
+                                        page_number_str=str(page_number),
+                                        phonetic=self.phonetic,
+                                        normal_html_exists=self.normal_html_exists,
+                                        phonetic_html_exists=self.phonetic_html_exists)
+        return rendered_page 
 
     def render_concordance_page(self, lemma, concordance_segments, l2_language):
         template = self.template_env.get_template('concordance_page.html')
