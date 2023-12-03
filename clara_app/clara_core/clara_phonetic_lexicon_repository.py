@@ -241,3 +241,61 @@ class PhoneticLexiconRepository:
         except Exception as e:
             post_task_update(callback, f'*** PhoneticLexiconRepository: error when initialising plain lexicon for language "{language}": {str(e)}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+    def get_aligned_entries_batch(self, words, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            # Prepare the query for batch lookup
+            if os.getenv('DB_TYPE') == 'sqlite':
+                query = "SELECT * FROM aligned_phonetic_lexicon WHERE language = ? AND word IN ({})".format(','.join('?' * len(words)))
+                cursor.execute(query, [language] + words)
+            else:  # Assume postgres
+                query = "SELECT * FROM aligned_phonetic_lexicon WHERE language = %s AND word = ANY(%s)"
+                cursor.execute(query, (language, tuple(words)))
+
+            # Fetch all matching records
+            records = cursor.fetchall()
+            connection.close()
+
+            # Convert records to a list of dicts
+            if os.getenv('DB_TYPE') == 'sqlite':
+                entries = [{'word': record[1], 'phonemes': record[2], 'aligned_graphemes': record[3], 'aligned_phonemes': record[4], 'status': record[5]} for record in records]
+            else:  # Assuming PostgreSQL
+                entries = [{'word': record['word'], 'phonemes': record['phonemes'], 'aligned_graphemes': record['aligned_graphemes'],
+                            'aligned_phonemes': record['aligned_phonemes'], 'status': record['status']}
+                           for record in records]
+
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching aligned entries batch for language "{language}": {str(e)}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+    def get_plain_entries_batch(self, words, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            # Prepare the query for batch lookup
+            if os.getenv('DB_TYPE') == 'sqlite':
+                query = "SELECT * FROM plain_phonetic_lexicon WHERE language = ? AND word IN ({})".format(','.join('?' * len(words)))
+                cursor.execute(query, [language] + words)
+            else:  # Assume postgres
+                query = "SELECT * FROM plain_phonetic_lexicon WHERE language = %s AND word = ANY(%s)"
+                cursor.execute(query, (language, tuple(words)))
+
+            # Fetch all matching records
+            records = cursor.fetchall()
+            connection.close()
+
+            # Convert records to a list of dicts
+            if os.getenv('DB_TYPE') == 'sqlite':
+                entries = [{'word': record[1], 'phonemes': record[2], 'status': record[3]} for record in records]
+            else:  # Assuming PostgreSQL
+                entries = [{'word': record['word'], 'phonemes': record['phonemes'], 'status': record['status']}
+                           for record in records]
+            return entries
+
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching plain entries batch for language "{language}": {str(e)}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
