@@ -22,7 +22,7 @@ class PhoneticLexiconRepository:
         try:
             if os.getenv('DB_TYPE') == 'sqlite':
                 # If we're using sqlite, check if db_file exists and if not create it
-                db_dir = config.get('phonetic_lexicon_repository', 'base_dir')
+                db_dir = config.get('phonetic_lexicon_repository', 'db_dir')
                 if not local_directory_exists(db_dir):
                     post_task_update(callback, f'--- Creating empty base dir for phonetic lexicon repository, {db_dir}')
                     make_local_directory(db_dir)
@@ -200,7 +200,10 @@ class PhoneticLexiconRepository:
             cursor = connection.cursor()
 
             # Clear existing entries for the language
-            cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE language = %s", (language,))
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE language = ?", (language,))
+            else:  # Assume postgres
+                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE language = %s", (language,))
 
             # Batch insert new items
             for entry in items:
@@ -208,9 +211,13 @@ class PhoneticLexiconRepository:
                 phonemes = entry['phonemes']
                 aligned_graphemes = entry['aligned_graphemes']
                 aligned_phonemes = entry['aligned_phonemes']
-                status = 'uploaded'  
-                cursor.execute("INSERT INTO aligned_phonetic_lexicon (word, phonemes, aligned_graphemes, aligned_phonemes, language, status) VALUES (%s, %s, %s, %s, %s, %s)",
-                               (word, phonemes, aligned_graphemes, aligned_phonemes, language, status))
+                status = 'uploaded'
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("INSERT INTO aligned_phonetic_lexicon (word, phonemes, aligned_graphemes, aligned_phonemes, language, status) VALUES (?, ?, ?, ?, ?, ?)",
+                                   (word, phonemes, aligned_graphemes, aligned_phonemes, language, status))
+                else:  # Assume postgres
+                    cursor.execute("INSERT INTO aligned_phonetic_lexicon (word, phonemes, aligned_graphemes, aligned_phonemes, language, status) VALUES (%s, %s, %s, %s, %s, %s)",
+                                   (word, phonemes, aligned_graphemes, aligned_phonemes, language, status))
 
             connection.commit()
             connection.close()
@@ -219,21 +226,29 @@ class PhoneticLexiconRepository:
             post_task_update(callback, f'*** PhoneticLexiconRepository: error when initialising aligned lexicon for language "{language}": {str(e)}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
+
     def initialise_plain_lexicon(self, items, language, callback=None):
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
 
             # Clear existing entries for the language
-            cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE language = %s", (language,))
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE language = ?", (language,))
+            else:  # Assume postgres
+                cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE language = %s", (language,))
 
             # Batch insert new items
             for entry in items:
                 word = entry['word']
                 phonemes = entry['phonemes']
-                status = 'uploaded'  
-                cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (%s, %s, %s, %s)",
-                               (word, phonemes, language, status))
+                status = 'uploaded'
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (?, ?, ?, ?)",
+                                   (word, phonemes, language, status))
+                else:  # Assume postgres
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (%s, %s, %s, %s)",
+                                   (word, phonemes, language, status))
 
             connection.commit()
             connection.close()
