@@ -277,11 +277,13 @@ class PhoneticLexiconRepository:
             # Convert records to a list of dicts
             if os.getenv('DB_TYPE') == 'sqlite':
                 entries = [{'word': record[1], 'phonemes': record[2], 'aligned_graphemes': record[3],
-                            'aligned_phonemes': record[4], 'status': record[5]} for record in records]
+                            'aligned_phonemes': record[4], 'status': record[6]} for record in records]
             else:  # Assuming PostgreSQL
                 entries = [{'word': record['word'], 'phonemes': record['phonemes'], 'aligned_graphemes': record['aligned_graphemes'],
                             'aligned_phonemes': record['aligned_phonemes'], 'status': record['status']}
                            for record in records]
+
+            return entries
 
         except Exception as e:
             post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching aligned entries batch for language "{language}": {str(e)}')
@@ -304,7 +306,7 @@ class PhoneticLexiconRepository:
             # Convert records to a list of dicts
             if os.getenv('DB_TYPE') == 'sqlite':
                 entries = [{'word': record[1], 'phonemes': record[2], 'aligned_graphemes': record[3],
-                            'aligned_phonemes': record[4], 'status': record[5]} for record in records]
+                            'aligned_phonemes': record[4], 'status': record[6]} for record in records]
             else:  # Assuming PostgreSQL
                 entries = [{'word': record['word'], 'phonemes': record['phonemes'], 'aligned_graphemes': record['aligned_graphemes'],
                             'aligned_phonemes': record['aligned_phonemes'], 'status': record['status']}
