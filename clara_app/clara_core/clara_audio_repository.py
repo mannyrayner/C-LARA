@@ -105,18 +105,6 @@ class AudioRepository:
             post_task_update(callback, error_message)
             post_task_update(callback, f'error')
 
-##    def add_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
-##        try:
-##            connection = connect(self.db_file)
-##            cursor = connection.cursor()
-##            cursor.execute(localise_sql_query("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (%s, %s, %s, %s, %s)"),
-##                           (engine_id, language_id, voice_id, text, file_path))
-##            connection.commit()
-##            connection.close()
-##        except Exception as e:
-##            post_task_update(callback, f'*** Error when inserting "{language_id}/{text}/{file_path}" into TTS database: "{str(e)}"')
-##            raise InternalCLARAError(message='TTS database inconsistency')
-
     def add_or_update_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
         try:
             connection = connect(self.db_file)
