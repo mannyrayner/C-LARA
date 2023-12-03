@@ -1,7 +1,7 @@
 from .clara_database_adapter import connect, localise_sql_query
 
 from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, copy_local_file, basename
-from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory
+from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory, read_json_file
 from .clara_utils import list_files_in_directory, post_task_update
 
 from .clara_classes import InternalCLARAError
@@ -299,3 +299,58 @@ class PhoneticLexiconRepository:
         except Exception as e:
             post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching plain entries batch for language "{language}": {str(e)}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+        
+
+#-----------------------
+
+## Testing
+
+## Contents for aligned file assumed to be in this format:
+
+##{
+##    "a": [
+##        "a",
+##        "æ"
+##    ],
+##    "about": [
+##        "a|b|ou|t",
+##        "ɐ|b|a‍ʊ|t"
+##    ],
+##    "active": [
+##        "a|c|t|i|v|e",
+##        "æ|k|t|ɪ|v|"
+##    ],
+
+def load_and_initialise_aligned_lexicon(repository, file_path, language, callback=None):
+    data = read_json_file(file_path)
+    items = []
+    for word in data:
+        aligned_graphemes, aligned_phonemes = data[word]
+        items.append({
+            'word': word,
+            'phonemes': aligned_phonemes.replace('|', ''),  
+            'aligned_graphemes': aligned_graphemes,
+            'aligned_phonemes': aligned_phonemes,
+        })
+    repository.initialise_aligned_lexicon(items, language, callback=callback)
+
+## Contents for aligned file assumed to be in this format:
+
+##{
+##    "a": "æ",
+##    "aah": "ˈɑː",
+##    "aardvark": "ˈɑːdvɑːk",
+##    "aardvarks": "ˈɑːdvɑːks",
+##    "aardwolf": "ˈɑːdwʊlf",
+##    "aba": "ɐbˈæ",
+
+def load_and_initialise_plain_lexicon(repository, file_path, language, callback=None):
+    data = read_json_file(file_path)
+    items = []
+    for word in data:
+        phonemes = data[word]
+        items.append({
+            'word': word,
+            'phonemes': phonemes,
+            }) 
+    repository.initialise_plain_lexicon(items, language, callback=callback)
