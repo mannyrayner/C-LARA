@@ -298,7 +298,7 @@ class PhoneticLexiconRepository:
             connection.close()
             post_task_update(callback, f'--- Initialised aligned phonetic lexicon for {language}, {len(items)} entries')
         except Exception as e:
-            post_task_update(callback, f'*** PhoneticLexiconRepository: error when initialising aligned lexicon for language "{language}": {str(e)}')
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when initialising aligned lexicon for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
 
@@ -329,7 +329,7 @@ class PhoneticLexiconRepository:
             connection.close()
             post_task_update(callback, f'--- Initialised plain phonetic lexicon for {language}, {len(items)} entries')
         except Exception as e:
-            post_task_update(callback, f'*** PhoneticLexiconRepository: error when initialising plain lexicon for language "{language}": {str(e)}')
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when initialising plain lexicon for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
     def get_aligned_entries_batch(self, words, language, callback=None):
@@ -361,7 +361,7 @@ class PhoneticLexiconRepository:
             return entries
 
         except Exception as e:
-            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching aligned entries batch for language "{language}": {str(e)}')
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching aligned entries batch for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
     def get_all_aligned_entries_for_language(self, language, callback=None):
@@ -390,7 +390,7 @@ class PhoneticLexiconRepository:
             return entries
 
         except Exception as e:
-            error_message = f'*** Error when retrieving aligned lexicon entries for language "{language}": {str(e)}'
+            error_message = f'*** Error when retrieving aligned lexicon entries for language "{language}": "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
@@ -421,7 +421,7 @@ class PhoneticLexiconRepository:
             return entries
 
         except Exception as e:
-            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching plain entries batch for language "{language}": {str(e)}')
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching plain entries batch for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
         
 
