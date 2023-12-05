@@ -311,8 +311,6 @@ def edit_phonetic_lexicon(request):
             else:
                 plain_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.plain_phonetic_entries_exist_for_language(language) else 'NO'
                 aligned_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.aligned_entries_exist_for_language(language) else 'NO'
-            print(f' plain_phonetic_lexicon_entries_exist = {plain_phonetic_lexicon_entries_exist}')
-            print(f' aligned_phonetic_lexicon_entries_exist = {aligned_phonetic_lexicon_entries_exist}')
             form = PhoneticLexiconForm(user=request.user, initial = { 'language': language,
                                                                       'letter_groups': letter_groups,
                                                                       'accents': accents,
