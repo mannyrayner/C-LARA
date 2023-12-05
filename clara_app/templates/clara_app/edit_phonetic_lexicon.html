@@ -2,11 +2,12 @@
 
 {% block content %}
     <h1>Edit Phonetic Lexicon</h1>
-	<form method="POST">
+	<form method="POST" enctype="multipart/form-data">
 	  {% csrf_token %}
 	  {{ form.as_p }}
-	  <input type="submit" name="action" value="Load">
-	  <input type="submit" name="action" value="Save">
+	  <input type="submit" name="action" value="Load orthography">
+	  <input type="submit" name="action" value="Save orthography">
+	  <input type="submit" name="action" value="Upload files">
     </form>
 	
     <script>
