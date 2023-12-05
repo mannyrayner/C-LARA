@@ -106,6 +106,7 @@ class PhoneticLexiconRepository:
                 cursor.execute("SELECT COUNT(*) FROM aligned_phonetic_lexicon WHERE language = %s",
                                (language,))
 
+            result = cursor.fetchone()
             if result is not None:
                 if os.getenv('DB_TYPE') == 'sqlite':
                     # For SQLite, result is a tuple
@@ -139,6 +140,7 @@ class PhoneticLexiconRepository:
                 cursor.execute("SELECT COUNT(*) FROM plain_phonetic_lexicon WHERE language = %s",
                                (language,))
 
+            result = cursor.fetchone()
             if result is not None:
                 if os.getenv('DB_TYPE') == 'sqlite':
                     # For SQLite, result is a tuple
