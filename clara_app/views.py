@@ -37,8 +37,9 @@ from .utils import uploaded_file_to_file
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
-from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository
+from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
 from .clara_core.clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+from .clara_core.clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
 from .clara_core.clara_audio_repository import AudioRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
@@ -304,7 +305,20 @@ def edit_phonetic_lexicon(request):
                         messages.success(request, f"Error when uploading plain phonetic lexicon: {plain_details}")
                     else:
                         messages.success(request, f"Plain phonetic lexicon uploaded successfully: {plain_details}")
-            form = PhoneticLexiconForm(user=request.user, initial = { 'language': language, 'letter_groups': letter_groups, 'accents': accents })
+            if not language:
+                plain_phonetic_lexicon_entries_exist = 'n/a'
+                aligned_phonetic_lexicon_entries_exist = 'n/a'
+            else:
+                plain_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.plain_phonetic_entries_exist_for_language(language) else 'NO'
+                aligned_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.aligned_entries_exist_for_language(language) else 'NO'
+            print(f' plain_phonetic_lexicon_entries_exist = {plain_phonetic_lexicon_entries_exist}')
+            print(f' aligned_phonetic_lexicon_entries_exist = {aligned_phonetic_lexicon_entries_exist}')
+            form = PhoneticLexiconForm(user=request.user, initial = { 'language': language,
+                                                                      'letter_groups': letter_groups,
+                                                                      'accents': accents,
+                                                                      'plain_phonetic_lexicon_entries_exist': plain_phonetic_lexicon_entries_exist,
+                                                                      'aligned_phonetic_lexicon_entries_exist': aligned_phonetic_lexicon_entries_exist
+                                                                      })
     else:
         form = PhoneticLexiconForm(user=request.user)
 
@@ -665,6 +679,7 @@ def project_detail(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
+    can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
     can_render_normal = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
     can_render_phonetic = clara_project_internal.text_versions["phonetic"] 
@@ -680,13 +695,17 @@ def project_detail(request, project_id):
         form = UpdateProjectTitleForm()
     return render(request, 'clara_app/project_detail.html', 
                   { 'project': project, 'form': form, 'api_cost': api_cost, 
-                    'can_create_segmented_text': can_create_segmented_text, 
+                    'can_create_segmented_text': can_create_segmented_text,
+                    'can_create_phonetic_text': can_create_phonetic_text,
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
                     'can_render_normal': can_render_normal,
                     'can_render_phonetic': can_render_phonetic,
                     'rendered_html_exists': rendered_html_exists,
                     'rendered_phonetic_html_exists': rendered_phonetic_html_exists}
                     )
+
+def phonetic_resources_are_available(l2_language):
+    return phonetic_orthography_resources_available(l2_language) or grapheme_phoneme_resources_available(l2_language)
 
 @login_required
 @user_has_a_project_role
