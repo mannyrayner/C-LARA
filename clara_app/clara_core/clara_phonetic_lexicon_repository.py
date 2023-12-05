@@ -407,7 +407,8 @@ class PhoneticLexiconRepository:
                 cursor.execute(query, [language] + words)
             else:  # Assume postgres
                 query = "SELECT * FROM plain_phonetic_lexicon WHERE language = %s AND word = ANY(%s)"
-                cursor.execute(query, (language, tuple(words)))
+                #cursor.execute(query, (language, tuple(words)))
+                cursor.execute(query, (language, words))
 
             # Fetch all matching records
             records = cursor.fetchall()
