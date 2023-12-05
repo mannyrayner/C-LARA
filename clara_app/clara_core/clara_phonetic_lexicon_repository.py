@@ -395,18 +395,27 @@ class PhoneticLexiconRepository:
 ##        "æ|k|t|ɪ|v|"
 ##    ],
 
-def load_and_initialise_aligned_lexicon(repository, file_path, language, callback=None):
-    data = read_json_file(file_path)
-    items = []
-    for word in data:
-        aligned_graphemes, aligned_phonemes = data[word]
-        items.append({
-            'word': word,
-            'phonemes': aligned_phonemes.replace('|', ''),  
-            'aligned_graphemes': aligned_graphemes,
-            'aligned_phonemes': aligned_phonemes,
-        })
-    repository.initialise_aligned_lexicon(items, language, callback=callback)
+    def load_and_initialise_aligned_lexicon(self, file_path, language, callback=None):
+        try:
+            data = read_json_file(file_path)
+        except:
+            return ( 'error', 'unable to read file' )
+        #print(f'--- Uploaded data from {file_path}: {len(data)} items')
+        items = []
+        try:
+            for word in data:
+                aligned_graphemes, aligned_phonemes = data[word]
+                #print(f'--- Uploading {word}: {aligned_graphemes}/{aligned_phonemes}')
+                items.append({
+                    'word': word,
+                    'phonemes': aligned_phonemes.replace('|', ''),  
+                    'aligned_graphemes': aligned_graphemes,
+                    'aligned_phonemes': aligned_phonemes,
+                })
+            self.initialise_aligned_lexicon(items, language, callback=callback)
+            return ( 'success', f'{len(items)} items loaded' )
+        except:
+            return ( 'error', 'something went wrong in internalisation' )
 
 ## Contents for aligned file assumed to be in this format:
 
@@ -418,13 +427,20 @@ def load_and_initialise_aligned_lexicon(repository, file_path, language, callbac
 ##    "aardwolf": "ˈɑːdwʊlf",
 ##    "aba": "ɐbˈæ",
 
-def load_and_initialise_plain_lexicon(repository, file_path, language, callback=None):
-    data = read_json_file(file_path)
-    items = []
-    for word in data:
-        phonemes = data[word]
-        items.append({
-            'word': word,
-            'phonemes': phonemes,
-            }) 
-    repository.initialise_plain_lexicon(items, language, callback=callback)
+    def load_and_initialise_plain_lexicon(self, file_path, language, callback=None):
+        try:
+            data = read_json_file(file_path)
+        except:
+            return ( 'error', 'unable to read file' )
+        items = []
+        try:
+            for word in data:
+                phonemes = data[word]
+                items.append({
+                    'word': word,
+                    'phonemes': phonemes,
+                    }) 
+            self.initialise_plain_lexicon(items, language, callback=callback)
+            return ( 'success', f'{len(items)} items loaded' )
+        except:
+            return ( 'error', 'something went wrong in internalisation' )
