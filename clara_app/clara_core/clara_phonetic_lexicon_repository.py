@@ -106,8 +106,16 @@ class PhoneticLexiconRepository:
                 cursor.execute("SELECT COUNT(*) FROM aligned_phonetic_lexicon WHERE language = %s",
                                (language,))
 
-            result = cursor.fetchone()
-            exists = result[0] > 0 if result is not None else False
+            if result is not None:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, result is a tuple
+                    exists = result[0] > 0
+                else:
+                    # For PostgreSQL, result is a RealDictRow
+                    exists = result['count'] > 0
+            else:
+                exists = False
+
 
             connection.commit()
             connection.close()
@@ -131,8 +139,15 @@ class PhoneticLexiconRepository:
                 cursor.execute("SELECT COUNT(*) FROM plain_phonetic_lexicon WHERE language = %s",
                                (language,))
 
-            result = cursor.fetchone()
-            exists = result[0] > 0 if result is not None else False
+            if result is not None:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, result is a tuple
+                    exists = result[0] > 0
+                else:
+                    # For PostgreSQL, result is a RealDictRow
+                    exists = result['count'] > 0
+            else:
+                exists = False
 
             connection.commit()
             connection.close()
@@ -157,7 +172,15 @@ class PhoneticLexiconRepository:
                                (word, phonemes, language))
 
             result = cursor.fetchone()
-            exists = result[0] > 0 if result is not None else False
+            if result is not None:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, result is a tuple
+                    exists = result[0] > 0
+                else:
+                    # For PostgreSQL, result is a RealDictRow
+                    exists = result['count'] > 0
+            else:
+                exists = False
 
             if exists:
                 # Update existing entry
