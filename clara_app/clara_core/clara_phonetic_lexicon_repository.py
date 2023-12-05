@@ -61,6 +61,7 @@ class PhoneticLexiconRepository:
                 cursor.execute('''CREATE TABLE IF NOT EXISTS aligned_phonetic_lexicon
                                   (id SERIAL PRIMARY KEY,
                                    word TEXT,
+                                   phonemes TEXT,
                                    aligned_graphemes TEXT,
                                    aligned_phonemes TEXT,
                                    language TEXT,
