@@ -38,6 +38,7 @@ from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
 from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository
+from .clara_core.clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_core.clara_audio_repository import AudioRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
@@ -267,26 +268,42 @@ def remove_language_master(request, pk):
 @login_required
 @language_master_required
 def edit_phonetic_lexicon(request):
-    repository = PhoneticOrthographyRepository()
+    orthography_repo = PhoneticOrthographyRepository()
+    phonetic_lexicon_repo = PhoneticLexiconRepository()
     if request.method == 'POST':
         form = PhoneticLexiconForm(request.POST, user=request.user)
         if form.is_valid():
             language = form.cleaned_data['language']
             letter_groups = form.cleaned_data['letter_groups']
             accents = form.cleaned_data['accents']
-            if request.POST.get('action') == 'Load':
+            if request.POST.get('action') == 'Load orthography':
                 if not language:
                     messages.error(request, "Language is not specified, cannot load data")
                     return redirect('edit_phonetic_lexicon')
                 else:
-                    ( letter_groups, accents ) = repository.get_text_entry(language)
+                    ( letter_groups, accents ) = orthography_repo.get_text_entry(language)
                     messages.success(request, "Data loaded")
-            elif request.POST.get('action') == 'Save':
+            elif request.POST.get('action') == 'Save orthography':
                 if not letter_groups:
                     messages.error(request, "Not saving, orthography list is empty")
                 else:
-                    repository.save_entry(language, letter_groups, accents)
+                    orthography_repo.save_entry(language, letter_groups, accents)
                     messages.success(request, "Data saved")
+            elif request.POST.get('action') == 'Upload files':
+                if 'aligned_lexicon_file' in request.FILES:
+                    aligned_file_path = uploaded_file_to_file(request.FILES['aligned_lexicon_file'])
+                    aligned_result, aligned_details = phonetic_lexicon_repo.load_and_initialise_aligned_lexicon(aligned_file_path, language)
+                    if aligned_result == 'error':
+                        messages.success(request, f"Error when uploading aligned phonetic lexicon: {aligned_details}")
+                    else:
+                        messages.success(request, f"Aligned phonetic lexicon uploaded successfully: {aligned_details}")
+                if 'plain_lexicon_file' in request.FILES:
+                    plain_file_path = uploaded_file_to_file(request.FILES['plain_lexicon_file'])
+                    plain_result, plain_details = phonetic_lexicon_repo.load_and_initialise_plain_lexicon(plain_file_path, language)
+                    if plain_result == 'error':
+                        messages.success(request, f"Error when uploading plain phonetic lexicon: {plain_details}")
+                    else:
+                        messages.success(request, f"Plain phonetic lexicon uploaded successfully: {plain_details}")
             form = PhoneticLexiconForm(user=request.user, initial = { 'language': language, 'letter_groups': letter_groups, 'accents': accents })
     else:
         form = PhoneticLexiconForm(user=request.user)

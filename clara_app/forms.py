@@ -397,6 +397,12 @@ class PhoneticLexiconForm(forms.Form):
     language = forms.ChoiceField(choices=[])  # Empty choices initially
     letter_groups = forms.CharField(label='Letter Groups', widget=forms.Textarea, required=False)
     accents = forms.CharField(label='Accents', widget=forms.Textarea, required=False)
+    plain_lexicon_file = forms.FileField(
+        label='Plain phonetic lexicon file (JSON)',
+        required=False)
+    aligned_lexicon_file = forms.FileField(
+        label='Aligned phonetic lexicon file (JSON)',
+        required=False)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)

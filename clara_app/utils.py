@@ -167,11 +167,8 @@ def uploaded_file_to_file(uploaded_file):
 
     # Get the file extension
     file_extension = os.path.splitext(uploaded_file.name)[1]
-    #print(f'Extension: {file_extension}')
     
     with tempfile.NamedTemporaryFile(suffix=file_extension, delete=False) as temp_file:
-        #print(f'Type: {type(uploaded_file)}')
-        #print(f'Size: {uploaded_file.size} bytes')
         
         # Write the content to the temp file
         temp_file.write(file_content)
