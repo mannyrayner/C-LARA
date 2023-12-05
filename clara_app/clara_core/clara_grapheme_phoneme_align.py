@@ -1,24 +1,39 @@
 
-from .clara_grapheme_phoneme_resources import grapheme_phoneme_alignment_available, load_grapheme_phoneme_lexical_resources
-from .clara_grapheme_phoneme_resources import get_phonetic_representation_for_word, grapheme_phoneme_alignments_for_key
+from .clara_grapheme_phoneme_resources import get_aligned_entry_for_word_and_resources, get_phonetic_representation_for_word_and_resources
+from .clara_grapheme_phoneme_resources import get_grapheme_phoneme_alignments_for_key_and_resources
+### Temporary
+##from .clara_grapheme_phoneme_resources import grapheme_phoneme_alignment_available
+##from .clara_grapheme_phoneme_resources import load_grapheme_phoneme_lexical_resources, get_phonetic_representation_for_word, grapheme_phoneme_alignments_for_key
 
 from .clara_classes import InternalCLARAError
 
 _trace = 'off'
 
-def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, L2, ExtraPhoneticEntries={}):
-    load_grapheme_phoneme_lexical_resources(L2)
-
-    LookedUpPhonemes = get_phonetic_representation_for_word(Letters, L2)
-    #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
-    if LookedUpPhonemes:
-        return dp_phonetic_align(Letters, LookedUpPhonemes, L2)
-    elif Letters in ExtraPhoneticEntries:
-        return dp_phonetic_align(Letters, ExtraPhoneticEntries[Letters], L2)
-    else:
+def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, Resources):
+    ExistingAlignedEntry = get_aligned_entry_for_word_and_resources(Letters, Resources)
+    if ExistingAlignedEntry:
+        return ExistingAlignedEntry
+    Phonemes = get_phonetic_representation_for_word_and_resources(Letters, Resources)
+    if not Phonemes:
         return None
+    else:
+        #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
+        return dp_phonetic_align(Letters, Phonemes, Resources)
+   
+### Temporary
+##def find_grapheme_phoneme_alignment_using_hardcoded_lexical_resources(Letters, L2, ExtraPhoneticEntries={}):
+##    load_grapheme_phoneme_lexical_resources(L2)
+##
+##    LookedUpPhonemes = get_phonetic_representation_for_word(Letters, L2)
+##    #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
+##    if LookedUpPhonemes:
+##        return dp_phonetic_align(Letters, LookedUpPhonemes, Resources=None, L2=L2)
+##    elif Letters in ExtraPhoneticEntries:
+##        return dp_phonetic_align(Letters, ExtraPhoneticEntries[Letters], Resources=None, L2=L2)
+##    else:
+##        return None
 
-def dp_phonetic_align(Letters, Phonemes, L2):
+def dp_phonetic_align(Letters, Phonemes, Resources):
     if Letters == '' and Phonemes == '':
         return ( '', '' )
     ( N, N1 ) = ( len(Letters), len(Phonemes) )
@@ -27,7 +42,7 @@ def dp_phonetic_align(Letters, Phonemes, L2):
     for TotalMatchLength in range(0, N + N1 ):
         for MatchLengthL in range(0, TotalMatchLength + 1):
             MatchLengthR = TotalMatchLength - MatchLengthL
-            extend(Letters, Phonemes, MatchLengthL, MatchLengthR, N, N1, DPDict, L2)
+            extend(Letters, Phonemes, MatchLengthL, MatchLengthR, N, N1, DPDict, Resources)
     if ( N, N1 ) in DPDict:
         ( BestCost, BestAlignedLetters, BestAlignedPhonemes ) = DPDict[( N, N1 )]
         return ( '|'.join(BestAlignedLetters), '|'.join(BestAlignedPhonemes) )
@@ -35,7 +50,7 @@ def dp_phonetic_align(Letters, Phonemes, L2):
         print(f'*** Error: unable to do DP match between "{Letters}" and "{Phonemes}"')
         return False
 
-def extend(Letters, Phonemes, MatchLengthL, MatchLengthP, NL, NP, DPDict, L2):
+def extend(Letters, Phonemes, MatchLengthL, MatchLengthP, NL, NP, DPDict, Resources):
     if _trace == 'on':
         print(f'--- extend({Letters}, {Phonemes}, {MatchLengthL}, {MatchLengthP}, {NL}, {NP}, DPDict)')
     if MatchLengthL > NL or MatchLengthP > NP:
@@ -50,7 +65,7 @@ def extend(Letters, Phonemes, MatchLengthL, MatchLengthP, NL, NP, DPDict, L2):
             # If we extend using a known match loaded from the aligned lexicon, we charge 2 if a null string is used, otherwise 1
             if KeyL != 'skip' and KeyP != 'skip':
                 Key = ( KeyL, KeyP )
-                PossibleAlignments = grapheme_phoneme_alignments_for_key(Key, L2)
+                PossibleAlignments = get_grapheme_phoneme_alignments_for_key_and_resources(Key, Resources)
                 if PossibleAlignments:
                     for ( AlignedLetters, AlignedPhonemes ) in PossibleAlignments:
                         Cost = 2 if '' in ( AlignedLetters, AlignedPhonemes ) else 1

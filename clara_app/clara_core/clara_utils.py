@@ -692,6 +692,10 @@ def os_environ_or_none(environment_variable):
     except:
         return None
 
+## Merge two dictionaries
+def merge_dicts(X, Y):
+    return { **X, **Y } 
+
 ##def get_config():
 ##    file = '$CLARA/clara_app/clara_core/config.ini'
 ##    if not local_file_exists(file):
