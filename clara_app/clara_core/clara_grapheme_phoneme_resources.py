@@ -63,7 +63,7 @@ from .clara_utils import local_file_exists, read_local_json_file, post_task_upda
 
 def grapheme_phoneme_resources_available(l2):
     repository = PhoneticLexiconRepository()
-    return repository.aligned_entries_exist_for_language(l2)
+    return repository.aligned_entries_exist_for_language(l2) and repository.plain_phonetic_entries_exist_for_language(l2)
 
 def get_phonetic_lexicon_resources_for_words_and_l2(words, l2, callback=None):
     plain_entries = get_plain_entries_for_words(words, l2, callback=callback)

@@ -118,6 +118,31 @@ class PhoneticLexiconRepository:
             post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
+    def plain_phonetic_entries_exist_for_language(self, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            # Check if the entry already exists
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT COUNT(*) FROM plain_phonetic_lexicon WHERE language = ?",
+                               (language,))
+            else:  # Assume postgres
+                cursor.execute("SELECT COUNT(*) FROM plain_phonetic_lexicon WHERE language = %s",
+                               (language,))
+
+            result = cursor.fetchone()
+            exists = result[0] > 0 if result is not None else False
+
+            connection.commit()
+            connection.close()
+            
+            return exists
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when checking for plain phonetic entries "{language}":')
+            post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
     def add_or_update_aligned_entry(self, word, phonemes, aligned_graphemes, aligned_phonemes, language, status, callback=None):
         try:
             connection = connect(self.db_file)

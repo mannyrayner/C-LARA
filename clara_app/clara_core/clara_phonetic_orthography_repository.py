@@ -18,6 +18,11 @@ import traceback
 
 config = get_config()
 
+def phonetic_orthography_resources_available(language):
+    repo = PhoneticOrthographyRepository()
+    orthography, accents = repo.get_text_entry(language)
+    return orthography
+
 class PhoneticOrthographyRepository:
     def __init__(self, callback=None):   
         self.base_dir = absolute_file_name(config.get('phonetic_orthography_repository', 'base_dir'))
