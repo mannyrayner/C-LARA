@@ -1,8 +1,8 @@
 from .clara_database_adapter import connect, localise_sql_query
 
-from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, copy_local_file, basename
-from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory, read_json_file
-from .clara_utils import list_files_in_directory, post_task_update
+from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, basename, extension_for_file_path
+from .clara_utils import make_directory, directory_exists, local_directory_exists, make_local_directory, read_json_file, read_txt_file
+from .clara_utils import post_task_update
 
 from .clara_classes import InternalCLARAError
 
@@ -483,7 +483,6 @@ class PhoneticLexiconRepository:
 
 #-----------------------
 
-## Testing
 
 ## Contents for aligned file assumed to be in this format:
 
@@ -506,7 +505,6 @@ class PhoneticLexiconRepository:
             data = read_json_file(file_path)
         except:
             return ( 'error', 'unable to read file' )
-        #print(f'--- Uploaded data from {file_path}: {len(data)} items')
         items = []
         try:
             for word in data:
@@ -523,7 +521,46 @@ class PhoneticLexiconRepository:
         except:
             return ( 'error', 'something went wrong in internalisation' )
 
-## Contents for aligned file assumed to be in this format:
+# Initialise from text taken from the orthography definition.
+#
+# Typical lines will look like this:
+#
+# hng | ng  
+#
+# hny | gn 
+# 
+# ng | ng
+# 
+# ny | gn 
+# 
+# hl | l
+
+    def load_and_initialise_aligned_lexicon_from_orthography_text(self, text, language, callback=None):
+        lines = text.split('\n')
+        items = []
+
+        try:
+            for line in lines:
+                parts = line.strip().split('|')
+                if len(parts) != 2:
+                    continue  # Skip malformed lines
+                grapheme = parts[0].strip()
+                phoneme = parts[1].strip()
+                items.append({
+                    'word': grapheme,
+                    'phonemes': phoneme,  # Assuming phoneme is already in the desired format, which could be IPA or ARPAbet-like
+                    'aligned_graphemes': grapheme,  
+                    'aligned_phonemes': phoneme,
+                })
+
+            self.initialise_aligned_lexicon(items, language, callback=callback)
+            return ('success', f'{len(items)} items loaded')
+        except Exception as e:
+            return ('error', f'Something went wrong in internalisation: {str(e)}')
+
+        return ('error', 'Unknown error')
+
+## Contents for plain lexicon JSON file assumed to be in this format:
 
 ##{
 ##    "a": "æ",
@@ -533,20 +570,50 @@ class PhoneticLexiconRepository:
 ##    "aardwolf": "ˈɑːdwʊlf",
 ##    "aba": "ɐbˈæ",
 
+## Contents for plain lexicon txt file assumed to be in this format:
+##
+## drösinöe dZ  eu s i n euille
+## föe f euille
+## sinöe s i n euille
+## ixöe i KH euille
+## la l a
+## itre i tch é
+## ka k a
+
     def load_and_initialise_plain_lexicon(self, file_path, language, callback=None):
+        file_extension = extension_for_file_path(file_path)
+        data = {}
+
+        # Read the file based on its extension
         try:
-            data = read_json_file(file_path)
-        except:
-            return ( 'error', 'unable to read file' )
+            if file_extension == 'json':
+                data = read_json_file(file_path)
+            # Note that the phonetic entries can be in either IPA or ARPAbet-like format
+            elif file_extension == 'txt':
+                lines = read_txt_file(file_path).split('\n')
+                for line in lines:
+                    parts = line.strip().split()
+                    if len(parts) < 2:
+                        continue  # Skip malformed lines
+                    word = parts[0]
+                    phonemes = ' '.join(parts[1:]) if len(parts) > 2 else parts[1]
+                    data[word] = phonemes
+            else:
+                return ('error', 'Unsupported file format')
+        except Exception as e:
+            return ('error', f'Error reading file: {str(e)}')
+
+        # Process the data and initialise the lexicon
         items = []
         try:
-            for word in data:
-                phonemes = data[word]
+            for word, phonemes in data.items():
                 items.append({
                     'word': word,
                     'phonemes': phonemes,
-                    }) 
+                })
             self.initialise_plain_lexicon(items, language, callback=callback)
-            return ( 'success', f'{len(items)} items loaded' )
-        except:
-            return ( 'error', 'something went wrong in internalisation' )
+            return ('success', f'{len(items)} items loaded')
+        except Exception as e:
+            return ('error', f'Something went wrong in internalisation: {str(e)}')
+
+        return ('error', 'Unknown error')
