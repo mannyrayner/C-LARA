@@ -275,9 +275,14 @@ def edit_phonetic_lexicon(request):
         form = PhoneticLexiconForm(request.POST, user=request.user)
         if form.is_valid():
             language = form.cleaned_data['language']
+            encoding = form.cleaned_data['encoding']
             letter_groups = form.cleaned_data['letter_groups']
             accents = form.cleaned_data['accents']
-            if request.POST.get('action') == 'Load orthography':
+            if request.POST.get('action') == 'Refresh':
+                # Load existing encoding information
+                current_encoding = phonetic_lexicon_repo.get_encoding_for_language(language)
+                form.fields['encoding'].initial = current_encoding
+            elif request.POST.get('action') == 'Load orthography':
                 if not language:
                     messages.error(request, "Language is not specified, cannot load data")
                     return redirect('edit_phonetic_lexicon')
@@ -285,11 +290,12 @@ def edit_phonetic_lexicon(request):
                     ( letter_groups, accents ) = orthography_repo.get_text_entry(language)
                     messages.success(request, "Data loaded")
             elif request.POST.get('action') == 'Save orthography':
-                if not letter_groups:
-                    messages.error(request, "Not saving, orthography list is empty")
-                else:
+                if letter_groups:
                     orthography_repo.save_entry(language, letter_groups, accents)
-                    messages.success(request, "Data saved")
+                    messages.success(request, "Orthography data saved")
+                if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
+                    phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
+                    messages.success(request, "Language encoding saved")
             elif request.POST.get('action') == 'Upload files':
                 if 'aligned_lexicon_file' in request.FILES:
                     aligned_file_path = uploaded_file_to_file(request.FILES['aligned_lexicon_file'])
@@ -312,6 +318,7 @@ def edit_phonetic_lexicon(request):
                 plain_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.plain_phonetic_entries_exist_for_language(language) else 'NO'
                 aligned_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.aligned_entries_exist_for_language(language) else 'NO'
             form = PhoneticLexiconForm(user=request.user, initial = { 'language': language,
+                                                                      'encoding': encoding,
                                                                       'letter_groups': letter_groups,
                                                                       'accents': accents,
                                                                       'plain_phonetic_lexicon_entries_exist': plain_phonetic_lexicon_entries_exist,
@@ -319,6 +326,9 @@ def edit_phonetic_lexicon(request):
                                                                       })
     else:
         form = PhoneticLexiconForm(user=request.user)
+        if form.fields['language'].initial:
+            current_encoding = phonetic_lexicon_repo.get_encoding_for_language(form.fields['language'].initial)
+            form.fields['encoding'].initial = current_encoding
 
     return render(request, 'clara_app/edit_phonetic_lexicon.html', {'form': form})
 

@@ -395,6 +395,11 @@ AudioItemFormSet = formset_factory(AudioItemForm, extra=1)
     
 class PhoneticLexiconForm(forms.Form):
     language = forms.ChoiceField(choices=[])  # Empty choices initially
+    encoding = forms.ChoiceField(
+        label='Encoding Type',
+        choices=[('ipa', 'IPA'), ('arpabet_like', 'ARPAbet-like')],
+        required=False
+    )
     letter_groups = forms.CharField(label='Letter Groups', widget=forms.Textarea, required=False)
     accents = forms.CharField(label='Accents', widget=forms.Textarea, required=False)
     plain_phonetic_lexicon_entries_exist = forms.FileField(
