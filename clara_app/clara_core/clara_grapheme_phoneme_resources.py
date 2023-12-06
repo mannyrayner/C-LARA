@@ -3,64 +3,6 @@ from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_classes import InternalCLARAError
 from .clara_utils import local_file_exists, read_local_json_file, post_task_update, merge_dicts
 
-### Temporary
-##def grapheme_phoneme_alignment_available(l2):
-##    return l2 in _plain_lexicon_files and l2 in _aligned_lexicon_files
-##
-### Temporary
-##def load_grapheme_phoneme_lexical_resources(l2):
-##    load_plain_grapheme_phoneme_lexicon(l2)
-##    load_aligned_grapheme_phoneme_lexicon(l2)
-##
-### Temporary
-##_plain_grapheme_phoneme_dicts = {}
-##
-### Temporary
-##_aligned_grapheme_phoneme_dicts = {}
-##
-### Temporary
-##_internalised_aligned_grapheme_phoneme_dicts = {}
-##
-### Temporary
-##_plain_lexicon_files = { 'english': '$CLARA/linguistic_data/english/en_UK_pronunciation_dict.json',
-##                         'french': '$CLARA/linguistic_data/french/fr_FR_pronunciation_dict.json' }
-##
-### Temporary
-##_aligned_lexicon_files = { 'english': '$CLARA/linguistic_data/english/en_UK_pronunciation_dict_aligned.json',
-##                           'french': '$CLARA/linguistic_data/french/fr_FR_pronunciation_dict_aligned.json' }
-##
-### Temporary
-##def load_plain_grapheme_phoneme_lexicon(l2):
-##    if l2 in _plain_grapheme_phoneme_dicts:
-##        return
-##    
-##    _plain_grapheme_phoneme_dicts[l2] = read_local_json_file(_plain_lexicon_files[l2])
-##
-### Temporary
-##def load_aligned_grapheme_phoneme_lexicon(l2):
-##    if l2 in _internalised_aligned_grapheme_phoneme_dicts:
-##        return
-##    
-##    _aligned_grapheme_phoneme_dicts[l2] = read_local_json_file(_aligned_lexicon_files[l2])
-##    Data =  _aligned_grapheme_phoneme_dicts[l2]
-##    internalised_aligned_lexicon, count = internalise_aligned_grapheme_phoneme_lexicon(Data, l2)
-##    _internalised_aligned_grapheme_phoneme_dicts[l2] = internalised_aligned_lexicon
-##    print(f'--- Loaded internalised aligned {l2} lexicon, {count} different letter/phoneme correspondences')
-##
-### Temporary
-##def get_phonetic_representation_for_word(word, l2):
-##    if l2 in _plain_grapheme_phoneme_dicts and word in _plain_grapheme_phoneme_dicts[l2]:
-##        return remove_accents_from_phonetic_string(_plain_grapheme_phoneme_dicts[l2][word])
-##    else:
-##        return None
-##
-### Temporary
-##def grapheme_phoneme_alignments_for_key(key, l2):
-##    if l2 in _internalised_aligned_grapheme_phoneme_dicts and key in _internalised_aligned_grapheme_phoneme_dicts[l2]:
-##        return _internalised_aligned_grapheme_phoneme_dicts[l2][key]
-##    else:
-##        return []
-
 def grapheme_phoneme_resources_available(l2):
     repository = PhoneticLexiconRepository()
     return repository.aligned_entries_exist_for_language(l2) and repository.plain_phonetic_entries_exist_for_language(l2)

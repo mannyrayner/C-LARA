@@ -1,9 +1,6 @@
 
 from .clara_grapheme_phoneme_resources import get_aligned_entry_for_word_and_resources, get_phonetic_representation_for_word_and_resources
 from .clara_grapheme_phoneme_resources import get_grapheme_phoneme_alignments_for_key_and_resources
-### Temporary
-##from .clara_grapheme_phoneme_resources import grapheme_phoneme_alignment_available
-##from .clara_grapheme_phoneme_resources import load_grapheme_phoneme_lexical_resources, get_phonetic_representation_for_word, grapheme_phoneme_alignments_for_key
 
 from .clara_classes import InternalCLARAError
 
@@ -20,19 +17,6 @@ def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, Resources):
         #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
         return dp_phonetic_align(Letters, Phonemes, Resources)
    
-### Temporary
-##def find_grapheme_phoneme_alignment_using_hardcoded_lexical_resources(Letters, L2, ExtraPhoneticEntries={}):
-##    load_grapheme_phoneme_lexical_resources(L2)
-##
-##    LookedUpPhonemes = get_phonetic_representation_for_word(Letters, L2)
-##    #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
-##    if LookedUpPhonemes:
-##        return dp_phonetic_align(Letters, LookedUpPhonemes, Resources=None, L2=L2)
-##    elif Letters in ExtraPhoneticEntries:
-##        return dp_phonetic_align(Letters, ExtraPhoneticEntries[Letters], Resources=None, L2=L2)
-##    else:
-##        return None
-
 def dp_phonetic_align(Letters, Phonemes, Resources):
     if Letters == '' and Phonemes == '':
         return ( '', '' )

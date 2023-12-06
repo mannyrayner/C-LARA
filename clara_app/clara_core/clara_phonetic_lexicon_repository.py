@@ -16,6 +16,7 @@ config = get_config()
 class PhoneticLexiconRepository:
     def __init__(self, callback=None):   
         self.db_file = absolute_local_file_name(config.get('phonetic_lexicon_repository', ( 'db_file' if _s3_storage else 'db_file_local' )))
+        self.possible_encodings = ( 'ipa', 'arpabet_like' )
         self._initialize_repository(callback=callback)
 
     def _initialize_repository(self, callback=None):
@@ -33,7 +34,11 @@ class PhoneticLexiconRepository:
             connection = connect(self.db_file)
             cursor = connection.cursor()
         
-            # Create tables for aligned and plain phonetic lexicon
+            # Create tables for aligned and plain phonetic lexicon, etc
+            cursor.execute('''CREATE TABLE IF NOT EXISTS phonetic_encoding
+                              (language TEXT PRIMARY KEY,
+                               encoding TEXT)''')
+            
             if os.getenv('DB_TYPE') == 'sqlite':
                 cursor.execute('''CREATE TABLE IF NOT EXISTS aligned_phonetic_lexicon
                                   (id INTEGER PRIMARY KEY,
@@ -92,6 +97,56 @@ class PhoneticLexiconRepository:
         except Exception as e:
             error_message = f'*** Error when trying to initialise phonetic lexicon database: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+    def set_encoding_for_language(self, language, encoding, callback=None):
+        try:
+            if not encoding in self.possible_encodings:
+                post_task_update(callback, f'*** PhoneticLexiconRepository: error when setting encoding for "{language}": illegal value "{encoding}"')
+                raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+            
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            if os.getenv('DB_TYPE') == 'sqlite':
+                # SQLite upsert syntax
+                cursor.execute("INSERT INTO phonetic_encoding (language, encoding) VALUES (?, ?) ON CONFLICT(language) DO UPDATE SET encoding = excluded.encoding",
+                               (language, encoding))
+            else:  # Assume postgres
+                # PostgreSQL upsert syntax
+                cursor.execute("INSERT INTO phonetic_encoding (language, encoding) VALUES (%s, %s) ON CONFLICT(language) DO UPDATE SET encoding = EXCLUDED.encoding",
+                               (language, encoding))
+
+            connection.commit()
+            connection.close()
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when setting encoding for "{language}": {str(e)}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+    def get_encoding_for_language(self, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT encoding FROM phonetic_encoding WHERE language = ?", (language,))
+            else:  # Assume postgres
+                cursor.execute("SELECT encoding FROM phonetic_encoding WHERE language = %s", (language,))
+            result = cursor.fetchone()
+
+            connection.close()
+            if result is not None:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, result is a tuple
+                    return result[0] 
+                else:
+                    # For PostgreSQL, result is a RealDictRow
+                    return result['encoding']
+            else:
+                return None
+                
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when getting encoding for "{language}": "{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
     def aligned_entries_exist_for_language(self, language, callback=None):
