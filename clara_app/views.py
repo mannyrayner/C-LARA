@@ -274,41 +274,43 @@ def edit_phonetic_lexicon(request):
     if request.method == 'POST':
         form = PhoneticLexiconForm(request.POST, user=request.user)
         if form.is_valid():
+            action = request.POST.get('action')
             language = form.cleaned_data['language']
             encoding = form.cleaned_data['encoding']
             letter_groups = form.cleaned_data['letter_groups']
             accents = form.cleaned_data['accents']
-            if request.POST.get('action') == 'Refresh':
-                # Load existing encoding information
-                current_encoding = phonetic_lexicon_repo.get_encoding_for_language(language)
-                form.fields['encoding'].initial = current_encoding
-            elif request.POST.get('action') == 'Load orthography':
-                if not language:
-                    messages.error(request, "Language is not specified, cannot load data")
-                    return redirect('edit_phonetic_lexicon')
-                else:
-                    ( letter_groups, accents ) = orthography_repo.get_text_entry(language)
+            #print(f'--- action = {action}, language = {language}, encoding = {encoding}, letter_groups = {letter_groups}')
+            if action == 'Refresh':
+                if language:
+                    encoding = phonetic_lexicon_repo.get_encoding_for_language(language)
+                    letter_groups, accents = orthography_repo.get_text_entry(language)
                     messages.success(request, "Data loaded")
-            elif request.POST.get('action') == 'Save orthography':
-                if letter_groups:
-                    orthography_repo.save_entry(language, letter_groups, accents)
-                    messages.success(request, "Orthography data saved")
+            elif action == 'Save orthography':
                 if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
                     phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
                     messages.success(request, "Language encoding saved")
-            elif request.POST.get('action') == 'Upload files':
+                if letter_groups:
+                    orthography_repo.save_entry(language, letter_groups, accents)
+                    messages.success(request, "Orthography data saved")
+                    orthography_result, orthography_details = phonetic_lexicon_repo.load_and_initialise_aligned_lexicon_from_orthography_text(letter_groups, language)
+                    print(f'orthography_result = {orthography_result}, orthography_details = {orthography_details}')
+                    if orthography_result == 'error':
+                        messages.error(request, f"Error when converting orthography data into aligned lexicon: {orthography_details}")
+                    else:
+                        messages.success(request, f"Orthography data also converted into aligned lexicon: {orthography_details}")
+            elif action == 'Upload files':
                 if 'aligned_lexicon_file' in request.FILES:
                     aligned_file_path = uploaded_file_to_file(request.FILES['aligned_lexicon_file'])
                     aligned_result, aligned_details = phonetic_lexicon_repo.load_and_initialise_aligned_lexicon(aligned_file_path, language)
                     if aligned_result == 'error':
-                        messages.success(request, f"Error when uploading aligned phonetic lexicon: {aligned_details}")
+                        messages.error(request, f"Error when uploading aligned phonetic lexicon: {aligned_details}")
                     else:
                         messages.success(request, f"Aligned phonetic lexicon uploaded successfully: {aligned_details}")
                 if 'plain_lexicon_file' in request.FILES:
                     plain_file_path = uploaded_file_to_file(request.FILES['plain_lexicon_file'])
                     plain_result, plain_details = phonetic_lexicon_repo.load_and_initialise_plain_lexicon(plain_file_path, language)
                     if plain_result == 'error':
-                        messages.success(request, f"Error when uploading plain phonetic lexicon: {plain_details}")
+                        messages.error(request, f"Error when uploading plain phonetic lexicon: {plain_details}")
                     else:
                         messages.success(request, f"Plain phonetic lexicon uploaded successfully: {plain_details}")
             if not language:
