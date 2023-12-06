@@ -30,7 +30,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-default-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.getenv('DJANGO_DEBUG', False))
+# In particular, never run in debug mode on UniSA
+DEBUG = bool(os.getenv('DJANGO_DEBUG', False)) and not os.getenv('CLARA_ENVIRONMENT') == 'unisa'
 
 # Local machine, Heroku, UniSA server
 ALLOWED_HOSTS = [
