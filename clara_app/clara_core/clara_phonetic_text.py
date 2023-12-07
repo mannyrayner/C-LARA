@@ -1,7 +1,7 @@
 
 from .clara_grapheme_phoneme_align import find_grapheme_phoneme_alignment_using_lexical_resources
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available, add_plain_entries_to_resources, remove_accents_from_phonetic_string
-from .clara_grapheme_phoneme_resources import get_phonetic_lexicon_resources_for_words_and_l2, get_phonetic_representation_for_word_and_resources
+from .clara_grapheme_phoneme_resources import get_phonetic_lexicon_resources_for_words_and_l2, get_phonetic_representation_for_word_and_resources, get_encoding
 from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
 from .clara_phonetic_chatgpt4 import get_phonetic_entries_for_words_using_chatgpt4
 from .clara_internalise import internalize_text
@@ -13,24 +13,29 @@ from .clara_utils import remove_duplicates_from_list_of_hashable_items
 def segmented_text_to_phonetic_text(segmented_text, l2_language, config_info={}, callback=None):
     l1_language = None
     segmented_text_object = internalize_text(segmented_text, l2_language, l1_language, 'segmented')
+
+    parameters = {}
     
     if phonetic_orthography_resources_available(l2_language):
         repository = PhoneticOrthographyRepository()
         orthography, accents = repository.get_parsed_entry(l2_language)
         alphabet_internalised = internalise_alphabet_for_phonetically_spelled_language(orthography)
-        parameters = ( 'phonetic_orthography', alphabet_internalised, accents )
-    elif grapheme_phoneme_resources_available(l2_language):
+        phonetic_orthography_resources = { 'alphabet_internalised': alphabet_internalised, 'accents': accents }
+        parameters['phonetic_orthography_resources'] = phonetic_orthography_resources
+        
+    if grapheme_phoneme_resources_available(l2_language):
         unique_words = get_unique_words_for_segmented_text_object(segmented_text_object)
-        resources = get_phonetic_lexicon_resources_for_words_and_l2(unique_words, l2_language)
-        chatgpt4_phonetic_entries = get_missing_phonetic_entries_for_words_and_resources(unique_words, resources, l2_language,
+        grapheme_phoneme_resources = get_phonetic_lexicon_resources_for_words_and_l2(unique_words, l2_language)
+        chatgpt4_phonetic_entries = get_missing_phonetic_entries_for_words_and_resources(unique_words, grapheme_phoneme_resources, l2_language,
                                                                                          config_info={}, callback=callback)
-        full_resources = add_plain_entries_to_resources(resources, chatgpt4_phonetic_entries)
-        parameters = ( 'grapheme_phoneme_alignment', full_resources )
-    else:
-        return ''
+        full_grapheme_phoneme_resources = add_plain_entries_to_resources(grapheme_phoneme_resources, chatgpt4_phonetic_entries)
+        parameters['grapheme_phoneme_alignment_resources'] = full_grapheme_phoneme_resources 
 
-    phonetic_text_object = segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters)
-    return phonetic_text_object.to_text(annotation_type='phonetic')
+    if len(parameters) == 0:
+        return ''
+    else:
+        phonetic_text_object = segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters)
+        return phonetic_text_object.to_text(annotation_type='phonetic')
                                 
 def segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters):
     phonetic_pages = []
@@ -90,27 +95,34 @@ def transfer_casing_to_aligned_word1(word, aligned_word):
 #
 # 2. ( 'grapheme_phoneme_alignment', resources )
 
-
 def guess_alignment_for_word(word, parameters):
-    if parameters[0] == 'phonetic_orthography':
-        alphabet_internalised, accents = parameters[1:]
-        return alignment_for_phonetically_spelled_language(word, alphabet_internalised, accents)
-    elif parameters[0] == 'grapheme_phoneme_alignment':
-        resources = parameters[1]
-        result = find_grapheme_phoneme_alignment_using_lexical_resources(word, resources)
-    else:
-        raise InternalCLARAError(message = f'Unknown parameters type {parameters[0]} in guess_alignment_for_word')
-        
-    if result:
-        return result
-    else:
-        return ( word, word )
+    # If we can get an alignment using grapheme/phoneme alignment, use that
+    if 'grapheme_phoneme_alignment_resources' in parameters:
+        grapheme_phoneme_alignment_resources = parameters['grapheme_phoneme_alignment_resources']
+        grapheme_phoneme_alignment_result = find_grapheme_phoneme_alignment_using_lexical_resources(word, grapheme_phoneme_alignment_resources)
+        if grapheme_phoneme_alignment_result:
+            return grapheme_phoneme_alignment_result
+
+    # Otherwise, if we can get an alignment using phonetic orthography, use that
+    if 'phonetic_orthography_resources' in parameters:
+        phonetic_orthography_resources = parameters['phonetic_orthography_resources']
+        alphabet_internalised = phonetic_orthography_resources['alphabet_internalised']
+        accents = phonetic_orthography_resources['accents'] 
+        phonetic_orthography_result = alignment_for_phonetically_spelled_language(word, alphabet_internalised, accents)
+        if phonetic_orthography_result:
+            return phonetic_orthography_result
+
+    # Otherwise give up and just align the word against itself
+    return ( word, word )
     
 # ------------------------------------------
 
 def get_missing_phonetic_entries_for_words_and_resources(unique_words, resources, l2_language,
                                                          config_info={}, callback=None):
-    
+
+    # For now, postpone the question of how to get gpt-4 to guess phonetic entries in non-IPA representations
+    if get_encoding(resources) != 'ipa':
+        return {}
     words_with_no_entries = [ word for word in unique_words
                               if not get_phonetic_representation_for_word_and_resources(word, resources) ]
     if not words_with_no_entries:

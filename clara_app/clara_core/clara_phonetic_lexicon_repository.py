@@ -330,11 +330,11 @@ class PhoneticLexiconRepository:
             connection = connect(self.db_file)
             cursor = connection.cursor()
 
-            # Clear existing entries for the language
+            # Clear existing 'uploaded' entries for the language
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE language = ?", (language,))
+                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE language = ? AND status = ?", (language, 'uploaded'))
             else:  # Assume postgres
-                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE language = %s", (language,))
+                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE language = %s AND status = %s", (language, 'uploaded'))
 
             # Batch insert new items
             for entry in items:
@@ -363,11 +363,11 @@ class PhoneticLexiconRepository:
             connection = connect(self.db_file)
             cursor = connection.cursor()
 
-            # Clear existing entries for the language
+            # Clear existing 'uploaded' entries for the language
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE language = ?", (language,))
+                cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE language = ? AND status = ?", (language, 'uploaded'))
             else:  # Assume postgres
-                cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE language = %s", (language,))
+                cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE language = %s AND status = %s", (language, 'uploaded'))
 
             # Batch insert new items
             for entry in items:

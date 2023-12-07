@@ -8,17 +8,22 @@ def grapheme_phoneme_resources_available(l2):
     return repository.aligned_entries_exist_for_language(l2) and repository.plain_phonetic_entries_exist_for_language(l2)
 
 def get_phonetic_lexicon_resources_for_words_and_l2(words, l2, callback=None):
+    encoding = get_phonetic_encoding_for_language(l2, callback=callback)
     plain_entries = get_plain_entries_for_words(words, l2, callback=callback)
     aligned_entries = get_aligned_entries_for_words(words, l2, callback=callback)
     internalised_aligned_lexicon = get_internalised_aligned_grapheme_phoneme_lexicon(l2, callback=callback)
-    return { 'plain_lexicon_entries': plain_entries,
+    return { 'encoding': encoding,
+             'plain_lexicon_entries': plain_entries,
              'aligned_lexicon_entries': aligned_entries,
              'internalised_aligned_lexicon': internalised_aligned_lexicon }
 
+def get_phonetic_encoding_for_language(l2, callback=None):
+    repository = PhoneticLexiconRepository()
+    return repository.get_encoding_for_language(l2, callback=callback)
+
 def add_plain_entries_to_resources(resources, new_plain_entries):
-    return { 'plain_lexicon_entries': merge_dicts(resources['plain_lexicon_entries'], new_plain_entries),
-             'aligned_lexicon_entries': resources['aligned_lexicon_entries'],
-             'internalised_aligned_lexicon': resources['internalised_aligned_lexicon'] }
+   resources['plain_lexicon_entries'] = merge_dicts(resources['plain_lexicon_entries'], new_plain_entries)
+   return resources
 
 def get_plain_entries_for_words(words, l2, callback=None):
     repository = PhoneticLexiconRepository()
@@ -41,12 +46,16 @@ def get_aligned_entries_for_words(words, l2, callback=None):
 def get_internalised_aligned_grapheme_phoneme_lexicon(l2, callback=None):
     repository = PhoneticLexiconRepository()
     aligned_entries = repository.get_all_aligned_entries_for_language(l2, callback=callback)
+    encoding = repository.get_encoding_for_language(l2, callback=callback)
     data = { aligned_entry['word']: ( aligned_entry['aligned_graphemes'], aligned_entry['aligned_phonemes'] )
              for aligned_entry in aligned_entries
              if aligned_entry['status'] != 'generated' }
-    internalised_lexicon, count = internalise_aligned_grapheme_phoneme_lexicon(data, l2)
+    internalised_lexicon, count = internalise_aligned_grapheme_phoneme_lexicon(data, l2, encoding)
     post_task_update(callback, f'--- Created internalised aligned {l2} lexicon, {count} different letter/phoneme correspondences')
     return internalised_lexicon
+
+def get_encoding(resources):
+    return resources['encoding'] if 'encoding' else None
 
 def get_phonetic_representation_for_word_and_resources(word, resources):
     if 'plain_lexicon_entries' in resources and word in resources['plain_lexicon_entries']:
@@ -66,7 +75,7 @@ def get_grapheme_phoneme_alignments_for_key_and_resources(key, resources):
     else:
         return []
 
-def internalise_aligned_grapheme_phoneme_lexicon(Data, l2):
+def internalise_aligned_grapheme_phoneme_lexicon(Data, l2, Encoding):
     internalised_aligned_lexicon = {}
     Count = 0
     for Word in Data:
@@ -78,15 +87,27 @@ def internalise_aligned_grapheme_phoneme_lexicon(Data, l2):
         ( LetterComponents, PhonemeComponents ) = ( Letters.split('|'), Phonemes.split('|') )
         if not len(LetterComponents) == len(PhonemeComponents):
             print(f'*** Warning: bad entry for "{Word}" in aligned {l2} lexicon, not aligned')
+            continue
         for ( LetterGroup, PhonemeGroup ) in zip( LetterComponents, PhonemeComponents ):
-            Key = ( '' if LetterGroup == '' else LetterGroup[0], '' if PhonemeGroup == '' else PhonemeGroup[0] )
+            Key = ( '' if LetterGroup == '' else LetterGroup[0],
+                    '' if PhonemeGroup == '' else first_phoneme_of_phoneme_string(PhonemeGroup, Encoding) )
             Current = internalised_aligned_lexicon[Key] if Key in internalised_aligned_lexicon else []
-            Correspondence = ( LetterGroup, PhonemeGroup )
+            Correspondence = ( LetterGroup,
+                               PhonemeGroup.split() if Encoding == 'arpabet_like' else PhonemeGroup )
             if not Correspondence in Current:
                 internalised_aligned_lexicon[Key] = Current + [ Correspondence ]
                 Count += 1
     return ( internalised_aligned_lexicon, Count )
     
-
 def remove_accents_from_phonetic_string(Str):
     return Str.replace('ˈ', '').replace('ˌ', '').replace('.', '').replace('\u200d', '')
+
+def first_phoneme_of_phoneme_string(Str, Encoding):
+    if Str == '':
+        return ''
+    # If encoding is 'ipa', each character is a phoneme
+    elif Encoding == 'ipa':
+        return Str[0]
+    # Assume arpabet_like, where we have space-separated phoneme representations
+    else:
+        return Str.split()[0]
