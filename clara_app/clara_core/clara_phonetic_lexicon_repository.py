@@ -10,6 +10,7 @@ from pathlib import Path
 
 import os
 import traceback
+import pprint
 
 config = get_config()
 
@@ -266,6 +267,77 @@ class PhoneticLexiconRepository:
             post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
+    def delete_aligned_entry(self, word, phonemes, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            # Delete entry
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE word = ? AND phonemes = ? AND language = ?",
+                               (word, phonemes, language))
+            else:  # Assume postgres
+                cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE word = %s AND phonemes = %s AND language = %s",
+                               (word, phonemes, language))
+
+            connection.commit()
+            connection.close()
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when deleting "{word}; {phonemes}" from aligned phonetic lexicon database:')
+            post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+
+    def add_or_update_plain_entry(self, word, phonemes, language, status, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            # Check if the entry already exists
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT COUNT(*) FROM plain_phonetic_lexicon WHERE word = ? AND phonemes = ? AND language = ?",
+                               (word, phonemes, language))
+            else:  # Assume postgres
+                cursor.execute("SELECT COUNT(*) FROM plain_phonetic_lexicon WHERE word = %s AND phonemes = %s AND language = %s",
+                               (word, phonemes, language))
+
+            result = cursor.fetchone()
+            if result is not None:
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, result is a tuple
+                    exists = result[0] > 0
+                else:
+                    # For PostgreSQL, result is a RealDictRow
+                    exists = result['count'] > 0
+            else:
+                exists = False
+
+            if exists:
+                # Update existing entry
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("""UPDATE plain_phonetic_lexicon SET status = ? 
+                                      WHERE word = ? AND phonemes = ? AND language = ?""",
+                                   (status, word, phonemes, language))
+                else:  # Assume postgres
+                    cursor.execute("""UPDATE plain_phonetic_lexicon SET status = %s 
+                                      WHERE word = %s AND phonemes = %s AND language = %s""",
+                                   (status, word, phonemes, language))
+            else:
+                # Insert new entry
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (?, ?, ?, ?)",
+                                   (word, phonemes, language, status))
+                else:  # Assume postgres
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (%s, %s, %s, %s)",
+                                   (word, phonemes, language, status))
+
+            connection.commit()
+            connection.close()
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when inserting/updating "{word}; {phonemes}" into plain phonetic lexicon database:')
+            post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
     def add_plain_entry(self, word, phonemes, language, status, callback=None):
         try:
             connection = connect(self.db_file)
@@ -483,6 +555,15 @@ class PhoneticLexiconRepository:
 
 #-----------------------
 
+    def record_guessed_plain_entries(self, plain_entries, callback=None):
+        # Placeholder
+        print(f'--- {len(plain_entries)} plain phonetic lexicon entries to record:')
+        pprint.pprint(plain_entries)
+        
+    def record_guessed_aligned_entries(self, aligned_entries, callback=None):
+        # Placeholder
+        print(f'--- {len(aligned_entries)} aligned phonetic lexicon entries to record:')
+        pprint.pprint(aligned_entries)
 
 ## Contents for aligned file assumed to be in this format:
 

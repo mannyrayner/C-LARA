@@ -6,7 +6,7 @@ from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 from .clara_phonetic_chatgpt4 import get_phonetic_entries_for_words_using_chatgpt4
 from .clara_internalise import internalize_text
 from .clara_classes import Text, Page, Segment, ContentElement, InternalCLARAError 
-from .clara_utils import remove_duplicates_from_list_of_hashable_items
+from .clara_utils import remove_duplicates_from_list_of_hashable_items, merge_dicts
 
 # ------------------------------------------
 
@@ -15,6 +15,9 @@ def segmented_text_to_phonetic_text(segmented_text, l2_language, config_info={},
     segmented_text_object = internalize_text(segmented_text, l2_language, l1_language, 'segmented')
 
     parameters = {}
+    guessed_plain_entries = {}
+    guessed_aligned_entries = {}
+    api_calls = []
     
     if phonetic_orthography_resources_available(l2_language):
         repository = PhoneticOrthographyRepository()
@@ -26,34 +29,50 @@ def segmented_text_to_phonetic_text(segmented_text, l2_language, config_info={},
     if grapheme_phoneme_resources_available(l2_language):
         unique_words = get_unique_words_for_segmented_text_object(segmented_text_object)
         grapheme_phoneme_resources = get_phonetic_lexicon_resources_for_words_and_l2(unique_words, l2_language)
-        chatgpt4_phonetic_entries = get_missing_phonetic_entries_for_words_and_resources(unique_words, grapheme_phoneme_resources, l2_language,
-                                                                                         config_info={}, callback=callback)
+        chatgpt4_phonetic_entries, api_calls = get_missing_phonetic_entries_for_words_and_resources(unique_words, grapheme_phoneme_resources, l2_language,
+                                                                                                    config_info={}, callback=callback)
+        guessed_plain_entries = [ { 'word': word, 'phonemes': chatgpt4_phonetic_entries[word] }
+                                  for word in chatgpt4_phonetic_entries ]
         full_grapheme_phoneme_resources = add_plain_entries_to_resources(grapheme_phoneme_resources, chatgpt4_phonetic_entries)
         parameters['grapheme_phoneme_alignment_resources'] = full_grapheme_phoneme_resources 
 
     if len(parameters) == 0:
-        return ''
+        return { 'text': '',
+                 'guessed_plain_entries': [],
+                 'guessed_aligned_entries': [],
+                 'api_calls': []}
     else:
-        phonetic_text_object = segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters)
-        return phonetic_text_object.to_text(annotation_type='phonetic')
+        phonetic_text_object, guessed_aligned_entries = segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters)
+        phonetic_text = phonetic_text_object.to_text(annotation_type='phonetic')
+        return { 'text': phonetic_text,
+                 'guessed_plain_entries': guessed_plain_entries,
+                 'guessed_aligned_entries': guessed_aligned_entries,
+                 'api_calls': api_calls }
                                 
 def segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters):
+    guessed_aligned_entries_dict = {}
     phonetic_pages = []
     for page in segmented_text_object.pages:
         phonetic_segments = []
         for segment in page.segments:
             for content_element in segment.content_elements:
                 if content_element.type == 'Word':
-                    phonetic_segment = word_to_phonetic_segment(content_element.content, parameters)
+                    phonetic_segment = word_to_phonetic_segment(content_element.content, parameters, guessed_aligned_entries_dict)
                 else:
                     phonetic_segment = Segment([content_element])
                 phonetic_segments += [ phonetic_segment ]
         phonetic_pages += [ Page(phonetic_segments, annotations=page.annotations) ]
-    return Text(phonetic_pages, segmented_text_object.l2_language, segmented_text_object.l1_language)
+    guessed_aligned_entries_list = guessed_aligned_entries_dict_to_list(guessed_aligned_entries_dict)
+    return ( Text(phonetic_pages, segmented_text_object.l2_language, segmented_text_object.l1_language),
+             guessed_aligned_entries_list )
 
-def word_to_phonetic_segment(word, parameters):
+def guessed_aligned_entries_dict_to_list(guessed_aligned_entries_dict):
+    return [ merge_dicts( { 'word': word }, guessed_aligned_entries_dict[word] )
+             for word in guessed_aligned_entries_dict ]
+
+def word_to_phonetic_segment(word, parameters, guessed_aligned_entries_dict):
     word1 = normalise_word_for_phonetic_decomposition(word)
-    aligned_word, aligned_phonetic = guess_alignment_for_word(word1, parameters)
+    aligned_word, aligned_phonetic = guess_alignment_for_word(word1, parameters, guessed_aligned_entries_dict)
     aligned_word1 = transfer_casing_to_aligned_word(word, aligned_word)
     word_components = aligned_word1.split('|')
     phonetic_components = aligned_phonetic.split('|')
@@ -95,11 +114,20 @@ def transfer_casing_to_aligned_word1(word, aligned_word):
 #
 # 2. ( 'grapheme_phoneme_alignment', resources )
 
-def guess_alignment_for_word(word, parameters):
+def guess_alignment_for_word(word, parameters, guessed_aligned_entries_dict):
+    # If we've already guessed an alignment for this word, use the same guess
+    if word in guessed_aligned_entries_dict:
+        previous_guessed_alignment = guessed_aligned_entries_dict[word]
+        result = ( previous_guessed_alignment['aligned_graphemes'], previous_guessed_alignment['aligned_phonemes'] )
+        return result
+
+    result = None
     # If we can get an alignment using grapheme/phoneme alignment, use that
     if 'grapheme_phoneme_alignment_resources' in parameters:
         grapheme_phoneme_alignment_resources = parameters['grapheme_phoneme_alignment_resources']
-        grapheme_phoneme_alignment_result = find_grapheme_phoneme_alignment_using_lexical_resources(word, grapheme_phoneme_alignment_resources)
+        grapheme_phoneme_alignment_result = find_grapheme_phoneme_alignment_using_lexical_resources(word,
+                                                                                                    grapheme_phoneme_alignment_resources,
+                                                                                                    guessed_aligned_entries_dict=guessed_aligned_entries_dict)
         if grapheme_phoneme_alignment_result:
             return grapheme_phoneme_alignment_result
 
@@ -111,9 +139,13 @@ def guess_alignment_for_word(word, parameters):
         phonetic_orthography_result = alignment_for_phonetically_spelled_language(word, alphabet_internalised, accents)
         if phonetic_orthography_result:
             return phonetic_orthography_result
-
+        # Assume we don't need to check results of regular phonetic orthography alignment,
+        # since if the phonetic entry is right there will only be one possibility.
+        # So don't store in guessed_aligned_entries_dict
+        
     # Otherwise give up and just align the word against itself
-    return ( word, word )
+    else:
+        return ( word, word )
     
 # ------------------------------------------
 
@@ -122,13 +154,14 @@ def get_missing_phonetic_entries_for_words_and_resources(unique_words, resources
 
     # For now, postpone the question of how to get gpt-4 to guess phonetic entries in non-IPA representations
     if get_encoding(resources) != 'ipa':
-        return {}
+        return ( {}, [] )
     words_with_no_entries = [ word for word in unique_words
                               if not get_phonetic_representation_for_word_and_resources(word, resources) ]
     if not words_with_no_entries:
-        return {}
+        return ( {}, [] )
     annotated_words_dict, api_calls = get_phonetic_entries_for_words_using_chatgpt4(words_with_no_entries, l2_language, config_info=config_info, callback=callback)
-    return { word: remove_accents_from_phonetic_string(annotated_words_dict[word]) for word in annotated_words_dict }
+    return ( { word: remove_accents_from_phonetic_string(annotated_words_dict[word]) for word in annotated_words_dict },
+             api_calls )
 
 def get_unique_words_for_segmented_text_object(segmented_text):
     elements = segmented_text.content_elements()

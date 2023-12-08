@@ -138,6 +138,7 @@ from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository import ImageRepository
+from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
@@ -579,9 +580,17 @@ class CLARAProjectInternal:
     # Create a "phonetic" version of the text - so far, no use of AI
     def create_phonetic_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
-        phonetic_text = segmented_text_to_phonetic_text(segmented_text, self.l2_language, config_info=config_info, callback=callback)
+        
+        phonetic_text_result = segmented_text_to_phonetic_text(segmented_text, self.l2_language, config_info=config_info, callback=callback)
+        phonetic_text = phonetic_text_result['text']
+        guessed_plain_entries = phonetic_text_result['guessed_plain_entries']
+        guessed_aligned_entries = phonetic_text_result['guessed_aligned_entries']
+        api_calls = phonetic_text_result['api_calls']
+        
         self.save_text_version("phonetic", phonetic_text, user=user, label=label, source='generated')
-        api_calls = []
+        repository = PhoneticLexiconRepository(callback=callback)
+        repository.record_guessed_plain_entries(guessed_plain_entries, callback=callback)
+        repository.record_guessed_aligned_entries(guessed_aligned_entries, callback=callback)
         return api_calls
 
     # Call ChatGPT-4 to create a version of the text with gloss annotations

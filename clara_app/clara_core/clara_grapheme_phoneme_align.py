@@ -9,7 +9,7 @@ import pprint
 _trace = 'off'
 #_trace = 'on'
 
-def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, Resources):
+def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, Resources, guessed_aligned_entries_dict=None):
     ExistingAlignedEntry = get_aligned_entry_for_word_and_resources(Letters, Resources)
     if ExistingAlignedEntry:
         return ExistingAlignedEntry
@@ -18,7 +18,13 @@ def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, Resources):
         return None
     else:
         #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
-        return dp_phonetic_align(Letters, Phonemes, Resources)
+        Result = dp_phonetic_align(Letters, Phonemes, Resources)
+        if Result and guessed_aligned_entries_dict != None:
+            AlignedGraphemes, AlignedPhonemes = Result
+            guessed_aligned_entries_dict[Letters] = { 'aligned_graphemes': AlignedGraphemes, 'aligned_phonemes': AlignedPhonemes }
+        #print(f'--- Result "{Result}"')
+        return Result
+        
    
 def dp_phonetic_align(Letters, Phonemes0, Resources):
     if Letters == '' and Phonemes0 == '':
@@ -46,7 +52,7 @@ def dp_phonetic_align(Letters, Phonemes0, Resources):
         print(f'*** Error: unable to do DP match between "{Letters}" and "{Phonemes}"')
         if _trace == 'on':
             pprint.pprint(DPDict)
-        return False
+        return None
 
 def extend(Letters, Phonemes, MatchLengthL, MatchLengthP, NL, NP, DPDict, Resources, Encoding):
     if _trace == 'on':
