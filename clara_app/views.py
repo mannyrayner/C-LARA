@@ -27,7 +27,7 @@ from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextFor
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
-from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet
+from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .utils import get_user_config, create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
@@ -272,9 +272,11 @@ def edit_phonetic_lexicon(request):
     orthography_repo = PhoneticOrthographyRepository()
     phonetic_lexicon_repo = PhoneticLexiconRepository()
     plain_lexicon_formset = None
+    aligned_lexicon_formset = None
     if request.method == 'POST':
         form = PhoneticLexiconForm(request.POST, user=request.user)
-        plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(request.POST)
+        plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(request.POST, prefix='plain')
+        aligned_lexicon_formset = AlignedPhoneticLexiconEntryFormSet(request.POST, prefix='aligned')
         if not form.is_valid():
             messages.error(request, f"Error in form: {form.errors}")
         else:
@@ -284,6 +286,7 @@ def edit_phonetic_lexicon(request):
             letter_groups = form.cleaned_data['letter_groups']
             accents = form.cleaned_data['accents']
             display_plain_lexicon_entries = form.cleaned_data['display_plain_lexicon_entries']
+            display_aligned_lexicon_entries = form.cleaned_data['display_aligned_lexicon_entries']
             #print(f'--- action = {action}, language = {language}, encoding = {encoding}, letter_groups = {letter_groups}')
             if action == 'Refresh':
                 if language:
@@ -291,15 +294,30 @@ def edit_phonetic_lexicon(request):
                     letter_groups, accents = orthography_repo.get_text_entry(language)
                     messages.success(request, f"Current data for {language} loaded")
             if action == 'Save lexicon':
-                n_words_saved = 0
+                plain_words_saved = []
                 for lexicon_form in plain_lexicon_formset:
                     if lexicon_form.is_valid():
+                        #print(f"plain: word: {lexicon_form.cleaned_data.get('word')}, phonemes: {lexicon_form.cleaned_data.get('phonemes')}, approved: {lexicon_form.cleaned_data.get('approved')}")
                         if lexicon_form.cleaned_data.get('approve'):
                             word = lexicon_form.cleaned_data.get('word')
                             phonemes = lexicon_form.cleaned_data.get('phonemes')
                             phonetic_lexicon_repo.add_or_update_plain_entry(word, phonemes, language, 'reviewed')
-                            n_words_saved += 1
-                messages.success(request, f"{n_words_saved} plain lexicon entries saved")
+                            #messages.success(request, f"add_or_update_plain_entry({word}, {phonemes}, {language}, 'reviewed')")
+                            plain_words_saved += [ word ]
+                messages.success(request, f"{len(plain_words_saved)} plain lexicon entries saved: {', '.join(plain_words_saved)}")
+                aligned_words_saved = []
+                for aligned_lexicon_form in aligned_lexicon_formset:
+                    if aligned_lexicon_form.is_valid():
+                        #print(f"aligned: word: {aligned_lexicon_form.cleaned_data.get('word')}, phonemes: {aligned_lexicon_form.cleaned_data.get('phonemes')}, approved: {aligned_lexicon_form.cleaned_data.get('approved')}")
+                        if aligned_lexicon_form.cleaned_data.get('approve'):
+                            word = aligned_lexicon_form.cleaned_data.get('word')
+                            phonemes = aligned_lexicon_form.cleaned_data.get('phonemes')
+                            aligned_graphemes = aligned_lexicon_form.cleaned_data.get('aligned_graphemes')
+                            aligned_phonemes = aligned_lexicon_form.cleaned_data.get('aligned_phonemes')
+                            phonetic_lexicon_repo.add_or_update_aligned_entry(word, phonemes, aligned_graphemes, aligned_phonemes, language, 'reviewed')
+                            #messages.success(request, f"add_or_update_aligned_entry({word}, {phonemes}, {aligned_graphemes}, {aligned_phonemes}, {language}, 'reviewed')")
+                            aligned_words_saved += [ word ]
+                messages.success(request, f"{len(aligned_words_saved)} aligned lexicon entries saved: {', '.join(aligned_words_saved)}")
             elif action == 'Save orthography':
                 if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
                     phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
@@ -333,6 +351,7 @@ def edit_phonetic_lexicon(request):
                 form = None
                 plain_lexicon_formset = None
                 display_plain_lexicon_entries = False
+                display_aligned_lexicon_entries = False
             else:
                 plain_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.plain_phonetic_entries_exist_for_language(language) else 'NO'
                 aligned_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.aligned_entries_exist_for_language(language) else 'NO'
@@ -343,9 +362,12 @@ def edit_phonetic_lexicon(request):
                                                                           'plain_phonetic_lexicon_entries_exist': plain_phonetic_lexicon_entries_exist,
                                                                           'aligned_phonetic_lexicon_entries_exist': aligned_phonetic_lexicon_entries_exist,
                                                                           'display_plain_lexicon_entries': display_plain_lexicon_entries,
+                                                                          'display_aligned_lexicon_entries': display_aligned_lexicon_entries,
                                                                           })
                 plain_lexicon_data = phonetic_lexicon_repo.get_generated_plain_entries(language)
-                plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(initial=plain_lexicon_data) 
+                plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(initial=plain_lexicon_data, prefix='plain')
+                aligned_lexicon_data = phonetic_lexicon_repo.get_generated_aligned_entries(language)
+                aligned_lexicon_formset = AlignedPhoneticLexiconEntryFormSet(initial=aligned_lexicon_data, prefix='aligned') 
     else:
         form = PhoneticLexiconForm(user=request.user)
         plain_lexicon_formset = None
@@ -356,6 +378,7 @@ def edit_phonetic_lexicon(request):
     return render(request, 'clara_app/edit_phonetic_lexicon.html',
                   {'form': form,
                    'plain_lexicon_formset': plain_lexicon_formset,
+                   'aligned_lexicon_formset': aligned_lexicon_formset,
                    })
 
 ##
