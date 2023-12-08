@@ -8,11 +8,47 @@
 	  
 	  {% if form.display_plain_lexicon_entries.value %}
 		  {{ plain_lexicon_formset.management_form }}
-		  {% for form in plain_lexicon_formset %}
-			  <hr>
-			  {{ form.as_p }}
+		  <table>
+				<tr>
+					<td>Word</td>
+					<td>Phonemes</td>
+					<td>Approve</td>
+					<td>Delete</td>
+				</tr>		  
+		  {% for plain_form in plain_lexicon_formset %}
+				<tr>
+					<td>{{ plain_form.word }}</td>
+					<td>{{ plain_form.phonemes }}</td>
+					<td>{{ plain_form.approve }}</td>
+					<td>{{ plain_form.delete }}</td>
+				</tr>
 		  {% endfor %}
+		  </table>
 	  {% endif %}
+	  
+	  {% if form.display_aligned_lexicon_entries.value %}
+		  {{ aligned_lexicon_formset.management_form }}
+		  <table>
+				<tr>
+					<td>Word</td>
+					<td>Phonemes</td>
+					<td>Aligned graphemes</td>
+					<td>Aligned phonemes</td>
+					<td>Approve</td>
+					<td>Delete</td>
+				</tr>		  
+		  {% for aligned_form in aligned_lexicon_formset %}
+				<tr>
+					<td>{{ aligned_form.word }}</td>
+					<td>{{ aligned_form.phonemes }}</td>
+					<td>{{ aligned_form.aligned_graphemes }}</td>
+					<td>{{ aligned_form.aligned_phonemes }}</td>
+					<td>{{ aligned_form.approve }}</td>
+					<td>{{ aligned_form.delete }}</td>
+				</tr>
+		  {% endfor %}
+		  </table>
+	  {% endif %}	  
 	  <input type="submit" name="action" value="Refresh">
 	  <input type="submit" name="action" value="Save orthography">
 	  <input type="submit" name="action" value="Save lexicon">
