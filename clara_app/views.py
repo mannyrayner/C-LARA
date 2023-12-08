@@ -27,7 +27,7 @@ from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextFor
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
-from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm
+from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet
 from .utils import get_user_config, create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
@@ -271,6 +271,7 @@ def remove_language_master(request, pk):
 def edit_phonetic_lexicon(request):
     orthography_repo = PhoneticOrthographyRepository()
     phonetic_lexicon_repo = PhoneticLexiconRepository()
+    plain_lexicon_formset = None
     if request.method == 'POST':
         form = PhoneticLexiconForm(request.POST, user=request.user)
         if form.is_valid():
@@ -279,12 +280,13 @@ def edit_phonetic_lexicon(request):
             encoding = form.cleaned_data['encoding']
             letter_groups = form.cleaned_data['letter_groups']
             accents = form.cleaned_data['accents']
+            display_plain_lexicon_entries = form.cleaned_data['display_plain_lexicon_entries']
             #print(f'--- action = {action}, language = {language}, encoding = {encoding}, letter_groups = {letter_groups}')
             if action == 'Refresh':
                 if language:
                     encoding = phonetic_lexicon_repo.get_encoding_for_language(language)
                     letter_groups, accents = orthography_repo.get_text_entry(language)
-                    messages.success(request, "Data loaded")
+                    messages.success(request, f"Current data for {language} loaded")
             elif action == 'Save orthography':
                 if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
                     phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
@@ -313,26 +315,35 @@ def edit_phonetic_lexicon(request):
                         messages.error(request, f"Error when uploading plain phonetic lexicon: {plain_details}")
                     else:
                         messages.success(request, f"Plain phonetic lexicon uploaded successfully: {plain_details}")
+                        
             if not language:
-                plain_phonetic_lexicon_entries_exist = 'n/a'
-                aligned_phonetic_lexicon_entries_exist = 'n/a'
+                form = None
+                plain_lexicon_formset = None
+                display_plain_lexicon_entries = False
             else:
                 plain_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.plain_phonetic_entries_exist_for_language(language) else 'NO'
                 aligned_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.aligned_entries_exist_for_language(language) else 'NO'
-            form = PhoneticLexiconForm(user=request.user, initial = { 'language': language,
-                                                                      'encoding': encoding,
-                                                                      'letter_groups': letter_groups,
-                                                                      'accents': accents,
-                                                                      'plain_phonetic_lexicon_entries_exist': plain_phonetic_lexicon_entries_exist,
-                                                                      'aligned_phonetic_lexicon_entries_exist': aligned_phonetic_lexicon_entries_exist
-                                                                      })
+                form = PhoneticLexiconForm(user=request.user, initial = { 'language': language,
+                                                                          'encoding': encoding,
+                                                                          'letter_groups': letter_groups,
+                                                                          'accents': accents,
+                                                                          'plain_phonetic_lexicon_entries_exist': plain_phonetic_lexicon_entries_exist,
+                                                                          'aligned_phonetic_lexicon_entries_exist': aligned_phonetic_lexicon_entries_exist,
+                                                                          'display_plain_lexicon_entries': display_plain_lexicon_entries,
+                                                                          })
+                plain_lexicon_data = phonetic_lexicon_repo.get_generated_plain_entries(language)
+                plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(initial=plain_lexicon_data) 
     else:
         form = PhoneticLexiconForm(user=request.user)
+        plain_lexicon_formset = None
         if form.fields['language'].initial:
             current_encoding = phonetic_lexicon_repo.get_encoding_for_language(form.fields['language'].initial)
             form.fields['encoding'].initial = current_encoding
 
-    return render(request, 'clara_app/edit_phonetic_lexicon.html', {'form': form})
+    return render(request, 'clara_app/edit_phonetic_lexicon.html',
+                  {'form': form,
+                   'plain_lexicon_formset': plain_lexicon_formset,
+                   })
 
 ##
 # Allow a language master to edit templates and examples

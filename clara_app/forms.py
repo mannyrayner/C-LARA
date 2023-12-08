@@ -418,6 +418,7 @@ class PhoneticLexiconForm(forms.Form):
     aligned_lexicon_file = forms.FileField(
         label='Aligned phonetic lexicon file (JSON)',
         required=False)
+    display_plain_lexicon_entries = forms.BooleanField(required=False)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -430,3 +431,15 @@ class PhoneticLexiconForm(forms.Form):
             # Query the languages for which the user is a language master
             languages = LanguageMaster.objects.filter(user=user).values_list('language', flat=True)
             self.fields['language'].choices = [(lang, lang.capitalize()) for lang in languages]
+
+class PlainPhoneticLexiconEntryForm(forms.Form):
+    word = forms.CharField(widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    phonemes = forms.CharField()
+    approve = forms.BooleanField(required=False)
+    delete = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(PlainPhoneticLexiconEntryForm, self).__init__(*args, **kwargs)
+        # Additional initialization can go here
+
+PlainPhoneticLexiconEntryFormSet = formset_factory(PlainPhoneticLexiconEntryForm, extra=0)
