@@ -402,7 +402,7 @@ class PhoneticLexiconForm(forms.Form):
     )
     letter_groups = forms.CharField(label='Letter Groups', widget=forms.Textarea, required=False)
     accents = forms.CharField(label='Accents', widget=forms.Textarea, required=False)
-    plain_phonetic_lexicon_entries_exist = forms.FileField(
+    plain_phonetic_lexicon_entries_exist = forms.CharField(
         label='Plain phonetic lexicon entries exist',
         max_length=5,
         widget=forms.TextInput(attrs={'readonly': 'readonly'}),
@@ -410,7 +410,7 @@ class PhoneticLexiconForm(forms.Form):
     plain_lexicon_file = forms.FileField(
         label='Plain phonetic lexicon file (JSON)',
         required=False)
-    aligned_phonetic_lexicon_entries_exist = forms.FileField(
+    aligned_phonetic_lexicon_entries_exist = forms.CharField(
         label='Aligned phonetic lexicon entries exist',
         max_length=5,
         widget=forms.TextInput(attrs={'readonly': 'readonly'}),

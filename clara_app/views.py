@@ -274,7 +274,10 @@ def edit_phonetic_lexicon(request):
     plain_lexicon_formset = None
     if request.method == 'POST':
         form = PhoneticLexiconForm(request.POST, user=request.user)
-        if form.is_valid():
+        plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(request.POST)
+        if not form.is_valid():
+            messages.error(request, f"Error in form: {form.errors}")
+        else:
             action = request.POST.get('action')
             language = form.cleaned_data['language']
             encoding = form.cleaned_data['encoding']
@@ -287,6 +290,16 @@ def edit_phonetic_lexicon(request):
                     encoding = phonetic_lexicon_repo.get_encoding_for_language(language)
                     letter_groups, accents = orthography_repo.get_text_entry(language)
                     messages.success(request, f"Current data for {language} loaded")
+            if action == 'Save lexicon':
+                n_words_saved = 0
+                for lexicon_form in plain_lexicon_formset:
+                    if lexicon_form.is_valid():
+                        if lexicon_form.cleaned_data.get('approve'):
+                            word = lexicon_form.cleaned_data.get('word')
+                            phonemes = lexicon_form.cleaned_data.get('phonemes')
+                            phonetic_lexicon_repo.add_or_update_plain_entry(word, phonemes, language, 'reviewed')
+                            n_words_saved += 1
+                messages.success(request, f"{n_words_saved} plain lexicon entries saved")
             elif action == 'Save orthography':
                 if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
                     phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
