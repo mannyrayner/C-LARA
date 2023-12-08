@@ -577,7 +577,7 @@ class CLARAProjectInternal:
         self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')
         return api_calls
 
-    # Create a "phonetic" version of the text - so far, no use of AI
+    # Create a "phonetic" version of the text 
     def create_phonetic_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
         
@@ -589,8 +589,8 @@ class CLARAProjectInternal:
         
         self.save_text_version("phonetic", phonetic_text, user=user, label=label, source='generated')
         repository = PhoneticLexiconRepository(callback=callback)
-        repository.record_guessed_plain_entries(guessed_plain_entries, callback=callback)
-        repository.record_guessed_aligned_entries(guessed_aligned_entries, callback=callback)
+        repository.record_guessed_plain_entries(guessed_plain_entries, self.l2_language, callback=callback)
+        repository.record_guessed_aligned_entries(guessed_aligned_entries, self.l2_language, callback=callback)
         return api_calls
 
     # Call ChatGPT-4 to create a version of the text with gloss annotations

@@ -555,15 +555,110 @@ class PhoneticLexiconRepository:
 
 #-----------------------
 
-    def record_guessed_plain_entries(self, plain_entries, callback=None):
-        # Placeholder
-        print(f'--- {len(plain_entries)} plain phonetic lexicon entries to record:')
-        pprint.pprint(plain_entries)
-        
-    def record_guessed_aligned_entries(self, aligned_entries, callback=None):
-        # Placeholder
-        print(f'--- {len(aligned_entries)} aligned phonetic lexicon entries to record:')
-        pprint.pprint(aligned_entries)
+    def record_guessed_plain_entries(self, plain_entries, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            for entry in plain_entries:
+                word = entry['word']
+                phonemes = entry['phonemes']
+
+                # Delete existing entry if it exists, then insert new entry
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE word = ? AND phonemes = ? AND language = ?", (word, phonemes, language))
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (?, ?, ?, 'generated')", (word, phonemes, language))
+                else:  # Assume postgres
+                    cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE word = %s AND phonemes = %s AND language = %s", (word, phonemes, language))
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (%s, %s, %s, 'generated')", (word, phonemes, language))
+
+            connection.commit()
+            connection.close()
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when recording guessed plain entries for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+    def record_guessed_aligned_entries(self, aligned_entries, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            for entry in aligned_entries:
+                word = entry['word']
+                aligned_graphemes = entry['aligned_graphemes']
+                aligned_phonemes = entry['aligned_phonemes']
+                # The 'phonemes' field is in fact redundant. Create it from the 'aligned_phonemes' field if it's missing.
+                phonemes = entry['phonemes'] if 'phonemes' in entry else aligned_phonemes.replace('|', '')
+
+                # Delete existing entry if it exists, then insert new entry
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE word = ? AND phonemes = ? AND language = ?", (word, phonemes, language))
+                    cursor.execute("INSERT INTO aligned_phonetic_lexicon (word, phonemes, aligned_graphemes, aligned_phonemes, language, status) VALUES (?, ?, ?, ?, ?, 'generated')",
+                                   (word, phonemes, aligned_graphemes, aligned_phonemes, language))
+
+                else:  # Assume postgres
+                    cursor.execute("DELETE FROM aligned_phonetic_lexicon WHERE word = %s AND phonemes = %s AND language = %s", (word, phonemes, language))
+                    cursor.execute("INSERT INTO aligned_phonetic_lexicon (word, phonemes, aligned_graphemes, aligned_phonemes, language, status) VALUES (%s, %s, %s, %s, %s, 'generated')",
+                                   (word, phonemes, aligned_graphemes, aligned_phonemes, language))
+
+            connection.commit()
+            connection.close()
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when recording guessed aligned entries for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+    def get_generated_plain_entries(self, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            # Retrieve all generated plain entries for the specified language
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT word, phonemes FROM plain_phonetic_lexicon WHERE language = ? AND status = 'generated'", (language,))
+            else:  # Assume postgres
+                cursor.execute("SELECT word, phonemes FROM plain_phonetic_lexicon WHERE language = %s AND status = 'generated'", (language,))
+
+            records = cursor.fetchall()
+            connection.close()
+
+            # Convert records to a list of dicts
+            if os.getenv('DB_TYPE') == 'sqlite':
+                entries = [{'word': record[0], 'phonemes': record[1]} for record in records]
+            else: # Assume postgres
+                entries = [{'word': record['word'], 'phonemes': record['phonemes']} for record in records]
+            return entries
+
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching generated plain entries for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+    def get_generated_aligned_entries(self, language, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+
+            # Retrieve all generated aligned entries for the specified language
+            if os.getenv('DB_TYPE') == 'sqlite':
+                cursor.execute("SELECT word, phonemes, aligned_graphemes, aligned_phonemes FROM aligned_phonetic_lexicon WHERE language = ? AND status = 'generated'", (language,))
+            else:  # Assume postgres
+                cursor.execute("SELECT word, phonemes, aligned_graphemes, aligned_phonemes FROM aligned_phonetic_lexicon WHERE language = %s AND status = 'generated'", (language,))
+
+            records = cursor.fetchall()
+            connection.close()
+
+            # Convert records to a list of dicts
+            if os.getenv('DB_TYPE') == 'sqlite':
+                entries = [{'word': record[0], 'phonemes': record[1], 'aligned_graphemes': record[2], 'aligned_phonemes': record[3]} for record in records]
+            else:  # Assume postgres
+                entries = [{'word': record['word'], 'phonemes': record['phonemes'], 'aligned_graphemes': record['aligned_graphemes'], 'aligned_phonemes': record['aligned_phonemes']}
+                           for record in records]
+            return entries
+
+        except Exception as e:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error when fetching generated aligned entries for language "{language}": "{str(e)}"\n{traceback.format_exc()}')
+            raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
+
+
 
 ## Contents for aligned file assumed to be in this format:
 
