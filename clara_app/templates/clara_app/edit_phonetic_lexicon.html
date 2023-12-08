@@ -5,8 +5,17 @@
 	<form method="POST" enctype="multipart/form-data">
 	  {% csrf_token %}
 	  {{ form.as_p }}
+	  
+	  {% if form.display_plain_lexicon_entries.value %}
+		  {{ plain_lexicon_formset.management_form }}
+		  {% for form in plain_lexicon_formset %}
+			  <hr>
+			  {{ form.as_p }}
+		  {% endfor %}
+	  {% endif %}
 	  <input type="submit" name="action" value="Refresh">
 	  <input type="submit" name="action" value="Save orthography">
+	  <input type="submit" name="action" value="Save lexicon">
 	  <input type="submit" name="action" value="Upload files">
     </form>
 	
