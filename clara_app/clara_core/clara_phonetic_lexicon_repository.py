@@ -792,4 +792,15 @@ class PhoneticLexiconRepository:
         except Exception as e:
             return ('error', f'Something went wrong in internalisation: {str(e)}')
 
+    # Return two values: ( consistent, error_message )
+    def consistent_aligned_phonetic_lexicon_entry(self, word, phonemes, aligned_graphemes, aligned_phonemes):
+        if word != aligned_graphemes.replace('|', ''):
+            return ( False, f"'{word}' is not consistent with '{aligned_graphemes}'" )
+        elif phonemes != aligned_phonemes.replace('|', ''):
+            return ( False, f"'{phonemes}' is not consistent with '{aligned_phonemes}'" )
+        elif len(aligned_graphemes.split('|')) != len(aligned_phonemes.split('|')):
+            return ( False, f"'{aligned_graphemes}' and '{aligned_phonemes}' have different numbers of components" )
+        else:
+            return ( True, '' )
+
         return ('error', 'Unknown error')
