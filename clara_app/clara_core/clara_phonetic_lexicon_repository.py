@@ -734,8 +734,6 @@ class PhoneticLexiconRepository:
         except Exception as e:
             return ('error', f'Something went wrong in internalisation: {str(e)}')
 
-        return ('error', 'Unknown error')
-
 ## Contents for plain lexicon JSON file assumed to be in this format:
 
 ##{
@@ -802,5 +800,3 @@ class PhoneticLexiconRepository:
             return ( False, f"'{aligned_graphemes}' and '{aligned_phonemes}' have different numbers of components" )
         else:
             return ( True, '' )
-
-        return ('error', 'Unknown error')
