@@ -304,20 +304,28 @@ def edit_phonetic_lexicon(request):
                             phonetic_lexicon_repo.add_or_update_plain_entry(word, phonemes, language, 'reviewed')
                             #messages.success(request, f"add_or_update_plain_entry({word}, {phonemes}, {language}, 'reviewed')")
                             plain_words_saved += [ word ]
-                messages.success(request, f"{len(plain_words_saved)} plain lexicon entries saved: {', '.join(plain_words_saved)}")
+                if len(plain_words_saved) != 0:
+                    messages.success(request, f"{len(plain_words_saved)} plain lexicon entries saved: {', '.join(plain_words_saved)}")
                 aligned_words_saved = []
                 for aligned_lexicon_form in aligned_lexicon_formset:
                     if aligned_lexicon_form.is_valid():
-                        #print(f"aligned: word: {aligned_lexicon_form.cleaned_data.get('word')}, phonemes: {aligned_lexicon_form.cleaned_data.get('phonemes')}, approved: {aligned_lexicon_form.cleaned_data.get('approved')}")
-                        if aligned_lexicon_form.cleaned_data.get('approve'):
+                        approve = aligned_lexicon_form.cleaned_data.get('approve')
+                        if approve:
                             word = aligned_lexicon_form.cleaned_data.get('word')
                             phonemes = aligned_lexicon_form.cleaned_data.get('phonemes')
                             aligned_graphemes = aligned_lexicon_form.cleaned_data.get('aligned_graphemes')
                             aligned_phonemes = aligned_lexicon_form.cleaned_data.get('aligned_phonemes')
-                            phonetic_lexicon_repo.add_or_update_aligned_entry(word, phonemes, aligned_graphemes, aligned_phonemes, language, 'reviewed')
-                            #messages.success(request, f"add_or_update_aligned_entry({word}, {phonemes}, {aligned_graphemes}, {aligned_phonemes}, {language}, 'reviewed')")
-                            aligned_words_saved += [ word ]
-                messages.success(request, f"{len(aligned_words_saved)} aligned lexicon entries saved: {', '.join(aligned_words_saved)}")
+                            print(f"aligned: word: {word}, phonemes: {phonemes}, aligned_graphemes: {aligned_graphemes}, aligned_phonemes: {aligned_phonemes}, approve: {approve}")
+                            consistent, error_message = phonetic_lexicon_repo.consistent_aligned_phonetic_lexicon_entry(word, phonemes, aligned_graphemes, aligned_phonemes)
+                            if not consistent:
+                                messages.error(request, f"Error when trying to save data for '{word}': {error_message}")
+                            else:
+                                phonetic_lexicon_repo.add_or_update_aligned_entry(word, phonemes, aligned_graphemes, aligned_phonemes, language, 'reviewed')
+                                aligned_words_saved += [ word ]
+                if len(aligned_words_saved) != 0:
+                    messages.success(request, f"{len(aligned_words_saved)} aligned lexicon entries saved: {', '.join(aligned_words_saved)}")
+                if len(plain_words_saved) == 0 and len(aligned_words_saved) == 0:
+                    messages.error(request, f"Warning: found no entries marked as approved, not saving anything")
             elif action == 'Save orthography':
                 if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
                     phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
