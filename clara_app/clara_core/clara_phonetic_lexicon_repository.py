@@ -133,9 +133,10 @@ class PhoneticLexiconRepository:
                 cursor.execute("SELECT encoding FROM phonetic_encoding WHERE language = ?", (language,))
             else:  # Assume postgres
                 cursor.execute("SELECT encoding FROM phonetic_encoding WHERE language = %s", (language,))
-            result = cursor.fetchone()
 
+            result = cursor.fetchone()
             connection.close()
+            
             if result is not None:
                 if os.getenv('DB_TYPE') == 'sqlite':
                     # For SQLite, result is a tuple
@@ -144,7 +145,7 @@ class PhoneticLexiconRepository:
                     # For PostgreSQL, result is a RealDictRow
                     return result['encoding']
             else:
-                return None
+                return 'ipa'
                 
         except Exception as e:
             post_task_update(callback, f'*** PhoneticLexiconRepository: error when getting encoding for "{language}": "{str(e)}"\n{traceback.format_exc()}')
