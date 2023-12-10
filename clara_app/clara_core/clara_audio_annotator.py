@@ -86,30 +86,28 @@ class AudioAnnotator:
         self.audio_repository.delete_entries_for_language(self.engine_id, self.language_id, callback=callback)
 
     def annotate_text(self, text_obj, phonetic=False, callback=None):
-        if self.tts_engine:
+        words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
+        missing_words, missing_segments = self._get_missing_audio(words_data, segments_data, phonetic=phonetic, callback=callback)
 
-            words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
-            missing_words, missing_segments = self._get_missing_audio(words_data, segments_data, phonetic=phonetic, callback=callback)
-
-            if missing_words and self.audio_type_for_words == 'tts':
-                # Don't try to use TTS for phonetic "words" (actually letter groups), it is not likely to work
-                if phonetic:
-                    post_task_update(callback, f"--- Do not try to use TTS to create audio for phonetic letter groups")
-                    new_words_data = []
-                else:
-                    post_task_update(callback, f"--- Creating TTS audio for words")
-                    new_words_data = self._create_and_store_missing_mp3s(missing_words, 'words', callback=callback)
-                    post_task_update(callback, f"--- TTS audio for words created")
-            else:
+        if self.engine_id and missing_words and self.audio_type_for_words == 'tts':
+            # Don't try to use TTS for phonetic "words" (actually letter groups), it is not likely to work
+            if phonetic:
+                post_task_update(callback, f"--- Do not try to use TTS to create audio for phonetic letter groups")
                 new_words_data = []
-
-            if missing_segments and self.audio_type_for_segments == 'tts':
-                external_name_for_segments = 'words' if phonetic else 'segments'
-                post_task_update(callback, f"--- Creating TTS audio for {external_name_for_segments}")
-                new_segments_data = self._create_and_store_missing_mp3s(missing_segments, 'segments', callback=callback)
-                post_task_update(callback, f"--- TTS audio for {external_name_for_segments} created")
             else:
-                new_segments_data = []
+                post_task_update(callback, f"--- Creating TTS audio for words")
+                new_words_data = self._create_and_store_missing_mp3s(missing_words, 'words', callback=callback)
+                post_task_update(callback, f"--- TTS audio for words created")
+        else:
+            new_words_data = []
+
+        if self.engine_id and missing_segments and self.audio_type_for_segments == 'tts':
+            external_name_for_segments = 'words' if phonetic else 'segments'
+            post_task_update(callback, f"--- Creating TTS audio for {external_name_for_segments}")
+            new_segments_data = self._create_and_store_missing_mp3s(missing_segments, 'segments', callback=callback)
+            post_task_update(callback, f"--- TTS audio for {external_name_for_segments} created")
+        else:
+            new_segments_data = []
 
         updated_words_data = words_data + new_words_data
         updated_segments_data = segments_data + new_segments_data

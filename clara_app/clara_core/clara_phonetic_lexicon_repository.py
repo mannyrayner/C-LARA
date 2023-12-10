@@ -711,23 +711,19 @@ class PhoneticLexiconRepository:
 # 
 # hl | l
 
-    def load_and_initialise_aligned_lexicon_from_orthography_text(self, text, language, callback=None):
-        lines = text.split('\n')
-        items = []
-
+    def load_and_initialise_aligned_lexicon_from_orthography_data(self, grapheme_phoneme_data, language, callback=None):
         try:
-            for line in lines:
-                parts = line.strip().split('|')
-                if len(parts) != 2:
-                    continue  # Skip malformed lines
-                grapheme = parts[0].strip()
-                phoneme = parts[1].strip()
-                items.append({
-                    'word': grapheme,
-                    'phonemes': phoneme,  # Assuming phoneme is already in the desired format, which could be IPA or ARPAbet-like
-                    'aligned_graphemes': grapheme,  
-                    'aligned_phonemes': phoneme,
-                })
+            items = []
+            for grapheme_phoneme_item in grapheme_phoneme_data:
+                graphemes = grapheme_phoneme_item['grapheme_variants'].split()
+                phoneme = grapheme_phoneme_item['phonemes']
+                for grapheme in graphemes:
+                    items.append({
+                        'word': grapheme,
+                        'phonemes': phoneme,  # Assuming phoneme is already in the desired format, which could be IPA or ARPAbet-like
+                        'aligned_graphemes': grapheme,  
+                        'aligned_phonemes': phoneme,
+                    })
 
             self.initialise_aligned_lexicon(items, language, callback=callback)
             return ('success', f'{len(items)} items loaded')
