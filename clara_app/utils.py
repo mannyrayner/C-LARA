@@ -48,6 +48,8 @@ def get_task_updates(report_id):
     updates = TaskUpdate.objects.filter(report_id=report_id).order_by('timestamp')
     messages = [update.message for update in updates]
     updates.delete()  # Delete the updates after reading them
+    for message in messages:
+        print(message)
     return messages
 
 def delete_all_tasks():
