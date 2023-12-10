@@ -28,6 +28,7 @@ from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTag
 from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
+from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet
 from .utils import get_user_config, create_internal_project_id, store_api_calls
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
@@ -273,8 +274,12 @@ def edit_phonetic_lexicon(request):
     phonetic_lexicon_repo = PhoneticLexiconRepository()
     plain_lexicon_formset = None
     aligned_lexicon_formset = None
+    grapheme_phoneme_formset = None
+    accents_formset = None
     if request.method == 'POST':
         form = PhoneticLexiconForm(request.POST, user=request.user)
+        grapheme_phoneme_formset = GraphemePhonemeCorrespondenceFormSet(request.POST, prefix='grapheme_phoneme')
+        accents_formset = AccentCharacterFormSet(request.POST, prefix='accents')
         plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(request.POST, prefix='plain')
         aligned_lexicon_formset = AlignedPhoneticLexiconEntryFormSet(request.POST, prefix='aligned')
         if not form.is_valid():
@@ -283,18 +288,58 @@ def edit_phonetic_lexicon(request):
             action = request.POST.get('action')
             language = form.cleaned_data['language']
             encoding = form.cleaned_data['encoding']
-            letter_groups = form.cleaned_data['letter_groups']
-            accents = form.cleaned_data['accents']
+            #letter_groups = form.cleaned_data['letter_groups']
+            #accents = form.cleaned_data['accents']
+            display_grapheme_to_phoneme_entries = form.cleaned_data['display_grapheme_to_phoneme_entries']
             display_plain_lexicon_entries = form.cleaned_data['display_plain_lexicon_entries']
             display_aligned_lexicon_entries = form.cleaned_data['display_aligned_lexicon_entries']
             #print(f'--- action = {action}, language = {language}, encoding = {encoding}, letter_groups = {letter_groups}')
             if action == 'Refresh':
                 if language:
                     encoding = phonetic_lexicon_repo.get_encoding_for_language(language)
-                    letter_groups, accents = orthography_repo.get_text_entry(language)
+                    #letter_groups, accents = orthography_repo.get_text_entry(language)
                     messages.success(request, f"Current data for {language} loaded")
-            if action == 'Save lexicon':
+            if action == 'Save':
+                grapheme_phoneme_data = []
+                accents_data = []
+                n_orthography_errors = 0
                 plain_words_saved = []
+                for grapheme_phoneme_form in grapheme_phoneme_formset:
+                    if grapheme_phoneme_form.is_valid():
+                        grapheme_variants = grapheme_phoneme_form.cleaned_data.get('grapheme_variants')
+                        phonemes = grapheme_phoneme_form.cleaned_data.get('phonemes')
+                        # Ignore null items
+                        if grapheme_variants or phonemes:
+                            grapheme_phoneme_item = { 'grapheme_variants': grapheme_variants, 'phonemes': phonemes }
+                            consistent, error_message = orthography_repo.consistent_orthography_item(grapheme_phoneme_item)
+                            if consistent:
+                                grapheme_phoneme_data += [ grapheme_phoneme_item ]
+                            else:
+                                messages.error(request, f"Error when trying to save grapheme/phoneme data: {error_message}")
+                                n_orthography_errors += 1
+                for accents_form in accents_formset:
+                     if accents_form.is_valid():
+                        accent = accents_form.cleaned_data.get('unicode_value')
+                        # Ignore null items
+                        if accent:
+                            accent_item = { 'unicode_value': accent }
+                            consistent, error_message = orthography_repo.consistent_accent_item(accent_item)
+                            if consistent:
+                                accents_data += [ accent_item ]
+                            else:
+                                messages.error(request, f"Error when trying to save grapheme/phoneme data: {error_message}")
+                                n_orthography_errors += 1
+                if n_orthography_errors == 0:
+                    orthography_repo.save_structured_data(language, grapheme_phoneme_data, accents_data)
+                    messages.success(request, f"Saved grapheme/phoneme data: {len(grapheme_phoneme_data)} grapheme/phoneme items, {len(accents_data)} accent items")
+                    orthography_result, orthography_details = phonetic_lexicon_repo.load_and_initialise_aligned_lexicon_from_orthography_data(grapheme_phoneme_data, language)
+                    #print(f'orthography_result = {orthography_result}, orthography_details = {orthography_details}')
+                    if orthography_result == 'error':
+                        messages.error(request, f"Error when converting grapheme/phoneme data into aligned lexicon: {orthography_details}")
+                    else:
+                        messages.success(request, f"Grapheme/phoneme data also converted into aligned lexicon: {orthography_details}")
+                else:
+                    messages.error(request, f"No grapheme/phoneme data saved")
                 for lexicon_form in plain_lexicon_formset:
                     if lexicon_form.is_valid():
                         #print(f"plain: word: {lexicon_form.cleaned_data.get('word')}, phonemes: {lexicon_form.cleaned_data.get('phonemes')}, approved: {lexicon_form.cleaned_data.get('approved')}")
@@ -324,22 +369,22 @@ def edit_phonetic_lexicon(request):
                                 aligned_words_saved += [ word ]
                 if len(aligned_words_saved) != 0:
                     messages.success(request, f"{len(aligned_words_saved)} aligned lexicon entries saved: {', '.join(aligned_words_saved)}")
-                if len(plain_words_saved) == 0 and len(aligned_words_saved) == 0:
+                if ( display_plain_lexicon_entries or display_aligned_lexicon_entries ) and len(plain_words_saved) == 0 and len(aligned_words_saved) == 0:
                     messages.error(request, f"Warning: found no entries marked as approved, not saving anything")
-            elif action == 'Save orthography':
-                if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
-                    phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
-                    messages.success(request, "Language encoding saved")
-                if letter_groups:
-                    orthography_repo.save_entry(language, letter_groups, accents)
-                    messages.success(request, "Orthography data saved")
-                    orthography_result, orthography_details = phonetic_lexicon_repo.load_and_initialise_aligned_lexicon_from_orthography_text(letter_groups, language)
-                    print(f'orthography_result = {orthography_result}, orthography_details = {orthography_details}')
-                    if orthography_result == 'error':
-                        messages.error(request, f"Error when converting orthography data into aligned lexicon: {orthography_details}")
-                    else:
-                        messages.success(request, f"Orthography data also converted into aligned lexicon: {orthography_details}")
-            elif action == 'Upload files':
+##            elif action == 'Save orthography':
+##                if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
+##                    phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
+##                    messages.success(request, "Language encoding saved")
+##                if letter_groups:
+##                    orthography_repo.save_entry(language, letter_groups, accents)
+##                    messages.success(request, "Orthography data saved")
+##                    orthography_result, orthography_details = phonetic_lexicon_repo.load_and_initialise_aligned_lexicon_from_orthography_text(letter_groups, language)
+##                    print(f'orthography_result = {orthography_result}, orthography_details = {orthography_details}')
+##                    if orthography_result == 'error':
+##                        messages.error(request, f"Error when converting orthography data into aligned lexicon: {orthography_details}")
+##                    else:
+##                        messages.success(request, f"Orthography data also converted into aligned lexicon: {orthography_details}")
+            elif action == 'Upload':
                 if 'aligned_lexicon_file' in request.FILES:
                     aligned_file_path = uploaded_file_to_file(request.FILES['aligned_lexicon_file'])
                     aligned_result, aligned_details = phonetic_lexicon_repo.load_and_initialise_aligned_lexicon(aligned_file_path, language)
@@ -357,24 +402,35 @@ def edit_phonetic_lexicon(request):
                         
             if not language:
                 form = None
+                grapheme_phoneme_correspondence_formset = None
+                accents_formset = None
                 plain_lexicon_formset = None
                 display_plain_lexicon_entries = False
                 display_aligned_lexicon_entries = False
             else:
+                grapheme_phoneme_correspondence_entries_exist = 'YES' if phonetic_orthography_resources_available(language) else 'NO'
                 plain_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.plain_phonetic_entries_exist_for_language(language) else 'NO'
                 aligned_phonetic_lexicon_entries_exist = 'YES' if phonetic_lexicon_repo.aligned_entries_exist_for_language(language) else 'NO'
                 form = PhoneticLexiconForm(user=request.user, initial = { 'language': language,
                                                                           'encoding': encoding,
-                                                                          'letter_groups': letter_groups,
-                                                                          'accents': accents,
+                                                                          'grapheme_phoneme_correspondence_entries_exist': grapheme_phoneme_correspondence_entries_exist,
                                                                           'plain_phonetic_lexicon_entries_exist': plain_phonetic_lexicon_entries_exist,
                                                                           'aligned_phonetic_lexicon_entries_exist': aligned_phonetic_lexicon_entries_exist,
+                                                                          'display_grapheme_to_phoneme_entries': display_grapheme_to_phoneme_entries,
                                                                           'display_plain_lexicon_entries': display_plain_lexicon_entries,
                                                                           'display_aligned_lexicon_entries': display_aligned_lexicon_entries,
                                                                           })
+                grapheme_phoneme_data, accents_data = orthography_repo.get_parsed_entry(language, formatting='new')
+                pprint.pprint(grapheme_phoneme_data)
+                pprint.pprint(accents_data)
                 plain_lexicon_data = phonetic_lexicon_repo.get_generated_plain_entries(language)
-                plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(initial=plain_lexicon_data, prefix='plain')
                 aligned_lexicon_data = phonetic_lexicon_repo.get_generated_aligned_entries(language)
+                
+                grapheme_phoneme_formset = GraphemePhonemeCorrespondenceFormSet(initial=grapheme_phoneme_data, prefix='grapheme_phoneme')
+                print(f'grapheme_phoneme_formset length: {len(grapheme_phoneme_formset)}')
+                print(f'accents_formset length: {len(accents_formset)}')
+                accents_formset = AccentCharacterFormSet(initial=accents_data, prefix='accents')
+                plain_lexicon_formset = PlainPhoneticLexiconEntryFormSet(initial=plain_lexicon_data, prefix='plain')
                 aligned_lexicon_formset = AlignedPhoneticLexiconEntryFormSet(initial=aligned_lexicon_data, prefix='aligned') 
     else:
         form = PhoneticLexiconForm(user=request.user)
@@ -385,6 +441,8 @@ def edit_phonetic_lexicon(request):
 
     return render(request, 'clara_app/edit_phonetic_lexicon.html',
                   {'form': form,
+                   'grapheme_phoneme_formset': grapheme_phoneme_formset,
+                   'accents_formset': accents_formset,
                    'plain_lexicon_formset': plain_lexicon_formset,
                    'aligned_lexicon_formset': aligned_lexicon_formset,
                    })

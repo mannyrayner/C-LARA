@@ -400,8 +400,13 @@ class PhoneticLexiconForm(forms.Form):
         choices=[('ipa', 'IPA'), ('arpabet_like', 'ARPAbet-like')],
         required=False
     )
-    letter_groups = forms.CharField(label='Letter Groups', widget=forms.Textarea, required=False)
-    accents = forms.CharField(label='Accents', widget=forms.Textarea, required=False)
+##    letter_groups = forms.CharField(label='Letter Groups', widget=forms.Textarea, required=False)
+##    accents = forms.CharField(label='Accents', widget=forms.Textarea, required=False)
+    grapheme_phoneme_correspondence_entries_exist = forms.CharField(
+        label='Grapheme to phoneme entries exist',
+        max_length=5,
+        widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+        required=False)
     plain_phonetic_lexicon_entries_exist = forms.CharField(
         label='Plain phonetic lexicon entries exist',
         max_length=5,
@@ -418,15 +423,13 @@ class PhoneticLexiconForm(forms.Form):
     aligned_lexicon_file = forms.FileField(
         label='Aligned phonetic lexicon file (JSON)',
         required=False)
+    display_grapheme_to_phoneme_entries = forms.BooleanField(required=False)
     display_plain_lexicon_entries = forms.BooleanField(required=False)
     display_aligned_lexicon_entries = forms.BooleanField(required=False)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(PhoneticLexiconForm, self).__init__(*args, **kwargs)
-
-        self.fields['letter_groups'].help_text = 'Use one line per character. If there are several forms for a character, separate them with spaces and put the canonical form first.'
-        self.fields['accents'].help_text = 'Use one line per accent character. Enter Unicode code points (e.g., U+064B) for non-printable characters.'
 
         if user:
             # Query the languages for which the user is a language master
@@ -459,3 +462,20 @@ class AlignedPhoneticLexiconEntryForm(forms.Form):
 
 AlignedPhoneticLexiconEntryFormSet = formset_factory(AlignedPhoneticLexiconEntryForm, extra=0)
 
+class GraphemePhonemeCorrespondenceForm(forms.Form):
+    grapheme_variants = forms.CharField(widget=forms.TextInput(attrs={'dir': 'ltr'}))  # Default direction
+    phonemes = forms.CharField(widget=forms.TextInput(attrs={'dir': 'ltr'}))  # Default direction
+
+    def __init__(self, *args, **kwargs):
+        language_direction = kwargs.pop('language_direction', 'ltr')
+        phoneme_direction = kwargs.pop('phoneme_direction', language_direction)
+        super(GraphemePhonemeCorrespondenceForm, self).__init__(*args, **kwargs)
+        self.fields['grapheme_variants'].widget.attrs['dir'] = language_direction
+        self.fields['phonemes'].widget.attrs['dir'] = phoneme_direction
+
+GraphemePhonemeCorrespondenceFormSet = formset_factory(GraphemePhonemeCorrespondenceForm, extra=1)
+
+class AccentCharacterForm(forms.Form):
+    unicode_value = forms.CharField(widget=forms.TextInput(attrs={'dir': 'ltr'}))
+
+AccentCharacterFormSet = formset_factory(AccentCharacterForm, extra=1)
