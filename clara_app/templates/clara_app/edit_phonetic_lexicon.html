@@ -6,53 +6,92 @@
 	  {% csrf_token %}
 	  {{ form.as_p }}
 	  
-	  {% if form.display_plain_lexicon_entries.value %}
-		  {{ plain_lexicon_formset.management_form }}
+	   {% if form.display_grapheme_to_phoneme_entries.value %}
+	      <h2>Grapheme-to-phoneme entries</h2>
+		  {{ grapheme_phoneme_formset.management_form }}
 		  <table>
 				<tr>
-					<td>Word</td>
+					<td>Grapheme variants</td>
 					<td>Phonemes</td>
-					<td>Approve</td>
-					<td>Delete</td>
 				</tr>		  
-		  {% for plain_form in plain_lexicon_formset %}
+		  {% for grapheme_phoneme_form in grapheme_phoneme_formset %}
 				<tr>
-					<td>{{ plain_form.word }}</td>
-					<td>{{ plain_form.phonemes }}</td>
-					<td>{{ plain_form.approve }}</td>
-					<td>{{ plain_form.delete }}</td>
+					<td>{{ grapheme_phoneme_form.grapheme_variants }}</td>
+					<td>{{ grapheme_phoneme_form.phonemes }}</td>
+				</tr>
+		  {% endfor %}
+		  </table>
+		  
+		  <h2>Accents</h2>
+		  {{ accents_formset.management_form }}
+		  <table>
+				<tr>
+					<td>Accent characters</td>
+				</tr>		  
+		  {% for accents_form in accents_formset %}
+				<tr>
+					<td>{{ accents_form.unicode_value }}</td>
 				</tr>
 		  {% endfor %}
 		  </table>
 	  {% endif %}
 	  
+	  {% if form.display_plain_lexicon_entries.value %}
+		  <h2>Plain phonetic lexicon</h2>
+		  {% if not plain_lexicon_formset.value %}
+		        <p>No entries to review</p>
+		  {% else %}
+			  {{ plain_lexicon_formset.management_form }}
+			  <table>
+					<tr>
+						<td>Word</td>
+						<td>Phonemes</td>
+						<td>Approve</td>
+						<td>Delete</td>
+					</tr>		  
+			  {% for plain_form in plain_lexicon_formset %}
+					<tr>
+						<td>{{ plain_form.word }}</td>
+						<td>{{ plain_form.phonemes }}</td>
+						<td>{{ plain_form.approve }}</td>
+						<td>{{ plain_form.delete }}</td>
+					</tr>
+			  {% endfor %}
+			  </table>
+		  {% endif %}
+	  {% endif %}
+	  
 	  {% if form.display_aligned_lexicon_entries.value %}
-		  {{ aligned_lexicon_formset.management_form }}
-		  <table>
-				<tr>
-					<td>Word</td>
-					<td>Phonemes</td>
-					<td>Aligned graphemes</td>
-					<td>Aligned phonemes</td>
-					<td>Approve</td>
-					<td>Delete</td>
-				</tr>		  
-		  {% for aligned_form in aligned_lexicon_formset %}
-				<tr>
-					<td>{{ aligned_form.word }}</td>
-					<td>{{ aligned_form.phonemes }}</td>
-					<td>{{ aligned_form.aligned_graphemes }}</td>
-					<td>{{ aligned_form.aligned_phonemes }}</td>
-					<td>{{ aligned_form.approve }}</td>
-					<td>{{ aligned_form.delete }}</td>
-				</tr>
-		  {% endfor %}
-		  </table>
+	      <h2>Aligned phonetic lexicon</h2>
+		  {% if not aligned_lexicon_formset.value %}
+		        <p>No entries to review</p>
+		  {% else %}
+			  {{ aligned_lexicon_formset.management_form }}
+			  <table>
+					<tr>
+						<td>Word</td>
+						<td>Phonemes</td>
+						<td>Aligned graphemes</td>
+						<td>Aligned phonemes</td>
+						<td>Approve</td>
+						<td>Delete</td>
+					</tr>		  
+			  {% for aligned_form in aligned_lexicon_formset %}
+					<tr>
+						<td>{{ aligned_form.word }}</td>
+						<td>{{ aligned_form.phonemes }}</td>
+						<td>{{ aligned_form.aligned_graphemes }}</td>
+						<td>{{ aligned_form.aligned_phonemes }}</td>
+						<td>{{ aligned_form.approve }}</td>
+						<td>{{ aligned_form.delete }}</td>
+					</tr>
+			  {% endfor %}
+			  </table>
+		  {% endif %}
 	  {% endif %}	  
 	  <input type="submit" name="action" value="Refresh">
-	  <input type="submit" name="action" value="Save orthography">
-	  <input type="submit" name="action" value="Save lexicon">
-	  <input type="submit" name="action" value="Upload files">
+	  <input type="submit" name="action" value="Save">
+	  <input type="submit" name="action" value="Upload">
     </form>
 	
     <script>
