@@ -300,6 +300,9 @@ def edit_phonetic_lexicon(request):
                     #letter_groups, accents = orthography_repo.get_text_entry(language)
                     messages.success(request, f"Current data for {language} loaded")
             if action == 'Save':
+                if encoding and encoding != phonetic_lexicon_repo.get_encoding_for_language(language):
+                    phonetic_lexicon_repo.set_encoding_for_language(language, encoding)
+                    messages.success(request, "Language encoding saved")
                 grapheme_phoneme_data = []
                 accents_data = []
                 n_orthography_errors = 0
