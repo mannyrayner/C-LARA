@@ -15,8 +15,11 @@ C-LARA, or **ChatGPT-based Learning And Reading Assistant**, is an open source w
 currently under development by an international open source consortium, whose purpose is to 
 make it easy to create engaging multimedia texts that can help language learners develop their reading and listening skills.
 The platform draws inspiration from the earlier [LARA project](https://www.unige.ch/callector/lara) but has been
-completely rewritten. An initial deployment of C-LARA is available at (https://c-lara.unisa.edu.au/accounts/login/). You can
-create an account for free, but if you want to use the AI-based functionality you need a positive credit balance. 
+completely rewritten. 
+
+An initial deployment of C-LARA, maintained by the University of South Australia, is available 
+[here](https://c-lara.unisa.edu.au/accounts/login/). You can
+create an account for free, but if you want to use the AI-based functionalities you need a positive credit balance. 
 We are currently welcoming early adopters, please contact Manny.Rayner@unisa.edu.au to get some initial credit.
 
 As the name suggests, ChatGPT-4 is at the centre of our activities. It is used in two complementary ways, both 
