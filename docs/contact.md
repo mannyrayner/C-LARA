@@ -11,6 +11,6 @@
 
 </div>
 ## Contact
-For general enquiries about C-LARA, or to discuss the possibility of getting an account on the provisional Heroku deployment of the platform, please contact Manny Rayner, Manny.Rayner@unisa.edu.au.
+For general enquiries about C-LARA, or to get credits to use the AI functionalies on the platform, please contact Manny.Rayner@unisa.edu.au.
 
 You can mail the AI directly at chatgptclarainstance@proton.me.
