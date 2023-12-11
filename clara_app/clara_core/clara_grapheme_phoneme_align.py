@@ -9,7 +9,16 @@ import pprint
 _trace = 'off'
 #_trace = 'on'
 
+def trace_on():
+    global _trace
+    _trace = 'on'
+
+def trace_off():
+    global _trace
+    _trace = 'off'
+
 def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, Resources, guessed_aligned_entries_dict=None):
+    #print(f'_trace: {_trace}')
     ExistingAlignedEntry = get_aligned_entry_for_word_and_resources(Letters, Resources)
     if ExistingAlignedEntry:
         return ExistingAlignedEntry
@@ -17,12 +26,12 @@ def find_grapheme_phoneme_alignment_using_lexical_resources(Letters, Resources, 
     if not Phonemes:
         return None
     else:
-        #print(f'--- Aligning "{Letters}" against "{Phonemes}"')
+        if _trace == 'on': print(f'--- Aligning "{Letters}" against "{Phonemes}"')
         Result = dp_phonetic_align(Letters, Phonemes, Resources)
         if Result and guessed_aligned_entries_dict != None:
             AlignedGraphemes, AlignedPhonemes = Result
             guessed_aligned_entries_dict[Letters] = { 'aligned_graphemes': AlignedGraphemes, 'aligned_phonemes': AlignedPhonemes }
-        #print(f'--- Result "{Result}"')
+        if _trace == 'on': print(f'--- Result "{Result}"')
         return Result
         
    
@@ -42,7 +51,7 @@ def dp_phonetic_align(Letters, Phonemes0, Resources):
             MatchLengthR = TotalMatchLength - MatchLengthL
             extend(Letters, Phonemes, MatchLengthL, MatchLengthR, N, N1, DPDict, Resources, Encoding)
     if ( N, N1 ) in DPDict:
-        ( BestCost, BestAlignedLetters, BestAlignedPhonemes0 ) = DPDict[( N, N1 )]
+        ( BestCost, BestAlignedLetters, BestAlignedPhonemes0 ) = dp_dict_lookup(DPDict, ( N, N1 ))
         if Encoding == 'arpabet_like':
             BestAlignedPhonemes = [ ' '.join(Phonemes) for Phonemes in BestAlignedPhonemes0 ]
         else:
@@ -70,6 +79,7 @@ def extend(Letters, Phonemes, MatchLengthL, MatchLengthP, NL, NP, DPDict, Resour
             if KeyL != 'skip' and KeyP != 'skip':
                 Key = ( KeyL, KeyP )
                 PossibleAlignments = get_grapheme_phoneme_alignments_for_key_and_resources(Key, Resources)
+                if _trace == 'on': print(f'--- Alignments for {Key}: {PossibleAlignments}')
                 if PossibleAlignments:
                     for ( AlignedLetters, AlignedPhonemes ) in PossibleAlignments:
                         Cost = 2 if '' in ( AlignedLetters, AlignedPhonemes ) else 1
@@ -91,11 +101,13 @@ def extend1(Letters, Phonemes, MatchLengthL, MatchLengthP, AlignedLetters, Align
         print(f'--- extend1({Letters}, {Phonemes}, {MatchLengthL}, {MatchLengthP}, "{AlignedLetters}", "{AlignedPhonemes}", {ExtraCost}, DPDict)')
     # Recall that Phonemes can be a list if we're using an arpabet_like encoding, so we use the more general str_or_list_startswith on the Phonemes
     if Letters[MatchLengthL:].startswith(AlignedLetters) and str_or_list_startswith(Phonemes[MatchLengthP:], AlignedPhonemes):
-        ( CurrentCost, CurrentMatchL, CurrentMatchP ) = DPDict[ ( MatchLengthL, MatchLengthP ) ]
+        ( CurrentCost, CurrentMatchL, CurrentMatchP ) = dp_dict_lookup(DPDict, ( MatchLengthL, MatchLengthP ))
         ( NewCost, NewMatchL, NewMatchP ) = ( CurrentCost + ExtraCost, CurrentMatchL + [ AlignedLetters ], CurrentMatchP + [ AlignedPhonemes ] )
         NewKey = ( MatchLengthL + len(AlignedLetters), MatchLengthP + len(AlignedPhonemes) )
-        if not NewKey in DPDict or DPDict[NewKey][0] > NewCost:
+        if not NewKey in DPDict or dp_dict_lookup(DPDict, NewKey)[0] > NewCost:
             DPDict[NewKey] = ( NewCost, NewMatchL, NewMatchP )
+            if _trace == 'on':
+                print(f'--- DPDict[{NewKey}] = ( {NewCost}, {NewMatchL}, {NewMatchP} )')
 
 def str_or_list_startswith(StrOrList, StrOrListPrefix):
     if isinstance(StrOrList, (str)) and isinstance(StrOrListPrefix, (str)):
@@ -115,3 +127,11 @@ def list_startswith(List, Prefix):
     else:
         return list_startswith(List[1:], Prefix[1:])
     
+def dp_dict_lookup(Dict, Key):
+    if Key in Dict:
+        return Dict[Key]
+    else:
+        if _trace == 'on': print(f'--- No entry in DPDict for {Key}, adding dummy value')
+        ( CurrentCost, CurrentMatchL, CurrentMatchP ) = ( 1000, [], [] )
+        return ( CurrentCost, CurrentMatchL, CurrentMatchP )
+

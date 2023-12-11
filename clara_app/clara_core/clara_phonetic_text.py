@@ -8,6 +8,8 @@ from .clara_internalise import internalize_text
 from .clara_classes import Text, Page, Segment, ContentElement, InternalCLARAError 
 from .clara_utils import remove_duplicates_from_list_of_hashable_items, merge_dicts
 
+import pprint
+
 # ------------------------------------------
 
 def segmented_text_to_phonetic_text(segmented_text, l2_language, config_info={}, callback=None):
@@ -29,6 +31,8 @@ def segmented_text_to_phonetic_text(segmented_text, l2_language, config_info={},
     if grapheme_phoneme_resources_available(l2_language):
         unique_words = get_unique_words_for_segmented_text_object(segmented_text_object)
         grapheme_phoneme_resources = get_phonetic_lexicon_resources_for_words_and_l2(unique_words, l2_language)
+        #pprint.pprint(grapheme_phoneme_resources)
+        
         chatgpt4_phonetic_entries, api_calls = get_missing_phonetic_entries_for_words_and_resources(unique_words, grapheme_phoneme_resources, l2_language,
                                                                                                     config_info={}, callback=callback)
         guessed_plain_entries = [ { 'word': word, 'phonemes': chatgpt4_phonetic_entries[word] }
@@ -44,6 +48,7 @@ def segmented_text_to_phonetic_text(segmented_text, l2_language, config_info={},
     else:
         phonetic_text_object, guessed_aligned_entries = segmented_text_object_to_phonetic_text_object(segmented_text_object, parameters)
         phonetic_text = phonetic_text_object.to_text(annotation_type='phonetic')
+        print(f'--- Guessed {len(guessed_plain_entries)} plain entries and {len(guessed_aligned_entries)} aligned entries')
         return { 'text': phonetic_text,
                  'guessed_plain_entries': guessed_plain_entries,
                  'guessed_aligned_entries': guessed_aligned_entries,
