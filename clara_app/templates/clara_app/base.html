@@ -47,7 +47,8 @@
 		  <li><a href="{% url 'user_config' %}">Set GPT-4 version</a></li>
 		  <li><a href="{% url 'credit_balance' %}">Credit balance for ChatGPT-4 API calls</a></li>
 		  {% if user.userprofile.is_admin %}
-            <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>
+		  <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>
+            <li><a href="{% url 'admin_password_reset' %}">Manually reset user's password</a></li>
 			<li><a href="{% url 'manage_language_masters' %}">Manage language masters</a></li>
 			<li><a href="{% url 'delete_tts_data' %}">Delete TTS data</a></li>
           {% endif %}
