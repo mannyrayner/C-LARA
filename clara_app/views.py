@@ -19,7 +19,7 @@ from django.contrib.auth.models import User
 from django_q.tasks import async_task
 from django_q.models import Task
 
-from .forms import RegistrationForm, UserForm, UserProfileForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
+from .forms import RegistrationForm, UserForm, UserProfileForm, AdminPasswordResetForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
@@ -142,8 +142,27 @@ def credit_balance(request):
     total_cost = get_user_api_cost(request.user)
     credit_balance = request.user.userprofile.credit - total_cost  
     return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance})
-    
-# Remove custom User
+
+# Allow an admin to manually reset the password on an account
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def admin_password_reset(request):
+    if request.method == 'POST':
+        form = AdminPasswordResetForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data['user']
+            new_password = form.cleaned_data['new_password']
+            try:
+                user.set_password(new_password)
+                user.save()
+                messages.success(request, f"Password for {user.username} has been updated.")
+                return redirect('admin_password_reset')
+            except User.DoesNotExist:
+                messages.error(request, "User not found.")
+    else:
+        form = AdminPasswordResetForm()
+    return render(request, 'clara_app/admin_password_reset.html', {'form': form})
+
 # Add credit to account
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)

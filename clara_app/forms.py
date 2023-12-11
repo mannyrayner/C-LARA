@@ -27,6 +27,11 @@ class UserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['email']
+
+class AdminPasswordResetForm(forms.Form):
+    #username = forms.CharField()
+    user = forms.ModelChoiceField(queryset=User.objects.all())
+    new_password = forms.CharField(widget=forms.PasswordInput())
         
 class UserProfileForm(forms.ModelForm):
     class Meta:

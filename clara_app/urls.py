@@ -10,11 +10,12 @@ from . import views
 urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='clara_app/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('register/', views.register, name='register'),  
+    path('register/', views.register, name='register'),
     path('home/', views.home, name='home'),  
     path('profile/', views.profile, name='profile'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('user_config/', views.user_config, name='user_config'),
+    path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
     path('add_credit/', views.add_credit, name='add_credit'),
     path('credit_balance/', views.credit_balance, name='credit_balance'),
     path('delete_tts_data/', views.delete_tts_data, name='delete_tts_data'),
