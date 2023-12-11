@@ -38,9 +38,6 @@
 	  
 	  {% if form.display_plain_lexicon_entries.value %}
 		  <h2>Plain phonetic lexicon</h2>
-		  {% if not plain_lexicon_formset.value %}
-		        <p>No entries to review</p>
-		  {% else %}
 			  {{ plain_lexicon_formset.management_form }}
 			  <table>
 					<tr>
@@ -58,14 +55,10 @@
 					</tr>
 			  {% endfor %}
 			  </table>
-		  {% endif %}
 	  {% endif %}
 	  
 	  {% if form.display_aligned_lexicon_entries.value %}
 	      <h2>Aligned phonetic lexicon</h2>
-		  {% if not aligned_lexicon_formset.value %}
-		        <p>No entries to review</p>
-		  {% else %}
 			  {{ aligned_lexicon_formset.management_form }}
 			  <table>
 					<tr>
@@ -87,7 +80,6 @@
 					</tr>
 			  {% endfor %}
 			  </table>
-		  {% endif %}
 	  {% endif %}	  
 	  <input type="submit" name="action" value="Refresh">
 	  <input type="submit" name="action" value="Save">
