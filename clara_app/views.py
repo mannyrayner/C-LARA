@@ -1924,7 +1924,8 @@ def edit_images(request, project_id):
                      'associated_areas': img.associated_areas,
                      'page': img.page,
                      'position': img.position}
-                    for img in images]  
+                    for img in images]
+    initial_data = sorted(initial_data, key=lambda x: x['page'])
 
     if request.method == 'POST':
         formset = ImageFormSet(request.POST, request.FILES)
