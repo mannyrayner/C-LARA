@@ -451,24 +451,24 @@ class CLARAProjectInternal:
 
     # Read one of the text files associated with the object
     def load_text_version(self, version: str) -> str:
-        file_path = self.text_versions[version]
-        if not file_path or not file_exists(Path(file_path)):
-            if version == 'segmented_with_images':
-                return self._create_and_load_segmented_with_images_text()
-            elif version == 'lemma_and_gloss':
+        if version == 'segmented_with_images':
+            return self._create_and_load_segmented_with_images_text()
+        elif version == 'lemma_and_gloss':
                 return self._create_and_load_lemma_and_gloss_file()
-            else:    
+        else:
+            file_path = self.text_versions[version]
+            if not file_path or not file_exists(Path(file_path)):
                 raise FileNotFoundError(f"'{version}' text not found.")
-        text = read_txt_file(file_path)
-        text = make_line_breaks_canonical_n(text)
-        return text
+            text = read_txt_file(file_path)
+            text = make_line_breaks_canonical_n(text)
+            return text
 
     # Get text consisting of "segmented" text, plus suitably tagged segmented text for any images that may be present
     def _create_and_load_segmented_with_images_text(self, callback=None):
         segmented_text = self.load_text_version("segmented")
         images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
         segmented_with_images_text = segmented_text + '\n' + images_text
-        self.save_text_version('segmented_with_images', segmented_with_images_text, source='merged', user='system')
+        #self.save_text_version('segmented_with_images', segmented_with_images_text, source='merged', user='system')
         return segmented_with_images_text
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
@@ -580,6 +580,7 @@ class CLARAProjectInternal:
     # Create a "phonetic" version of the text 
     def create_phonetic_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
+        #print(f'--- Input to create_phonetic_text: "{segmented_text}"')
         
         phonetic_text_result = segmented_text_to_phonetic_text(segmented_text, self.l2_language, config_info=config_info, callback=callback)
         phonetic_text = phonetic_text_result['text']
