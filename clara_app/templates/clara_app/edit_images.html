@@ -1,18 +1,42 @@
 {% extends "clara_app/base.html" %}
 
+{% block title %}Edit Images{% endblock %}
+
 {% block content %}
+  <h2>Edit Images ("{{ project.title }}")</h2>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ formset.management_form }}
-    {% for form in formset %}
-	  <hr>
-	  {% if form.image_base_name.value %}
-         <p><img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;"></p>
-      {% else %}
-         <p>No image currently stored.</p>
-      {% endif %}
-      {{ form.as_p }}
-    {% endfor %}
+    <table>
+      <thead>
+        <tr>
+          <th>Image Preview</th>
+		  <th>Image Upload</th>
+          <th>Image Name</th>
+          <th>Page</th>
+          <th>Position</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in formset %}
+          <tr>
+            <td>
+              {% if form.image_base_name.value %}
+                <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;">
+              {% else %}
+                No image currently stored.
+              {% endif %}
+            </td>
+			<td>{{ form.image_file_path }}</td>
+            <td>{{ form.image_name }}</td>
+            <td>{{ form.page }}</td>
+            <td>{{ form.position }}</td>
+            <td>{{ form.delete }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
     <button type="submit">Save changes</button>
   </form>
   
