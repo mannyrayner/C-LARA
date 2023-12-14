@@ -11,7 +11,12 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='clara_app/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/', views.register, name='register'),
-    path('home/', views.home, name='home'),  
+    path('home/', views.home, name='home'),
+    # Password reset links (ref: https://github.com/django/django/blob/master/django/contrib/auth/urls.py)
+    path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('profile/', views.profile, name='profile'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('user_config/', views.user_config, name='user_config'),
