@@ -262,3 +262,17 @@ if os.getenv('CLARA_ENVIRONMENT') != 'heroku':
             },
         },
     }
+
+if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+    # Email backend
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+    # SMTP Configuration
+    # SMTP Configuration
+    EMAIL_HOST = 'localhost'  # The address of your Postfix server
+    EMAIL_PORT = 25  # Default SMTP port
+    EMAIL_HOST_USER = ''  # No user needed
+    EMAIL_HOST_PASSWORD = ''  # No password needed
+    EMAIL_USE_TLS = False  # Typically not needed for internal relay servers
+    # Default from email
+    DEFAULT_FROM_EMAIL = 'ChatGPT-based Learning and Reading Assistant (C-LARA) <clara-no-reply@unisa.edu.au>'
