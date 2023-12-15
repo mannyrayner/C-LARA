@@ -93,7 +93,10 @@ def normalise_word_for_phonetic_decomposition(word):
 
 def word_phonetic_pair_to_element(pair):
     word, phonetic = pair
-    return ContentElement('Word', word, annotations={'phonetic': phonetic})
+    if word in ( ' ', '-' ):
+        return ContentElement('NonWordText', word)
+    else:
+        return ContentElement('Word', word, annotations={'phonetic': phonetic})
 
 def transfer_casing_to_aligned_word(word, aligned_word):
     try:
@@ -126,6 +129,18 @@ def guess_alignment_for_word(word, parameters, guessed_aligned_entries_dict):
         result = ( previous_guessed_alignment['aligned_graphemes'], previous_guessed_alignment['aligned_phonemes'] )
         return result
 
+    # If we can split up the word, do each piece separately and then glue them back together again
+    # Only do this when we are using the regular phonetic orthography method
+    if 'phonetic_orthography_resources' in parameters:
+        for separator in ( ' ', '-' ):
+            components = word.split(separator)
+            if len(components) > 1:
+                results = [ guess_alignment_for_word(component, parameters, guessed_aligned_entries_dict)
+                            for component in components ]
+                #print(f'Component results: {results}')
+                return ( f'|{separator}|'.join([ result[0] for result in results ]),
+                         f'|{separator}|'.join([ result[1] for result in results ]) )
+
     result = None
     # If we can get an alignment using grapheme/phoneme alignment, use that
     if 'grapheme_phoneme_alignment_resources' in parameters:
@@ -150,7 +165,10 @@ def guess_alignment_for_word(word, parameters, guessed_aligned_entries_dict):
         
     # Otherwise give up and just align the word against itself
     else:
-        return ( word, word )
+        if ' ' in word:
+            return ( f'@{word}@', word )
+        else:
+            return ( word, word )
     
 # ------------------------------------------
 
