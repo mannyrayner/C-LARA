@@ -9,9 +9,10 @@
 <body>
   <header>
 	<nav class="nav-bar">
-	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
 	  <a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">First</a>
+	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
 	  <a href="{{ 'page_' ~ (page_number + 1) ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Next</a>
+	  <a href="{{ 'page_' ~ total_pages ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Last</a>
 	  <button id="vocab-frequency-btn">Frequency</button>
 	  <button id="vocab-alphabetical-btn">Alphabetical</button>
 	  
