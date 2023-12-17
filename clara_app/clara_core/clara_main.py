@@ -142,6 +142,7 @@ from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
+from .clara_export_import import create_export_zipfile
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
@@ -935,5 +936,23 @@ class CLARAProjectInternal:
                                          audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments)
         return None if not audio_annotator else audio_annotator.printname_for_voice()
 
-    
-            
+##    def get_audio_metadata(self, tts_engine_type=None, human_voice_id=None,
+##                           audio_type_for_words='tts', audio_type_for_segments='tts', type='all', format='default',
+##                           phonetic=False, callback=None):
+
+
+    def create_export_zipfile(self, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
+        project_directory = self.project_dir
+        audio_metadata = self.get_audio_metadata(tts_engine_type=None, human_voice_id=human_voice_id,
+                                                 audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                                 type='all', format='default', callback=callback)
+        image_metadata = self.get_all_project_images(callback=callback)
+        zipfile = self.export_zipfile_pathname()
+        result = create_export_zipfile(project_directory, audio_metadata, image_metadata, zipfile, callback=callback)
+        if result:
+            return zipfile
+        else:
+            return False
+
+    def export_zipfile_pathname(self):
+        return f"$CLARA/tmp/{self.id}_zipfile.zip"

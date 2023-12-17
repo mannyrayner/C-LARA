@@ -214,6 +214,16 @@ class Image:
         self.position = position
         self.page_object = page_object
 
+    def to_json(self):
+        return { 'image_file_path': self.image_file_path,
+                 'thumbnail_file_path': self.thumbnail_file_path,
+                 'image_name': self.image_name,
+                 'associated_text': self.associated_text,
+                 'associated_areas': self.associated_areas,
+                 'page': self.page,
+                 'position':self.position,
+                 }
+
     def merge_page(self, page_object):
         self.page_object = page_object
 

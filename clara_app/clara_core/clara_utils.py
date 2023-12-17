@@ -166,6 +166,10 @@ def remove_directory(pathname):
     else:
         shutil.rmtree(abspathname)
 
+def remove_local_directory(pathname):
+    abspathname = absolute_file_name(pathname)
+    shutil.rmtree(abspathname)
+
 def copy_file(pathname1, pathname2):
     abspathname1 = absolute_file_name(pathname1)
     abspathname2 = absolute_file_name(pathname2)
@@ -232,6 +236,20 @@ def copy_directory(pathname1, pathname2):
             _s3_bucket.copy(old_source, new_key)
     else:
         shutil.copytree(abspathname1, abspathname2)
+
+def copy_directory_to_local_directory(pathname1, pathname2):
+    if _s3_storage:
+        fail_if_no_s3_bucket()
+
+        copy_directory_from_s3(pathname1, local_pathname=pathname2)
+    else:
+        copy_local_directory_to_local_directory(pathname1, pathname2)
+
+def copy_local_directory_to_local_directory(pathname1, pathname2):
+    abspathname1 = absolute_local_file_name(pathname1)
+    abspathname2 = absolute_local_file_name(pathname2)
+
+    shutil.copytree(abspathname1, abspathname2)
 
 # Make an S3 copy of a file if we're in S3 mode and need to transfer the file to another file system.
 # If we're not in S3 mode, we don't need to do anything: we just use the file as it is.
@@ -503,6 +521,12 @@ def write_json_to_file(data, pathname):
     else:
         with open(abspathname, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4) 
+
+def write_json_to_local_file(data, pathname):
+    abspathname = absolute_local_file_name(pathname)
+
+    with open(abspathname, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4) 
 
 def write_json_to_file_plain_utf8(data, pathname):
     abspathname = absolute_file_name(pathname)
