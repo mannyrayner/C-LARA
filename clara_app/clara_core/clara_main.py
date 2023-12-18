@@ -937,21 +937,35 @@ class CLARAProjectInternal:
         return None if not audio_annotator else audio_annotator.printname_for_voice()
 
     # Make a zipfile for exporting the project and other metadata
-    def create_export_zipfile(self, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
+    def create_export_zipfile(self, human_voice_id=None, human_voice_id_phonetic=None,
+                              audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
         global_metadata = { 'human_voice_id': human_voice_id,
+                            'human_voice_id_phonetic': human_voice_id_phonetic,
                             'audio_type_for_words': audio_type_for_words,
                             'audio_type_for_segments': audio_type_for_segments }
         project_directory = self.project_dir
-        audio_metadata = self.get_audio_metadata(tts_engine_type=None, human_voice_id=human_voice_id,
+        audio_metadata = self.get_audio_metadata(tts_engine_type=None,
+                                                 human_voice_id=human_voice_id, 
                                                  audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                                 type='all', format='default', callback=callback)
+                                                 type='all', format='default',
+                                                 phonetic=False, callback=callback)
+        if human_voice_id_phonetic:
+            audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,
+                                                              human_voice_id=human_voice_id_phonetic,
+                                                              audio_type_for_words='human', audio_type_for_segments=audio_type_for_words,
+                                                              type='all', format='default',
+                                                              phonetic=True, callback=callback)
+        else:
+            audio_metadata_phonetic = None
         image_metadata = self.get_all_project_images(callback=callback)
         zipfile = self.export_zipfile_pathname()
-        result = create_export_zipfile(global_metadata, project_directory, audio_metadata, image_metadata, zipfile, callback=callback)
+        result = create_export_zipfile(global_metadata, project_directory, audio_metadata, audio_metadata_phonetic,
+                                       image_metadata, zipfile, callback=callback)
         if result:
             return zipfile
         else:
+            post_task_update(callback, f"error")
             return False
 
     def export_zipfile_pathname(self):
-        return f"$CLARA/tmp/{self.id}_zipfile.zip"
+        return absolute_file_name(f"$CLARA/tmp/{self.id}_zipfile.zip")
