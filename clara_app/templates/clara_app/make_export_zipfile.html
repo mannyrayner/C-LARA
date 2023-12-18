@@ -1,0 +1,19 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Make export zipfile{% endblock %}
+
+{% block content %}
+  <h2>Make Export Zipfile ("{{ project.title }}")</h2>
+  <form method="post" id="make_export-zipfile-form">
+    {% csrf_token %}
+    <button type="submit" id="submit-button">Make zipfile</button>
+  </form>
+
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+
+  <script type="text/javascript">
+    document.getElementById('make_export-zipfile-form').onsubmit = function() {
+      document.getElementById('submit-button').textContent = "Processing...";
+    };
+  </script>
+{% endblock %}

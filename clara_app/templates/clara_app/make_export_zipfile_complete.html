@@ -1,0 +1,15 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Download export zipfile{% endblock %}
+
+{% block content %}
+
+  <h3>Download Export Zipfile ("{{ project.title }}")</h3>
+
+  {% if succeeded %}
+     <p><a href="{% url 'serve_export_zipfile' project.id %}" download="{{ project.id }}.zip">Download Zip</a></p>
+  {% endif %}
+	
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+
+{% endblock %}
