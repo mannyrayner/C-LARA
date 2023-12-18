@@ -10,14 +10,15 @@ import os
 import tempfile
 import traceback
 
-def create_export_zipfile(project_directory, audio_metadata, image_metadata, zipfile, callback=None):
+def create_export_zipfile(global_metadata, project_directory, audio_metadata, image_metadata, zipfile, callback=None):
     try:
         tmp_dir = tempfile.mkdtemp()
         tmp_zipfile = make_tmp_file('project_zip', 'zip')
-        
-        copy_project_directory_to_tmp_dir(project_directory, tmp_dir)
-        copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir)
-        copy_image_data_to_tmp_dir(image_metadata, tmp_dir)
+
+        write_global_metadata_to_tmp_dir(global_metadata, tmp_dir, callback=callback)
+        copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=callback)
+        copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, callback=callback)
+        copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=callback)
         
         make_zipfile(tmp_dir, tmp_zipfile, callback=callback)
         copy_local_file(tmp_zipfile, zipfile)
@@ -32,10 +33,17 @@ def create_export_zipfile(project_directory, audio_metadata, image_metadata, zip
         if local_directory_exists(tmp_dir):
             remove_local_directory(tmp_dir)
 
-def copy_project_directory_to_tmp_dir(project_directory, tmp_dir):
+def write_global_metadata_to_tmp_dir(global_metadata, tmp_dir, callback=None):
+    global_metadata_file = f'{tmp_dir}/metadata.json'
+    write_json_to_local_file(global_metadata, global_metadata_file)
+    post_task_update(callback, f'--- Written global metadata')
+
+def copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=None):
     tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
-    
+
+    post_task_update(callback, f'--- Copying project directory')
     copy_directory_to_local_directory(project_directory, tmp_project_dir)
+    post_task_update(callback, f'--- Project directory copied')
 
 ## Format looks like this:
 ##
@@ -53,21 +61,29 @@ def copy_project_directory_to_tmp_dir(project_directory, tmp_dir):
 ##        },
 ##        ...
 
-def copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir):
+def copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, callback=None):
     tmp_audio_dir = os.path.join(tmp_dir, 'audio')
     make_local_directory(tmp_audio_dir)
     file = f'{tmp_audio_dir}/metadata.json'
 
     for words_or_segments in ( 'words', 'segments' ):
         if words_or_segments in audio_metadata:
-            for item in audio_metadata[words_or_segments]:
-                if 'file' in item and file_exists(item['file']):
-                    pathname = item['file']
-                    zipfile_pathname = os.path.join(tmp_audio_dir, basename(pathname))
-                    copy_to_local_file(pathname, zipfile_pathname)
-                    item['file'] = basename(pathname)
+            sub_metadata = audio_metadata[words_or_segments]
+            if len(sub_metadata) != 0:
+                count = 0
+                post_task_update(callback, f'--- Copying {len(sub_metadata)} audio files for {words_or_segments}')
+                for item in audio_metadata[words_or_segments]:
+                    if 'file' in item and file_exists(item['file']):
+                        pathname = item['file']
+                        zipfile_pathname = os.path.join(tmp_audio_dir, basename(pathname))
+                        copy_to_local_file(pathname, zipfile_pathname)
+                        item['file'] = basename(pathname)
+                        count += 1
+                        if count % 10 == 0:
+                            post_task_update(callback, f'--- Copied {count}/{len(sub_metadata)} files for {words_or_segments}')
     
     write_json_to_local_file(audio_metadata, file)
+    post_task_update(callback, f'--- Copied all audio files')
 
 ## Format looks like this:
 ##
@@ -82,18 +98,27 @@ def copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir):
 ##        "position": "bottom"
 ##    },
     
-def copy_image_data_to_tmp_dir(image_metadata, tmp_dir):
+def copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=None):
     tmp_image_dir = os.path.join(tmp_dir, 'images')
     make_local_directory(tmp_image_dir)
     file = f'{tmp_image_dir}/metadata.json'
     
     image_metadata_as_json = [ image.to_json() for image in image_metadata ]
-    for item in image_metadata_as_json:
-        for key in ( 'image_file_path', 'thumbnail_file_path' ):
-            if key in item:
-                pathname = item[key]
-                zipfile_pathname = os.path.join(tmp_image_dir, basename(pathname))
-                copy_to_local_file(pathname, zipfile_pathname)
-                item[key] = basename(pathname)
+
+    if len(image_metadata_as_json) != 0:
+        count = 0
+        post_task_update(callback, f'--- Copying {len(image_metadata_as_json)} image files')
+        
+        for item in image_metadata_as_json:
+            for key in ( 'image_file_path', 'thumbnail_file_path' ):
+                if key in item:
+                    pathname = item[key]
+                    zipfile_pathname = os.path.join(tmp_image_dir, basename(pathname))
+                    copy_to_local_file(pathname, zipfile_pathname)
+                    item[key] = basename(pathname)
+                    count += 1
+                    if count % 10 == 0:
+                        post_task_update(callback, f'--- Copied {count}/{len(image_metadata_as_json)} image files')
     
     write_json_to_local_file(image_metadata_as_json, file)
+    post_task_update(callback, f'--- Copied all image files')
