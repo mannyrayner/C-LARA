@@ -63,15 +63,16 @@ urlpatterns = [
     path('project/<int:project_id>/process_manual_alignment_monitor/<str:report_id>/', views.process_manual_alignment_monitor, name='process_manual_alignment_monitor'),
     path('project/<int:project_id>/process_manual_alignment_complete/<str:status>/', views.process_manual_alignment_complete, name='process_manual_alignment_complete'),
     path('project/<int:project_id>/generate_annotated_segmented_file/', views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
-    # Temporary one-image version
-    #path('project/<int:project_id>/images_view/', views.images_view, name='images_view'),
-    # Multi-image version
     path('project/<int:project_id>/edit_images/', views.edit_images, name='edit_images'),
     path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
     path('project/<int:project_id>/render_text_start_phonetic/', views.render_text_start_phonetic, name='render_text_start_phonetic'),
     path('project/<int:project_id>/render_text_status/<str:report_id>/', views.render_text_status, name='render_text_status'),
     path('project/<int:project_id>/render_text_monitor/<str:phonetic_or_normal>/<str:report_id>/', views.render_text_monitor, name='render_text_monitor'),
     path('project/<int:project_id>/render_text_complete/<str:phonetic_or_normal>/<str:status>/', views.render_text_complete, name='render_text_complete'),
+    path('project/<int:project_id>/make_export_zipfile/', views.make_export_zipfile, name='make_export_zipfile'),
+    path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', views.make_export_zipfile_status, name='make_export_zipfile_status'),
+    path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
+    path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
     path('project/<int:project_id>/offer_to_register_content_normal/', views.offer_to_register_content_normal, name='offer_to_register_content_normal'),
     path('project/<int:project_id>/offer_to_register_content_phonetic/', views.offer_to_register_content_phonetic, name='offer_to_register_content_phonetic'),
     path('project/<int:project_id>/register_project_content/<str:phonetic_or_normal>/', views.register_project_content, name='register_project_content'),
@@ -84,6 +85,7 @@ urlpatterns = [
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/multimedia/<path:filename>', views.serve_rendered_text_multimedia, name='serve_rendered_text'),
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/<path:filename>', views.serve_rendered_text, name='serve_rendered_text'),
     path('serve_zipfile/<int:project_id>/', views.serve_zipfile, name='serve_zipfile'),
+    path('serve_export_zipfile/<int:project_id>/', views.serve_export_zipfile, name='serve_export_zipfile'),
     path('projects/serve_project_image/<str:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
     path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', views.serve_audio_file, name='serve_audio_file'),
 

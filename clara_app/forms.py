@@ -252,6 +252,9 @@ class CreateLemmaAndGlossTaggedTextForm(CreateAnnotatedTextForm):
             choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
         ]
 
+class MakeExportZipForm(forms.Form):
+    pass
+
 class RenderTextForm(forms.Form):
     pass
 

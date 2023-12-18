@@ -25,7 +25,7 @@ from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectSearchFor
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
-from .forms import RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
+from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet
@@ -1968,6 +1968,111 @@ def edit_images(request, project_id):
 
     return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project})
 
+def clara_project_internal_make_export_zipfile(clara_project_internal,
+                                               human_voice_id=None, human_voice_id_phonetic=None,
+                                               audio_type_for_words='tts', audio_type_for_segments='tts', 
+                                               callback=None):
+    print(f'--- Asynchronous rendering task started for creating export zipfile')
+    try:
+        clara_project_internal.create_export_zipfile(human_voice_id=human_voice_id, human_voice_id_phonetic=human_voice_id_phonetic,
+                                                     audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                                     callback=callback)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+# Start the async process that will do the rendering
+@login_required
+@user_has_a_project_role
+def make_export_zipfile(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
+    human_audio_info_phonetic = HumanAudioInfo.objects.filter(project=project).first()
+        
+    if human_audio_info:
+        human_voice_id = human_audio_info.voice_talent_id
+        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
+        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
+    else:
+        audio_type_for_words = 'tts'
+        audio_type_for_segments = 'tts'
+        human_voice_id = None
+
+    if human_audio_info_phonetic:
+        human_voice_id_phonetic = human_audio_info_phonetic.voice_talent_id
+    else:
+        human_voice_id_phonetic = None
+
+    if request.method == 'POST':
+        form = MakeExportZipForm(request.POST)
+        if form.is_valid():
+            # Create a unique ID to tag messages posted by this task
+            report_id = uuid.uuid4()
+
+            # Define a callback as list of the callback function and the first argument
+            # We can't use a lambda function or a closure because async_task can't apply pickle to them
+            callback = [post_task_update_in_db, report_id]
+
+            # Enqueue the task
+            try:
+                task_id = async_task(clara_project_internal_make_export_zipfile, clara_project_internal,
+                                     human_voice_id=human_voice_id, human_voice_id_phonetic=human_voice_id_phonetic,
+                                     audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                     callback=callback)
+
+                # Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('make_export_zipfile_monitor', project_id, report_id)
+            except Exception as e:
+                messages.error(request, f"An internal error occurred in export zipfile creation. Error details: {str(e)}\n{traceback.format_exc()}")
+                form = MakeExportZipForm()
+                return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project})
+    else:
+        form = MakeExportZipForm()
+        return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project})
+
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_has_a_project_role
+def make_export_zipfile_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    #if len(messages) != 0:
+    #    pprint.pprint(messages)
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+# Render the monitoring page, which will use JavaScript to poll the task status API
+@login_required
+@user_has_a_project_role
+def make_export_zipfile_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/make_export_zipfile_monitor.html',
+                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+
+# Display the final result of creating the zipfile
+@login_required
+@user_has_a_project_role
+def make_export_zipfile_complete(request, project_id, status):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    if status == 'error':
+        succeeded = False
+        messages.error(request, "Unable to create export zipfile")
+    else:
+        succeeded = True
+        messages.success(request, f'Export zipfile created')
+        
+    return render(request, 'clara_app/make_export_zipfile_complete.html', 
+                  {'succeeded': succeeded,
+                   'project': project} )
+
 def clara_project_internal_render_text(clara_project_internal, project_id,
                                        audio_type_for_words='tts', audio_type_for_segments='tts', human_voice_id=None,
                                        self_contained=False, phonetic=False, callback=None):
@@ -2283,6 +2388,26 @@ def serve_zipfile(request, project_id):
         raise Http404("Zipfile does not exist")
 
     return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
+
+# Serve up export zipfile
+@login_required
+def serve_export_zipfile(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    zip_filepath = absolute_file_name(clara_project_internal.export_zipfile_pathname())
+
+    if not file_exists(zip_filepath):
+        raise Http404("Zipfile does not exist")
+
+    if not _s3_storage:
+        print(f'--- Serving existing non-S3 zipfile {zip_filepath}')
+        zip_file = open(zip_filepath, 'rb')
+        response = FileResponse(zip_file, as_attachment=True)
+        response['Content-Type'] = 'application/zip'
+        response['Content-Disposition'] = f'attachment; filename="{project_id}.zip"'
+        return response
+
+    #return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
 
 @login_required
 def serve_project_image(request, project_id, base_filename):
