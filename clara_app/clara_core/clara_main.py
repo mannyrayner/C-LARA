@@ -218,6 +218,35 @@ class CLARAProjectInternal:
         project._load_existing_text_versions()
         return project
 
+    # Reconstitute a CLARAProjectInternal from an export zipfile
+    def from_zipfile(cls, zipfile: str, new_id: str, callback=None) -> 'CLARAProjectInternal':
+        try:
+            tmp_dir = tempfile.mkdtemp()
+            unzip_file(zipfile, temp_dir)
+            tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
+            if not local_directory_exists(tmp_project_dir):
+                post_task_update(callback, f'--- Unable to find project_dir subdirectory in unzipped directory')
+                raise FileNotFoundError(f"project_dir not found in unzipped directory")
+            stored_data_file = os.path.join(tmp_project_dir, 'stored_data.json')
+            if not local_file_exists(stored_data_file):
+                post_task_update(callback, f'--- Unable to find stored_data file in unzipped directory')
+                raise FileNotFoundError(f"stored_data.json not found in unzipped directory")
+            stored_data = read_json_local_file(stored_data_file)
+            stored_data['id'] = new_id
+            write_json_to_local_file(stored_data, stored_data_file)
+            project = cls.from_directory(tmp_project_dir)
+            update_metadata_from_export_dir(project, temp_dir)
+            return project
+        except Exception as e:
+            post_task_update(callback, f'*** Error when trying to import zipfile {zipfile}')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            return None
+        finally:
+            # Remove the tmp dir once we've used it
+            if local_directory_exists(temp_dir):
+                remove_local_directory(temp_dir)
+            
     # If there are already files in the associated directory, update self.text_versions
     def _load_existing_text_versions(self) -> None:
         for version in self.text_versions:
@@ -251,7 +280,7 @@ class CLARAProjectInternal:
         except Exception as e:
             # Here we log the unexpected exception.
             logging.error(f"Unexpected error in _copy_text_version_if_it_exists: {e}")
-            raise
+            raise 
 
     @staticmethod
     def _load_stored_data(directory: Path) -> Dict[str, str]:

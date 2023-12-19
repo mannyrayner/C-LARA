@@ -133,3 +133,7 @@ def copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=None):
     
     write_json_to_local_file(image_metadata_as_json, file)
     post_task_update(callback, f'--- Copied all image files')
+
+# ===========================================
+
+
