@@ -2087,16 +2087,22 @@ def make_export_zipfile_monitor(request, project_id, report_id):
 @user_has_a_project_role
 def make_export_zipfile_complete(request, project_id, status):
     project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     if status == 'error':
         succeeded = False
         messages.error(request, "Unable to create export zipfile")
     else:
         succeeded = True
         messages.success(request, f'Export zipfile created')
+        if _s3_storage:
+            presigned_url = generate_s3_presigned_url(clara_project_internal.export_zipfile_pathname())
+        else:
+            presigned_url = None
         
     return render(request, 'clara_app/make_export_zipfile_complete.html', 
                   {'succeeded': succeeded,
-                   'project': project} )
+                   'project': project,
+                   'presigned_url': presigned_url} )
 
 def clara_project_internal_render_text(clara_project_internal, project_id,
                                        audio_type_for_words='tts', audio_type_for_segments='tts', human_voice_id=None,
