@@ -12,6 +12,7 @@ import datetime
 import time
 import tempfile
 import hashlib
+import uuid
 
 from .models import CLARAProject, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
 
@@ -35,21 +36,41 @@ def get_user_config(user):
         'max_annotation_words': user_config.max_annotation_words,
     }
 
+def make_asynch_callback_and_report_id(request, task_type):
+    # Create a unique ID to tag messages posted by this task
+    report_id = uuid.uuid4()
+    user_id = request.user.username
+    callback = [ post_task_update_in_db, report_id, user_id, task_type ]
+    return ( callback, report_id )
+
 # Used in callback function passed to asynchronous processes,
 # so that they can report progress. 
-def post_task_update_in_db(report_id, message):
-    #print(f"--- Posted task update in_db: report_id = '{report_id}, message = '{message}')")
+##def post_task_update_in_db(report_id, message):
+##    if len(message) > 1000:
+##        message = message[:1000] + '...'
+##    TaskUpdate.objects.create(report_id=report_id, message=message)
+
+def post_task_update_in_db(report_id, user_id, task_type, message):
     if len(message) > 1000:
         message = message[:1000] + '...'
-    TaskUpdate.objects.create(report_id=report_id, message=message)
+    TaskUpdate.objects.create(report_id=report_id, user_id=user_id, task_type=task_type, message=message)
 
 # Extract unread messages for a given task ID
+##def get_task_updates(report_id):
+##    updates = TaskUpdate.objects.filter(report_id=report_id).order_by('timestamp')
+##    messages = [update.message for update in updates]
+##    updates.delete()  # Delete the updates after reading them
+##    for message in messages:
+##        print(message)
+##    return messages
+
 def get_task_updates(report_id):
-    updates = TaskUpdate.objects.filter(report_id=report_id).order_by('timestamp')
+    updates = TaskUpdate.objects.filter(report_id=report_id, read=False).order_by('timestamp')
     messages = [update.message for update in updates]
-    updates.delete()  # Delete the updates after reading them
-    for message in messages:
-        print(message)
+    
+    # Mark the updates as read
+    updates.update(read=True)
+    
     return messages
 
 def delete_all_tasks():

@@ -11,8 +11,9 @@ from django import forms
 from django.db.models import Avg, Q
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
+from django.utils import timezone
 
-from .models import UserProfile, UserConfiguration, LanguageMaster, Content
+from .models import UserProfile, UserConfiguration, LanguageMaster, Content, TaskUpdate
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
 
@@ -29,7 +30,7 @@ from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, Rat
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet
-from .utils import get_user_config, create_internal_project_id, store_api_calls
+from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates, delete_all_tasks
@@ -56,6 +57,8 @@ from .clara_core.clara_utils import make_mp3_version_of_audio_file_if_necessary
 from pathlib import Path
 from decimal import Decimal
 from urllib.parse import unquote
+from datetime import timedelta
+
 import re
 import json
 import zipfile
@@ -194,8 +197,10 @@ def delete_tts_data(request):
             language = form.cleaned_data['language']
             
             # Create a unique ID to tag messages posted by this task, and a callback
-            report_id = uuid.uuid4()
-            callback = [post_task_update_in_db, report_id]
+            #report_id = uuid.uuid4()
+            #callback = [post_task_update_in_db, report_id]
+            task_type = f'delete_tts'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
             async_task(delete_tts_data_for_language, language, callback=callback)
             print(f'--- Started delete task {language}')
@@ -237,8 +242,10 @@ def delete_tts_data_complete(request, language, status):
             language = form.cleaned_data['language']
             
             # Create a unique ID to tag messages posted by this task, and a callback
-            report_id = uuid.uuid4()
-            callback = [post_task_update_in_db, report_id]
+            #report_id = uuid.uuid4()
+            #callback = [post_task_update_in_db, report_id]
+            task_type = f'delete_tts'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
             async_task(delete_tts_data_for_language, language, callback=callback)
             print(f'--- Started delete task for {language}')
@@ -284,6 +291,14 @@ def remove_language_master(request, pk):
         return redirect('manage_language_masters')
     else:
         return render(request, 'clara_app/remove_language_master_confirm.html', {'language_master': language_master})
+
+# Display recent task update messages
+@login_required
+def view_task_updates(request):
+    time_threshold = timezone.now() - timedelta(minutes=15)
+    user_id = request.user.username
+    updates = TaskUpdate.objects.filter(timestamp__gte=time_threshold, user_id=user_id).order_by('-timestamp')
+    return render(request, 'clara_app/view_task_updates.html', {'updates': updates})
 
 # Allow a language master to edit a phonetic lexicon
 @login_required
@@ -1017,8 +1032,10 @@ def human_audio_processing(request, project_id):
                         # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
                         copy_local_file_to_s3_if_necessary(zip_file)
                         # Create a callback
-                        report_id = uuid.uuid4()
-                        callback = [post_task_update_in_db, report_id]
+                        #report_id = uuid.uuid4()
+                        #callback = [post_task_update_in_db, report_id]
+                        task_type = f'process_ldt_zipfile'
+                        callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
                         async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
 
@@ -1061,8 +1078,10 @@ def human_audio_processing(request, project_id):
                         messages.error(request, f"Error: unable to find uploaded metadata file {metadata_file}")
                     else:
                         # Create a callback
-                        report_id = uuid.uuid4()
-                        callback = [post_task_update_in_db, report_id]
+                        #report_id = uuid.uuid4()
+                        #callback = [post_task_update_in_db, report_id]
+                        task_type = f'process_manual_alignment'
+                        callback, report_id = make_asynch_callback_and_report_id(request, task_type)
                         
                         # The metadata file can either be a .json file with start and end times, or a .txt file of Audacity labels
                         metadata = read_json_or_txt_file(metadata_file)
@@ -1184,8 +1203,10 @@ def human_audio_processing_phonetic(request, project_id):
                         # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
                         copy_local_file_to_s3_if_necessary(zip_file)
                         # Create a callback
-                        report_id = uuid.uuid4()
-                        callback = [post_task_update_in_db, report_id]
+                        #report_id = uuid.uuid4()
+                        #callback = [post_task_update_in_db, report_id]
+                        task_type = f'process_ldt_zipfile_phonetic'
+                        callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
                         async_task(process_ldt_zipfile, clara_project_internal, zip_file, human_voice_id, callback=callback)
 
@@ -1541,8 +1562,10 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
                 try:
                     # Create a unique ID to tag messages posted by this task, and a callback
-                    report_id = uuid.uuid4()
-                    callback = [post_task_update_in_db, report_id]
+                    #report_id = uuid.uuid4()
+                    #callback = [post_task_update_in_db, report_id]
+                    task_type = f'{text_choice}_{this_version}'
+                    callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
                     # We are correcting the text using the AI and then saving it
                     if text_choice == 'correct':
@@ -2010,11 +2033,13 @@ def make_export_zipfile(request, project_id):
         form = MakeExportZipForm(request.POST)
         if form.is_valid():
             # Create a unique ID to tag messages posted by this task
-            report_id = uuid.uuid4()
+            #report_id = uuid.uuid4()
 
             # Define a callback as list of the callback function and the first argument
             # We can't use a lambda function or a closure because async_task can't apply pickle to them
-            callback = [post_task_update_in_db, report_id]
+            #callback = [post_task_update_in_db, report_id]
+            task_type = f'make_export_zipfile'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
             # Enqueue the task
             try:
@@ -2135,11 +2160,13 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
         form = RenderTextForm(request.POST)
         if form.is_valid():
             # Create a unique ID to tag messages posted by this task
-            report_id = uuid.uuid4()
+            #report_id = uuid.uuid4()
 
             # Define a callback as list of the callback function and the first argument
             # We can't use a lambda function or a closure because async_task can't apply pickle to them
-            callback = [post_task_update_in_db, report_id]
+            #callback = [post_task_update_in_db, report_id]
+            task_type = f'render_{phonetic_or_normal}'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
         
             # Enqueue the render_text task
             self_contained = True
@@ -2399,7 +2426,15 @@ def serve_export_zipfile(request, project_id):
     if not file_exists(zip_filepath):
         raise Http404("Zipfile does not exist")
 
-    if not _s3_storage:
+    if _s3_storage:
+        print(f'--- Serving existing S3 zipfile {zip_filepath}')
+        # Generate a presigned URL for the S3 file
+        presigned_url = _s3_client.generate_presigned_url('get_object',
+                                                          Params={'Bucket': _s3_bucket_name,
+                                                                  'Key': str(zip_filepath)},
+                                                          ExpiresIn=3600)  # URL expires in 1 hour
+        return redirect(presigned_url)
+    else:
         print(f'--- Serving existing non-S3 zipfile {zip_filepath}')
         zip_file = open(zip_filepath, 'rb')
         response = FileResponse(zip_file, as_attachment=True)

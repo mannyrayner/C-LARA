@@ -23,6 +23,7 @@ urlpatterns = [
     path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
     path('add_credit/', views.add_credit, name='add_credit'),
     path('credit_balance/', views.credit_balance, name='credit_balance'),
+    path('view_task_updates/', views.view_task_updates, name='view_task_updates'),
     path('delete_tts_data/', views.delete_tts_data, name='delete_tts_data'),
     path('delete_tts_data_status/<str:report_id>/', views.delete_tts_data_status, name='delete_tts_data_status'),
     path('delete_tts_data_monitor/<str:language>/<str:report_id>/', views.delete_tts_data_monitor, name='delete_tts_data_monitor'),

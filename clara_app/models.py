@@ -174,17 +174,31 @@ class APICall(models.Model):
     class Meta:
         ordering = ['-timestamp']
         
-# ASYNCHRONOUS PROCESSING
 # Used by asynchronous processes to report results
+##class TaskUpdate(models.Model):
+##    report_id = models.CharField(max_length=255)
+##    message = models.CharField(max_length=1024)
+##    timestamp = models.DateTimeField(auto_now_add=True)
+##
+##    class Meta:
+##        indexes = [
+##            models.Index(fields=['report_id', 'timestamp']),
+##        ]
+
 class TaskUpdate(models.Model):
     report_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255, null=True, blank=True)  # Assuming user_id is a string; adjust as needed.
+    task_type = models.CharField(max_length=255, null=True, blank=True)  # Add choices if you have predefined task types.
     message = models.CharField(max_length=1024)
+    read = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         indexes = [
             models.Index(fields=['report_id', 'timestamp']),
+            # Consider adding additional indexes if needed for query optimization
         ]
+
 
 class Rating(models.Model):
     RATING_CHOICES = [
