@@ -2429,11 +2429,20 @@ def serve_export_zipfile(request, project_id):
     if _s3_storage:
         print(f'--- Serving existing S3 zipfile {zip_filepath}')
         # Generate a presigned URL for the S3 file
-        presigned_url = _s3_client.generate_presigned_url('get_object',
-                                                          Params={'Bucket': _s3_bucket_name,
-                                                                  'Key': str(zip_filepath)},
-                                                          ExpiresIn=3600)  # URL expires in 1 hour
-        return redirect(presigned_url)
+##        presigned_url = _s3_client.generate_presigned_url('get_object',
+##                                                          Params={'Bucket': _s3_bucket_name,
+##                                                                  'Key': str(zip_filepath)},
+##                                                          ExpiresIn=3600)  # URL expires in 1 hour
+##        return redirect(presigned_url)
+        try:
+            s3_file = _s3_bucket.Object(key=str(zip_filepath)).get()
+            response = StreamingHttpResponse(streaming_content=s3_file['Body'],
+                                             content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="{project_id}.zip"'
+            return response
+        except Exception as e:
+            print(f"Error accessing S3 file: {e}")
+            raise Http404("Error accessing S3 file")
     else:
         print(f'--- Serving existing non-S3 zipfile {zip_filepath}')
         zip_file = open(zip_filepath, 'rb')
