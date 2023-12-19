@@ -1,0 +1,16 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Task Updates{% endblock %}
+
+{% block content %}
+  <h2>Recent Task Updates</h2>
+  <ul>
+    {% for update in updates %}
+      <li>{{ update.timestamp }} - {{ update.message }}</li>
+    {% empty %}
+      <li>No recent updates.</li>
+    {% endfor %}
+  </ul>
+  
+{% endblock %}
+
