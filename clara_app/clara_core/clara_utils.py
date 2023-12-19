@@ -166,9 +166,18 @@ def remove_directory(pathname):
     else:
         shutil.rmtree(abspathname)
 
-def remove_local_directory(pathname):
+def remove_local_directory(pathname, callback=None):
     abspathname = absolute_file_name(pathname)
-    shutil.rmtree(abspathname)
+
+    try:
+        shutil.rmtree(abspathname)
+    except FileNotFoundError as e:
+        error_message = f"Warning: directory not found when trying to remove: {abspathname}"
+        post_task_update(callback, error_message)
+    except Exception as e:
+        error_message = f"Error when trying to remove directory: {abspathname} - {str(e)}\n{traceback.format_exc()}"
+        post_task_update(callback, error_message)
+        raise
 
 def copy_file(pathname1, pathname2):
     abspathname1 = absolute_file_name(pathname1)
@@ -474,10 +483,18 @@ def remove_file(pathname):
     else:
         os.remove(abspathname)
 
-def remove_local_file(pathname):
+def remove_local_file(pathname, callback=None):
     abspathname = absolute_local_file_name(pathname)
 
-    os.remove(abspathname)
+    try:
+        os.remove(abspathname)
+    except FileNotFoundError as e:
+        error_message = f"Warning: file not found when trying to remove: {abspathname}"
+        post_task_update(callback, error_message)
+    except Exception as e:
+        error_message = f"Error when trying to remove file: {abspathname} - {str(e)}\n{traceback.format_exc()}"
+        post_task_update(callback, error_message)
+        raise
 
 
 def rename_file(pathname1, pathname2):
