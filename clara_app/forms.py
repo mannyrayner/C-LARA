@@ -76,6 +76,10 @@ class ProjectCreationForm(forms.ModelForm):
         model = CLARAProject
         fields = ['title', 'l2', 'l1']
 
+class ProjectImportForm(forms.Form):
+    title = forms.CharField(label='Project Title', max_length=255)
+    zipfile = forms.FileField(label='Project Zipfile')
+
 class ProjectSearchForm(forms.Form):
     title = forms.CharField(required=False)
     l2 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)

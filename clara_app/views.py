@@ -22,7 +22,7 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserProfileForm, AdminPasswordResetForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
@@ -690,6 +690,52 @@ def create_project(request):
         # This is a GET request, so create a new blank form
         form = ProjectCreationForm()
         return render(request, 'clara_app/create_project.html', {'form': form})
+
+# Import a new project from a zipfile
+@login_required
+def import_project(request):
+    if request.method == 'POST':
+        form = ProjectImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Extract the validated data from the form
+            title = form.cleaned_data['title']
+            uploaded_file = form.cleaned_data['zipfile']
+            zip_file = uploaded_file_to_file(uploaded_file)
+
+            # Check if the zipfile exists
+            if not local_file_exists(zip_file):
+                messages.error(request, f"Error: unable to find uploaded zipfile {zip_file}")
+                return render(request, 'clara_app/import_project.html', {'form': form})
+
+            # Create a new project in Django's database, associated with the current user
+            # Use 'english' as a placeholder for l1 and l2 until we have the real values from the zipfile
+            clara_project = CLARAProject(title=title, user=request.user, l2='english', l1='english')
+            clara_project.save()
+            internal_id = create_internal_project_id(title, clara_project.id)
+            clara_project.internal_id = internal_id
+            clara_project.save()
+
+            # Create a new internal project from the zipfile
+            clara_project_internal = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id)
+            if clara_project_internal is None:
+                messages.error(request, "Failed to import project from zipfile.")
+                return render(request, 'clara_app/import_project.html', {'form': form})
+
+            # Now that we have the real l1 and l2, use them to update clara_project. 
+            clara_project.l1 = clara_project_internal.l1_language
+            clara_project.l2 = clara_project_internal.l2_language
+            clara_project.save()
+
+            print(f'--- Created project: id={clara_project.id}, internal_id={internal_id}')
+
+            return redirect('project_detail', project_id=clara_project.id)
+        else:
+            # The form data was invalid. Re-render the form with error messages.
+            return render(request, 'clara_app/import_project.html', {'form': form})
+    else:
+        # This is a GET request, so create a new blank form
+        form = ProjectImportForm()
+        return render(request, 'clara_app/import_project.html', {'form': form})
 
 # Create a clone of a project        
 @login_required
@@ -2435,20 +2481,14 @@ def serve_export_zipfile(request, project_id):
     if _s3_storage:
         print(f'--- Serving existing S3 zipfile {zip_filepath}')
         # Generate a presigned URL for the S3 file
-##        presigned_url = _s3_client.generate_presigned_url('get_object',
-##                                                          Params={'Bucket': _s3_bucket_name,
-##                                                                  'Key': str(zip_filepath)},
-##                                                          ExpiresIn=3600)  # URL expires in 1 hour
-##        return redirect(presigned_url)
-        try:
-            s3_file = _s3_bucket.Object(key=str(zip_filepath)).get()
-            response = StreamingHttpResponse(streaming_content=s3_file['Body'],
-                                             content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename="{project_id}.zip"'
-            return response
-        except Exception as e:
-            print(f"Error accessing S3 file: {e}")
-            raise Http404("Error accessing S3 file")
+        # In fact this doesn't work, for reasons neither ChatGPT-4 nor I understand.
+        # But generating the presigned URL one level up does work, see the make_export_zipfile function
+        # The following code should not get called.
+        presigned_url = _s3_client.generate_presigned_url('get_object',
+                                                          Params={'Bucket': _s3_bucket_name,
+                                                                  'Key': str(zip_filepath)},
+                                                          ExpiresIn=3600)  # URL expires in 1 hour
+        return redirect(presigned_url)
     else:
         print(f'--- Serving existing non-S3 zipfile {zip_filepath}')
         zip_file = open(zip_filepath, 'rb')
