@@ -1,6 +1,7 @@
 from .clara_classes import InternalCLARAError
 from .clara_utils import absolute_local_file_name, file_exists, local_file_exists, basename, copy_local_file, copy_to_local_file, remove_local_file
 from .clara_utils import make_local_directory, copy_directory_to_local_directory, local_directory_exists, remove_local_directory
+from .clara_utils import get_immediate_subdirectories_in_local_directory, get_files_in_local_directory, rename_file
 from .clara_utils import make_tmp_file, write_json_to_local_file, read_json_local_file, make_zipfile, unzip_file, post_task_update
 from .clara_audio_annotator import AudioAnnotator
 from .clara_audio_repository import AudioRepository
@@ -136,4 +137,32 @@ def copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=None):
 
 # ===========================================
 
+def change_project_id_in_imported_directory(tmp_dir, new_id):
+    tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
+    if not local_directory_exists(tmp_project_dir):
+        post_task_update(callback, f'--- Unable to find project_dir subdirectory in unzipped directory')
+        raise FileNotFoundError(f"project_dir not found in unzipped directory")
+    stored_data_file = os.path.join(tmp_project_dir, 'stored_data.json')
+    if not local_file_exists(stored_data_file):
+        post_task_update(callback, f'--- Unable to find stored_data file in unzipped directory')
+        raise FileNotFoundError(f"stored_data.json not found in unzipped directory")
+    stored_data = read_json_local_file(stored_data_file)
+    stored_data['id'] = new_id
+    write_json_to_local_file(stored_data, stored_data_file)
 
+# Go through the project dir and rename the text and annotated text files to be canonical with the new project id
+def rename_files_in_project_dir(tmp_project_dir, new_id):
+    abs_dir = absolute_local_file_name(tmp_project_dir)
+    subdirs = get_immediate_subdirectories_in_local_directory(abs_dir)
+    for subdir in subdirs:
+        files = get_files_in_local_directory(os.path.join(abs_dir, subdir))
+        for file in files:
+            print(f'file: {file}')
+            if file.endswith(f'{subdir}.txt'):
+                print(f'Renaming')
+                rename_file(os.path.join(abs_dir, subdir, file),
+                            os.path.join(abs_dir, subdir, f'{new_id}_{subdir}.txt'))
+
+# Placeholder for now
+def update_multimedia_from_imported_directory(project, temp_dir):
+    return

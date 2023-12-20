@@ -142,19 +142,22 @@ from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
-from .clara_export_import import create_export_zipfile
+from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory, rename_files_in_project_dir
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
+from .clara_utils import local_directory_exists, remove_local_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp
-from .clara_utils import post_task_update
+from .clara_utils import unzip_file, post_task_update
 
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Union
+
 import datetime
 import logging
 import pprint
 import traceback
+import tempfile
 
 config = get_config()
 
@@ -219,23 +222,17 @@ class CLARAProjectInternal:
         return project
 
     # Reconstitute a CLARAProjectInternal from an export zipfile
-    def from_zipfile(cls, zipfile: str, new_id: str, callback=None) -> 'CLARAProjectInternal':
+    @classmethod
+    def create_CLARAProjectInternal_from_zipfile(cls, zipfile: str, new_id: str, callback=None) -> 'CLARAProjectInternal':
         try:
             tmp_dir = tempfile.mkdtemp()
-            unzip_file(zipfile, temp_dir)
+            unzip_file(zipfile, tmp_dir)
+            post_task_update(callback, '--- Unzipped import file')
+            change_project_id_in_imported_directory(tmp_dir, new_id)
             tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
-            if not local_directory_exists(tmp_project_dir):
-                post_task_update(callback, f'--- Unable to find project_dir subdirectory in unzipped directory')
-                raise FileNotFoundError(f"project_dir not found in unzipped directory")
-            stored_data_file = os.path.join(tmp_project_dir, 'stored_data.json')
-            if not local_file_exists(stored_data_file):
-                post_task_update(callback, f'--- Unable to find stored_data file in unzipped directory')
-                raise FileNotFoundError(f"stored_data.json not found in unzipped directory")
-            stored_data = read_json_local_file(stored_data_file)
-            stored_data['id'] = new_id
-            write_json_to_local_file(stored_data, stored_data_file)
+            rename_files_in_project_dir(tmp_project_dir, new_id)
             project = cls.from_directory(tmp_project_dir)
-            update_metadata_from_export_dir(project, temp_dir)
+            update_multimedia_from_imported_directory(project, tmp_dir)
             return project
         except Exception as e:
             post_task_update(callback, f'*** Error when trying to import zipfile {zipfile}')
@@ -244,8 +241,8 @@ class CLARAProjectInternal:
             return None
         finally:
             # Remove the tmp dir once we've used it
-            if local_directory_exists(temp_dir):
-                remove_local_directory(temp_dir)
+            if local_directory_exists(tmp_dir):
+                remove_local_directory(tmp_dir)
             
     # If there are already files in the associated directory, update self.text_versions
     def _load_existing_text_versions(self) -> None:

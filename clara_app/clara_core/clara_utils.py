@@ -650,6 +650,16 @@ def write_json_or_txt_file(data, file_path: str):
     else:
         raise ValueError(f'Unsupported file type {extension} for {file_path}')
 
+def get_immediate_subdirectories_in_local_directory(a_dir):
+    abs_dir = absolute_local_file_name(a_dir)
+    return [name for name in os.listdir(abs_dir)
+            if os.path.isdir(os.path.join(abs_dir, name))]
+
+def get_files_in_local_directory(a_dir):
+    abs_dir = absolute_local_file_name(a_dir)
+    return [name for name in os.listdir(abs_dir)
+            if os.path.isfile(os.path.join(abs_dir, name))]
+
 def download_file_from_url(url, file_path):
     abs_file_path = absolute_local_file_name(file_path)
     
