@@ -716,7 +716,7 @@ def import_project(request):
             clara_project.save()
 
             # Create a new internal project from the zipfile
-            clara_project_internal = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id)
+            clara_project_internal, global_metadata = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id)
             if clara_project_internal is None:
                 messages.error(request, "Failed to import project from zipfile.")
                 return render(request, 'clara_app/import_project.html', {'form': form})
@@ -725,6 +725,27 @@ def import_project(request):
             clara_project.l1 = clara_project_internal.l1_language
             clara_project.l2 = clara_project_internal.l2_language
             clara_project.save()
+
+            # Update human audio info from the global metadata, which looks like this:
+            #{
+            #  "human_voice_id": "mannyrayner",
+            #  "human_voice_id_phonetic": "mannyrayner",
+            #  "audio_type_for_words": "human",
+            #  "audio_type_for_segments": "tts"
+            #}
+            if global_metadata and isinstance(global_metadata, dict):
+                if "human_voice_id" in global_metadata and global_metadata["human_voice_id"]:                       
+                    plain_human_audio_info, plain_created = HumanAudioInfo.objects.get_or_create(project=clara_project)
+                    plain_human_audio_info.voice_talent_id = global_metadata["human_voice_id"]
+                    plain_human_audio_info.use_for_words = True if global_metadata["audio_type_for_words"] == 'human' else False
+                    plain_human_audio_info.use_for_segments = True if global_metadata["audio_type_for_segments"] == 'human' else False
+                    plain_human_audio_info.save()
+                    
+                if "human_voice_id_phonetic" in global_metadata and global_metadata["human_voice_id_phonetic"]:   
+                    phonetic_human_audio_info, phonetic_created = PhoneticHumanAudioInfo.objects.get_or_create(project=clara_project)
+                    phonetic_human_audio_info.voice_talent_id = global_metadata["human_voice_id_phonetic"]
+                    phonetic_human_audio_info.use_for_words = True
+                    phonetic_human_audio_info.save()
 
             print(f'--- Created project: id={clara_project.id}, internal_id={internal_id}')
 
@@ -2061,7 +2082,7 @@ def make_export_zipfile(request, project_id):
     human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
     human_audio_info_phonetic = HumanAudioInfo.objects.filter(project=project).first()
         
-    if human_audio_info:
+    if human_audio_info and human_audio_info.voice_talent_id:
         human_voice_id = human_audio_info.voice_talent_id
         audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
         audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
@@ -2070,7 +2091,7 @@ def make_export_zipfile(request, project_id):
         audio_type_for_segments = 'tts'
         human_voice_id = None
 
-    if human_audio_info_phonetic:
+    if human_audio_info_phonetic and human_audio_info_phonetic.voice_talent_id:
         human_voice_id_phonetic = human_audio_info_phonetic.voice_talent_id
     else:
         human_voice_id_phonetic = None
