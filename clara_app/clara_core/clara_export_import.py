@@ -150,19 +150,57 @@ def change_project_id_in_imported_directory(tmp_dir, new_id):
     stored_data['id'] = new_id
     write_json_to_local_file(stored_data, stored_data_file)
 
-# Go through the project dir and rename the text and annotated text files to be canonical with the new project id
+# Go through the project dir and rename the text and annotated text files to be canonical wrt the new project id
 def rename_files_in_project_dir(tmp_project_dir, new_id):
     abs_dir = absolute_local_file_name(tmp_project_dir)
     subdirs = get_immediate_subdirectories_in_local_directory(abs_dir)
     for subdir in subdirs:
         files = get_files_in_local_directory(os.path.join(abs_dir, subdir))
         for file in files:
-            print(f'file: {file}')
             if file.endswith(f'{subdir}.txt'):
-                print(f'Renaming')
                 rename_file(os.path.join(abs_dir, subdir, file),
                             os.path.join(abs_dir, subdir, f'{new_id}_{subdir}.txt'))
 
-# Placeholder for now
-def update_multimedia_from_imported_directory(project, temp_dir):
+def update_multimedia_from_imported_directory(project, temp_dir, callback=None):
+    update_images_from_imported_directory(project, temp_dir, callback=callback)
+    update_regular_audio_from_imported_directory(project, temp_dir, callback=callback)
+    update_phonetic_audio_from_imported_directory(project, temp_dir, callback=callback)
+
+## Typical items in image metadata look like this:
+##
+##    {
+##        "image_file_path": "tmp1i2yu_18.jpg",
+##        "thumbnail_file_path": "tmp1i2yu_18_thumbnail.jpg",
+##        "image_name": "01VeryBigFirTree",
+##        "associated_text": "",
+##        "associated_areas": "",
+##        "page": 1,
+##        "position": "bottom"
+##    },
+    
+def update_images_from_imported_directory(project, tmp_dir, callback=None):
+    image_dir = absolute_local_file_name(os.path.join(tmp_dir, 'images'))
+    metadata_file = os.path.join(image_dir, 'metadata.json')
+    if not local_file_exists(metadata_file):
+        # There are no images in this zipfile
+        return
+    metadata = read_json_local_file(metadata_file)
+    for item in metadata:
+        # Note that we don't use "thumbnail_file_path", add_project_image generates the thumbnail on the fly.
+        project.add_project_image(item['image_name'],
+                                  os.path.join(image_dir, item['image_file_path']),
+                                  associated_text=item['associated_text'],
+                                  associated_areas=item['associated_areas'],
+                                  page=item['page'],
+                                  position=item['position'],
+                                  callback=callback)
+
+# So far a placeholder
+def update_regular_audio_from_imported_directory(project, temp_dir, callback=None):
     return
+
+# So far a placeholder
+def update_phonetic_audio_from_imported_directory(project, temp_dir, callback=None):
+    return
+
+

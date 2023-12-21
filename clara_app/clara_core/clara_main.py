@@ -840,7 +840,9 @@ class CLARAProjectInternal:
             post_task_update(callback, f"--- Image {image_name} added successfully")
             return stored_image_path
         except Exception as e:
-            post_task_update(callback, f"*** CLARAProjectInternal: error when adding/updating image: {str(e)}")
+            post_task_update(callback, f"*** CLARAProjectInternal: error when adding/updating image {image_name}")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
             # Handle the exception as needed
             return None
 
