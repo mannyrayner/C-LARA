@@ -195,12 +195,103 @@ def update_images_from_imported_directory(project, tmp_dir, callback=None):
                                   position=item['position'],
                                   callback=callback)
 
-# So far a placeholder
-def update_regular_audio_from_imported_directory(project, temp_dir, callback=None):
-    return
+## Global meta data looks like this:
+##
+##    {
+##    "human_voice_id": "mannyrayner",
+##    "human_voice_id_phonetic": "mannyrayner",
+##    "audio_type_for_words": "human",
+##    "audio_type_for_segments": "tts"
+## }
+##
+## Audio metadata looks like this:
+##
+## {
+##    "words": [
+##        {
+##            "word": "once",
+##            "file": null
+##        },
+##        (...)
+##
+##    ],
+##    "segments": [
+##        {
+##            "segment": "Once upon a time there were four little Rabbits, and their names were\u2014 Flopsy, Mopsy, Cotton-tail, and Peter.",
+##            "file": "default_356.mp3"
+##        },
+##        (...)
+##    ]
+## }
 
-# So far a placeholder
-def update_phonetic_audio_from_imported_directory(project, temp_dir, callback=None):
-    return
+## Only import human audio, we can recreate TTS audio
 
+def update_regular_audio_from_imported_directory(project, tmp_dir, callback=None):
+    audio_dir = absolute_local_file_name(os.path.join(tmp_dir, 'audio'))
+    global_metadata = get_global_metadata(tmp_dir)
+    if not local_directory_exists(audio_dir) or not global_metadata or not global_metadata['human_voice_id']:
+        return
+    language = project.l2_language
+    annotator = AudioAnnotator(language,
+                               tts_engine_type=None,
+                               human_voice_id=global_metadata['human_voice_id'],
+                               audio_type_for_words=global_metadata['audio_type_for_words'],
+                               audio_type_for_segments=global_metadata['audio_type_for_segments'],
+                               callback=callback)
+    audio_metadata = get_normal_audio_metadata(tmp_dir)
+    if not audio_metadata or not isinstance(audio_metadata, (dict)) or not 'words' in audio_metadata or not 'segments' in audio_metadata:
+        return
+    
+    if global_metadata['audio_type_for_words'] == 'human':
+        words_metadata_for_update = [ { 'text': item['word'], 'file': item['file'] }
+                                      for item in audio_metadata['words'] ]
+        post_task_update(callback, 'Storing human audio for words ({len(words_metadata_for_update)} items)')
+        annotator._store_existing_human_audio_mp3s(words_metadata_for_update, audio_dir, callback=callback)
+    if global_metadata['audio_type_for_segments'] == 'human':
+        segments_metadata_for_update = [ { 'text': item['segment'], 'file': item['file'] }
+                                      for item in audio_metadata['segments'] ]
+        post_task_update(callback, 'Storing human audio for segments ({len(segments_metadata_for_update)} items)')
+        annotator._store_existing_human_audio_mp3s(segments_metadata_for_update, audio_dir, callback=callback)
+                                         
+def update_phonetic_audio_from_imported_directory(project, tmp_dir, callback=None):
+    audio_dir = absolute_local_file_name(os.path.join(tmp_dir, 'phonetic_audio'))
+    global_metadata = get_global_metadata(tmp_dir)
+    if not local_directory_exists(audio_dir) or not global_metadata or not global_metadata['human_voice_id_phonetic']:
+        return
+    language = project.l2_language
+    annotator = AudioAnnotator(language,
+                               tts_engine_type=None,
+                               human_voice_id=global_metadata['human_voice_id_phonetic'],
+                               audio_type_for_words='human',
+                               audio_type_for_segments='tts',
+                               callback=callback)
+    audio_metadata = get_phonetic_audio_metadata(tmp_dir)
+    if not audio_metadata or not isinstance(audio_metadata, (dict)) or not 'words' in audio_metadata:
+        return
 
+    phonemes_metadata_for_update = [ { 'text': item['word'], 'file': item['file'] }
+                                     for item in audio_metadata['words'] ]
+    post_task_update(callback, 'Storing human audio for phonemes ({len(phonemes_metadata_for_update)} items)')
+    annotator._store_existing_human_audio_mp3s(phonemes_metadata_for_update, audio_dir, callback=callback)
+
+def get_global_metadata(tmp_dir):
+    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'metadata.json'))
+    if not local_file_exists(metadata_file):
+        return None
+    else:
+        return read_json_local_file(metadata_file)
+
+def get_normal_audio_metadata(tmp_dir):
+    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'audio' 'metadata.json'))
+    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'phonetic_audio' 'metadata.json'))
+    if not local_file_exists(metadata_file):
+        return None
+    else:
+        return read_json_local_file(metadata_file)
+
+def get_phonetic_audio_metadata(tmp_dir):
+    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'phonetic_audio' 'metadata.json'))
+    if not local_file_exists(metadata_file):
+        return None
+    else:
+        return read_json_local_file(metadata_file)

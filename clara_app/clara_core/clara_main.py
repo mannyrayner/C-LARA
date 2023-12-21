@@ -142,7 +142,8 @@ from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
-from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory, rename_files_in_project_dir
+from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
+from .clara_export_import import get_global_metadata, rename_files_in_project_dir
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
@@ -233,12 +234,13 @@ class CLARAProjectInternal:
             rename_files_in_project_dir(tmp_project_dir, new_id)
             project = cls.from_directory(tmp_project_dir)
             update_multimedia_from_imported_directory(project, tmp_dir)
-            return project
+            global_metadata = get_global_metadata(tmp_dir)
+            return ( project, global_metadata )
         except Exception as e:
             post_task_update(callback, f'*** Error when trying to import zipfile {zipfile}')
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
-            return None
+            return ( None, None )
         finally:
             # Remove the tmp dir once we've used it
             if local_directory_exists(tmp_dir):
@@ -697,10 +699,14 @@ class CLARAProjectInternal:
     # If we are processing phonetic text, we just internalise that.
     def get_internalised_text(self, phonetic=False) -> str:
         if phonetic:
+            if not self.text_versions["phonetic"]:
+                return None
             phonetic_text = self.load_text_version("phonetic")
             internalised_phonetic_text = internalize_text(phonetic_text, self.l2_language, self.l1_language, 'phonetic')
             return internalised_phonetic_text
         else:
+            if not self.text_versions["gloss"] or not self.text_versions["lemma"]:
+                return None
             glossed_text = self.load_text_version("gloss")
             lemma_tagged_text = self.load_text_version("lemma")
             internalised_glossed_text = internalize_text(glossed_text, self.l2_language, self.l1_language, 'gloss')
@@ -710,15 +716,17 @@ class CLARAProjectInternal:
 
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
-    # Caches the internalised version.
+    # Tried caching the internalised version, but it's hard to make this work.
     def get_internalised_and_annotated_text(self, tts_engine_type=None, human_voice_id=None,
                                             audio_type_for_words='tts', audio_type_for_segments='tts',
                                             phonetic=False, callback=None) -> str:
-        if self.internalised_and_annotated_text:
-            return self.internalised_and_annotated_text
+##        if self.internalised_and_annotated_text:
+##            return self.internalised_and_annotated_text
         post_task_update(callback, f"--- Creating internalised text")
         text_object = self.get_internalised_text(phonetic=phonetic) 
         post_task_update(callback, f"--- Internalised text created")
+        if not text_object:
+            return None
         
         post_task_update(callback, f"--- Adding audio annotations")
         audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
@@ -742,7 +750,7 @@ class CLARAProjectInternal:
         concordance_annotator = ConcordanceAnnotator()
         concordance_annotator.annotate_text(text_object, phonetic=phonetic)
         post_task_update(callback, f"--- Concordance annotations done")
-        self.internalised_and_annotated_text = text_object
+##        self.internalised_and_annotated_text = text_object
         return text_object
 
     # Get audio metadata for the project.
@@ -977,7 +985,7 @@ class CLARAProjectInternal:
                                                  audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                  type='all', format='default',
                                                  phonetic=False, callback=callback)
-        if human_voice_id_phonetic:
+        if self.text_versions['phonetic'] and human_voice_id_phonetic:
             audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,
                                                               human_voice_id=human_voice_id_phonetic,
                                                               audio_type_for_words='human', audio_type_for_segments=audio_type_for_words,

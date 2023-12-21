@@ -147,7 +147,6 @@ class ImageRepository:
 
             connection.commit()
             connection.close()
-            self.get_current_entry(project_id, callback=callback)
         except Exception as e:
             post_task_update(callback, f'*** ImageRepository: error when inserting/updating "{project_id}/{image_name}/{file_path}" into Image database: "{str(e)}"')
             raise InternalCLARAError(message='Image database inconsistency')
