@@ -763,12 +763,9 @@ class PhoneticLexiconRepository:
             elif file_extension == 'txt':
                 lines = read_txt_file(file_path).split('\n')
                 for line in lines:
-                    parts = line.strip().split()
-                    if len(parts) < 2:
-                        continue  # Skip malformed lines
-                    word = parts[0]
-                    phonemes = ' '.join(parts[1:]) if len(parts) > 2 else parts[1]
-                    data[word] = phonemes
+                    word, phonemes = parse_phonetic_lexicon_line(line)
+                    if word:
+                        data[word] = phonemes
             else:
                 return ('error', 'Unsupported file format')
         except Exception as e:
@@ -797,3 +794,23 @@ class PhoneticLexiconRepository:
             return ( False, f"'{aligned_graphemes}' and '{aligned_phonemes}' have different numbers of components" )
         else:
             return ( True, '' )
+
+def parse_phonetic_lexicon_line(line):
+    parts = line.strip().split()
+    if len(parts) < 2:
+        return ( None, None )  # Skip empty and malformed lines
+    word = parts[0]
+    if len(parts) > 2:
+        # Assume it's an entry in ARPAbet-like format, e.g. Drehu
+        phonemes = ' '.join(parts[1:])
+    else:
+        # Assume it's an ipa-dict entry
+        phonemes = clean_up_ipa_dict_entry(parts[1])
+    return word, phonemes
+
+# ipa-dict entries for some languages:
+# Icelandic: brunnið	/prʏnɪð/
+# Romanian: aanicăi	/aanikəj/
+
+def clean_up_ipa_dict_entry(phonetic_str):
+    return phonetic_str.replace('/', '')

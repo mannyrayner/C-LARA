@@ -183,8 +183,14 @@ def get_missing_phonetic_entries_for_words_and_resources(unique_words, resources
     if not words_with_no_entries:
         return ( {}, [] )
     annotated_words_dict, api_calls = get_phonetic_entries_for_words_using_chatgpt4(words_with_no_entries, l2_language, config_info=config_info, callback=callback)
-    return ( { word: remove_accents_from_phonetic_string(annotated_words_dict[word]) for word in annotated_words_dict },
+    return ( { word: cleaned_first_phonetic_entry(annotated_words_dict[word]) for word in annotated_words_dict },
              api_calls )
+
+def cleaned_first_phonetic_entry(entry):
+    if isinstance(entry, str):
+        return remove_accents_from_phonetic_string(entry)
+    elif isinstance(entry, ( list, tuple )):
+        return cleaned_first_phonetic_entry(entry[0])
 
 def get_unique_words_for_segmented_text_object(segmented_text):
     elements = segmented_text.content_elements()

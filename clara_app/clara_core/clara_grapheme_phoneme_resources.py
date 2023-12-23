@@ -5,7 +5,9 @@ from .clara_utils import local_file_exists, read_local_json_file, post_task_upda
 
 def grapheme_phoneme_resources_available(l2):
     repository = PhoneticLexiconRepository()
-    return repository.aligned_entries_exist_for_language(l2) and repository.plain_phonetic_entries_exist_for_language(l2)
+    # Only request the plain entries, since initially there will be no aligned entries.
+    #return repository.aligned_entries_exist_for_language(l2) and repository.plain_phonetic_entries_exist_for_language(l2)
+    return repository.plain_phonetic_entries_exist_for_language(l2)
 
 def get_phonetic_lexicon_resources_for_words_and_l2(words, l2, callback=None):
     encoding = get_phonetic_encoding_for_language(l2, callback=callback)
@@ -89,11 +91,11 @@ def internalise_aligned_grapheme_phoneme_lexicon(Data, l2, Encoding):
             print(f'*** Warning: bad entry for "{Word}" in aligned {l2} lexicon, not aligned')
             continue
         for ( LetterGroup, PhonemeGroup ) in zip( LetterComponents, PhonemeComponents ):
+            PhonemeGroupList = phoneme_string_to_list(PhonemeGroup, Encoding)
             Key = ( '' if LetterGroup == '' else LetterGroup[0],
-                    '' if PhonemeGroup == '' else first_phoneme_of_phoneme_string(PhonemeGroup, Encoding) )
+                    '' if PhonemeGroup == '' else PhonemeGroupList[0] )
             Current = internalised_aligned_lexicon[Key] if Key in internalised_aligned_lexicon else []
-            Correspondence = ( LetterGroup,
-                               PhonemeGroup.split() if Encoding == 'arpabet_like' else PhonemeGroup )
+            Correspondence = ( LetterGroup, PhonemeGroupList )
             if not Correspondence in Current:
                 internalised_aligned_lexicon[Key] = Current + [ Correspondence ]
                 Count += 1
@@ -102,12 +104,31 @@ def internalise_aligned_grapheme_phoneme_lexicon(Data, l2, Encoding):
 def remove_accents_from_phonetic_string(Str):
     return Str.replace('ˈ', '').replace('ˌ', '').replace('.', '').replace('\u200d', '')
 
-def first_phoneme_of_phoneme_string(Str, Encoding):
-    if Str == '':
-        return ''
-    # If encoding is 'ipa', each character is a phoneme
-    elif Encoding == 'ipa':
-        return Str[0]
-    # Assume arpabet_like, where we have space-separated phoneme representations
+def phoneme_string_to_list(phoneme_string, encoding):
+    # In an arbabet-like encoding, the phoneme string is a space-separated representation of phonemes
+    if encoding == 'arpabet_like':
+        return phoneme_string.split()
+    # In an IPA encoding, we may have diacritics after phonemes (e.g. lengthening), which need to be combined with them
     else:
-        return Str.split()[0]
+        phoneme_list = [ char for char in phoneme_string ]         
+        return combine_phonemes_with_diacritics(phoneme_list)
+
+ipa_diacritics = 'ːʰ̥'
+
+def combine_phonemes_with_diacritics(phoneme_list):
+    if len(phoneme_list) < 2:
+        return phoneme_list
+    if phoneme_list[1] in ipa_diacritics:
+        return [ f'{phoneme_list[0]}{phoneme_list[1]}' ] + combine_phonemes_with_diacritics(phoneme_list[2:])
+    else:
+        return [ phoneme_list[0] ] + combine_phonemes_with_diacritics(phoneme_list[1:])
+
+##def first_phoneme_of_phoneme_string(Str, Encoding):
+##    if Str == '':
+##        return ''
+##    # If encoding is 'ipa', each character is a phoneme
+##    elif Encoding == 'ipa':
+##        return Str[0]
+##    # Assume arpabet_like, where we have space-separated phoneme representations
+##    else:
+##        return Str.split()[0]
