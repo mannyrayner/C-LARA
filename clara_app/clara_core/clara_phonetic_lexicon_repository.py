@@ -679,7 +679,7 @@ class PhoneticLexiconRepository:
 
     def load_and_initialise_aligned_lexicon(self, file_path, language, callback=None):
         try:
-            data = read_json_file(file_path)
+            data = read_local_json_file(file_path)
         except:
             return ( 'error', 'unable to read file' )
         items = []
@@ -695,8 +695,8 @@ class PhoneticLexiconRepository:
                 })
             self.initialise_aligned_lexicon(items, language, callback=callback)
             return ( 'success', f'{len(items)} items loaded' )
-        except:
-            return ( 'error', 'something went wrong in internalisation' )
+        except Exception as e:
+            return ( 'error', 'something went wrong in internalising aligned lexicon: {str(e)}\n{traceback.format_exc()}' )
 
 # Initialise from text taken from the orthography definition.
 #
@@ -729,7 +729,7 @@ class PhoneticLexiconRepository:
             self.initialise_aligned_lexicon(items, language, callback=callback)
             return ('success', f'{len(items)} items loaded')
         except Exception as e:
-            return ('error', f'Something went wrong in internalisation: {str(e)}')
+            return ('error', f'Something went wrong in internalising aligned lexicon from orthography data: {str(e)}\n{traceback.format_exc()}')
 
 ## Contents for plain lexicon JSON file assumed to be in this format:
 
@@ -743,13 +743,10 @@ class PhoneticLexiconRepository:
 
 ## Contents for plain lexicon txt file assumed to be in this format:
 ##
-## drösinöe dZ  eu s i n euille
+## drösinöe dZeu s i n euille
 ## föe f euille
 ## sinöe s i n euille
 ## ixöe i KH euille
-## la l a
-## itre i tch é
-## ka k a
 
     def load_and_initialise_plain_lexicon(self, file_path, language, callback=None):
         file_extension = extension_for_file_path(file_path)
@@ -758,10 +755,10 @@ class PhoneticLexiconRepository:
         # Read the file based on its extension
         try:
             if file_extension == 'json':
-                data = read_json_file(file_path)
+                data = read_local_json_file(file_path)
             # Note that the phonetic entries can be in either IPA or ARPAbet-like format
             elif file_extension == 'txt':
-                lines = read_txt_file(file_path).split('\n')
+                lines = read_local_txt_file(file_path).split('\n')
                 for line in lines:
                     word, phonemes = parse_phonetic_lexicon_line(line)
                     if word:
@@ -769,7 +766,7 @@ class PhoneticLexiconRepository:
             else:
                 return ('error', 'Unsupported file format')
         except Exception as e:
-            return ('error', f'Error reading file: {str(e)}')
+            return ('error', f'Error reading file: {str(e)}\n{traceback.format_exc()}')
 
         # Process the data and initialise the lexicon
         items = []
