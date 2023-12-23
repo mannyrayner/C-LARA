@@ -204,7 +204,7 @@ class CreateCEFRTextForm(CreateAnnotatedTextForm):
 
 class CreatePhoneticTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
-        ('generate', 'Generate phonetic text'),
+        ('generate', 'Generate phonetic text from segmented text'),
         ('manual', 'Manually edit/enter phonetic text'),
         ('load_archived', 'Load archived version')
     ]
@@ -215,7 +215,7 @@ class CreatePhoneticTextForm(CreateAnnotatedTextForm):
     
 class CreateGlossedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
-        ('generate', 'Generate annotated text using AI'),
+        ('generate', 'Generate annotated text from segmented text using AI'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
         ('manual', 'Manually enter annotated text'),
@@ -228,9 +228,9 @@ class CreateGlossedTextForm(CreateAnnotatedTextForm):
 
 class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
-        ('trivial', 'Generate annotated text with trivial tags'),
-        ('tree_tagger', 'Generate annotated text using TreeTagger'),
-        ('generate', 'Generate annotated text using AI'),
+        ('trivial', 'Generate annotated text from segmented text with trivial tags'),
+        ('tree_tagger', 'Generate annotated text from segmented text using TreeTagger'),
+        ('generate', 'Generate annotated text from segmented text using AI'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
         ('manual', 'Manually enter annotated text'),
@@ -425,7 +425,7 @@ class PhoneticLexiconForm(forms.Form):
         widget=forms.TextInput(attrs={'readonly': 'readonly'}),
         required=False)
     plain_lexicon_file = forms.FileField(
-        label='Plain phonetic lexicon file (JSON)',
+        label='Plain phonetic lexicon file (txt or JSON)',
         required=False)
     aligned_phonetic_lexicon_entries_exist = forms.CharField(
         label='Aligned phonetic lexicon entries exist',

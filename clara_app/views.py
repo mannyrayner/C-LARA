@@ -253,7 +253,7 @@ def delete_tts_data_complete(request, language, status):
             return redirect('delete_tts_data_monitor', language, report_id)
     else:
         if status == 'error':
-            messages.error(request, f'Something went wrong when deleting TTS data for {language}')
+            messages.error(request, f"Something went wrong when deleting TTS data for {language}. Try looking at the 'Recent task updates' view")
         else:
             messages.success(request, f'Deleted TTS data for {language}')
 
@@ -341,7 +341,6 @@ def edit_phonetic_lexicon(request):
                     grapheme_phoneme_data = []
                     accents_data = []
                     n_orthography_errors = 0
-                    plain_words_saved = []
                     for grapheme_phoneme_form in grapheme_phoneme_formset:
                         if grapheme_phoneme_form.is_valid():
                             grapheme_variants = grapheme_phoneme_form.cleaned_data.get('grapheme_variants')
@@ -378,6 +377,7 @@ def edit_phonetic_lexicon(request):
                             messages.success(request, f"Grapheme/phoneme data also converted into aligned lexicon: {orthography_details}")
                     else:
                         messages.error(request, f"No grapheme/phoneme data saved")
+                plain_words_saved = []
                 for lexicon_form in plain_lexicon_formset:
                     if lexicon_form.is_valid():
                         #print(f"plain: word: {lexicon_form.cleaned_data.get('word')}, phonemes: {lexicon_form.cleaned_data.get('phonemes')}, approved: {lexicon_form.cleaned_data.get('approved')}")
@@ -691,6 +691,61 @@ def create_project(request):
         form = ProjectCreationForm()
         return render(request, 'clara_app/create_project.html', {'form': form})
 
+# This is the function to run in the worker process
+def import_project_from_zip_file(zip_file, project_id, internal_id, callback=None):
+    try:
+        clara_project = get_object_or_404(CLARAProject, pk=project_id)
+        # If we're on Heroku, the main thread should have copied the zipfile to S3 so that we can get it
+        copy_s3_file_to_local_if_necessary(zip_file, callback=callback)
+        if not local_file_exists(zip_file):
+            post_task_update(callback, f"Error: unable to find uploaded file {zip_file}")
+            post_task_update(callback, f"error")
+            return
+        
+        post_task_update(callback, f"--- Found uploaded file {zip_file}")
+
+        # Create a new internal project from the zipfile
+        clara_project_internal, global_metadata = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id)
+        if clara_project_internal is None:
+            post_task_update(callback, f"Error: unable to create internal project")
+            post_task_update(callback, f"error")
+
+        # Now that we have the real l1 and l2, use them to update clara_project. 
+        clara_project.l1 = clara_project_internal.l1_language
+        clara_project.l2 = clara_project_internal.l2_language
+        clara_project.save() 
+
+        # Update human audio info from the global metadata, which looks like this:
+        #{
+        #  "human_voice_id": "mannyrayner",
+        #  "human_voice_id_phonetic": "mannyrayner",
+        #  "audio_type_for_words": "human",
+        #  "audio_type_for_segments": "tts"
+        #}
+        if global_metadata and isinstance(global_metadata, dict):
+            if "human_voice_id" in global_metadata and global_metadata["human_voice_id"]:                       
+                plain_human_audio_info, plain_created = HumanAudioInfo.objects.get_or_create(project=clara_project)
+                plain_human_audio_info.voice_talent_id = global_metadata["human_voice_id"]
+                plain_human_audio_info.use_for_words = True if global_metadata["audio_type_for_words"] == 'human' else False
+                plain_human_audio_info.use_for_segments = True if global_metadata["audio_type_for_segments"] == 'human' else False
+                plain_human_audio_info.save()
+                
+            if "human_voice_id_phonetic" in global_metadata and global_metadata["human_voice_id_phonetic"]:   
+                phonetic_human_audio_info, phonetic_created = PhoneticHumanAudioInfo.objects.get_or_create(project=clara_project)
+                phonetic_human_audio_info.voice_talent_id = global_metadata["human_voice_id_phonetic"]
+                phonetic_human_audio_info.use_for_words = True
+                phonetic_human_audio_info.save()
+
+        post_task_update(callback, f'--- Created project: id={clara_project.id}, internal_id={internal_id}')
+        post_task_update(callback, f"finished")
+
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+    finally:
+        # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
+        remove_file(zip_file)
+
 # Import a new project from a zipfile
 @login_required
 def import_project(request):
@@ -707,6 +762,9 @@ def import_project(request):
                 messages.error(request, f"Error: unable to find uploaded zipfile {zip_file}")
                 return render(request, 'clara_app/import_project.html', {'form': form})
 
+            # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
+            copy_local_file_to_s3_if_necessary(zip_file)
+
             # Create a new project in Django's database, associated with the current user
             # Use 'english' as a placeholder for l1 and l2 until we have the real values from the zipfile
             clara_project = CLARAProject(title=title, user=request.user, l2='english', l1='english')
@@ -715,41 +773,14 @@ def import_project(request):
             clara_project.internal_id = internal_id
             clara_project.save()
 
-            # Create a new internal project from the zipfile
-            clara_project_internal, global_metadata = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id)
-            if clara_project_internal is None:
-                messages.error(request, "Failed to import project from zipfile.")
-                return render(request, 'clara_app/import_project.html', {'form': form})
+            task_type = f'import_project_zipfile'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-            # Now that we have the real l1 and l2, use them to update clara_project. 
-            clara_project.l1 = clara_project_internal.l1_language
-            clara_project.l2 = clara_project_internal.l2_language
-            clara_project.save()
+            async_task(import_project_from_zip_file, zip_file, clara_project.id, internal_id, callback=callback)
 
-            # Update human audio info from the global metadata, which looks like this:
-            #{
-            #  "human_voice_id": "mannyrayner",
-            #  "human_voice_id_phonetic": "mannyrayner",
-            #  "audio_type_for_words": "human",
-            #  "audio_type_for_segments": "tts"
-            #}
-            if global_metadata and isinstance(global_metadata, dict):
-                if "human_voice_id" in global_metadata and global_metadata["human_voice_id"]:                       
-                    plain_human_audio_info, plain_created = HumanAudioInfo.objects.get_or_create(project=clara_project)
-                    plain_human_audio_info.voice_talent_id = global_metadata["human_voice_id"]
-                    plain_human_audio_info.use_for_words = True if global_metadata["audio_type_for_words"] == 'human' else False
-                    plain_human_audio_info.use_for_segments = True if global_metadata["audio_type_for_segments"] == 'human' else False
-                    plain_human_audio_info.save()
-                    
-                if "human_voice_id_phonetic" in global_metadata and global_metadata["human_voice_id_phonetic"]:   
-                    phonetic_human_audio_info, phonetic_created = PhoneticHumanAudioInfo.objects.get_or_create(project=clara_project)
-                    phonetic_human_audio_info.voice_talent_id = global_metadata["human_voice_id_phonetic"]
-                    phonetic_human_audio_info.use_for_words = True
-                    phonetic_human_audio_info.save()
+            # Redirect to the monitor view, passing the task ID and report ID as parameters
+            return redirect('import_project_monitor', clara_project.id, report_id)
 
-            print(f'--- Created project: id={clara_project.id}, internal_id={internal_id}')
-
-            return redirect('project_detail', project_id=clara_project.id)
         else:
             # The form data was invalid. Re-render the form with error messages.
             return render(request, 'clara_app/import_project.html', {'form': form})
@@ -758,6 +789,38 @@ def import_project(request):
         form = ProjectImportForm()
         return render(request, 'clara_app/import_project.html', {'form': form})
 
+@login_required
+@user_has_a_project_role
+def import_project_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+# Render the monitoring page, which will use JavaScript to poll the task status API
+@login_required
+@user_has_a_project_role
+def import_project_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/import_project_monitor.html',
+                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+
+# Confirm the final result of importing the prouect
+@login_required
+@user_has_a_project_role
+def import_project_complete(request, project_id, status):
+    if status == 'error':
+        messages.error(request, "Something went wrong when importing the project. Try looking at the 'Recent task updates' view")
+        return redirect('import_project')
+    else:
+        messages.success(request, "Project imported successfully")
+        return redirect('project_detail', project_id=project_id)
+        
 # Create a clone of a project        
 @login_required
 @user_has_a_project_role
@@ -1408,7 +1471,7 @@ def process_ldt_zipfile_complete(request, project_id, status):
     if succeeded:
         messages.success(request, "LiteDevTools zipfile processed successfully!")
     else:
-        messages.error(request, "Something went wrong when installing LiteDevTools zipfile")
+        messages.error(request, "Something went wrong when installing LiteDevTools zipfile. Try looking at the 'Recent task updates' view")
         
     return render(request, 'clara_app/process_ldt_zipfile_complete.html',
                   {'project': project})
@@ -1426,7 +1489,7 @@ def process_manual_alignment_complete(request, project_id, status):
     if succeeded:
         messages.success(request, "Manual alignment data processed successfully!")
     else:
-        messages.error(request, "Something went wrong when trying to install manual alignment data")
+        messages.error(request, "Something went wrong when trying to install manual alignment data. Try looking at the 'Recent task updates' view")
         
     return render(request, 'clara_app/process_manual_alignment_complete.html',
                   {'project': project})
@@ -1764,7 +1827,7 @@ def generate_text_complete(request, project_id, version, status):
     # We got here from the monitor view
     else:
         if status == 'error':
-            messages.error(request, f'Something went wrong when creating {version} text')
+            messages.error(request, f"Something went wrong when creating {version} text. Try looking at the 'Recent task updates' view")
         else:
             messages.success(request, f'Created {version} text')
         
@@ -2157,7 +2220,7 @@ def make_export_zipfile_complete(request, project_id, status):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     if status == 'error':
         succeeded = False
-        messages.error(request, "Unable to create export zipfile")
+        messages.error(request, "Unable to create export zipfile. Try looking at the 'Recent task updates' view")
     else:
         succeeded = True
         messages.success(request, f'Export zipfile created')
@@ -2309,12 +2372,12 @@ def render_text_complete(request, project_id, phonetic_or_normal, status):
         zipfile_url = None
         # Create the form for registering the project content
         register_form = RegisterAsContentForm()
-        messages.success(request, f'Rendered text found')
+        messages.success(request, f'Rendered text created')
     else:
         content_url = None
         zipfile_url = None
         register_form = None
-        messages.error(request, "Rendered text not found")
+        messages.error(request, "Something went wrong when creating the rendered text. Try looking at the 'Recent task updates' view")
         
     return render(request, 'clara_app/render_text_complete.html', 
                   {'phonetic_or_normal': phonetic_or_normal,
