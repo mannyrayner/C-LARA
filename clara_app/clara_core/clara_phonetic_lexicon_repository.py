@@ -1,7 +1,8 @@
 from .clara_database_adapter import connect, localise_sql_query
 
 from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, basename, extension_for_file_path
-from .clara_utils import make_directory, directory_exists, local_directory_exists, make_local_directory, read_json_file, read_txt_file
+from .clara_utils import make_directory, directory_exists, local_directory_exists, make_local_directory
+from .clara_utils import read_json_file, read_txt_file, read_local_json_file, read_local_txt_file
 from .clara_utils import post_task_update
 
 from .clara_classes import InternalCLARAError
