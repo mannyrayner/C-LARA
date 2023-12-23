@@ -285,7 +285,7 @@ class AudioAnnotator:
         for page in text_obj.pages:
             for segment in page.segments:
                 segment_text = segment.to_text()
-                segment_file_path = segment_cache[segment_text] if segment_text in segment_cache else None
+                segment_file_path = segment_cache[segment_text] if segment_text in segment_cache else 'placeholder.mp3'
                 if segment_file_path and not string_has_no_audio_content(segment_text):
                     segment.annotations['tts'] = {
                         "engine_id": self.segment_engine_id,
