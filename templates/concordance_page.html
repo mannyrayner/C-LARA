@@ -22,12 +22,12 @@
 			  <span class="word {% if element.annotations.lemma == lemma %}concordance-highlight{% endif %}"
 					data-gloss="{{ element.annotations.gloss }}"
 					data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
-					data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
+					data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
 			{%- elif phonetic and element.annotations.phonetic -%}
 			  <span class="word {% if element.annotations.phonetic == lemma %}concordance-highlight{% endif %}"
 					data-gloss="{{ element.annotations.phonetic }}"
 					data-lemma="{{ element.annotations.phonetic|replace_punctuation }}" 
-					data-audio="{{ element.annotations.tts.file_path }}">{{ element.content }}</span>
+					data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
 	        {%- endif -%}
 		  {%- elif element.type == "NonWordText" -%}{{ element.content }}
 		  {%- elif element.type == "Image" -%} 
