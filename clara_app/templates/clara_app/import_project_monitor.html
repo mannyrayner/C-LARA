@@ -1,0 +1,46 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+    <h2>Importing project ("{{ project.title }}")</h2>
+  
+    <div class="status-messages-class" id="status-messages">
+    </div>
+  
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script>
+		var interval_id = setInterval(getTaskStatus, 5000);  // Call getTaskStatus every 5 seconds
+
+		function getTaskStatus() {
+			$.ajax({
+				url: "{% url 'import_project_status' project_id report_id %}",  // The URL of the make_export_zipfile_status endpoint
+				type: "get",
+				success: function(response) {
+					// Check if there are new messages
+					if (response.messages.length > 0) {
+						// Add the latest messages to the status messages element
+						response.messages.forEach(function(message) {
+							$("#status-messages").append("<p>" + message + "</p>");
+						});
+					} else {
+						// If no new messages, add a placeholder message
+						$("#status-messages").append("<p>[No updates for last 5 seconds]</p>");
+					}
+
+					// Scroll to the bottom of the div
+					$("#status-messages").animate({ scrollTop: $('#status-messages')[0].scrollHeight}, "fast");
+
+
+					// If the task is finished, stop polling the server and redirect to the 'complete' view
+					if (response.status == 'finished') {
+						clearInterval(interval_id);
+						window.location = "{% url 'import_project_complete' project_id 'finished' %}";
+					} else if (response.status == 'error') {
+						clearInterval(interval_id);
+						window.location = "{% url 'import_project_complete' project_id 'error' %}";
+					}
+				}
+			});
+		}
+</script>
+
+{% endblock %}

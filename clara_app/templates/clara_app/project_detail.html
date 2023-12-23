@@ -25,7 +25,7 @@
 	<p><a href="{% url 'render_text_start_phonetic' project.id %}" {% if not can_render_phonetic %}class="disabled-link"{% endif %}>Render Phonetic Text</a></p>
 	<p><a href="{% url 'offer_to_register_content_normal' project.id %}" {% if not rendered_html_exists %}class="disabled-link"{% endif %}>Register Rendered Text</a></p>
 	<p><a href="{% url 'offer_to_register_content_phonetic' project.id %}" {% if not rendered_phonetic_html_exists %}class="disabled-link"{% endif %}>Register Rendered Phonetic Text</a></p>
-	<p><a href="{% url 'make_export_zipfile' project.id %}" {% if not rendered_html_exists and not rendered_phonetic_html_exists %}class="disabled-link"{% endif %}>Export zipfile</a></p>
+	<p><a href="{% url 'make_export_zipfile' project.id %}">Export zipfile</a></p>
 	<p><a href="{% url 'compare_versions' project.id %}">Compare Text Versions</a></p>
 	<p><a href="{% url 'project_history' project.id %}">View Project History</a></p>
 	<p><a href="{% url 'manage_project_members' project.id %}">Manage Project Members</a></p>
