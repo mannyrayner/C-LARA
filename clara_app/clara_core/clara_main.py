@@ -233,8 +233,8 @@ class CLARAProjectInternal:
             tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
             rename_files_in_project_dir(tmp_project_dir, new_id)
             project = cls.from_directory(tmp_project_dir)
-            update_metadata_file_paths(project, project.project_dir)
-            update_multimedia_from_imported_directory(project, tmp_dir)
+            update_metadata_file_paths(project, project.project_dir, callback=callback)
+            update_multimedia_from_imported_directory(project, tmp_dir, callback=callback)
             global_metadata = get_global_metadata(tmp_dir)
             return ( project, global_metadata )
         except Exception as e:
