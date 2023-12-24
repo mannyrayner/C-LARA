@@ -7,6 +7,7 @@ from .clara_audio_annotator import AudioAnnotator
 from .clara_audio_repository import AudioRepository
 from .clara_image_repository import ImageRepository
 
+from pathlib import Path
 import os
 import tempfile
 import traceback
@@ -160,6 +161,42 @@ def rename_files_in_project_dir(tmp_project_dir, new_id):
             if file.endswith(f'{subdir}.txt'):
                 rename_file(os.path.join(abs_dir, subdir, file),
                             os.path.join(abs_dir, subdir, f'{new_id}_{subdir}.txt'))
+
+def update_metadata_file_paths(clara_project_internal, tmp_project_dir, callback=None):
+    try:
+        # Read the existing metadata
+        metadata_file_path = os.path.join(tmp_project_dir, 'metadata.json')
+        if not local_file_exists(metadata_file_path):
+            post_task_update(callback, f"Error: metadata file {metadata_file_path} not found")
+            return False
+
+        project_id = clara_project_internal.id
+        metadata = read_json_local_file(metadata_file_path)
+
+        # Update the 'file' field in each metadata entry
+        for entry in metadata:
+            if 'file' in entry:
+                # Split the path
+                pathname = entry['file']
+                path_parts = Path(pathname).parts
+                clara_project_index = path_parts.index('clara_content') + 1
+                # Get the old project name
+                old_project_id = path_parts[clara_project_index]
+                # Replace old project id with new one
+                pathname_with_project_id_fixed = pathname.replace(old_project_id, project_id)
+                # Split again
+                path_parts_with_project_id_fixed = Path(pathname_with_project_id_fixed).parts
+                # Replace the beginning, up to 'clara_content', with the local values
+                new_path_parts = ['$CLARA', 'clara_content'] + list(path_parts_with_project_id_fixed[clara_project_index:])
+                entry['file'] = str(Path(*new_path_parts))
+
+        # Write the updated metadata back to the file
+        write_json_to_local_file(metadata, metadata_file_path)
+
+        return True
+    except Exception as e:
+        post_task_update(callback, f"Error updating metadata file paths: {str(e)}\n{traceback.format_exc()}")
+        return False
 
 def update_multimedia_from_imported_directory(project, temp_dir, callback=None):
     update_images_from_imported_directory(project, temp_dir, callback=callback)

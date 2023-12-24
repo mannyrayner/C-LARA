@@ -143,7 +143,7 @@ from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
-from .clara_export_import import get_global_metadata, rename_files_in_project_dir
+from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
@@ -234,6 +234,7 @@ class CLARAProjectInternal:
             rename_files_in_project_dir(tmp_project_dir, new_id)
             project = cls.from_directory(tmp_project_dir)
             update_multimedia_from_imported_directory(project, tmp_dir)
+            update_metadata_file_paths(project, tmp_dir)
             global_metadata = get_global_metadata(tmp_dir)
             return ( project, global_metadata )
         except Exception as e:
