@@ -705,7 +705,7 @@ def import_project_from_zip_file(zip_file, project_id, internal_id, callback=Non
         post_task_update(callback, f"--- Found uploaded file {zip_file}")
 
         # Create a new internal project from the zipfile
-        clara_project_internal, global_metadata = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id)
+        clara_project_internal, global_metadata = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id, callback=callback)
         if clara_project_internal is None:
             post_task_update(callback, f"Error: unable to create internal project")
             post_task_update(callback, f"error")
