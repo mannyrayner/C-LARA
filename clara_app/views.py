@@ -1140,10 +1140,10 @@ def human_audio_processing(request, project_id):
                             text = form.cleaned_data.get('text')
                             uploaded_audio_file_path = form.cleaned_data.get('audio_file_path')
                             real_audio_file_path = uploaded_file_to_file(uploaded_audio_file_path)
-                            print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
+                            #print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
                             stored_audio_file_path = audio_repository.store_mp3('human_voice', project.l2, human_voice_id, real_audio_file_path)
                             audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path)
-                            print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
+                            #print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
                             n_files_uploaded += 1
                                 
                 messages.success(request, f"{n_files_uploaded} audio files uploaded from {len(formset)} items")
@@ -1161,9 +1161,6 @@ def human_audio_processing(request, project_id):
                         print(f"--- Found uploaded file {zip_file}")
                         # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
                         copy_local_file_to_s3_if_necessary(zip_file)
-                        # Create a callback
-                        #report_id = uuid.uuid4()
-                        #callback = [post_task_update_in_db, report_id]
                         task_type = f'process_ldt_zipfile'
                         callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
@@ -2220,6 +2217,7 @@ def make_export_zipfile_complete(request, project_id, status):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     if status == 'error':
         succeeded = False
+        presigned_url = None
         messages.error(request, "Unable to create export zipfile. Try looking at the 'Recent task updates' view")
     else:
         succeeded = True
