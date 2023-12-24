@@ -162,12 +162,12 @@ def rename_files_in_project_dir(tmp_project_dir, new_id):
                 rename_file(os.path.join(abs_dir, subdir, file),
                             os.path.join(abs_dir, subdir, f'{new_id}_{subdir}.txt'))
 
-def update_metadata_file_paths(clara_project_internal, tmp_project_dir, callback=None):
+def update_metadata_file_paths(clara_project_internal, project_dir, callback=None):
     try:
         # Read the existing metadata
-        metadata_file_path = os.path.join(tmp_project_dir, 'metadata.json')
+        metadata_file_path = os.path.join(project_dir, 'metadata.json')
         if not local_file_exists(metadata_file_path):
-            post_task_update(callback, f"Error: metadata file {metadata_file_path} not found")
+            post_task_update(callback, f"Warning: metadata file {metadata_file_path} not found, cannot update")
             return False
 
         project_id = clara_project_internal.id
@@ -188,10 +188,12 @@ def update_metadata_file_paths(clara_project_internal, tmp_project_dir, callback
                 path_parts_with_project_id_fixed = Path(pathname_with_project_id_fixed).parts
                 # Replace the beginning, up to 'clara_content', with the local values
                 new_path_parts = ['$CLARA', 'clara_content'] + list(path_parts_with_project_id_fixed[clara_project_index:])
-                entry['file'] = str(Path(*new_path_parts))
+                new_path = str(Path(*new_path_parts))
+                entry['file'] = new_path
 
         # Write the updated metadata back to the file
         write_json_to_local_file(metadata, metadata_file_path)
+        post_task_update(callback, f"Updated metadata file for project '{clara_project_internal.id}': {metadata_file_path}")
 
         return True
     except Exception as e:
