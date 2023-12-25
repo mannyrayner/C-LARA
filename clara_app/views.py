@@ -2581,7 +2581,7 @@ def serve_export_zipfile(request, project_id):
 
     #return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
 
-@login_required
+#@login_required
 def serve_project_image(request, project_id, base_filename):
     file_path = absolute_file_name(Path(image_dir_for_project_id(project_id)) / base_filename)
     if file_exists(file_path):
