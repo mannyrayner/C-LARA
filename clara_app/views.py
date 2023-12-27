@@ -33,7 +33,8 @@ from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet
 from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
-from .utils import post_task_update_in_db, get_task_updates, delete_all_tasks
+from .utils import post_task_update_in_db, get_task_updates
+#from .utils import delete_all_tasks
 from .utils import uploaded_file_to_file
 
 from .clara_core.clara_main import CLARAProjectInternal
@@ -139,11 +140,20 @@ def user_config(request):
 
     return render(request, 'clara_app/user_config.html', {'form': form})
 
-# Credit balance for money spent on API calls    
+# Credit balance for money spent on API calls
+
+# Old version: incorrect, since people can get back credit by deleting projects
+##@login_required
+##def credit_balance(request):
+##    total_cost = get_user_api_cost(request.user)
+##    credit_balance = request.user.userprofile.credit - total_cost  
+##    return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance})
+
+# New version: charge calls at once
+
 @login_required
 def credit_balance(request):
-    total_cost = get_user_api_cost(request.user)
-    credit_balance = request.user.userprofile.credit - total_cost  
+    credit_balance = request.user.userprofile.credit
     return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance})
 
 # Allow an admin to manually reset the password on an account
@@ -2581,7 +2591,6 @@ def serve_export_zipfile(request, project_id):
 
     #return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
 
-#@login_required
 def serve_project_image(request, project_id, base_filename):
     file_path = absolute_file_name(Path(image_dir_for_project_id(project_id)) / base_filename)
     if file_exists(file_path):

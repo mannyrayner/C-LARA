@@ -2,8 +2,9 @@
 from django.db.models import Sum
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
-from django_q.models import OrmQ
+#from django_q.models import OrmQ
 
 from functools import wraps
 from decimal import Decimal
@@ -14,7 +15,10 @@ import tempfile
 import hashlib
 import uuid
 
-from .models import CLARAProject, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
+
+from .models import CLARAProject, User, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
+
+from .clara_core.clara_utils import write_json_to_file_plain_utf8, read_json_file
 
 import re
 
@@ -73,15 +77,35 @@ def get_task_updates(report_id):
     
     return messages
 
-def delete_all_tasks():
-    OrmQ.objects.all().delete()
-    time.sleep(1)
+##def delete_all_tasks():
+##    OrmQ.objects.all().delete()
+##    time.sleep(1)
 
 # Create internal_id by sanitizing the project title and appending the project_id
 def create_internal_project_id(title, project_id):
     return re.sub(r'\W+', '_', title) + '_' + str(project_id)
 
+# Old version: incorrect, since people can get back credit by deleting projects
+
+##def store_api_calls(api_calls, project, user, operation):
+##    for api_call in api_calls:
+##        timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
+##        APICall.objects.create(
+##            user=user,
+##            project=project,
+##            operation=operation,
+##            cost=api_call.cost,
+##            duration=api_call.duration,
+##            retries=api_call.retries,
+##            prompt=api_call.prompt,
+##            response=api_call.response,
+##            timestamp=timestamp,
+##        )
+
+# New version: charge calls at once
+
 def store_api_calls(api_calls, project, user, operation):
+    user_profile = user.userprofile
     for api_call in api_calls:
         timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
         APICall.objects.create(
@@ -95,15 +119,55 @@ def store_api_calls(api_calls, project, user, operation):
             response=api_call.response,
             timestamp=timestamp,
         )
+        # Deduct the cost from the user's credit balance
+        user_profile.credit -= api_call.cost
+        user_profile.save()
+
 
 def get_user_api_cost(user):
     total_cost = APICall.objects.filter(user=user).aggregate(Sum('cost'))
     return total_cost['cost__sum'] if total_cost['cost__sum'] is not None else 0
-    
+
+# Temporary function for making credit balances consistent with new scheme of
+# charging calls immediately to credit balance.
+def update_credit_balances():
+    for user in User.objects.all():
+        total_cost = get_user_api_cost(user)
+        user_profile = user.userprofile
+        user_profile.credit -= total_cost
+        user_profile.save()
+
+def backup_credit_balances():
+    backup_data = []
+    for user in User.objects.all():
+        total_cost = get_user_api_cost(user)
+        credit_balance = user.userprofile.credit
+        backup_data.append({
+            'user_id': user.id,
+            'username': user.username,
+            'credit_balance': str(credit_balance),  # Convert Decimal to string for JSON serialization
+            'total_cost': str(total_cost),
+        })
+
+    backup_file = f"$CLARA/tmp/credit_backup_{timezone.now().strftime('%Y%m%d_%H%M%S')}.json"
+    write_json_to_file_plain_utf8(backup_data, backup_file)
+
+    return backup_file
+
+def restore_credit_balances(backup_file):
+    backup_data = read_json_file(backup_file)
+
+    for data in backup_data:
+        user = User.objects.get(id=data['user_id'])
+        user_profile = user.userprofile
+        user_profile.credit = Decimal(data['credit_balance'])
+        user_profile.save()
+
+ 
 def get_project_api_cost(user, project):
     total_cost = APICall.objects.filter(user=user, project=project).aggregate(Sum('cost'))
     return total_cost['cost__sum'] if total_cost['cost__sum'] is not None else 0
-    
+   
 def get_project_operation_costs(user, project):
     operation_costs = APICall.objects.filter(user=user, project=project).values('operation').annotate(total=Sum('cost'))
     return {item['operation']: item['total'] for item in operation_costs}
