@@ -228,15 +228,17 @@ def transfer_credit(request):
             }
 
             # Send confirmation email
+            recipient_email = request.user.email
             send_mail(
                 'Confirm Credit Transfer',
                 f'Please confirm your credit transfer of {amount} to {recipient.username} using this code: {confirmation_code}',
                 'clara-no-reply@unisa.edu.au',
-                [request.user.email],
+                [recipient_email],
                 fail_silently=False,
             )
 
-            messages.info(request, f'A confirmation email has been sent to {request.user.email}. Please check your email to complete the transfer.')
+            anonymised_email = recipient_email[0:3] + '*' * ( len(recipient_email) - 10 ) + recipient_email[-7:]
+            messages.info(request, f'A confirmation email has been sent to {anonymised_email}. Please check your email to complete the transfer.')
             return redirect('confirm_transfer')
     else:
         form = AddCreditForm()
@@ -272,7 +274,7 @@ def confirm_transfer(request):
             # Clear the transfer details from the session
             del request.session['credit_transfer']
 
-            messages.success(request, f'Credit transfer of {amount} to {recipient.username} completed successfully.')
+            messages.success(request, f'Credit transfer of USD {amount} to {recipient.username} completed successfully.')
             return redirect('transfer_credit')
     else:
         form = ConfirmTransferForm()
