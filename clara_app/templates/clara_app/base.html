@@ -46,6 +46,7 @@
 		  <li><a href="{% url 'edit_profile' %}">Edit user profile</a></li>
 		  <li><a href="{% url 'user_config' %}">Set GPT-4 version</a></li>
 		  <li><a href="{% url 'credit_balance' %}">Credit balance for ChatGPT-4 API calls</a></li>
+		  <li><a href="{% url 'transfer_credit' %}">Transfer credit to another user</a></li>
 		  <li><a href="{% url 'view_task_updates' %}">Recent task updates</a></li>
 		  {% if user.userprofile.is_admin %}
 		  <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>

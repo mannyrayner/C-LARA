@@ -1,0 +1,13 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Transfer Credit{% endblock %}
+
+{% block content %}
+  <h2>Transfer Credit</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Transfer Credit</button>
+  </form>
+{% endblock %}
+
