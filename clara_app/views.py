@@ -210,12 +210,12 @@ def transfer_credit(request):
                 recipient = User.objects.get(username=recipient_username)
             except User.DoesNotExist:
                 messages.error(request, 'User not found.')
-                return render(request, 'transfer_credit.html', {'form': form})
+                return render(request, 'clara_app/transfer_credit.html', {'form': form})
 
             # Check if user has enough credit
             if request.user.userprofile.credit < amount:
                 messages.error(request, 'Insufficient credit.')
-                return render(request, 'transfer_credit.html', {'form': form})
+                return render(request, 'clara_app/transfer_credit.html', {'form': form})
 
             # Generate a unique confirmation code
             confirmation_code = str(uuid.uuid4())
