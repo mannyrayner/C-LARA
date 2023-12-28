@@ -236,7 +236,7 @@ def transfer_credit(request):
                 fail_silently=False,
             )
 
-            messages.info(request, 'A confirmation email has been sent to {request.user.email}. Please check your email to complete the transfer.')
+            messages.info(request, f'A confirmation email has been sent to {request.user.email}. Please check your email to complete the transfer.')
             return redirect('confirm_transfer')
     else:
         form = AddCreditForm()
