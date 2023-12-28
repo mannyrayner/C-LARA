@@ -11,6 +11,7 @@ from django import forms
 from django.db.models import Avg, Q
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
 from django.utils import timezone
 
 from .models import UserProfile, UserConfiguration, LanguageMaster, Content, TaskUpdate
@@ -22,7 +23,8 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserProfileForm, AdminPasswordResetForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, DeleteTTSDataForm, AudioMetadataForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
+from .forms import DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
@@ -191,6 +193,91 @@ def add_credit(request):
     else:
         form = AddCreditForm()
     return render(request, 'clara_app/add_credit.html', {'form': form})
+
+from django.core.mail import send_mail
+import uuid
+
+@login_required
+def transfer_credit(request):
+    if request.method == 'POST':
+        form = AddCreditForm(request.POST)
+        if form.is_valid():
+            recipient_username = form.cleaned_data['user']
+            amount = form.cleaned_data['credit']
+
+            # Check if recipient exists
+            try:
+                recipient = User.objects.get(username=recipient_username)
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+                return render(request, 'transfer_credit.html', {'form': form})
+
+            # Check if user has enough credit
+            if request.user.userprofile.credit < amount:
+                messages.error(request, 'Insufficient credit.')
+                return render(request, 'transfer_credit.html', {'form': form})
+
+            # Generate a unique confirmation code
+            confirmation_code = str(uuid.uuid4())
+
+            # Store the transfer details and confirmation code in the session
+            request.session['credit_transfer'] = {
+                'recipient_id': recipient.id,
+                'amount': str(amount),  # Convert Decimal to string for session storage
+                'confirmation_code': confirmation_code,
+            }
+
+            # Send confirmation email
+            send_mail(
+                'Confirm Credit Transfer',
+                f'Please confirm your credit transfer of {amount} to {recipient.username} using this code: {confirmation_code}',
+                'from@example.com',
+                [request.user.email],
+                fail_silently=False,
+            )
+
+            messages.info(request, 'A confirmation email has been sent. Please check your email to complete the transfer.')
+            return redirect('confirm_transfer')
+    else:
+        form = AddCreditForm()
+
+    return render(request, 'clara_app/transfer_credit.html', {'form': form})
+
+@login_required
+def confirm_transfer(request):
+    if request.method == 'POST':
+        form = ConfirmTransferForm(request.POST)
+        if form.is_valid():
+            confirmation_code = form.cleaned_data['confirmation_code']
+
+            # Retrieve transfer details from the session
+            transfer_details = request.session.get('credit_transfer')
+            if not transfer_details:
+                messages.error(request, 'Transfer details not found.')
+                return redirect('transfer_credit')
+
+            # Check if the confirmation code matches
+            if confirmation_code != transfer_details['confirmation_code']:
+                messages.error(request, 'Invalid confirmation code.')
+                return render(request, 'confirm_transfer.html', {'form': form})
+
+            # Complete the transfer
+            recipient = User.objects.get(id=transfer_details['recipient_id'])
+            amount = Decimal(transfer_details['amount'])
+            request.user.userprofile.credit -= amount
+            request.user.userprofile.save()
+            recipient.userprofile.credit += amount
+            recipient.userprofile.save()
+
+            # Clear the transfer details from the session
+            del request.session['credit_transfer']
+
+            messages.success(request, f'Credit transfer of {amount} to {recipient.username} completed successfully.')
+            return redirect('transfer_credit')
+    else:
+        form = ConfirmTransferForm()
+
+    return render(request, 'clara_app/confirm_transfer.html', {'form': form})
 
 def delete_tts_data_for_language(language, callback=None):
     post_task_update(callback, f"--- Starting delete task for language {language}")

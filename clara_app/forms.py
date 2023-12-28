@@ -103,6 +103,9 @@ class AddCreditForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
     credit = forms.DecimalField()
 
+class ConfirmTransferForm(forms.Form):
+    confirmation_code = forms.CharField(label='Confirmation Code', max_length=100)
+
 class CreateAnnotatedTextForm(forms.Form):
     text_choice = forms.ChoiceField(
         choices=[
