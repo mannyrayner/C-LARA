@@ -231,12 +231,12 @@ def transfer_credit(request):
             send_mail(
                 'Confirm Credit Transfer',
                 f'Please confirm your credit transfer of {amount} to {recipient.username} using this code: {confirmation_code}',
-                'from@example.com',
+                'clara-no-reply@unisa.edu.au',
                 [request.user.email],
                 fail_silently=False,
             )
 
-            messages.info(request, 'A confirmation email has been sent. Please check your email to complete the transfer.')
+            messages.info(request, 'A confirmation email has been sent to {request.user.email}. Please check your email to complete the transfer.')
             return redirect('confirm_transfer')
     else:
         form = AddCreditForm()
