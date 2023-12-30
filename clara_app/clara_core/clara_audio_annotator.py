@@ -32,13 +32,19 @@ import traceback
 import regex
 
 class AudioAnnotator:
-    def __init__(self, language, tts_engine_type=None, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
+    def __init__(self, language, tts_engine_type=None, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts',
+                 phonetic=False, callback=None):
         self.language = language
         # For TTS
-        self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, callback=callback)
+        self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, phonetic=False, callback=callback)
         self.engine_id = self.tts_engine.tts_engine_type if self.tts_engine else None
         self.voice_id = get_default_voice(language, self.tts_engine) if self.tts_engine else None
         self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
+
+        self.phonetic_tts_engine = get_tts_engine(language, phonetic=True, callback=callback) if phonetic else None
+        self.phonetic_engine_id = self.phonetic_tts_engine.tts_engine_type if self.phonetic_tts_engine else None
+        self.phonetic_voice_id = get_default_voice(language, self.phonetic_tts_engine) if self.phonetic_tts_engine else None
+        self.phonetic_language_id = get_language_id(language, self.phonetic_tts_engine) if self.phonetic_tts_engine else None
         # For human audio
         self.human_voice_id = human_voice_id
         # Common
@@ -60,11 +66,12 @@ class AudioAnnotator:
         if self.audio_type_for_words == 'human' and not self.human_voice_id:
             raise InternalCLARAError(message = "Human audio type specified for words, but no human_voice_id provided.")
 
-        # Set word- and segment-based engine, language, and voice IDs based on audio types
+        # Set word- and segment-based engine, language, and voice IDs based on audio types and whether or not it's a phonetic text
+        # If it's a phonetic text, we may be using the phonetic TTS engine to create phoneme audio
         if self.audio_type_for_words == 'tts':
-            self.word_engine_id = self.engine_id
-            self.word_language_id = self.language_id
-            self.word_voice_id = self.voice_id
+            self.word_engine_id = self.phonetic_engine_id if phonetic else self.engine_id
+            self.word_language_id = self.phonetic_language_id if phonetic else self.language_id
+            self.word_voice_id = self.phonetic_voice_id if phonetic else self.voice_id
         else:
             self.word_engine_id = 'human_voice'
             self.word_language_id = self.language
@@ -89,22 +96,18 @@ class AudioAnnotator:
         words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
         missing_words, missing_segments = self._get_missing_audio(words_data, segments_data, phonetic=phonetic, callback=callback)
 
-        if self.engine_id and missing_words and self.audio_type_for_words == 'tts':
-            # Don't try to use TTS for phonetic "words" (actually letter groups), it is not likely to work
-            if phonetic:
-                post_task_update(callback, f"--- Do not try to use TTS to create audio for phonetic letter groups")
-                new_words_data = []
-            else:
-                post_task_update(callback, f"--- Creating TTS audio for words")
-                new_words_data = self._create_and_store_missing_mp3s(missing_words, 'words', callback=callback)
-                post_task_update(callback, f"--- TTS audio for words created")
+        if self.audio_type_for_words == 'tts' and self.word_engine_id and missing_words and self.audio_type_for_words == 'tts':
+            external_name_for_words = 'phonemes' if phonetic else 'words'
+            post_task_update(callback, f"--- Creating TTS audio for {external_name_for_words}")
+            new_words_data = self._create_and_store_missing_mp3s(missing_words, 'words', phonetic=phonetic, callback=callback)
+            post_task_update(callback, f"--- TTS audio for words created")
         else:
             new_words_data = []
 
-        if self.engine_id and missing_segments and self.audio_type_for_segments == 'tts':
+        if self.audio_type_for_segments == 'tts' and self.segment_engine_id and missing_segments and self.audio_type_for_segments == 'tts':
             external_name_for_segments = 'words' if phonetic else 'segments'
             post_task_update(callback, f"--- Creating TTS audio for {external_name_for_segments}")
-            new_segments_data = self._create_and_store_missing_mp3s(missing_segments, 'segments', callback=callback)
+            new_segments_data = self._create_and_store_missing_mp3s(missing_segments, 'segments', phonetic=phonetic, callback=callback)
             post_task_update(callback, f"--- TTS audio for {external_name_for_segments} created")
         else:
             new_segments_data = []
@@ -147,6 +150,12 @@ class AudioAnnotator:
 
         segments_and_file_paths = [ [ item[0], segment_file_paths[item[1]] ] for item in segments_data ]
         words_and_file_paths = [ [ item[0], word_file_paths[item[1]] ] for item in words_data ]
+
+        words_and_file_paths = remove_duplicates_general(words_and_file_paths)
+        if phonetic:
+            segments_and_file_paths = remove_duplicates_general(segments_and_file_paths)
+
+        #print(f'--- words_and_file_paths = {words_and_file_paths}')
         
         return words_and_file_paths, segments_and_file_paths
 
@@ -170,10 +179,11 @@ class AudioAnnotator:
         segments_metadata = [{"segment": canonical_text_for_audio(segment_data[0]), "file": segment_data[1]}
                              for segment_data in segments_data
                              if segment_data[0]]
-        
-        words_metadata = remove_duplicates_general(words_metadata)
-        if phonetic:
-            segments_metadata = remove_duplicates_general(segments_metadata)
+
+        # Do this earlier in _get_all_audio_data
+        #words_metadata = remove_duplicates_general(words_metadata)
+        #if phonetic:
+        #    segments_metadata = remove_duplicates_general(segments_metadata)
 
         if format != 'default':
             words_metadata = [ format_audio_metadata_item(item, format, 'words') for item in words_metadata ]
@@ -186,7 +196,15 @@ class AudioAnnotator:
         else:
             return { 'words': words_metadata, 'segments': segments_metadata }
 
-    def _create_and_store_missing_mp3s(self, text_items, words_or_segments, callback=None):
+    def _create_and_store_missing_mp3s(self, text_items, words_or_segments, phonetic=False, callback=None):
+        # We use phonetic_tts_engine if we have a phonetic text and we are creating audio for the "words", i.e. the grapheme groups
+        # Otherwise use tts_engine
+        tts_engine_to_use = self.phonetic_tts_engine if phonetic and words_or_segments == 'words' else self.tts_engine
+        engine_id_to_use = tts_engine_to_use.tts_engine_type
+        language_id_to_use = get_language_id(self.language, tts_engine=tts_engine_to_use)
+        voice_id_to_use = get_default_voice(self.language, tts_engine=tts_engine_to_use)
+        post_task_update(callback, f"--- Using tts_engine={engine_id_to_use}, language_id={language_id_to_use}, voice_id={voice_id_to_use}")
+        
         temp_dir = tempfile.mkdtemp()
         text_file_paths = []
 
@@ -196,10 +214,11 @@ class AudioAnnotator:
             try:
                 unique_filename = f"{uuid.uuid4()}.mp3"
                 temp_file = os.path.join(temp_dir, unique_filename)
-                result = self.tts_engine.create_mp3(self.language_id, self.voice_id, canonical_text, temp_file, callback=callback)
+
+                result = tts_engine_to_use.create_mp3(language_id_to_use, voice_id_to_use, canonical_text, temp_file, callback=callback)
                 if result:
-                    file_path = self.audio_repository.store_mp3(self.engine_id, self.language_id, self.voice_id, temp_file)
-                    self.audio_repository.add_or_update_entry(self.engine_id, self.language_id, self.voice_id, canonical_text, file_path)
+                    file_path = self.audio_repository.store_mp3(engine_id_to_use, language_id_to_use, voice_id_to_use, temp_file)
+                    self.audio_repository.add_or_update_entry(engine_id_to_use, language_id_to_use, voice_id_to_use, canonical_text, file_path)
                 else:
                     file_path = None
                     post_task_update(callback, f"--- Failed to create mp3 for '{text}'")

@@ -861,7 +861,7 @@ def post_task_update(callback, message):
         callback_function, report_id, user_id, task_type = callback
         callback_function(report_id, user_id, task_type, message)
         #print(f"Posted task update: '{message}'")
-        print(f"Posted task update: '{message}' (user_id={user_id}, task_type={task_type}")
+        print(f"Posted task update: '{message}' (user_id={user_id}, task_type={task_type})")
     elif callback:
         print(f"Error: bad callback: {callback}. Must be a four element list.")
     else:

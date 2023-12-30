@@ -731,7 +731,8 @@ class CLARAProjectInternal:
         
         post_task_update(callback, f"--- Adding audio annotations")
         audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
-                                         audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, callback=callback)
+                                         audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                         phonetic=phonetic, callback=callback)
         audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"--- Audio annotations done")
 
@@ -777,7 +778,8 @@ class CLARAProjectInternal:
         if text_object:
             post_task_update(callback, f"--- Internalised text created")
             audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
-                                             audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, callback=callback)
+                                             audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                             phonetic=phonetic, callback=callback)
             return audio_annotator.generate_audio_metadata(text_object, type=type, format=format, phonetic=phonetic, callback=callback)
         else:
             post_task_update(callback, f"--- Cannot create internalised text (phonetic = {phonetic})")
@@ -793,7 +795,7 @@ class CLARAProjectInternal:
         else:
             post_task_update(callback, f'--- {zipfile} found')
         try:
-            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
+            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, phonetic=False, callback=callback)
             post_task_update(callback, f'--- Calling process_lite_dev_tools_zipfile')
             return audio_annotator.process_lite_dev_tools_zipfile(zipfile, callback=callback)
         except Exception as e:
@@ -826,7 +828,7 @@ class CLARAProjectInternal:
                 # It's JSON metadata
                 metadata = metadata_or_audacity_label_data
                 
-            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, callback=callback)
+            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, phonetic=False, callback=callback)
             post_task_update(callback, f'--- Calling process_manual_alignment')
             return audio_annotator.process_manual_alignment(metadata, audio_file, callback=callback)
         except Exception as e:

@@ -28,6 +28,8 @@ import tempfile
 import requests
 import base64
 import gtts
+import traceback
+import json
 
 config = get_config()
 
@@ -38,6 +40,7 @@ class TTSEngine:
 class ReadSpeakerEngine(TTSEngine):
     def __init__(self, api_key=None, base_url=None):
         self.tts_engine_type = 'readspeaker'
+        self.phonetic = False
         self.api_key = api_key or self.load_api_key()
         self.base_url = base_url or config.get('tts', 'readspeaker_base_url')
         self.languages = { 'english':
@@ -128,6 +131,7 @@ class ReadSpeakerEngine(TTSEngine):
 class GoogleTTSEngine(TTSEngine):
     def __init__(self):
         self.tts_engine_type = 'google'
+        self.phonetic = False
         self.languages =  {'afrikaans': {'language_id': 'af', 'voices': ['default']},
                            'albanian': {'language_id': 'sq', 'voices': ['default']},
                            'arabic': {'language_id': 'ar', 'voices': ['default']},
@@ -233,6 +237,7 @@ class GoogleTTSEngine(TTSEngine):
 class ABAIREngine(TTSEngine):
     def __init__(self, base_url=None):
         self.tts_engine_type = 'abair'
+        self.phonetic = False
         self.base_url = base_url or config.get('tts', 'abair_base_url')
         self.languages = { 'irish':
                             {  'language_id': 'ga-IE',
@@ -267,7 +272,117 @@ class ABAIREngine(TTSEngine):
         else:
             return False
 
-TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), ReadSpeakerEngine()]
+## Use ipa-reader.xyz to create an mp3 for a piece of IPA text.
+##
+## Code slightly adapted from a solution found by Claudia
+
+class IPAReaderEngine(TTSEngine):
+    def __init__(self):
+        self.tts_engine_type = 'ipa_reader'
+        self.phonetic = True
+        self.execute_url = "https://iawll6of90.execute-api.us-east-1.amazonaws.com/production"
+        
+        self.languages = { 'irish':
+                            {  'language_id': 'ga-IE',
+                               'voices': [
+                                   'ga_UL_anb_nnmnkwii',
+                                   'ga_MU_nnc_nnmnkwii',
+                                   'ga_MU_cmg_nnmnkwii'                           
+                               ]
+                            }
+                          }
+        self.languages = { 'american': { 'language_id': 'american',
+                                         'voices': [ 'Salli',
+                                                     'Ivy',
+                                                     'Joanna',
+                                                     'Joey',
+                                                     'Justin',
+                                                     'Kendra',
+                                                     'Kimberley'
+                                                     ]
+                                         },
+                           'english': { 'language_id': 'american',
+                                         'voices': [ 'Emma',
+                                                     'Brian',
+                                                     'Amy'
+                                                     ]
+                                         },
+                           'australian': { 'language_id': 'australian',
+                                           'voices': [ 'Nicole',
+                                                       'Russell'
+                                                       ]
+                                           },
+                           'french': { 'language_id': 'french',
+                                       'voices': [ 'Celine',
+                                                   'Mathieu'
+                                                   ]
+                                       },
+                           'icelandic': { 'language_id': 'icelandic',
+                                          'voices': [ 'Dora',
+                                                      'Karl'
+                                                      ]
+                                          },
+                           'romanian': { 'language_id': 'romanian',
+                                         'voices': [ 'Carmen'
+                                                      ]
+                                         },
+                           'dutch': { 'language_id': 'romanian',
+                                      'voices': [ 'Lotte',
+                                                  'Ruben'
+                                                  ]
+                                      }
+                           }
+
+    def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
+        try:
+            payload = json.dumps({
+              #"text": "/ˈrɛnə(n)/",
+              "text": f"/{text}/",  
+              #"voice": "Ruben"
+              "voice": voice_id
+            })
+            
+            headers = {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+              'Accept': '*/*',
+              'Accept-Language': 'en-US,en;q=0.5',
+              'Accept-Encoding': 'gzip, deflate, br',
+              'Content-Type': 'application/json',
+              'Origin': 'http://ipa-reader.xyz',
+              'Connection': 'keep-alive',
+              'Referer': 'http://ipa-reader.xyz/',
+              'Sec-Fetch-Dest': 'empty',
+              'Sec-Fetch-Mode': 'cors',
+              'Sec-Fetch-Site': 'cross-site',
+              'TE': 'trailers'
+            }
+
+            response = requests.request("POST", self.execute_url, headers=headers, data=payload)
+
+            binary_data = response._content.decode('unicode_escape')
+
+            # Decode the base64-encoded binary data
+            decoded_data = base64.b64decode(binary_data)
+
+            abs_output_file = absolute_local_file_name(output_file)
+
+            with open(abs_output_file, "wb") as audio_file:
+                audio_file.write(decoded_data)
+
+            return True
+                
+        except requests.exceptions.RequestException as e:
+            post_task_update(callback, f"*** Warning: Network error while creating ipa-reader mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+        except IOError as e:
+            post_task_update(callback, f"*** Warning: IOError while saving ipa-reader mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+        except Exception as e:
+            post_task_update(callback, f"*** Warning: unable to create ipa-reader mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+
+
+TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
 
 def create_tts_engine(engine_type):
     if engine_type == 'readspeaker':
@@ -276,12 +391,14 @@ def create_tts_engine(engine_type):
         return GoogleTTSEngine()
     elif engine_type == 'abair':
         return ABAIREngine()
+    elif engine_type == 'ipa_reader':
+        return IPAReaderEngine()
     else:
         raise ValueError(f"Unknown TTS engine type: {engine_type}")
     
-def get_tts_engine(language, callback=None):
+def get_tts_engine(language, phonetic=False, callback=None):
     for tts_engine in TTS_ENGINES:
-        if language in tts_engine.languages:
+        if language in tts_engine.languages and tts_engine.phonetic == phonetic:
             post_task_update(callback, f"--- clara_tts_api found TTS engine of type '{tts_engine.tts_engine_type}'")
             return tts_engine
     return None
