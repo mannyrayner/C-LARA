@@ -8,6 +8,7 @@ Classes:
 - ReadSpeakerEngine: Derived class for ReadSpeaker TTS engine.
 - GoogleTTSEngine: Derived class for Google TTS engine.
 - ABAIREngine: Derived class for ABAIR TTS engine.
+- IPAReaderEngine: Derived class for ipa-reader phonetic TTS engine.
 
 Functions:
 - create_tts_engine(engine_type: str) -> TTSEngine:
@@ -282,15 +283,6 @@ class IPAReaderEngine(TTSEngine):
         self.phonetic = True
         self.execute_url = "https://iawll6of90.execute-api.us-east-1.amazonaws.com/production"
         
-        self.languages = { 'irish':
-                            {  'language_id': 'ga-IE',
-                               'voices': [
-                                   'ga_UL_anb_nnmnkwii',
-                                   'ga_MU_nnc_nnmnkwii',
-                                   'ga_MU_cmg_nnmnkwii'                           
-                               ]
-                            }
-                          }
         self.languages = { 'american': { 'language_id': 'american',
                                          'voices': [ 'Salli',
                                                      'Ivy',
@@ -318,8 +310,8 @@ class IPAReaderEngine(TTSEngine):
                                                    ]
                                        },
                            'icelandic': { 'language_id': 'icelandic',
-                                          'voices': [ 'Dora',
-                                                      'Karl'
+                                          'voices': [ 'Karl',
+                                                      'Dora'
                                                       ]
                                           },
                            'romanian': { 'language_id': 'romanian',
@@ -330,15 +322,63 @@ class IPAReaderEngine(TTSEngine):
                                       'voices': [ 'Lotte',
                                                   'Ruben'
                                                   ]
-                                      }
+                                      },
+                           'portuguese': { 'language_id': 'portuguese',
+                                           'voices': [ 'Cristiano',
+                                                       'Ines'
+                                                       ]
+                                      },
+                           'german': { 'language_id': 'german',
+                                       'voices': [ 'Marlene'
+                                                   ]
+                                      },
+                           'italian': { 'language_id': 'italian',
+                                        'voices': [ 'Carla',
+                                                    'Giorgio'
+                                                    ]
+                                      },
+                           'japanese': { 'language_id': 'japanese',
+                                         'voices': [ 'Mizuki'
+                                                     ]
+                                      },
+                           'norwegian': { 'language_id': 'norwegian',
+                                          'voices': [ 'Liv'
+                                                      ]
+                                      },
+                           'polish': { 'language_id': 'polish',
+                                       'voices': [ 'Maja',
+                                                   'Jan',
+                                                   'Ewa'
+                                                   ]
+                                      },
+                           'russian': { 'language_id': 'russian',
+                                        'voices': [ 'Maxim',
+                                                    'Tatyana'
+                                                    ]
+                                      },
+                           'spanish': { 'language_id': 'spanish',
+                                        'voices': [ 'Conchita'
+                                                    ]
+                                      },
+                           'swedish': { 'language_id': 'swedish',
+                                        'voices': [ 'Astrid'
+                                                    ]
+                                      },
+                           'turkish': { 'language_id': 'turkish',
+                                        'voices': [ 'Filiz'
+                                                    ]
+                                      },
+                           'welsh': { 'language_id': 'welsh',
+                                      'voices': [ 'Gwyneth'
+                                                    ]
+                                      },
+
                            }
 
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
         try:
             payload = json.dumps({
-              #"text": "/ˈrɛnə(n)/",
               "text": f"/{text}/",  
-              #"voice": "Ruben"
               "voice": voice_id
             })
             
