@@ -120,7 +120,7 @@ def store_api_calls(api_calls, project, user, operation):
             timestamp=timestamp,
         )
         # Deduct the cost from the user's credit balance
-        user_profile.credit -= api_call.cost
+        user_profile.credit -= Decimal(api_call.cost)
         user_profile.save()
 
 
