@@ -477,37 +477,51 @@ def edit_phonetic_lexicon(request):
                     else:
                         messages.error(request, f"No grapheme/phoneme data saved")
                 plain_words_saved = []
+                plain_words_deleted = []
                 for lexicon_form in plain_lexicon_formset:
                     if lexicon_form.is_valid():
-                        #print(f"plain: word: {lexicon_form.cleaned_data.get('word')}, phonemes: {lexicon_form.cleaned_data.get('phonemes')}, approved: {lexicon_form.cleaned_data.get('approved')}")
-                        if lexicon_form.cleaned_data.get('approve'):
-                            word = lexicon_form.cleaned_data.get('word')
-                            phonemes = lexicon_form.cleaned_data.get('phonemes')
+                        approve = lexicon_form.cleaned_data.get('approve')
+                        delete = lexicon_form.cleaned_data.get('delete')
+                        word = lexicon_form.cleaned_data.get('word')
+                        phonemes = lexicon_form.cleaned_data.get('phonemes')
+                        #print(f"plain: word: {word}, phonemes: {phonemes}, approve: {approve}, delete: {delete}")
+                        if approve:
                             phonetic_lexicon_repo.add_or_update_plain_entry(word, phonemes, language, 'reviewed')
-                            #messages.success(request, f"add_or_update_plain_entry({word}, {phonemes}, {language}, 'reviewed')")
                             plain_words_saved += [ word ]
+                        elif delete:
+                            phonetic_lexicon_repo.delete_plain_entry(word, phonemes, language)
+                            plain_words_deleted += [ word ]
                 if len(plain_words_saved) != 0:
                     messages.success(request, f"{len(plain_words_saved)} plain lexicon entries saved: {', '.join(plain_words_saved)}")
+                if len(plain_words_deleted) != 0:
+                    messages.success(request, f"{len(plain_words_deleted)} plain lexicon entries deleted: {', '.join(plain_words_deleted)}")
                 aligned_words_saved = []
+                aligned_words_deleted = []
                 for aligned_lexicon_form in aligned_lexicon_formset:
                     if aligned_lexicon_form.is_valid():
                         approve = aligned_lexicon_form.cleaned_data.get('approve')
+                        delete = aligned_lexicon_form.cleaned_data.get('delete')
+                        word = aligned_lexicon_form.cleaned_data.get('word')
+                        phonemes = aligned_lexicon_form.cleaned_data.get('phonemes')
+                        aligned_graphemes = aligned_lexicon_form.cleaned_data.get('aligned_graphemes')
+                        aligned_phonemes = aligned_lexicon_form.cleaned_data.get('aligned_phonemes')
                         if approve:
-                            word = aligned_lexicon_form.cleaned_data.get('word')
-                            phonemes = aligned_lexicon_form.cleaned_data.get('phonemes')
-                            aligned_graphemes = aligned_lexicon_form.cleaned_data.get('aligned_graphemes')
-                            aligned_phonemes = aligned_lexicon_form.cleaned_data.get('aligned_phonemes')
-                            print(f"aligned: word: {word}, phonemes: {phonemes}, aligned_graphemes: {aligned_graphemes}, aligned_phonemes: {aligned_phonemes}, approve: {approve}")
                             consistent, error_message = phonetic_lexicon_repo.consistent_aligned_phonetic_lexicon_entry(word, phonemes, aligned_graphemes, aligned_phonemes)
                             if not consistent:
                                 messages.error(request, f"Error when trying to save data for '{word}': {error_message}")
                             else:
                                 phonetic_lexicon_repo.add_or_update_aligned_entry(word, phonemes, aligned_graphemes, aligned_phonemes, language, 'reviewed')
                                 aligned_words_saved += [ word ]
+                        elif delete:
+                            phonetic_lexicon_repo.delete_aligned_entry(word, phonemes, language)
+                            aligned_words_deleted += [ word ]
                 if len(aligned_words_saved) != 0:
                     messages.success(request, f"{len(aligned_words_saved)} aligned lexicon entries saved: {', '.join(aligned_words_saved)}")
-                if ( display_plain_lexicon_entries or display_aligned_lexicon_entries ) and len(plain_words_saved) == 0 and len(aligned_words_saved) == 0:
-                    messages.error(request, f"Warning: found no entries marked as approved, not saving anything")
+                if len(aligned_words_deleted) != 0:
+                    messages.success(request, f"{len(aligned_words_deleted)} aligned lexicon entries deleted: {', '.join(aligned_words_deleted)}")
+                if ( display_plain_lexicon_entries or display_aligned_lexicon_entries ) and \
+                   len(plain_words_saved) == 0 and len(aligned_words_saved) == 0 and len(plain_words_deleted) == 0 and len(aligned_words_deleted) == 0:
+                    messages.error(request, f"Warning: found no entries marked as approved or deleted, did not save anything")
             elif action == 'Upload':
                 if 'aligned_lexicon_file' in request.FILES:
                     aligned_file_path = uploaded_file_to_file(request.FILES['aligned_lexicon_file'])
