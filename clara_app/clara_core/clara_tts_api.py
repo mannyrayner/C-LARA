@@ -318,7 +318,7 @@ class IPAReaderEngine(TTSEngine):
                                          'voices': [ 'Carmen'
                                                       ]
                                          },
-                           'dutch': { 'language_id': 'romanian',
+                           'dutch': { 'language_id': 'dutch',
                                       'voices': [ 'Lotte',
                                                   'Ruben'
                                                   ]

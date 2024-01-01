@@ -102,7 +102,11 @@ def internalise_aligned_grapheme_phoneme_lexicon(Data, l2, Encoding):
     return ( internalised_aligned_lexicon, Count )
     
 def remove_accents_from_phonetic_string(Str):
-    return Str.replace('ˈ', '').replace('ˌ', '').replace('.', '').replace('\u200d', '')
+    #return Str.replace("'", '').replace('ˈ', '').replace('ˌ', '').replace('.', '').replace('\u200d', '').replace('²', '')
+    _accent_chars = "'ˈˌ.\u200d²"
+    for char in _accent_chars:
+        Str = Str.replace(char, '')
+    return Str
 
 def phoneme_string_to_list(phoneme_string, encoding):
     # In an arbabet-like encoding, the phoneme string is a space-separated representation of phonemes

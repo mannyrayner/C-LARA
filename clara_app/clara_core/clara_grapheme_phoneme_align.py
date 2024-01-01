@@ -40,7 +40,7 @@ def dp_phonetic_align(Letters, Phonemes0, Resources):
         return ( '', '' )
     Encoding = get_encoding(Resources)
     Phonemes = phoneme_string_to_list(Phonemes0, Encoding)
-    print(f'--- Phonemes = {Phonemes}')
+    if _trace == 'on': print(f'--- Phonemes = {Phonemes}')
     ( N, N1 ) = ( len(Letters), len(Phonemes) )
     DPDict = {}
     DPDict[(0, 0)] = ( 0, [], [] )
