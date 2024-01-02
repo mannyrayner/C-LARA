@@ -34,7 +34,7 @@ def segmented_text_to_phonetic_text(segmented_text, l2_language, config_info={},
         #pprint.pprint(grapheme_phoneme_resources)
         
         chatgpt4_phonetic_entries, api_calls = get_missing_phonetic_entries_for_words_and_resources(unique_words, grapheme_phoneme_resources, l2_language,
-                                                                                                    config_info={}, callback=callback)
+                                                                                                    config_info=config_info, callback=callback)
         guessed_plain_entries = [ { 'word': word, 'phonemes': chatgpt4_phonetic_entries[word] }
                                   for word in chatgpt4_phonetic_entries ]
         full_grapheme_phoneme_resources = add_plain_entries_to_resources(grapheme_phoneme_resources, chatgpt4_phonetic_entries)

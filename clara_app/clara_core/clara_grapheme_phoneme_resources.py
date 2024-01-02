@@ -117,13 +117,19 @@ def phoneme_string_to_list(phoneme_string, encoding):
         phoneme_list = [ char for char in phoneme_string ]         
         return combine_phonemes_with_diacritics(phoneme_list)
 
-ipa_diacritics = 'ːʰ̥'
+# Note that the first two characters are not the same.
+# The ipa-dict lexica are not consistent about the character used to indicate lengthening.
+ipa_diacritics = ':ːʰ̥'
 
 def combine_phonemes_with_diacritics(phoneme_list):
     if len(phoneme_list) < 2:
         return phoneme_list
+    # Phoneme followed by diacritic
     if phoneme_list[1] in ipa_diacritics:
         return [ f'{phoneme_list[0]}{phoneme_list[1]}' ] + combine_phonemes_with_diacritics(phoneme_list[2:])
+    # Phoneme surrounded by parentheses
+    if len(phoneme_list) >= 3 and phoneme_list[0] == '(' and phoneme_list[2] == ')':
+        return [ f'({phoneme_list[1]})' ] + combine_phonemes_with_diacritics(phoneme_list[3:])
     else:
         return [ phoneme_list[0] ] + combine_phonemes_with_diacritics(phoneme_list[1:])
 

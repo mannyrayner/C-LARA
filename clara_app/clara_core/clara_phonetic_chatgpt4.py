@@ -101,6 +101,7 @@ into
 
 [ [ "bright", "bɹaɪt" ], [ "car", "kɑːɹ" ], [ "course", "kɔːs" ], [ "grab", "ɡɹæb" ], [ "does", [ "dʌz", "doʊz"] ] ]
 """
+
     
     elif language == 'french':
         return """Note that the French 'r' sound is usually represented in IPA as 'ʁ'.
@@ -113,6 +114,21 @@ into
 
 [ [ "bon", "bɔ̃" ], [ "défaut", "defo" ], [ "réussi", "ʁeysi" ], [ "est", [ "ɛ", "ɛst"] ] ]
 """
+
+    
+    elif language == 'dutch':
+        return """Note that the Dutch '-en' ending is usually represented in IPA as 'ə'.
+
+For example, you might convert
+
+[ "beiden", "band" ]
+
+into
+
+[ [ "beiden", "bɛidə"], [ "knobelen", "knoːbələ" ], [ "band", [ "bɑnt", "bɛnt" ] ] ]
+"""
+
+    
     else:
         """For example, in English you might convert
 

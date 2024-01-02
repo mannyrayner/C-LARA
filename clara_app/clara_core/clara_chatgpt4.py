@@ -54,7 +54,7 @@ def call_openai_api(messages, gpt_model='gpt-4'):
     )
     return response
 
-async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4', callback=None):
+async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4-1106-preview', callback=None):
     start_time = time.time()
     n_prompt_chars = int(config.get('chatgpt4_trace', 'max_prompt_chars_to_show'))
     n_response_chars = int(config.get('chatgpt4_trace', 'max_response_chars_to_show'))
