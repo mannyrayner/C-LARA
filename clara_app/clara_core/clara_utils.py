@@ -710,6 +710,12 @@ def remove_extension_from_file_path(file_path: str):
 def basename(pathname):
     return os.path.basename(pathname)
 
+def pathname_parts(pathname):
+    # On a UNIX machine, it seems that Path.parts doesn't work on a Windows pathname,
+    # but on a Windows machine it works on a UNIX pathname. So convert to UNIX form
+    pathname1 = pathname.replace('\\', '/')
+    return Path(pathname1).parts
+
 def get_file_time(pathname):
     abspathname = absolute_file_name(pathname)
 

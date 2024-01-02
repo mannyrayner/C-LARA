@@ -1,5 +1,5 @@
 from .clara_classes import InternalCLARAError
-from .clara_utils import absolute_local_file_name, file_exists, local_file_exists, basename, copy_local_file, copy_to_local_file, remove_local_file
+from .clara_utils import absolute_local_file_name, pathname_parts, file_exists, local_file_exists, basename, copy_local_file, copy_to_local_file, remove_local_file
 from .clara_utils import make_local_directory, copy_directory_to_local_directory, local_directory_exists, remove_local_directory
 from .clara_utils import get_immediate_subdirectories_in_local_directory, get_files_in_local_directory, rename_file
 from .clara_utils import make_tmp_file, write_json_to_local_file, read_json_local_file, make_zipfile, unzip_file, post_task_update
@@ -178,7 +178,7 @@ def update_metadata_file_paths(clara_project_internal, project_dir, callback=Non
             if 'file' in entry:
                 # Split the path
                 pathname = entry['file']
-                path_parts = Path(pathname).parts
+                path_parts = pathname_parts(pathname)
                 if not 'clara_content' in path_parts:
                     post_task_update(callback, f"Warning: 'clara_content' not found in metadata file pathname {pathname} (parts = {path_parts}), cannot update")
                 else:
