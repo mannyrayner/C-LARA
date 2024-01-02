@@ -179,17 +179,20 @@ def update_metadata_file_paths(clara_project_internal, project_dir, callback=Non
                 # Split the path
                 pathname = entry['file']
                 path_parts = Path(pathname).parts
-                clara_project_index = path_parts.index('clara_content') + 1
-                # Get the old project name
-                old_project_id = path_parts[clara_project_index]
-                # Replace old project id with new one
-                pathname_with_project_id_fixed = pathname.replace(old_project_id, project_id)
-                # Split again
-                path_parts_with_project_id_fixed = Path(pathname_with_project_id_fixed).parts
-                # Replace the beginning, up to 'clara_content', with the local values
-                new_path_parts = ['$CLARA', 'clara_content'] + list(path_parts_with_project_id_fixed[clara_project_index:])
-                new_path = str(Path(*new_path_parts))
-                entry['file'] = new_path
+                if not 'clara_content' in path_parts:
+                    post_task_update(callback, f"Warning: 'clara_content' not found in metadata file pathname {pathname}, cannot update")
+                else:
+                    clara_project_index = path_parts.index('clara_content') + 1
+                    # Get the old project name
+                    old_project_id = path_parts[clara_project_index]
+                    # Replace old project id with new one
+                    pathname_with_project_id_fixed = pathname.replace(old_project_id, project_id)
+                    # Split again
+                    path_parts_with_project_id_fixed = Path(pathname_with_project_id_fixed).parts
+                    # Replace the beginning, up to 'clara_content', with the local values
+                    new_path_parts = ['$CLARA', 'clara_content'] + list(path_parts_with_project_id_fixed[clara_project_index:])
+                    new_path = str(Path(*new_path_parts))
+                    entry['file'] = new_path
 
         # Write the updated metadata back to the file
         write_json_to_local_file(metadata, metadata_file_path)
