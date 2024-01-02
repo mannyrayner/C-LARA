@@ -180,7 +180,7 @@ def update_metadata_file_paths(clara_project_internal, project_dir, callback=Non
                 pathname = entry['file']
                 path_parts = Path(pathname).parts
                 if not 'clara_content' in path_parts:
-                    post_task_update(callback, f"Warning: 'clara_content' not found in metadata file pathname {pathname}, cannot update")
+                    post_task_update(callback, f"Warning: 'clara_content' not found in metadata file pathname {pathname} (parts = {path_parts}), cannot update")
                 else:
                     clara_project_index = path_parts.index('clara_content') + 1
                     # Get the old project name
