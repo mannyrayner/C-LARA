@@ -144,15 +144,6 @@ def user_config(request):
 
 # Credit balance for money spent on API calls
 
-# Old version: incorrect, since people can get back credit by deleting projects
-##@login_required
-##def credit_balance(request):
-##    total_cost = get_user_api_cost(request.user)
-##    credit_balance = request.user.userprofile.credit - total_cost  
-##    return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance})
-
-# New version: charge calls at once
-
 @login_required
 def credit_balance(request):
     credit_balance = request.user.userprofile.credit
@@ -194,9 +185,7 @@ def add_credit(request):
         form = AddCreditForm()
     return render(request, 'clara_app/add_credit.html', {'form': form})
 
-from django.core.mail import send_mail
-import uuid
-
+# Transfer credit to another account
 @login_required
 def transfer_credit(request):
     if request.method == 'POST':
@@ -394,7 +383,7 @@ def remove_language_master(request, pk):
 # Display recent task update messages
 @login_required
 def view_task_updates(request):
-    time_threshold = timezone.now() - timedelta(minutes=15)
+    time_threshold = timezone.now() - timedelta(minutes=60)
     user_id = request.user.username
     updates = TaskUpdate.objects.filter(timestamp__gte=time_threshold, user_id=user_id).order_by('-timestamp')
     return render(request, 'clara_app/view_task_updates.html', {'updates': updates})

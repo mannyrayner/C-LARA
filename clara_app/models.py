@@ -28,8 +28,8 @@ class LanguageMaster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='language_master_set')
     language = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
 
-    class Meta:
-        unique_together = ['user', 'language']
+    #class Meta:
+    #    unique_together = ['user', 'language']
 
 class CLARAProject(models.Model):
     title = models.CharField(max_length=200)

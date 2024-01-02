@@ -43,8 +43,8 @@ class UserConfigForm(forms.ModelForm):
         model = UserConfiguration
         fields = ['gpt_model', 'max_annotation_words']  
         widgets = {
-            'gpt_model': forms.Select(choices=[('gpt-4', 'GPT-4'),
-                                               ('gpt-4-1106-preview', 'GPT-4 Turbo')]),
+            'gpt_model': forms.Select(choices=[('gpt-4-1106-preview', 'GPT-4 Turbo'),
+                                               ('gpt-4', 'GPT-4')]),
             'max_annotation_words': forms.Select(choices=[(100, '100'),
                                                           (250, '250'),
                                                           (500, '500'),
