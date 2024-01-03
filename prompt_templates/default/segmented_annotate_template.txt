@@ -2,9 +2,11 @@ Annotate the following {l2_language} text, dividing it up in a natural way into 
 
 Pages are separated using instances of the <page> tag.
 
-Segments are separated using instance of a double bar, ||.
+Segments are separated using instances of a double bar, ||.
 
 Also, if a word in the text is composed of smaller words, separate them with vertical bars.
+
+Do not change the layout. In particular, if the text appears to be formatted as a poem, leave the line-breaks as they are.
 
 Here are some French examples:
 
@@ -12,6 +14,6 @@ Here are some French examples:
 
 Here is the text to annotate:
 
-"{text}"
+{text}
 
 The output will be read by a Python script, so produce just the text without any comments or introduction.
