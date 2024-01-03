@@ -742,45 +742,29 @@ class PhoneticLexiconRepository:
 ##    "aardwolf": "ˈɑːdwʊlf",
 ##    "aba": "ɐbˈæ",
 
-## Contents for plain lexicon txt file assumed to be in this format:
-##
-## drösinöe dZeu s i n euille
-## föe f euille
-## sinöe s i n euille
-## ixöe i KH euille
-
     def load_and_initialise_plain_lexicon(self, file_path, language, callback=None):
-        file_extension = extension_for_file_path(file_path)
-        data = {}
 
         # Read the file based on its extension
-        try:
+        try: 
+            file_extension = extension_for_file_path(file_path)
+        
             if file_extension == 'json':
-                data = read_local_json_file(file_path)
-            # Note that the phonetic entries can be in either IPA or ARPAbet-like format
+                data = read_plain_json_lexicon(file_path)
             elif file_extension == 'txt':
-                lines = read_local_txt_file(file_path).split('\n')
-                for line in lines:
-                    word, phonemes = parse_phonetic_lexicon_line(line)
-                    if word:
-                        data[word] = phonemes
+                data = read_plain_text_lexicon(file_path)
             else:
                 return ('error', 'Unsupported file format')
         except Exception as e:
             return ('error', f'Error reading file: {str(e)}\n{traceback.format_exc()}')
 
-        # Process the data and initialise the lexicon
-        items = []
+        # Initialise the lexicon
         try:
-            for word, phonemes in data.items():
-                items.append({
-                    'word': word,
-                    'phonemes': phonemes,
-                })
-            self.initialise_plain_lexicon(items, language, callback=callback)
-            return ('success', f'{len(items)} items loaded')
+            if not check_consistent_plain_lexicon_data(data, callback=callback):
+                return ('error', f'Something went wrong in internalisation: generated lexicon data was not consistent')
+            self.initialise_plain_lexicon(data, language, callback=callback)
+            return ('success', f'{len(data)} items loaded')
         except Exception as e:
-            return ('error', f'Something went wrong in internalisation: {str(e)}')
+            return ('error', f'Something went wrong in internalisation: {str(e)}\n{traceback.format_exc()}')
 
     # Return two values: ( consistent, error_message )
     def consistent_aligned_phonetic_lexicon_entry(self, word, phonemes, aligned_graphemes, aligned_phonemes):
@@ -793,22 +777,92 @@ class PhoneticLexiconRepository:
         else:
             return ( True, '' )
 
+
+
+        
+
+def check_consistent_plain_lexicon_data(data, callback=None):
+    if not isinstance(data, list):
+        post_task_update(callback, f'*** PhoneticLexiconRepository: generated data was not a list')
+        return False
+    for item in data:
+        try:
+            word = item['word']
+            phonemes = item['phonemes']
+        except:
+            post_task_update(callback, f'*** PhoneticLexiconRepository: error: bad item {item} in generated data')
+            return False
+    return True
+
+def read_plain_json_lexicon(file_path):
+    data0 = read_local_json_file(file_path)
+
+    data = [ { 'word': key, 'phonemes': [ data0[key] ] }
+             for key in data0 ]
+
+    return data
+
+def read_plain_text_lexicon(file_path):
+    data = []
+    lines = read_local_txt_file(file_path).split('\n')
+    
+    for line in lines:
+        word, phonemes_list = parse_phonetic_lexicon_line(line)
+        if word:
+            for phonemes in phonemes_list:
+                data += [ { 'word': word, 'phonemes': phonemes } ]
+                
+    return data
+
 def parse_phonetic_lexicon_line(line):
+    if line.count('/') >= 2:
+        return parse_ipa_dict_phonetic_lexicon_line(line)
+    else:
+        return parse_arpabet_like_phonetic_lexicon_line(line)
+
+## Contents for ipa-dict plain lexicon file can have single or multiple entries:
+##     
+## astasieret	/astaˈziːʁət/
+## Astats	/asˈtaːt͡s/, /aˈstaːt͡s/
+
+def parse_ipa_dict_phonetic_lexicon_line(line):
+    parts = [ part.strip() for part in line.split('/')
+              if part.replace(',', '').strip() != '' ]
+        
+    if len(parts) < 2:
+        return ( None, None )  # Skip empty and malformed lines
+
+    # The German ipa-dict preserves casing, but we discard it.
+    word = parts[0].lower()
+    
+    if ' ' in word:
+        return ( None, None )  # Skip entries for multi word expressions
+
+    phonemes_list = parts[1:]
+    return word, phonemes_list
+
+## Contents for ARPAbet plain lexicon txt file assumed to be in this format:
+##
+## drösinöe dZeu s i n euille
+## föe f euille
+## sinöe s i n euille
+## ixöe i KH euille
+
+def parse_arpabet_like_phonetic_lexicon_line(line):
     parts = line.strip().split()
     if len(parts) < 2:
         return ( None, None )  # Skip empty and malformed lines
-    word = parts[0]
-    if len(parts) > 2:
-        # Assume it's an entry in ARPAbet-like format, e.g. Drehu
-        phonemes = ' '.join(parts[1:])
-    else:
-        # Assume it's an ipa-dict entry
-        phonemes = clean_up_ipa_dict_entry(parts[1])
-    return word, phonemes
 
-# ipa-dict entries for some languages:
-# Icelandic: brunnið	/prʏnɪð/
-# Romanian: aanicăi	/aanikəj/
+    word = parts[1]
+    phonemes = ' '.join(parts[1:])
+    
+    return word, [ phonemes ]
 
-def clean_up_ipa_dict_entry(phonetic_str):
-    return phonetic_str.replace('/', '')
+### ipa-dict entries for some languages:
+### Icelandic: brunnið	/prʏnɪð/
+### Romanian: aanicăi	/aanikəj/
+##
+##def clean_up_ipa_dict_entry(phonetic_str):
+##    return phonetic_str.replace('/', '')
+
+
