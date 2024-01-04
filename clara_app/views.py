@@ -464,7 +464,9 @@ def edit_phonetic_lexicon(request):
                             messages.success(request, f"Grapheme/phoneme data also converted into aligned lexicon: {orthography_details}")
                     else:
                         messages.error(request, f"No grapheme/phoneme data saved")
+                plain_words_to_save = []
                 plain_words_saved = []
+                plain_words_to_delete = []
                 plain_words_deleted = []
                 for lexicon_form in plain_lexicon_formset:
                     if lexicon_form.is_valid():
@@ -472,18 +474,23 @@ def edit_phonetic_lexicon(request):
                         delete = lexicon_form.cleaned_data.get('delete')
                         word = lexicon_form.cleaned_data.get('word')
                         phonemes = lexicon_form.cleaned_data.get('phonemes')
-                        #print(f"plain: word: {word}, phonemes: {phonemes}, approve: {approve}, delete: {delete}")
+                        record = { 'word': word, 'phonemes': phonemes }
                         if approve:
-                            phonetic_lexicon_repo.add_or_update_plain_entry(word, phonemes, language, 'reviewed')
-                            plain_words_saved += [ word ]
+                            plain_words_to_save.append(record) 
                         elif delete:
-                            phonetic_lexicon_repo.delete_plain_entry(word, phonemes, language)
-                            plain_words_deleted += [ word ]
-                if len(plain_words_saved) != 0:
+                            plain_words_to_delete.append(record)
+                if len(plain_words_to_save) != 0:
+                    phonetic_lexicon_repo.record_reviewed_plain_entries(plain_words_to_save, language)
+                    plain_words_saved = [ item['word'] for item in plain_words_to_save ]
                     messages.success(request, f"{len(plain_words_saved)} plain lexicon entries saved: {', '.join(plain_words_saved)}")
-                if len(plain_words_deleted) != 0:
+                if len(plain_words_to_delete) != 0:
+                    phonetic_lexicon_repo.delete_plain_entries(plain_words_to_save, language)
+                    plain_words_deleted = [ item['word'] for item in plain_words_to_delete ]
                     messages.success(request, f"{len(plain_words_deleted)} plain lexicon entries deleted: {', '.join(plain_words_deleted)}")
+                    
+                aligned_words_to_save = []
                 aligned_words_saved = []
+                aligned_words_to_delete = []
                 aligned_words_deleted = []
                 for aligned_lexicon_form in aligned_lexicon_formset:
                     if aligned_lexicon_form.is_valid():
@@ -493,20 +500,24 @@ def edit_phonetic_lexicon(request):
                         phonemes = aligned_lexicon_form.cleaned_data.get('phonemes')
                         aligned_graphemes = aligned_lexicon_form.cleaned_data.get('aligned_graphemes')
                         aligned_phonemes = aligned_lexicon_form.cleaned_data.get('aligned_phonemes')
+                        record = { 'word': word, 'phonemes': phonemes, 'aligned_graphemes': aligned_graphemes, 'aligned_phonemes': aligned_phonemes }
                         if approve:
                             consistent, error_message = phonetic_lexicon_repo.consistent_aligned_phonetic_lexicon_entry(word, phonemes, aligned_graphemes, aligned_phonemes)
                             if not consistent:
                                 messages.error(request, f"Error when trying to save data for '{word}': {error_message}")
                             else:
-                                phonetic_lexicon_repo.add_or_update_aligned_entry(word, phonemes, aligned_graphemes, aligned_phonemes, language, 'reviewed')
-                                aligned_words_saved += [ word ]
+                                aligned_words_to_save.append(record) 
                         elif delete:
-                            phonetic_lexicon_repo.delete_aligned_entry(word, phonemes, language)
-                            aligned_words_deleted += [ word ]
-                if len(aligned_words_saved) != 0:
+                            aligned_words_to_delete.append(record)
+                if len(aligned_words_to_save) != 0:
+                    phonetic_lexicon_repo.record_reviewed_aligned_entries(aligned_words_to_save, language)
+                    aligned_words_saved = [ item['word'] for item in aligned_words_to_save ]
                     messages.success(request, f"{len(aligned_words_saved)} aligned lexicon entries saved: {', '.join(aligned_words_saved)}")
-                if len(aligned_words_deleted) != 0:
+                if len(aligned_words_to_delete) != 0:
+                    phonetic_lexicon_repo.delete_aligned_entries(aligned_words_to_delete, language)
+                    aligned_words_deleted = [ item['word'] for item in aligned_words_to_delete ]
                     messages.success(request, f"{len(aligned_words_deleted)} aligned lexicon entries deleted: {', '.join(aligned_words_deleted)}")
+                    
                 if ( display_new_plain_lexicon_entries or display_new_aligned_lexicon_entries ) and \
                    len(plain_words_saved) == 0 and len(aligned_words_saved) == 0 and len(plain_words_deleted) == 0 and len(aligned_words_deleted) == 0:
                     messages.error(request, f"Warning: found no entries marked as approved or deleted, did not save anything")
@@ -551,7 +562,7 @@ def edit_phonetic_lexicon(request):
                 grapheme_phoneme_data, accents_data = orthography_repo.get_parsed_entry(language, formatting='new')
                 
                 plain_lexicon_data = []
-                if display_new_aligned_lexicon_entries:
+                if display_new_plain_lexicon_entries:
                     plain_lexicon_data += phonetic_lexicon_repo.get_generated_plain_entries(language)
                 if display_approved_plain_lexicon_entries:
                     plain_lexicon_data += phonetic_lexicon_repo.get_reviewed_plain_entries(language)
