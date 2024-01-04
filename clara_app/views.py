@@ -531,11 +531,16 @@ def edit_phonetic_lexicon(request):
                         messages.success(request, f"Aligned phonetic lexicon uploaded successfully: {aligned_details}")
                 if 'plain_lexicon_file' in request.FILES:
                     plain_file_path = uploaded_file_to_file(request.FILES['plain_lexicon_file'])
-                    plain_result, plain_details = phonetic_lexicon_repo.load_and_initialise_plain_lexicon(plain_file_path, language)
-                    if plain_result == 'error':
-                        messages.error(request, f"Error when uploading plain phonetic lexicon: {plain_details}")
-                    else:
-                        messages.success(request, f"Plain phonetic lexicon uploaded successfully: {plain_details}")
+                    # If we're on Heroku, we need to copy the zipfile to S3 so that the worker process can get it
+                    copy_local_file_to_s3_if_necessary(plain_file_path)
+
+                    task_type = f'import_phonetic_lexicon'
+                    callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                    async_task(upload_and_install_plain_phonetic_lexicon, plain_file_path, language, callback=callback)
+
+                    # Redirect to the monitor view, passing the language and report ID as parameters
+                    return redirect('import_phonetic_lexicon_monitor', language, report_id)
                         
             if not language:
                 form = None
@@ -595,6 +600,59 @@ def edit_phonetic_lexicon(request):
                    'plain_lexicon_formset': plain_lexicon_formset,
                    'aligned_lexicon_formset': aligned_lexicon_formset,
                    })
+
+def upload_and_install_plain_phonetic_lexicon(file_path, language, callback=None):
+    post_task_update(callback, f"--- Installing phonetic lexicon for {language}")
+
+    try:
+        phonetic_lexicon_repo = PhoneticLexiconRepository() 
+
+        result, details = phonetic_lexicon_repo.load_and_initialise_plain_lexicon(file_path, language, callback=callback)
+        
+        if result == 'error':
+            post_task_update(callback, f"Error when uploading phonetic lexicon for {language}: {details}")
+            post_task_update(callback, f"error")
+        else:
+            post_task_update(callback, f"Phonetic lexicon for {language} uploaded successfully: {details}")
+            post_task_update(callback, f"finished")
+
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+    finally:
+        # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
+        remove_file(file_path)
+
+@login_required
+@language_master_required
+def import_phonetic_lexicon_status(request, language, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+# Render the monitoring page, which will use JavaScript to poll the task status API
+@login_required
+@language_master_required
+def import_phonetic_lexicon_monitor(request, language, report_id):
+    return render(request, 'clara_app/import_phonetic_lexicon_monitor.html',
+                  {'report_id': report_id, 'language': language})
+
+# Confirm the final result of importing the lexicon
+@login_required
+@language_master_required
+def import_phonetic_lexicon_complete(request, language, status):
+    if status == 'error':
+        messages.error(request, f"Something went wrong when importing the phonetic lexicon for {language}. Try looking at the 'Recent task updates' view")
+        return redirect('edit_phonetic_lexicon')
+    else:
+        messages.success(request, f"Phonetic lexicon for {language} imported successfully")
+        return redirect('edit_phonetic_lexicon')
 
 ##
 # Allow a language master to edit templates and examples
