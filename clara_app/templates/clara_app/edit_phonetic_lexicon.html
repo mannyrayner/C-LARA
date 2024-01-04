@@ -36,7 +36,7 @@
 		  </table>
 	  {% endif %}
 	  
-	  {% if form.display_plain_lexicon_entries.value %}
+	  {% if form.display_new_plain_lexicon_entries.value or form.display_approved_plain_lexicon_entries.value %}
 		  <h2>Plain phonetic lexicon</h2>
 			  {{ plain_lexicon_formset.management_form }}
 			  <table>
@@ -57,7 +57,7 @@
 			  </table>
 	  {% endif %}
 	  
-	  {% if form.display_aligned_lexicon_entries.value %}
+	  {% if form.display_new_aligned_lexicon_entries.value or form.display_approved_aligned_lexicon_entries.value %}
 	      <h2>Aligned phonetic lexicon</h2>
 			  {{ aligned_lexicon_formset.management_form }}
 			  <table>
