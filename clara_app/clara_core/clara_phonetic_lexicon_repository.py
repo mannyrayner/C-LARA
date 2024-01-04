@@ -677,7 +677,7 @@ class PhoneticLexiconRepository:
             if os.getenv('DB_TYPE') == 'sqlite':
                 cursor.execute("SELECT word, phonemes FROM plain_phonetic_lexicon WHERE language = ? AND status = ?", (language, status))
             else:  # Assume postgres
-                cursor.execute("SELECT word, phonemes FROM plain_phonetic_lexicon WHERE language = %s AND status = ?", (language, status))
+                cursor.execute("SELECT word, phonemes FROM plain_phonetic_lexicon WHERE language = %s AND status = %s", (language, status))
 
             records = cursor.fetchall()
             connection.close()
