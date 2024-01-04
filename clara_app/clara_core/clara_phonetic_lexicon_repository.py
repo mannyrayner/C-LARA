@@ -544,9 +544,9 @@ class PhoneticLexiconRepository:
 
             # Convert records to a list of dicts
             if os.getenv('DB_TYPE') == 'sqlite':
-                entries = [{'word': record[1], 'phonemes': record[2], 'status': record[3]} for record in records]
+                entries = [{'word': record[1], 'phonemes': record[2], 'language': record[3], 'status': record[4]} for record in records]
             else:  # Assuming PostgreSQL
-                entries = [{'word': record['word'], 'phonemes': record['phonemes'], 'status': record['status']}
+                entries = [{'word': record['word'], 'phonemes': record['phonemes'], 'language': record['language'], 'status': record['status']}
                            for record in records]
             return entries
 
@@ -572,10 +572,10 @@ class PhoneticLexiconRepository:
                 # Delete existing entry if it exists, then insert new entry
                 if os.getenv('DB_TYPE') == 'sqlite':
                     cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE word = ? AND phonemes = ? AND language = ?", (word, phonemes, language))
-                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (?, ?, ?, '{status}')", (word, phonemes, language))
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (?, ?, ?, ?)", (word, phonemes, language, status))
                 else:  # Assume postgres
                     cursor.execute("DELETE FROM plain_phonetic_lexicon WHERE word = %s AND phonemes = %s AND language = %s", (word, phonemes, language))
-                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (%s, %s, %s, '{status}')", (word, phonemes, language))
+                    cursor.execute("INSERT INTO plain_phonetic_lexicon (word, phonemes, language, status) VALUES (%s, %s, %s, %s)", (word, phonemes, language, status))
 
             connection.commit()
             connection.close()
