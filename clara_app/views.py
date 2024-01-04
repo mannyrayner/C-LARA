@@ -410,12 +410,11 @@ def edit_phonetic_lexicon(request):
             action = request.POST.get('action')
             language = form.cleaned_data['language']
             encoding = form.cleaned_data['encoding']
-            #letter_groups = form.cleaned_data['letter_groups']
-            #accents = form.cleaned_data['accents']
             display_grapheme_to_phoneme_entries = form.cleaned_data['display_grapheme_to_phoneme_entries']
-            display_plain_lexicon_entries = form.cleaned_data['display_plain_lexicon_entries']
-            display_aligned_lexicon_entries = form.cleaned_data['display_aligned_lexicon_entries']
-            #print(f'--- action = {action}, language = {language}, encoding = {encoding}, letter_groups = {letter_groups}')
+            display_new_plain_lexicon_entries = form.cleaned_data['display_new_plain_lexicon_entries']
+            display_new_aligned_lexicon_entries = form.cleaned_data['display_new_aligned_lexicon_entries']
+            display_approved_plain_lexicon_entries = form.cleaned_data['display_approved_plain_lexicon_entries']
+            display_approved_aligned_lexicon_entries = form.cleaned_data['display_approved_aligned_lexicon_entries']
             if action == 'Refresh':
                 if language:
                     encoding = phonetic_lexicon_repo.get_encoding_for_language(language)
@@ -508,7 +507,7 @@ def edit_phonetic_lexicon(request):
                     messages.success(request, f"{len(aligned_words_saved)} aligned lexicon entries saved: {', '.join(aligned_words_saved)}")
                 if len(aligned_words_deleted) != 0:
                     messages.success(request, f"{len(aligned_words_deleted)} aligned lexicon entries deleted: {', '.join(aligned_words_deleted)}")
-                if ( display_plain_lexicon_entries or display_aligned_lexicon_entries ) and \
+                if ( display_new_plain_lexicon_entries or display_new_aligned_lexicon_entries ) and \
                    len(plain_words_saved) == 0 and len(aligned_words_saved) == 0 and len(plain_words_deleted) == 0 and len(aligned_words_deleted) == 0:
                     messages.error(request, f"Warning: found no entries marked as approved or deleted, did not save anything")
             elif action == 'Upload':
@@ -544,14 +543,24 @@ def edit_phonetic_lexicon(request):
                                                                           'plain_phonetic_lexicon_entries_exist': plain_phonetic_lexicon_entries_exist,
                                                                           'aligned_phonetic_lexicon_entries_exist': aligned_phonetic_lexicon_entries_exist,
                                                                           'display_grapheme_to_phoneme_entries': display_grapheme_to_phoneme_entries,
-                                                                          'display_plain_lexicon_entries': display_plain_lexicon_entries,
-                                                                          'display_aligned_lexicon_entries': display_aligned_lexicon_entries,
+                                                                          'display_new_plain_lexicon_entries': display_new_plain_lexicon_entries,
+                                                                          'display_approved_plain_lexicon_entries': display_approved_plain_lexicon_entries,
+                                                                          'display_new_aligned_lexicon_entries': display_new_aligned_lexicon_entries,
+                                                                          'display_approved_aligned_lexicon_entries': display_approved_aligned_lexicon_entries,
                                                                           })
                 grapheme_phoneme_data, accents_data = orthography_repo.get_parsed_entry(language, formatting='new')
-                #pprint.pprint(grapheme_phoneme_data)
-                #pprint.pprint(accents_data)
-                plain_lexicon_data = phonetic_lexicon_repo.get_generated_plain_entries(language)
-                aligned_lexicon_data = phonetic_lexicon_repo.get_generated_aligned_entries(language)
+                
+                plain_lexicon_data = []
+                if display_new_aligned_lexicon_entries:
+                    plain_lexicon_data += phonetic_lexicon_repo.get_generated_plain_entries(language)
+                if display_approved_plain_lexicon_entries:
+                    plain_lexicon_data += phonetic_lexicon_repo.get_reviewed_plain_entries(language)
+
+                aligned_lexicon_data = []
+                if display_new_aligned_lexicon_entries:
+                    aligned_lexicon_data += phonetic_lexicon_repo.get_generated_aligned_entries(language)
+                if display_approved_aligned_lexicon_entries:
+                    aligned_lexicon_data += phonetic_lexicon_repo.get_reviewed_aligned_entries(language)
                 #print(f'--- edit_phonetic_lexicon found {len(plain_lexicon_data)} plain lexicon entries to review')
                 #print(f'--- edit_phonetic_lexicon found {len(aligned_lexicon_data)} aligned lexicon entries to review')
                 

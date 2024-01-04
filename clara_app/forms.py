@@ -439,8 +439,10 @@ class PhoneticLexiconForm(forms.Form):
         label='Aligned phonetic lexicon file (JSON)',
         required=False)
     display_grapheme_to_phoneme_entries = forms.BooleanField(required=False)
-    display_plain_lexicon_entries = forms.BooleanField(required=False)
-    display_aligned_lexicon_entries = forms.BooleanField(required=False)
+    display_new_plain_lexicon_entries = forms.BooleanField(required=False)
+    display_approved_plain_lexicon_entries = forms.BooleanField(required=False)
+    display_new_aligned_lexicon_entries = forms.BooleanField(required=False)
+    display_approved_aligned_lexicon_entries = forms.BooleanField(required=False)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
