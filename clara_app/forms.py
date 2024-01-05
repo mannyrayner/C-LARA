@@ -36,7 +36,7 @@ class AdminPasswordResetForm(forms.Form):
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['bio', 'location', 'birth_date', 'profile_picture']
+        fields = ['bio', 'location', 'birth_date', 'profile_picture', 'is_private']
 
 class UserConfigForm(forms.ModelForm):
     class Meta:
