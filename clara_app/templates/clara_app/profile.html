@@ -1,8 +1,10 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-  <h2>Profile</h2>
-  <p>Welcome, {{ request.user.username }}!</p>
+  <h2>Profile for "{{ request.user.username }}"</h2>
+  {% if profile.is_private %}
+     <p><b>Account is private</b></p>
+  {% endif %}
   <p>Email: {{ email }}</p>
   <p>Bio: {{ profile.bio }}</p>
   <p>Location: {{ profile.location }}</p>
