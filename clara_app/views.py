@@ -768,15 +768,6 @@ def content_success(request):
    
 # List currently registered content
 @login_required
-##def content_list(request):
-##    content_list = Content.objects.all().order_by(Lower('title'))
-##    paginator = Paginator(content_list, 10)  # Show 10 content items per page
-##
-##    page = request.GET.get('page')
-##    contents = paginator.get_page(page)
-##    
-##    return render(request, 'clara_app/content_list.html', {'contents': contents})
-
 def content_list(request):
     search_form = ContentSearchForm(request.GET or None)
     query = Q()
@@ -808,7 +799,9 @@ def content_detail(request, content_id):
     comments = Comment.objects.filter(content=content).order_by('timestamp')
     rating = Rating.objects.filter(content=content, user=request.user).first()
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
-
+    comment_form = CommentForm()  # initialize empty comment form
+    rating_form = RatingForm()  # initialize empty rating form
+    
     if request.method == 'POST':
         if 'submit_rating' in request.POST:
             rating_form = RatingForm(request.POST)
@@ -821,7 +814,7 @@ def content_detail(request, content_id):
                     rating.save()
                 else:
                     new_rating.save()
-            comment_form = CommentForm()  # initialize empty comment form
+            
         elif 'submit_comment' in request.POST:
             comment_form = CommentForm(request.POST)
             if comment_form.is_valid():
@@ -829,11 +822,8 @@ def content_detail(request, content_id):
                 new_comment.user = request.user
                 new_comment.content = content
                 new_comment.save()
-            rating_form = RatingForm()  # initialize empty rating form
+            
         return redirect('content_detail', content_id=content_id)
-    else:
-        rating_form = RatingForm()
-        comment_form = CommentForm()
 
     return render(request, 'clara_app/content_detail.html', {
         'content': content,
