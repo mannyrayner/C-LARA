@@ -13,6 +13,7 @@ from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.utils import timezone
+from django.urls import reverse
 
 from .models import UserProfile, UserConfiguration, LanguageMaster, Content, TaskUpdate
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
@@ -62,6 +63,7 @@ from decimal import Decimal
 from urllib.parse import unquote
 from datetime import timedelta
 
+import os
 import re
 import json
 import zipfile
@@ -792,6 +794,17 @@ def content_list(request):
 
     return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form})
 
+def send_notification_email(recipients, content, action):
+    subject = f"New {action} on your content: {content.title}"
+    message = f"A new {action} has been posted on your content '{content.title}'. Visit the content to see more: {content.get_absolute_url()}"
+    from_email = 'clara-no-reply@unisa.edu.au'
+    recipient_list = [user.email for user in recipients if user.email]
+
+    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+        send_mail(subject, message, from_email, recipient_list)
+    else:
+        print(f' --- On UniSA would do: send_mail({subject}, {message}, {from_email}, {recipient_list})')
+
 # Show a piece of registered content. Users can add ratings and comments.    
 @login_required
 def content_detail(request, content_id):
@@ -814,7 +827,6 @@ def content_detail(request, content_id):
                     rating.save()
                 else:
                     new_rating.save()
-            
         elif 'submit_comment' in request.POST:
             comment_form = CommentForm(request.POST)
             if comment_form.is_valid():
@@ -822,7 +834,17 @@ def content_detail(request, content_id):
                 new_comment.user = request.user
                 new_comment.content = content
                 new_comment.save()
-            
+
+        # Identify recipients
+        content_creator = content.project.user
+        co_owners = User.objects.filter(projectpermissions__project=content.project, projectpermissions__role='OWNER')
+        previous_commenters = User.objects.filter(comment__content=content).distinct()
+        recipients = set([content_creator] + list(co_owners) + list(previous_commenters))
+
+        # Send email notification
+        action = 'rating' if 'submit_rating' in request.POST else 'comment'
+        send_notification_email(recipients, content, action)
+
         return redirect('content_detail', content_id=content_id)
 
     return render(request, 'clara_app/content_detail.html', {
