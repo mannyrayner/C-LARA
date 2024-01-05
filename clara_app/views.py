@@ -12,6 +12,8 @@ from django.db.models import Avg, Q
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
@@ -794,16 +796,35 @@ def content_list(request):
 
     return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form})
 
-def send_notification_email(recipients, content, action):
+##def send_notification_email(recipients, content, action):
+##    subject = f"New {action} on your content: {content.title}"
+##    message = f"A new {action} has been posted on your content '{content.title}'. Visit the content to see more: {content.get_absolute_url()}"
+##    from_email = 'clara-no-reply@unisa.edu.au'
+##    recipient_list = [user.email for user in recipients if user.email]
+##
+##    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+##        send_mail(subject, message, from_email, recipient_list)
+##    else:
+##        print(f' --- On UniSA would do: send_mail({subject}, {message}, {from_email}, {recipient_list})')
+
+def send_notification_email(request, recipients, content, action):
+    full_url = request.build_absolute_uri(content.get_absolute_url())
     subject = f"New {action} on your content: {content.title}"
-    message = f"A new {action} has been posted on your content '{content.title}'. Visit the content to see more: {content.get_absolute_url()}"
+    context = {
+        'action': action,
+        'content_title': content.title,
+        'full_url': full_url,
+    }
+    message = render_to_string('rating_or_comment_notification_email.html', context)
     from_email = 'clara-no-reply@unisa.edu.au'
     recipient_list = [user.email for user in recipients if user.email]
 
     if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
-        send_mail(subject, message, from_email, recipient_list)
+        email = EmailMessage(subject, message, from_email, recipient_list)
+        email.content_subtype = "html"  # Set the email content type to HTML
+        email.send()
     else:
-        print(f' --- On UniSA would do: send_mail({subject}, {message}, {from_email}, {recipient_list})')
+        print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
 
 # Show a piece of registered content. Users can add ratings and comments.    
 @login_required
@@ -843,7 +864,7 @@ def content_detail(request, content_id):
 
         # Send email notification
         action = 'rating' if 'submit_rating' in request.POST else 'comment'
-        send_notification_email(recipients, content, action)
+        send_notification_email(request, recipients, content, action)
 
         return redirect('content_detail', content_id=content_id)
 
