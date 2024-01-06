@@ -108,7 +108,18 @@ def home(request):
 def profile(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email})
-    
+
+# External user profile view
+def external_profile(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+    profile = get_object_or_404(UserProfile, user=user)
+
+    # Check if the profile is private
+    if profile.is_private and request.user != user:
+        return render(request, 'clara_app/external_profile_private.html', {'username': user.username})
+
+    return render(request, 'clara_app/external_profile.html', {'profile': profile, 'email': user.email})
+
 # Edit user profile
 @login_required
 def edit_profile(request):
