@@ -142,7 +142,7 @@ def send_friend_request_notification_email(request, other_user):
     }
     message = render_to_string('friend_request_notification_email.html', context)
     from_email = 'clara-no-reply@unisa.edu.au'
-    recipient_list = [ request.user.email ]
+    recipient_list = [ other_user.email ]
 
     if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
         email = EmailMessage(subject, message, from_email, recipient_list)
