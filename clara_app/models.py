@@ -20,6 +20,25 @@ class UserProfile(models.Model):
     def is_language_master(self):
         return self.user.language_master_set.exists()
 
+class FriendRequest(models.Model):
+    STATUS_CHOICES = [
+        ('SENT', 'Sent'),
+        ('ACCEPTED', 'Accepted'),
+        ('DECLINED', 'Declined'),
+        ('CANCELED', 'Canceled'),
+    ]
+
+    sender = models.ForeignKey(User, related_name='friend_requests_sent', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name='friend_requests_received', on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='SENT')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('sender', 'receiver')
+
+    def __str__(self):
+        return f"{self.sender.username} -> {self.receiver.username}: {self.status}"
+
 class UserConfiguration(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     gpt_model = models.CharField(max_length=50, default='gpt-4')

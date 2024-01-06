@@ -17,14 +17,15 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import UserProfile, UserConfiguration, LanguageMaster, Content, TaskUpdate
+from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
 from django_q.models import Task
 
-from .forms import RegistrationForm, UserForm, UserProfileForm, AdminPasswordResetForm, UserConfigForm, AssignLanguageMasterForm, AddProjectMemberForm
+from .forms import RegistrationForm, UserForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, UserConfigForm
+from .forms import AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
@@ -111,14 +112,45 @@ def profile(request):
 
 # External user profile view
 def external_profile(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
-    profile = get_object_or_404(UserProfile, user=user)
+    profile_user = get_object_or_404(User, pk=user_id)
+    profile = get_object_or_404(UserProfile, user=profile_user)
 
     # Check if the profile is private
     if profile.is_private and request.user != user:
         return render(request, 'clara_app/external_profile_private.html', {'username': user.username})
 
-    return render(request, 'clara_app/external_profile.html', {'profile': profile, 'email': user.email})
+    # Check the friend status
+    friend_request = FriendRequest.objects.filter(
+        (Q(sender=request.user) & Q(receiver=profile_user)) | 
+        (Q(sender=profile_user) & Q(receiver=request.user))
+    ).first()
+
+    if request.method == 'POST':
+        form = FriendRequestForm(request.POST)
+        if form.is_valid():
+            action = form.cleaned_data['action']
+            friend_request_id = form.cleaned_data.get('friend_request_id')
+
+            if action == 'send':
+                FriendRequest.objects.create(sender=request.user, receiver=profile_user)
+            elif action in ['cancel', 'reject', 'unfriend'] and friend_request_id:
+                FriendRequest.objects.filter(id=friend_request_id).delete()
+            elif action == 'accept' and friend_request_id:
+                FriendRequest.objects.filter(id=friend_request_id).update(status='Accepted')
+
+            return redirect('external_profile', user_id=user_id)
+
+    else:
+        form = FriendRequestForm()
+
+    return render(request, 'clara_app/external_profile.html', {
+        'profile_user': profile_user,
+        'profile': profile,
+        'email': profile_user.email,
+        'friend_request': friend_request,
+        'form': form,
+    })
+
 
 # Edit user profile
 @login_required

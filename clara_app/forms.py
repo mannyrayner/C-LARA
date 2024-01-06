@@ -7,14 +7,6 @@ from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, Phonet
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
-
-# Remove custom User
-# Custom version of django.contrib.auth.forms.UserCreationForm
-# which uses clara_app.models.User instead of auth.User
-# class ClaraUserCreationForm(UserCreationForm):
-    # class Meta(UserCreationForm.Meta):
-        # model = User
-        # fields = UserCreationForm.Meta.fields
         
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -29,7 +21,6 @@ class UserForm(forms.ModelForm):
         fields = ['email']
 
 class AdminPasswordResetForm(forms.Form):
-    #username = forms.CharField()
     user = forms.ModelChoiceField(queryset=User.objects.all())
     new_password = forms.CharField(widget=forms.PasswordInput())
         
@@ -37,6 +28,10 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['bio', 'location', 'birth_date', 'profile_picture', 'is_private']
+
+class FriendRequestForm(forms.Form):
+    action = forms.CharField(widget=forms.HiddenInput())
+    friend_request_id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
 
 class UserConfigForm(forms.ModelForm):
     class Meta:
