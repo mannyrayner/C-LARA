@@ -1,0 +1,25 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Friends and Friend Requests</h2>
+  <h3>Incoming Friend Requests</h3>
+  {% for request in incoming_requests %}
+    <p>{{ request.sender.username }} - <a href="{% url 'external_profile' request.sender.id %}">View Profile</a></p>
+  {% empty %}
+    <p>No incoming friend requests.</p>
+  {% endfor %}
+
+  <h3>Outgoing Friend Requests</h3>
+  {% for request in outgoing_requests %}
+    <p>{{ request.receiver.username }} - <a href="{% url 'external_profile' request.receiver.id %}">View Profile</a></p>
+  {% empty %}
+    <p>No outgoing friend requests.</p>
+  {% endfor %}
+
+  <h3>Current Friends</h3>
+  {% for friend in current_friends %}
+    <p>{{ friend.username }} - <a href="{% url 'external_profile' friend.id %}">View Profile</a></p>
+  {% empty %}
+    <p>No current friends.</p>
+  {% endfor %}
+{% endblock %}

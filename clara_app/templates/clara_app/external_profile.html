@@ -42,7 +42,7 @@
         <button type="submit">Reject Friend Request</button>
       </form>
     {% endif %}
-  {% else %}
+  {% elif profile.user != request.user %}
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="action" value="send">
