@@ -110,48 +110,6 @@ def profile(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email})
 
-# External user profile view
-def external_profile(request, user_id):
-    profile_user = get_object_or_404(User, pk=user_id)
-    profile = get_object_or_404(UserProfile, user=profile_user)
-
-    # Check if the profile is private
-    if profile.is_private and request.user != user:
-        return render(request, 'clara_app/external_profile_private.html', {'username': user.username})
-
-    # Check the friend status
-    friend_request = FriendRequest.objects.filter(
-        (Q(sender=request.user) & Q(receiver=profile_user)) | 
-        (Q(sender=profile_user) & Q(receiver=request.user))
-    ).first()
-
-    if request.method == 'POST':
-        form = FriendRequestForm(request.POST)
-        if form.is_valid():
-            action = form.cleaned_data['action']
-            friend_request_id = form.cleaned_data.get('friend_request_id')
-
-            if action == 'send':
-                FriendRequest.objects.create(sender=request.user, receiver=profile_user)
-            elif action in ['cancel', 'reject', 'unfriend'] and friend_request_id:
-                FriendRequest.objects.filter(id=friend_request_id).delete()
-            elif action == 'accept' and friend_request_id:
-                FriendRequest.objects.filter(id=friend_request_id).update(status='Accepted')
-
-            return redirect('external_profile', user_id=user_id)
-
-    else:
-        form = FriendRequestForm()
-
-    return render(request, 'clara_app/external_profile.html', {
-        'profile_user': profile_user,
-        'profile': profile,
-        'email': profile_user.email,
-        'friend_request': friend_request,
-        'form': form,
-    })
-
-
 # Edit user profile
 @login_required
 def edit_profile(request):
@@ -174,6 +132,67 @@ def edit_profile(request):
     }
 
     return render(request, 'clara_app/edit_profile.html', context)
+
+# External user profile view
+def external_profile(request, user_id):
+    profile_user = get_object_or_404(User, pk=user_id)
+    profile = get_object_or_404(UserProfile, user=profile_user)
+
+    # Check if the profile is private
+    if profile.is_private and request.user != user:
+        return render(request, 'clara_app/external_profile_private.html', {'username': user.username})
+
+    # Check the friend status
+    friend_request = FriendRequest.objects.filter(
+        (Q(sender=request.user) & Q(receiver=profile_user)) | 
+        (Q(sender=profile_user) & Q(receiver=request.user))
+    ).first()
+
+    if request.method == 'POST':
+        form = FriendRequestForm(request.POST)
+        if form.is_valid():
+            action = form.cleaned_data['action']
+            friend_request_id = form.cleaned_data.get('friend_request_id')
+
+            if action == 'send':
+                FriendRequest.objects.create(sender=request.user, receiver=profile_user, status='Sent')
+            elif action in ['cancel', 'reject', 'unfriend'] and friend_request_id:
+                FriendRequest.objects.filter(id=friend_request_id).delete()
+            elif action == 'accept' and friend_request_id:
+                FriendRequest.objects.filter(id=friend_request_id).update(status='Accepted')
+
+            return redirect('external_profile', user_id=user_id)
+
+    else:
+        form = FriendRequestForm()
+
+    return render(request, 'clara_app/external_profile.html', {
+        'profile_user': profile_user,
+        'profile': profile,
+        'email': profile_user.email,
+        'friend_request': friend_request,
+        'form': form,
+    })
+
+@login_required
+def friends(request):
+    # Get the current user's profile
+    user_profile = request.user.userprofile
+
+    # Get incoming and outgoing friend requests
+    incoming_requests = FriendRequest.objects.filter(receiver=request.user, status='Sent')
+    outgoing_requests = FriendRequest.objects.filter(sender=request.user, status='Sent')
+
+    # Get current friends (both directions)
+    current_friends = [ request.sender for request in FriendRequest.objects.filter(receiver=request.user, status='Accepted') ] + \
+                      [ request.receiver for request in FriendRequest.objects.filter(sender=request.user, status='Accepted') ]
+
+    return render(request, 'clara_app/friends.html', {
+        'user_profile': user_profile,
+        'incoming_requests': incoming_requests,
+        'outgoing_requests': outgoing_requests,
+        'current_friends': current_friends,
+    })
 
 def user_config(request):
     # In the legacy case, we won't have a UserConfiguration object yet, so create one if necessary
@@ -839,18 +858,7 @@ def content_list(request):
 
     return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form})
 
-##def send_notification_email(recipients, content, action):
-##    subject = f"New {action} on your content: {content.title}"
-##    message = f"A new {action} has been posted on your content '{content.title}'. Visit the content to see more: {content.get_absolute_url()}"
-##    from_email = 'clara-no-reply@unisa.edu.au'
-##    recipient_list = [user.email for user in recipients if user.email]
-##
-##    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
-##        send_mail(subject, message, from_email, recipient_list)
-##    else:
-##        print(f' --- On UniSA would do: send_mail({subject}, {message}, {from_email}, {recipient_list})')
-
-def send_notification_email(request, recipients, content, action):
+def send_rating_or_comment_notification_email(request, recipients, content, action):
     full_url = request.build_absolute_uri(content.get_absolute_url())
     subject = f"New {action} on your content: {content.title}"
     context = {
@@ -907,7 +915,7 @@ def content_detail(request, content_id):
 
         # Send email notification
         action = 'rating' if 'submit_rating' in request.POST else 'comment'
-        send_notification_email(request, recipients, content, action)
+        send_rating_or_comment_notification_email(request, recipients, content, action)
 
         return redirect('content_detail', content_id=content_id)
 
