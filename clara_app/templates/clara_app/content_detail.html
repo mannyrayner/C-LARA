@@ -16,11 +16,15 @@
 
   <p>L2: {{ content.l2 }}</p>
   <p>L1: {{ content.l1 }}</p>
+  {% if content.project %}
+     <p>Created by: <a href="{% url 'external_profile' user_id=content.project.user.id %}"><strong>{{ content.project.user.username }}</strong></a></p>
+  {% else %}
+     <p>Created by: {{ content.annotator }}</p>
+  {% endif %}
   <p>Summary: {{ content.summary }}</p>
   <p>Length in words: {{ content.length_in_words }}</p>
   <p>Author: {{ content.author }}</p>
   <p>Voice: {{ content.voice }}</p>
-  <p>Annotator: {{ content.annotator }}</p>
   <p>Difficulty Level: {{ content.difficulty_level }}</p>
   
   {% for comment in comments %}
