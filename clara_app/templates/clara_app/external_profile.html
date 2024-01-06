@@ -9,4 +9,44 @@
   {% if profile.profile_picture %}
     <img src="{{ profile.profile_picture.url }}" alt="Profile picture" style="max-width: 200px; max-height: 200px;">
   {% endif %}
+  
+  {% if friend_request %}
+    {% if friend_request.status == 'Accepted' %}
+      <p>You are friends with {{ profile_user.username }}.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="unfriend">
+        <input type="hidden" name="friend_request_id" value="{{ friend_request.id }}">
+        <button type="submit">Unfriend</button>
+      </form>
+    {% elif friend_request.sender == request.user %}
+      <p>You have sent a friend request to {{ profile_user.username }}.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="cancel">
+        <input type="hidden" name="friend_request_id" value="{{ friend_request.id }}">
+        <button type="submit">Cancel Friend Request</button>
+      </form>
+    {% elif friend_request.receiver == request.user %}
+      <p>{{ profile_user.username }} has sent you a friend request.</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="accept">
+        <input type="hidden" name="friend_request_id" value="{{ friend_request.id }}">
+        <button type="submit">Accept Friend Request</button>
+      </form>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <input type="hidden" name="friend_request_id" value="{{ friend_request.id }}">
+        <button type="submit">Reject Friend Request</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="send">
+      <button type="submit">Send Friend Request</button>
+    </form>
+  {% endif %}
 {% endblock %}
