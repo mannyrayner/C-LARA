@@ -25,7 +25,7 @@
   
   {% for comment in comments %}
     <p>
-      <strong>{{ comment.user.username }}</strong> 
+	  <a href="{% url 'external_profile' user_id=comment.user.id %}"><strong>{{ comment.user.username }}</strong></a>
       ({{ comment.timestamp|date:"F j, Y, P" }}):
       {{ comment.comment }}
     </p>
