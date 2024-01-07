@@ -2565,7 +2565,6 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
         
     if human_audio_info:
         human_voice_id = human_audio_info.voice_talent_id
-        # Phonetic always uses human voice for "words" (actually letter groups) 
         audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
         audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
     else:
@@ -2577,17 +2576,11 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
         form = RenderTextForm(request.POST)
         if form.is_valid():
             # Create a unique ID to tag messages posted by this task
-            #report_id = uuid.uuid4()
-
-            # Define a callback as list of the callback function and the first argument
-            # We can't use a lambda function or a closure because async_task can't apply pickle to them
-            #callback = [post_task_update_in_db, report_id]
             task_type = f'render_{phonetic_or_normal}'
             callback, report_id = make_asynch_callback_and_report_id(request, task_type)
         
             # Enqueue the render_text task
             self_contained = True
-            # First check that we can internalise the appropriate files, and give an error if we can't
             try:
                 phonetic = True if phonetic_or_normal == 'phonetic' else False
                 internalised_text = clara_project_internal.get_internalised_text(phonetic=phonetic)
