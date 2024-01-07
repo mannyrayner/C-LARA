@@ -34,6 +34,7 @@ SUPPORTED_LANGUAGES = [
     ('korean', 'Korean'),
     ('latin', 'Latin'),
     ('mandarin', 'Mandarin'),
+    ('māori', 'Māori'),
     ('norwegian', 'Norwegian'),
     ('old norse', 'Old Norse'),
     ('polish', 'Polish'),
