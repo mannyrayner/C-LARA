@@ -7,52 +7,50 @@ Functions:
 - call_chat_gpt4(prompt): Sends a prompt to ChatGPT-4 and returns the response.
 - get_api_chatgpt4_response(prompt): Sends a prompt to the ChatGPT-4 API and returns the response.
 
-This module also provides an option to use a manual alternative to the ChatGPT-4 API by setting the USE_API flag to False.
 """
 
 from .clara_classes import *
 from . import clara_openai
-# Comment this out for now. We haven't used it for ages, and it confuses Heroku.
-#from . import clara_chatgpt4_manual
 from .clara_utils import get_config, post_task_update, post_task_update_async, print_and_flush
 
 import asyncio
 import os
-import openai
+# Old-style OpenAI ChatCompletion call
+#import openai
+from openai import OpenAI
 import requests
 import time
 from retrying import retry
-from openai.error import RateLimitError, Timeout
 
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# Old-style OpenAI ChatCompletion call
+#openai.api_key = os.environ["OPENAI_API_KEY"]
 
 config = get_config()
 
-# Set up OpenAI API client
-
-USE_API = True  # Set to False to use the manual alternative
-
-# Define a function to check if an exception is a timeout or a rate limit error
-def is_retryable_exception(exception):
-    return isinstance(exception, (Timeout, RateLimitError))
-
-# Specify retry parameters: wait 5 seconds between retries, and retry up to 5 times
-#@retry(stop_max_attempt_number=5, wait_fixed=5000, retry_on_exception=is_retryable_exception)
 def call_chat_gpt4(prompt, config_info={}, callback=None):
     gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4'
     return asyncio.run(get_api_chatgpt4_response(prompt, gpt_model=gpt_model, callback=callback))
 
+# Old-style OpenAI ChatCompletion call
+##def call_openai_api(messages, gpt_model='gpt-4'):
+##    # This function makes the actual OpenAI API call
+##    response = openai.ChatCompletion.create(
+##        model=gpt_model,
+##        messages=messages,
+##        max_tokens=4000,
+##        n=1,
+##        stop=None,
+##        temperature=0.9,
+##    )
+##    return response
+
 def call_openai_api(messages, gpt_model='gpt-4'):
-    # This function makes the actual OpenAI API call
-    response = openai.ChatCompletion.create(
-        model=gpt_model,
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    chat_completion = client.chat.completions.create(
         messages=messages,
-        max_tokens=4000,
-        n=1,
-        stop=None,
-        temperature=0.9,
-    )
-    return response
+        model=gpt_model
+        )
+    return chat_completion
 
 async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4-1106-preview', callback=None):
     start_time = time.time()
@@ -62,7 +60,7 @@ async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4-1106-preview', call
         truncated_prompt = prompt if len(prompt) <= n_prompt_chars else prompt[:n_prompt_chars] + '...'
         await post_task_update_async(callback, f'--- Sending request to {gpt_model}: "{truncated_prompt}"')
     messages = [ {"role": "system", "content": "You are a helpful assistant."},
-             {"role": "user", "content": prompt} ]
+                 {"role": "user", "content": prompt} ]
     
     loop = asyncio.get_event_loop()
 
@@ -82,7 +80,9 @@ async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4-1106-preview', call
     # Once the API call is done:
     response = api_task.result()
 
-    response_string = response.choices[0]['message']['content']
+    # Old-style OpenAI ChatCompletion call
+    #response_string = response.choices[0]['message']['content']
+    response_string = response.choices[0].message.content
     if n_response_chars != 0:
         truncated_response = response_string if len(response_string) <= n_response_chars else response_string[:n_response_chars] + '...'
         await post_task_update_async(callback, f'--- Received response from {gpt_model}: "{truncated_response}"')

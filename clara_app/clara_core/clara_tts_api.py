@@ -24,6 +24,8 @@ Returns the language ID for the given language in the specified TTS engine or th
 from .clara_utils import get_config, post_task_update, os_environ_or_none
 from .clara_utils import absolute_file_name, absolute_local_file_name, local_file_exists, write_local_txt_file
 
+from openai import OpenAI
+
 import os
 import tempfile
 import requests
@@ -235,6 +237,48 @@ class GoogleTTSEngine(TTSEngine):
             post_task_update(callback, f"*** Warning: unable to find Google credentials in GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON")
             return False
 
+class OpenAITTSEngine(TTSEngine):
+    def __init__(self):
+        self.tts_engine_type = 'openai'
+        self.open_ai_key = os.environ["OPENAI_API_KEY"]
+        self.phonetic = False
+        self._openai_supported_languages = ['afrikaans', 'arabic', 'armenian', 'azerbaijani', 'belarusian',
+                                            'bosnian', 'bulgarian', 'catalan', 'chinese', 'croatian', 'czech',
+                                            'danish', 'dutch', 'english', 'estonian', 'finnish', 'french',
+                                            'galician', 'german', 'greek', 'hebrew', 'hindi', 'hungarian',
+                                            'icelandic', 'indonesian', 'italian', 'japanese', 'kannada', 'kazakh',
+                                            'korean', 'latvian', 'lithuanian', 'macedonian', 'malay', 'marathi',
+                                            'māori', 'nepali', 'norwegian', 'persian', 'polish', 'portuguese',
+                                            'romanian', 'russian', 'serbian', 'slovak', 'slovenian', 'spanish',
+                                            'swahili', 'swedish', 'tagalog', 'tamil', 'thai', 'turkish', 'ukrainian',
+                                            'urdu', 'vietnamese', 'welsh']
+        self._openai_supported_voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+                                            
+        self.languages =  { language: {'language_id': language, 'voices': self._openai_supported_voices }
+                            for language in self._openai_supported_languages }
+                           
+    def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
+        try: 
+            client = OpenAI(api_key=self.open_ai_key)
+            speech_file_path = absolute_local_file_name(output_file)
+            response = client.audio.speech.create(
+                              model="tts-1",
+                              voice=voice_id,
+                              input=text
+                              )
+            response.stream_to_file(speech_file_path)
+            return True
+        
+        except requests.exceptions.RequestException as e:
+            post_task_update(callback, f"*** Warning: Network error while creating OpenAI TTS mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+        except IOError as e:
+            post_task_update(callback, f"*** Warning: IOError while saving OpenAI TTS mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+        except Exception as e:
+            post_task_update(callback, f"*** Warning: unable to create OpenAI TTS mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+
 class ABAIREngine(TTSEngine):
     def __init__(self, base_url=None):
         self.tts_engine_type = 'abair'
@@ -422,7 +466,7 @@ class IPAReaderEngine(TTSEngine):
             return False
 
 
-TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
+TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
 
 def create_tts_engine(engine_type):
     if engine_type == 'readspeaker':
@@ -431,6 +475,8 @@ def create_tts_engine(engine_type):
         return GoogleTTSEngine()
     elif engine_type == 'abair':
         return ABAIREngine()
+    elif engine_type == 'openai':
+        return OpenAITTSEngine()
     elif engine_type == 'ipa_reader':
         return IPAReaderEngine()
     else:
