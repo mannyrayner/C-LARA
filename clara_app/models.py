@@ -5,6 +5,9 @@ from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAG
 
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
+
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -242,3 +245,27 @@ class Comment(models.Model):
     comment = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     
+class Update(models.Model):
+    UPDATE_TYPES = [
+        ('PUBLISH', 'Publish'),
+        ('RATE', 'Rate'),
+        ('COMMENT', 'Comment'),
+        ('FRIEND', 'Friend'),
+        # Add more types as needed
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    update_type = models.CharField(max_length=10, choices=UPDATE_TYPES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    # Generic foreign key setup
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    def __str__(self):
+        return f"{self.user.username} {self.update_type} at {self.timestamp}"
+
+    class Meta:
+        ordering = ['-timestamp']
+        

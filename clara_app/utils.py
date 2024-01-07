@@ -3,6 +3,7 @@ from django.db.models import Sum
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
 
 #from django_q.models import OrmQ
 
@@ -16,7 +17,7 @@ import hashlib
 import uuid
 
 
-from .models import CLARAProject, User, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate
+from .models import CLARAProject, User, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update
 
 from .clara_core.clara_utils import write_json_to_file_plain_utf8, read_json_file
 
@@ -76,10 +77,6 @@ def get_task_updates(report_id):
     updates.update(read=True)
     
     return messages
-
-##def delete_all_tasks():
-##    OrmQ.objects.all().delete()
-##    time.sleep(1)
 
 # Create internal_id by sanitizing the project title and appending the project_id
 def create_internal_project_id(title, project_id):
@@ -221,27 +218,6 @@ def language_master_required(function):
         else:
             return HttpResponseForbidden('You are not authorized to edit language prompts')
     return _wrapped_view
- 
-# Uploaded files aren't always files.
-##def uploaded_file_to_file(uploaded_file):
-##    try:
-##        return uploaded_file.temporary_file_path()
-##    except AttributeError:
-##        # If not, save the uploaded file to a new temporary file
-##        temp_file = tempfile.NamedTemporaryFile(delete=False)
-##        for chunk in uploaded_file.chunks():
-##            temp_file.write(chunk)
-##        temp_file.close()
-##        return temp_file.name
-
-##def uploaded_file_to_file(uploaded_file):
-##    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-##        print(f'Type: {type(uploaded_file)}')
-##        print(f'Size: {uploaded_file.size} bytes')
-##        #file_content = uploaded_file.read()  # Read the entire content
-##        file_content = uploaded_file.open("rb").read()
-##        temp_file.write(file_content)
-##        return temp_file.name
 
 def compute_md5_of_content(content):
     """Compute the MD5 checksum of content."""
@@ -271,3 +247,22 @@ def uploaded_file_to_file(uploaded_file):
             return None
 
         return temp_file.name
+
+def create_update(user, update_type, obj):
+    """
+    Create an Update record for a given user, update type, and object.
+
+    Args:
+    user (User): The user who performed the action.
+    update_type (str): The type of update (e.g., 'PUBLISH', 'RATE', 'COMMENT', 'FRIEND').
+    obj (Model instance): The object related to the update (e.g., Content, Comment, Rating, FriendRequest).
+    """
+    content_type = ContentType.objects.get_for_model(obj)
+    update = Update.objects.create(
+        user=user,
+        update_type=update_type,
+        content_type=content_type,
+        object_id=obj.id
+    )
+    print(f'--- Posted update: "{update}"')
+    return update

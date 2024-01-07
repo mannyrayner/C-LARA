@@ -40,8 +40,7 @@ from .utils import get_user_config, create_internal_project_id, store_api_calls,
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates
-#from .utils import delete_all_tasks
-from .utils import uploaded_file_to_file
+from .utils import uploaded_file_to_file, create_update
 
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
@@ -178,7 +177,11 @@ def external_profile(request, user_id):
             elif action in ['cancel', 'reject', 'unfriend'] and friend_request_id:
                 FriendRequest.objects.filter(id=friend_request_id).delete()
             elif action == 'accept' and friend_request_id:
-                FriendRequest.objects.filter(id=friend_request_id).update(status='Accepted')
+                friend_request_query_set = FriendRequest.objects.filter(id=friend_request_id)
+                friend_request_query_set.update(status='Accepted')
+
+                # Create an Update record for the update feed
+                create_update(request.user, 'FRIEND', friend_request_query_set.first())
 
             return redirect('external_profile', user_id=user_id)
 
@@ -916,8 +919,11 @@ def content_detail(request, content_id):
                 if rating:
                     rating.rating = new_rating.rating
                     rating.save()
+                    create_update(request.user, 'RATE', rating)
                 else:
                     new_rating.save()
+                    create_update(request.user, 'RATE', new_rating)
+            
         elif 'submit_comment' in request.POST:
             comment_form = CommentForm(request.POST)
             if comment_form.is_valid():
@@ -925,6 +931,7 @@ def content_detail(request, content_id):
                 new_comment.user = request.user
                 new_comment.content = content
                 new_comment.save()
+                create_update(request.user, 'COMMENT', new_comment)
 
         # Identify recipients
         content_creator = content.project.user
@@ -2772,6 +2779,10 @@ def register_project_content(request, phonetic_or_normal, project_id):
                 content.difficulty_level = cefr_level
                 content.summary = summary
                 content.save()
+                
+            # Create an Update record for the update feed
+            create_update(request.user, 'PUBLISH', content)
+            
             return redirect(content.get_absolute_url())
 
     # If the form was not submitted or was not valid, redirect back to the project detail page.
