@@ -1,0 +1,16 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Update Feed</h2>
+  <ul>
+    {% for update in updates %}
+      <li>
+        <strong>{{ update.user.username }}</strong> 
+        performed a <strong>{{ update.update_type }}</strong> action 
+        at {{ update.timestamp }}
+      </li>
+    {% empty %}
+      <li>No updates to show.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
