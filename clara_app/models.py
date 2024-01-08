@@ -264,7 +264,7 @@ class Update(models.Model):
     content_object = GenericForeignKey('content_type', 'object_id')
 
     def __str__(self):
-        return f"{self.user.username} {self.update_type} at {self.timestamp}"
+        return f"{self.user.username} {self.update_type} at {self.timestamp}. Content: {self.content_object}"
 
     class Meta:
         ordering = ['-timestamp']

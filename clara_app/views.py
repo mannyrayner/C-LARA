@@ -220,9 +220,14 @@ def friends(request):
 def update_feed(request):
     # Retrieve updates related to the user's friends and their own actions
     friends = current_friends_of_user(request.user)
+    #print(f'Friends: {friends}')
     updates = Update.objects.filter(
         Q(user__in=friends) | Q(user=request.user)
     ).order_by('-timestamp')[:50]  # Get the latest 50 updates
+
+    #print(f'Updates:')
+    #for update in updates:
+    #    print(update)
 
     return render(request, 'clara_app/update_feed.html', {'updates': updates})
 
