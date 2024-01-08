@@ -905,14 +905,16 @@ def send_rating_or_comment_notification_email(request, recipients, content, acti
     }
     message = render_to_string('rating_or_comment_notification_email.html', context)
     from_email = 'clara-no-reply@unisa.edu.au'
-    recipient_list = [user.email for user in recipients if user.email]
+    recipient_list = [user.email for user in recipients
+                      if user.email and not user == request.user]
 
-    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
-        email = EmailMessage(subject, message, from_email, recipient_list)
-        email.content_subtype = "html"  # Set the email content type to HTML
-        email.send()
-    else:
-        print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
+    if len(recipient_list) != 0:
+        if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+            email = EmailMessage(subject, message, from_email, recipient_list)
+            email.content_subtype = "html"  # Set the email content type to HTML
+            email.send()
+        else:
+            print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
 
 # Show a piece of registered content. Users can add ratings and comments.    
 @login_required
