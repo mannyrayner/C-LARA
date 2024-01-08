@@ -20,12 +20,15 @@ from . import clara_chatgpt4
 
 def generate_story(language, prompt=None, config_info={}, callback=None):
     if not prompt:
+        introduction = ''
         prompt = f"Write a short, quirky news story in {language.capitalize()} suitable for use in an intermediate language class."
+    else:
+        introduction = f"Write a text in {language.capitalize()}, using the following instructions.\n\n"
 
     clarification = f""" Since the output will be processed by a Python script, write only the {language.capitalize()} text.
 Do not include any introduction, translation, explanation or similar."""
 
-    full_prompt = prompt + clarification
+    full_prompt = introduction + prompt + clarification
     api_call = clara_chatgpt4.call_chat_gpt4(full_prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )
 
