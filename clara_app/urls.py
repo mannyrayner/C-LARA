@@ -19,6 +19,7 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('profile/', views.profile, name='profile'),
     path('friends/', views.friends, name='friends'),
+    path('update_feed/', views.update_feed, name='update_feed'),
     path('external_profile/<int:user_id>/', views.external_profile, name='external_profile'),
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('user_config/', views.user_config, name='user_config'),

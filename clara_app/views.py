@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate
+from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
 from django.contrib.auth.models import User
 
@@ -40,7 +40,7 @@ from .utils import get_user_config, create_internal_project_id, store_api_calls,
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates
-from .utils import uploaded_file_to_file, create_update
+from .utils import uploaded_file_to_file, create_update, current_friends_of_user
 
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
@@ -205,9 +205,8 @@ def friends(request):
     incoming_requests = FriendRequest.objects.filter(receiver=request.user, status='Sent')
     outgoing_requests = FriendRequest.objects.filter(sender=request.user, status='Sent')
 
-    # Get current friends (both directions)
-    current_friends = [ request.sender for request in FriendRequest.objects.filter(receiver=request.user, status='Accepted') ] + \
-                      [ request.receiver for request in FriendRequest.objects.filter(sender=request.user, status='Accepted') ]
+    # Get current friends 
+    current_friends = current_friends_of_user(request.user)
 
     return render(request, 'clara_app/friends.html', {
         'user_profile': user_profile,
@@ -215,6 +214,17 @@ def friends(request):
         'outgoing_requests': outgoing_requests,
         'current_friends': current_friends,
     })
+
+# Show the update feed
+@login_required
+def update_feed(request):
+    # Retrieve updates related to the user's friends and their own actions
+    friends = current_friends_of_user(request.user)
+    updates = Update.objects.filter(
+        Q(user__in=friends) | Q(user=request.user)
+    ).order_by('-timestamp')[:50]  # Get the latest 50 updates
+
+    return render(request, 'clara_app/update_feed.html', {'updates': updates})
 
 def user_config(request):
     # In the legacy case, we won't have a UserConfiguration object yet, so create one if necessary

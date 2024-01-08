@@ -17,7 +17,7 @@ import hashlib
 import uuid
 
 
-from .models import CLARAProject, User, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update
+from .models import CLARAProject, User, UserConfiguration, APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest
 
 from .clara_core.clara_utils import write_json_to_file_plain_utf8, read_json_file
 
@@ -247,6 +247,11 @@ def uploaded_file_to_file(uploaded_file):
             return None
 
         return temp_file.name
+
+# Get current friends. Friend request can work in either direction.
+def current_friends_of_user(user):
+    return [ friend_request.sender for friend_request in FriendRequest.objects.filter(receiver=user, status='Accepted') ] + \
+           [ friend_request.receiver for friend_request in FriendRequest.objects.filter(sender=user, status='Accepted') ]
 
 def create_update(user, update_type, obj):
     """
