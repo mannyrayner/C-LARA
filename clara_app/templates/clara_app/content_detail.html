@@ -14,8 +14,8 @@
     <button type="submit" name="submit_rating">Submit rating</button>
 </form>
 
-  <p>L2: {{ content.l2 }}</p>
-  <p>L1: {{ content.l1 }}</p>
+  <p>Text language: {{ content.l2 }}</p>
+  <p>Content language: {{ content.l1 }}</p>
   {% if content.project %}
      <p>Created by: <a href="{% url 'external_profile' user_id=content.project.user.id %}"><strong>{{ content.project.user.username }}</strong></a></p>
   {% else %}

@@ -33,6 +33,26 @@
   .btn-special:hover {
     background-color: #0056b3;  /* Darker shade for hover */
   }
+  
+  a[data-tooltip] {
+    position: relative;
+}
+  
+  a[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(10%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 1;
+    white-space: nowrap;
+}
+
 
   </style>
   <title>{% block title %}C-LARA{% endblock %}</title>

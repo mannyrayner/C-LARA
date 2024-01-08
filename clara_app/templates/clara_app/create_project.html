@@ -4,7 +4,9 @@
   <h1>Create a new project</h1>
   <form method="POST">
     {% csrf_token %}
-    {{ form.as_p }}
+	<p>Title: {{ form.title }}</p>
+	<p>Text language: {{ form.l2 }}</p>
+	<p>Annotation language: {{ form.l1 }}</p>
     <button type="submit">Create Project</button>
     {% if form.errors %}
         <ul>

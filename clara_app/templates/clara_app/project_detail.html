@@ -7,30 +7,83 @@
         {{ form.as_p }}
         <button type="submit">Update Title</button>
     </form>
-	<p>L2 Language: {{ project.l2 }}</p>
-	<p>L1 Language: {{ project.l1 }}</p>
+	<p>Text Language: {{ project.l2 }}</p>
+	<p>Annotation Language: {{ project.l1 }}</p>
 	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
-	<p><a href="{% url 'create_plain_text' project.id %}" >Create/Edit Plain Text</a></p>
-	<p><a href="{% url 'create_summary' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Create/Edit Summary</a></p>
-	<p><a href="{% url 'create_cefr_level' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Estimate/Edit CEFR Level</a></p>
-	<p><a href="{% url 'create_segmented_text' project.id %}" {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>Create/Edit Segmented Text</a></p>
-	<p><a href="{% url 'edit_images' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Add/Remove Images</a></p>
-	<p><a href="{% url 'create_phonetic_text' project.id %}" {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>Create/Edit Phonetic Text</a></p>
-	<p><a href="{% url 'create_glossed_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>Create/Edit Glossed Text</a></p>
-	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">Create/Edit Lemma Tagged Text</a></p>
+	<p><a href="{% url 'create_plain_text' project.id %}" 
+	      data-tooltip="Tell the AI to create the original text for your project. Alternately, edit the result or paste in your own text." >
+		  Create/Edit Plain Text</a></p>
+	<p><a href="{% url 'create_summary' project.id %}" 
+	      data-tooltip="Tell the AI to create a summary of the original text. Alternately, edit the result or paste in your own summary." 
+		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
+		  Create/Edit Summary</a></p>
+	<p><a href="{% url 'create_cefr_level' project.id %}" 
+	      data-tooltip="Tell the AI to estimate the CEFR level (A1 to C2) of the original text. Alternately, edit the result or paste in your estimate." 
+		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
+		  Estimate/Edit CEFR Level</a></p>
+	<p><a href="{% url 'create_segmented_text' project.id %}" 
+	      data-tooltip="Tell the AI to divide the text into pages and sentence-like segments, and split up compound words. Alternately, edit the result or add your own segmentation." 
+		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
+		  Create/Edit Segmented Text</a></p>
+	<p><a href="{% url 'edit_images' project.id %}" 
+	      data-tooltip="Upload, replace or remove images to include in the text." 
+	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+		  Add/Remove Images</a></p>
+	<p><a href="{% url 'create_phonetic_text' project.id %}"
+	      data-tooltip="If a phonetic lexicon has been uploaded for this language, create a version of the text divided into phonetic units."
+	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>
+		  Create/Edit Phonetic Text</a></p>
+	<p><a href="{% url 'create_glossed_text' project.id %}" 
+	      data-tooltip="Tell the AI to add glosses to the words in the text. Alternately, edit the result or add your own glosses." 
+	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+		  Create/Edit Glossed Text</a></p>
+	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" 
+	      data-tooltip="Tell the AI to add lemma and part-of-speech tags to the words in the text. Alternately, edit the result or add your own tags." 
+	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">
+		  Create/Edit Lemma Tagged Text</a></p>
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->
-	<p><a href="{% url 'human_audio_processing' project.id %}" {% if not can_render_normal %}class="disabled-link"{% endif %}>Human Audio Processing</a></p>
-	<p><a href="{% url 'human_audio_processing_phonetic' project.id %}" {% if not can_render_phonetic %}class="disabled-link"{% endif %}>Human Audio Processing (Phonetic)</a></p>
-	<p><a href="{% url 'render_text_start_normal' project.id %}" {% if not can_render_normal %}class="disabled-link"{% endif %}>Render Text</a></p>
-	<p><a href="{% url 'render_text_start_phonetic' project.id %}" {% if not can_render_phonetic %}class="disabled-link"{% endif %}>Render Phonetic Text</a></p>
-	<p><a href="{% url 'offer_to_register_content_normal' project.id %}" {% if not rendered_html_exists %}class="disabled-link"{% endif %}>Register Rendered Text</a></p>
-	<p><a href="{% url 'offer_to_register_content_phonetic' project.id %}" {% if not rendered_phonetic_html_exists %}class="disabled-link"{% endif %}>Register Rendered Phonetic Text</a></p>
-	<p><a href="{% url 'make_export_zipfile' project.id %}">Export zipfile</a></p>
-	<p><a href="{% url 'compare_versions' project.id %}">Compare Text Versions</a></p>
-	<p><a href="{% url 'project_history' project.id %}">View Project History</a></p>
-	<p><a href="{% url 'manage_project_members' project.id %}">Manage Project Members</a></p>
-	<p><a href="{% url 'clone_project' project.id %}">Clone Project</a></p>
-	<p><a href="{% url 'delete_project' project.id %}">Delete Project</a></p>
+	<p><a href="{% url 'human_audio_processing' project.id %}" 
+	      data-tooltip="Specify if you want to use human-recorded audio for the text, and if so upload it." 
+	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
+		  Human Audio Processing</a></p>
+	<p><a href="{% url 'human_audio_processing_phonetic' project.id %}" 
+	      data-tooltip="Specify if you want to use human-recorded audio for the phonetic version of the text, and if so upload it." 
+	      {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
+		  Human Audio Processing (Phonetic)</a></p>
+	<p><a href="{% url 'render_text_start_normal' project.id %}" 
+	      data-tooltip="Create the final multimedia version of the text. Usually this will involve using TTS to produce the audio." 
+	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
+		  Render Text</a></p>
+	<p><a href="{% url 'render_text_start_phonetic' project.id %}"
+	      data-tooltip="Create the final multimedia version of the phonetic text. This may involve using the ipa-reader site to produce the phonetic audio." 
+      	  {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
+		  Render Phonetic Text</a></p>
+	<p><a href="{% url 'offer_to_register_content_normal' project.id %}" 
+	      data-tooltip="Make the multimedia version of the text available through the C-LARA social network." 
+	      {% if not rendered_html_exists %}class="disabled-link"{% endif %}>
+		  Register Rendered Text</a></p>
+	<p><a href="{% url 'offer_to_register_content_phonetic' project.id %}" 
+	      data-tooltip="Make the multimedia version of the phonetic text available through the C-LARA social network." 
+	      {% if not rendered_phonetic_html_exists %}class="disabled-link"{% endif %}>
+		  Register Rendered Phonetic Text</a></p>
+	<p><a href="{% url 'make_export_zipfile' project.id %}"
+	      data-tooltip="Package up the project as a zipfile, to archive it or move it to another server."> 
+	      Export zipfile</a></p>
+	<p><a href="{% url 'compare_versions' project.id %}"
+	      data-tooltip="Compare different versions of the plain or annotated text. This is often useful for estimating error rates.">
+	      Compare Text Versions</a></p>
+	<p><a href="{% url 'project_history' project.id %}"
+	      data-tooltip="View the project history.">
+	      View Project History</a></p>
+	<p><a href="{% url 'manage_project_members' project.id %}"
+	      data-tooltip="Add or remove people from the project.">
+	      Manage Project Members</a></p>
+	<p><a href="{% url 'clone_project' project.id %}"
+	      data-tooltip="Create a clone of the project.">
+	      Clone Project</a></p>
+	<p><a href="{% url 'delete_project' project.id %}"
+	      data-tooltip="Permanently remove the project.">
+	      Delete Project</a></p>
 
 {% endblock %}
 
