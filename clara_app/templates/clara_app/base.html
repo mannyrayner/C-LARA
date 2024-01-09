@@ -43,7 +43,8 @@
     position: absolute;
     bottom: 100%;
     left: 50%;
-    transform: translateX(10%);
+    transform: translateX(20%);
+	transform: translateY(200%);
     background-color: #333;
     color: #fff;
     padding: 5px;
@@ -62,34 +63,80 @@
     <nav>
       <ul>
         {% if user.is_authenticated %}
-		  <li><a href="{% url 'profile' %}">Display user profile</a></li>
-		  <li><a href="{% url 'edit_profile' %}">Edit user profile</a></li>
-		  <li><a href="{% url 'update_feed' %}">Update feed</a></li>
-		  <li><a href="{% url 'friends' %}">Display friends</a></li>
-		  <li><a href="{% url 'user_config' %}">Set GPT-4 version</a></li>
-		  <li><a href="{% url 'credit_balance' %}">Credit balance for ChatGPT-4 API calls</a></li>
-		  <li><a href="{% url 'transfer_credit' %}">Transfer credit to another user</a></li>
-		  <li><a href="{% url 'view_task_updates' %}">Recent task updates</a></li>
+		  <li><a href="{% url 'profile' %}"
+		         data-tooltip="Display your location, bio, profile picture etc.">
+		         Display user profile</a></li>
+		  <li><a href="{% url 'edit_profile' %}"
+		         data-tooltip="Enter/edit your location, bio, profile picture etc.">
+				 Edit user profile</a></li>
+		  <li><a href="{% url 'update_feed' %}"
+		         data-tooltip="Get a summary of recent C-LARA activity from you and your friends.">
+				 Update feed</a></li>
+		  <li><a href="{% url 'friends' %}"
+		         data-tooltip="Show friends and outstanding friend requests.">
+				 Display friends</a></li>
+		  <li><a href="{% url 'user_config' %}"
+		         data-tooltip="Specify the GPT-4 model you want to use and other related parameters.">
+				 Set GPT-4 version</a></li>
+		  <li><a href="{% url 'credit_balance' %}"
+		         data-tooltip="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
+				 Credit balance for ChatGPT-4 API calls</a></li>
+		  <li><a href="{% url 'transfer_credit' %}"
+		         data-tooltip="Transfer some of the credit from your GPT-4 call account to another user.">
+				 Transfer credit to another user</a></li>
+		  <li><a href="{% url 'view_task_updates' %}"
+		         data-tooltip="Show a summary of recent activity by you and your C-LARA friends."
+		         >Recent task updates</a></li>
 		  {% if user.userprofile.is_admin %}
-		  <li><a href="{% url 'add_credit' %}">Add credit to user</a></li>
-            <li><a href="{% url 'admin_password_reset' %}">Manually reset user's password</a></li>
-			<li><a href="{% url 'manage_language_masters' %}">Manage language masters</a></li>
-			<li><a href="{% url 'delete_tts_data' %}">Delete TTS data</a></li>
+		  <li><a href="{% url 'add_credit' %}"
+		         data-tooltip="Add credit to a user's GPT-4 call account">
+				 Add credit to user</a></li>
+            <li><a href="{% url 'admin_password_reset' %}"
+			       data-tooltip="Manually reset a user's password, in case they cannot use the normal password reset.">
+				   Manually reset user's password</a></li>
+			<li><a href="{% url 'manage_language_masters' %}"
+			       data-tooltip="Give users 'language master' privileges, so that they can customise annotation prompts and edit phonetic lexicon data.">
+				   Manage language masters</a></li>
+			<li><a href="{% url 'delete_tts_data' %}"
+			       data-tooltip="Remove all cached TTS data for a given language.">
+				   Delete TTS data</a></li>
           {% endif %}
 		  {% if user.userprofile.is_language_master %}
-			<li><a href="{% url 'edit_prompt' %}">Edit annotation prompts</a></li>
-			<li><a href="{% url 'edit_phonetic_lexicon' %}">Edit phonetic lexicon</a></li>
+			<li><a href="{% url 'edit_prompt' %}"
+			       data-tooltip="Edit the GPT-4 prompt templates and examples used to create text annotations for languages where you are a language master.">
+				   Edit annotation prompts</a></li>
+			<li><a href="{% url 'edit_phonetic_lexicon' %}"
+			       data-tooltip="Upload or edit phonetic lexicon data for languages where you are a language master.">
+				   Edit phonetic lexicon</a></li>
 		  {% endif %}
-		  <li><a href="{% url 'create_project' %}">Create new C-LARA project</a></li>
-		  <li><a href="{% url 'import_project' %}">Import C-LARA project from zipfile</a></li>
-		  <li><a href="{% url 'project_list' %}">List your C-LARA projects</a></li>
-		  <li><a href="{% url 'content_list' %}">List registered content</a></li>
-		  <li><a href="{% url 'register_content' %}">Register external LARA content</a></li>
-          <li><a href="{% url 'logout' %}">Logout</a></li>
+		  <li><a href="{% url 'create_project' %}"
+		         data-tooltip="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
+				 Create new C-LARA project</a></li>
+		  <li><a href="{% url 'import_project' %}"
+		         data-tooltip="Import a project from a zipfile created using the 'Export zipfile' command.">
+				 Import C-LARA project from zipfile</a></li>
+		  <li><a href="{% url 'project_list' %}"
+		         data-tooltip="List all the projects you have created or have been assigned a role in.">
+		         List your C-LARA projects</a></li>
+		  <li><a href="{% url 'content_list' %}"
+		         data-tooltip="List all the content that has been registered in the C-LARA social network.">
+				 List registered content</a></li>
+		  <li><a href="{% url 'register_content' %}"
+		         data-tooltip="Register a piece of LARA content to make it accessible through the C-LARA social network.">
+				 Register external LARA content</a></li>
+          <li><a href="{% url 'logout' %}"
+		         data-tooltip="Exit C-LARA.">
+				 Logout</a></li>
         {% else %}
-          <li><a href="{% url 'login' %}">Login</a></li>
-          <li><a href="{% url 'register' %}">Register</a></li>
-		  <li><a href="{% url 'password_reset' %}">Password reset</a></li>
+          <li><a href="{% url 'login' %}"
+		         data-tooltip="Log in using your userid and password.">
+				 Login</a></li>
+          <li><a href="{% url 'register' %}"
+		         data-tooltip="Create a new account, giving a userid, password and email address.">
+				 Register</a></li>
+		  <li><a href="{% url 'password_reset' %}"
+		         data-tooltip="Reset your password if you have lost it or want to change it. You need to have given an email address.">
+				 Password reset</a></li>
         {% endif %}
       </ul>
     </nav>
