@@ -85,7 +85,7 @@
 		         data-tooltip="Transfer some of the credit from your GPT-4 call account to another user.">
 				 Transfer credit to another user</a></li>
 		  <li><a href="{% url 'view_task_updates' %}"
-		         data-tooltip="Show a summary of recent activity by you and your C-LARA friends."
+		         data-tooltip="Show trace output from C-LARA tasks produced during the last hour."
 		         >Recent task updates</a></li>
 		  {% if user.userprofile.is_admin %}
 		  <li><a href="{% url 'add_credit' %}"

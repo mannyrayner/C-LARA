@@ -9,6 +9,18 @@
   <form method="post" id="create-plain-text-form">
     {% csrf_token %}
     <p>{{ form.text_choice.label_tag }} {{ form.text_choice }}</p>
+	<!--- <div class="form-group">
+        <label for="text_choice">Choose an option:</label>
+        {% for choice in form.text_choice %}
+            {% with choice_choice_value=choice.choice_value %}
+                <div>
+                    <input type="radio" name="text_choice" id="{{ choice.id_for_label }}" value="{{ choice_choice_value }}">
+                    <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                    <button type="button" class="info-btn" data-toggle="popover" title="Information" data-content="{{ text_choices_info.choice_choice_value }}">i</button>
+                </div>
+            {% endwith %}
+        {% endfor %}
+    </div> --->
     <p>{{ form.archived_version.label_tag }} {{ form.archived_version }}</p>
     <p>{{ form.prompt.label_tag }} {{ form.prompt }}</p>
 	<p>{{ form.current_version.label_tag }} {{ form.current_version }}</p>
@@ -23,6 +35,12 @@
     document.getElementById('create-plain-text-form').onsubmit = function() {
       document.getElementById('submit-button').textContent = "Processing...";
     };
+  </script>
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+      $('[data-toggle="popover"]').popover(); 
+    });
   </script>
   
   <script src="{% static 'clara_app/scripts/form-button-text.js' %}"></script>
