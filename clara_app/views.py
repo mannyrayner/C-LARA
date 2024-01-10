@@ -52,7 +52,8 @@ from .clara_core.clara_audio_repository import AudioRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
-from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure  
+from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure
+from .clara_core.clara_chatgpt4 import call_chat_gpt4_image
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
 from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
@@ -75,6 +76,7 @@ import logging
 import pprint
 import uuid
 import traceback
+import tempfile
 
 # Create a new account    
 def register(request):
@@ -2365,7 +2367,7 @@ def project_history(request, project_id):
 
 @login_required
 @user_has_a_project_role
-def edit_images(request, project_id):
+def edit_images(request, project_id, dall_e_3_image_status):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     # Retrieve existing images
@@ -2381,57 +2383,121 @@ def edit_images(request, project_id):
     initial_data = sorted(initial_data, key=lambda x: x['page'])
 
     if request.method == 'POST':
-        formset = ImageFormSet(request.POST, request.FILES)
-        for i in range(0, len(formset)):
-            form = formset[i]
-            previous_record = initial_data[i] if i < len(initial_data) else None
-            # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
-            print(f"--- form #{i}: form.changed_data = {form.changed_data}")
-            if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data ):
-                if not form.is_valid():
-                    print(f'--- Invalid form data (form #{i}): {form}')
-                    messages.error(request, "Invalid form data.")
-                    return redirect('edit_images', project_id=project_id)
-                
-                image_name = form.cleaned_data.get('image_name')
-                # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
-                # If there is no file upload, the value is null
-                if form.cleaned_data.get('image_file_path'):
-                    uploaded_image_file_path = form.cleaned_data.get('image_file_path')
-                    real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
-                    print(f'--- real_image_file_path for {image_name} (from upload) = {real_image_file_path}')
-                elif previous_record:
-                    real_image_file_path = previous_record['image_file_path']
-                    print(f'--- real_image_file_path for {image_name} (previously stored) = {real_image_file_path}')
-                else:
-                    real_image_file_path = None
-                associated_text = form.cleaned_data.get('associated_text')
-                associated_areas = form.cleaned_data.get('associated_areas')
-                page = form.cleaned_data.get('page', 1)
-                position = form.cleaned_data.get('position', 'bottom')
-                delete = form.cleaned_data.get('delete')
-                print(f'--- real_image_file_path = {real_image_file_path}, image_name = {image_name}, page = {page}, delete = {delete}')
+        if 'action' in request.POST and request.POST['action'] == 'create_dalle_image':
+            task_type = f'create_dalle_e_3_image'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-                if image_name and delete:
-                    clara_project_internal.remove_project_image(image_name)
-                    messages.success(request, f"Deleted image: {image_name}")
-                elif image_name and real_image_file_path:
-                   # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
-                    if not associated_areas and associated_text and image_name:  
-                        # Generate the uninstantiated annotated image structure
-                        structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
-                        # Convert the structure to a string and store it in 'associated_areas'
-                        associated_areas = json.dumps(structure)
+            async_task(create_and_add_dall_e_3_image, project_id, callback=callback)
+            print(f'--- Started DALL-E-3 image generation task')
+            #Redirect to the monitor view, passing the task ID and report ID as parameters
+            return redirect('create_dall_e_3_image_monitor', project_id, report_id)
 
-                    clara_project_internal.add_project_image(image_name, real_image_file_path,
-                                                             associated_text=associated_text, associated_areas=associated_areas,
-                                                             page=page, position=position)
-        messages.success(request, "Image data updated")
-        return redirect('edit_images', project_id=project_id)
+        else:
+            formset = ImageFormSet(request.POST, request.FILES)
+            for i in range(0, len(formset)):
+                form = formset[i]
+                previous_record = initial_data[i] if i < len(initial_data) else None
+                # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
+                #print(f"--- form #{i}: form.changed_data = {form.changed_data}")
+                if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data ):
+                    if not form.is_valid():
+                        #print(f'--- Invalid form data (form #{i}): {form}')
+                        messages.error(request, "Invalid form data.")
+                        return redirect('edit_images', project_id=project_id)
+                    
+                    image_name = form.cleaned_data.get('image_name')
+                    # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
+                    # If there is no file upload, the value is null
+                    if form.cleaned_data.get('image_file_path'):
+                        uploaded_image_file_path = form.cleaned_data.get('image_file_path')
+                        real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
+                        #print(f'--- real_image_file_path for {image_name} (from upload) = {real_image_file_path}')
+                    elif previous_record:
+                        real_image_file_path = previous_record['image_file_path']
+                        #print(f'--- real_image_file_path for {image_name} (previously stored) = {real_image_file_path}')
+                    else:
+                        real_image_file_path = None
+                    associated_text = form.cleaned_data.get('associated_text')
+                    associated_areas = form.cleaned_data.get('associated_areas')
+                    page = form.cleaned_data.get('page', 1)
+                    position = form.cleaned_data.get('position', 'bottom')
+                    delete = form.cleaned_data.get('delete')
+                    #print(f'--- real_image_file_path = {real_image_file_path}, image_name = {image_name}, page = {page}, delete = {delete}')
+
+                    if image_name and delete:
+                        clara_project_internal.remove_project_image(image_name)
+                        messages.success(request, f"Deleted image: {image_name}")
+                    elif image_name and real_image_file_path:
+                       # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
+                        if not associated_areas and associated_text and image_name:  
+                            # Generate the uninstantiated annotated image structure
+                            structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
+                            # Convert the structure to a string and store it in 'associated_areas'
+                            associated_areas = json.dumps(structure)
+
+                        clara_project_internal.add_project_image(image_name, real_image_file_path,
+                                                                 associated_text=associated_text, associated_areas=associated_areas,
+                                                                 page=page, position=position)
+            messages.success(request, "Image data updated")
+            return redirect('edit_images', project_id=project_id)
     else:
         formset = ImageFormSet(initial=initial_data)
+        if dall_e_3_image_status == 'finished':
+            messages.success(request, "DALL-E-3 image for whole text successfully generated")
+        elif dall_e_3_image_status == 'error':
+            messages.success(request, "Something went wrong when generating DALL-E-3 image for whole text. Look at the 'Recent task updates' view for further information.")
 
     return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project})
+
+def create_and_add_dall_e_3_image(project_id, callback=None):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        text = clara_project_internal.load_text_version('plain')
+        text_language = project.l2
+        intro = f'Create an image to illustrate the following piece of {text_language} text: \n\n'
+        prompt = intro + text
+        temp_dir = tempfile.mkdtemp()
+        tmp_image_file = os.path.join(temp_dir, 'image_for_whole_text.jpg')
+        
+        post_task_update(callback, f"--- Creating a new DALL-E-3 image based on the whole project text")
+        call_chat_gpt4_image(prompt, tmp_image_file, config_info={}, callback=callback)
+        post_task_update(callback, f"--- Image created: {tmp_image_file}")
+
+        image_name = 'DALLE-E-3-Image-For-Whole-Text'
+        clara_project_internal.add_project_image(image_name, tmp_image_file, 
+                                                 associated_text='', associated_areas='',
+                                                 page=1, position='top')
+        post_task_update(callback, f"--- Image stored")
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+    
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_has_a_project_role
+def create_dall_e_3_image_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_has_a_project_role
+def create_dall_e_3_image_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/create_dall_e_3_image_monitor.html',
+                  {'project_id': project_id, 'project': project, 'report_id': report_id})
+    
 
 def clara_project_internal_make_export_zipfile(clara_project_internal,
                                                human_voice_id=None, human_voice_id_phonetic=None,
