@@ -2439,7 +2439,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                  associated_text=associated_text, associated_areas=associated_areas,
                                                                  page=page, position=position)
             messages.success(request, "Image data updated")
-            return redirect('edit_images', project_id=project_id)
+            return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
     else:
         formset = ImageFormSet(initial=initial_data)
         if dall_e_3_image_status == 'finished':
@@ -2455,8 +2455,12 @@ def create_and_add_dall_e_3_image(project_id, callback=None):
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         text = clara_project_internal.load_text_version('plain')
         text_language = project.l2
-        intro = f'Create an image to illustrate the following piece of {text_language} text: \n\n'
-        prompt = intro + text
+        prompt = f"""Here is something in {text_language} that another instance of you wrote:
+
+{text}
+
+Could you create an image to go on the front page?
+"""
         temp_dir = tempfile.mkdtemp()
         tmp_image_file = os.path.join(temp_dir, 'image_for_whole_text.jpg')
         
