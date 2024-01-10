@@ -1925,7 +1925,7 @@ def compare_versions(request, project_id):
 #
 # - When creating the initial "plain" version, we pass an optional prompt.
 # - In the "lemma" version, we may have the additional option of using TreeTagger.
-def create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template):
+def create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template, text_choices_info=None):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     tree_tagger_supported = fully_supported_treetagger_language(project.l2)
@@ -2095,7 +2095,9 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                                                prompt=prompt, archived_versions=archived_versions, current_version=current_version,
                                                tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
 
-    return render(request, template, {'form': form, 'project': project})
+    #print(f'text_choices_info: {text_choices_info}')
+
+    return render(request, template, {'form': form, 'project': project, 'text_choices_info': text_choices_info})
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
@@ -2289,7 +2291,13 @@ def previous_version_and_template_for_version(this_version):
 def create_plain_text(request, project_id):
     this_version = 'plain'
     previous_version, template = previous_version_and_template_for_version(this_version)
-    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+    text_choices_info = {
+        'generate': "Generate text using AI. Select this option. Type your request into the 'Prompt' box, for example 'Write a short poem about why kittens are cute'. Then press the 'Create' button at the bottom.",
+        'improve': "Improve existing text using AI: this only makes sense if there already is text. Select this option. Then press the 'Improve' button at the bottom.",
+        'manual': "Manually enter/edit text. Select this option, then type whatever you want into the text box. Then press the 'Save' button at the bottom.",
+        'load_archived': "Load archived version. Select this option and also select something from the 'Archived version' menu. Then press the 'Load' button at the bottom."
+    }
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template, text_choices_info=text_choices_info)
 
 #Create or edit "summary" version of the text     
 @login_required
