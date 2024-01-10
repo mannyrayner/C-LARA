@@ -9,7 +9,7 @@
     {% csrf_token %}
     <button type="submit" name="action" value="create_dalle_image">Create</button>
   </form>
-  <h3>Upload/edit/remove existing images</h3>
+  <h3>Upload/edit/delete existing images</h3>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ formset.management_form }}

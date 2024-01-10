@@ -3,7 +3,9 @@
 {% block content %}
   <h1>Your Projects</h1>
   <form method="GET">
-    {{ search_form.as_p }}
+    <p>Text language: {{ search_form.l2 }}</p>
+	<p>Annotation language: {{ search_form.l1 }}</p>
+	<p>Title: {{ search_form.title }}</p>
     <input type="submit" value="Search">
   </form>
 
