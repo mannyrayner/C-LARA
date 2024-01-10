@@ -4,6 +4,12 @@
 
 {% block content %}
   <h2>Edit Images ("{{ project.title }}")</h2>
+  <h3>Create a new DALL-E-3 image based on the whole text</h3>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <button type="submit" name="action" value="create_dalle_image">Create</button>
+  </form>
+  <h3>Upload/edit/remove existing images</h3>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ formset.management_form }}
@@ -37,7 +43,7 @@
         {% endfor %}
       </tbody>
     </table>
-    <button type="submit">Save changes</button>
+    <button type="submit" name="action" value="save_changes">Save changes</button>
   </form>
   
   <p>

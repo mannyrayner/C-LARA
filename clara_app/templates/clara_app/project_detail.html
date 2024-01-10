@@ -25,7 +25,7 @@
 	      data-tooltip="Tell the AI to divide the text into pages and sentence-like segments, and split up compound words. Alternately, edit the result or add your own segmentation." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Segmented Text</a></p>
-	<p><a href="{% url 'edit_images' project.id %}" 
+	<p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image'%}" 
 	      data-tooltip="Upload, replace or remove images to include in the text." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
 		  Add/Remove Images</a></p>
