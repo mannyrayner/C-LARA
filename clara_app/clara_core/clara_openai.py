@@ -23,6 +23,15 @@ def print_openai_models():
     for model in models['data']:
         print(f"Model ID: {model.id}")
 
+def cost_of_gpt4_image_api_call(prompt, gpt_model='dall-e-3', size='1024x1024'):
+    if size == '1024x1024':
+        return float(config.get('dall_e_3_costs', '1024x1024')) 
+    elif size in ( '1024x1792', '1792x1024' ):
+        return float(config.get('dall_e_3_costs', '1792x1024')) 
+    else:
+        # Use most expensive one for anything else
+        return float(config.get('dall_e_3_costs', '1792x1024')) 
+
 def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4'):
     """Returns the cost in dollars of an OpenAI API call, defined by a prompt in the form of a list of messages and a response string"""
     n_message_tokens = ( num_gpt4_tokens_for_messages(messages) / 1000.0 )

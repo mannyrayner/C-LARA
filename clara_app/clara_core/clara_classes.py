@@ -83,7 +83,7 @@ class Segment:
             # When producing 'segmented' or 'phonetic' text, we need to add | markers between continuous Words.
             if annotation_type in ( 'segmented', 'phonetic' ) and this_type == 'Word' and last_type == 'Word':
                 out_text += '|'
-            if element.type in ( 'Word', 'NonWordText' ):
+            if element.type in ( 'Word', 'NonWordText', 'Markup' ):
                 out_text += element.to_text(annotation_type)
             last_type = this_type
         return out_text

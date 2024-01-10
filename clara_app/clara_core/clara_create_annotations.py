@@ -142,10 +142,12 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma, a
     return ( human_readable_text, all_api_calls )
 
 def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma, elements, l1_language, l2_language, config_info={}, callback=None):
+    # Remove markup from the elements before passing to GPT-4 to make things easier for the AI
+    word_and_non_word_text_elements = [ element for element in elements if element.type in ( 'Word', 'NonWordText' ) ]
     if annotate_or_improve == 'annotate':
-        simplified_elements0 = [ simplify_element_to_string(element) for element in elements ]
+        simplified_elements0 = [ simplify_element_to_string(element) for element in word_and_non_word_text_elements ]
     else:
-        simplified_elements0 = [ simplify_element_to_list(element, gloss_or_lemma) for element in elements ]
+        simplified_elements0 = [ simplify_element_to_list(element, gloss_or_lemma) for element in word_and_non_word_text_elements ]
     simplified_elements = [ element for element in simplified_elements0 if element != False ]
     text_to_annotate = simplified_element_list_to_text(simplified_elements) 
     simplified_elements_json = json.dumps(simplified_elements)
@@ -207,7 +209,6 @@ def merge_elements_and_annotated_elements(elements, annotated_elements, gloss_or
         elif tag == 'replace':
             # Handle replacements if necessary
             pass
-
     return elements
 
 def segmentation_prompt(annotate_or_improve, text, l2_language):
@@ -378,6 +379,9 @@ def unsimplify_element(element, gloss_or_lemma):
         # String only consists of punctuation marks
         if all(regex.match(r"\p{P}", c) for c in content):
             return ContentElement("NonWordText", content)
+        # String is an HTML tag
+        elif regex.match(r"<\/?\w+>", content):
+            return ContentElement("Markup", content)
         else:
             return ContentElement("Word", content, annotations={ 'gloss': gloss })
     elif gloss_or_lemma == 'lemma' and len(element) == 3:
@@ -385,6 +389,9 @@ def unsimplify_element(element, gloss_or_lemma):
         # String only consists of punctuation marks
         if all(regex.match(r"\p{P}", c) for c in content):
             return ContentElement("NonWordText", content)
+        # String is an HTML tag
+        elif regex.match(r"<\/?\w+>", content):
+            return ContentElement("Markup", content)
         else:
             return ContentElement("Word", content, annotations={ 'lemma': lemma, 'pos': pos })
     elif gloss_or_lemma == 'lemma_and_gloss' and len(element) == 4:
@@ -392,6 +399,9 @@ def unsimplify_element(element, gloss_or_lemma):
         # String only consists of punctuation marks
         if all(regex.match(r"\p{P}", c) for c in content):
             return ContentElement("NonWordText", content)
+        # String is an HTML tag
+        elif regex.match(r"<\/?\w+>", content):
+            return ContentElement("Markup", content)
         else:
             return ContentElement("Word", content, annotations={ 'lemma': lemma, 'pos': pos, 'gloss': gloss })
     else:

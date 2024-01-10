@@ -77,6 +77,7 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
 
     internalized_text = Text(internalized_pages, l2_language=l2_language, l1_language=l1_language)
     return internalized_text
+
 def parse_content_elements(segment_text, type):
     if type in ( 'plain', 'summary', 'cefr_level', 'segmented'):
         return parse_content_elements_segmented(segment_text)
@@ -85,7 +86,7 @@ def parse_content_elements(segment_text, type):
 
 def parse_content_elements_segmented(segment_text):
     content_elements = []
-    pattern = r"(?:@[^@]+@|(?:[^\s\p{P}]|[#'@])+|\|(?:[^\s\p{P}|[#'@]])+|[\s\p{P}--[@#']]+)"
+    pattern = r"(?:@[^@]+@|<\/?\w+>|(?:[^\s\p{P}<]|[#'@])+|\|(?:[^\s\p{P}|[#'@]])+|[\s\p{P}--[@#']]+)"
     words_and_elements = regex.findall(pattern, segment_text, regex.V1)
 
     for item in words_and_elements:
@@ -95,6 +96,9 @@ def parse_content_elements_segmented(segment_text):
             # Multi-word expression
             mwe = item.replace("@", "")
             content_elements.append(ContentElement("Word", content=mwe, annotations={}))
+        elif item.startswith("<") and item.endswith(">"):
+            # HTML markup
+            content_elements.append(ContentElement("Markup", item))
         elif "|" in item:
             # Word with smaller pieces
             pieces = item.split("|")
