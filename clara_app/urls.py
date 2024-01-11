@@ -79,6 +79,7 @@ urlpatterns = [
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
     path('project/<int:project_id>/create_dall_e_3_image_status/<str:report_id>/', views.create_dall_e_3_image_status, name='create_dall_e_3_image_status'),
     path('project/<int:project_id>/create_dall_e_3_image_monitor/<str:report_id>/', views.create_dall_e_3_image_monitor, name='create_dall_e_3_image_monitor'),
+    path('project/<int:project_id>/set_format_preferences/', views.set_format_preferences, name='set_format_preferences'),
     path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
     path('project/<int:project_id>/render_text_start_phonetic/', views.render_text_start_phonetic, name='render_text_start_phonetic'),
     path('project/<int:project_id>/render_text_status/<str:report_id>/', views.render_text_status, name='render_text_status'),

@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update
-from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating
+from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
@@ -35,7 +35,7 @@ from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTag
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
-from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet
+from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
 from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
@@ -2616,6 +2616,23 @@ def make_export_zipfile_complete(request, project_id, status):
                   {'succeeded': succeeded,
                    'project': project,
                    'presigned_url': presigned_url} )
+
+@login_required
+@user_has_a_project_role
+def set_format_preferences(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    preferences, created = FormatPreferences.objects.get_or_create(project=project)
+
+    if request.method == 'POST':
+        form = FormatPreferencesForm(request.POST, instance=preferences)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Format preferences updated successfully.")
+            return redirect('set_format_preferences', project_id=project_id)
+    else:
+        form = FormatPreferencesForm(instance=preferences)
+
+    return render(request, 'clara_app/set_format_preferences.html', {'form': form, 'project': project})
 
 def clara_project_internal_render_text(clara_project_internal, project_id,
                                        audio_type_for_words='tts', audio_type_for_segments='tts', human_voice_id=None,

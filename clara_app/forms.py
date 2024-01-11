@@ -3,7 +3,7 @@ from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
 from .models import Content, UserProfile, UserConfiguration, LanguageMaster
-from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment
+from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
@@ -60,6 +60,11 @@ class ContentRegistrationForm(forms.ModelForm):
             'external_url', 'title', 'text_type', 'l2', 'l1', 'length_in_words', 'author',
             'voice', 'annotator', 'difficulty_level'
         ]
+
+class FormatPreferencesForm(forms.ModelForm):
+    class Meta:
+        model = FormatPreferences
+        fields = ['font_type', 'font_size', 'text_align']
 
 class ContentSearchForm(forms.Form):
     l2 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)

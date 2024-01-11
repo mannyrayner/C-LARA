@@ -154,7 +154,16 @@ class CLARAProjectAction(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     class Meta:
-        ordering = ['-timestamp']     
+        ordering = ['-timestamp']
+
+class FormatPreferences(models.Model):
+    project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, related_name='format_preferences')
+    font_type = models.CharField(max_length=50, choices=[('sans-serif', 'Sans Serif'), ('serif', 'Serif')])
+    font_size = models.CharField(max_length=50, choices=[('small', 'Small'), ('medium', 'Medium'), ('large', 'Large')])
+    text_align = models.CharField(max_length=50, choices=[('left', 'Left'), ('center', 'Center'), ('right', 'Right')])
+
+    def __str__(self):
+        return f"Format Preferences for {self.project.title}"
 
 class Content(models.Model):
     external_url = models.URLField(max_length=255, blank=True, null=True)
