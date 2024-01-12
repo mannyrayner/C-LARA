@@ -3,7 +3,7 @@ Django
 configparser
 gTTS
 jinja2
-openai
+openai==1.6.1
 Pillow
 regex
 requests
