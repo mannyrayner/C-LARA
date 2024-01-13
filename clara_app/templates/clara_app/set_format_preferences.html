@@ -1,0 +1,11 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Set Format Preferences for "{{ project.title }}"</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Preferences</button>
+  </form>
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+{% endblock %}

@@ -50,6 +50,10 @@
 	      data-tooltip="Specify if you want to use human-recorded audio for the phonetic version of the text, and if so upload it." 
 	      {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
 		  Human Audio Processing (Phonetic)</a></p>
+	<p><a href="{% url 'set_format_preferences' project.id %}" 
+	      data-tooltip="Select formatting options for font size, font type, text alignment, etc." 
+	      {% if not can_render_normal and not can_render_phonetic %}class="disabled-link"{% endif %}>
+		  Set Format Preferences</a></p>
 	<p><a href="{% url 'render_text_start_normal' project.id %}" 
 	      data-tooltip="Create the final multimedia version of the text. Usually this will involve using TTS to produce the audio." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
