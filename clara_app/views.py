@@ -234,7 +234,7 @@ def update_feed(request):
 
     valid_updates = [ update for update in updates if valid_update_for_update_feed(update) ]
 
-    return render(request, 'clara_app/update_feed.html', {'updates': updates})
+    return render(request, 'clara_app/update_feed.html', {'updates': valid_updates})
 
 # Check that the updates are such that we can render them in the template
 def valid_update_for_update_feed(update):
