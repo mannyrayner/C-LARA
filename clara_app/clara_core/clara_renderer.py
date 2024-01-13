@@ -12,7 +12,7 @@ The renderer also supports self-contained rendering, which means that all multim
 
 from .clara_utils import _s3_storage, absolute_file_name
 from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists
-from .clara_utils import copy_file, basename, write_txt_file, output_dir_for_project_id
+from .clara_utils import copy_file, basename, read_txt_file, write_txt_file, output_dir_for_project_id
 from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update 
 
 from pathlib import Path
@@ -24,8 +24,11 @@ import traceback
 config = get_config()
 
 class StaticHTMLRenderer:
-    def __init__(self, project_id, project_id_internal, phonetic=False, normal_html_exists=False, phonetic_html_exists=False):
+    def __init__(self, project_id, project_id_internal, phonetic=False, format_preferences_info=None,
+                 normal_html_exists=False, phonetic_html_exists=False, callback=None):
+        post_task_update(callback, f'--- Creating StaticHTMLRenderer, format_preferences_info = {format_preferences_info}')
         self.phonetic = phonetic
+        self.format_preferences_info = format_preferences_info
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
         self.template_env.filters['replace_punctuation'] = replace_punctuation_with_underscores
 
@@ -45,13 +48,64 @@ class StaticHTMLRenderer:
         
         make_directory(self.output_dir, parents=True)
 
-        # Copy the 'static' folder to the output_dir
+        self._copy_static_files()
+        
+    # Copy the files in the 'static' folder to the output_dir
+    # Use format_preferences_info to modify the parametrised CSS file,
+    # creating two versions: clara_styles.css and clara_styles_conconcordance.css
+    def _copy_static_files(self):
         static_src = absolute_file_name('$CLARA/static')
         static_dst = self.output_dir / 'static'
         if _s3_storage:
             copy_directory_to_s3(static_src, s3_pathname=static_dst)
         else:
             copy_directory(static_src, static_dst)
+
+    def _copy_static_files(self):
+        FONT_SIZE_MAP = {
+            'small': '0.8em',
+            'medium': '1.2em',
+            'large': '1.6em',
+            'huge': '2.4em',
+            'HUGE': '3.2em',
+            }
+
+        DEFAULT_FORMAT_PREFERENCES = {
+            'font_type': 'sans-serif',
+            'font_size': 'medium',
+            'text_align': 'left',
+            
+            'concordance_font_type': 'sans-serif',
+            'concordance_font_size': 'medium',
+            'concordance_text_align': 'left',
+            }
+
+        static_src = absolute_file_name('$CLARA/static')
+        static_dst = self.output_dir / 'static'
+        if _s3_storage:
+            copy_directory_to_s3(static_src, s3_pathname=static_dst)
+        else:
+            copy_directory(static_src, static_dst)
+
+        # Define default format preferences
+        format_preferences = self.format_preferences_info.to_dict() if self.format_preferences_info else DEFAULT_FORMAT_PREFERENCES
+
+        # Read the parametrized CSS file
+        css_content = read_txt_file(static_dst / 'clara_styles_parametrised.css')
+
+        # Replace placeholders with actual values
+        css_content_main = css_content.replace('{{ font_size }}', FONT_SIZE_MAP[format_preferences['font_size']])
+        css_content_main = css_content_main.replace('{{ font_type }}', format_preferences['font_type'])
+        css_content_main = css_content_main.replace('{{ text_align }}', format_preferences['text_align'])
+
+        css_content_concordance = css_content.replace('{{ font_size }}', FONT_SIZE_MAP[format_preferences['concordance_font_size']])
+        css_content_concordance = css_content_concordance.replace('{{ font_type }}', format_preferences['concordance_font_type'])
+        css_content_concordance = css_content_concordance.replace('{{ text_align }}', format_preferences['concordance_text_align'])
+
+        # Write the modified CSS to the output directory
+        write_txt_file(css_content_main, static_dst / 'clara_styles_main.css')
+        write_txt_file(css_content_concordance, static_dst / 'clara_styles_concordance.css')
+
 
     def render_page(self, page, page_number, total_pages, l2_language, l1_language):
         is_rtl = is_rtl_language(l2_language)

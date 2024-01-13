@@ -931,7 +931,7 @@ class CLARAProjectInternal:
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
     # Requires 'gloss' and 'lemma' texts.
     def render_text(self, project_id, self_contained=False, tts_engine_type=None, human_voice_id=None,
-                    audio_type_for_words='tts', audio_type_for_segments='tts',
+                    audio_type_for_words='tts', audio_type_for_segments='tts', format_preferences_info=None,
                     phonetic=False, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
         text_object = self.get_internalised_and_annotated_text(tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
@@ -944,7 +944,8 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- normal_html_exists: {normal_html_exists}")
         phonetic_html_exists = self.rendered_phonetic_html_exists(project_id)
         post_task_update(callback, f"--- phonetic_html_exists: {phonetic_html_exists}")
-        renderer = StaticHTMLRenderer(project_id, self.id, phonetic=phonetic, normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists)
+        renderer = StaticHTMLRenderer(project_id, self.id, phonetic=phonetic, format_preferences_info=format_preferences_info,
+                                      normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists, callback=callback)
         post_task_update(callback, f"--- Start creating pages")
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
