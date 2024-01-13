@@ -64,7 +64,8 @@ class ContentRegistrationForm(forms.ModelForm):
 class FormatPreferencesForm(forms.ModelForm):
     class Meta:
         model = FormatPreferences
-        fields = ['font_type', 'font_size', 'text_align']
+        fields = ['font_type', 'font_size', 'text_align',
+                  'concordance_font_type', 'concordance_font_size', 'concordance_text_align']
 
 class ContentSearchForm(forms.Form):
     l2 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)

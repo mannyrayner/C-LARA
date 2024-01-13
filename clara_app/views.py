@@ -138,6 +138,7 @@ def send_friend_request_notification_email(request, other_user):
     friends_url = request.build_absolute_uri(reverse('friends'))
     subject = f"New C-LARA friend request"
     context = {
+        'user': request.user,
         'other_user': other_user,
         'friends_url': friends_url,
     }
@@ -2639,9 +2640,12 @@ def clara_project_internal_render_text(clara_project_internal, project_id,
                                        self_contained=False, phonetic=False, callback=None):
     print(f'--- Asynchronous rendering task started: phonetic={phonetic}, self_contained={self_contained}')
     try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        format_preferences_info = FormatPreferences.objects.filter(project=project).first()
         clara_project_internal.render_text(project_id,
                                            audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                           human_voice_id=human_voice_id, self_contained=self_contained, phonetic=phonetic, callback=callback)
+                                           human_voice_id=human_voice_id, format_preferences_info=format_preferences_info,
+                                           self_contained=self_contained, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")

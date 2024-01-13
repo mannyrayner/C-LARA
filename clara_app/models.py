@@ -158,9 +158,26 @@ class CLARAProjectAction(models.Model):
 
 class FormatPreferences(models.Model):
     project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, related_name='format_preferences')
-    font_type = models.CharField(max_length=50, choices=[('sans-serif', 'Sans Serif'), ('serif', 'Serif')])
-    font_size = models.CharField(max_length=50, choices=[('small', 'Small'), ('medium', 'Medium'), ('large', 'Large')])
-    text_align = models.CharField(max_length=50, choices=[('left', 'Left'), ('center', 'Center'), ('right', 'Right')])
+    
+    font_type = models.CharField(max_length=50, choices=[('sans-serif', 'Sans Serif'), ('serif', 'Serif')], default='serif')
+    font_size = models.CharField(max_length=50,
+                                 choices=[('small', 'Small'), ('medium', 'Medium'), ('large', 'Large'), ('huge', 'Huge'), ('HUGE', 'HUGE')],
+                                 default='medium')
+    text_align = models.CharField(max_length=50, choices=[('left', 'Left'), ('center', 'Center'), ('right', 'Right')], default='left')
+
+    concordance_font_type = models.CharField(max_length=50, choices=[('sans-serif', 'Sans Serif'), ('serif', 'Serif')], default='serif')
+    concordance_font_size = models.CharField(max_length=50, choices=[('small', 'Small'), ('medium', 'Medium'), ('large', 'Large')], default='medium')
+    concordance_text_align = models.CharField(max_length=50, choices=[('left', 'Left'), ('center', 'Center'), ('right', 'Right')], default='left')
+
+    def to_dict(self):
+        return { 'font_type': self.font_type,
+                 'font_size': self.font_size,
+                 'text_align': self.text_align,
+
+                 'concordance_font_type': self.concordance_font_type,
+                 'concordance_font_size': self.concordance_font_size,
+                 'concordance_text_align': self.concordance_text_align,
+                 }
 
     def __str__(self):
         return f"Format Preferences for {self.project.title}"
