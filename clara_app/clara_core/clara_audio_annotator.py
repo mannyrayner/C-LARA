@@ -32,19 +32,34 @@ import traceback
 import regex
 
 class AudioAnnotator:
-    def __init__(self, language, tts_engine_type=None, human_voice_id=None, audio_type_for_words='tts', audio_type_for_segments='tts',
+    def __init__(self, language, tts_engine_type=None,
+                 human_voice_id=None,
+                 audio_type_for_words='tts', audio_type_for_segments='tts',
+                 preferred_tts_engine=None, preferred_tts_voice=None,
                  phonetic=False, callback=None):
         self.language = language
-        # For TTS
-        self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, phonetic=False, callback=callback)
+        # TTS for words
+        self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, words_or_segments='words', phonetic=False, callback=callback)
         self.engine_id = self.tts_engine.tts_engine_type if self.tts_engine else None
-        self.voice_id = get_default_voice(language, self.tts_engine) if self.tts_engine else None
+        self.voice_id = get_default_voice(language, preferred_tts_voice, self.tts_engine) if self.tts_engine else None
         self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
 
+        # TTS for segments
+        if tts_engine_type:
+            self.segment_tts_engine = create_tts_engine(tts_engine_type)
+        else:
+            self.segment_tts_engine = get_tts_engine(language, words_or_segments='segments', preferred_tts_engine=preferred_tts_engine,
+                                                     phonetic=False, callback=callback)
+        self.segment_engine_id = self.segment_tts_engine.tts_engine_type if self.segment_tts_engine else None
+        self.segment_voice_id = get_default_voice(language, preferred_tts_voice, self.segment_tts_engine) if self.segment_tts_engine else None
+        self.segment_language_id = get_language_id(language, self.segment_tts_engine) if self.segment_tts_engine else None
+
+        # TTS for phonemes
         self.phonetic_tts_engine = get_tts_engine(language, phonetic=True, callback=callback) if phonetic else None
         self.phonetic_engine_id = self.phonetic_tts_engine.tts_engine_type if self.phonetic_tts_engine else None
-        self.phonetic_voice_id = get_default_voice(language, self.phonetic_tts_engine) if self.phonetic_tts_engine else None
+        self.phonetic_voice_id = get_default_voice(language, preferred_tts_voice, self.phonetic_tts_engine) if self.phonetic_tts_engine else None
         self.phonetic_language_id = get_language_id(language, self.phonetic_tts_engine) if self.phonetic_tts_engine else None
+        
         # For human audio
         self.human_voice_id = human_voice_id
         # Common
@@ -69,19 +84,19 @@ class AudioAnnotator:
         # Set word- and segment-based engine, language, and voice IDs based on audio types and whether or not it's a phonetic text
         # If it's a phonetic text, we may be using the phonetic TTS engine to create phoneme audio
         if self.audio_type_for_words == 'tts':
+            self.word_tts_engine = self.phonetic_tts_engine if phonetic else self.tts_engine
             self.word_engine_id = self.phonetic_engine_id if phonetic else self.engine_id
             self.word_language_id = self.phonetic_language_id if phonetic else self.language_id
             self.word_voice_id = self.phonetic_voice_id if phonetic else self.voice_id
         else:
+            self.word_tts_engine = None
             self.word_engine_id = 'human_voice'
             self.word_language_id = self.language
             self.word_voice_id = self.human_voice_id
 
-        if self.audio_type_for_segments == 'tts':
-            self.segment_engine_id = self.engine_id
-            self.segment_language_id = self.language_id
-            self.segment_voice_id = self.voice_id
-        else:
+        # If we're using TTS for segments, we've already set this higher up
+        if self.audio_type_for_segments != 'tts':
+            self.segment_tts_engine = None
             self.segment_engine_id = 'human_voice'
             self.segment_language_id = self.language
             self.segment_voice_id = self.human_voice_id
@@ -197,13 +212,18 @@ class AudioAnnotator:
             return { 'words': words_metadata, 'segments': segments_metadata }
 
     def _create_and_store_missing_mp3s(self, text_items, words_or_segments, phonetic=False, callback=None):
-        # We use phonetic_tts_engine if we have a phonetic text and we are creating audio for the "words", i.e. the grapheme groups
-        # Otherwise use tts_engine
-        tts_engine_to_use = self.phonetic_tts_engine if phonetic and words_or_segments == 'words' else self.tts_engine
-        engine_id_to_use = tts_engine_to_use.tts_engine_type
-        language_id_to_use = get_language_id(self.language, tts_engine=tts_engine_to_use)
-        voice_id_to_use = get_default_voice(self.language, tts_engine=tts_engine_to_use)
-        post_task_update(callback, f"--- Using tts_engine={engine_id_to_use}, language_id={language_id_to_use}, voice_id={voice_id_to_use}")
+        if words_or_segments == 'words':
+            tts_engine_to_use = self.word_tts_engine
+            engine_id_to_use = self.word_engine_id
+            language_id_to_use = self.word_language_id
+            voice_id_to_use = self.word_voice_id
+        else:
+            tts_engine_to_use = self.segment_tts_engine
+            engine_id_to_use = self.segment_engine_id
+            language_id_to_use = self.segment_language_id
+            voice_id_to_use = self.segment_voice_id
+        
+        post_task_update(callback, f"--- For {words_or_segments}, using tts_engine={engine_id_to_use}, language_id={language_id_to_use}, voice_id={voice_id_to_use}")
         
         temp_dir = tempfile.mkdtemp()
         text_file_paths = []

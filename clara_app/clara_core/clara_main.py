@@ -718,8 +718,10 @@ class CLARAProjectInternal:
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     # Tried caching the internalised version, but it's hard to make this work.
-    def get_internalised_and_annotated_text(self, tts_engine_type=None, human_voice_id=None,
+    def get_internalised_and_annotated_text(self, 
+                                            human_voice_id=None,
                                             audio_type_for_words='tts', audio_type_for_segments='tts',
+                                            preferred_tts_engine=None, preferred_tts_voice=None,
                                             phonetic=False, callback=None) -> str:
 ##        if self.internalised_and_annotated_text:
 ##            return self.internalised_and_annotated_text
@@ -730,8 +732,10 @@ class CLARAProjectInternal:
             return None
         
         post_task_update(callback, f"--- Adding audio annotations")
-        audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
+        audio_annotator = AudioAnnotator(self.l2_language, 
+                                         human_voice_id=human_voice_id,
                                          audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                         preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                          phonetic=phonetic, callback=callback)
         audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"--- Audio annotations done")
@@ -930,11 +934,14 @@ class CLARAProjectInternal:
     # "Self-contained" means that it includes all the multimedia files referenced.
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
     # Requires 'gloss' and 'lemma' texts.
-    def render_text(self, project_id, self_contained=False, tts_engine_type=None, human_voice_id=None,
+    def render_text(self, project_id, self_contained=False,
+                    preferred_tts_engine=None, preferred_tts_voice=None,
+                    human_voice_id=None,
                     audio_type_for_words='tts', audio_type_for_segments='tts', format_preferences_info=None,
                     phonetic=False, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
-        text_object = self.get_internalised_and_annotated_text(tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
+        text_object = self.get_internalised_and_annotated_text(preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
+                                                               human_voice_id=human_voice_id,
                                                                audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                                phonetic=phonetic, callback=callback)
  

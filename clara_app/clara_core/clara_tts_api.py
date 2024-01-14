@@ -252,7 +252,7 @@ class OpenAITTSEngine(TTSEngine):
                                             'romanian', 'russian', 'serbian', 'slovak', 'slovenian', 'spanish',
                                             'swahili', 'swedish', 'tagalog', 'tamil', 'thai', 'turkish', 'ukrainian',
                                             'urdu', 'vietnamese', 'welsh']
-        self._openai_supported_voices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+        self._openai_supported_voices = ['onyx', 'alloy', 'echo', 'fable', 'nova', 'shimmer']
                                             
         self.languages =  { language: {'language_id': language, 'voices': self._openai_supported_voices }
                             for language in self._openai_supported_languages }
@@ -468,6 +468,8 @@ class IPAReaderEngine(TTSEngine):
 
 TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
 
+TTS_ENGINES_OPENAI_FIRST = [ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
+
 def create_tts_engine(engine_type):
     if engine_type == 'readspeaker':
         return ReadSpeakerEngine()
@@ -482,8 +484,12 @@ def create_tts_engine(engine_type):
     else:
         raise ValueError(f"Unknown TTS engine type: {engine_type}")
     
-def get_tts_engine(language, phonetic=False, callback=None):
-    for tts_engine in TTS_ENGINES:
+def get_tts_engine(language, words_or_segments='words', preferred_tts_engine=None, phonetic=False, callback=None):
+    if words_or_segments == 'segments' and phonetic == False and preferred_tts_engine == 'openai':
+        TTS_ENGINE_LIST_TO_USE = TTS_ENGINES_OPENAI_FIRST
+    else:
+        TTS_ENGINE_LIST_TO_USE = TTS_ENGINES 
+    for tts_engine in TTS_ENGINE_LIST_TO_USE:
         if language in tts_engine.languages and tts_engine.phonetic == phonetic:
             post_task_update(callback, f"--- clara_tts_api found TTS engine of type '{tts_engine.tts_engine_type}'")
             return tts_engine
@@ -492,10 +498,11 @@ def get_tts_engine(language, phonetic=False, callback=None):
 def get_tts_engine_types():
     return [ tts_engine.tts_engine_type for tts_engine in TTS_ENGINES ]
 
-def get_default_voice(language, tts_engine=None):
+def get_default_voice(language, preferred_voice, tts_engine=None):
     tts_engine = tts_engine or get_tts_engine(language)
     if tts_engine and language in tts_engine.languages:
-        return tts_engine.languages[language]['voices'][0]
+        voices = tts_engine.languages[language]['voices']
+        return preferred_voice if preferred_voice in voices else voices[0]
     return None
 
 def get_language_id(language, tts_engine=None):

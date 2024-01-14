@@ -280,7 +280,7 @@ def update_regular_audio_from_imported_directory(project, tmp_dir, callback=None
                                audio_type_for_words=global_metadata['audio_type_for_words'],
                                audio_type_for_segments=global_metadata['audio_type_for_segments'],
                                callback=callback)
-    audio_metadata = get_normal_audio_metadata(tmp_dir)
+    audio_metadata = get_normal_audio_metadata(tmp_dir, callback=callback)
     if not audio_metadata or not isinstance(audio_metadata, (dict)) or not 'words' in audio_metadata or not 'segments' in audio_metadata:
         return
     
@@ -307,7 +307,7 @@ def update_phonetic_audio_from_imported_directory(project, tmp_dir, callback=Non
                                audio_type_for_words='human',
                                audio_type_for_segments='tts',
                                callback=callback)
-    audio_metadata = get_phonetic_audio_metadata(tmp_dir)
+    audio_metadata = get_phonetic_audio_metadata(tmp_dir, callback=callback)
     if not audio_metadata or not isinstance(audio_metadata, (dict)) or not 'words' in audio_metadata:
         return
 
@@ -316,24 +316,27 @@ def update_phonetic_audio_from_imported_directory(project, tmp_dir, callback=Non
     post_task_update(callback, 'Storing human audio for phonemes ({len(phonemes_metadata_for_update)} items)')
     annotator._store_existing_human_audio_mp3s(phonemes_metadata_for_update, audio_dir, callback=callback)
 
-def get_global_metadata(tmp_dir):
+def get_global_metadata(tmp_dir, callback=None):
     metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'metadata.json'))
     if not local_file_exists(metadata_file):
         return None
     else:
         return read_json_local_file(metadata_file)
 
-def get_normal_audio_metadata(tmp_dir):
-    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'audio' 'metadata.json'))
-    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'phonetic_audio' 'metadata.json'))
+def get_normal_audio_metadata(tmp_dir, callback=None):
+    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'audio', 'metadata.json'))
     if not local_file_exists(metadata_file):
+        post_task_update(callback, f'--- Normal audio metadata file {metadata_file} not found')
         return None
     else:
+        post_task_update(callback, f'--- Normal audio metadata file {metadata_file} found')
         return read_json_local_file(metadata_file)
 
-def get_phonetic_audio_metadata(tmp_dir):
-    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'phonetic_audio' 'metadata.json'))
+def get_phonetic_audio_metadata(tmp_dir, callback=None):
+    metadata_file = absolute_local_file_name(os.path.join(tmp_dir, 'phonetic_audio', 'metadata.json'))
     if not local_file_exists(metadata_file):
+        post_task_update(callback, f'--- Phonetic audio metadata file {metadata_file} not found')
         return None
     else:
+        post_task_update(callback, f'--- Phonetic audio metadata file {metadata_file} found')
         return read_json_local_file(metadata_file)
