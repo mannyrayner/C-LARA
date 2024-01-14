@@ -1473,6 +1473,9 @@ def human_audio_processing(request, project_id):
 
             human_audio_info.save()  # Save the restored data back to the database
 
+            if method == 'tts_only':
+                messages.success(request, "Saved settings.")
+
             # 1. If we're doing uploading, get the formset and save uploaded files
 
             if method == 'upload' and human_voice_id:
@@ -2678,7 +2681,9 @@ def set_format_preferences(request, project_id):
     return render(request, 'clara_app/set_format_preferences.html', {'form': form, 'project': project})
 
 def clara_project_internal_render_text(clara_project_internal, project_id,
-                                       audio_type_for_words='tts', audio_type_for_segments='tts', human_voice_id=None,
+                                       audio_type_for_words='tts', audio_type_for_segments='tts',
+                                       preferred_tts_engine=None, preferred_tts_voice=None,
+                                       human_voice_id=None,
                                        self_contained=False, phonetic=False, callback=None):
     print(f'--- Asynchronous rendering task started: phonetic={phonetic}, self_contained={self_contained}')
     try:
@@ -2686,6 +2691,7 @@ def clara_project_internal_render_text(clara_project_internal, project_id,
         format_preferences_info = FormatPreferences.objects.filter(project=project).first()
         clara_project_internal.render_text(project_id,
                                            audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                           preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                            human_voice_id=human_voice_id, format_preferences_info=format_preferences_info,
                                            self_contained=self_contained, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"finished")
@@ -2732,10 +2738,14 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
         human_voice_id = human_audio_info.voice_talent_id
         audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
         audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
+        preferred_tts_engine = human_audio_info.preferred_tts_engine if audio_type_for_segments == 'tts' else None
+        preferred_tts_voice = human_audio_info.preferred_tts_voice if audio_type_for_segments == 'tts' else None
     else:
         audio_type_for_words = 'tts'
         audio_type_for_segments = 'tts'
         human_voice_id = None
+        preferred_tts_engine = None
+        preferred_tts_voice = None
 
     if request.method == 'POST':
         form = RenderTextForm(request.POST)
@@ -2751,6 +2761,7 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
                 internalised_text = clara_project_internal.get_internalised_text(phonetic=phonetic)
                 task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id,
                                      audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                     preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                      human_voice_id=human_voice_id, self_contained=self_contained,
                                      phonetic=phonetic, callback=callback)
                 print(f'--- Asynchronous rendering task posted: phonetic={phonetic}, self_contained={self_contained}')

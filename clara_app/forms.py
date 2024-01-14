@@ -381,13 +381,15 @@ ImageFormSet = formset_factory(ImageForm, extra=1)
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:
         model = HumanAudioInfo
-        fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id',
+        fields = ['method', 'preferred_tts_engine', 'preferred_tts_voice',
+                  'use_for_segments', 'use_for_words', 'voice_talent_id',
                   'audio_file', 'manual_align_metadata_file']
 
 class PhoneticHumanAudioInfoForm(forms.ModelForm):
     class Meta:
         model = PhoneticHumanAudioInfo
-        fields = ['method', 'use_for_segments', 'use_for_words', 'voice_talent_id']
+        fields = ['method', 'preferred_tts_engine', 'preferred_tts_voice',
+                  'use_for_segments', 'use_for_words', 'voice_talent_id']
 
 class AudioItemForm(forms.Form):
     text = forms.CharField(

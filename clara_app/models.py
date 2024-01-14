@@ -80,22 +80,40 @@ class ProjectPermissions(models.Model):
 class HumanAudioInfo(models.Model):
     # Choices for the 'method' field
     METHOD_CHOICES = [
+        ('tts_only', 'TTS only'),
         ('upload', 'Upload'),
         ('record', 'Record'),
         ('manual_align', 'Manual Align'),
         ('automatic_align', 'Automatic Align'),
     ]
+
+    TTS_CHOICES = [
+        ( 'none', 'None' ),
+        ( 'google', 'Google TTS' ),
+        ( 'openai', 'OpenAI TTS' ),
+        ( 'abair', 'ABAIR' ),
+    ]
+
+    VOICE_CHOICES = [
+        ( 'none', 'None' ),
+        ( 'alloy', 'Alloy (OpenAI)' ),
+        ( 'echo', 'Echo (OpenAI)' ),
+        ( 'fable', 'Fable (OpenAI)' ),
+        ( 'onyx', 'Onyx (OpenAI)' ),
+        ( 'nova', 'Nova (OpenAI)' ),
+        ( 'shimmer', 'Shimmer (OpenAI)' ),
+        ( 'ga_UL_anb_nnmnkwii', 'ga_UL_anb_nnmnkwii (ABAIR)' ),
+        ( 'ga_MU_nnc_nnmnkwii', 'ga_MU_nnc_nnmnkwii (ABAIR)' ),
+        ( 'ga_MU_cmg_nnmnkwii', 'ga_MU_cmg_nnmnkwii (ABAIR)' ),      
+    ]
     
     # Fields
     method = models.CharField(max_length=20, choices=METHOD_CHOICES)
+    preferred_tts_engine = models.CharField(max_length=20, choices=TTS_CHOICES, default='none')
+    preferred_tts_voice = models.CharField(max_length=20, choices=VOICE_CHOICES, default='none')
     use_for_segments = models.BooleanField(default=False)
     use_for_words = models.BooleanField(default=False)
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
-    #audio_file = models.FileField(upload_to='audio_files/', blank=True, null=True)
-    #manual_align_metadata_file = models.FileField(upload_to='metadata_files/', blank=True, null=True)
-    # We are just using these two fields to store pathnames temporarily before
-    # passing them to the async process. Using FileField turns out to create many complications
-    # and doesn't help us.
     audio_file = models.CharField(max_length=500, blank=True, null=True)
     manual_align_metadata_file = models.CharField(max_length=500, blank=True, null=True)
 
@@ -117,9 +135,19 @@ class PhoneticHumanAudioInfo(models.Model):
         ('upload_individual', 'Upload single files'),
         ('upload_zipfile', 'Upload zipfile with metadata'),
     ]
+
+    TTS_CHOICES = [
+        ( 'none', 'None' ),
+    ]
+
+    VOICE_CHOICES = [
+        ( 'none', 'None' ),
+    ]
     
     # Fields
     method = models.CharField(max_length=40, choices=METHOD_CHOICES, default='upload_individual')
+    preferred_tts_engine = models.CharField(max_length=20, choices=TTS_CHOICES, default='none')
+    preferred_tts_voice = models.CharField(max_length=20, choices=VOICE_CHOICES, default='none')
     use_for_segments = models.BooleanField(default=False)
     use_for_words = models.BooleanField(default=True)
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
