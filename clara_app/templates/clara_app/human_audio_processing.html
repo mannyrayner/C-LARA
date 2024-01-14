@@ -2,10 +2,10 @@
 
 {% load static %}
 
-{% block title %}Human Audio Processing{% endblock %}
+{% block title %}Audio Processing{% endblock %}
 
 {% block content %}
-  <h2>Human Audio Processing ("{{ project.title }}")</h2>
+  <h2>Audio Processing ("{{ project.title }}")</h2>
   
   <form method="post" enctype="multipart/form-data" id="human-audio-processing-form">
     {% csrf_token %}
@@ -13,12 +13,20 @@
         <label for="{{ form.method.id_for_label }}">Method:</label>
         {{ form.method }}
     </p>
+	<p>
+        <label for="{{ form.preferred_tts_engine.id_for_label }}">Preferred TTS engine:</label>
+        {{ form.preferred_tts_engine }}
+    </p>
+	<p>
+        <label for="{{ form.preferred_tts_voice.id_for_label }}">Preferred TTS voice:</label>
+        {{ form.preferred_tts_voice }}
+    </p>
     <p>
-        <label for="{{ form.use_for_segments.id_for_label }}">Use for Segments:</label>
+        <label for="{{ form.use_for_segments.id_for_label }}">Use human audio for segments:</label>
         {{ form.use_for_segments }}
     </p>
     <p>
-        <label for="{{ form.use_for_words.id_for_label }}">Use for Words:</label>
+        <label for="{{ form.use_for_words.id_for_label }}">Use human audio for words:</label>
         {{ form.use_for_words }}
     </p>
     <p>

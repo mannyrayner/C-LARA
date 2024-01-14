@@ -43,13 +43,13 @@
 		  Create/Edit Lemma Tagged Text</a></p>
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->
 	<p><a href="{% url 'human_audio_processing' project.id %}" 
-	      data-tooltip="Specify if you want to use human-recorded audio for the text, and if so upload it." 
+	      data-tooltip="Specify audio options for normal text. If you are using human-recorded audio, upload it." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
-		  Human Audio Processing</a></p>
+		  Audio Processing</a></p>
 	<p><a href="{% url 'human_audio_processing_phonetic' project.id %}" 
-	      data-tooltip="Specify if you want to use human-recorded audio for the phonetic version of the text, and if so upload it." 
+	      data-tooltip="Specify audio options for phonetic text. If you are using human-recorded audio, upload it." 
 	      {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
-		  Human Audio Processing (Phonetic)</a></p>
+		  Audio Processing (Phonetic)</a></p>
 	<p><a href="{% url 'set_format_preferences' project.id %}" 
 	      data-tooltip="Select formatting options for font size, font type, text alignment, etc." 
 	      {% if not can_render_normal and not can_render_phonetic %}class="disabled-link"{% endif %}>
