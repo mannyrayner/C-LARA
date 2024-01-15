@@ -13,33 +13,20 @@
 
 ## Ongoing Activities
 
-Our current activities include:
+Our current activities include the following:
 
-**Melbourne University student projects**
+**"Simple C-LARA" interface**
 
-Under the supervision of Alex Xiang, six five-person teams of Melbourne University computer science students carried
- out C-LARA-related projects. In each project, the students reimplemented a standalone piece of functionality
-that was part of the previous LARA platform. The projects started at the beginning of August 2023 and were completed in 
-mid-November. We are now working on integrating them into C-LARA.
+We want to make it easy for children and people unconfident with technology to create C-LARA documents. We are consequently creating a simplified version of the platform, where nearly all processing is done using defaults and the user only needed to input an initial prompt.
 
-**UniSA server**
+**Social network**
 
-The current provisional deployment of C-LARA on Heroku is adequate for internal testing, but too slow for public use.
-We have deployed a faster version on a UniSA server, and will be making it available to initial users at the end of November 2023.
+We are expanding the initial set of social network functions, to allow people to interact more effectively when posting and discussing C-LARA content.
 
-**Multi-words**
+**Phonetic texts**
 
-Our evaluations show that multi-words are still a major problem for the glossing and lemma annotation phases
-of C-LARA. When texts contain multi-words (phrases) like "how much" or "fall asleep", these should be annotated as
-single units, but we have still not found reliable ways to give the AI the right instructions. Our language
-teacher collaborators consider that this is currently one of the platform's most serious shortcomings, and
-we are investigating various ways to address it.
+For languages where a phonetic lexicon is available (currently Dutch, English, French, German, Icelandic, Romanian and the Oceanic language Drehu), C-LARA now includes functionality to present texts in "phonetic" form, where words are broken down into smaller units associated with phonetic values. This lets beginner learners step through text a sound at a time. We are working on ways to let GPT-4 help more effectively in constructing these resources.
 
-**ChatGPT-4 and long-term memory**
+**Images and AI**
 
-One of the biggest practical problems when working with ChatGPT-4 as a software collaborator is that the AI has
-a limited memory window, forgetting interactions that may have occurred only the previous day and being unable
-to keep a global view of their activities in the project. We have been experimenting with the
-<a href="https://www.papr.ai/memory" target="_blank">Papr Memory plugin</a>, which automates the process
-of keeping an external long-term memory which ChatGPT can access autonomously. Anecdotally, this makes it 
-much easier for Chat to keep an overview of the project.
+We have added a preliminary integration of OpenAI's DALL-E-3, which currently lets the user instruct the AI to add an image based on the whole text. We plan to add further functionality. We will also integrate GPT-4V, so that users can upload an image and tell the AI to construct text from it.
