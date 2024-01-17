@@ -112,12 +112,18 @@
 		  <li><a href="{% url 'create_project' %}"
 		         data-tooltip="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
 				 Create new C-LARA project</a></li>
+		  <li><a href="{% url 'simple_clara' 0 'initial' %}"
+		         data-tooltip="Create a new C-LARA project using Simple-C-LARA.">
+				 Create new C-LARA project using Simple-C-LARA</a></li>
 		  <li><a href="{% url 'import_project' %}"
 		         data-tooltip="Import a project from a zipfile created using the 'Export zipfile' command.">
 				 Import C-LARA project from zipfile</a></li>
-		  <li><a href="{% url 'project_list' %}"
+		  <li><a href="{% url 'project_list' 'full_clara' %}"
 		         data-tooltip="List all the projects you have created or have been assigned a role in.">
 		         List your C-LARA projects</a></li>
+		  <li><a href="{% url 'project_list' 'simple_clara' %}"
+		         data-tooltip="List all the projects you have created or have been assigned a role in, using Simple-C-LARA.">
+		         List your C-LARA projects using Simple-C-LARA</a></li>
 		  <li><a href="{% url 'content_list' %}"
 		         data-tooltip="List all the content that has been registered in the C-LARA social network.">
 				 List registered content</a></li>

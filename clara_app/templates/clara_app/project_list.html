@@ -1,7 +1,11 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-  <h1>Your Projects</h1>
+  {% if clara_version == "simple_clara" %}
+     <h1>Your Projects (Access through simple C-LARA)</h1>
+  {% else %}
+     <h1>Your Projects (Access through full C-LARA)</h1>
+  {% endif %}
   <form method="GET">
     <p>Text language: {{ search_form.l2 }}</p>
 	<p>Annotation language: {{ search_form.l1 }}</p>
@@ -14,7 +18,11 @@
   <ul>
     {% for project, data in page_obj %}
       <li>
-        <a href="{% url 'project_detail' project.id %}">{{ project.title }}</a> (Role: {{ data.role }})
+	    {% if clara_version == "simple_clara" %}
+	      <a href="{% url 'simple_clara' project.id 'initial' %}">{{ project.title }}</a> (Role: {{ data.role }})
+		{% else %}
+          <a href="{% url 'project_detail' project.id %}">{{ project.title }}</a> (Role: {{ data.role }})
+		{% endif %}
         <div class="costInfo" style="display: none;">
           <p>Total cost: ${{ data.cost|floatformat:2 }}</p>
           <p>Cost per operation:</p>

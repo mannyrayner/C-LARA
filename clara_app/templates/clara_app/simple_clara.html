@@ -1,0 +1,52 @@
+{% extends 'clara_app/base.html' %}
+
+{% block content %}
+
+  <h2>Simple C-LARA</h2>
+  <form method="post">
+    {% csrf_token %}
+	<h3>Title</h3>
+	<p>{{ form.title }}
+	{% if status != 'No project' %}
+      <button type="submit" name="action" value="change_title">Change title</button>
+    {% endif %}</p>
+    {% if status == 'No project' %}
+	  <h3>Languages</h3>
+	  <p>Text language: {{ form.l2 }}</p>
+	  <p>Annotation language: {{ form.l1 }}</p>
+      <button type="submit" name="action" value="create_project">Create Project</button>
+    {% endif %}
+	{% if status != 'No project' %}
+	   <h3>Prompt</h3>
+	   <p>{{ form.prompt }}</p>
+	{% endif %}
+	{% if status == 'No prompt' or status == 'No text' %}
+      <button type="submit" name="action" value="create_text_and_image">Create Text and Image</button>
+    {% endif %}
+	
+	{% if status != 'No project' and status != 'No prompt' and status != 'No text' %}
+	  <h3>Generated text</h3>
+      <p>{{ form.plain_text }}
+	     <button type="submit" name="action" value="rewrite_text">Rewrite Text</button></p>
+	  <br>
+    {% endif %}
+    {% if status == 'No multimedia' or status == 'Everything available' %}
+	  <h3>Image</h3>
+      <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
+	  <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
+    {% endif %}
+  
+    {% if status == 'No multimedia' or status == 'Everything available' %}
+	  <h3>Multimedia text</h3>
+      <button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button>
+    {% endif %}
+	
+	{% if status == 'Everything available' %}
+	  <h3>C-LARA Social Network</h3>
+      <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
+      <button type="submit" name="action" value="post_rendered_text">Post to Social Network</button>
+    {% endif %}
+  </form>
+
+ {% endblock %}
+  
