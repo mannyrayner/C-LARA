@@ -27,7 +27,7 @@ from django_q.models import Task
 from .forms import RegistrationForm, UserForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
@@ -1043,7 +1043,330 @@ def create_project(request):
         form = ProjectCreationForm()
         return render(request, 'clara_app/create_project.html', {'form': form})
 
-# This is the function to run in the worker process
+def get_simple_clara_resources_helper(project_id):
+    try:
+        resources_available = {}
+        
+        if not project_id:
+            # Inital state: we passed in a null (zero) project_id. Nothing exists yet.
+            resources_available['status'] = 'No project'
+            return resources_available
+
+        # We have a project, add the L2, L1 and title to available resources
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+        resources_available['l2'] = project.l2
+        resources_available['l1'] = project.l1
+        resources_available['title'] = project.title
+        resources_available['internal_title'] = clara_project_internal.id
+
+        if not clara_project_internal.text_versions['prompt']:
+            # We have a project, but no prompt
+            resources_available['status'] = 'No prompt'
+            return resources_available
+        else:
+            resources_available['prompt'] = clara_project_internal.load_text_version('prompt')
+
+        if not clara_project_internal.text_versions['plain']:
+            # We have a prompt, but no plain text
+            resources_available['status'] = 'No text'
+            return resources_available
+        else:
+            resources_available['plain_text'] = clara_project_internal.load_text_version('plain')
+
+        image = clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text')
+        if not image:
+            # We have plain text, but no image
+            resources_available['status'] = 'No image'
+            return resources_available
+        else:
+            resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
+
+        if not clara_project_internal.rendered_html_exists(project_id):
+            # We have plain text and image, but no rendered HTML
+            resources_available['status'] = 'No multimedia'
+            return resources_available
+        else:
+            # We have the rendered HTML
+            resources_available['rendered_text_available'] = True
+            resources_available['status'] = 'Everything available'
+            return resources_available
+    except Exception as e:
+        return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
+
+@login_required
+def simple_clara(request, project_id, status):
+    username = request.user.username
+    # Get resources available for display based on the current state
+    resources = get_simple_clara_resources_helper(project_id)
+    #pprint.pprint(resources)
+    
+    status = resources['status']
+    form = SimpleClaraForm(initial=resources)
+
+    if request.method == 'POST':
+        # Extract action from the POST request
+        action = request.POST.get('action')
+        print(f'Action = {action}')
+        if action:
+            form = SimpleClaraForm(request.POST)
+            if form.is_valid():
+                if action == 'create_project':
+                    l2 = form.cleaned_data['l2']
+                    l1 = form.cleaned_data['l1']
+                    title = form.cleaned_data['title']
+                    simple_clara_action = { 'action': 'create_project', 'l2': l2, 'l1': l1, 'title': title }
+                elif action == 'change_title':
+                    title = form.cleaned_data['title']
+                    simple_clara_action = { 'action': 'change_title', 'title': title }
+                elif action == 'create_text_and_image':
+                    prompt = form.cleaned_data['prompt']
+                    simple_clara_action = { 'action': 'create_text_and_image', 'prompt': prompt }
+                elif action == 'rewrite_text':
+                    prompt = form.cleaned_data['prompt']
+                    simple_clara_action = { 'action': 'rewrite_text', 'prompt': prompt }
+                elif action == 'regenerate_image':
+                    simple_clara_action = { 'action': 'regenerate_image' }
+                elif action == 'create_rendered_text':
+                    simple_clara_action = { 'action': 'create_rendered_text' }
+                elif action == 'post_rendered_text':
+                    simple_clara_action = { 'action': 'post_rendered_text' }
+                else:
+                    messages.error(request, f"Error: unknown action '{action}'")
+                    return redirect('simple_clara', project_id, 'error')
+
+                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title',  'post_rendered_text' )
+                
+                if action in _simple_clara_actions_to_execute_locally:
+                    result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
+                    new_project_id = result['project_id'] if 'project_id' in result else project_id
+                    new_status = result['status']
+                    return redirect('simple_clara', new_project_id, new_status)
+                else:
+                    task_type = f'simple_clara_action'
+                    callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                    print(f'--- Starting async task, simple_clara_action = {simple_clara_action}')
+                    
+                    async_task(perform_simple_clara_action_helper, username, project_id, simple_clara_action, callback=callback)
+
+                    return redirect('simple_clara_monitor', project_id, report_id)
+    else:
+        if status == 'error':
+            messages.error(request, f"Something went wrong. Try looking at the 'Recent task updates' view")
+        elif status == 'finished':
+            messages.success(request, f'Simple C-LARA operation succeeded')
+    
+    # Render the simple_clara template with the necessary context
+    return render(request, 'clara_app/simple_clara.html', {
+        'project_id': project_id,
+        'form': form,
+        'status': status
+    })
+
+# Function to be executed in async process. We pass in the username, a project_id, and a 'simple_clara_action',
+# which is a dict containing the other inputs needed for the action in question.
+#
+# If the action succeeds, it returns a dict of the form { 'status': 'finished', 'project_id': project_id }
+#
+# If it fails, it returns a dict of the form { 'status': 'error', 'error': error_message }
+def perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None):
+    try:
+        action_type = simple_clara_action['action']
+        if action_type == 'create_project':
+            # simple_clara_action should be of form { 'action': 'create_project', 'l2': text_language, 'l1': annotation_language, 'title': title }
+            result = simple_clara_create_project_helper(username, simple_clara_action, callback=callback)
+        elif action_type == 'change_title':
+            # simple_clara_action should be of form { 'action': 'create_project', 'l2': text_language, 'l1': annotation_language, 'title': title }
+            result = simple_clara_change_title_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_text_and_image':
+            # simple_clara_action should be of form { 'action': 'create_text_and_image', 'prompt': prompt }
+            result = simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'rewrite_text':
+            # simple_clara_action should be of form { 'action': 'rewrite_text', 'prompt': prompt }
+            result = simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'regenerate_image':
+            # simple_clara_action should be of form { 'action': 'regenerate_image' }
+            result = simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_rendered_text':
+            # simple_clara_action should be of form { 'action': 'create_rendered_text' }
+            result = simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'post_rendered_text':
+            # simple_clara_action should be of form { 'action': 'post_rendered_text' }
+            result = simple_clara_post_rendered_text_helper(username, project_id, simple_clara_action, callback=callback)
+        else:
+            result = { 'status': 'error',
+                       'error': f'Unknown simple_clara action type in: {simple_clara_action}' }
+    except Exception as e:
+        result = { 'status': 'failed',
+                   'error': f'Exception when executing simple_clara action {simple_clara_action}: {str(e)}\n{traceback.format_exc()}' }
+
+    if result['status'] == 'finished':
+        post_task_update(callback, f"finished")
+    else:
+        if 'error' in result:
+            post_task_update(callback, result['error'])
+        post_task_update(callback, f"error")
+
+    return result
+
+@login_required
+def simple_clara_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    status = 'unknown'
+    new_project_id = 'no_project_id'
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+def simple_clara_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    return render(request, 'clara_app/simple_clara_monitor.html',
+                  {'project_id': project_id, 'project': project, 'report_id': report_id})
+
+def simple_clara_create_project_helper(username, simple_clara_action, callback=None):
+    l2_language = simple_clara_action['l2']
+    l1_language = simple_clara_action['l1']
+    title = simple_clara_action['title']
+    # Create a new project in Django's database, associated with the current user
+    user = User.objects.get(username=username)
+    clara_project = CLARAProject(title=title, user=user, l2=l2_language, l1=l1_language)
+    clara_project.save()
+    internal_id = create_internal_project_id(title, clara_project.id)
+    # Update the Django project with the internal_id
+    clara_project.internal_id = internal_id
+    clara_project.save()
+    # Create a new internal project in the C-LARA framework
+    clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
+    post_task_update(callback, f"--- Created project '{title}'")
+    return { 'status': 'finished',
+             'project_id': clara_project.id }
+
+def simple_clara_change_title_helper(username, project_id, simple_clara_action, callback=None):
+    title = simple_clara_action['title']
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    
+    project.title = title
+    project.save()
+            
+    post_task_update(callback, f"--- Updated project title to '{title}'")
+    return { 'status': 'finished',
+             'project_id': project_id } 
+
+def simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=None):
+    prompt = simple_clara_action['prompt']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    title = project.title
+    user = project.user
+    config_info = get_user_config(user)
+
+    # Create the text
+    clara_project_internal.create_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+
+    # Create the image
+    create_and_add_dall_e_3_image(project_id, callback=None)
+
+    post_task_update(callback, f"--- Created text and image for '{title}'")
+
+    return { 'status': 'finished' }
+
+def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=None):
+    prompt = simple_clara_action['prompt']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    title = project.title
+    user = project.user
+    config_info = get_user_config(user)
+
+    # Rewrite the text
+    clara_project_internal.improve_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+
+    post_task_update(callback, f"--- Regenerated text for '{title}'")
+
+    return { 'status': 'finished' }
+
+def simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=None):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    title = project.title
+
+    # Create the image
+    create_and_add_dall_e_3_image(project_id, callback=callback)
+
+    post_task_update(callback, f"--- Created image for '{title}'")
+
+    return { 'status': 'finished' }
+
+
+def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    title = project.title
+    user = project.user
+    config_info = get_user_config(user)
+
+    # Create summary
+    clara_project_internal.create_summary(user=username, config_info=config_info, callback=callback)
+    post_task_update(callback, f"--- Created summary for '{title}'")
+
+    # Get CEFR level
+    clara_project_internal.get_cefr_level(user=username, config_info=config_info, callback=callback)
+    post_task_update(callback, f"--- Got CEFR level for '{title}'")
+
+    # Create segmented text
+    clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
+    post_task_update(callback, f"--- Added segmentation for '{title}'")
+
+    # Create glossed text
+    clara_project_internal.create_glossed_text(user=username, config_info=config_info, callback=callback)
+    post_task_update(callback, f"--- Added glosses for '{title}'")
+
+    # Create lemma-tagged text
+    clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
+    post_task_update(callback, f"--- Added lemma tags for '{title}'")
+
+    # Render
+    clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
+    post_task_update(callback, f"--- Created rendered text for '{title}'")
+
+    if phonetic_resources_are_available(project.l2):
+        # Create phonetic text
+        clara_project_internal.create_phonetic_text(user=username, config_info=config_info, callback=callback)
+        post_task_update(callback, f"--- Created phonetic text for '{title}'")
+
+        # Render phonetic text and then render normal text again to get the links right
+        clara_project_internal.render_text(project_id, phonetic=True, self_contained=True, callback=callback)
+        clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
+        post_task_update(callback, f"--- Created phonetic rendered text for '{title}'")
+
+    return { 'status': 'finished' }
+
+def simple_clara_post_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    title = project.title
+    
+    phonetic_or_normal = 'normal'
+    
+    register_project_content_helper(project_id, phonetic_or_normal)
+
+    post_task_update(callback, f"--- Registered project content for '{title}'")
+
+    return { 'status': 'finished' }
+
+# This is the function to run in the worker process when importing a zipfile
 def import_project_from_zip_file(zip_file, project_id, internal_id, callback=None):
     try:
         clara_project = get_object_or_404(CLARAProject, pk=project_id)
@@ -1255,7 +1578,7 @@ def remove_project_member(request, permission_id):
       
 # List projects on which the user has a role    
 @login_required
-def project_list(request):
+def project_list(request, clara_version):
     user = request.user
     search_form = ProjectSearchForm(request.GET or None)
     query = Q((Q(user=user) | Q(projectpermissions__user=user)))
@@ -1289,7 +1612,7 @@ def project_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'clara_app/project_list.html', {'search_form': search_form, 'page_obj': page_obj})
+    return render(request, 'clara_app/project_list.html', {'search_form': search_form, 'page_obj': page_obj, 'clara_version': clara_version})
 
 # Delete a project
 @login_required
@@ -1300,7 +1623,7 @@ def delete_project(request, project_id):
     if request.method == 'POST':
         project.delete()
         clara_project_internal.delete()
-        return redirect('project_list')
+        return redirect('project_list', 'normal')
     else:
         return render(request, 'clara_app/confirm_delete.html', {'project': project})
 
@@ -1984,7 +2307,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     current_version = clara_project_internal.get_file_description(this_version, 'current')
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == this_version]
     text_choice = 'generate' if archived_versions == [] else 'manual'
-    prompt = None
+    prompt = clara_project_internal.load_text_version_or_null('prompt') if this_version == 'plain' else None
     action = None
 
     if request.method == 'POST':
@@ -1996,7 +2319,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             label = form.cleaned_data['label']
             gold_standard = form.cleaned_data['gold_standard']
             username = request.user.username
-            # We have an optional prompt when creating the initial text.
+            # We have an optional prompt when creating or improving the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
             if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'tree_tagger', 'jieba' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
@@ -2044,8 +2367,6 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
                 try:
                     # Create a unique ID to tag messages posted by this task, and a callback
-                    #report_id = uuid.uuid4()
-                    #callback = [post_task_update_in_db, report_id]
                     task_type = f'{text_choice}_{this_version}'
                     callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
@@ -2071,7 +2392,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('improve', this_version)
                         async_task(perform_improve_operation_and_store_api_calls, this_version, project, clara_project_internal,
-                                   request.user, label, callback=callback)
+                                   request.user, label, prompt=prompt, callback=callback)
                         print(f'--- Started improvement task')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
@@ -2193,7 +2514,7 @@ def generate_text_complete(request, project_id, version, status):
         current_version = clara_project_internal.get_file_description(version, 'current')
         archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == version]
         text_choice = 'generate' if archived_versions == [] else 'manual'
-        prompt = None
+        prompt = clara_project_internal.load_text_version_or_null('prompt') if version == 'plain' else None
 
         try:
             annotated_text = clara_project_internal.load_text_version(version)
@@ -2240,7 +2561,7 @@ def perform_correct_operation_and_store_api_calls(annotated_text, version, proje
                                                   user_object, label, callback=None):
     try:
         config_info = get_user_config(user_object)
-        operation, api_calls = perform_correct_operation(annotated_text, version, clara_project_internal, user_object.username, label,
+        operation, api_calls = perform_correct_operation(annotated_text, version, clara_project_internal, user_object.username, label, 
                                                          config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
@@ -2286,20 +2607,20 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
         raise InternalCLARAError(message = f'Unknown first argument in perform_generate_operation: {version}')
 
 def perform_improve_operation_and_store_api_calls(version, project, clara_project_internal,
-                                                   user_object, label, callback=None):
+                                                   user_object, label, prompt=None, callback=None):
     try:
         config_info = get_user_config(user_object)
         operation, api_calls = perform_improve_operation(version, clara_project_internal, user_object.username, label,
-                                                         config_info=config_info, callback=callback)
+                                                         prompt=prompt, config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
  
-def perform_improve_operation(version, clara_project_internal, user, label, config_info={}, callback=None):
+def perform_improve_operation(version, clara_project_internal, user, label, prompt=None, config_info={}, callback=None):
     if version == 'plain':
-        return ( 'generate', clara_project_internal.improve_plain_text(user=user, label=label, config_info=config_info, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
     if version == 'summary':
         return ( 'generate', clara_project_internal.improve_summary(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
@@ -2877,85 +3198,101 @@ def offer_to_register_content(request, phonetic_or_normal, project_id):
 @login_required
 @user_has_a_project_role
 def register_project_content(request, phonetic_or_normal, project_id):
-    phonetic = True if phonetic_or_normal == 'phonetic' else False
     project = get_object_or_404(CLARAProject, pk=project_id)
-    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-
-    # Check if human audio info exists for the project and if voice_talent_id is set
-    if phonetic_or_normal == 'phonetic':
-        human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
-    else:
-        human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
-    if human_audio_info:
-        human_voice_id = human_audio_info.voice_talent_id
-        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
-        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
-    else:
-        audio_type_for_words = 'tts'
-        audio_type_for_segments = 'tts'
-        human_voice_id = None
-
-    word_count0 = clara_project_internal.get_word_count(phonetic=phonetic)
-    voice0 = clara_project_internal.get_voice(human_voice_id=human_voice_id, 
-                                              audio_type_for_words=audio_type_for_words, 
-                                              audio_type_for_segments=audio_type_for_segments)
-    
-    # CEFR level and summary are not essential, just continue if they're not available
-    try:
-        cefr_level0 = clara_project_internal.load_text_version("cefr_level")
-    except Exception as e:
-        cefr_level0 = None
-    try:
-        summary0 = clara_project_internal.load_text_version("summary")
-    except Exception as e:
-        summary0 = None
-    word_count = 0 if not word_count0 else word_count0 # Dummy value if real one unavailable
-    voice = "Unknown" if not voice0 else voice0 # Dummy value if real one unavailable
-    cefr_level = "Unknown" if not cefr_level0 else cefr_level0 # Dummy value if real one unavailable
-    summary = "Unknown" if not summary0 else summary0 # Dummy value if real one unavailable
 
     if request.method == 'POST':
         form = RegisterAsContentForm(request.POST)
         if form.is_valid() and form.cleaned_data.get('register_as_content'):
             if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                 raise PermissionDenied("You don't have permission to register a text.")
-            title = f'{project.title} (phonetic)' if phonetic_or_normal == 'phonetic' else project.title
-            content, created = Content.objects.get_or_create(
-                                    project = project,  
-                                    defaults = {
-                                        'title': title,  
-                                        'l2': project.l2,  
-                                        'l1': project.l1,
-                                        'text_type': phonetic_or_normal,
-                                        'length_in_words': word_count,  
-                                        'author': project.user.username,  
-                                        'voice': voice,  
-                                        'annotator': project.user.username,  
-                                        'difficulty_level': cefr_level,  
-                                        'summary': summary
-                                        }
-                                    )
-            # Update any fields that might have changed
-            if not created:
-                content.title = title
-                content.l2 = project.l2
-                content.l1 = project.l1
-                content.text_type = phonetic_or_normal
-                content.length_in_words = word_count  
-                content.author = project.user.username
-                content.voice = voice 
-                content.annotator = project.user.username
-                content.difficulty_level = cefr_level
-                content.summary = summary
-                content.save()
-                
+
+            # Main processing happens in the helper function, which is shared with simple-C-LARA
+            content = register_project_content_helper(project_id, phonetic_or_normal)
+            
             # Create an Update record for the update feed
-            create_update(request.user, 'PUBLISH', content)
+            if content:
+                create_update(request.user, 'PUBLISH', content)
             
             return redirect(content.get_absolute_url())
 
     # If the form was not submitted or was not valid, redirect back to the project detail page.
     return redirect('project_detail', project_id=project.id)
+
+def register_project_content_helper(project_id, phonetic_or_normal):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        phonetic = True if phonetic_or_normal == 'phonetic' else False
+
+        # Check if human audio info exists for the project and if voice_talent_id is set
+        if phonetic_or_normal == 'phonetic':
+            human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
+        else:
+            human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+        if human_audio_info:
+            human_voice_id = human_audio_info.voice_talent_id
+            audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
+            audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
+        else:
+            audio_type_for_words = 'tts'
+            audio_type_for_segments = 'tts'
+            human_voice_id = None
+
+        word_count0 = clara_project_internal.get_word_count(phonetic=phonetic)
+        voice0 = clara_project_internal.get_voice(human_voice_id=human_voice_id, 
+                                                  audio_type_for_words=audio_type_for_words, 
+                                                  audio_type_for_segments=audio_type_for_segments)
+        
+        # CEFR level and summary are not essential, just continue if they're not available
+        try:
+            cefr_level0 = clara_project_internal.load_text_version("cefr_level")
+        except Exception as e:
+            cefr_level0 = None
+        try:
+            summary0 = clara_project_internal.load_text_version("summary")
+        except Exception as e:
+            summary0 = None
+        word_count = 0 if not word_count0 else word_count0 # Dummy value if real one unavailable
+        voice = "Unknown" if not voice0 else voice0 # Dummy value if real one unavailable
+        cefr_level = "Unknown" if not cefr_level0 else cefr_level0 # Dummy value if real one unavailable
+        summary = "Unknown" if not summary0 else summary0 # Dummy value if real one unavailable
+
+        title = f'{project.title} (phonetic)' if phonetic_or_normal == 'phonetic' else project.title
+        
+        content, created = Content.objects.get_or_create(
+                                project = project,  
+                                defaults = {
+                                    'title': title,  
+                                    'l2': project.l2,  
+                                    'l1': project.l1,
+                                    'text_type': phonetic_or_normal,
+                                    'length_in_words': word_count,  
+                                    'author': project.user.username,  
+                                    'voice': voice,  
+                                    'annotator': project.user.username,  
+                                    'difficulty_level': cefr_level,  
+                                    'summary': summary
+                                    }
+                                )
+        # Update any fields that might have changed
+        if not created:
+            content.title = title
+            content.l2 = project.l2
+            content.l1 = project.l1
+            content.text_type = phonetic_or_normal
+            content.length_in_words = word_count  
+            content.author = project.user.username
+            content.voice = voice 
+            content.annotator = project.user.username
+            content.difficulty_level = cefr_level
+            content.summary = summary
+            content.save()
+
+        return content
+
+    except Exception as e:
+        post_task_update(callback, f"Exception when posting content: {str(e)}\n{traceback.format_exc()}")
+        return None
         
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, phonetic_or_normal, filename):

@@ -81,6 +81,17 @@ class ProjectImportForm(forms.Form):
     title = forms.CharField(label='Project Title', max_length=255)
     zipfile = forms.FileField(label='Project Zipfile')
 
+class SimpleClaraForm(forms.Form):
+    status = forms.CharField(initial='No project', required=False)
+    l2 = forms.ChoiceField(label='Text language', choices=SUPPORTED_LANGUAGES, required=False)
+    l1 = forms.ChoiceField(label='Annotation language', choices=SUPPORTED_LANGUAGES, required=False)
+    title = forms.CharField(label='Title', max_length=200, required=False)
+    internal_title = forms.CharField(label='Title', max_length=200, required=False)
+    prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
+    plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False) 
+    image_basename = forms.CharField(required=False)
+    rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)
+
 class ProjectSearchForm(forms.Form):
     title = forms.CharField(required=False)
     l2 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)
