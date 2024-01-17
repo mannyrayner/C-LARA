@@ -8,6 +8,7 @@ Each CLARAProjectInternal object is associated with a directory, which contains 
 text representations related to the object. These texts are kept as files since they
 can be very large. We have seven types of text, as follows:
 
+"prompt". The prompt, if there is one.
 "plain". The initial unformatted text.
 "segmented". Text with segmentation annotations added.
 "summary". English summary of text.
@@ -27,16 +28,16 @@ an initial empty project.
 to a newly created clone of it.
 
 - save_text_version(version, text). Saves one of the associated texts. "version" is one
-of ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
 
 - delete_text_version(version). Deletes one of the associated texts. "version" is one
-of ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
 
 - delete_text_versions(versions). Deleted several associated texts. "version" is a list of strings
-from ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+from ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
 
 - load_text_version(version). Retrieves one of the associated texts. "version" is one
-of ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
 
 - delete(). Delete project's associated directory.
 
@@ -44,7 +45,7 @@ of ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and
 Returns list of metadata references for files holding different updates of text versions.
 Metadata reference is dict with keys ( "file", "version", "source", "user", "timestamp", "gold_standard", "description" )
   - file: absolute pathname for file, as str
-  - version: one of ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" )
+  - version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" )
   - source: one of ( "ai_generated", "ai_revised", "human_revised" )
   - user: username for account on which file was created
   - timestamp: time when file was posted, in format '%Y%m%d%H%M%S'
@@ -53,12 +54,12 @@ Metadata reference is dict with keys ( "file", "version", "source", "user", "tim
 
 - get_file_description(version, file)
 Returns the metadata "description" field for a file or "" if the file does not exist.
-- version: one of ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" )
+- version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" )
 - file: either the pathname for an archived file, or "current", referring to the most recent file of this type
 
 - diff_editions_of_text_version(file_path1, file_path2, version, required. Diff two versions
 of the same kind of file and return information as specified.
-"version" is one of ( "plain", "summary", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+"version" is one of ( "prompt", "plain", "summary", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
 "required" is a list containing a subset of ( "error_rate", "details" )
 
 - create_plain_text(prompt=None). Calls ChatGPT-4 to create the initial plain text in l2_language.
@@ -172,6 +173,7 @@ class CLARAProjectInternal:
         self.cefr_level = None
         self.project_dir = self.BASE_DIR / self.id
         self.text_versions = {
+            "prompt": None,
             "plain": None,
             "summary": None,
             "cefr_level": None,
@@ -256,8 +258,9 @@ class CLARAProjectInternal:
 
     # Copy relevant files from this project to a newly created clone of it.
     def copy_files_to_newly_cloned_project(self, new_project: 'CLARAProjectInternal') -> None:
-        # Always copy the plain text file if it's there.
-        # Even if it's not directly useable, we may want to transform it in some way
+        # Always copy the prompt and plain text file if available.
+        # Even not directly useable, we may want to transform them in some way
+        self._copy_text_version_if_it_exists("prompt", new_project)
         self._copy_text_version_if_it_exists("plain", new_project)
         # If the L2 is the same, the CEFR, summary, segmented and lemma files will by default be valid
         if self.l2_language == new_project.l2_language:
@@ -360,7 +363,7 @@ class CLARAProjectInternal:
     # Metadata reference is dict with keys ( "file", "version", "source", "user", "timestamp", "gold_standard" )
     #
     #   - file: absolute pathname for file, as str
-    #   - version: one of ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma" )
     #   - source: one of ( "ai_generated", "ai_revised", "human_revised" )
     #   - user: username for account on which file was created
     #   - timestamp: time when file was posted, in format '%Y%m%d%H%M%S'
@@ -368,7 +371,7 @@ class CLARAProjectInternal:
 
     # For downward compatibility, guess metadata based on existing files where necessary.
     # Files referenced:
-    #   - self._file_path_for_version(version) for version in ( "plain", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - self._file_path_for_version(version) for version in ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma" )
     #     when file exists
     #   - Everything in self._get_archive_dir()
     # Get timestamps from the file ages.
@@ -379,7 +382,7 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["plain", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
+        versions = ["prompt", "plain", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
 
         # Check if any metadata entries are missing for the existing files
         for version in versions:
@@ -493,6 +496,12 @@ class CLARAProjectInternal:
             text = make_line_breaks_canonical_n(text)
             return text
 
+    def load_text_version_or_null(self, version: str) -> str:
+        try:
+            return self.load_text_version(version)
+        except FileNotFoundError:
+            return ''
+
     # Get text consisting of "segmented" text, plus suitably tagged segmented text for any images that may be present
     def _create_and_load_segmented_with_images_text(self, callback=None):
         segmented_text = self.load_text_version("segmented")
@@ -534,14 +543,17 @@ class CLARAProjectInternal:
     # Call ChatGPT-4 to create a story based on the given prompt
     def create_plain_text(self, prompt: Optional[str] = None, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         plain_text, api_calls = generate_story(self.l2_language, prompt, config_info=config_info, callback=callback)
+        self.save_text_version('prompt', prompt if prompt else '', user=user, label=label, source='human_input')
         self.save_text_version('plain', plain_text, user=user, label=label, source='ai_generated')
         return api_calls
 
     # Call ChatGPT-4 to try to improve a text
-    def improve_plain_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+    def improve_plain_text(self, prompt='', user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         try:
+            stored_prompt = self.load_text_version("prompt")
             current_version = self.load_text_version("plain")
-            plain_text, api_calls = improve_story(self.l2_language, current_version, config_info=config_info, callback=callback)
+            improvement_prompt = prompt if prompt and prompt != stored_prompt else None
+            plain_text, api_calls = improve_story(self.l2_language, current_version, improvement_prompt=improvement_prompt, config_info=config_info, callback=callback)
             self.save_text_version("plain", plain_text, user=user, label=label, source='ai_revised')
             return api_calls
         except:

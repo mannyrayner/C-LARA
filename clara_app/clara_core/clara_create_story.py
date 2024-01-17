@@ -32,14 +32,25 @@ Do not include any introduction, translation, explanation or similar."""
     api_call = clara_chatgpt4.call_chat_gpt4(full_prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )
 
-def improve_story(language, current_version, config_info={}, callback=None):
-    prompt = f"""Please read through the following {language.capitalize()} text and reproduce it, correcting any mistakes you may find.
+def improve_story(language, current_version, improvement_prompt=None, config_info={}, callback=None):
+    if not improvement_prompt:
+        prompt = f"""Please read through the following {language.capitalize()} text and reproduce it, correcting any mistakes you may find.
 Here is the text:
 
 {current_version}
 
 """
+    else:
+        prompt = f"""Please read through the following {language.capitalize()} text and try to rewrite it, taking into account the following advice:
 
+{improvement_prompt}
+
+Here is the text:
+
+{current_version}
+
+"""
+            
     clarification = f"""Since the output will be processed by a Python script, write only the {language.capitalize()} text.
 Do not include any introduction, translation, explanation or similar."""
 
