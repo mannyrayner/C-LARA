@@ -88,6 +88,7 @@ class SimpleClaraForm(forms.Form):
     title = forms.CharField(label='Title', max_length=200, required=False)
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
     prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
+    image_advice_prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False) 
     image_basename = forms.CharField(required=False)
     rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)

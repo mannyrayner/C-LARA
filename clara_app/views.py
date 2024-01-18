@@ -1076,21 +1076,17 @@ def get_simple_clara_resources_helper(project_id):
             resources_available['plain_text'] = clara_project_internal.load_text_version('plain')
 
         image = clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text')
-        if not image:
-            # We have plain text, but no image
-            resources_available['status'] = 'No image'
-            return resources_available
-        else:
+        if image:
             resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
 
         if not clara_project_internal.rendered_html_exists(project_id):
             # We have plain text and image, but no rendered HTML
-            resources_available['status'] = 'No multimedia'
+            resources_available['status'] = 'No multimedia' if image else 'No image'
             return resources_available
         else:
             # We have the rendered HTML
             resources_available['rendered_text_available'] = True
-            resources_available['status'] = 'Everything available'
+            resources_available['status'] = 'Everything available' if image else 'Everything available except image'
             return resources_available
     except Exception as e:
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
@@ -1127,7 +1123,8 @@ def simple_clara(request, project_id, status):
                     prompt = form.cleaned_data['prompt']
                     simple_clara_action = { 'action': 'rewrite_text', 'prompt': prompt }
                 elif action == 'regenerate_image':
-                    simple_clara_action = { 'action': 'regenerate_image' }
+                    image_advice_prompt = form.cleaned_data['image_advice_prompt']
+                    simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
                 elif action == 'create_rendered_text':
                     simple_clara_action = { 'action': 'create_rendered_text' }
                 elif action == 'post_rendered_text':
@@ -1187,7 +1184,7 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
             # simple_clara_action should be of form { 'action': 'rewrite_text', 'prompt': prompt }
             result = simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'regenerate_image':
-            # simple_clara_action should be of form { 'action': 'regenerate_image' }
+            # simple_clara_action should be of form { 'action': 'regenerate_image', 'image_advice_prompt': image_advice_prompt }
             result = simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_rendered_text':
             # simple_clara_action should be of form { 'action': 'create_rendered_text' }
@@ -1271,12 +1268,14 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
     config_info = get_user_config(user)
 
     # Create the text
+    post_task_update(callback, f"STARTED TASK: create plain text")
     clara_project_internal.create_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+    post_task_update(callback, f"ENDED TASK: create plain text")
 
     # Create the image
+    post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, callback=None)
-
-    post_task_update(callback, f"--- Created text and image for '{title}'")
+    post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     return { 'status': 'finished' }
 
@@ -1291,21 +1290,23 @@ def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, 
     config_info = get_user_config(user)
 
     # Rewrite the text
+    post_task_update(callback, f"STARTED TASK: rewrite plain text")
     clara_project_internal.improve_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
-
-    post_task_update(callback, f"--- Regenerated text for '{title}'")
+    post_task_update(callback, f"ENDED TASK: rewrite plain text")
 
     return { 'status': 'finished' }
 
 def simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=None):
+    image_advice_prompt = simple_clara_action['image_advice_prompt']
+    
     project = get_object_or_404(CLARAProject, pk=project_id)
 
     title = project.title
 
     # Create the image
-    create_and_add_dall_e_3_image(project_id, callback=callback)
-
-    post_task_update(callback, f"--- Created image for '{title}'")
+    post_task_update(callback, f"STARTED TASK: regenerate DALL-E-3 image")
+    create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
+    post_task_update(callback, f"ENDED TASK: regenerate DALL-E-3 image")
 
     return { 'status': 'finished' }
 
@@ -1319,38 +1320,46 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
     config_info = get_user_config(user)
 
     # Create summary
+    post_task_update(callback, f"STARTED TASK: create summary")
     clara_project_internal.create_summary(user=username, config_info=config_info, callback=callback)
-    post_task_update(callback, f"--- Created summary for '{title}'")
+    post_task_update(callback, f"ENDED TASK: create summary")
 
     # Get CEFR level
+    post_task_update(callback, f"STARTED TASK: get CEFR level")
     clara_project_internal.get_cefr_level(user=username, config_info=config_info, callback=callback)
-    post_task_update(callback, f"--- Got CEFR level for '{title}'")
+    post_task_update(callback, f"ENDED TASK: get CEFR level")
 
     # Create segmented text
+    post_task_update(callback, f"STARTED TASK: add segmentation information")
     clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
-    post_task_update(callback, f"--- Added segmentation for '{title}'")
+    post_task_update(callback, f"ENDED TASK: add segmentation information")
 
     # Create glossed text
+    post_task_update(callback, f"STARTED TASK: add glosses")
     clara_project_internal.create_glossed_text(user=username, config_info=config_info, callback=callback)
-    post_task_update(callback, f"--- Added glosses for '{title}'")
+    post_task_update(callback, f"ENDED TASK: add glosses")
 
     # Create lemma-tagged text
+    post_task_update(callback, f"STARTED TASK: add lemma tags")
     clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
-    post_task_update(callback, f"--- Added lemma tags for '{title}'")
+    post_task_update(callback, f"ENDED TASK: add lemma tags")
 
     # Render
+    post_task_update(callback, f"STARTED TASK: create TTS audio and multimodal text")
     clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
-    post_task_update(callback, f"--- Created rendered text for '{title}'")
+    post_task_update(callback, f"ENDED TASK: create TTS audio and multimodal text")
 
     if phonetic_resources_are_available(project.l2):
         # Create phonetic text
+        post_task_update(callback, f"STARTED TASK: create phonetic text")
         clara_project_internal.create_phonetic_text(user=username, config_info=config_info, callback=callback)
-        post_task_update(callback, f"--- Created phonetic text for '{title}'")
+        post_task_update(callback, f"ENDED TASK: create phonetic text")
 
         # Render phonetic text and then render normal text again to get the links right
+        post_task_update(callback, f"STARTED TASK: create phonetic multimodal text")
         clara_project_internal.render_text(project_id, phonetic=True, self_contained=True, callback=callback)
         clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
-        post_task_update(callback, f"--- Created phonetic rendered text for '{title}'")
+        post_task_update(callback, f"ENDED TASK: create phonetic multimodal text")
 
     return { 'status': 'finished' }
 
@@ -2816,7 +2825,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
 
     return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project})
 
-def create_and_add_dall_e_3_image(project_id, callback=None):
+def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None):
     try:
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -2826,8 +2835,12 @@ def create_and_add_dall_e_3_image(project_id, callback=None):
 
 {text}
 
-Could you create an image to go on the front page?
-"""
+Could you create an image to go on the front page?"""
+        if advice_prompt:
+            prompt += f"""
+When generating the image, keep the following advice in mind:
+
+{advice_prompt}"""
         temp_dir = tempfile.mkdtemp()
         tmp_image_file = os.path.join(temp_dir, 'image_for_whole_text.jpg')
         
