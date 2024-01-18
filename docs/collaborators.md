@@ -16,8 +16,8 @@
 - **BELINDA CHIERA**: Project coordination, statistical analysis
 - **CATHY CHUA**: Project coordination, ethical aspects
 - **CATIA CUCCHIARINI**: User studies, Italian and Dutch evaluation
-- **CHRISTELE MAIZONNIAUX **: French evaluation
-- **JEREMIAH MCPADDEN **: Latin, Discord server
+- **CHRISTELE MAIZONNIAUX**: French evaluation
+- **JEREMIAH MCPADDEN**: Latin, Discord server
 - **MARTA MYKHATS**: Pedagogical aspects, Ukrainian evaluation
 - **NEASA NÍ CHIARÁIN**: User studies, Irish evaluation
 - **MANNY RAYNER**: Software implementation and design, project coordination, English evaluation
