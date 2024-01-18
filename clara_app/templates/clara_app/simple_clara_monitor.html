@@ -2,8 +2,13 @@
 
 {% block content %}
     <h2>Performing Simple-C-LARA action ("{{ project.title }}")</h2>
+	
+	<div class="flex-container">
+        <div class="status-messages-class" id="high-level-status-messages">
+        </div>
   
-    <div class="status-messages-class" id="status-messages">
+        <div class="status-messages-class" id="status-messages">
+        </div>
     </div>
   
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -24,6 +29,11 @@
 						// Add the latest messages to the status messages element
 						response.messages.forEach(function(message) {
 							$("#status-messages").append("<p>" + message + "</p>");
+							
+							if (message.startsWith("STARTED TASK:") || message.startsWith("ENDED TASK:")) {
+							    $("#high-level-status-messages").append("<p>" + message + "</p>");
+							}
+							
 						});
 					} else {
 						// If no new messages, add a placeholder message
@@ -31,6 +41,7 @@
 					}
 
 					$("#status-messages").animate({ scrollTop: $('#status-messages')[0].scrollHeight}, "fast");
+					$("#high-level-status-messages").animate({ scrollTop: $('#status-messages')[0].scrollHeight}, "fast");
 
 					// If the task has completed, stop polling the server and redirect to the 'simple_clara' view,
 					// passing the project_id and the status

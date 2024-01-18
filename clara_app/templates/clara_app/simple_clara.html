@@ -34,14 +34,18 @@
 	  <h3>Image</h3>
       <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
 	  <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
+	{% elif status == 'No image' or status == 'Everything available except image' %}
+	   <h3>Image</h3>
+	   <p>Image generation failed, probably due to constraints on appropriate content. Sometimes adding advice in the box below and regenerating will fix this.</p>
+	   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
     {% endif %}
   
-    {% if status == 'No multimedia' or status == 'Everything available' %}
+    {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' %}
 	  <h3>Multimedia text</h3>
       <button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button>
     {% endif %}
 	
-	{% if status == 'Everything available' %}
+	{% if status == 'Everything available' or status == 'Everything available except image' %}
 	  <h3>C-LARA Social Network</h3>
       <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
       <button type="submit" name="action" value="post_rendered_text">Post to Social Network</button>

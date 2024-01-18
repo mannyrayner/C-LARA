@@ -19,6 +19,24 @@
     width: 200%; 
     height: 300px; 
   }
+  
+  .flex-container {
+        display: flex;
+    }
+
+    #high-level-status-messages {
+        flex: 0 1 40%; /* flex-grow: 0, flex-shrink: 1, flex-basis: 40% */
+        min-width: 300px; /* Minimum width of the left div */
+        overflow-y: auto;
+        max-height: 300px;
+        padding-right: 10px; /* Space between the divs */
+    }
+
+    #status-messages {
+        flex: 1 1 auto; /* flex-grow: 1, flex-shrink: 1, flex-basis: auto */
+        overflow-y: auto;
+        max-height: 300px;
+    }
 
   .status-messages-class {
     height: 200px;  /* Adjust as needed */
