@@ -103,13 +103,18 @@ def register(request):
 
 # Welcome screen
 def home(request):
-    return HttpResponse("Welcome to C-LARA!")
+    
+    #return HttpResponse("Welcome to C-LARA!")
+    return redirect('profile')
 
 # Show user profile
 @login_required
 def profile(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
-    return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email})
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email, 'clara_version': clara_version})
 
 # Edit user profile
 @login_required
@@ -127,9 +132,12 @@ def edit_profile(request):
         u_form = UserForm(instance=request.user)
         p_form = UserProfileForm(instance=request.user.userprofile)
 
+    clara_version = get_user_config(request.user)['clara_version']
+
     context = {
         'u_form': u_form,
-        'p_form': p_form
+        'p_form': p_form,
+        'clara_version': clara_version
     }
 
     return render(request, 'clara_app/edit_profile.html', context)
@@ -191,12 +199,15 @@ def external_profile(request, user_id):
     else:
         form = FriendRequestForm()
 
+    clara_version = get_user_config(request.user)['clara_version']
+
     return render(request, 'clara_app/external_profile.html', {
         'profile_user': profile_user,
         'profile': profile,
         'email': profile_user.email,
         'friend_request': friend_request,
         'form': form,
+        'clara_version': clara_version
     })
 
 @login_required
@@ -211,11 +222,14 @@ def friends(request):
     # Get current friends 
     current_friends = current_friends_of_user(request.user)
 
+    clara_version = get_user_config(request.user)['clara_version']
+
     return render(request, 'clara_app/friends.html', {
         'user_profile': user_profile,
         'incoming_requests': incoming_requests,
         'outgoing_requests': outgoing_requests,
         'current_friends': current_friends,
+        'clara_version': clara_version,
     })
 
 # Show the update feed
@@ -234,7 +248,9 @@ def update_feed(request):
 
     valid_updates = [ update for update in updates if valid_update_for_update_feed(update) ]
 
-    return render(request, 'clara_app/update_feed.html', {'updates': valid_updates})
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/update_feed.html', {'updates': valid_updates, 'clara_version': clara_version})
 
 # Check that the updates are such that we can render them in the template
 def valid_update_for_update_feed(update):
@@ -288,14 +304,19 @@ def user_config(request):
     else:
         form = UserConfigForm(instance=user_config)
 
-    return render(request, 'clara_app/user_config.html', {'form': form})
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/user_config.html', {'form': form, 'clara_version': clara_version})
 
 # Credit balance for money spent on API calls
 
 @login_required
 def credit_balance(request):
     credit_balance = request.user.userprofile.credit
-    return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance})
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance, 'clara_version': clara_version})
 
 # Allow an admin to manually reset the password on an account
 @login_required
@@ -315,7 +336,10 @@ def admin_password_reset(request):
                 messages.error(request, "User not found.")
     else:
         form = AdminPasswordResetForm()
-    return render(request, 'clara_app/admin_password_reset.html', {'form': form})
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/admin_password_reset.html', {'form': form, 'clara_version': clara_version})
 
 # Add credit to account
 @login_required
@@ -331,7 +355,10 @@ def add_credit(request):
             messages.success(request, "Credit added successfully")
     else:
         form = AddCreditForm()
-    return render(request, 'clara_app/add_credit.html', {'form': form})
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/add_credit.html', {'form': form, 'clara_version': clara_version})
 
 # Transfer credit to another account
 @login_required
@@ -380,7 +407,9 @@ def transfer_credit(request):
     else:
         form = AddCreditForm()
 
-    return render(request, 'clara_app/transfer_credit.html', {'form': form})
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/transfer_credit.html', {'form': form, 'clara_version': clara_version})
 
 @login_required
 def confirm_transfer(request):
@@ -416,7 +445,9 @@ def confirm_transfer(request):
     else:
         form = ConfirmTransferForm()
 
-    return render(request, 'clara_app/confirm_transfer.html', {'form': form})
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/confirm_transfer.html', {'form': form, 'clara_version': clara_version})
 
 def delete_tts_data_for_language(language, callback=None):
     post_task_update(callback, f"--- Starting delete task for language {language}")
@@ -445,8 +476,11 @@ def delete_tts_data(request):
 
     else:
         form = DeleteTTSDataForm()
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/delete_tts_data.html', {
-        'form': form,
+        'form': form, 'clara_version': clara_version
     })
 
 # This is the API endpoint that the JavaScript will poll
@@ -466,8 +500,11 @@ def delete_tts_data_status(request, report_id):
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
 def delete_tts_data_monitor(request, language, report_id):
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/delete_tts_data_monitor.html',
-                  {'language': language, 'report_id': report_id})
+                  {'language': language, 'report_id': report_id, 'clara_version': clara_version})
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
@@ -495,8 +532,10 @@ def delete_tts_data_complete(request, language, status):
 
         form = DeleteTTSDataForm()
 
+        clara_version = get_user_config(request.user)['clara_version']
+
         return render(request, 'clara_app/delete_tts_data.html',
-                      { 'form': form, } )
+                      { 'form': form, 'clara_version': clara_version, } )
 
 # Manage users declared as 'language masters', adding or withdrawing the 'language master' privilege   
 @login_required
@@ -512,9 +551,12 @@ def manage_language_masters(request):
             return redirect('manage_language_masters')
     else:
         form = AssignLanguageMasterForm()
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/manage_language_masters.html', {
         'language_masters': language_masters,
-        'form': form,
+        'form': form, 'clara_version': clara_version,
     })
 
 # Remove someone as a language master, asking for confirmation first
@@ -526,7 +568,10 @@ def remove_language_master(request, pk):
         language_master.delete()
         return redirect('manage_language_masters')
     else:
-        return render(request, 'clara_app/remove_language_master_confirm.html', {'language_master': language_master})
+
+        clara_version = get_user_config(request.user)['clara_version']
+        
+        return render(request, 'clara_app/remove_language_master_confirm.html', {'language_master': language_master, 'clara_version': clara_version})
 
 # Display recent task update messages
 @login_required
@@ -534,7 +579,10 @@ def view_task_updates(request):
     time_threshold = timezone.now() - timedelta(minutes=60)
     user_id = request.user.username
     updates = TaskUpdate.objects.filter(timestamp__gte=time_threshold, user_id=user_id).order_by('-timestamp')
-    return render(request, 'clara_app/view_task_updates.html', {'updates': updates})
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/view_task_updates.html', {'updates': updates, 'clara_version': clara_version})
 
 # Allow a language master to edit a phonetic lexicon
 @login_required
@@ -741,12 +789,15 @@ def edit_phonetic_lexicon(request):
             current_encoding = phonetic_lexicon_repo.get_encoding_for_language(form.fields['language'].initial)
             form.fields['encoding'].initial = current_encoding
 
+    clara_version = get_user_config(request.user)['clara_version']
+
     return render(request, 'clara_app/edit_phonetic_lexicon.html',
                   {'form': form,
                    'grapheme_phoneme_formset': grapheme_phoneme_formset,
                    'accents_formset': accents_formset,
                    'plain_lexicon_formset': plain_lexicon_formset,
                    'aligned_lexicon_formset': aligned_lexicon_formset,
+                   'clara_version': clara_version
                    })
 
 def upload_and_install_plain_phonetic_lexicon(file_path, language, callback=None):
@@ -788,8 +839,10 @@ def import_phonetic_lexicon_status(request, language, report_id):
 @login_required
 @language_master_required
 def import_phonetic_lexicon_monitor(request, language, report_id):
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/import_phonetic_lexicon_monitor.html',
-                  {'report_id': report_id, 'language': language})
+                  {'report_id': report_id, 'language': language, 'clara_version': clara_version})
 
 # Confirm the final result of importing the lexicon
 @login_required
@@ -890,7 +943,10 @@ def edit_prompt(request):
             else:
                 raise Exception("Internal error: neither Load nor Save found in POST request to edit_prompt")
 
-            return render(request, 'clara_app/edit_prompt.html', {'prompt_selection_form': prompt_selection_form, 'prompt_formset': prompt_formset})
+            clara_version = get_user_config(request.user)['clara_version']
+
+            return render(request, 'clara_app/edit_prompt.html',
+                          {'prompt_selection_form': prompt_selection_form, 'prompt_formset': prompt_formset, 'clara_version': clara_version})
 
     else:
         prompt_selection_form = PromptSelectionForm(user=request.user)
@@ -908,11 +964,17 @@ def register_content(request):
             return redirect('content_success')
     else:
         form = ContentRegistrationForm()
-    return render(request, 'clara_app/register_content.html', {'form': form})
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/register_content.html', {'form': form, 'clara_version': clara_version})
 
 # Confirm that content has been registered
 def content_success(request):
-    return render(request, 'clara_app/content_success.html')
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/content_success.html', {'clara_version': clara_version})
    
 # List currently registered content
 @login_required
@@ -938,7 +1000,9 @@ def content_list(request):
     page = request.GET.get('page')
     contents = paginator.get_page(page)
 
-    return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form})
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form, 'clara_version': clara_version})
 
 def send_rating_or_comment_notification_email(request, recipients, content, action):
     full_url = request.build_absolute_uri(content.get_absolute_url())
@@ -1007,12 +1071,16 @@ def content_detail(request, content_id):
 
         return redirect('content_detail', content_id=content_id)
 
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/content_detail.html', {
         'content': content,
         'rating_form': rating_form,
         'comment_form': comment_form,
         'comments': comments,
         'average_rating': average_rating['rating__avg'],
+        'clara_version': clara_version
+        
     })
 
 # Create a new project
@@ -1041,7 +1109,10 @@ def create_project(request):
     else:
         # This is a GET request, so create a new blank form
         form = ProjectCreationForm()
-        return render(request, 'clara_app/create_project.html', {'form': form})
+
+        clara_version = get_user_config(request.user)['clara_version']
+        
+        return render(request, 'clara_app/create_project.html', {'form': form, 'clara_version':clara_version})
 
 def get_simple_clara_resources_helper(project_id):
     try:
@@ -1104,7 +1175,7 @@ def simple_clara(request, project_id, status):
     if request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
-        print(f'Action = {action}')
+        #print(f'Action = {action}')
         if action:
             form = SimpleClaraForm(request.POST)
             if form.is_valid():
@@ -1141,25 +1212,31 @@ def simple_clara(request, project_id, status):
                     new_status = result['status']
                     return redirect('simple_clara', new_project_id, new_status)
                 else:
-                    task_type = f'simple_clara_action'
-                    callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+                    if not request.user.userprofile.credit > 0:
+                        messages.error(request, f"Sorry, you need money in your account to perform this operation")
+                        return redirect('simple_clara', project_id, 'initial')
+                    else:
+                        task_type = f'simple_clara_action'
+                        callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-                    print(f'--- Starting async task, simple_clara_action = {simple_clara_action}')
-                    
-                    async_task(perform_simple_clara_action_helper, username, project_id, simple_clara_action, callback=callback)
+                        print(f'--- Starting async task, simple_clara_action = {simple_clara_action}')
+                        
+                        async_task(perform_simple_clara_action_helper, username, project_id, simple_clara_action, callback=callback)
 
-                    return redirect('simple_clara_monitor', project_id, report_id)
+                        return redirect('simple_clara_monitor', project_id, report_id)
     else:
         if status == 'error':
             messages.error(request, f"Something went wrong. Try looking at the 'Recent task updates' view")
         elif status == 'finished':
             messages.success(request, f'Simple C-LARA operation succeeded')
     
-    # Render the simple_clara template with the necessary context
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/simple_clara.html', {
         'project_id': project_id,
         'form': form,
-        'status': status
+        'status': status,
+        'clara_version': clara_version
     })
 
 # Function to be executed in async process. We pass in the username, a project_id, and a 'simple_clara_action',
@@ -1225,8 +1302,11 @@ def simple_clara_status(request, project_id, report_id):
 @login_required
 def simple_clara_monitor(request, project_id, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/simple_clara_monitor.html',
-                  {'project_id': project_id, 'project': project, 'report_id': report_id})
+                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'clara_version':clara_version})
 
 def simple_clara_create_project_helper(username, simple_clara_action, callback=None):
     l2_language = simple_clara_action['l2']
@@ -1269,12 +1349,15 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
 
     # Create the text
     post_task_update(callback, f"STARTED TASK: create plain text")
-    clara_project_internal.create_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+    api_calls = clara_project_internal.create_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'plain')
     post_task_update(callback, f"ENDED TASK: create plain text")
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, callback=None)
+    #api_calls are stored inside create_and_add_dall_e_3_image
+    #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     return { 'status': 'finished' }
@@ -1291,7 +1374,8 @@ def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, 
 
     # Rewrite the text
     post_task_update(callback, f"STARTED TASK: rewrite plain text")
-    clara_project_internal.improve_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+    api_calls = clara_project_internal.improve_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: rewrite plain text")
 
     return { 'status': 'finished' }
@@ -1300,12 +1384,15 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
     image_advice_prompt = simple_clara_action['image_advice_prompt']
     
     project = get_object_or_404(CLARAProject, pk=project_id)
+    user = project.user
 
     title = project.title
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: regenerate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
+    #api_calls are stored inside create_and_add_dall_e_3_image
+    #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: regenerate DALL-E-3 image")
 
     return { 'status': 'finished' }
@@ -1321,27 +1408,32 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
 
     # Create summary
     post_task_update(callback, f"STARTED TASK: create summary")
-    clara_project_internal.create_summary(user=username, config_info=config_info, callback=callback)
+    api_calls = clara_project_internal.create_summary(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'summary')
     post_task_update(callback, f"ENDED TASK: create summary")
 
     # Get CEFR level
     post_task_update(callback, f"STARTED TASK: get CEFR level")
-    clara_project_internal.get_cefr_level(user=username, config_info=config_info, callback=callback)
+    api_calls = clara_project_internal.get_cefr_level(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'cefr_level')
     post_task_update(callback, f"ENDED TASK: get CEFR level")
 
     # Create segmented text
     post_task_update(callback, f"STARTED TASK: add segmentation information")
-    clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
+    api_calls = clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'segmented')
     post_task_update(callback, f"ENDED TASK: add segmentation information")
 
     # Create glossed text
     post_task_update(callback, f"STARTED TASK: add glosses")
-    clara_project_internal.create_glossed_text(user=username, config_info=config_info, callback=callback)
+    api_calls = clara_project_internal.create_glossed_text(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'gloss')
     post_task_update(callback, f"ENDED TASK: add glosses")
 
     # Create lemma-tagged text
     post_task_update(callback, f"STARTED TASK: add lemma tags")
-    clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
+    api_calls = clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'lemma')
     post_task_update(callback, f"ENDED TASK: add lemma tags")
 
     # Render
@@ -1471,7 +1563,10 @@ def import_project(request):
     else:
         # This is a GET request, so create a new blank form
         form = ProjectImportForm()
-        return render(request, 'clara_app/import_project.html', {'form': form})
+
+        clara_version = get_user_config(request.user)['clara_version']
+        
+        return render(request, 'clara_app/import_project.html', {'form': form, 'clara_version': clara_version})
 
 @login_required
 @user_has_a_project_role
@@ -1491,8 +1586,11 @@ def import_project_status(request, project_id, report_id):
 @user_has_a_project_role
 def import_project_monitor(request, project_id, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/import_project_monitor.html',
-                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+                  {'report_id': report_id, 'project_id': project_id, 'project': project, 'clara_version':clara_version})
 
 # Confirm the final result of importing the prouect
 @login_required
@@ -1539,7 +1637,9 @@ def clone_project(request, project_id):
         new_title = project.title + " - copy"
         form = ProjectCreationForm(initial={'title': new_title, 'l2': project.l2, 'l1': project.l1})
 
-    return render(request, 'clara_app/create_cloned_project.html', {'form': form, 'project': project})
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/create_cloned_project.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 # Manage the users associated with a project. Users can have the roles 'Owner', 'Annotator' or 'Viewer'
 @login_required
@@ -1569,7 +1669,11 @@ def manage_project_members(request, project_id):
         'project': project,
         'permissions': permissions,
         'form': form,
+        'clara_version': clara_version,
     }
+    
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/manage_project_members.html', context)
 
 # Remove a member from a project
@@ -1634,7 +1738,10 @@ def delete_project(request, project_id):
         clara_project_internal.delete()
         return redirect('project_list', 'normal')
     else:
-        return render(request, 'clara_app/confirm_delete.html', {'project': project})
+        
+        clara_version = get_user_config(request.user)['clara_version']
+        
+        return render(request, 'clara_app/confirm_delete.html', {'project': project, 'clara_version': clara_version})
 
 # Display information and functionalities associated with a project     
 @login_required
@@ -1657,6 +1764,9 @@ def project_detail(request, project_id):
             project.save()
     else:
         form = UpdateProjectTitleForm()
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/project_detail.html', 
                   { 'project': project, 'form': form, 'api_cost': api_cost, 
                     'can_create_segmented_text': can_create_segmented_text,
@@ -1665,7 +1775,9 @@ def project_detail(request, project_id):
                     'can_render_normal': can_render_normal,
                     'can_render_phonetic': can_render_phonetic,
                     'rendered_html_exists': rendered_html_exists,
-                    'rendered_phonetic_html_exists': rendered_phonetic_html_exists}
+                    'rendered_phonetic_html_exists': rendered_phonetic_html_exists,
+                    'clara_version': clara_version,
+                    }
                     )
 
 def phonetic_resources_are_available(l2_language):
@@ -1687,9 +1799,11 @@ def get_audio_metadata_view(request, project_id):
         pass
     else:
         form = AudioMetadataForm(initial={'metadata': audio_metadata_str})
+
+    clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/audio_metadata.html', 
-                  { 'project': project, 'form': form })
+                  { 'project': project, 'form': form, 'clara_version': clara_version })
 
 # First integration endpoint for Manual Text/Audio Alignment.
 # Used by Text/Audio Alignment server to download
@@ -1918,6 +2032,8 @@ def human_audio_processing(request, project_id):
             audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
         else:
             audio_item_formset = None
+
+    clara_version = get_user_config(request.user)['clara_version']
     
     context = {
         'project': project,
@@ -1925,7 +2041,7 @@ def human_audio_processing(request, project_id):
         'formset': audio_item_formset,
         'audio_file': human_audio_info.audio_file,
         'manual_align_metadata_file': human_audio_info.manual_align_metadata_file,
-        # Any other context data you want to send to the template
+        'clara_version': clara_version
     }
 
     return render(request, 'clara_app/human_audio_processing.html', context)
@@ -2037,12 +2153,14 @@ def human_audio_processing_phonetic(request, project_id):
         audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
     else:
         audio_item_formset = None
+
+    clara_version = get_user_config(request.user)['clara_version']
     
     context = {
         'project': project,
         'form': form,
         'formset': audio_item_formset,
-        # Any other context data you want to send to the template
+        'clara_version': clara_version
     }
 
     return render(request, 'clara_app/human_audio_processing_phonetic.html', context)
@@ -2131,16 +2249,22 @@ def process_manual_alignment_status(request, project_id, report_id):
 @user_has_a_project_role
 def process_ldt_zipfile_monitor(request, project_id, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/process_ldt_zipfile_monitor.html',
-                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+                  {'report_id': report_id, 'project_id': project_id, 'project': project, 'clara_version': clara_version})
 
 # Render the monitoring page, which will use JavaScript to poll the task status API
 @login_required
 @user_has_a_project_role
 def process_manual_alignment_monitor(request, project_id, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/process_manual_alignment_monitor.html',
-                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+                  {'report_id': report_id, 'project_id': project_id, 'project': project, 'clara_version': clara_version})
 
 # Confirm the final result of processing the zipfile
 @login_required
@@ -2156,9 +2280,11 @@ def process_ldt_zipfile_complete(request, project_id, status):
         messages.success(request, "LiteDevTools zipfile processed successfully!")
     else:
         messages.error(request, "Something went wrong when installing LiteDevTools zipfile. Try looking at the 'Recent task updates' view")
-        
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/process_ldt_zipfile_complete.html',
-                  {'project': project})
+                  {'project': project, 'clara_version': clara_version})
 
 # Confirm the final result of uploading the manual alignment data
 @login_required
@@ -2174,9 +2300,11 @@ def process_manual_alignment_complete(request, project_id, status):
         messages.success(request, "Manual alignment data processed successfully!")
     else:
         messages.error(request, "Something went wrong when trying to install manual alignment data. Try looking at the 'Recent task updates' view")
+
+    clara_version = get_user_config(request.user)['clara_version']
         
     return render(request, 'clara_app/process_manual_alignment_complete.html',
-                  {'project': project})
+                  {'project': project, 'clara_version': clara_version})
 
 
 # Used for Voice Recorder functionality
@@ -2290,8 +2418,9 @@ def compare_versions(request, project_id):
         form.fields['file1'].choices = metadata_for_plain
         form.fields['file2'].choices = metadata_for_plain
 
-    #return render(request, 'clara_app/diff.html', {'form': form, 'project': project})
-    return render(request, 'clara_app/diff_and_diff_result.html', {'form': form, 'project': project})
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/diff_and_diff_result.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 # Generic code for the operations which support creating, annotating, improving and editing text,
 # to produce and edit the "plain", "summary", "cefr", "segmented", "gloss" and "lemma" versions.
@@ -2474,8 +2603,9 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                                                tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
 
     #print(f'text_choices_info: {text_choices_info}')
+    clara_version = get_user_config(request.user)['clara_version']
 
-    return render(request, template, {'form': form, 'project': project, 'text_choices_info': text_choices_info})
+    return render(request, template, {'form': form, 'project': project, 'text_choices_info': text_choices_info, 'clara_version': clara_version})
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
@@ -2544,7 +2674,9 @@ def generate_text_complete(request, project_id, version, status):
                                                prompt=prompt, archived_versions=archived_versions, current_version=current_version,
                                                tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
 
-    return render(request, template, {'form': form, 'project': project})
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, template, {'form': form, 'project': project, 'clara_version': clara_version})
 
 def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
     if version == 'plain':
@@ -2739,7 +2871,10 @@ def create_lemma_and_gloss_tagged_text(request, project_id):
 def project_history(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     actions = CLARAProjectAction.objects.filter(project=project).order_by('-timestamp')
-    return render(request, 'clara_app/project_history.html', {'project': project, 'actions': actions})
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/project_history.html', {'project': project, 'actions': actions, 'clara_version': clara_version})
 
 @login_required
 @user_has_a_project_role
@@ -2823,7 +2958,9 @@ def edit_images(request, project_id, dall_e_3_image_status):
         elif dall_e_3_image_status == 'error':
             messages.success(request, "Something went wrong when generating DALL-E-3 image for whole text. Look at the 'Recent task updates' view for further information.")
 
-    return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project})
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project, 'clara_version': clara_version})
 
 def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None):
     try:
@@ -2845,7 +2982,9 @@ When generating the image, keep the following advice in mind:
         tmp_image_file = os.path.join(temp_dir, 'image_for_whole_text.jpg')
         
         post_task_update(callback, f"--- Creating a new DALL-E-3 image based on the whole project text")
-        call_chat_gpt4_image(prompt, tmp_image_file, config_info={}, callback=callback)
+        api_call = call_chat_gpt4_image(prompt, tmp_image_file, config_info={}, callback=callback)
+        api_calls = [ api_call ]
+        store_api_calls(api_calls, project, project.user, 'image')
         post_task_update(callback, f"--- Image created: {tmp_image_file}")
 
         image_name = 'DALLE-E-3-Image-For-Whole-Text'
@@ -2854,9 +2993,11 @@ When generating the image, keep the following advice in mind:
                                                  page=1, position='top')
         post_task_update(callback, f"--- Image stored")
         post_task_update(callback, f"finished")
+        return api_calls
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
+        return []
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
@@ -2879,8 +3020,11 @@ def create_dall_e_3_image_status(request, project_id, report_id):
 @user_has_a_project_role
 def create_dall_e_3_image_monitor(request, project_id, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/create_dall_e_3_image_monitor.html',
-                  {'project_id': project_id, 'project': project, 'report_id': report_id})
+                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'clara_version': clara_version})
     
 
 def clara_project_internal_make_export_zipfile(clara_project_internal,
@@ -2948,7 +3092,10 @@ def make_export_zipfile(request, project_id):
                 return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project})
     else:
         form = MakeExportZipForm()
-        return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project})
+
+        clara_version = get_user_config(request.user)['clara_version']
+        
+        return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
@@ -2971,8 +3118,11 @@ def make_export_zipfile_status(request, project_id, report_id):
 @user_has_a_project_role
 def make_export_zipfile_monitor(request, project_id, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/make_export_zipfile_monitor.html',
-                  {'report_id': report_id, 'project_id': project_id, 'project': project})
+                  {'report_id': report_id, 'project_id': project_id, 'project': project, 'clara_version': clara_version})
 
 # Display the final result of creating the zipfile
 @login_required
@@ -2992,10 +3142,13 @@ def make_export_zipfile_complete(request, project_id, status):
         else:
             presigned_url = None
         
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/make_export_zipfile_complete.html', 
                   {'succeeded': succeeded,
                    'project': project,
-                   'presigned_url': presigned_url} )
+                   'presigned_url': presigned_url,
+                   'clara_version': clara_version} )
 
 @login_required
 @user_has_a_project_role
@@ -3012,7 +3165,9 @@ def set_format_preferences(request, project_id):
     else:
         form = FormatPreferencesForm(instance=preferences)
 
-    return render(request, 'clara_app/set_format_preferences.html', {'form': form, 'project': project})
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/set_format_preferences.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 def clara_project_internal_render_text(clara_project_internal, project_id,
                                        audio_type_for_words='tts', audio_type_for_segments='tts',
@@ -3062,6 +3217,8 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
+    clara_version = get_user_config(request.user)['clara_version']
+
     # Check if human audio info exists for the project and if voice_talent_id is set
     if phonetic_or_normal == 'phonetic':
         human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
@@ -3105,14 +3262,14 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
             except InternalisationError as e:
                 messages.error(request, f'{e.message}')
                 form = RenderTextForm()
-                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
+                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project, 'clara_version': clara_version})
             except Exception as e:
                 messages.error(request, f"An internal error occurred in rendering. Error details: {str(e)}\n{traceback.format_exc()}")
                 form = RenderTextForm()
-                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
+                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project, 'clara_version': clara_version})
     else:
         form = RenderTextForm()
-        return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project})
+        return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 # This is the API endpoint that the JavaScript will poll
 @login_required
@@ -3135,8 +3292,11 @@ def render_text_status(request, project_id, report_id):
 @user_has_a_project_role
 def render_text_monitor(request, project_id, phonetic_or_normal, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/render_text_monitor.html',
-                  {'phonetic_or_normal': phonetic_or_normal, 'report_id': report_id, 'project_id': project_id, 'project': project})
+                  {'phonetic_or_normal': phonetic_or_normal, 'report_id': report_id, 'project_id': project_id, 'project': project, 'clara_version': clara_version})
 
 # Display the final result of rendering
 @login_required
@@ -3163,10 +3323,12 @@ def render_text_complete(request, project_id, phonetic_or_normal, status):
         register_form = None
         messages.error(request, "Something went wrong when creating the rendered text. Try looking at the 'Recent task updates' view")
         
+    clara_version = get_user_config(request.user)['clara_version']
+    
     return render(request, 'clara_app/render_text_complete.html', 
                   {'phonetic_or_normal': phonetic_or_normal,
                    'content_url': content_url, 'zipfile_url': zipfile_url,
-                   'project': project, 'register_form': register_form})
+                   'project': project, 'register_form': register_form, 'clara_version': clara_version})
 
 @login_required
 @user_has_a_project_role
@@ -3201,11 +3363,13 @@ def offer_to_register_content(request, phonetic_or_normal, project_id):
         zipfile_url = None
         register_form = None
         messages.error(request, "Rendered text not found")
+
+    clara_version = get_user_config(request.user)['clara_version']
         
     return render(request, 'clara_app/render_text_complete.html',
                   {'phonetic_or_normal': phonetic_or_normal,
                    'content_url': content_url, 'zipfile_url': zipfile_url,
-                   'project': project, 'register_form': register_form})
+                   'project': project, 'register_form': register_form, 'clara_version': clara_version})
 
 # Register content produced by rendering from a project        
 @login_required

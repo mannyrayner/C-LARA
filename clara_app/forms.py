@@ -36,8 +36,10 @@ class FriendRequestForm(forms.Form):
 class UserConfigForm(forms.ModelForm):
     class Meta:
         model = UserConfiguration
-        fields = ['gpt_model', 'max_annotation_words']  
+        fields = ['clara_version', 'gpt_model', 'max_annotation_words']  
         widgets = {
+            'clara_version': forms.Select(choices=[('simple_clara', 'Simple C-LARA'),
+                                                   ('full_clara', 'Full C-LARA'),]),
             'gpt_model': forms.Select(choices=[('gpt-4-1106-preview', 'GPT-4 Turbo'),
                                                ('gpt-4', 'GPT-4')]),
             'max_annotation_words': forms.Select(choices=[(100, '100'),
@@ -45,6 +47,11 @@ class UserConfigForm(forms.ModelForm):
                                                           (500, '500'),
                                                           (1000, '1000')])
         }
+
+    def __init__(self, *args, **kwargs):
+        super(UserConfigForm, self).__init__(*args, **kwargs)
+        self.fields['gpt_model'].required = False
+        self.fields['max_annotation_words'].required = False
         
 class AssignLanguageMasterForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())

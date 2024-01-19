@@ -32,11 +32,14 @@ def get_user_config(user):
     except UserConfiguration.DoesNotExist:
         # Default configuration if UserConfiguration does not exist
         return {
-            'gpt_model': 'gpt-4',
+            'clara_version': 'full_clara',
+            'gpt_model': 'gpt-4-1106-preview',
+            'max_annotation_words': 250,
             # Add more default configurations here as needed
         }
 
     return {
+        'clara_version': user_config.clara_version,
         'gpt_model': user_config.gpt_model,
         'max_annotation_words': user_config.max_annotation_words,
     }

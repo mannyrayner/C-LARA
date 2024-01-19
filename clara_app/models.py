@@ -43,9 +43,15 @@ class FriendRequest(models.Model):
         return f"{self.sender.username} -> {self.receiver.username}: {self.status}"
 
 class UserConfiguration(models.Model):
+    CLARA_VERSION_CHOICES = [
+        ('simple_clara', 'Simple C-LARA'),
+        ('full_clara', 'Full C-LARA'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    gpt_model = models.CharField(max_length=50, default='gpt-4')
-    max_annotation_words = models.IntegerField(default=100)
+    clara_version = models.CharField(max_length=20, choices=CLARA_VERSION_CHOICES, default='full_clara')
+    gpt_model = models.CharField(max_length=50, default='gpt-4-1106-preview')
+    max_annotation_words = models.IntegerField(default=250)
 
 class LanguageMaster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='language_master_set')
