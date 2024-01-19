@@ -4,7 +4,11 @@
   <h2>Edit configuration information</h2>
   <form method="POST">
     {% csrf_token %}
-    {{ form.as_p }}
+    <p>C-LARA version: {{ form.clara_version }}</p>
+	{% if clara_version == 'full_clara' %}
+	  <p>GPT-4 model: {{ form.gpt_model }}</p>
+	  <p>Max annotation words: {{ form.max_annotation_words }}</p>
+	{% endif %}
     <button type="submit">Save</button>
   </form>
 {% endblock %}

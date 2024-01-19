@@ -94,17 +94,19 @@
 		         data-tooltip="Show friends and outstanding friend requests.">
 				 Display friends</a></li>
 		  <li><a href="{% url 'user_config' %}"
-		         data-tooltip="Specify the GPT-4 model you want to use and other related parameters.">
-				 Set GPT-4 version</a></li>
+		         data-tooltip="Choose between simple C-LARA and full C-LARA. In full C-LARA mode, also specify the GPT-4 model you want to use and other related parameters.">
+				 Choose between simple C-LARA and full C-LARA</a></li>
 		  <li><a href="{% url 'credit_balance' %}"
 		         data-tooltip="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
 				 Credit balance for ChatGPT-4 API calls</a></li>
 		  <li><a href="{% url 'transfer_credit' %}"
 		         data-tooltip="Transfer some of the credit from your GPT-4 call account to another user.">
 				 Transfer credit to another user</a></li>
-		  <li><a href="{% url 'view_task_updates' %}"
-		         data-tooltip="Show trace output from C-LARA tasks produced during the last hour."
-		         >Recent task updates</a></li>
+		  {% if clara_version != 'simple_clara' %}
+			  <li><a href="{% url 'view_task_updates' %}"
+					 data-tooltip="Show trace output from C-LARA tasks produced during the last hour.">
+					 Recent task updates</a></li>
+		  {% endif %}
 		  {% if user.userprofile.is_admin %}
 		  <li><a href="{% url 'add_credit' %}"
 		         data-tooltip="Add credit to a user's GPT-4 call account">
@@ -127,27 +129,33 @@
 			       data-tooltip="Upload or edit phonetic lexicon data for languages where you are a language master.">
 				   Edit phonetic lexicon</a></li>
 		  {% endif %}
-		  <li><a href="{% url 'create_project' %}"
-		         data-tooltip="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
-				 Create new C-LARA project</a></li>
+		  {% if clara_version != 'simple_clara' %}
+			  <li><a href="{% url 'create_project' %}"
+					 data-tooltip="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
+					 Create new C-LARA project</a></li>
+		  {% endif %}
 		  <li><a href="{% url 'simple_clara' 0 'initial' %}"
 		         data-tooltip="Create a new C-LARA project using Simple-C-LARA.">
 				 Create new C-LARA project using Simple-C-LARA</a></li>
-		  <li><a href="{% url 'import_project' %}"
-		         data-tooltip="Import a project from a zipfile created using the 'Export zipfile' command.">
-				 Import C-LARA project from zipfile</a></li>
-		  <li><a href="{% url 'project_list' 'full_clara' %}"
-		         data-tooltip="List all the projects you have created or have been assigned a role in.">
-		         List your C-LARA projects</a></li>
+		  {% if clara_version != 'simple_clara' %}
+			  <li><a href="{% url 'import_project' %}"
+					 data-tooltip="Import a project from a zipfile created using the 'Export zipfile' command.">
+					 Import C-LARA project from zipfile</a></li>
+			  <li><a href="{% url 'project_list' 'full_clara' %}"
+					 data-tooltip="List all the projects you have created or have been assigned a role in.">
+					 List your C-LARA projects</a></li>
+		  {% endif %}
 		  <li><a href="{% url 'project_list' 'simple_clara' %}"
 		         data-tooltip="List all the projects you have created or have been assigned a role in, using Simple-C-LARA.">
 		         List your C-LARA projects using Simple-C-LARA</a></li>
 		  <li><a href="{% url 'content_list' %}"
 		         data-tooltip="List all the content that has been registered in the C-LARA social network.">
 				 List registered content</a></li>
-		  <li><a href="{% url 'register_content' %}"
-		         data-tooltip="Register a piece of LARA content to make it accessible through the C-LARA social network.">
-				 Register external LARA content</a></li>
+		  {% if clara_version != 'simple_clara' %}
+			  <li><a href="{% url 'register_content' %}"
+					 data-tooltip="Register a piece of LARA content to make it accessible through the C-LARA social network.">
+					 Register external LARA content</a></li>
+		  {% endif %}
           <li><a href="{% url 'logout' %}"
 		         data-tooltip="Exit C-LARA.">
 				 Logout</a></li>
