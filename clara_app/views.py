@@ -2983,8 +2983,6 @@ When generating the image, keep the following advice in mind:
         
         post_task_update(callback, f"--- Creating a new DALL-E-3 image based on the whole project text")
         api_call = call_chat_gpt4_image(prompt, tmp_image_file, config_info={}, callback=callback)
-        api_calls = [ api_call ]
-        store_api_calls(api_calls, project, project.user, 'image')
         post_task_update(callback, f"--- Image created: {tmp_image_file}")
 
         image_name = 'DALLE-E-3-Image-For-Whole-Text'
@@ -2993,6 +2991,8 @@ When generating the image, keep the following advice in mind:
                                                  page=1, position='top')
         post_task_update(callback, f"--- Image stored")
         post_task_update(callback, f"finished")
+        api_calls = [ api_call ]
+        store_api_calls(api_calls, project, project.user, 'image')
         return api_calls
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
