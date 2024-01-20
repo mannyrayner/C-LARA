@@ -552,11 +552,20 @@ def get_tts_engine(language, words_or_segments='words', preferred_tts_engine=Non
 def get_tts_engine_types():
     return [ tts_engine.tts_engine_type for tts_engine in TTS_ENGINES ]
 
-def get_default_voice(language, preferred_voice, tts_engine=None):
+def get_default_voice(language, preferred_voice, words_or_segments_or_phonemes, tts_engine=None):
     tts_engine = tts_engine or get_tts_engine(language)
+    tts_engine_type = tts_engine.tts_engine_type
     if tts_engine and language in tts_engine.languages:
         voices = tts_engine.languages[language]['voices']
-        return preferred_voice if preferred_voice in voices else voices[0]
+        # Choose the explicitly preferred voice if it's there
+        if preferred_voice in voices:
+            return preferred_voice
+        # If we're using Google TTS, take the default voice for words - the high-end ones are usually only good
+        # for longer inputs
+        elif tts_engine_type == 'google' and words_or_segments_or_phonemes == 'words':
+            return 'default'
+        else:
+            return voices[0]
     return None
 
 def get_language_id(language, tts_engine=None):

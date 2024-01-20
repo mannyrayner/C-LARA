@@ -41,7 +41,7 @@ class AudioAnnotator:
         # TTS for words
         self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, words_or_segments='words', phonetic=False, callback=callback)
         self.engine_id = self.tts_engine.tts_engine_type if self.tts_engine else None
-        self.voice_id = get_default_voice(language, preferred_tts_voice, self.tts_engine) if self.tts_engine else None
+        self.voice_id = get_default_voice(language, preferred_tts_voice, 'words', self.tts_engine) if self.tts_engine else None
         self.language_id = get_language_id(language, self.tts_engine) if self.tts_engine else None
 
         # TTS for segments
@@ -51,13 +51,13 @@ class AudioAnnotator:
             self.segment_tts_engine = get_tts_engine(language, words_or_segments='segments', preferred_tts_engine=preferred_tts_engine,
                                                      phonetic=False, callback=callback)
         self.segment_engine_id = self.segment_tts_engine.tts_engine_type if self.segment_tts_engine else None
-        self.segment_voice_id = get_default_voice(language, preferred_tts_voice, self.segment_tts_engine) if self.segment_tts_engine else None
+        self.segment_voice_id = get_default_voice(language, preferred_tts_voice, 'sentences', self.segment_tts_engine) if self.segment_tts_engine else None
         self.segment_language_id = get_language_id(language, self.segment_tts_engine) if self.segment_tts_engine else None
 
         # TTS for phonemes
         self.phonetic_tts_engine = get_tts_engine(language, phonetic=True, callback=callback) if phonetic else None
         self.phonetic_engine_id = self.phonetic_tts_engine.tts_engine_type if self.phonetic_tts_engine else None
-        self.phonetic_voice_id = get_default_voice(language, preferred_tts_voice, self.phonetic_tts_engine) if self.phonetic_tts_engine else None
+        self.phonetic_voice_id = get_default_voice(language, preferred_tts_voice, 'phonemes', self.phonetic_tts_engine) if self.phonetic_tts_engine else None
         self.phonetic_language_id = get_language_id(language, self.phonetic_tts_engine) if self.phonetic_tts_engine else None
         
         # For human audio
