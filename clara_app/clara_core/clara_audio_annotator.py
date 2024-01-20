@@ -244,7 +244,7 @@ class AudioAnnotator:
                     post_task_update(callback, f"--- Failed to create mp3 for '{text}'")
                 text_file_paths.append([text, file_path])
             except Exception as e:
-                post_task_update(callback, f"*** Error creating TTS file: {str(e)}")
+                post_task_update(callback, f"*** Error creating TTS file: '{str(e)}'\n{traceback.format_exc()}")
                 
         shutil.rmtree(temp_dir)
         return text_file_paths
