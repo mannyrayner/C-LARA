@@ -25,6 +25,7 @@ from .clara_utils import get_config, post_task_update, os_environ_or_none
 from .clara_utils import absolute_file_name, absolute_local_file_name, local_file_exists, write_local_txt_file
 
 from openai import OpenAI
+from google.cloud import texttospeech
 
 import os
 import tempfile
@@ -142,20 +143,20 @@ class GoogleTTSEngine(TTSEngine):
                            'bengali': {'language_id': 'bn', 'voices': ['default']},
                            'bosnian': {'language_id': 'bs', 'voices': ['default']},
                            'catalan': {'language_id': 'ca', 'voices': ['default']},
-                           'cantonese': {'language_id': 'zh-CN', 'voices': ['default']},
+                           'cantonese': {'language_id': 'yue-HK', 'voices': ['yue-HK-Standard-D', 'default']},
                            'chinese': {'language_id': 'zh', 'voices': ['default']},
-                           'mandarin': {'language_id': 'zh', 'voices': ['default']},
+                           'mandarin': {'language_id': 'cmn-CN', 'voices': ['cmn-CN-Wavenet-C', 'default']},
                            'taiwanese': {'language_id': 'zh-TW', 'voices': ['default']},
                            'croatian': {'language_id': 'hr', 'voices': ['default']},
                            'czech': {'language_id': 'cs', 'voices': ['default']},
                            'danish': {'language_id': 'da', 'voices': ['default']},
                            'dutch': {'language_id': 'nl', 'voices': ['default']},
-                           'english': {'language_id': 'en', 'voices': ['default']},
+                           'english': {'language_id': 'en-GB', 'voices': ['en-GB-News-J', 'default']},
                            'esperanto': {'language_id': 'eo', 'voices': ['default']},
                            'estonian': {'language_id': 'et', 'voices': ['default']},
                            'filipino': {'language_id': 'tl', 'voices': ['default']},
                            'finnish': {'language_id': 'fi', 'voices': ['default']},
-                           'french': {'language_id': 'fr', 'voices': ['default']},
+                           'french': {'language_id': 'fr-FR', 'voices': ['fr-FR-Studio-D', 'default']},
                            'german': {'language_id': 'de', 'voices': ['default']},
                            'greek': {'language_id': 'el', 'voices': ['default']},
                            'gujarati': {'language_id': 'gu', 'voices': ['default']},
@@ -181,7 +182,7 @@ class GoogleTTSEngine(TTSEngine):
                            'norwegian': {'language_id': 'no', 'voices': ['default']},
                            'polish': {'language_id': 'pl', 'voices': ['default']},
                            'portuguese': {'language_id': 'pt', 'voices': ['default']},
-                           'romanian': {'language_id': 'ro', 'voices': ['default']},
+                           'romanian': {'language_id': 'ro', 'voices': ['ro-RO-Wavenet-A', 'default']},
                            'russian': {'language_id': 'ru', 'voices': ['default']},
                            'serbian': {'language_id': 'sr', 'voices': ['default']},
                            'sinhala': {'language_id': 'si', 'voices': ['default']},
@@ -201,6 +202,59 @@ class GoogleTTSEngine(TTSEngine):
                         }
 
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
+        #return self.create_mp3_gtts(language_id, voice_id, text, output_file, callback=callback)
+        return self.create_mp3_google_cloud(language_id, voice_id, text, output_file, callback=callback)
+
+    def create_mp3_google_cloud(self, language_id, voice_id, text, output_file, callback=None):
+        try:
+            found_google_creds = self._load_google_application_creds(callback=callback)
+
+            if found_google_creds:
+                # Initialize the client
+                client = texttospeech.TextToSpeechClient()
+
+                # Set the text input
+                synthesis_input = texttospeech.SynthesisInput(text=text)
+
+                # Specify the voice, if possible using its name
+                if voice_id == 'default':
+                    voice = texttospeech.VoiceSelectionParams(
+                        language_code=language_id
+                        )
+                else:
+                    voice = texttospeech.VoiceSelectionParams(
+                        language_code=language_id,
+                        name=voice_id
+                        )
+
+                # Specify the audio configuration 
+                audio_config = texttospeech.AudioConfig(
+                    audio_encoding=texttospeech.AudioEncoding.MP3
+                )
+
+                # Perform the Text-to-Speech request
+                response = client.synthesize_speech(
+                    input=synthesis_input, 
+                    voice=voice, 
+                    audio_config=audio_config
+                    )
+
+                # Save the audio to the file
+                with open(output_file, "wb") as out:
+                    out.write(response.audio_content)
+                return True
+            
+        except requests.exceptions.RequestException as e:
+            post_task_update(callback, f"*** Warning: Network error while creating Google TTS mp3 for '{text}': {str(e)}")
+            return False
+        except IOError as e:
+            post_task_update(callback, f"*** Warning: IOError while saving Google TTS mp3 for '{text}': {str(e)}")
+            return False
+        except Exception as e:
+            post_task_update(callback, f"*** Warning: unable to create Google TTS mp3 for '{text}': {str(e)}")
+            return False
+
+    def create_mp3_gtts(self, language_id, voice_id, text, output_file, callback=None):
         try:
             found_google_creds = self._load_google_application_creds(callback=callback)
 
