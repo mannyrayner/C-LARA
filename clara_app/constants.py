@@ -6,7 +6,9 @@ TEXT_TYPE_CHOICES = [
 ]   
 
 SUPPORTED_LANGUAGES = [
+    ('american english', 'American English'),
     ('arabic', 'Arabic'),
+    ('australian english', 'Australian English'),
     ('barngarla', 'Barngarla'),
     ('bengali', 'Bengali'),
     ('bulgarian', 'Bulgarian'),
