@@ -1157,8 +1157,20 @@ def get_simple_clara_resources_helper(project_id):
         else:
             # We have the rendered HTML
             resources_available['rendered_text_available'] = True
+            
+        try:
+            content = Content.objects.get(project=project)
+        except Exception as e:
+            content = None
+            
+        if content:
+            resources_available['content_id'] = content.id
+            resources_available['status'] = 'Posted' if image else 'Posted without image'
+            return resources_available
+        else:
             resources_available['status'] = 'Everything available' if image else 'Everything available except image'
             return resources_available
+            
     except Exception as e:
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
@@ -1167,10 +1179,11 @@ def simple_clara(request, project_id, status):
     username = request.user.username
     # Get resources available for display based on the current state
     resources = get_simple_clara_resources_helper(project_id)
-    #pprint.pprint(resources)
+    pprint.pprint(resources)
     
     status = resources['status']
     form = SimpleClaraForm(initial=resources)
+    content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
 
     if request.method == 'POST':
         # Extract action from the POST request
@@ -1190,6 +1203,9 @@ def simple_clara(request, project_id, status):
                 elif action == 'create_text_and_image':
                     prompt = form.cleaned_data['prompt']
                     simple_clara_action = { 'action': 'create_text_and_image', 'prompt': prompt }
+                elif action == 'save_text':
+                    plain_text = form.cleaned_data['plain_text']
+                    simple_clara_action = { 'action': 'save_text', 'plain_text': plain_text }
                 elif action == 'rewrite_text':
                     prompt = form.cleaned_data['prompt']
                     simple_clara_action = { 'action': 'rewrite_text', 'prompt': prompt }
@@ -1204,12 +1220,17 @@ def simple_clara(request, project_id, status):
                     messages.error(request, f"Error: unknown action '{action}'")
                     return redirect('simple_clara', project_id, 'error')
 
-                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title',  'post_rendered_text' )
+                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
                     result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
                     new_project_id = result['project_id'] if 'project_id' in result else project_id
                     new_status = result['status']
+                    if new_status == 'error':
+                        messages.error(request, f"Something went wrong. Try looking at the 'Recent task updates' view")
+                    else:
+                        success_message = result['message'] if 'message' in result else f'Simple C-LARA operation succeeded'
+                        messages.success(request, success_message)
                     return redirect('simple_clara', new_project_id, new_status)
                 else:
                     if not request.user.userprofile.credit > 0:
@@ -1224,17 +1245,13 @@ def simple_clara(request, project_id, status):
                         async_task(perform_simple_clara_action_helper, username, project_id, simple_clara_action, callback=callback)
 
                         return redirect('simple_clara_monitor', project_id, report_id)
-    else:
-        if status == 'error':
-            messages.error(request, f"Something went wrong. Try looking at the 'Recent task updates' view")
-        elif status == 'finished':
-            messages.success(request, f'Simple C-LARA operation succeeded')
     
     clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/simple_clara.html', {
         'project_id': project_id,
         'form': form,
+        'content': content,
         'status': status,
         'clara_version': clara_version
     })
@@ -1257,6 +1274,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'create_text_and_image':
             # simple_clara_action should be of form { 'action': 'create_text_and_image', 'prompt': prompt }
             result = simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_text':
+            # simple_clara_action should be of form { 'action': 'save_text', 'plain_text': plain_text }
+            result = simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'rewrite_text':
             # simple_clara_action should be of form { 'action': 'rewrite_text', 'prompt': prompt }
             result = simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -1324,6 +1344,7 @@ def simple_clara_create_project_helper(username, simple_clara_action, callback=N
     clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
     post_task_update(callback, f"--- Created project '{title}'")
     return { 'status': 'finished',
+             'message': 'Project created',
              'project_id': clara_project.id }
 
 def simple_clara_change_title_helper(username, project_id, simple_clara_action, callback=None):
@@ -1335,6 +1356,7 @@ def simple_clara_change_title_helper(username, project_id, simple_clara_action, 
             
     post_task_update(callback, f"--- Updated project title to '{title}'")
     return { 'status': 'finished',
+             'message': 'Title updated',
              'project_id': project_id } 
 
 def simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=None):
@@ -1360,7 +1382,24 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
     #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
-    return { 'status': 'finished' }
+    if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
+        return { 'status': 'finished',
+                 'message': 'Created text and image' }
+    else:
+        return { 'status': 'finished',
+                 'message': 'Created text but was unable to create image. Probably DALL-E-3 thought something was inappropriate.' }
+
+def simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=None):
+    plain_text = simple_clara_action['plain_text']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Save the text
+    clara_project_internal.save_text_version('plain', plain_text, source='human_revised', user=username)
+
+    return { 'status': 'finished',
+             'message': 'Saved the text.'}
 
 def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=None):
     prompt = simple_clara_action['prompt']
@@ -1378,7 +1417,8 @@ def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, 
     store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: rewrite plain text")
 
-    return { 'status': 'finished' }
+    return { 'status': 'finished',
+             'message': 'Rewrote the text'}
 
 def simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=None):
     image_advice_prompt = simple_clara_action['image_advice_prompt']
@@ -1395,7 +1435,12 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
     #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: regenerate DALL-E-3 image")
 
-    return { 'status': 'finished' }
+    if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
+        return { 'status': 'finished',
+                 'message': 'Regenerated the image' }
+    else:
+        return { 'status': 'finished',
+                 'message': 'Unable to regenerate the image. Probably DALL-E-3 thought something was inappropriate.' }
 
 
 def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
@@ -1453,7 +1498,8 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
         clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
         post_task_update(callback, f"ENDED TASK: create phonetic multimodal text")
 
-    return { 'status': 'finished' }
+    return { 'status': 'finished',
+             'message': 'Created the multimedia text.'}
 
 def simple_clara_post_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
     project = get_object_or_404(CLARAProject, pk=project_id)
@@ -1465,7 +1511,8 @@ def simple_clara_post_rendered_text_helper(username, project_id, simple_clara_ac
 
     post_task_update(callback, f"--- Registered project content for '{title}'")
 
-    return { 'status': 'finished' }
+    return { 'status': 'finished',
+             'message': 'Posted multimedia text on C-LARA social network.'}
 
 # This is the function to run in the worker process when importing a zipfile
 def import_project_from_zip_file(zip_file, project_id, internal_id, callback=None):

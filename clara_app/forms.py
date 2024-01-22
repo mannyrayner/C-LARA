@@ -99,6 +99,7 @@ class SimpleClaraForm(forms.Form):
     plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False) 
     image_basename = forms.CharField(required=False)
     rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)
+    content_id = forms.CharField(required=False)
 
 class ProjectSearchForm(forms.Form):
     title = forms.CharField(required=False)
