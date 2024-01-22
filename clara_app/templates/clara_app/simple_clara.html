@@ -26,29 +26,40 @@
 	
 	{% if status != 'No project' and status != 'No prompt' and status != 'No text' %}
 	  <h3>Generated text</h3>
-      <p>{{ form.plain_text }}
+	  <p>{{ form.plain_text }}
+	     <button type="submit" name="action" value="save_text">Save Edited Text</button>
 	     <button type="submit" name="action" value="rewrite_text">Rewrite Text</button></p>
 	  <br>
     {% endif %}
-    {% if status == 'No multimedia' or status == 'Everything available' %}
+    {% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' %}
 	  <h3>Image</h3>
       <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
 	  <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
-	{% elif status == 'No image' or status == 'Everything available except image' %}
+	{% elif status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
 	   <h3>Image</h3>
 	   <p>Image generation failed, probably due to constraints on appropriate content. Sometimes adding advice in the box below and regenerating will fix this.</p>
 	   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
     {% endif %}
   
-    {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' %}
+    {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
 	  <h3>Multimedia text</h3>
-      <button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button>
+	  {% if status != 'No image' and status != 'No multimedia' %}
+	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
+	  {% endif %}
+	  {% if status == 'No image' or status == 'No multimedia' %}
+        <button type="submit" name="action" value="create_rendered_text">Generate Multimeia Text</button>
+	  {% else %}
+      <p><button type="submit" name="action" value="create_rendered_text">Regenerate Multimedia Text</button><p>
+	  {% endif %}
     {% endif %}
 	
-	{% if status == 'Everything available' or status == 'Everything available except image' %}
+	{% if status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
 	  <h3>C-LARA Social Network</h3>
-      <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
-      <button type="submit" name="action" value="post_rendered_text">Post to Social Network</button>
+	  {% if status == 'Everything available' or status == 'Everything available except image' %}
+        <button type="submit" name="action" value="post_rendered_text">Post to Social Network</button>
+	  {% else %}
+	    <p><a href="{{ content.get_absolute_url }}" target="_blank">View Social Network Page</a></p>
+	  {% endif %}
     {% endif %}
   </form>
 
