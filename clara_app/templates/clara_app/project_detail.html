@@ -12,35 +12,43 @@
 	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
 	<p><a href="{% url 'create_plain_text' project.id %}" 
 	      data-tooltip="Tell the AI to create the original text for your project. Alternately, edit the result or paste in your own text." >
-		  Create/Edit Plain Text</a></p>
+		  Create/Edit Plain Text</a> 
+		  {% if text_versions.plain %}✓{% endif %}</p>
 	<p><a href="{% url 'create_summary' project.id %}" 
 	      data-tooltip="Tell the AI to create a summary of the original text. Alternately, edit the result or paste in your own summary." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
-		  Create/Edit Summary</a></p>
+		  Create/Edit Summary</a>
+		  {% if text_versions.summary %}✓{% endif %}</p>
 	<p><a href="{% url 'create_cefr_level' project.id %}" 
 	      data-tooltip="Tell the AI to estimate the CEFR level (A1 to C2) of the original text. Alternately, edit the result or paste in your estimate." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
-		  Estimate/Edit CEFR Level</a></p>
+		  Estimate/Edit CEFR Level</a>
+		  {% if text_versions.cefr_level %}✓{% endif %}</p>
 	<p><a href="{% url 'create_segmented_text' project.id %}" 
 	      data-tooltip="Tell the AI to divide the text into pages and sentence-like segments, and split up compound words. Alternately, edit the result or add your own segmentation." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
-		  Create/Edit Segmented Text</a></p>
+		  Create/Edit Segmented Text</a>
+		  {% if text_versions.segmented %}✓{% endif %}</p>
 	<p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image'%}" 
 	      data-tooltip="Upload, replace or remove images to include in the text." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
-		  Add/Remove Images</a></p>
+		  Add/Remove Images</a>
+		  {% if images_exist %}✓{% endif %}</p>
 	<p><a href="{% url 'create_phonetic_text' project.id %}"
 	      data-tooltip="If a phonetic lexicon has been uploaded for this language, create a version of the text divided into phonetic units."
 	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>
-		  Create/Edit Phonetic Text</a></p>
+		  Create/Edit Phonetic Text</a>
+		  {% if text_versions.phonetic %}✓{% endif %}</p>
 	<p><a href="{% url 'create_glossed_text' project.id %}" 
 	      data-tooltip="Tell the AI to add glosses to the words in the text. Alternately, edit the result or add your own glosses." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
-		  Create/Edit Glossed Text</a></p>
+		  Create/Edit Glossed Text</a>
+		  {% if text_versions.gloss %}✓{% endif %}</p>
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add lemma and part-of-speech tags to the words in the text. Alternately, edit the result or add your own tags." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">
-		  Create/Edit Lemma Tagged Text</a></p>
+		  Create/Edit Lemma Tagged Text</a>
+		  {% if text_versions.lemma %}✓{% endif %}</p>
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->
 	<p><a href="{% url 'human_audio_processing' project.id %}" 
 	      data-tooltip="Specify audio options for normal text. If you are using human-recorded audio, upload it." 
@@ -57,11 +65,13 @@
 	<p><a href="{% url 'render_text_start_normal' project.id %}" 
 	      data-tooltip="Create the final multimedia version of the text. Usually this will involve using TTS to produce the audio." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
-		  Render Text</a></p>
+		  Render Text</a>
+		  {% if rendered_html_exists %}✓{% endif %}</p>
 	<p><a href="{% url 'render_text_start_phonetic' project.id %}"
 	      data-tooltip="Create the final multimedia version of the phonetic text. This may involve using the ipa-reader site to produce the phonetic audio." 
       	  {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
-		  Render Phonetic Text</a></p>
+		  Render Phonetic Text</a>
+		  {% if rendered_phonetic_html_exists %}✓{% endif %}</p>
 	<p><a href="{% url 'offer_to_register_content_normal' project.id %}" 
 	      data-tooltip="Make the multimedia version of the text available through the C-LARA social network." 
 	      {% if not rendered_html_exists %}class="disabled-link"{% endif %}>

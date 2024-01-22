@@ -47,7 +47,7 @@
 	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
 	  {% endif %}
 	  {% if status == 'No image' or status == 'No multimedia' %}
-        <button type="submit" name="action" value="create_rendered_text">Generate Multimeia Text</button>
+        <button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button>
 	  {% else %}
       <p><button type="submit" name="action" value="create_rendered_text">Regenerate Multimedia Text</button><p>
 	  {% endif %}
