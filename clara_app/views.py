@@ -1796,6 +1796,7 @@ def delete_project(request, project_id):
 def project_detail(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    text_versions = clara_project_internal.text_versions
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
@@ -1803,6 +1804,8 @@ def project_detail(request, project_id):
     can_render_phonetic = clara_project_internal.text_versions["phonetic"] 
     rendered_html_exists = clara_project_internal.rendered_html_exists(project_id)
     rendered_phonetic_html_exists = clara_project_internal.rendered_phonetic_html_exists(project_id)
+    images = clara_project_internal.get_all_project_images()
+    images_exist = len(images) != 0
     api_cost = get_project_api_cost(request.user, project)
     if request.method == 'POST':
         form = UpdateProjectTitleForm(request.POST)
@@ -1815,7 +1818,9 @@ def project_detail(request, project_id):
     clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/project_detail.html', 
-                  { 'project': project, 'form': form, 'api_cost': api_cost, 
+                  { 'project': project, 'form': form, 'api_cost': api_cost,
+                    'text_versions': text_versions,
+                    'images_exist': images_exist,
                     'can_create_segmented_text': can_create_segmented_text,
                     'can_create_phonetic_text': can_create_phonetic_text,
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
