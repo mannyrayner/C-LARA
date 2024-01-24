@@ -65,8 +65,10 @@
 	  {% endif %}
     {% endif %}
   </form>
-  <br>
-  <p><a href="{% url 'project_detail' project_id %}"><strong>[View project in full C-LARA]</strong></a></p>
-
+  {% if status != 'No project' %}
+    <br>
+    <p><a href="{% url 'project_detail' project_id %}"><strong>[View project in full C-LARA]</strong></a></p>
+  {% endif %}
+  
  {% endblock %}
   
