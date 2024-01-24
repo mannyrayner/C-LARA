@@ -150,7 +150,7 @@ from .clara_utils import absolute_file_name, read_json_file, write_json_to_file,
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import local_directory_exists, remove_local_directory
-from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp
+from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp, get_file_time
 from .clara_utils import unzip_file, post_task_update
 
 from pathlib import Path
@@ -1001,21 +1001,29 @@ class CLARAProjectInternal:
 
     # Determine whether the rendered HTML has been created
     def rendered_html_exists(self, project_id):
+        return file_exists(self.rendered_html_page_1_file(project_id))
+
+    def rendered_html_timestamp(self, project_id):
+        page1 = file_exists(self.rendered_html_page_1_file(project_id))
+        return None if not file_exists(page1) else get_file_time(page1)
+
+    def rendered_html_page_1_file(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'normal')
         page_1_file = str( Path(output_dir) / 'page_1.html' )
-        result = file_exists(page_1_file)
-        print(f'--- Checking first page of rendered text: {page_1_file}: status = {result}')
-        # If the first page exists, at least some HTML has been created
-        return result
+        return page_1_file
 
     # Determine whether the rendered HTML has been created
     def rendered_phonetic_html_exists(self, project_id):
+        return file_exists(self.rendered_phonetic_html_page_1_file(project_id))
+
+    def rendered_phonetic_html_timestamp(self, project_id):
+        page1 = file_exists(self.rendered_phonetic_html_page_1_file(project_id))
+        return None if not file_exists(page1) else get_file_time(page1)
+
+    def rendered_phonetic_html_page_1_file(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'phonetic')
         page_1_file = str( Path(output_dir) / 'page_1.html' )
-        result = file_exists(page_1_file)
-        print(f'--- Checking first page of rendered text: {page_1_file}: status = {result}')
-        # If the first page exists, at least some HTML has been created
-        return result
+        return page_1_file
 
     # Get the word-count
     def get_word_count(self, phonetic=False) -> int:

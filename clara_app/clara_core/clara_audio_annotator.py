@@ -407,8 +407,8 @@ def string_has_no_audio_content(s):
     return not s1 or all(regex.match(r"[\p{P} \n|]", c) for c in s1)
 
 # Segment has no audio content if it has no Word content-elements
-def segment_has_no_audio_content(segment):
-    for content_element in segment.content_elements:
-        if content_element.type == 'Word':
-            return False
-    return True
+##def segment_has_no_audio_content(segment):
+##    for content_element in segment.content_elements:
+##        if content_element.type == 'Word':
+##            return False
+##    return True
