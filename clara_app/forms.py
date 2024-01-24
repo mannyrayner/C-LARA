@@ -97,7 +97,11 @@ class SimpleClaraForm(forms.Form):
     # Id of the CLARAProjectInternal
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
     # L2 title to appear on the first page of the text
-    text_title = forms.CharField(label='Text title', max_length=500, required=False)
+    text_title = forms.CharField(
+        #widget=forms.Textarea(attrs={'rows': 2, 'cols': 40}),
+        widget=forms.Textarea(attrs={'rows': 2}),
+        required=False,
+        initial='' )
     prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     image_advice_prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False) 
