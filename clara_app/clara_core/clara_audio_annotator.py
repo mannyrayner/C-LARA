@@ -142,6 +142,7 @@ class AudioAnnotator:
                 segment_text_plain = segment.to_text()
                 segment_text_canonical = canonical_text_for_audio(segment_text_plain)
                 if not string_has_no_audio_content(segment_text_canonical):
+                #if not segment_has_no_audio_content(segment):
                     segments_data.append([segment_text_plain, segment_text_canonical])
                 
                 for content_element in segment.content_elements:
@@ -332,6 +333,8 @@ class AudioAnnotator:
                         "voice_id": self.segment_voice_id,
                         "file_path": segment_file_path,
                     }
+                #else:
+                #    post_task_update(callback, f"*** Warning: no mp3 found for '{segment_text}'")
 
                 for content_element in segment.content_elements:
                     if content_element.type == 'Word':
@@ -398,7 +401,14 @@ def format_audio_metadata_item(item, format, words_or_segments):
     except:
         raise InternalCLARAError(message = f'Bad call: clara_audio_annotator.format_audio_metadata_item({item}, {format}, {words_or_segments})')
 
-# String has no audio content if it's just punctuation marks and separators
+# String has no audio content if it's just HTML tags, punctuation marks and separators
 def string_has_no_audio_content(s):
-    return not s or all(regex.match(r"[\p{P} \n|]", c) for c in s)
+    s1 = regex.sub(r"<\/?\w+>", '', s)
+    return not s1 or all(regex.match(r"[\p{P} \n|]", c) for c in s1)
 
+# Segment has no audio content if it has no Word content-elements
+def segment_has_no_audio_content(segment):
+    for content_element in segment.content_elements:
+        if content_element.type == 'Word':
+            return False
+    return True

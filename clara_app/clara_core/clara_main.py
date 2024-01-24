@@ -130,6 +130,7 @@ from .clara_conventional_tagging import generate_tagged_version_with_treetagger,
 from .clara_create_story import generate_story, improve_story
 from .clara_cefr import estimate_cefr_reading_level
 from .clara_summary import generate_summary, improve_summary
+from .clara_create_title import generate_title
 from .clara_manual_audio_align import add_indices_to_segmented_text, annotated_segmented_data_and_label_file_data_to_metadata
 from .clara_internalise import internalize_text
 from .clara_correct_syntax import correct_syntax_in_string
@@ -175,6 +176,7 @@ class CLARAProjectInternal:
         self.text_versions = {
             "prompt": None,
             "plain": None,
+            "title": None,
             "summary": None,
             "cefr_level": None,
             "segmented": None,
@@ -262,8 +264,9 @@ class CLARAProjectInternal:
         # Even not directly useable, we may want to transform them in some way
         self._copy_text_version_if_it_exists("prompt", new_project)
         self._copy_text_version_if_it_exists("plain", new_project)
-        # If the L2 is the same, the CEFR, summary, segmented and lemma files will by default be valid
+        # If the L2 is the same, the title CEFR, summary, segmented and lemma files will by default be valid
         if self.l2_language == new_project.l2_language:
+            self._copy_text_version_if_it_exists("title", new_project)
             self._copy_text_version_if_it_exists("cefr_level", new_project)
             self._copy_text_version_if_it_exists("summary", new_project)
             self._copy_text_version_if_it_exists("segmented", new_project)
@@ -363,7 +366,7 @@ class CLARAProjectInternal:
     # Metadata reference is dict with keys ( "file", "version", "source", "user", "timestamp", "gold_standard" )
     #
     #   - file: absolute pathname for file, as str
-    #   - version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - version: one of ( "prompt", "plain", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
     #   - source: one of ( "ai_generated", "ai_revised", "human_revised" )
     #   - user: username for account on which file was created
     #   - timestamp: time when file was posted, in format '%Y%m%d%H%M%S'
@@ -371,7 +374,7 @@ class CLARAProjectInternal:
 
     # For downward compatibility, guess metadata based on existing files where necessary.
     # Files referenced:
-    #   - self._file_path_for_version(version) for version in ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - self._file_path_for_version(version) for version in ( "prompt", "plain", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
     #     when file exists
     #   - Everything in self._get_archive_dir()
     # Get timestamps from the file ages.
@@ -382,7 +385,7 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["prompt", "plain", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
+        versions = ["prompt", "plain", "title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
 
         # Check if any metadata entries are missing for the existing files
         for version in versions:
@@ -507,7 +510,10 @@ class CLARAProjectInternal:
         segmented_text = self.load_text_version("segmented")
         images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
         segmented_with_images_text = segmented_text + '\n' + images_text
-        #self.save_text_version('segmented_with_images', segmented_with_images_text, source='merged', user='system')
+        text_title = self.load_text_version_or_null('title')
+        if text_title != '':
+            # We need to put segment breaks around the text_title to get the right interaction with segment audio
+            segmented_with_images_text = f'<h1>||{text_title}||</h1><page>\n' + segmented_with_images_text
         return segmented_with_images_text
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
@@ -555,6 +561,27 @@ class CLARAProjectInternal:
             improvement_prompt = prompt if prompt and prompt != stored_prompt else None
             plain_text, api_calls = improve_story(self.l2_language, current_version, improvement_prompt=improvement_prompt, config_info=config_info, callback=callback)
             self.save_text_version("plain", plain_text, user=user, label=label, source='ai_revised')
+            return api_calls
+        except:
+            return []
+
+    # Call ChatGPT-4 to create a title for the text
+    def create_title(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        try:
+            plain_text = self.load_text_version("plain")
+            title, api_calls = generate_title(plain_text, self.l2_language, config_info=config_info, callback=callback)
+            self.save_text_version("title", title, user=user, label=label, source='ai_generated')
+            return api_calls
+        except:
+            return []
+
+    # Call ChatGPT-4 to try to improve the title for the text
+    def improve_title(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        try:
+            plain_text = self.load_text_version("plain")
+            old_title = self.load_text_version("title")
+            title, api_calls = improve_title(plain_text, old_title, self.l2_language, config_info=config_info, callback=callback)
+            self.save_text_version("title", title, user=user, label=label, source='ai_revised')
             return api_calls
         except:
             return []
@@ -952,6 +979,7 @@ class CLARAProjectInternal:
                     audio_type_for_words='tts', audio_type_for_segments='tts', format_preferences_info=None,
                     phonetic=False, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
+        title = self.load_text_version_or_null("title")
         text_object = self.get_internalised_and_annotated_text(preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                                                human_voice_id=human_voice_id,
                                                                audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
@@ -963,7 +991,8 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- normal_html_exists: {normal_html_exists}")
         phonetic_html_exists = self.rendered_phonetic_html_exists(project_id)
         post_task_update(callback, f"--- phonetic_html_exists: {phonetic_html_exists}")
-        renderer = StaticHTMLRenderer(project_id, self.id, phonetic=phonetic, format_preferences_info=format_preferences_info,
+        renderer = StaticHTMLRenderer(project_id, self.id, title=title,
+                                      phonetic=phonetic, format_preferences_info=format_preferences_info,
                                       normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists, callback=callback)
         post_task_update(callback, f"--- Start creating pages")
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
