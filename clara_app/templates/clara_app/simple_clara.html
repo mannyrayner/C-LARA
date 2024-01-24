@@ -25,6 +25,9 @@
     {% endif %}
 	
 	{% if status != 'No project' and status != 'No prompt' and status != 'No text' %}
+	  <h3>Generated text title</h3>
+	  <p>{{ form.text_title }}
+	     <button type="submit" name="action" value="save_text_title">Save Edited Text Title</button></p>
 	  <h3>Generated text</h3>
 	  <p>{{ form.plain_text }}
 	     <button type="submit" name="action" value="save_text">Save Edited Text</button>
@@ -62,6 +65,8 @@
 	  {% endif %}
     {% endif %}
   </form>
+  <br>
+  <p><a href="{% url 'project_detail' project_id %}"><strong>[View project in full C-LARA]</strong></a></p>
 
  {% endblock %}
   
