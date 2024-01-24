@@ -60,6 +60,7 @@ urlpatterns = [
     path('project/<int:project_id>/clone_project/', views.clone_project, name='clone_project'),
     path('project/<int:project_id>/audio_metadata/', views.get_audio_metadata_view, name='get_audio_metadata'),
     path('project/<int:project_id>/create_plain_text/', views.create_plain_text, name='create_plain_text'),
+    path('project/<int:project_id>/create_title/', views.create_title, name='create_title'),
     path('project/<int:project_id>/create_summary/', views.create_summary, name='create_summary'),
     path('project/<int:project_id>/create_cefr_level/', views.create_cefr_level, name='create_cefr_level'),
     path('project/<int:project_id>/create_segmented_text/', views.create_segmented_text, name='create_segmented_text'),

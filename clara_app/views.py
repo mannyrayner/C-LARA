@@ -30,7 +30,7 @@ from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
-from .forms import CreatePlainTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
+from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
@@ -1145,6 +1145,7 @@ def get_simple_clara_resources_helper(project_id):
             return resources_available
         else:
             resources_available['plain_text'] = clara_project_internal.load_text_version('plain')
+            resources_available['text_title'] = clara_project_internal.load_text_version_or_null('title')
 
         image = clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text')
         if image:
@@ -1206,6 +1207,9 @@ def simple_clara(request, project_id, status):
                 elif action == 'save_text':
                     plain_text = form.cleaned_data['plain_text']
                     simple_clara_action = { 'action': 'save_text', 'plain_text': plain_text }
+                elif action == 'save_text_title':
+                    text_title = form.cleaned_data['text_title']
+                    simple_clara_action = { 'action': 'save_text_title', 'text_title': text_title }
                 elif action == 'rewrite_text':
                     prompt = form.cleaned_data['prompt']
                     simple_clara_action = { 'action': 'rewrite_text', 'prompt': prompt }
@@ -1220,7 +1224,7 @@ def simple_clara(request, project_id, status):
                     messages.error(request, f"Error: unknown action '{action}'")
                     return redirect('simple_clara', project_id, 'error')
 
-                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'post_rendered_text' )
+                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_text_title', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
                     result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
@@ -1277,6 +1281,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'save_text':
             # simple_clara_action should be of form { 'action': 'save_text', 'plain_text': plain_text }
             result = simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_text_title':
+            # simple_clara_action should be of form { 'action': 'save_text_title', 'text_title': text_title }
+            result = simple_clara_save_text_title_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'rewrite_text':
             # simple_clara_action should be of form { 'action': 'rewrite_text', 'prompt': prompt }
             result = simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -1357,7 +1364,7 @@ def simple_clara_change_title_helper(username, project_id, simple_clara_action, 
     post_task_update(callback, f"--- Updated project title to '{title}'")
     return { 'status': 'finished',
              'message': 'Title updated',
-             'project_id': project_id } 
+             'project_id': project_id }
 
 def simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=None):
     prompt = simple_clara_action['prompt']
@@ -1375,6 +1382,12 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
     store_api_calls(api_calls, project, user, 'plain')
     post_task_update(callback, f"ENDED TASK: create plain text")
 
+    # Create the title
+    post_task_update(callback, f"STARTED TASK: create text title")
+    api_calls = clara_project_internal.create_title(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'plain')
+    post_task_update(callback, f"ENDED TASK: create text title")
+
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, callback=None)
@@ -1384,10 +1397,10 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
         return { 'status': 'finished',
-                 'message': 'Created text and image' }
+                 'message': 'Created text, title and image' }
     else:
         return { 'status': 'finished',
-                 'message': 'Created text but was unable to create image. Probably DALL-E-3 thought something was inappropriate.' }
+                 'message': 'Created text and title but was unable to create image. Probably DALL-E-3 thought something was inappropriate.' }
 
 def simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=None):
     plain_text = simple_clara_action['plain_text']
@@ -1400,6 +1413,18 @@ def simple_clara_save_text_helper(username, project_id, simple_clara_action, cal
 
     return { 'status': 'finished',
              'message': 'Saved the text.'}
+
+def simple_clara_save_text_title_helper(username, project_id, simple_clara_action, callback=None):
+    text_title = simple_clara_action['text_title']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Save the text
+    clara_project_internal.save_text_version('title', text_title, source='human_revised', user=username)
+
+    return { 'status': 'finished',
+             'message': 'Saved the text title.'}
 
 def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=None):
     prompt = simple_clara_action['prompt']
@@ -2475,13 +2500,13 @@ def compare_versions(request, project_id):
     return render(request, 'clara_app/diff_and_diff_result.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 # Generic code for the operations which support creating, annotating, improving and editing text,
-# to produce and edit the "plain", "summary", "cefr", "segmented", "gloss" and "lemma" versions.
+# to produce and edit the "plain", "title", "summary", "cefr", "segmented", "gloss" and "lemma" versions.
 # It is also possible to retrieve archived versions of the files if they exist.
 #
 # The argument 'this_version' is the version we are currently creating/editing.
 # The argument 'previous_version' is the version it is created from. E.g. "gloss" is created from "segmented".
 #
-# Most of the operations are common to all five types of text, but there are some small divergences
+# Most of the operations are common to all these types of text, but there are some small divergences
 # which have to be treated specially:
 #
 # - When creating the initial "plain" version, we pass an optional prompt.
@@ -2733,6 +2758,8 @@ def generate_text_complete(request, project_id, version, status):
 def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
     if version == 'plain':
         return CreatePlainTextForm(*args, **kwargs)
+    elif version == 'title':
+        return CreateTitleTextForm(*args, **kwargs)
     elif version == 'summary':
         return CreateSummaryTextForm(*args, **kwargs)
     elif version == 'cefr_level':
@@ -2783,6 +2810,8 @@ def perform_generate_operation_and_store_api_calls(version, project, clara_proje
 def perform_generate_operation(version, clara_project_internal, user, label, prompt=None, config_info={}, callback=None):
     if version == 'plain':
         return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'title':
+        return ( 'generate', clara_project_internal.create_title(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'summary':
         return ( 'generate', clara_project_internal.create_summary(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'cefr_level':
@@ -2814,7 +2843,9 @@ def perform_improve_operation_and_store_api_calls(version, project, clara_projec
 def perform_improve_operation(version, clara_project_internal, user, label, prompt=None, config_info={}, callback=None):
     if version == 'plain':
         return ( 'generate', clara_project_internal.improve_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
-    if version == 'summary':
+    elif version == 'title':
+        return ( 'generate', clara_project_internal.improve_title(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'summary':
         return ( 'generate', clara_project_internal.improve_summary(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
         return ( 'generate', clara_project_internal.improve_segmented_text(user=user, label=label, config_info=config_info, callback=callback) )
@@ -2830,6 +2861,8 @@ def perform_improve_operation(version, clara_project_internal, user, label, prom
 def previous_version_and_template_for_version(this_version):
     if this_version == 'plain':
         return ( 'plain', 'clara_app/create_plain_text.html' )
+    elif this_version == 'title':
+        return ( 'plain', 'clara_app/create_title.html' )
     elif this_version == 'summary':
         return ( 'plain', 'clara_app/create_summary.html' )
     elif this_version == 'cefr_level':
@@ -2860,6 +2893,14 @@ def create_plain_text(request, project_id):
         'load_archived': "Load archived version. Select this option and also select something from the 'Archived version' menu. Then press the 'Load' button at the bottom."
     }
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template, text_choices_info=text_choices_info)
+
+#Create or edit title for the text     
+@login_required
+@user_has_a_project_role
+def create_title(request, project_id):
+    this_version = 'title'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
 #Create or edit "summary" version of the text     
 @login_required

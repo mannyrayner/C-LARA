@@ -92,8 +92,12 @@ class SimpleClaraForm(forms.Form):
     status = forms.CharField(initial='No project', required=False)
     l2 = forms.ChoiceField(label='Text language', choices=SUPPORTED_LANGUAGES, required=False)
     l1 = forms.ChoiceField(label='Annotation language', choices=SUPPORTED_LANGUAGES, required=False)
+    # Name of the Django-level project (CLARAProject)
     title = forms.CharField(label='Title', max_length=200, required=False)
+    # Id of the CLARAProjectInternal
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
+    # L2 title to appear on the first page of the text
+    text_title = forms.CharField(label='Text title', max_length=500, required=False)
     prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     image_advice_prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False) 
@@ -202,7 +206,19 @@ class CreateSegmentedTextForm(CreateAnnotatedTextForm):
         self.fields['text_choice'].choices = self.TEXT_CHOICES if jieba_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'jieba'
             ]
+
+class CreateTitleTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Generate title using AI'),
+        ('improve', 'Improve existing title using AI'),
+        ('manual', 'Manually enter/edit title'),
+        ('load_archived', 'Load archived version')
+    ]
     
+    def __init__(self, *args, prompt=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
+
 class CreateSummaryTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Generate summary using AI'),
@@ -252,11 +268,11 @@ class CreateGlossedTextForm(CreateAnnotatedTextForm):
 
 class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
-        ('trivial', 'Generate annotated text from segmented text with trivial tags'),
-        ('tree_tagger', 'Generate annotated text from segmented text using TreeTagger'),
         ('generate', 'Generate annotated text from segmented text using AI'),
+        ('tree_tagger', 'Generate annotated text from segmented text using TreeTagger'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
+        ('trivial', 'Generate annotated text from segmented text with trivial tags'),
         ('manual', 'Manually enter annotated text'),
         ('load_archived', 'Load archived version')
     ]

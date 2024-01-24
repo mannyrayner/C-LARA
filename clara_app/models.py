@@ -122,6 +122,9 @@ class HumanAudioInfo(models.Model):
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
     audio_file = models.CharField(max_length=500, blank=True, null=True)
     manual_align_metadata_file = models.CharField(max_length=500, blank=True, null=True)
+    # Timestamps for dependency tracking
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     
     # Relationship with CLARAProject
@@ -157,6 +160,9 @@ class PhoneticHumanAudioInfo(models.Model):
     use_for_segments = models.BooleanField(default=False)
     use_for_words = models.BooleanField(default=True)
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
+    # Timestamps for dependency tracking
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
     
     # Relationship with CLARAProject
     project = models.OneToOneField(
@@ -202,6 +208,10 @@ class FormatPreferences(models.Model):
     concordance_font_type = models.CharField(max_length=50, choices=[('sans-serif', 'Sans Serif'), ('serif', 'Serif')], default='serif')
     concordance_font_size = models.CharField(max_length=50, choices=[('small', 'Small'), ('medium', 'Medium'), ('large', 'Large')], default='medium')
     concordance_text_align = models.CharField(max_length=50, choices=[('left', 'Left'), ('center', 'Center'), ('right', 'Right')], default='left')
+
+    # Timestamps for dependency tracking
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     def to_dict(self):
         return { 'font_type': self.font_type,
