@@ -177,6 +177,7 @@ class CLARAProjectInternal:
             "prompt": None,
             "plain": None,
             "title": None,
+            "segmented_title": None,
             "summary": None,
             "cefr_level": None,
             "segmented": None,
@@ -267,6 +268,7 @@ class CLARAProjectInternal:
         # If the L2 is the same, the title CEFR, summary, segmented and lemma files will by default be valid
         if self.l2_language == new_project.l2_language:
             self._copy_text_version_if_it_exists("title", new_project)
+            self._copy_text_version_if_it_exists("segmented_title", new_project)
             self._copy_text_version_if_it_exists("cefr_level", new_project)
             self._copy_text_version_if_it_exists("summary", new_project)
             self._copy_text_version_if_it_exists("segmented", new_project)
@@ -366,7 +368,7 @@ class CLARAProjectInternal:
     # Metadata reference is dict with keys ( "file", "version", "source", "user", "timestamp", "gold_standard" )
     #
     #   - file: absolute pathname for file, as str
-    #   - version: one of ( "prompt", "plain", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - version: one of ( "prompt", "plain", "segmented_title", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
     #   - source: one of ( "ai_generated", "ai_revised", "human_revised" )
     #   - user: username for account on which file was created
     #   - timestamp: time when file was posted, in format '%Y%m%d%H%M%S'
@@ -374,7 +376,7 @@ class CLARAProjectInternal:
 
     # For downward compatibility, guess metadata based on existing files where necessary.
     # Files referenced:
-    #   - self._file_path_for_version(version) for version in ( "prompt", "plain", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - self._file_path_for_version(version) for version in ( "prompt", "plain", "segmented_title", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
     #     when file exists
     #   - Everything in self._get_archive_dir()
     # Get timestamps from the file ages.
@@ -385,7 +387,7 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["prompt", "plain", "title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
+        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
 
         # Check if any metadata entries are missing for the existing files
         for version in versions:
@@ -510,7 +512,7 @@ class CLARAProjectInternal:
         segmented_text = self.load_text_version("segmented")
         images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
         segmented_with_images_text = segmented_text + '\n' + images_text
-        text_title = self.load_text_version_or_null('title')
+        text_title = self.load_text_version_or_null("segmented_title")
         if text_title != '':
             # We need to put segment breaks around the text_title to get the right interaction with segment audio
             segmented_with_images_text = f'<h1>||{text_title}||</h1><page>\n' + segmented_with_images_text
@@ -619,11 +621,21 @@ class CLARAProjectInternal:
         except:
             return []
 
-    # Call ChatGPT-4 to create a version of the text with segmentation annotations
+    # Call ChatGPT-4 to create versions of the text and title (if available) with segmentation annotations
     def create_segmented_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         plain_text = self.load_text_version("plain")
         segmented_text, api_calls = generate_segmented_version(plain_text, self.l2_language, config_info=config_info, callback=callback)
         self.save_text_version("segmented", segmented_text, user=user, label=label, source='ai_generated')
+
+        # If we have a title, which is a separate piece of text, segment that too and save it as "segmented_title"
+        title_text = self.load_text_version_or_null("title")
+        if title_text:
+            segmented_title_text, title_api_calls = generate_segmented_version(title_text, self.l2_language, config_info=config_info, callback=callback)
+            # We want the title to be a single segment
+            segmented_title_text_cleaned = segmented_title_text.replace('<page>', '').replace('||', '').strip()
+            self.save_text_version("segmented_title", segmented_title_text_cleaned, user=user, label=label, source='ai_generated')
+            api_calls += title_api_calls
+            
         return api_calls
 
     # Call Jieba to create a version of the text with segmentation annotations
