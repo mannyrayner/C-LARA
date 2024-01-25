@@ -15,6 +15,9 @@ _processing_phases = [
                             # Accessible from CLARAProjectInternal object
 
     "title",                # Typically AI-generated title for first page of text
+                            # Accessible from CLARAProjectInternal object
+
+    "segmented_title",      # Typically AI-generated segmented version of title for first page of text
                             # Accessible from CLARAProjectInternal object 
     
     "segmented",            # Typically AI-generated segmented version of text
@@ -62,24 +65,28 @@ _immediate_dependencies = {
     "cefr_level": [ "plain" ],
 
     "title": [ "plain" ],
+
+    "segmented_title": [ "title" ],
     
     "segmented": [ "plain" ],
     
     "images": [ "segmented" ],
     
-    "phonetic": [ "segmented", "title" ],
+    "phonetic": [ "segmented", "segmented_title" ],
     
-    "gloss": [ "segmented", "title" ],
+    "gloss": [ "segmented", "segmented_title" ],
     
-    "lemma": [ "segmented", "title" ],
+    "lemma": [ "segmented", "segmented_title" ],
     
     "audio": [ "segmented" ],
+
+    "audio_phonetic": [ "phonetic" ],
     
     "format_preferences": [ "segmented" ],
     
     "render": [ "title", "gloss", "lemma", "images", "audio", "format_preferences" ],
 
-    "render_phonetic": [ "phonetic", "images", "audio", "format_preferences" ],
+    "render_phonetic": [ "phonetic", "images", "audio_phonetic", "format_preferences" ],
     
     "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
     }
@@ -96,8 +103,9 @@ def get_dependencies(processing_phase_id):
     return remove_duplicates_from_list_of_hashable_items(all_dependencies)
 
 def timestamp_for_phase(clara_project_internal, project_id, processing_phase_id,
-                        human_audio_info=None, format_preference=None):
-    if processing_phase_id in [ "plain", "summary", "cefr_level", "title",
+                        human_audio_info=None, phonetic_human_audio_info=None,
+                        format_preference=None, content_object=None):
+    if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
                                 "segmented", "phonetic", "gloss", "lemma" ]:
         try:
             file = clara_project_internal.load_text_version(processing_phase_id)
@@ -127,11 +135,39 @@ def timestamp_for_phase(clara_project_internal, project_id, processing_phase_id,
             timestamps.append(human_audio_info.updated_at)
         
         return latest_timestamp(timestamps)
+    elif processing_phase_id == 'audio_phonetic':
+        if not phonetic_human_audio_info:
+            return None
+        human_voice_id = phonetic_human_audio_info.voice_talent_id
+        metadata = []
+        if human_audio_info.use_for_words:
+            metadata += clara_project_internal.get_audio_metadata(phonetic=True, human_voice_id=human_voice_id,
+                                                                  audio_type_for_words='human', type='words',
+                                                                  format='text_and_full_file')
+        timestamps = [ timestamp_for_file(item['full_file']) for item in metadata ]
+
+        if phonetic_human_audio_info.updated_at:
+            timestamps.append(phonetic_human_audio_info.updated_at)
+        
+        return latest_timestamp(timestamps)
     elif processing_phase_id == 'format_preferences':
         if not format_preference:
             return None
         else:
             return format_preference.updated_at
     elif processing_phase_id == 'render':
+        if not clara_project_internal.rendered_html_exists(project_id):
+            return None
+        else:
+            return clara_project_internal.rendered_html_timestamp(project_id)
+    elif processing_phase_id == 'render_phonetic':
+        if not clara_project_internal.rendered_phonetic_html_exists(project_id):
+            return None
+        else:
+            return clara_project_internal.rendered_phonetic_html_timestamp(project_id)
+    elif processing_phase_id == 'social_network':
+        if not content_object:
+            return None
+        else:
+            return content_object.updated_at
         
-            
