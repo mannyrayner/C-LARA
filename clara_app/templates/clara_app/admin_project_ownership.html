@@ -1,0 +1,27 @@
+{% extends 'clara_app/base.html' %}
+
+{% load clara_tags %}
+
+{% block content %}
+  <h2>Admin Project Ownership</h2>
+  <h3>Search Projects</h3>
+  <form method="get">
+    {{ search_form.as_p }}
+    <button type="submit">Search</button>
+  </form>
+  <h3>Project List</h3>
+  <form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    {% for form, project in formset|zip_lists:projects_info %}
+      <div>
+        {{ form.select }} {{ project.title }} ({{ project.l2 }})
+        {{ form.project_id }}
+      </div>
+    {% endfor %}
+    <button type="submit">Update Ownership</button>
+  </form>
+
+  <!-- (Include search form and other content as before) -->
+{% endblock %}
+

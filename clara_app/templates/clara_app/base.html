@@ -108,12 +108,15 @@
 					 Recent task updates</a></li>
 		  {% endif %}
 		  {% if user.userprofile.is_admin %}
-		  <li><a href="{% url 'add_credit' %}"
-		         data-tooltip="Add credit to a user's GPT-4 call account">
-				 Add credit to user</a></li>
+			<li><a href="{% url 'add_credit' %}"
+				   data-tooltip="Add credit to a user's GPT-4 call account">
+				   Add credit to user</a></li>
             <li><a href="{% url 'admin_password_reset' %}"
 			       data-tooltip="Manually reset a user's password, in case they cannot use the normal password reset.">
 				   Manually reset user's password</a></li>
+		    <li><a href="{% url 'admin_project_ownership' %}"
+			       data-tooltip="Give yourself a COOWNER role on a project, if you are an admin and need to access it urgently for some reason.">
+				   Make yourself co-owner of a project</a></li>
 			<li><a href="{% url 'manage_language_masters' %}"
 			       data-tooltip="Give users 'language master' privileges, so that they can customise annotation prompts and edit phonetic lexicon data.">
 				   Manage language masters</a></li>
