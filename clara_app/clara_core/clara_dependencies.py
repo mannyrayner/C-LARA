@@ -2,172 +2,224 @@
 
 from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, get_file_time
 
+from .clara_classes import InternalCLARAError
+
 import traceback
 
-_processing_phases = [
-    "plain",                # Plain text
-                            # Accessible from CLARAProjectInternal object
-    
-    "summary",              # Typically AI-generated summary
-                            # Accessible from CLARAProjectInternal object
-    
-    "cefr_level",           # Typically AI-generated estimate of CEFR level
-                            # Accessible from CLARAProjectInternal object
+class CLARADependencies:
+    def __init__(self, clara_project_internal, project_id,
+                 human_audio_info=None, phonetic_human_audio_info=None,
+                 format_preference=None, content_object=None,
+                 callback=None):
+        self.clara_project_internal = clara_project_internal
+        self.project_id = project_id
+        self.human_audio_info = human_audio_info
+        self.phonetic_human_audio_info = phonetic_human_audio_info
+        self.format_preference = format_preference
+        self.content_object = content_object
 
-    "title",                # Typically AI-generated title for first page of text
-                            # Accessible from CLARAProjectInternal object
+        self._processing_phases = [
+            "plain",                # Plain text
+                                    # Accessible from CLARAProjectInternal object
+    
+            "summary",              # Typically AI-generated summary
+                                    # Accessible from CLARAProjectInternal object
+            
+            "cefr_level",           # Typically AI-generated estimate of CEFR level
+                                    # Accessible from CLARAProjectInternal object
 
-    "segmented_title",      # Typically AI-generated segmented version of title for first page of text
-                            # Accessible from CLARAProjectInternal object 
-    
-    "segmented",            # Typically AI-generated segmented version of text
-                            # Accessible from CLARAProjectInternal object
-    
-    "images",               # Typically AI-generated images
-                            # Accessible from CLARAProjectInternal object
-    
-    "phonetic",             # Typically AI-generated phonetic version of text
-                            # Only possible for languages with phonetic lexicon resources
-                            # Accessible from CLARAProjectInternal object
-    
-    "gloss",                # Typically AI-generated glossed version of text
-                            # Accessible from CLARAProjectInternal object
-    
-    "lemma",                # Typically AI-generated lemma-tagged version of text
-                            # Accessible from CLARAProjectInternal object
-    
-    "audio",                # Declarations for how to attach audio to normal text
-                            # If human-recorded audio is specified, the relevant audio files
-                            # Accessible from CLARAProject object
+            "title",                # Typically AI-generated title for first page of text
+                                    # Accessible from CLARAProjectInternal object
 
-    "audio_phonetic",       # Declarations for how to attach audio to phonetic text
-                            # If human-recorded audio is specified, the relevant audio files
-                            # Accessible from CLARAProject object
-    
-    "format_preferences",   # Declarations for formatting, e.g. font and text alignment
-                            # Accessible from CLARAProject object
-    
-    "render",               # Rendered version of normal text
-                            # Accessible from CLARAProjectInternal object
+            "segmented_title",      # Typically AI-generated segmented version of title for first page of text
+                                    # Accessible from CLARAProjectInternal object 
+            
+            "segmented",            # Typically AI-generated segmented version of text
+                                    # Accessible from CLARAProjectInternal object
+            
+            "images",               # Typically AI-generated images
+                                    # Accessible from CLARAProjectInternal object
+            
+            "phonetic",             # Typically AI-generated phonetic version of text
+                                    # Only possible for languages with phonetic lexicon resources
+                                    # Accessible from CLARAProjectInternal object
+            
+            "gloss",                # Typically AI-generated glossed version of text
+                                    # Accessible from CLARAProjectInternal object
+            
+            "lemma",                # Typically AI-generated lemma-tagged version of text
+                                    # Accessible from CLARAProjectInternal object
+            
+            "audio",                # Declarations for how to attach audio to normal text
+                                    # If human-recorded audio is specified, the relevant audio files
+                                    # Accessible from CLARAProject object
 
-    "render_phonetic",      # Rendered version of phonetic text
-                            # Accessible from CLARAProjectInternal object
-    
-    "social_network",       # Social network page if text is posted there
-                            # Accessible from CLARAProject object
-    ]
+            "audio_phonetic",       # Declarations for how to attach audio to phonetic text
+                                    # If human-recorded audio is specified, the relevant audio files
+                                    # Accessible from CLARAProject object
+            
+            "format_preferences",   # Declarations for formatting, e.g. font and text alignment
+                                    # Accessible from CLARAProject object
+            
+            "render",               # Rendered version of normal text
+                                    # Accessible from CLARAProjectInternal object
 
-_immediate_dependencies = {
-    "plain": [],
-    
-    "summary": [ "plain" ],
-    
-    "cefr_level": [ "plain" ],
+            "render_phonetic",      # Rendered version of phonetic text
+                                    # Accessible from CLARAProjectInternal object
+            
+            "social_network",       # Social network page if text is posted there
+                                    # Accessible from CLARAProject object
+            ]
 
-    "title": [ "plain" ],
+        self._immediate_dependencies = {
+            "plain": [],
+            
+            "summary": [ "plain" ],
+            
+            "cefr_level": [ "plain" ],
 
-    "segmented_title": [ "title" ],
-    
-    "segmented": [ "plain" ],
-    
-    "images": [ "segmented" ],
-    
-    "phonetic": [ "segmented", "segmented_title" ],
-    
-    "gloss": [ "segmented", "segmented_title" ],
-    
-    "lemma": [ "segmented", "segmented_title" ],
-    
-    "audio": [ "segmented" ],
+            "title": [ "plain" ],
 
-    "audio_phonetic": [ "phonetic" ],
-    
-    "format_preferences": [ "segmented" ],
-    
-    "render": [ "title", "gloss", "lemma", "images", "audio", "format_preferences" ],
+            "segmented_title": [ "title" ],
+            
+            "segmented": [ "plain" ],
+            
+            "images": [ "segmented" ],
+            
+            "phonetic": [ "segmented", "segmented_title" ],
+            
+            "gloss": [ "segmented", "segmented_title" ],
+            
+            "lemma": [ "segmented", "segmented_title" ],
+            
+            "audio": [ "segmented" ],
 
-    "render_phonetic": [ "phonetic", "images", "audio_phonetic", "format_preferences" ],
-    
-    "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
-    }
+            "audio_phonetic": [ "phonetic" ],
+            
+            "format_preferences": [ "segmented" ],
+            
+            "render": [ "title", "gloss", "lemma", "images", "audio", "format_preferences" ],
 
-def get_dependencies(processing_phase_id):
-    all_dependencies = []
-    
-    if not processing_phase_id in _immediate_dependencies:
-        return []
-    
-    for phase in _immediate_dependencies[processing_phase_id]:
-        all_dependencies += get_dependencies[phase]
+            "render_phonetic": [ "phonetic", "images", "audio_phonetic", "format_preferences" ],
+            
+            "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
+            }
+
+    def get_dependencies(processing_phase_id):
+        all_dependencies = []
         
-    return remove_duplicates_from_list_of_hashable_items(all_dependencies)
+        if not processing_phase_id in self._immediate_dependencies:
+            return []
+        
+        for phase in self._immediate_dependencies[processing_phase_id]:
+            all_dependencies += get_dependencies[phase]
+            
+        return remove_duplicates_from_list_of_hashable_items(all_dependencies)
 
-def timestamp_for_phase(clara_project_internal, project_id, processing_phase_id,
-                        human_audio_info=None, phonetic_human_audio_info=None,
-                        format_preference=None, content_object=None):
-    if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
-                                "segmented", "phonetic", "gloss", "lemma" ]:
-        try:
-            file = clara_project_internal.load_text_version(processing_phase_id)
-            return get_file_time(file)
-        except FileNotFoundError:
-            return None
-    elif processing_phase_id == 'images':
-            images = clara_project_internal.get_all_project_images()
-            timestamps = [ get_file_time(image.image_file_path) for image in images ]
+    def timestamp_for_phase(processing_phase_id):
+        if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
+                                    "segmented", "phonetic", "gloss", "lemma" ]:
+            try:
+                file = self.clara_project_internal.load_text_version(processing_phase_id)
+                return get_file_time(file)
+            except FileNotFoundError:
+                return None
+        elif processing_phase_id == 'images':
+                images = self.clara_project_internal.get_all_project_images()
+                timestamps = [ get_file_time(image.image_file_path) for image in images ]
+                return latest_timestamp(timestamps)
+        elif processing_phase_id == 'audio':
+            if not self.human_audio_info:
+                return None
+            human_voice_id = self.human_audio_info.voice_talent_id
+            metadata = []
+            if self.human_audio_info.use_for_words:
+                metadata += self.clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
+                                                                           audio_type_for_words='human', type='words',
+                                                                           format='text_and_full_file')
+            if self.human_audio_info.use_for_segments:
+                metadata += self.clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
+                                                                           audio_type_for_segments='human', type='segments',
+                                                                           format='text_and_full_file')
+            timestamps = [ timestamp_for_file(item['full_file']) for item in metadata ]
+
+            if self.human_audio_info.updated_at:
+                timestamps.append(human_audio_info.updated_at)
+            
             return latest_timestamp(timestamps)
-    elif processing_phase_id == 'audio':
-        if not human_audio_info:
-            return None
-        human_voice_id = human_audio_info.voice_talent_id
-        metadata = []
-        if human_audio_info.use_for_words:
-            metadata += clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
-                                                                  audio_type_for_words='human', type='words',
-                                                                  format='text_and_full_file')
-        if human_audio_info.use_for_segments:
-            metadata += clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
-                                                                  audio_type_for_segments='human', type='segments',
-                                                                  format='text_and_full_file')
-        timestamps = [ timestamp_for_file(item['full_file']) for item in metadata ]
+        elif processing_phase_id == 'audio_phonetic':
+            if not self.phonetic_human_audio_info:
+                return None
+            human_voice_id = self.phonetic_human_audio_info.voice_talent_id
+            metadata = []
+            if self.human_audio_info.use_for_words:
+                metadata += self.clara_project_internal.get_audio_metadata(phonetic=True, human_voice_id=human_voice_id,
+                                                                           audio_type_for_words='human', type='words',
+                                                                           format='text_and_full_file')
+            timestamps = [ timestamp_for_file(item['full_file']) for item in metadata ]
 
-        if human_audio_info.updated_at:
-            timestamps.append(human_audio_info.updated_at)
-        
-        return latest_timestamp(timestamps)
-    elif processing_phase_id == 'audio_phonetic':
-        if not phonetic_human_audio_info:
-            return None
-        human_voice_id = phonetic_human_audio_info.voice_talent_id
-        metadata = []
-        if human_audio_info.use_for_words:
-            metadata += clara_project_internal.get_audio_metadata(phonetic=True, human_voice_id=human_voice_id,
-                                                                  audio_type_for_words='human', type='words',
-                                                                  format='text_and_full_file')
-        timestamps = [ timestamp_for_file(item['full_file']) for item in metadata ]
+            if self.phonetic_human_audio_info.updated_at:
+                timestamps.append(phonetic_human_audio_info.updated_at)
+            
+            return latest_timestamp(timestamps)
+        elif processing_phase_id == 'format_preferences':
+            if not self.format_preference:
+                return None
+            else:
+                return self.format_preference.updated_at
+        elif processing_phase_id == 'render':
+            if not self.clara_project_internal.rendered_html_exists(project_id):
+                return None
+            else:
+                return self.clara_project_internal.rendered_html_timestamp(project_id)
+        elif processing_phase_id == 'render_phonetic':
+            if not self.clara_project_internal.rendered_phonetic_html_exists(project_id):
+                return None
+            else:
+                return self.clara_project_internal.rendered_phonetic_html_timestamp(project_id)
+        elif processing_phase_id == 'social_network':
+            if not self.content_object:
+                return None
+            else:
+                return self.content_object.updated_at
+        else:
+            raise InternalCLARAError(message=f'Unknown processing phase id {processing_phase_id}')
 
-        if phonetic_human_audio_info.updated_at:
-            timestamps.append(phonetic_human_audio_info.updated_at)
+    def timestamps_for_all_phases():
+        return { processing_phase_id: self.timestamp_for_phase(processing_phase_id)
+                 for processing_phase_id in self._processing_phases }
+
+    def timestamp_for_all_phase_dependencies():
+        processing_phase_timestamp_dict = self.timestamps_for_all_phases()
+        result = {}
         
-        return latest_timestamp(timestamps)
-    elif processing_phase_id == 'format_preferences':
-        if not format_preference:
-            return None
-        else:
-            return format_preference.updated_at
-    elif processing_phase_id == 'render':
-        if not clara_project_internal.rendered_html_exists(project_id):
-            return None
-        else:
-            return clara_project_internal.rendered_html_timestamp(project_id)
-    elif processing_phase_id == 'render_phonetic':
-        if not clara_project_internal.rendered_phonetic_html_exists(project_id):
-            return None
-        else:
-            return clara_project_internal.rendered_phonetic_html_timestamp(project_id)
-    elif processing_phase_id == 'social_network':
-        if not content_object:
-            return None
-        else:
-            return content_object.updated_at
+        for processing_phase in self._processing_phases:
+            dependencies = self.get_dependencies(processing_phase_id)
+            timestamps = [ processing_phase_timestamp_dict[dependency_processing_phase_id] for
+                           dependency_processing_phase_id in dependencies ]
+            result[processing_phase] = latest_timestamp(timestamps)
+            
+        return result
+
+    def up_to_date_dict():
+        processing_phase_timestamp_dict = self.timestamps_for_all_phases()
+        processing_phase_dependency_timestamp_dict = self.timestamp_for_all_phase_dependencies()
+        result = {}
         
+        for processing_phase in self._processing_phases:
+            processing_phase_timestamp = processing_phase_timestamp_dict[processing_phase]
+            processing_phase_dependency_timestamp = processing_phase_dependency_timestamp_dict[processing_phase]
+            # If the phase and the dependencies both have a timestamp,
+            # and the timestamp for the dependencies is later, then the phase is out of date
+            if processing_phase_timestamp and processing_phase_dependency_timestamp and \
+               later_timestamp(processing_phase_dependency_timestamp, processing_phase_timestamp):
+                result[processing_phase] = False
+            # If there is no timestamp for the phase, then it's out of date
+            elif not processing_phase_dependency_timestamp:
+                result[processing_phase] = False
+            # Otherwise the phase is up to date
+            else:
+                result[processing_phase] = True
+
+        return result
+    
