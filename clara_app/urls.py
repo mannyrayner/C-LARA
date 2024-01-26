@@ -24,6 +24,7 @@ urlpatterns = [
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('user_config/', views.user_config, name='user_config'),
     path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
+    path('admin_project_ownership/', views.admin_project_ownership, name='admin_project_ownership'),
     path('add_credit/', views.add_credit, name='add_credit'),
     path('transfer_credit/', views.transfer_credit, name='transfer_credit'),
     path('confirm_transfer/', views.confirm_transfer, name='confirm_transfer'),

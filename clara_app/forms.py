@@ -114,6 +114,12 @@ class ProjectSearchForm(forms.Form):
     l2 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)
     l1 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)
 
+class ProjectSelectionForm(forms.Form):
+    select = forms.BooleanField(required=False, widget=forms.CheckboxInput)
+    project_id = forms.IntegerField(widget=forms.HiddenInput)
+    
+ProjectSelectionFormSet = formset_factory(ProjectSelectionForm, extra=0)
+
 class AddProjectMemberForm(forms.Form):
     ROLE_CHOICES = [
         ('VIEWER', 'Viewer'),

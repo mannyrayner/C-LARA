@@ -24,7 +24,7 @@ from django.contrib.auth.models import User
 from django_q.tasks import async_task
 from django_q.models import Task
 
-from .forms import RegistrationForm, UserForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, UserConfigForm
+from .forms import RegistrationForm, UserForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
@@ -536,6 +536,52 @@ def delete_tts_data_complete(request, language, status):
 
         return render(request, 'clara_app/delete_tts_data.html',
                       { 'form': form, 'clara_version': clara_version, } )
+
+# Select a project and make yourself co-owner of it (admin only)
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def admin_project_ownership(request):
+    search_form = ProjectSearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        title = search_form.cleaned_data.get('title')
+        l2 = search_form.cleaned_data.get('l2')
+        l1 = search_form.cleaned_data.get('l1')
+
+        if title:
+            query &= Q(title__icontains=title)
+        if l2:
+            query &= Q(l2__icontains=l2)
+        if l1:
+            query &= Q(l1__icontains=l1)
+
+    projects = CLARAProject.objects.filter(query).order_by(Lower('title'))
+
+    if request.method == 'POST':
+        formset = ProjectSelectionFormSet(request.POST)
+        if formset.is_valid():
+            for form in formset:
+                if form.cleaned_data.get('select'):
+                    project_id = form.cleaned_data.get('project_id')
+                    selected_project = CLARAProject.objects.get(pk=project_id)
+                    ProjectPermissions.objects.create(user=request.user, project=selected_project, role='OWNER')
+                    messages.success(request, f"You are now a co-owner of the project: {selected_project.title}")
+            return redirect('admin_project_ownership')
+    else:
+        projects_info = [{'id': project.id, 'title': project.title, 'l2': project.l2} for project in projects]
+        initial_data = [{'project_id': project['id']} for project in projects_info]
+        formset = ProjectSelectionFormSet(initial=initial_data)
+
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/admin_project_ownership.html', {
+        'formset': formset,
+        'projects_info': projects_info,
+        'search_form': search_form,
+        'clara_version': clara_version
+    })
+
 
 # Manage users declared as 'language masters', adding or withdrawing the 'language master' privilege   
 @login_required

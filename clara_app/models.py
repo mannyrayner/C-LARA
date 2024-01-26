@@ -239,6 +239,9 @@ class Content(models.Model):
     annotator = models.CharField(max_length=255)
     difficulty_level = models.CharField(max_length=100)
     summary = models.TextField(default='', blank=True)
+    # Timestamps for dependency tracking
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return self.title
