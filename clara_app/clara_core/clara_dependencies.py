@@ -7,6 +7,8 @@ from .clara_classes import InternalCLARAError
 import traceback
 
 class CLARADependencies:
+
+    # Initialise with the information needed to calculate whether processing phases are up to date.
     def __init__(self, clara_project_internal, project_id,
                  human_audio_info=None, phonetic_human_audio_info=None,
                  format_preference=None, content_object=None,
@@ -18,6 +20,7 @@ class CLARADependencies:
         self.format_preference = format_preference
         self.content_object = content_object
 
+        # The different C-LARA processing phases we will evaluate for being up to date
         self._processing_phases = [
             "plain",                # Plain text
                                     # Accessible from CLARAProjectInternal object
@@ -71,6 +74,7 @@ class CLARADependencies:
                                     # Accessible from CLARAProject object
             ]
 
+        # For each processing phase, list the preceding phases on which it is immediately dependent
         self._immediate_dependencies = {
             "plain": [],
             
@@ -105,6 +109,7 @@ class CLARADependencies:
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
             }
 
+    # Create the transitive closure of _immediate_dependencies to get the full list of dependencies
     def get_dependencies(processing_phase_id):
         all_dependencies = []
         
@@ -116,6 +121,7 @@ class CLARADependencies:
             
         return remove_duplicates_from_list_of_hashable_items(all_dependencies)
 
+    # Get the latest timestamp for files and database records associated with a processing phase
     def timestamp_for_phase(processing_phase_id):
         if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
                                     "segmented", "phonetic", "gloss", "lemma" ]:
@@ -185,10 +191,12 @@ class CLARADependencies:
         else:
             raise InternalCLARAError(message=f'Unknown processing phase id {processing_phase_id}')
 
+    # Get the latest timestamp associated with all the phases
     def timestamps_for_all_phases():
         return { processing_phase_id: self.timestamp_for_phase(processing_phase_id)
                  for processing_phase_id in self._processing_phases }
 
+    # Use timestamps_for_all_phases to get the latest timestamp for all the phases on which each phase depends
     def timestamp_for_all_phase_dependencies():
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
         result = {}
@@ -201,6 +209,7 @@ class CLARADependencies:
             
         return result
 
+    # Use the timestamps for phases and dependencies to determine whether the resources for each phase are up to date
     def up_to_date_dict():
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
         processing_phase_dependency_timestamp_dict = self.timestamp_for_all_phase_dependencies()
@@ -222,4 +231,27 @@ class CLARADependencies:
                 result[processing_phase] = True
 
         return result
-    
+
+# Utility functions
+
+# Return the latest in a list of timestamps. If list is empty, return None
+def latest_timestamp(timestamps):
+    if not timestamps:
+        return None
+    return max(timestamp for timestamp in timestamps if timestamp is not None)
+
+# Returns True if timestamp1 is later than timestamp2, otherwise False
+def later_timestamp(timestamp1, timestamp2):
+    if timestamp1 is None or timestamp2 is None:
+        return False
+    return timestamp1 > timestamp2
+
+# Returns the time delta in seconds between the present moment and the timestamp.
+# This should be useful for debugging.
+def timestamp_to_age_in_seconds(timestamp):
+    if timestamp is None:
+        return None
+    now = datetime.now().timestamp()
+    return int(now - timestamp.timestamp())
+
+
