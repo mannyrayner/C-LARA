@@ -30,7 +30,7 @@ from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
-from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
+from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
@@ -1882,6 +1882,7 @@ def project_detail(request, project_id):
     up_to_date_dict = clara_dependencies.up_to_date_dict(debug=True)
 
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
+    can_create_segmented_title = clara_project_internal.text_versions["title"]
     can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
     can_render_normal = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
@@ -1905,7 +1906,9 @@ def project_detail(request, project_id):
                   { 'project': project, 'form': form, 'api_cost': api_cost,
                     'text_versions': text_versions,
                     'images_exist': images_exist,
+                    'up_to_date_dict': up_to_date_dict,
                     'can_create_segmented_text': can_create_segmented_text,
+                    'can_create_segmented_title': can_create_segmented_title,
                     'can_create_phonetic_text': can_create_phonetic_text,
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
                     'can_render_normal': can_render_normal,
@@ -2819,6 +2822,8 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreatePlainTextForm(*args, **kwargs)
     elif version == 'title':
         return CreateTitleTextForm(*args, **kwargs)
+    elif version == 'segmented_title':
+        return CreateSegmentedTitleTextForm(*args, **kwargs)
     elif version == 'summary':
         return CreateSummaryTextForm(*args, **kwargs)
     elif version == 'cefr_level':
@@ -2871,6 +2876,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
         return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'title':
         return ( 'generate', clara_project_internal.create_title(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'segmented_title':
+        return ( 'generate', clara_project_internal.create_segmented_title(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'summary':
         return ( 'generate', clara_project_internal.create_summary(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'cefr_level':
@@ -2922,6 +2929,8 @@ def previous_version_and_template_for_version(this_version):
         return ( 'plain', 'clara_app/create_plain_text.html' )
     elif this_version == 'title':
         return ( 'plain', 'clara_app/create_title.html' )
+    elif this_version == 'segmented_title':
+        return ( 'title', 'clara_app/create_segmented_title.html' )
     elif this_version == 'summary':
         return ( 'plain', 'clara_app/create_summary.html' )
     elif this_version == 'cefr_level':
@@ -2958,6 +2967,14 @@ def create_plain_text(request, project_id):
 @user_has_a_project_role
 def create_title(request, project_id):
     this_version = 'title'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
+#Create or edit title for the text     
+@login_required
+@user_has_a_project_role
+def create_segmented_title(request, project_id):
+    this_version = 'segmented_title'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 

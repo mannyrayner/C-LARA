@@ -217,6 +217,17 @@ class CreateSegmentedTextForm(CreateAnnotatedTextForm):
             choice for choice in self.TEXT_CHOICES if choice[0] != 'jieba'
             ]
 
+class CreateSegmentedTitleTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Generate title using AI'),
+        ('manual', 'Manually enter/edit title'),
+        ('load_archived', 'Load archived version')
+    ]
+    
+    def __init__(self, *args, prompt=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
+
 class CreateTitleTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Generate title using AI'),
