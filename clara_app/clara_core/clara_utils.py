@@ -716,15 +716,20 @@ def pathname_parts(pathname):
     pathname1 = pathname.replace('\\', '/')
     return Path(pathname1).parts
 
-def get_file_time(pathname):
+def get_file_time(pathname, time_format='float'):
     abspathname = absolute_file_name(pathname)
 
     if _s3_storage:
         fail_if_no_s3_bucket()
         obj = _s3_client.head_object(Bucket=_s3_bucket_name, Key=abspathname)
-        return obj['LastModified'].timestamp()
+        float_value = obj['LastModified'].timestamp()
     else:
-        return Path(abspathname).stat().st_mtime
+        float_value = Path(abspathname).stat().st_mtime
+
+    if time_format == 'timestamp':
+        return datetime.fromtimestamp(float_value)
+    else:
+        return float_value
       
 def make_tmp_file(prefix, extension):
     return f"$CLARA/tmp/{prefix}_{uuid.uuid4()}.{extension}"

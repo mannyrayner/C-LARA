@@ -131,12 +131,13 @@ class CLARADependencies:
                     return None
                 else:
                     file_path = self.clara_project_internal.text_versions[processing_phase_id]
-                    return get_file_time(file_path)
+                    return get_file_time(file_path, time_format='timestamp')
             except FileNotFoundError:
                 return None
         elif processing_phase_id == 'images':
                 images = self.clara_project_internal.get_all_project_images()
-                timestamps = [ get_file_time(image.image_file_path) for image in images ]
+                timestamps = [ get_file_time(image.image_file_path, time_format='timestamp')
+                               for image in images ]
                 return latest_timestamp(timestamps)
         elif processing_phase_id == 'audio':
             if not self.human_audio_info:
@@ -181,12 +182,12 @@ class CLARADependencies:
             if not self.clara_project_internal.rendered_html_exists(self.project_id):
                 return None
             else:
-                return self.clara_project_internal.rendered_html_timestamp(self.project_id)
+                return self.clara_project_internal.rendered_html_timestamp(self.project_id, time_format='timestamp')
         elif processing_phase_id == 'render_phonetic':
             if not self.clara_project_internal.rendered_phonetic_html_exists(self.project_id):
                 return None
             else:
-                return self.clara_project_internal.rendered_phonetic_html_timestamp(self.project_id)
+                return self.clara_project_internal.rendered_phonetic_html_timestamp(self.project_id, time_format='timestamp')
         elif processing_phase_id == 'social_network':
             if not self.content_object:
                 return None
@@ -205,6 +206,7 @@ class CLARADependencies:
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
         ages_dict = { processing_phase_id: timestamp_to_age_in_seconds(processing_phase_timestamp_dict[processing_phase_id])
                       for processing_phase_id in self._processing_phases }
+        print(f'Ages for processing phases')
         pprint.pprint(ages_dict)        
 
     # Use timestamps_for_all_phases to get the latest timestamp for all the phases on which each phase depends
