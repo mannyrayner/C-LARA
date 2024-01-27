@@ -1016,7 +1016,7 @@ class CLARAProjectInternal:
         return file_exists(self.rendered_html_page_1_file(project_id))
 
     def rendered_html_timestamp(self, project_id):
-        page1 = file_exists(self.rendered_html_page_1_file(project_id))
+        page1 = self.rendered_html_page_1_file(project_id)
         return None if not file_exists(page1) else get_file_time(page1)
 
     def rendered_html_page_1_file(self, project_id):
@@ -1029,7 +1029,7 @@ class CLARAProjectInternal:
         return file_exists(self.rendered_phonetic_html_page_1_file(project_id))
 
     def rendered_phonetic_html_timestamp(self, project_id):
-        page1 = file_exists(self.rendered_phonetic_html_page_1_file(project_id))
+        page1 = self.rendered_phonetic_html_page_1_file(project_id)
         return None if not file_exists(page1) else get_file_time(page1)
 
     def rendered_phonetic_html_page_1_file(self, project_id):

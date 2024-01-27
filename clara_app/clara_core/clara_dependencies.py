@@ -1,23 +1,24 @@
 
 
 from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, get_file_time
-
 from .clara_classes import InternalCLARAError
 
+from datetime import datetime
 import traceback
+import pprint
 
 class CLARADependencies:
 
     # Initialise with the information needed to calculate whether processing phases are up to date.
     def __init__(self, clara_project_internal, project_id,
                  human_audio_info=None, phonetic_human_audio_info=None,
-                 format_preference=None, content_object=None,
+                 format_preferences=None, content_object=None,
                  callback=None):
         self.clara_project_internal = clara_project_internal
         self.project_id = project_id
         self.human_audio_info = human_audio_info
         self.phonetic_human_audio_info = phonetic_human_audio_info
-        self.format_preference = format_preference
+        self.format_preferences = format_preferences
         self.content_object = content_object
 
         # The different C-LARA processing phases we will evaluate for being up to date
@@ -110,7 +111,7 @@ class CLARADependencies:
             }
 
     # Create the transitive closure of _immediate_dependencies to get the full list of dependencies
-    def get_dependencies(processing_phase_id):
+    def get_dependencies(self, processing_phase_id):
         all_dependencies = []
         
         if not processing_phase_id in self._immediate_dependencies:
@@ -122,12 +123,15 @@ class CLARADependencies:
         return remove_duplicates_from_list_of_hashable_items(all_dependencies)
 
     # Get the latest timestamp for files and database records associated with a processing phase
-    def timestamp_for_phase(processing_phase_id):
+    def timestamp_for_phase(self, processing_phase_id):
         if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
                                     "segmented", "phonetic", "gloss", "lemma" ]:
             try:
-                file = self.clara_project_internal.load_text_version(processing_phase_id)
-                return get_file_time(file)
+                if not self.clara_project_internal.text_versions[processing_phase_id]:
+                    return None
+                else:
+                    file_path = self.clara_project_internal.text_versions[processing_phase_id]
+                    return get_file_time(file_path)
             except FileNotFoundError:
                 return None
         elif processing_phase_id == 'images':
@@ -169,20 +173,20 @@ class CLARADependencies:
             
             return latest_timestamp(timestamps)
         elif processing_phase_id == 'format_preferences':
-            if not self.format_preference:
+            if not self.format_preferences:
                 return None
             else:
-                return self.format_preference.updated_at
+                return self.format_preferences.updated_at
         elif processing_phase_id == 'render':
-            if not self.clara_project_internal.rendered_html_exists(project_id):
+            if not self.clara_project_internal.rendered_html_exists(self.project_id):
                 return None
             else:
-                return self.clara_project_internal.rendered_html_timestamp(project_id)
+                return self.clara_project_internal.rendered_html_timestamp(self.project_id)
         elif processing_phase_id == 'render_phonetic':
-            if not self.clara_project_internal.rendered_phonetic_html_exists(project_id):
+            if not self.clara_project_internal.rendered_phonetic_html_exists(self.project_id):
                 return None
             else:
-                return self.clara_project_internal.rendered_phonetic_html_timestamp(project_id)
+                return self.clara_project_internal.rendered_phonetic_html_timestamp(self.project_id)
         elif processing_phase_id == 'social_network':
             if not self.content_object:
                 return None
@@ -192,12 +196,19 @@ class CLARADependencies:
             raise InternalCLARAError(message=f'Unknown processing phase id {processing_phase_id}')
 
     # Get the latest timestamp associated with all the phases
-    def timestamps_for_all_phases():
+    def timestamps_for_all_phases(self):
         return { processing_phase_id: self.timestamp_for_phase(processing_phase_id)
                  for processing_phase_id in self._processing_phases }
 
+    # Print ages of timestamps for all phases. Use for debugging
+    def print_ages_for_all_phase_timestamps(self):
+        processing_phase_timestamp_dict = self.timestamps_for_all_phases()
+        ages_dict = { processing_phase_id: timestamp_to_age_in_seconds(processing_phase_timestamp_dict[processing_phase_id])
+                      for processing_phase_id in self._processing_phases }
+        pprint.pprint(ages_dict)        
+
     # Use timestamps_for_all_phases to get the latest timestamp for all the phases on which each phase depends
-    def timestamp_for_all_phase_dependencies():
+    def timestamp_for_all_phase_dependencies(self):
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
         result = {}
         
@@ -210,7 +221,7 @@ class CLARADependencies:
         return result
 
     # Use the timestamps for phases and dependencies to determine whether the resources for each phase are up to date
-    def up_to_date_dict():
+    def up_to_date_dict(self):
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
         processing_phase_dependency_timestamp_dict = self.timestamp_for_all_phase_dependencies()
         result = {}
