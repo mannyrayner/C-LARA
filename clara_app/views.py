@@ -50,6 +50,7 @@ from .clara_core.clara_phonetic_lexicon_repository import PhoneticLexiconReposit
 from .clara_core.clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
 from .clara_core.clara_audio_repository import AudioRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
+from .clara_core.clara_dependencies import CLARADependencies
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure
@@ -1868,6 +1869,16 @@ def project_detail(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     text_versions = clara_project_internal.text_versions
+    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    phonetic_human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
+    format_preferences = FormatPreferences.objects.filter(project=project).first()
+    content_object = Content.objects.filter(project=project).first() 
+    clara_dependencies = CLARADependencies(clara_project_internal, project_id,
+                                           human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
+                                           format_preferences=format_preferences, content_object=content_object)
+    # Temporary call for debugging
+    clara_dependencies.print_ages_for_all_phase_timestamps()
+
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
@@ -3187,8 +3198,8 @@ def make_export_zipfile(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
-    human_audio_info_phonetic = HumanAudioInfo.objects.filter(project=project).first()
+    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    human_audio_info_phonetic = PhoneticHumanAudioInfo.objects.filter(project=project).first()
         
     if human_audio_info and human_audio_info.voice_talent_id:
         human_voice_id = human_audio_info.voice_talent_id
