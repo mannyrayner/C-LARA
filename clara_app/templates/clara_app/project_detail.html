@@ -13,78 +13,88 @@
 	<p><a href="{% url 'create_plain_text' project.id %}" 
 	      data-tooltip="Tell the AI to create the original text for your project. Alternately, edit the result or paste in your own text." >
 		  Create/Edit Plain Text</a> 
-		  {% if text_versions.plain %}✓{% endif %}</p>
+		  {% if up_to_date_dict.plain %}✓{% endif %}</p>
 	<p><a href="{% url 'create_title' project.id %}" 
 	      data-tooltip="Tell the AI to create a title to put on the first page of the text. Alternately, edit the result or paste in your own title." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Text Title</a>
-		  {% if text_versions.title %}✓{% endif %}</p>
+		  {% if up_to_date_dict.title %}✓{% endif %}</p>
 	<p><a href="{% url 'create_summary' project.id %}" 
 	      data-tooltip="Tell the AI to create a summary of the original text. Alternately, edit the result or paste in your own summary." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Summary</a>
-		  {% if text_versions.summary %}✓{% endif %}</p>
+		  {% if up_to_date_dict.summary %}✓{% endif %}</p>
 	<p><a href="{% url 'create_cefr_level' project.id %}" 
 	      data-tooltip="Tell the AI to estimate the CEFR level (A1 to C2) of the original text. Alternately, edit the result or paste in your estimate." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
 		  Estimate/Edit CEFR Level</a>
-		  {% if text_versions.cefr_level %}✓{% endif %}</p>
+		  {% if up_to_date_dict.cefr_level %}✓{% endif %}</p>
 	<p><a href="{% url 'create_segmented_text' project.id %}" 
 	      data-tooltip="Tell the AI to divide the text into pages and sentence-like segments, and split up compound words. Alternately, edit the result or add your own segmentation." 
 		  {% if not can_create_segmented_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Segmented Text</a>
-		  {% if text_versions.segmented %}✓{% endif %}</p>
+		  {% if up_to_date_dict.segmented %}✓{% endif %}</p>
+	<p><a href="{% url 'create_segmented_title' project.id %}" 
+	      data-tooltip="Tell the AI to split up compound words in the title. Alternately, edit the result or add your own segmentation." 
+		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
+		  Create/Edit Segmented Title</a>
+		  {% if up_to_date_dict.segmented_title %}✓{% endif %}</p>
 	<p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image'%}" 
 	      data-tooltip="Upload, replace or remove images to include in the text." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
 		  Add/Remove Images</a>
-		  {% if images_exist %}✓{% endif %}</p>
+		  {% if up_to_date_dict.images %}✓{% endif %}</p>
 	<p><a href="{% url 'create_phonetic_text' project.id %}"
 	      data-tooltip="If a phonetic lexicon has been uploaded for this language, create a version of the text divided into phonetic units."
 	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Phonetic Text</a>
-		  {% if text_versions.phonetic %}✓{% endif %}</p>
+		  {% if up_to_date_dict.phonetic %}✓{% endif %}</p>
 	<p><a href="{% url 'create_glossed_text' project.id %}" 
 	      data-tooltip="Tell the AI to add glosses to the words in the text. Alternately, edit the result or add your own glosses." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Glossed Text</a>
-		  {% if text_versions.gloss %}✓{% endif %}</p>
+		  {% if up_to_date_dict.gloss %}✓{% endif %}</p>
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add lemma and part-of-speech tags to the words in the text. Alternately, edit the result or add your own tags." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">
 		  Create/Edit Lemma Tagged Text</a>
-		  {% if text_versions.lemma %}✓{% endif %}</p>
+		  {% if up_to_date_dict.lemma %}✓{% endif %}</p>
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->
 	<p><a href="{% url 'human_audio_processing' project.id %}" 
 	      data-tooltip="Specify audio options for normal text. If you are using human-recorded audio, upload it." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
-		  Audio Processing</a></p>
+		  Audio Processing</a>
+		  {% if up_to_date_dict.audio %}✓{% endif %}</p>
 	<p><a href="{% url 'human_audio_processing_phonetic' project.id %}" 
 	      data-tooltip="Specify audio options for phonetic text. If you are using human-recorded audio, upload it." 
 	      {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
-		  Audio Processing (Phonetic)</a></p>
+		  Audio Processing (Phonetic)</a>
+		  {% if up_to_date_dict.audio_phonetic %}✓{% endif %}</p>
 	<p><a href="{% url 'set_format_preferences' project.id %}" 
 	      data-tooltip="Select formatting options for font size, font type, text alignment, etc." 
 	      {% if not can_render_normal and not can_render_phonetic %}class="disabled-link"{% endif %}>
-		  Set Format Preferences</a></p>
+		  Set Format Preferences</a>
+		  {% if up_to_date_dict.format_preferences %}✓{% endif %}</p>
 	<p><a href="{% url 'render_text_start_normal' project.id %}" 
 	      data-tooltip="Create the final multimedia version of the text. Usually this will involve using TTS to produce the audio." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
 		  Render Text</a>
-		  {% if rendered_html_exists %}✓{% endif %}</p>
+		  {% if up_to_date_dict.render %}✓{% endif %}</p>
 	<p><a href="{% url 'render_text_start_phonetic' project.id %}"
 	      data-tooltip="Create the final multimedia version of the phonetic text. This may involve using the ipa-reader site to produce the phonetic audio." 
       	  {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
 		  Render Phonetic Text</a>
-		  {% if rendered_phonetic_html_exists %}✓{% endif %}</p>
+		  {% if up_to_date_dict.render_phonetic %}✓{% endif %}</p>
 	<p><a href="{% url 'offer_to_register_content_normal' project.id %}" 
 	      data-tooltip="Make the multimedia version of the text available through the C-LARA social network." 
 	      {% if not rendered_html_exists %}class="disabled-link"{% endif %}>
-		  Register Rendered Text</a></p>
+		  Register Rendered Text</a>
+		  {% if up_to_date_dict.social_network %}✓{% endif %}</p>
 	<p><a href="{% url 'offer_to_register_content_phonetic' project.id %}" 
 	      data-tooltip="Make the multimedia version of the phonetic text available through the C-LARA social network." 
 	      {% if not rendered_phonetic_html_exists %}class="disabled-link"{% endif %}>
-		  Register Rendered Phonetic Text</a></p>
+		  Register Rendered Phonetic Text</a>
+		  {% if up_to_date_dict.social_network %}✓{% endif %}</p>
 	<p><a href="{% url 'make_export_zipfile' project.id %}"
 	      data-tooltip="Package up the project as a zipfile, to archive it or move it to another server."> 
 	      Export zipfile</a></p>
