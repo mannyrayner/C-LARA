@@ -89,7 +89,7 @@ class CLARADependencies:
             
             "segmented": [ "plain" ],
             
-            "images": [ "segmented" ],
+            "images": [ "plain" ],
             
             "phonetic": [ "segmented", "segmented_title" ],
             

@@ -79,7 +79,7 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
     return internalized_text
 
 def parse_content_elements(segment_text, type):
-    if type in ( 'plain', 'summary', 'cefr_level', 'segmented'):
+    if type in ( 'plain', 'summary', 'title', 'cefr_level', 'segmented', 'segmented_title'):
         return parse_content_elements_segmented(segment_text)
     else:
         return parse_content_elements_glossed_or_tagged(segment_text, type)

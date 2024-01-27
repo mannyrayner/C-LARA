@@ -628,15 +628,22 @@ class CLARAProjectInternal:
         self.save_text_version("segmented", segmented_text, user=user, label=label, source='ai_generated')
 
         # If we have a title, which is a separate piece of text, segment that too and save it as "segmented_title"
+        title_api_calls = self.create_segmented_title(user=user, label=label, config_info=config_info, callback=callback)
+        api_calls += title_api_calls
+            
+        return api_calls
+
+    # Call ChatGPT-4 to create version of the title (if available) with segmentation annotations
+    def create_segmented_title(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         title_text = self.load_text_version_or_null("title")
         if title_text:
-            segmented_title_text, title_api_calls = generate_segmented_version(title_text, self.l2_language, config_info=config_info, callback=callback)
+            segmented_title_text, api_calls = generate_segmented_version(title_text, self.l2_language, config_info=config_info, callback=callback)
             # We want the title to be a single segment
             segmented_title_text_cleaned = segmented_title_text.replace('<page>', '').replace('||', '').strip()
             self.save_text_version("segmented_title", segmented_title_text_cleaned, user=user, label=label, source='ai_generated')
-            api_calls += title_api_calls
-            
-        return api_calls
+            return api_calls
+        else:
+            return []
 
     # Call Jieba to create a version of the text with segmentation annotations
     def create_segmented_text_using_jieba(self, user='Unknown', label='') -> List[APICall]:
