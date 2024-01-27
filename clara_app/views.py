@@ -1877,7 +1877,9 @@ def project_detail(request, project_id):
                                            human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
                                            format_preferences=format_preferences, content_object=content_object)
     # Temporary call for debugging
-    clara_dependencies.print_ages_for_all_phase_timestamps()
+    #clara_dependencies.print_ages_for_all_phase_timestamps()
+
+    up_to_date_dict = clara_dependencies.up_to_date_dict(debug=True)
 
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
