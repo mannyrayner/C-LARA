@@ -116,9 +116,12 @@ class CLARADependencies:
         
         if not processing_phase_id in self._immediate_dependencies:
             return []
+        else:
+            immediate_dependencies = self._immediate_dependencies[processing_phase_id]
+            all_dependencies += immediate_dependencies
         
-        for phase in self._immediate_dependencies[processing_phase_id]:
-            all_dependencies += get_dependencies[phase]
+        for dependency_processing_phase_id in immediate_dependencies:
+            all_dependencies += self.get_dependencies(dependency_processing_phase_id)
             
         return remove_duplicates_from_list_of_hashable_items(all_dependencies)
 
@@ -214,16 +217,16 @@ class CLARADependencies:
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
         result = {}
         
-        for processing_phase in self._processing_phases:
+        for processing_phase_id in self._processing_phases:
             dependencies = self.get_dependencies(processing_phase_id)
             timestamps = [ processing_phase_timestamp_dict[dependency_processing_phase_id] for
                            dependency_processing_phase_id in dependencies ]
-            result[processing_phase] = latest_timestamp(timestamps)
+            result[processing_phase_id] = latest_timestamp(timestamps)
             
         return result
 
     # Use the timestamps for phases and dependencies to determine whether the resources for each phase are up to date
-    def up_to_date_dict(self):
+    def up_to_date_dict(self, debug=False):
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
         processing_phase_dependency_timestamp_dict = self.timestamp_for_all_phase_dependencies()
         result = {}
@@ -231,17 +234,27 @@ class CLARADependencies:
         for processing_phase in self._processing_phases:
             processing_phase_timestamp = processing_phase_timestamp_dict[processing_phase]
             processing_phase_dependency_timestamp = processing_phase_dependency_timestamp_dict[processing_phase]
+            
             # If the phase and the dependencies both have a timestamp,
             # and the timestamp for the dependencies is later, then the phase is out of date
             if processing_phase_timestamp and processing_phase_dependency_timestamp and \
                later_timestamp(processing_phase_dependency_timestamp, processing_phase_timestamp):
                 result[processing_phase] = False
-            # If there is no timestamp for the phase, then it's out of date
-            elif not processing_phase_dependency_timestamp:
+            # If there is no timestamp for the phase, then it's out of date or more likely not done at all
+            elif not processing_phase_timestamp:
                 result[processing_phase] = False
             # Otherwise the phase is up to date
             else:
                 result[processing_phase] = True
+
+            if debug:
+                print(f'---------------------')
+                print(f'Processing phase: {processing_phase}:')
+                print(f'Timestamp: {processing_phase_timestamp}')
+                print(f'Age in seconds: {timestamp_to_age_in_seconds(processing_phase_timestamp)}')
+                print(f'Dependencies timestamp: {processing_phase_dependency_timestamp}')
+                print(f'Dependencies age in seconds: {timestamp_to_age_in_seconds(processing_phase_dependency_timestamp)}')
+                print(f'Up to date: {result[processing_phase]}')
 
         return result
 
@@ -257,7 +270,11 @@ def latest_timestamp(timestamps):
 def later_timestamp(timestamp1, timestamp2):
     if timestamp1 is None or timestamp2 is None:
         return False
-    return timestamp1 > timestamp2
+    
+    try:
+        return timestamp1 > timestamp2
+    except:
+        return timestamp_to_age_in_seconds(timestamp2) > timestamp_to_age_in_seconds(timestamp1)
 
 # Returns the time delta in seconds between the present moment and the timestamp.
 # This should be useful for debugging.
