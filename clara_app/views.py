@@ -1356,11 +1356,15 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
                    'error': f'Exception when executing simple_clara action {simple_clara_action}: {str(e)}\n{traceback.format_exc()}' }
 
     if result['status'] == 'finished':
-        post_task_update(callback, f"finished")
+        # Note that we post "finished_simple_clara_action" to distinguish from the lower-level "finished".
+        # This is what simple_clara_status is listening for
+        post_task_update(callback, f"finished_simple_clara_action")
     else:
         if 'error' in result:
             post_task_update(callback, result['error'])
-        post_task_update(callback, f"error")
+        # Note that we post "error_simple_clara_action" to distinguish from the lower-level "error".
+        # This is what simple_clara_status is listening for
+        post_task_update(callback, f"error_simple_clara_action")
 
     return result
 
@@ -1370,9 +1374,9 @@ def simple_clara_status(request, project_id, report_id):
     print(f'{len(messages)} messages received')
     status = 'unknown'
     new_project_id = 'no_project_id'
-    if 'error' in messages:
+    if 'error_simple_clara_action' in messages:
         status = 'error'
-    elif 'finished' in messages:
+    elif 'finished_simple_clara_action' in messages:
         status = 'finished'  
     else:
         status = 'unknown'    
