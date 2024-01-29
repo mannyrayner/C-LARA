@@ -40,7 +40,7 @@ from .utils import get_user_config, create_internal_project_id, store_api_calls,
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates
-from .utils import uploaded_file_to_file, create_update, current_friends_of_user
+from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
 
 from .clara_core.clara_main import CLARAProjectInternal
 from .clara_core.clara_internalise import internalize_text
@@ -1168,16 +1168,19 @@ def get_simple_clara_resources_helper(project_id):
         if not project_id:
             # Inital state: we passed in a null (zero) project_id. Nothing exists yet.
             resources_available['status'] = 'No project'
+            resources_available['up_to_date_dict'] = {}
             return resources_available
 
         # We have a project, add the L2, L1 and title to available resources
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal)
 
         resources_available['l2'] = project.l2
         resources_available['l1'] = project.l1
         resources_available['title'] = project.title
         resources_available['internal_title'] = clara_project_internal.id
+        resources_available['up_to_date_dict'] = up_to_date_dict
 
         if not clara_project_internal.text_versions['prompt']:
             # We have a project, but no prompt
@@ -1227,9 +1230,10 @@ def simple_clara(request, project_id, status):
     username = request.user.username
     # Get resources available for display based on the current state
     resources = get_simple_clara_resources_helper(project_id)
-    pprint.pprint(resources)
+    #pprint.pprint(resources)
     
     status = resources['status']
+    up_to_date_dict = resources['up_to_date_dict'] 
     form = SimpleClaraForm(initial=resources)
     content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
 
@@ -1264,7 +1268,7 @@ def simple_clara(request, project_id, status):
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
                 elif action == 'create_rendered_text':
-                    simple_clara_action = { 'action': 'create_rendered_text' }
+                    simple_clara_action = { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'post_rendered_text':
                     simple_clara_action = { 'action': 'post_rendered_text' }
                 else:
@@ -1307,10 +1311,11 @@ def simple_clara(request, project_id, status):
         'clara_version': clara_version
     })
 
-# Function to be executed in async process. We pass in the username, a project_id, and a 'simple_clara_action',
+# Function to be executed, possibly in async process. We pass in the username, a project_id, and a 'simple_clara_action',
 # which is a dict containing the other inputs needed for the action in question.
 #
-# If the action succeeds, it returns a dict of the form { 'status': 'finished', 'project_id': project_id }
+# If the action succeeds, it usually returns a dict of the form { 'status': 'finished', 'message': message }
+# In the special case of 'create_project', it also returns a 'project_id'.
 #
 # If it fails, it returns a dict of the form { 'status': 'error', 'error': error_message }
 def perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None):
@@ -1338,7 +1343,7 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
             # simple_clara_action should be of form { 'action': 'regenerate_image', 'image_advice_prompt': image_advice_prompt }
             result = simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_rendered_text':
-            # simple_clara_action should be of form { 'action': 'create_rendered_text' }
+            # simple_clara_action should be of form { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'post_rendered_text':
             # simple_clara_action should be of form { 'action': 'post_rendered_text' }
@@ -1518,57 +1523,73 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
 def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    up_to_date_dict = simple_clara_action['up_to_date_dict']
 
     title = project.title
     user = project.user
     config_info = get_user_config(user)
 
     # Create summary
-    post_task_update(callback, f"STARTED TASK: create summary")
-    api_calls = clara_project_internal.create_summary(user=username, config_info=config_info, callback=callback)
-    store_api_calls(api_calls, project, user, 'summary')
-    post_task_update(callback, f"ENDED TASK: create summary")
+    if not up_to_date_dict['summary']:
+        post_task_update(callback, f"STARTED TASK: create summary")
+        api_calls = clara_project_internal.create_summary(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'summary')
+        post_task_update(callback, f"ENDED TASK: create summary")
 
     # Get CEFR level
-    post_task_update(callback, f"STARTED TASK: get CEFR level")
-    api_calls = clara_project_internal.get_cefr_level(user=username, config_info=config_info, callback=callback)
-    store_api_calls(api_calls, project, user, 'cefr_level')
-    post_task_update(callback, f"ENDED TASK: get CEFR level")
+    if not up_to_date_dict['cefr_level']:
+        post_task_update(callback, f"STARTED TASK: get CEFR level")
+        api_calls = clara_project_internal.get_cefr_level(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'cefr_level')
+        post_task_update(callback, f"ENDED TASK: get CEFR level")
 
     # Create segmented text
-    post_task_update(callback, f"STARTED TASK: add segmentation information")
-    api_calls = clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
-    store_api_calls(api_calls, project, user, 'segmented')
-    post_task_update(callback, f"ENDED TASK: add segmentation information")
+    if not up_to_date_dict['segmented']:
+        post_task_update(callback, f"STARTED TASK: add segmentation information")
+        api_calls = clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'segmented')
+        post_task_update(callback, f"ENDED TASK: add segmentation information")
+
+    # Create segmented title. This will just have been done as part of create_segmented_text if we ran that step
+    if up_to_date_dict['segmented'] and not up_to_date_dict['segmented_title']:
+        post_task_update(callback, f"STARTED TASK: add segmentation information to text title")
+        api_calls = clara_project_internal.create_segmented_title(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'segmented_title')
+        post_task_update(callback, f"ENDED TASK: add segmentation information to text title")
 
     # Create glossed text
-    post_task_update(callback, f"STARTED TASK: add glosses")
-    api_calls = clara_project_internal.create_glossed_text(user=username, config_info=config_info, callback=callback)
-    store_api_calls(api_calls, project, user, 'gloss')
-    post_task_update(callback, f"ENDED TASK: add glosses")
+    if not up_to_date_dict['gloss']:
+        post_task_update(callback, f"STARTED TASK: add glosses")
+        api_calls = clara_project_internal.create_glossed_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'gloss')
+        post_task_update(callback, f"ENDED TASK: add glosses")
 
     # Create lemma-tagged text
-    post_task_update(callback, f"STARTED TASK: add lemma tags")
-    api_calls = clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
-    store_api_calls(api_calls, project, user, 'lemma')
-    post_task_update(callback, f"ENDED TASK: add lemma tags")
+    if not up_to_date_dict['lemma']:
+        post_task_update(callback, f"STARTED TASK: add lemma tags")
+        api_calls = clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'lemma')
+        post_task_update(callback, f"ENDED TASK: add lemma tags")
 
     # Render
-    post_task_update(callback, f"STARTED TASK: create TTS audio and multimodal text")
-    clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
-    post_task_update(callback, f"ENDED TASK: create TTS audio and multimodal text")
+    if not up_to_date_dict['render']:
+        post_task_update(callback, f"STARTED TASK: create TTS audio and multimodal text")
+        clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
+        post_task_update(callback, f"ENDED TASK: create TTS audio and multimodal text")
 
     if phonetic_resources_are_available(project.l2):
         # Create phonetic text
-        post_task_update(callback, f"STARTED TASK: create phonetic text")
-        clara_project_internal.create_phonetic_text(user=username, config_info=config_info, callback=callback)
-        post_task_update(callback, f"ENDED TASK: create phonetic text")
+        if not up_to_date_dict['phonetic']:
+            post_task_update(callback, f"STARTED TASK: create phonetic text")
+            clara_project_internal.create_phonetic_text(user=username, config_info=config_info, callback=callback)
+            post_task_update(callback, f"ENDED TASK: create phonetic text")
 
         # Render phonetic text and then render normal text again to get the links right
-        post_task_update(callback, f"STARTED TASK: create phonetic multimodal text")
-        clara_project_internal.render_text(project_id, phonetic=True, self_contained=True, callback=callback)
-        clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
-        post_task_update(callback, f"ENDED TASK: create phonetic multimodal text")
+        if not up_to_date_dict['render_phonetic']:
+            post_task_update(callback, f"STARTED TASK: create phonetic multimodal text")
+            clara_project_internal.render_text(project_id, phonetic=True, self_contained=True, callback=callback)
+            clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
+            post_task_update(callback, f"ENDED TASK: create phonetic multimodal text")
 
     return { 'status': 'finished',
              'message': 'Created the multimedia text.'}
@@ -1869,17 +1890,7 @@ def project_detail(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     text_versions = clara_project_internal.text_versions
-    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
-    phonetic_human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
-    format_preferences = FormatPreferences.objects.filter(project=project).first()
-    content_object = Content.objects.filter(project=project).first() 
-    clara_dependencies = CLARADependencies(clara_project_internal, project_id,
-                                           human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
-                                           format_preferences=format_preferences, content_object=content_object)
-    # Temporary call for debugging
-    #clara_dependencies.print_ages_for_all_phase_timestamps()
-
-    up_to_date_dict = clara_dependencies.up_to_date_dict(debug=True)
+    up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal)
 
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_segmented_title = clara_project_internal.text_versions["title"]
