@@ -3,7 +3,8 @@
 from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, get_file_time
 from .clara_classes import InternalCLARAError
 
-from datetime import datetime
+from datetime import datetime, timezone
+
 import traceback
 import pprint
 
@@ -137,11 +138,13 @@ class CLARADependencies:
                     return get_file_time(file_path, time_format='timestamp')
             except FileNotFoundError:
                 return None
+            
         elif processing_phase_id == 'images':
                 images = self.clara_project_internal.get_all_project_images()
                 timestamps = [ get_file_time(image.image_file_path, time_format='timestamp')
                                for image in images ]
                 return latest_timestamp(timestamps)
+            
         elif processing_phase_id == 'audio':
             if not self.human_audio_info:
                 return None
@@ -155,12 +158,16 @@ class CLARADependencies:
                 metadata += self.clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
                                                                            audio_type_for_segments='human', type='segments',
                                                                            format='text_and_full_file')
-            timestamps = [ timestamp_for_file(item['full_file']) for item in metadata ]
+            objects_and_timestamps = [ [ item['full_file'], get_file_time(item['full_file'], time_format='timestamp') ]
+                                       for item in metadata
+                                       # We can have null files for items that haven't been recorded
+                                       if item['full_file'] ]
 
             if self.human_audio_info.updated_at:
-                timestamps.append(human_audio_info.updated_at)
-            
-            return latest_timestamp(timestamps)
+                objects_and_timestamps.append([ 'human_audio_info record', self.human_audio_info.updated_at ])
+
+            return latest_timestamp_from_objects_and_timestamps(objects_and_timestamps, label='human_audio', debug=False)
+        
         elif processing_phase_id == 'audio_phonetic':
             if not self.phonetic_human_audio_info:
                 return None
@@ -170,32 +177,40 @@ class CLARADependencies:
                 metadata += self.clara_project_internal.get_audio_metadata(phonetic=True, human_voice_id=human_voice_id,
                                                                            audio_type_for_words='human', type='words',
                                                                            format='text_and_full_file')
-            timestamps = [ timestamp_for_file(item['full_file']) for item in metadata ]
+            objects_and_timestamps = [ [ item['full_file'], get_file_time(item['full_file'], time_format='timestamp') ]
+                                       for item in metadata
+                                       # We can have null files for items that haven't been recorded
+                                       if item['full_file'] ]
 
             if self.phonetic_human_audio_info.updated_at:
-                timestamps.append(phonetic_human_audio_info.updated_at)
+                objects_and_timestamps.append([ 'phonetic_human_audio_info record', self.phonetic_human_audio_info.updated_at ])
             
-            return latest_timestamp(timestamps)
+            return latest_timestamp_from_objects_and_timestamps(objects_and_timestamps, label='phonetic_human_audio', debug=False)
+        
         elif processing_phase_id == 'format_preferences':
             if not self.format_preferences:
                 return None
             else:
                 return self.format_preferences.updated_at
+            
         elif processing_phase_id == 'render':
             if not self.clara_project_internal.rendered_html_exists(self.project_id):
                 return None
             else:
                 return self.clara_project_internal.rendered_html_timestamp(self.project_id, time_format='timestamp')
+            
         elif processing_phase_id == 'render_phonetic':
             if not self.clara_project_internal.rendered_phonetic_html_exists(self.project_id):
                 return None
             else:
                 return self.clara_project_internal.rendered_phonetic_html_timestamp(self.project_id, time_format='timestamp')
+            
         elif processing_phase_id == 'social_network':
             if not self.content_object:
                 return None
             else:
                 return self.content_object.updated_at
+            
         else:
             raise InternalCLARAError(message=f'Unknown processing phase id {processing_phase_id}')
 
@@ -240,9 +255,11 @@ class CLARADependencies:
             if processing_phase_timestamp and processing_phase_dependency_timestamp and \
                later_timestamp(processing_phase_dependency_timestamp, processing_phase_timestamp):
                 result[processing_phase] = False
-            # If there is no timestamp for the phase, then it's out of date or more likely not done at all
+            # Else if there is no timestamp, then if it's an optional phase, count it as up to date
+            # otherwise count it as out of date
             elif not processing_phase_timestamp:
-                result[processing_phase] = False
+                _optional_phases = ( "audio", "audio_phonetic", "format_preferences" )
+                result[processing_phase] = True if processing_phase in _optional_phases else False
             # Otherwise the phase is up to date
             else:
                 result[processing_phase] = True
@@ -262,19 +279,43 @@ class CLARADependencies:
 
 # Return the latest in a list of timestamps. If list is empty, return None
 def latest_timestamp(timestamps):
-    if not timestamps:
+    try:
+        aware_timestamps = [convert_to_timezone_aware(timestamp)
+                            for timestamp in timestamps if timestamp is not None]
+        return max(aware_timestamps)
+    except ValueError:
+        # Return None if the list is empty (i.e., all timestamps are None)
         return None
-    return max(timestamp for timestamp in timestamps if timestamp is not None)
+
+# Version of latest_timestamp adapted to print more debugging info
+def latest_timestamp_from_objects_and_timestamps(objects_and_timestamps, label=None, debug=False):
+    if not objects_and_timestamps:
+        if debug:
+            print(f'latest_timestamp_from_objects_and_timestamps (label={label}): empty list')
+        return None
+
+    ( latest_object, latest_timestamp ) = ( None, None )
+    for ( x, timestamp ) in objects_and_timestamps:
+        if not latest_timestamp or later_timestamp(timestamp, latest_timestamp):
+            ( latest_object, latest_timestamp ) = ( x, timestamp)
+
+    if debug:
+        print(f'latest_timestamp_from_objects_and_timestamps (label={label})')
+        print(f'latest_timestamp: {latest_timestamp}')
+        print(f'latest_age: {timestamp_to_age_in_seconds(latest_timestamp)}')
+        print(f'latest_object: "{latest_object}"')
+
+    return latest_timestamp
 
 # Returns True if timestamp1 is later than timestamp2, otherwise False
 def later_timestamp(timestamp1, timestamp2):
     if timestamp1 is None or timestamp2 is None:
         return False
-    
-    try:
-        return timestamp1 > timestamp2
-    except:
-        return timestamp_to_age_in_seconds(timestamp2) > timestamp_to_age_in_seconds(timestamp1)
+
+    aware_timestamp1 = convert_to_timezone_aware(timestamp1)
+    aware_timestamp2 = convert_to_timezone_aware(timestamp2)
+                                                                               
+    return aware_timestamp1 > aware_timestamp2
 
 # Returns the time delta in seconds between the present moment and the timestamp.
 # This should be useful for debugging.
@@ -284,4 +325,10 @@ def timestamp_to_age_in_seconds(timestamp):
     now = datetime.now().timestamp()
     return int(now - timestamp.timestamp())
 
-
+# Convert naive datetime objects to timezone-aware objects (using UTC)
+def convert_to_timezone_aware(timestamp):
+    try:
+        return timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=timezone.utc)
+    except:
+        return timestamp
+    
