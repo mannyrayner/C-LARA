@@ -64,17 +64,17 @@
 	      data-tooltip="Specify audio options for normal text. If you are using human-recorded audio, upload it." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
 		  Audio Processing</a>
-		  {% if up_to_date_dict.audio %}✓{% endif %}</p>
+		  {% if up_to_date_dict.audio and can_render_normal %}✓{% endif %}</p>
 	<p><a href="{% url 'human_audio_processing_phonetic' project.id %}" 
 	      data-tooltip="Specify audio options for phonetic text. If you are using human-recorded audio, upload it." 
 	      {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
 		  Audio Processing (Phonetic)</a>
-		  {% if up_to_date_dict.audio_phonetic %}✓{% endif %}</p>
+		  {% if up_to_date_dict.audio_phonetic and can_render_phonetic %}✓{% endif %}</p>
 	<p><a href="{% url 'set_format_preferences' project.id %}" 
 	      data-tooltip="Select formatting options for font size, font type, text alignment, etc." 
 	      {% if not can_render_normal and not can_render_phonetic %}class="disabled-link"{% endif %}>
 		  Set Format Preferences</a>
-		  {% if up_to_date_dict.format_preferences %}✓{% endif %}</p>
+		  {% if up_to_date_dict.format_preferences and can_render_normal %}✓{% endif %}</p>
 	<p><a href="{% url 'render_text_start_normal' project.id %}" 
 	      data-tooltip="Create the final multimedia version of the text. Usually this will involve using TTS to produce the audio." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
