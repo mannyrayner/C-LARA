@@ -1201,6 +1201,10 @@ def get_simple_clara_resources_helper(project_id):
         if image:
             resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
 
+        if clara_project_internal.text_versions['segmented']:
+            # We have segmented text
+            resources_available['segmented_text'] = clara_project_internal.load_text_version('segmented')
+
         if not clara_project_internal.rendered_html_exists(project_id):
             # We have plain text and image, but no rendered HTML
             resources_available['status'] = 'No multimedia' if image else 'No image'
@@ -1258,6 +1262,9 @@ def simple_clara(request, project_id, status):
                 elif action == 'save_text':
                     plain_text = form.cleaned_data['plain_text']
                     simple_clara_action = { 'action': 'save_text', 'plain_text': plain_text }
+                elif action == 'save_segmented_text':
+                    segmented_text = form.cleaned_data['segmented_text']
+                    simple_clara_action = { 'action': 'save_segmented_text', 'segmented_text': segmented_text }
                 elif action == 'save_text_title':
                     text_title = form.cleaned_data['text_title']
                     simple_clara_action = { 'action': 'save_text_title', 'text_title': text_title }
@@ -1275,7 +1282,8 @@ def simple_clara(request, project_id, status):
                     messages.error(request, f"Error: unknown action '{action}'")
                     return redirect('simple_clara', project_id, 'error')
 
-                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_text_title', 'post_rendered_text' )
+                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text',
+                                                             'save_text_title', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
                     result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
@@ -1333,6 +1341,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'save_text':
             # simple_clara_action should be of form { 'action': 'save_text', 'plain_text': plain_text }
             result = simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_segmented_text':
+            # simple_clara_action should be of form { 'action': 'save_segmented_text', 'segmented_text': segmented_text }
+            result = simple_clara_save_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'save_text_title':
             # simple_clara_action should be of form { 'action': 'save_text_title', 'text_title': text_title }
             result = simple_clara_save_text_title_helper(username, project_id, simple_clara_action, callback=callback)
@@ -1469,6 +1480,18 @@ def simple_clara_save_text_helper(username, project_id, simple_clara_action, cal
 
     return { 'status': 'finished',
              'message': 'Saved the text.'}
+
+def simple_clara_save_segmented_text_helper(username, project_id, simple_clara_action, callback=None):
+    segmented_text = simple_clara_action['segmented_text']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Save the segmented text
+    clara_project_internal.save_text_version('segmented', segmented_text, source='human_revised', user=username)
+
+    return { 'status': 'finished',
+             'message': 'Saved the segmented text.'}
 
 def simple_clara_save_text_title_helper(username, project_id, simple_clara_action, callback=None):
     text_title = simple_clara_action['text_title']
