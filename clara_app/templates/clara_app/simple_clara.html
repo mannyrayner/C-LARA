@@ -45,6 +45,12 @@
     {% endif %}
   
     {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+	  {% if status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+	    <h3>Segmented text</h3>
+		<p>{{ form.segmented_text }}
+	    <button type="submit" name="action" value="save_segmented_text">Save Edited Segmented Text</button>
+		<br>
+	  {% endif %}
 	  <h3>Multimedia text</h3>
 	  {% if status != 'No image' and status != 'No multimedia' %}
 	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
