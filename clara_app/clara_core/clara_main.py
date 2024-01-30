@@ -161,6 +161,7 @@ import logging
 import pprint
 import traceback
 import tempfile
+import pickle
 
 config = get_config()
 
@@ -187,7 +188,7 @@ class CLARAProjectInternal:
             "lemma": None,
             "lemma_and_gloss": None,
         }
-        self.internalised_and_annotated_text = None
+        self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
         self.image_repository = ImageRepository()
         self._ensure_directories()
         self._store_information_in_dir()
@@ -816,6 +817,21 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- Concordance annotations done")
 ##        self.internalised_and_annotated_text = text_object
         return text_object
+
+    def save_internalised_and_annotated_text(self, text_object):
+        try:
+            file = absolute_local_file_name(self.internalised_and_annotated_text_path)
+            pickle.dump(text_object, file)
+        except:
+            print(f'*** Warning: call to pickle.dump failed')
+            return
+
+    def get_saved_internalised_and_annotated_text(self):
+        try:
+            file = absolute_local_file_name(self.internalised_and_annotated_text_path)
+            return pickle.load(file)
+        except:
+            return None
 
     # Get audio metadata for the project.
     #
