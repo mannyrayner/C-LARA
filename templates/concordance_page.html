@@ -31,7 +31,7 @@
 	        {%- endif -%}
 		  {%- elif element.type == "NonWordText" -%}{{ element.content }}
 		  {%- elif element.type == "Image" -%} 
-			 <img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.thumbnail_src }}" alt="Thumbnail">
+			 <img src="{{ '/accounts/projects/serve_project_image/' + element.content.project_id_internal + '/' + element.content.thumbnail_src }}" alt="Thumbnail">
 	      {%- endif -%}  
       {%- endfor -%}
       {%- if segment.annotations.tts -%}

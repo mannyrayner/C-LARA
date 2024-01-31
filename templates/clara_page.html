@@ -36,7 +36,7 @@
 		  {%- for element in segment.content_elements -%}
 		    {%- if element.type == "Image" -%}
 			  <div class="image-container" style="width: {{ element.content.width }}px; height: {{ element.content.height }}px;">
-				<img src="{{ '/accounts/projects/serve_project_image/' + project_id_internal + '/' + element.content.src }}" alt="Project Image">
+				<img src="{{ '/accounts/projects/serve_project_image/' + element.content.project_id_internal + '/' + element.content.src }}" alt="Project Image">
 				{%- if not phonetic and element.content.transformed_segments -%}
 				  <svg viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
 				  {%- for segment in element.content.transformed_segments -%}
