@@ -342,3 +342,44 @@ class Update(models.Model):
     class Meta:
         ordering = ['-timestamp']
         
+# Through model to maintain order in the ReadingHistory ManyToMany relationship
+class ReadingHistoryProjectOrder(models.Model):
+    reading_history = models.ForeignKey('ReadingHistory', on_delete=models.CASCADE)
+    project = models.ForeignKey('CLARAProject', on_delete=models.CASCADE)  # Direct reference to CLARAProject
+    order = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ['order']
+
+# Main ReadingHistory model
+class ReadingHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reading_histories')
+    language = models.CharField(max_length=100)
+    projects = models.ManyToManyField('CLARAProject', through=ReadingHistoryProjectOrder, related_name='included_in_reading_histories')
+
+    def __str__(self):
+        return f"Reading History for {self.user.username} in {self.language}"
+
+    def add_project(self, project):
+        """Add a project to the reading history."""
+        max_order = self.projects_through.order_by('-order').first()
+        next_order = max_order.order + 1 if max_order else 0
+        ReadingHistoryProjectOrder.objects.create(reading_history=self, project=project, order=next_order)
+
+    def remove_project(self, project):
+        """Remove a project from the reading history and adjust order of remaining projects."""
+        project_order = self.projects_through.get(project=project)
+        project_order.delete()
+        # Adjust the order of the remaining projects
+        for remaining_project in self.projects_through.filter(order__gt=project_order.order):
+            remaining_project.order -= 1
+            remaining_project.save()
+
+    def get_ordered_projects(self):
+        """Retrieve the ordered list of projects in the reading history."""
+        return [project_order.project for project_order in self.projects_through.order_by('order')]
+
+    @property
+    def projects_through(self):
+        """Helper property to access the through model directly."""
+        return ReadingHistoryProjectOrder.objects.filter(reading_history=self)
