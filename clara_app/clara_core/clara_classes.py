@@ -266,6 +266,10 @@ class TreeTaggerError(Exception):
     def __init__(self, message = 'TreeTagger error'):
         self.message = message
 
+class ReadingHistoryError(Exception):
+    def __init__(self, message = 'ReadingHistory error'):
+        self.message = message
+
 # Can't import from these functions from other files because we get a circular import
 def basename(pathname):
     return os.path.basename(pathname)

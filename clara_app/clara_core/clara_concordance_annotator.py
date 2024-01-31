@@ -14,8 +14,8 @@ from collections import defaultdict
 
 class ConcordanceAnnotator:
 
-    def __init__(self):
-        pass
+    def __init__(self, concordance_id=None):
+        self.concordance_id = concordance_id
 
     def annotate_text(self, text, phonetic=False):
         concordance = defaultdict(lambda: {"segments": set(), "frequency": 0})
@@ -26,7 +26,7 @@ class ConcordanceAnnotator:
         for page in text.pages:
             for segment in page.segments:
                 segment.annotations['page_number'] = page_number
-                segment.annotations['segment_uid'] = f"seg_{segment_uid}"
+                segment.annotations['segment_uid'] = f"seg_{segment_uid}" if not self.concordance_id else f"seg_{self.concordance_id}_{segment_uid}"
                 segment_id_mapping[segment.annotations['segment_uid']] = segment
                 segment_uid += 1
 

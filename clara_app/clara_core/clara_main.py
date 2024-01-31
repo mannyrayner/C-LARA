@@ -146,7 +146,8 @@ from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
-from .clara_utils import absolute_file_name, read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
+from .clara_utils import absolute_file_name, absolute_local_file_name
+from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import local_directory_exists, remove_local_directory
@@ -189,10 +190,17 @@ class CLARAProjectInternal:
             "lemma_and_gloss": None,
         }
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
+        self.internalised_and_annotated_text_path_phonetic = self.project_dir / 'internalised_and_annotated_text_phonetic.pickle'
         self.image_repository = ImageRepository()
         self._ensure_directories()
         self._store_information_in_dir()
         self._load_existing_text_versions()
+
+    def get_internalised_and_annotated_text_path(self, phonetic=False):
+        if not phonetic:
+            return self.internalised_and_annotated_text_path
+        else:
+            return self.internalised_and_annotated_text_path_phonetic
 
     def _ensure_directories(self) -> None:
         make_directory(self.project_dir, parents=True, exist_ok=True)
@@ -817,25 +825,38 @@ class CLARAProjectInternal:
             add_image_to_text(text_object, image, project_id_internal=self.id, callback=callback)
         
         post_task_update(callback, f"--- Adding concordance annotations")
-        concordance_annotator = ConcordanceAnnotator()
+        concordance_annotator = ConcordanceAnnotator(concordance_id=self.id)
         concordance_annotator.annotate_text(text_object, phonetic=phonetic)
         post_task_update(callback, f"--- Concordance annotations done")
 ##        self.internalised_and_annotated_text = text_object
+        self.save_internalised_and_annotated_text(text_object, phonetic=phonetic, callback=callback)
         return text_object
 
-    def save_internalised_and_annotated_text(self, text_object):
+    def save_internalised_and_annotated_text(self, text_object, phonetic=False, callback=None):
         try:
-            file = absolute_local_file_name(self.internalised_and_annotated_text_path)
-            pickle.dump(text_object, file)
-        except:
-            print(f'*** Warning: call to pickle.dump failed')
-            return
+            path = absolute_local_file_name(self.get_internalised_and_annotated_text_path(phonetic=phonetic))
+            with open(path, 'wb') as file:
+                pickle.dump(text_object, file)
+            post_task_update(callback, f"--- Saved internalised form to {path}")
+            return True
+        except Exception as e:
+            post_task_update(callback, f'*** Error when trying to save internalised form to {path}')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            return False
 
-    def get_saved_internalised_and_annotated_text(self):
+    def get_saved_internalised_and_annotated_text(self, phonetic=False, callback=None):
         try:
-            file = absolute_local_file_name(self.internalised_and_annotated_text_path)
-            return pickle.load(file)
-        except:
+            path = absolute_local_file_name(self.get_internalised_and_annotated_text_path(phonetic=phonetic))
+            with open(path, 'rb') as file:
+                text_object = pickle.load(file)
+            post_task_update(callback, f"--- Read internalised form from {path}")
+            return text_object
+            
+        except Exception as e:
+            post_task_update(callback, f'*** Error when trying to read internalised form from {path}')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
             return None
 
     # Get audio metadata for the project.
