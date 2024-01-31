@@ -2751,14 +2751,17 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     raise e
                     messages.error(request, f"An error occurred while producing the text. Error details: {str(e)}\n{traceback.format_exc()}")
                     annotated_text = ''
-            # If something happened, log it
+            # If something happened, log it. We don't much care if this fails.
             if action:
-                CLARAProjectAction.objects.create(
-                    project=project,
-                    action=action,
-                    text_version=this_version,
-                    user=request.user
-                )
+                try:
+                    CLARAProjectAction.objects.create(
+                        project=project,
+                        action=action,
+                        text_version=this_version,
+                        user=request.user
+                    )
+                except:
+                    pass
     # We're displaying the current version of the file, or as close as we can get
     else:
         try:
