@@ -6,13 +6,19 @@ render_text operation in CLARAProjectInternal.
 
 A ReadingHistoryInternal has the following instance variables, supplied in the constructor:
 
-project_id. A number representing the id of a Django-level CLARAproject. The ReadingHistory will be displayed
+- project_id.
+
+A number representing the id of a Django-level CLARAproject. The ReadingHistory will be rendered
 as though it were the text associated with this project.
 
-clara_project_internal. A CLARAProjectInternal object which acts as though it were the CLARAProjectInternal
+- clara_project_internal.
+
+A CLARAProjectInternal object which acts as though it were the CLARAProjectInternal
 associated with the Django-level CLARAproject.
 
-component_clara_project_internals. A list of component CLARAProjectInternal objects.
+- component_clara_project_internals.
+
+A list of component CLARAProjectInternal objects.
 
 Methods:
 
@@ -28,7 +34,8 @@ glue them together, and save the result in the clara_project_internal.
 
 - render_combined_text_object(self, phonetic=False, callback=None)
 
-Extract the saved annotated text object from the clara_project_internal and render it.
+Extract the saved annotated text object from the clara_project_internal and render it into the directory
+associated with project_id.
 """
 
 from .clara_renderer import StaticHTMLRenderer
