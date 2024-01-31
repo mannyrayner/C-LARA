@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    {% if title %} <p>"{{ title }}" p. {{ page_number }}</p> {% endif %}
+    {% if page.annotations.title %} <p>"{{ page.annotations.title }}" p. {{ page_number }}</p> {% endif %}
 	<nav class="nav-bar">
 	  <a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">First</a>
 	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
