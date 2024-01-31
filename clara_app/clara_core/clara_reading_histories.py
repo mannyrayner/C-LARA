@@ -1,3 +1,35 @@
+"""
+Implements the ReadingHistoryInternal class. The purpose of this class is to combine together 
+two or more CLARAProjectInternal objects into a single virtual project which represents their concatenation.
+The implementation uses the pickled representations of the internalised text created when performing the
+render_text operation in CLARAProjectInternal.
+
+A ReadingHistoryInternal has the following instance variables, supplied in the constructor:
+
+project_id. A number representing the id of a Django-level CLARAproject. The ReadingHistory will be displayed
+as though it were the text associated with this project.
+
+clara_project_internal. A CLARAProjectInternal object which acts as though it were the CLARAProjectInternal
+associated with the Django-level CLARAproject.
+
+component_clara_project_internals. A list of component CLARAProjectInternal objects.
+
+Methods:
+
+- create_combined_text_object(self, phonetic=False, callback=None)
+
+Extract the saved annotated text object from each of the component_clara_project_internals,
+glue them together, and save the result in the clara_project_internal
+
+- add_component_project_and_create_combined_text_object(self, new_component_project, phonetic=False, callback=None)
+
+Extract the saved annotated text object from the clara_project_internal and the new component project,
+glue them together, and save the result in the clara_project_internal.
+
+- render_combined_text_object(self, phonetic=False, callback=None)
+
+Extract the saved annotated text object from the clara_project_internal and render it.
+"""
 
 from .clara_renderer import StaticHTMLRenderer
 from .clara_classes import Text, ReadingHistoryError
@@ -40,6 +72,7 @@ class ReadingHistoryInternal:
     # glue them together, and save the result in the clara_project_internal
     def add_component_project_and_create_combined_text_object(self, new_component_project, phonetic=False, callback=None):
         try:
+            self.component_clara_project_internals.append(new_component_project)
             old_combined_object = clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
             new_text_object = new_component_project.get_saved_internalised_and_annotated_text(phonetic=phonetic)
             new_combined_text_object = combine_text_objects([ old_combined_object, new_text_object ])
