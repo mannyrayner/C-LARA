@@ -25,11 +25,11 @@ config = get_config()
 
 class StaticHTMLRenderer:
     def __init__(self, project_id, project_id_internal,
-                 title=None,
+                 #title=None,
                  phonetic=False, format_preferences_info=None,
                  normal_html_exists=False, phonetic_html_exists=False, callback=None):
         post_task_update(callback, f'--- Creating StaticHTMLRenderer, format_preferences_info = {format_preferences_info}')
-        self.title = title
+        #self.title = title
         self.phonetic = phonetic
         self.format_preferences_info = format_preferences_info
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
@@ -120,7 +120,7 @@ class StaticHTMLRenderer:
                                         l2_language=l2_language,
                                         is_rtl=is_rtl,
                                         l1_language=l1_language,
-                                        title=self.title,
+                                        #title=self.title,
                                         page_number=page_number,
                                         page_number_str=str(page_number),
                                         phonetic=self.phonetic,

@@ -777,7 +777,8 @@ class CLARAProjectInternal:
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     # Tried caching the internalised version, but it's hard to make this work.
-    def get_internalised_and_annotated_text(self, 
+    def get_internalised_and_annotated_text(self,
+                                            title=None,
                                             human_voice_id=None,
                                             audio_type_for_words='tts', audio_type_for_segments='tts',
                                             preferred_tts_engine=None, preferred_tts_voice=None,
@@ -789,6 +790,10 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- Internalised text created")
         if not text_object:
             return None
+
+        if title:
+            for page in text_object.pages:
+                page.annotations['title'] = title
         
         post_task_update(callback, f"--- Adding audio annotations")
         audio_annotator = AudioAnnotator(self.l2_language, 
@@ -1015,7 +1020,8 @@ class CLARAProjectInternal:
                     phonetic=False, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
         title = self.load_text_version_or_null("title")
-        text_object = self.get_internalised_and_annotated_text(preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
+        text_object = self.get_internalised_and_annotated_text(title=title,
+                                                               preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                                                human_voice_id=human_voice_id,
                                                                audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                                phonetic=phonetic, callback=callback)
@@ -1026,7 +1032,8 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- normal_html_exists: {normal_html_exists}")
         phonetic_html_exists = self.rendered_phonetic_html_exists(project_id)
         post_task_update(callback, f"--- phonetic_html_exists: {phonetic_html_exists}")
-        renderer = StaticHTMLRenderer(project_id, self.id, title=title,
+        renderer = StaticHTMLRenderer(project_id, self.id,
+                                      #title=title,
                                       phonetic=phonetic, format_preferences_info=format_preferences_info,
                                       normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists, callback=callback)
         post_task_update(callback, f"--- Start creating pages")
