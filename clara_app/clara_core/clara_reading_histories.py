@@ -1,6 +1,6 @@
 
+from .clara_renderer import StaticHTMLRenderer
 from .clara_classes import Text, ReadingHistoryError
-
 from .clara_utils import post_task_update
 
 import traceback
@@ -66,7 +66,7 @@ class ReadingHistoryInternal:
                                           normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists,
                                           callback=callback)
             post_task_update(callback, f"--- Start creating pages (phonetic={phonetic})")
-            renderer.render_text(text_object, self_contained=self_contained, callback=callback)
+            renderer.render_text(text_object, self_contained=True, callback=callback)
         except Exception as e:
             post_task_update(callback, f'*** Error when trying to render combined text for reading history')
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
@@ -87,15 +87,13 @@ def combine_text_objects(text_objects, phonetic=False, callback=None):
     for new_text_object in text_objects:
         new_pages = new_text_object.pages
         new_concordance = new_text_object.annotations['concordance'] if 'concordance' in new_text_object.annotations else {}
-        page += new_pages
-        add_to_concordances(concordance, new_concordance)
-
-    self.clara_project_internal.save_internalised_and_annotated_text(text_object, phonetic=phonetic)
+        pages += new_pages
+        add_to_concordance(concordance, new_concordance)
     
-    combined_text_object = Text(pages, l2_language, l1_language, annotations={'concordance': concordance} )
+    return Text(pages, l2_language, l1_language, annotations={'concordance': concordance} )
 
 # The concordance is a lemma-indexed dict, where the values are dicts with key ( 'segments', 'frequency' )
-def add_to_concordances(concordance, new_concordance):
+def add_to_concordance(concordance, new_concordance):
     for lemma in new_concordance:
         if not lemma in concordance:
             concordance[lemma] = new_concordance[lemma]
