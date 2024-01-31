@@ -809,7 +809,7 @@ class CLARAProjectInternal:
                 image.merge_page(page_object)
                 # Remove the Page object from the Text object
                 text_object.remove_page(page_object)
-            add_image_to_text(text_object, image, callback=callback)
+            add_image_to_text(text_object, image, project_id_internal=self.id, callback=callback)
         
         post_task_update(callback, f"--- Adding concordance annotations")
         concordance_annotator = ConcordanceAnnotator()

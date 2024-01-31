@@ -116,7 +116,7 @@ class StaticHTMLRenderer:
         rendered_page = template.render(page=page,
                                         total_pages=total_pages,
                                         project_id=self.project_id,
-                                        project_id_internal=self.project_id_internal,
+                                        #project_id_internal=self.project_id_internal,
                                         l2_language=l2_language,
                                         is_rtl=is_rtl,
                                         l1_language=l1_language,
@@ -133,7 +133,7 @@ class StaticHTMLRenderer:
         project_id_internal = self.project_id_internal
         rendered_page = template.render(lemma=lemma,
                                         concordance_segments=concordance_segments,
-                                        project_id_internal=project_id_internal,
+                                        #project_id_internal=project_id_internal,
                                         l2_language=l2_language,
                                         phonetic=self.phonetic)
         return rendered_page
