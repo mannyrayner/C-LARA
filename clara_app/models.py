@@ -188,8 +188,8 @@ class CLARAProjectAction(models.Model):
     ]
 
     project = models.ForeignKey(CLARAProject, on_delete=models.CASCADE)
-    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
-    text_version = models.CharField(max_length=10, choices=TEXT_VERSION_CHOICES)
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    text_version = models.CharField(max_length=50, choices=TEXT_VERSION_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
