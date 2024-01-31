@@ -118,7 +118,7 @@ nav {
 .speaker-icon {
   cursor: pointer;
   margin-left: 0.2em;
-  font-size: 0.8em;
+  font-size: {{ font_size }};
   vertical-align: middle;
 }
 
