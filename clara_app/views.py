@@ -1201,6 +1201,9 @@ def get_simple_clara_resources_helper(project_id):
         if image:
             resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
 
+        # For uploaded image, in case we want to use one
+        resources_available['image_file_path'] = None
+
         if clara_project_internal.text_versions['segmented']:
             # We have segmented text
             resources_available['segmented_text'] = clara_project_internal.load_text_version('segmented')
@@ -1234,6 +1237,7 @@ def simple_clara(request, project_id, status):
     username = request.user.username
     # Get resources available for display based on the current state
     resources = get_simple_clara_resources_helper(project_id)
+    #print(f'Resources:')
     #pprint.pprint(resources)
     
     status = resources['status']
@@ -1246,8 +1250,10 @@ def simple_clara(request, project_id, status):
         action = request.POST.get('action')
         #print(f'Action = {action}')
         if action:
-            form = SimpleClaraForm(request.POST)
+            form = SimpleClaraForm(request.POST, request.FILES)
             if form.is_valid():
+                #print(f'form.cleaned_data')
+                #pprint.pprint(form.cleaned_data)
                 if action == 'create_project':
                     l2 = form.cleaned_data['l2']
                     l1 = form.cleaned_data['l1']
@@ -1268,6 +1274,14 @@ def simple_clara(request, project_id, status):
                 elif action == 'save_text_title':
                     text_title = form.cleaned_data['text_title']
                     simple_clara_action = { 'action': 'save_text_title', 'text_title': text_title }
+                elif action == 'save_uploaded_image':
+                    if form.cleaned_data['image_file_path']:
+                        uploaded_image_file_path = form.cleaned_data['image_file_path']
+                        image_file_path = uploaded_file_to_file(uploaded_image_file_path)
+                        simple_clara_action = { 'action': 'save_uploaded_image', 'image_file_path': image_file_path }
+                    else:
+                        messages.error(request, f"Error: no image to upload")
+                        return redirect('simple_clara', project_id, 'error')
                 elif action == 'rewrite_text':
                     prompt = form.cleaned_data['prompt']
                     simple_clara_action = { 'action': 'rewrite_text', 'prompt': prompt }
@@ -1283,7 +1297,7 @@ def simple_clara(request, project_id, status):
                     return redirect('simple_clara', project_id, 'error')
 
                 _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text',
-                                                             'save_text_title', 'post_rendered_text' )
+                                                             'save_text_title', 'save_uploaded_image', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
                     result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
@@ -1347,6 +1361,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'save_text_title':
             # simple_clara_action should be of form { 'action': 'save_text_title', 'text_title': text_title }
             result = simple_clara_save_text_title_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_uploaded_image':
+            # simple_clara_action should be of form 'action': 'save_uploaded_image', 'image_file_path': image_file_path }
+            result = simple_clara_save_uploaded_image_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'rewrite_text':
             # simple_clara_action should be of form { 'action': 'rewrite_text', 'prompt': prompt }
             result = simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -1504,6 +1521,21 @@ def simple_clara_save_text_title_helper(username, project_id, simple_clara_actio
 
     return { 'status': 'finished',
              'message': 'Saved the text title.'}
+
+# simple_clara_action should be of form 'action': 'save_uploaded_image', 'image_file_path': image_file_path }
+def simple_clara_save_uploaded_image_helper(username, project_id, simple_clara_action, callback=None):
+    image_file_path = simple_clara_action['image_file_path']
+
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
+    image_name = 'DALLE-E-3-Image-For-Whole-Text'
+    clara_project_internal.add_project_image(image_name, image_file_path, 
+                                             associated_text='', associated_areas='',
+                                             page=1, position='top')
+
+    return { 'status': 'finished',
+             'message': 'Saved the image.'}
 
 def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=None):
     prompt = simple_clara_action['prompt']
@@ -3680,6 +3712,65 @@ def register_project_content_helper(project_id, phonetic_or_normal):
     except Exception as e:
         post_task_update(callback, f"Exception when posting content: {str(e)}\n{traceback.format_exc()}")
         return None
+
+@login_required
+def reading_history(request):
+    user = request.user
+    reading_history = None
+    projects_in_history = []
+    project_id = None
+
+    if request.method == 'POST':
+        l2_form = L2LanguageSelectionForm(request.POST)
+        add_project_form = AddProjectToReadingHistoryForm(request.POST)
+
+        if l2_form.is_valid():
+            l2_language = l2_form.cleaned_data['l2']
+            reading_history, created = ReadingHistory.objects.get_or_create(user=user, l2=l2_language)
+
+            if created:
+                # Create associated CLARAProject and CLARAProjectInternal
+                title = f"{user}_reading_history_for_{l2_language}"
+                l1_language = 'No L1 language'
+                # Create a new CLARAProject, associated with the current user
+                clara_project = CLARAProject(title=title, user=request.user, l2=l2_language, l1=l1_language)
+                clara_project.save()
+                internal_id = create_internal_project_id(title, clara_project.id)
+                # Update the Django project with the internal_id
+                clara_project.internal_id = internal_id
+                clara_project.save()
+                # Create a new CLARAProjectInternal
+                clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
+                reading_history.project = clara_project
+                reading_history.internal_id = internal_id
+                reading_history.save()
+                
+
+            if add_project_form.is_valid() and reading_history:
+                new_project_id = add_project_form.cleaned_data['project_id']
+                new_project = get_object_or_404(CLARAProject, pk=new_project_id)
+                reading_history.add_project(reading_history)
+                reading_history.save()
+
+            clara_project = reading_history.project
+            clara_project_internal = CLARAProjectInternal(clara_project.internal_id, clara_project.l2, clara_project.l1)
+            projects_in_history = reading_history.get_ordered_projects()
+            internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+                                             for project in projects_in_history ]
+            reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
+            reading_history_internal.create_combined_text_object()
+            reading_history_internal.render_combined_text_object()
+
+    else:
+        l2_form = L2LanguageSelectionForm()
+        add_project_form = AddProjectToReadingHistoryForm()
+
+    return render(request, 'clara_app/reading_history.html', {
+        'l2_form': l2_form,
+        'add_project_form': add_project_form,
+        'projects_in_history': projects_in_history,
+        'rendered_link': rendered_link,
+    })
         
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, phonetic_or_normal, filename):

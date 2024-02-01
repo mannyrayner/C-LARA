@@ -354,8 +354,13 @@ class ReadingHistoryProjectOrder(models.Model):
 # Main ReadingHistory model
 class ReadingHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reading_histories')
-    language = models.CharField(max_length=100)
+    l2 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
+    project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, null=True, blank=True, unique=True)
+    internal_id = models.CharField(max_length=200)
     projects = models.ManyToManyField('CLARAProject', through=ReadingHistoryProjectOrder, related_name='included_in_reading_histories')
+
+    class Meta:
+        unique_together = ('user', 'l2')
 
     def __str__(self):
         return f"Reading History for {self.user.username} in {self.language}"

@@ -103,6 +103,7 @@ class SimpleClaraForm(forms.Form):
         required=False,
         initial='' )
     prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
+    image_file_path = forms.ImageField(label='Image File', required=False)
     image_advice_prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False)
     segmented_text = forms.CharField(label='Segmented text', widget=forms.Textarea, required=False) 
