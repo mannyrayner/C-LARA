@@ -1560,8 +1560,9 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
     image_advice_prompt = simple_clara_action['image_advice_prompt']
     
     project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    
     user = project.user
-
     title = project.title
 
     # Create the image
@@ -3744,8 +3745,6 @@ def reading_history(request):
                 reading_history.project = clara_project
                 reading_history.internal_id = internal_id
                 reading_history.save()
-                
-
             if add_project_form.is_valid() and reading_history:
                 new_project_id = add_project_form.cleaned_data['project_id']
                 new_project = get_object_or_404(CLARAProject, pk=new_project_id)
