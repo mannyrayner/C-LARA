@@ -19,9 +19,9 @@
     {% for project, data in page_obj %}
       <li>
 	    {% if clara_version == "simple_clara" %}
-	      <a href="{% url 'simple_clara' project.id 'initial' %}">{{ project.title }}</a> (Role: {{ data.role }})
+	      <a href="{% url 'simple_clara' project.id 'initial' %}">{% if project.title %} {{ project.title }} {% else %} (No title) {% endif %}</a> (Role: {{ data.role }})
 		{% else %}
-          <a href="{% url 'project_detail' project.id %}">{{ project.title }}</a> (Role: {{ data.role }})
+          <a href="{% url 'project_detail' project.id %}">{% if project.title %} {{ project.title }} {% else %} (No title) {% endif %}</a> (Role: {{ data.role }})
 		{% endif %}
         <div class="costInfo" style="display: none;">
           <p>Total cost: ${{ data.cost|floatformat:2 }}</p>
