@@ -1865,14 +1865,14 @@ def manage_project_members(request, project_id):
     else:
         form = AddProjectMemberForm()
 
+    clara_version = get_user_config(request.user)['clara_version']
+
     context = {
         'project': project,
         'permissions': permissions,
         'form': form,
         'clara_version': clara_version,
     }
-    
-    clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/manage_project_members.html', context)
 
