@@ -3,7 +3,7 @@
 {% block content %}
 
   <h2>Simple C-LARA</h2>
-  <form method="post">
+  <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
 	<h3>Project name</h3>
 	<p>{{ form.title }}
@@ -43,6 +43,10 @@
 	   <p>Image generation failed, probably due to constraints on appropriate content. Sometimes adding advice in the box below and regenerating will fix this.</p>
 	   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
     {% endif %}
+	{% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' or status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
+	   <h3>Uploaded image (alternative to AI-generated image)</h3>
+	   <p>{{ form.image_file_path }} <button type="submit" name="action" value="save_uploaded_image">Save Uploaded Image</button><p>
+	{% endif %}
   
     {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
 	  {% if status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
