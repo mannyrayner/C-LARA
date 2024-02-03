@@ -111,6 +111,15 @@ class SimpleClaraForm(forms.Form):
     rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)
     content_id = forms.CharField(required=False)
 
+    def __init__(self, *args, is_rtl_language=False, **kwargs):
+        super(SimpleClaraForm, self).__init__(*args, **kwargs)
+
+        # For right-to-left languages like Arabic, Farsi, Urdu and Hebrew
+        if is_rtl_language:
+            self.fields['text_title'].widget.attrs['dir'] = 'rtl'
+            self.fields['plain_text'].widget.attrs['dir'] = 'rtl'
+            self.fields['segmented_text'].widget.attrs['dir'] = 'rtl'
+
 class ProjectSearchForm(forms.Form):
     title = forms.CharField(required=False)
     l2 = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES), required=False)

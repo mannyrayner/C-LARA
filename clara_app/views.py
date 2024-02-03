@@ -1177,6 +1177,7 @@ def get_simple_clara_resources_helper(project_id):
         up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal)
 
         resources_available['l2'] = project.l2
+        resources_available['rtl_language'] = is_rtl_language(project.l2)
         resources_available['l1'] = project.l1
         resources_available['title'] = project.title
         resources_available['internal_title'] = clara_project_internal.id
@@ -1241,8 +1242,10 @@ def simple_clara(request, project_id, status):
     #pprint.pprint(resources)
     
     status = resources['status']
+    rtl_language = resources['rtl_language'] if 'rtl_language' in resources else False
+    print(f'--- rtl_language = {rtl_language}')
     up_to_date_dict = resources['up_to_date_dict'] 
-    form = SimpleClaraForm(initial=resources)
+    form = SimpleClaraForm(initial=resources, is_rtl_language=rtl_language)
     content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
 
     if request.method == 'POST':
@@ -1250,7 +1253,7 @@ def simple_clara(request, project_id, status):
         action = request.POST.get('action')
         #print(f'Action = {action}')
         if action:
-            form = SimpleClaraForm(request.POST, request.FILES)
+            form = SimpleClaraForm(request.POST, request.FILES, is_rtl_language=rtl_language)
             if form.is_valid():
                 #print(f'form.cleaned_data')
                 #pprint.pprint(form.cleaned_data)
