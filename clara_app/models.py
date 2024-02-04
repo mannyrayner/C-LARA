@@ -8,6 +8,8 @@ from django.db import models
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+
+from .clara_core.clara_main import CLARAProjectInternal
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -66,6 +68,10 @@ class CLARAProject(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     l2 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
+
+    def has_saved_internalised_and_annotated_text(self, phonetic=False):
+        clara_project_internal = CLARAProjectInternal(self.internal_id, self.l2, self.l1)
+        return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [
@@ -228,7 +234,7 @@ class FormatPreferences(models.Model):
 
 class Content(models.Model):
     external_url = models.URLField(max_length=255, blank=True, null=True)
-    project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, null=True, blank=True, unique=True)
+    project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, null=True, blank=True, unique=True, related_name='related_content')
     title = models.CharField(max_length=255)
     text_type = models.CharField(max_length=10, choices=TEXT_TYPE_CHOICES, default='normal')
     l2 = models.CharField(max_length=100, verbose_name='L2 Language')
@@ -356,14 +362,14 @@ class ReadingHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reading_histories')
     l2 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, null=True, blank=True, unique=True)
-    internal_id = models.CharField(max_length=200)
+    internal_id = models.CharField(max_length=200, null=True)
     projects = models.ManyToManyField('CLARAProject', through=ReadingHistoryProjectOrder, related_name='included_in_reading_histories')
 
     class Meta:
         unique_together = ('user', 'l2')
 
     def __str__(self):
-        return f"Reading History for {self.user.username} in {self.language}"
+        return f"Reading History for {self.user.username} in {self.l2}"
 
     def add_project(self, project):
         """Add a project to the reading history."""

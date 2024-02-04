@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update
+from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -35,6 +35,7 @@ from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTag
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
+from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
 from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
@@ -43,14 +44,16 @@ from .utils import post_task_update_in_db, get_task_updates
 from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
 
 from .clara_core.clara_main import CLARAProjectInternal
-from .clara_core.clara_internalise import internalize_text
-from .clara_core.clara_prompt_templates import PromptTemplateRepository
-from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
-from .clara_core.clara_phonetic_lexicon_repository import PhoneticLexiconRepository
-from .clara_core.clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
 from .clara_core.clara_audio_repository import AudioRepository
 from .clara_core.clara_audio_annotator import AudioAnnotator
+from .clara_core.clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+from .clara_core.clara_prompt_templates import PromptTemplateRepository
 from .clara_core.clara_dependencies import CLARADependencies
+from .clara_core.clara_reading_histories import ReadingHistoryInternal
+from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+
+from .clara_core.clara_internalise import internalize_text
+from .clara_core.clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure
@@ -3717,62 +3720,126 @@ def register_project_content_helper(project_id, phonetic_or_normal):
         post_task_update(callback, f"Exception when posting content: {str(e)}\n{traceback.format_exc()}")
         return None
 
+# Show link to reading history for user and l2_language
+# There are controls to change the l2 and add a project to the reading history
 @login_required
-def reading_history(request):
+def reading_history(request, l2_language):
     user = request.user
-    reading_history = None
-    projects_in_history = []
-    project_id = None
+    reading_history, created = ReadingHistory.objects.get_or_create(user=user, l2=l2_language)
+
+    if created:
+        # Create associated CLARAProject and CLARAProjectInternal
+        title = f"{user}_reading_history_for_{l2_language}"
+        l1_language = 'No L1 language'
+        # Create a new CLARAProject, associated with the current user
+        clara_project = CLARAProject(title=title, user=request.user, l2=l2_language, l1=l1_language)
+        clara_project.save()
+        internal_id = create_internal_project_id(title, clara_project.id)
+        # Update the CLARAProject with the internal_id
+        clara_project.internal_id = internal_id
+        clara_project.save()
+        # Create a new CLARAProjectInternal
+        clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
+        reading_history.project = clara_project
+        reading_history.internal_id = internal_id
+        reading_history.save()
+
+    clara_project = reading_history.project
+    project_id = clara_project.id
+    clara_project_internal = CLARAProjectInternal(clara_project.internal_id, clara_project.l2, clara_project.l1)
 
     if request.method == 'POST':
-        l2_form = L2LanguageSelectionForm(request.POST)
-        add_project_form = AddProjectToReadingHistoryForm(request.POST)
+        action = request.POST.get('action')
 
-        if l2_form.is_valid():
-            l2_language = l2_form.cleaned_data['l2']
-            reading_history, created = ReadingHistory.objects.get_or_create(user=user, l2=l2_language)
-
-            if created:
-                # Create associated CLARAProject and CLARAProjectInternal
-                title = f"{user}_reading_history_for_{l2_language}"
-                l1_language = 'No L1 language'
-                # Create a new CLARAProject, associated with the current user
-                clara_project = CLARAProject(title=title, user=request.user, l2=l2_language, l1=l1_language)
-                clara_project.save()
-                internal_id = create_internal_project_id(title, clara_project.id)
-                # Update the Django project with the internal_id
-                clara_project.internal_id = internal_id
-                clara_project.save()
-                # Create a new CLARAProjectInternal
-                clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
-                reading_history.project = clara_project
-                reading_history.internal_id = internal_id
-                reading_history.save()
-            if add_project_form.is_valid() and reading_history:
-                new_project_id = add_project_form.cleaned_data['project_id']
+        if action == 'select_language':
+##            l2_form = L2LanguageSelectionForm(request.POST)
+##            if l2_form.is_valid():
+##                l2_language = l2_form.cleaned_data['l2']
+##            else:
+##                pprint.pprint(l2_form)
+##                messages.error(request, f"Unable to set language")
+##            l2_language = l2_form.cleaned_data['l2']
+            l2_language =  request.POST['l2']
+            return redirect('reading_history', l2_language)
+            
+        elif action == 'add_project':
+##            add_project_form = AddProjectToReadingHistoryForm(request.POST)
+##            if add_project_form.is_valid() and reading_history:
+            if reading_history:
+                new_project_id = request.POST['project_id']
                 new_project = get_object_or_404(CLARAProject, pk=new_project_id)
-                reading_history.add_project(reading_history)
+                reading_history.add_project(new_project)
                 reading_history.save()
 
-            clara_project = reading_history.project
-            clara_project_internal = CLARAProjectInternal(clara_project.internal_id, clara_project.l2, clara_project.l1)
-            projects_in_history = reading_history.get_ordered_projects()
-            internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-                                             for project in projects_in_history ]
-            reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
-            reading_history_internal.create_combined_text_object()
-            reading_history_internal.render_combined_text_object()
+                projects_in_history = reading_history.get_ordered_projects()
 
+                if projects_in_history:
+                    internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+                                                     for project in projects_in_history ]
+                    reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
+                    reading_history_internal.create_combined_text_object()
+                    reading_history_internal.render_combined_text_object()
+                    project_id = clara_project.id
+            else:
+                messages.error(request, f"Unable to add project to reading history")
+            return redirect('reading_history', l2_language)
+
+    # GET request
     else:
-        l2_form = L2LanguageSelectionForm()
-        add_project_form = AddProjectToReadingHistoryForm()
+        languages_available = l2s_in_posted_content()
+        projects_in_history = reading_history.get_ordered_projects()
+        projects_available = projects_available_for_adding_to_history(l2_language, projects_in_history)
+        
+        l2_form = L2LanguageSelectionForm(languages_available=languages_available, l2=l2_language)
+        add_project_form = AddProjectToReadingHistoryForm(projects_available=projects_available)
 
     return render(request, 'clara_app/reading_history.html', {
         'l2_form': l2_form,
         'add_project_form': add_project_form,
         'projects_in_history': projects_in_history,
-        'rendered_link': rendered_link,
+        'project_id': project_id,
+        'projects_available': projects_available
     })
+
+# Find the L2s such that
+#   - they are the L2 of a piece of posted content
+#   - whose project has a saved internalised text
+def l2s_in_posted_content():
+    # Get all Content objects that are linked to a CLARAProject
+    contents_with_projects = Content.objects.exclude(project=None)
+    #pprint.pprint(contents_with_projects)
+    l2_languages = set()
+
+    for content in contents_with_projects:
+        # Check if the associated project has saved internalized text
+        if content.project.has_saved_internalised_and_annotated_text():
+            l2_languages.add(content.l2)
+##            print(f'{content.title} has saved_internalised_and_annotated_text')
+##        else:
+##            print(f'{content.title} does not have saved_internalised_and_annotated_text')
+
+    return list(l2_languages)
+
+# Find the projects that
+#   - have the right l2,
+#   - have been posted as content,
+#   - have a saved internalised text,
+#   - are not already in the history
+def projects_available_for_adding_to_history(l2_language, projects_in_history):
+    # Get all projects that have been posted as content with the specified L2 language
+    projects = CLARAProject.objects.filter(
+        l2=l2_language,
+        related_content__isnull=False
+    ).distinct()
+
+    available_projects = []
+
+    for project in projects:
+        # Check if the project has saved internalized text and is not already in the history
+        if project.has_saved_internalised_and_annotated_text() and project not in projects_in_history:
+            available_projects.append(project)
+
+    return available_projects
         
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, phonetic_or_normal, filename):

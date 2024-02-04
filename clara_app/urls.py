@@ -101,6 +101,7 @@ urlpatterns = [
     path('project/<int:project_id>/generate_text_status/<str:report_id>/', views.generate_text_status, name='generate_text_status'),
     path('project/<int:project_id>/generate_text_monitor/<str:version>/<str:report_id>/', views.generate_text_monitor, name='generate_text_monitor'),
     path('project/<int:project_id>/generate_text_complete/<str:version>/<str:status>/', views.generate_text_complete, name='generate_text_complete'),
+    path('reading_history/<str:l2_language>/', views.reading_history, name='reading_history'),
     path('projects/<int:project_id>/compare_versions/', views.compare_versions, name='compare_versions'),
     path('projects/<int:project_id>/metadata/<str:version>/', views.get_metadata_for_version, name='get_metadata_for_version'),
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/static/<path:filename>', views.serve_rendered_text_static, name='serve_rendered_text'),

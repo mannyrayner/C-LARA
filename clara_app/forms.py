@@ -131,6 +131,30 @@ class ProjectSelectionForm(forms.Form):
     
 ProjectSelectionFormSet = formset_factory(ProjectSelectionForm, extra=0)
 
+class L2LanguageSelectionForm(forms.Form):
+    l2 = forms.ChoiceField(required=False)
+
+    def __init__(self, *args,
+                 languages_available=None, l2=None,
+                 **kwargs):
+        super(L2LanguageSelectionForm, self).__init__(*args, **kwargs)
+        
+        if languages_available:
+            self.fields['l2'].choices = [ ( language, language.capitalize() ) for language in languages_available ]
+        if l2:
+            self.fields['l2'].initial = l2
+
+class AddProjectToReadingHistoryForm(forms.Form):
+    project_id = forms.ChoiceField(required=False)
+
+    def __init__(self, *args,
+                 projects_available=None, l2=None,
+                 **kwargs):
+        super(AddProjectToReadingHistoryForm, self).__init__(*args, **kwargs)
+        
+        if projects_available:
+            self.fields['project_id'].choices = [ ( project.id, project.title ) for project in projects_available ]
+
 class AddProjectMemberForm(forms.Form):
     ROLE_CHOICES = [
         ('VIEWER', 'Viewer'),
