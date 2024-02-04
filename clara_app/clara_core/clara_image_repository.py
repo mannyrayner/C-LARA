@@ -73,7 +73,7 @@ class ImageRepository:
 
             connection.commit()
             connection.close()
-            post_task_update(callback, f'--- Initialised image repository')
+            #post_task_update(callback, f'--- Initialised image repository')
 
         except Exception as e:
             error_message = f'*** Error when trying to initialise image database: "{str(e)}"\n{traceback.format_exc()}'

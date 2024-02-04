@@ -848,6 +848,9 @@ class CLARAProjectInternal:
     def get_saved_internalised_and_annotated_text(self, phonetic=False, callback=None):
         try:
             path = absolute_local_file_name(self.get_internalised_and_annotated_text_path(phonetic=phonetic))
+            if not local_file_exists(path):
+                return None
+            
             with open(path, 'rb') as file:
                 text_object = pickle.load(file)
             post_task_update(callback, f"--- Read internalised form from {path}")
