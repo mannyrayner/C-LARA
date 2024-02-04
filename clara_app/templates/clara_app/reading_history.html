@@ -6,18 +6,19 @@
 <!-- Form to select L2 language -->
 <form method="post">
     {% csrf_token %}
-    <h3>Select Language</h3>
+    <h3>Language</h3>
     {{ l2_form.as_p }}
-    <button type="submit" name="action" value="select_language">Select Language</button>
+    <button type="submit" name="action" value="select_language">Change Language</button>
 </form>
 
 <!-- List of projects in the reading history -->
+<br>
 <h3>Texts in Reading History</h3>
 <ul>
     {% for project in projects_in_history %}
     <li>{{ project.title }}</li>
     {% empty %}
-    <li>No projects in reading history.</li>
+    <li>No texts in current reading history.</li>
     {% endfor %}
 </ul>
 
@@ -32,10 +33,20 @@
 		{% csrf_token %}
 		<h3>Add Text to Reading History</h3>
 		{{ add_project_form.as_p }}
-		<button type="submit" name="action" value="add_project">Add Project</button>
+		<button type="submit" name="action" value="add_project">Add Selected Text</button>
 	</form>
 {% else %}
 <p><b>No other texts currently available to add to history</b</p>
+{% endif %}
+
+<!-- Delete Reading History Button/Form -->
+{% if projects_in_history %}
+	<br>
+	<h3>Delete Current Reading History</h3>
+	<form method="post">
+		{% csrf_token %}
+		<button type="submit" name="action" value="delete_reading_history" onclick="return confirm('Are you sure you want to delete this reading history?');">Delete</button>
+	</form>
 {% endif %}
 
 {% endblock %}
