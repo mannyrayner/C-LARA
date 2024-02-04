@@ -3728,21 +3728,7 @@ def reading_history(request, l2_language):
     reading_history, created = ReadingHistory.objects.get_or_create(user=user, l2=l2_language)
 
     if created:
-        # Create associated CLARAProject and CLARAProjectInternal
-        title = f"{user}_reading_history_for_{l2_language}"
-        l1_language = 'No L1 language'
-        # Create a new CLARAProject, associated with the current user
-        clara_project = CLARAProject(title=title, user=request.user, l2=l2_language, l1=l1_language)
-        clara_project.save()
-        internal_id = create_internal_project_id(title, clara_project.id)
-        # Update the CLARAProject with the internal_id
-        clara_project.internal_id = internal_id
-        clara_project.save()
-        # Create a new CLARAProjectInternal
-        clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
-        reading_history.project = clara_project
-        reading_history.internal_id = internal_id
-        reading_history.save()
+        create_project_and_project_internal_for_reading_history(reading_history, user, l2_language)
 
     clara_project = reading_history.project
     project_id = clara_project.id
@@ -3751,20 +3737,21 @@ def reading_history(request, l2_language):
     if request.method == 'POST':
         action = request.POST.get('action')
 
+        # Changing the reading history language
         if action == 'select_language':
-##            l2_form = L2LanguageSelectionForm(request.POST)
-##            if l2_form.is_valid():
-##                l2_language = l2_form.cleaned_data['l2']
-##            else:
-##                pprint.pprint(l2_form)
-##                messages.error(request, f"Unable to set language")
-##            l2_language = l2_form.cleaned_data['l2']
             l2_language =  request.POST['l2']
             return redirect('reading_history', l2_language)
-            
+
+        # Deleting the reading history for the currently selected language
+        elif action == 'delete_reading_history':
+            reading_history.delete()
+            clara_project.delete()
+            clara_project_internal.delete()
+            messages.success(request, "Reading history deleted successfully.")
+            return redirect('reading_history', l2_language)  
+
+        # Adding a project to the end of the reading history     
         elif action == 'add_project':
-##            add_project_form = AddProjectToReadingHistoryForm(request.POST)
-##            if add_project_form.is_valid() and reading_history:
             if reading_history:
                 new_project_id = request.POST['project_id']
                 new_project = get_object_or_404(CLARAProject, pk=new_project_id)
@@ -3785,6 +3772,7 @@ def reading_history(request, l2_language):
             return redirect('reading_history', l2_language)
 
     # GET request
+    # Display the language, the current reading history projects, a link to the compiled reading history, and controls
     else:
         languages_available = l2s_in_posted_content()
         projects_in_history = reading_history.get_ordered_projects()
@@ -3797,9 +3785,27 @@ def reading_history(request, l2_language):
         'l2_form': l2_form,
         'add_project_form': add_project_form,
         'projects_in_history': projects_in_history,
+        # project_id is used to construct the link to the compiled reading history
         'project_id': project_id,
         'projects_available': projects_available
     })
+
+# Create associated CLARAProject and CLARAProjectInternal
+def create_project_and_project_internal_for_reading_history(reading_history, user, l2_language):
+    title = f"{user}_reading_history_for_{l2_language}"
+    l1_language = 'No L1 language'
+    # Create a new CLARAProject, associated with the current user
+    clara_project = CLARAProject(title=title, user=user, l2=l2_language, l1=l1_language)
+    clara_project.save()
+    internal_id = create_internal_project_id(title, clara_project.id)
+    # Update the CLARAProject with the internal_id
+    clara_project.internal_id = internal_id
+    clara_project.save()
+    # Create a new CLARAProjectInternal
+    clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
+    reading_history.project = clara_project
+    reading_history.internal_id = internal_id
+    reading_history.save()
 
 # Find the L2s such that
 #   - they are the L2 of a piece of posted content
@@ -3807,16 +3813,12 @@ def reading_history(request, l2_language):
 def l2s_in_posted_content():
     # Get all Content objects that are linked to a CLARAProject
     contents_with_projects = Content.objects.exclude(project=None)
-    #pprint.pprint(contents_with_projects)
     l2_languages = set()
 
     for content in contents_with_projects:
         # Check if the associated project has saved internalized text
         if content.project.has_saved_internalised_and_annotated_text():
             l2_languages.add(content.l2)
-##            print(f'{content.title} has saved_internalised_and_annotated_text')
-##        else:
-##            print(f'{content.title} does not have saved_internalised_and_annotated_text')
 
     return list(l2_languages)
 
