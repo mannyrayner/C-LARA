@@ -1,0 +1,41 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>Reading History</h2>
+
+<!-- Form to select L2 language -->
+<form method="post">
+    {% csrf_token %}
+    <h3>Select Language</h3>
+    {{ l2_form.as_p }}
+    <button type="submit" name="action" value="select_language">Select Language</button>
+</form>
+
+<!-- List of projects in the reading history -->
+<h3>Texts in Reading History</h3>
+<ul>
+    {% for project in projects_in_history %}
+    <li>{{ project.title }}</li>
+    {% empty %}
+    <li>No projects in reading history.</li>
+    {% endfor %}
+</ul>
+
+<!-- Link to view the rendered content of the reading history -->
+{% if projects_in_history %}
+<p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Content</a></p>
+{% endif %}
+
+<!-- Form to add a project to the reading history -->
+{% if projects_available %}
+	<form method="post">
+		{% csrf_token %}
+		<h3>Add Text to Reading History</h3>
+		{{ add_project_form.as_p }}
+		<button type="submit" name="action" value="add_project">Add Project</button>
+	</form>
+{% else %}
+<p><b>No other texts currently available to add to history</b</p>
+{% endif %}
+
+{% endblock %}
