@@ -11,7 +11,7 @@
 
   <ul>
     {% for content in contents %}
-      <li><a href="{{ content.get_absolute_url }}">{{ content.title }}</a></li>
+      <li><a href="{{ content.get_absolute_url }}">{% if content.title %} {{ content.title }} {% else %} (No title) {% endif %}</a></li>
     {% empty %}
       <li>No content has been registered yet.</li>
     {% endfor %}
