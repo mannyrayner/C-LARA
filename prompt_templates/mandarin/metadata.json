@@ -14,5 +14,37 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20230822234555"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\mandarin\\pinyin_annotate_template.txt",
+        "annotation_type": "pinyin",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240205120145"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\mandarin\\pinyin_annotate_examples.json",
+        "annotation_type": "pinyin",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240205120155"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\mandarin\\pinyin_improve_template.txt",
+        "annotation_type": "pinyin",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20240205120532"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\mandarin\\segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240205221855"
     }
 ]
