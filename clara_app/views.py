@@ -31,7 +31,7 @@ from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm,
 from .forms import DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
-from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
+from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
@@ -62,7 +62,7 @@ from .clara_core.clara_classes import TemplateError, InternalCLARAError, Interna
 from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
 from .clara_core.clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
-from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language
+from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language, is_chinese_language
 from .clara_core.clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from pathlib import Path
@@ -934,14 +934,19 @@ def edit_prompt(request):
                 try:
                     prompts = prompt_repo.load_template_or_examples(template_or_examples, annotation_type, operation)
                 except TemplateError as e1:
-                    # If the default language is different, try that next
-                    if language != default_language:
+                    # If we're editing 'default' and we didn't find anything on the previous step, there's nothing to use, so return blank values
+                    if language == 'default':
+                        messages.success(request, f"Warning: nothing found, you need to write the default {template_or_examples} from scratch")
+                        prompt_repo_default = PromptTemplateRepository('default')
+                        prompts = prompt_repo_default.blank_template_or_examples(template_or_examples, annotation_type, operation)
+                    # If we're not editing 'default' and the default language is different, try that next
+                    elif language != default_language:
                         try:
                             prompt_repo_default_language = PromptTemplateRepository(default_language)
                             prompts = prompt_repo_default_language.load_template_or_examples(template_or_examples, annotation_type, operation)
                         except TemplateError as e2:
                             # If we haven't already done that, try 'default'
-                            if language != 'default' and default_language != 'default':
+                            if default_language != 'default':
                                 try:
                                     prompt_repo_default = PromptTemplateRepository('default')
                                     prompts = prompt_repo_default.load_template_or_examples(template_or_examples, annotation_type, operation)
@@ -1591,6 +1596,7 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     up_to_date_dict = simple_clara_action['up_to_date_dict']
 
+    l2 = project.l2
     title = project.title
     user = project.user
     config_info = get_user_config(user)
@@ -1633,9 +1639,24 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
     # Create lemma-tagged text
     if not up_to_date_dict['lemma']:
         post_task_update(callback, f"STARTED TASK: add lemma tags")
-        api_calls = clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
+        if is_chinese_language(l2):
+            # AI-based tagging doesn't seem to do well with Chinese languages, they lack inflection, and we don't currently use the POS tags
+            api_calls = clara_project_internal.create_lemma_tagged_text_with_trivial_tags(user=username, config_info=config_info, callback=callback)
+        else:
+            api_calls = clara_project_internal.create_lemma_tagged_text(user=username, config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user, 'lemma')
         post_task_update(callback, f"ENDED TASK: add lemma tags")
+
+    # Create pinyin-tagged text
+    if is_chinese_language(l2) and not up_to_date_dict['pinyin']:
+        post_task_update(callback, f"STARTED TASK: add pinyin")
+        if l2 == 'mandarin':
+            # So far, pypinyin seems to do better than the AI, but my understanding is that it only works for Mandarin
+             api_calls = clara_project_internal.create_pinyin_tagged_text_using_pypinyin(user=username, config_info=config_info, callback=callback)
+        else:
+            api_calls = clara_project_internal.create_pinyin_tagged_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'pinyin')
+        post_task_update(callback, f"ENDED TASK: add pinyin")
 
     # Render
     if not up_to_date_dict['render']:
@@ -1962,6 +1983,7 @@ def project_detail(request, project_id):
     can_create_segmented_title = clara_project_internal.text_versions["title"]
     can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
+    can_create_pinyin_text = clara_project_internal.text_versions["segmented"] and is_chinese_language(project.l2) 
     can_render_normal = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
     can_render_phonetic = clara_project_internal.text_versions["phonetic"] 
     rendered_html_exists = clara_project_internal.rendered_html_exists(project_id)
@@ -1988,6 +2010,7 @@ def project_detail(request, project_id):
                     'can_create_segmented_title': can_create_segmented_title,
                     'can_create_phonetic_text': can_create_phonetic_text,
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
+                    'can_create_pinyin_text': can_create_pinyin_text,
                     'can_render_normal': can_render_normal,
                     'can_render_phonetic': can_render_phonetic,
                     'rendered_html_exists': rendered_html_exists,
@@ -2675,7 +2698,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             username = request.user.username
             # We have an optional prompt when creating or improving the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
-            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'tree_tagger', 'jieba' ):
+            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
             # We're saving an edited version of a file
             elif text_choice == 'manual':
@@ -2716,7 +2739,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                 messages.error(request, f"Sorry, you need money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
-            elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'jieba' ):
+            elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                     raise PermissionDenied("You don't have permission to create text by calling the AI.")
                 try:
@@ -2780,6 +2803,17 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         annotated_text = clara_project_internal.load_text_version(this_version)
                         text_choice = 'manual'
                         success_message = f'Created {this_version} text using Jieba'
+                        print(f'--- {success_message}')
+                        messages.success(request, success_message)
+                        current_version = clara_project_internal.get_file_description(this_version, 'current')
+                    # We are creating the text using pypinyin. This operation is only possible with pinyin-annotation
+                    elif text_choice == 'pypinyin':
+                        action, api_calls = ( 'generate', clara_project_internal.create_pinyin_tagged_text_using_pypinyin(user=username, label=label) )
+                        # These operations are handled elsewhere for generation and improvement, due to asynchrony
+                        store_api_calls(api_calls, project, request.user, this_version)
+                        annotated_text = clara_project_internal.load_text_version(this_version)
+                        text_choice = 'manual'
+                        success_message = f'Created {this_version} text using pypinyin'
                         print(f'--- {success_message}')
                         messages.success(request, success_message)
                         current_version = clara_project_internal.get_file_description(this_version, 'current')
@@ -2916,6 +2950,8 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreateGlossedTextForm(*args, **kwargs)
     elif version == 'lemma':
         return CreateLemmaTaggedTextForm(*args, **kwargs)
+    elif version == 'pinyin':
+        return CreatePinyinTaggedTextForm(*args, **kwargs)
     elif version == 'lemma_and_gloss':
         return CreateLemmaAndGlossTaggedTextForm(*args, **kwargs)
     else:
@@ -2970,6 +3006,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
         return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
         return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'pinyin':
+        return ( 'generate', clara_project_internal.create_pinyin_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     # There is no generate operation for lemma_and_gloss, since we make it by merging lemma and gloss
     else:
         raise InternalCLARAError(message = f'Unknown first argument in perform_generate_operation: {version}')
@@ -2999,6 +3037,8 @@ def perform_improve_operation(version, clara_project_internal, user, label, prom
         return ( 'generate', clara_project_internal.improve_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
         return ( 'generate', clara_project_internal.improve_lemma_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'pinyin':
+        return ( 'generate', clara_project_internal.improve_pinyin_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma_and_gloss':
         return ( 'generate', clara_project_internal.improve_lemma_and_gloss_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     else:
@@ -3023,6 +3063,8 @@ def previous_version_and_template_for_version(this_version):
         return ( 'segmented_with_images', 'clara_app/create_glossed_text.html' )
     elif this_version == 'lemma':
         return ( 'segmented_with_images', 'clara_app/create_lemma_tagged_text.html' )
+    elif this_version == 'pinyin':
+        return ( 'segmented_with_images', 'clara_app/create_pinyin_tagged_text.html' )
     elif this_version == 'lemma_and_gloss':
         return ( 'lemma_and_gloss', 'clara_app/create_lemma_and_gloss_tagged_text.html' )
     else:
@@ -3103,6 +3145,14 @@ def create_glossed_text(request, project_id):
 @user_has_a_project_role
 def create_lemma_tagged_text(request, project_id):
     this_version = 'lemma'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
+# Create or edit "pinyin-tagged" version of the text 
+@login_required
+@user_has_a_project_role
+def create_pinyin_tagged_text(request, project_id):
+    this_version = 'pinyin'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -3217,11 +3267,14 @@ def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         text = clara_project_internal.load_text_version('plain')
         text_language = project.l2
-        prompt = f"""Here is something in {text_language} that another instance of you wrote:
+        #prompt = f"""Here is something in {text_language} that another instance of you wrote:
+        prompt = f"""Please read the following (it is written in {text_language.capitalize()}) and create an image to go with it:
 
 {text}
 
-Could you create an image to go on the front page?"""
+Do not include text in the image unless that is specifically necessary for some reason.
+"""
+#Could you create an image to go on the front page?"""
         if advice_prompt:
             prompt += f"""
 When generating the image, keep the following advice in mind:

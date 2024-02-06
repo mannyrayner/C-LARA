@@ -7,6 +7,8 @@ from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, Phonet
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
+
+from .clara_core.clara_utils import is_rtl_language, is_chinese_language
         
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -338,6 +340,20 @@ class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
         self.fields['text_choice'].choices = self.TEXT_CHOICES if tree_tagger_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
         ]
+
+class CreatePinyinTaggedTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Generate pinyin-tagged text from segmented text using AI'),
+        ('pypinyin', 'Generate pinyin-tagged text from segmented text using pypinyin'),
+        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
+        ('improve', 'Improve existing annotated text using AI'),
+        ('manual', 'Manually enter annotated text'),
+        ('load_archived', 'Load archived version')
+    ]
+
+    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', **kwargs):
+        super(CreatePinyinTaggedTextForm, self).__init__(*args, archived_versions=archived_versions, current_version=current_version, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
         
 class CreateLemmaAndGlossTaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
@@ -403,6 +419,7 @@ class PromptSelectionForm(forms.Form):
         ("segmented", "Segmented"),
         ("gloss", "Gloss"),
         ("lemma", "Lemma"),
+        ("pinyin", "Pinyin"),
     ]
 
     language = forms.ChoiceField(choices=[])  # Empty choices initially
@@ -419,6 +436,11 @@ class PromptSelectionForm(forms.Form):
             # Query the languages for which the user is a language master
             languages = LanguageMaster.objects.filter(user=user).values_list('language', flat=True)
             self.fields['language'].choices = [(lang, lang.capitalize()) for lang in languages]
+
+            chinese_language_included = any([ is_chinese_language(lang) for lang in languages ])
+            if not chinese_language_included:
+                self.fields['annotation_type'].choices = [ ( choice, label ) for ( choice, label ) in annotation_type_choices
+                                                           if choice != 'pinyin' ]
 
 class TemplateForm(forms.Form):
     template = forms.CharField(widget=forms.Textarea)
