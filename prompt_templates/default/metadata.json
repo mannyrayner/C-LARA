@@ -558,5 +558,37 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20240102235510"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\pinyin_annotate_template.txt",
+        "annotation_type": "pinyin",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240205114609"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\pinyin_annotate_examples.json",
+        "annotation_type": "pinyin",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240205115512"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\pinyin_improve_examples.json",
+        "annotation_type": "pinyin",
+        "template_or_examples": "examples",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20240205115716"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\pinyin_improve_template.txt",
+        "annotation_type": "pinyin",
+        "template_or_examples": "template",
+        "operation": "improve",
+        "user": "mannyrayner",
+        "timestamp": "20240205120454"
     }
 ]
