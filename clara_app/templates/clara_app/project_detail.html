@@ -59,6 +59,11 @@
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">
 		  Create/Edit Lemma Tagged Text</a>
 		  {% if up_to_date_dict.lemma %}✓{% endif %}</p>
+	<p><a href="{% url 'create_pinyin_tagged_text' project.id %}" 
+	      data-tooltip="Tell the AI to add pinyin to the words in the text. Alternately, edit the result or add your own tags." 
+	      {% if not can_create_pinyin_text %}class="disabled-link{% endif %}">
+		  Create/Edit Pinyin Tagged Text</a>
+		  {% if up_to_date_dict.pinyin %}✓{% endif %}</p>
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->
 	<p><a href="{% url 'human_audio_processing' project.id %}" 
 	      data-tooltip="Specify audio options for normal text. If you are using human-recorded audio, upload it." 
