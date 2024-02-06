@@ -20,5 +20,6 @@ dj-database-url==2.0.0
 psycopg2==2.9.6
 psycopg2-binary
 jieba
+pypinyin
 chardet
 
