@@ -15,6 +15,7 @@ can be very large. We have seven types of text, as follows:
 "cefr_level". CEFR level of text (one of A1, A2, B1, B2, C1, C2).
 "gloss". Text with segmentation annotations plus a gloss annotations for each word.
 "lemma". Text with segmentation annotations plus a lemma annotation for each word.
+"pinyin". Text with segmentation annotations plus a pinyin annotation for each word.
 "lemma_and_gloss". Text with segmentation annotations plus a lemma, gloss and POS annotation for each word.
 
 The main methods are the following:
@@ -28,16 +29,16 @@ an initial empty project.
 to a newly created clone of it.
 
 - save_text_version(version, text). Saves one of the associated texts. "version" is one
-of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss", "pinyin" ).
 
 - delete_text_version(version). Deletes one of the associated texts. "version" is one
-of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss", "pinyin" ).
 
 - delete_text_versions(versions). Deleted several associated texts. "version" is a list of strings
-from ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+from ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss", "pinyin" ).
 
 - load_text_version(version). Retrieves one of the associated texts. "version" is one
-of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss", "pinyin" ).
 
 - delete(). Delete project's associated directory.
 
@@ -45,7 +46,7 @@ of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", 
 Returns list of metadata references for files holding different updates of text versions.
 Metadata reference is dict with keys ( "file", "version", "source", "user", "timestamp", "gold_standard", "description" )
   - file: absolute pathname for file, as str
-  - version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" )
+  - version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss", "pinyin" )
   - source: one of ( "ai_generated", "ai_revised", "human_revised" )
   - user: username for account on which file was created
   - timestamp: time when file was posted, in format '%Y%m%d%H%M%S'
@@ -54,12 +55,12 @@ Metadata reference is dict with keys ( "file", "version", "source", "user", "tim
 
 - get_file_description(version, file)
 Returns the metadata "description" field for a file or "" if the file does not exist.
-- version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss" )
+- version: one of ( "prompt", "plain", "summary", "cefr_level", "segmented", "gloss", "lemma", "lemma_and_gloss", "pinyin" )
 - file: either the pathname for an archived file, or "current", referring to the most recent file of this type
 
 - diff_editions_of_text_version(file_path1, file_path2, version, required. Diff two versions
 of the same kind of file and return information as specified.
-"version" is one of ( "prompt", "plain", "summary", "segmented", "gloss", "lemma", "lemma_and_gloss" ).
+"version" is one of ( "prompt", "plain", "summary", "segmented", "gloss", "lemma", "lemma_and_gloss", "pinyin" ).
 "required" is a list containing a subset of ( "error_rate", "details" )
 
 - create_plain_text(prompt=None). Calls ChatGPT-4 to create the initial plain text in l2_language.
@@ -93,22 +94,29 @@ Requires "segmented" version to exist. Returns a list of APICall instances relat
 - improve_glossed_text(). Calls ChatGPT-4 to try to improve the "glossed" version.
 Requires "glossed" version to exist. Returns a list of APICall instances related to the operation.
 
-- create_lemma_tagged_text(). Calls ChatGPT-4 to annotate the "segmented" version with
-lemma annotations in l1_language and saves the result as the "lemma" version.
-Requires "segmented" version to exist. Returns a list of APICall instances related to the operation.
-
 - create_lemma_tagged_text_with_treetagger(). Calls TreeTagger to annotate the "segmented" version with
 lemma annotations in l1_language and saves the result as the "lemma" version.
 Requires "segmented" version to exist. Returns an empty list for consistency with create_lemma_tagged_text above.
 
+- create_lemma_tagged_text(). Calls ChatGPT-4 to annotate the "segmented" version with
+lemma annotations in l1_language and saves the result as the "lemma" version.
+Requires "segmented" version to exist. Returns a list of APICall instances related to the operation.
+
 - improve_lemma_tagged_text(). Calls ChatGPT-4 to try to improve the "lemma" version.
 Requires "lemma" version to exist. Returns a list of APICall instances related to the operation.
+
+- create_pinyin_tagged_text(). Calls ChatGPT-4 to annotate the "segmented" version with
+pinyin annotations in l1_language and saves the result as the "pinyin" version.
+Requires "segmented" version to exist. Returns a list of APICall instances related to the operation.
+
+- improve_pinyin_tagged_text(). Calls ChatGPT-4 to try to improve the "pinyin" version.
+Requires "pinyin" version to exist. Returns a list of APICall instances related to the operation.
 
 - improve_lemma_and_gloss_tagged_text(). Calls ChatGPT-4 to try to improve the "lemma_and_gloss" version.
 Requires "lemma" and "gloss" versions to exist. Returns a list of APICall instances related to the operation.
 
 - get_internalised_and_annotated_text(). Returns a Text object, defined in clara_classes.py,
-representing the text together with all annotations (segmentation, gloss, lemma, audio, concordance).
+representing the text together with all annotations (segmentation, gloss, lemma, audio, concordance, pinyin if relevant).
 TTS files are generated as needed.
 Requires "gloss" and "lemma" versions to exist.
 
@@ -125,6 +133,7 @@ from .clara_classes import *
 from .clara_create_annotations import invoke_templates_on_trivial_text
 from .clara_create_annotations import generate_glossed_version, generate_segmented_version, generate_tagged_version
 from .clara_create_annotations import improve_glossed_version, improve_segmented_version, improve_tagged_version
+from .clara_create_annotations import generate_pinyin_tagged_version, improve_pinyin_tagged_version
 from .clara_create_annotations import improve_lemma_and_gloss_tagged_version
 from .clara_conventional_tagging import generate_tagged_version_with_treetagger, generate_tagged_version_with_trivial_tags
 from .clara_create_story import generate_story, improve_story
@@ -134,9 +143,9 @@ from .clara_create_title import generate_title
 from .clara_manual_audio_align import add_indices_to_segmented_text, annotated_segmented_data_and_label_file_data_to_metadata
 from .clara_internalise import internalize_text
 from .clara_correct_syntax import correct_syntax_in_string
-from .clara_chinese import segment_text_using_jieba
+from .clara_chinese import segment_text_using_jieba, pinyin_tag_text_using_pypinyin
 from .clara_diff import diff_text_objects
-from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged
+from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glossed_and_tagged_with_pinyin
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository import ImageRepository
@@ -188,6 +197,7 @@ class CLARAProjectInternal:
             "gloss": None,
             "lemma": None,
             "lemma_and_gloss": None,
+            "pinyin": None,
         }
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
         self.internalised_and_annotated_text_path_phonetic = self.project_dir / 'internalised_and_annotated_text_phonetic.pickle'
@@ -274,7 +284,7 @@ class CLARAProjectInternal:
         # Even not directly useable, we may want to transform them in some way
         self._copy_text_version_if_it_exists("prompt", new_project)
         self._copy_text_version_if_it_exists("plain", new_project)
-        # If the L2 is the same, the title CEFR, summary, segmented and lemma files will by default be valid
+        # If the L2 is the same, the title CEFR, summary, segmented, lemma and pinyin files will by default be valid
         if self.l2_language == new_project.l2_language:
             self._copy_text_version_if_it_exists("title", new_project)
             self._copy_text_version_if_it_exists("segmented_title", new_project)
@@ -283,6 +293,7 @@ class CLARAProjectInternal:
             self._copy_text_version_if_it_exists("segmented", new_project)
             self._copy_text_version_if_it_exists("phonetic", new_project)
             self._copy_text_version_if_it_exists("lemma", new_project)
+            self._copy_text_version_if_it_exists("pinyin", new_project)
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
             self._copy_text_version_if_it_exists("gloss", new_project)
@@ -377,7 +388,7 @@ class CLARAProjectInternal:
     # Metadata reference is dict with keys ( "file", "version", "source", "user", "timestamp", "gold_standard" )
     #
     #   - file: absolute pathname for file, as str
-    #   - version: one of ( "prompt", "plain", "segmented_title", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - version: one of ( "prompt", "plain", "segmented_title", "title", "summary", "cefr_level", "segmented", "gloss", "lemma", "pinyin" )
     #   - source: one of ( "ai_generated", "ai_revised", "human_revised" )
     #   - user: username for account on which file was created
     #   - timestamp: time when file was posted, in format '%Y%m%d%H%M%S'
@@ -385,7 +396,8 @@ class CLARAProjectInternal:
 
     # For downward compatibility, guess metadata based on existing files where necessary.
     # Files referenced:
-    #   - self._file_path_for_version(version) for version in ( "prompt", "plain", "segmented_title", "title", "summary", "cefr_level", "segmented", "gloss", "lemma" )
+    #   - self._file_path_for_version(version) for version in
+    #     ( "prompt", "plain", "segmented_title", "title", "summary", "cefr_level", "segmented", "gloss", "lemma", "pinyin" )
     #     when file exists
     #   - Everything in self._get_archive_dir()
     # Get timestamps from the file ages.
@@ -396,7 +408,7 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma"]
+        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma", "pinyin"]
 
         # Check if any metadata entries are missing for the existing files
         for version in versions:
@@ -708,7 +720,7 @@ class CLARAProjectInternal:
         return api_calls
 
     # Call Treetagger to create a version of the text with lemma annotations
-    def create_lemma_tagged_text_with_treetagger(self, user='Unknown', label='', callback=None) -> List[APICall]:
+    def create_lemma_tagged_text_with_treetagger(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
         print(f'--- Calling generate_tagged_version_with_treetagger')
         lemma_tagged_text = generate_tagged_version_with_treetagger(segmented_text, self.l2_language)
@@ -718,14 +730,12 @@ class CLARAProjectInternal:
         return api_calls
 
     # Create a version where each word is tagged with its surface form
-    def create_lemma_tagged_text_with_trivial_tags(self, user='Unknown', label='', callback=None) -> List[APICall]:
+    def create_lemma_tagged_text_with_trivial_tags(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
         lemma_tagged_text = generate_tagged_version_with_trivial_tags(segmented_text)
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='trivial')
         api_calls = []
         return api_calls
-
-    generate_tagged_version_with_trivial_tags
 
     # Call ChatGPT-4 to create a version of the text with lemma annotations
     def create_lemma_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
@@ -743,6 +753,30 @@ class CLARAProjectInternal:
         self.save_text_version("lemma", new_lemma_tagged_text, user=user, label=label, source='ai_revised')
         return api_calls
 
+     # Call pypinyin to create a version of the text with pinyin annotations
+    def create_pinyin_tagged_text_using_pypinyin(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        segmented_text = self.load_text_version("segmented_with_images")
+        pinyin_tagged_text = pinyin_tag_text_using_pypinyin(segmented_text)
+        self.save_text_version("pinyin", pinyin_tagged_text, user=user, label=label, source='ai_generated')
+        api_calls = []
+        return api_calls
+
+    # Call ChatGPT-4 to create a version of the text with pinyin annotations
+    def create_pinyin_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        segmented_text = self.load_text_version("segmented_with_images")
+        pinyin_tagged_text, api_calls = generate_pinyin_tagged_version(segmented_text, self.l2_language,
+                                                                       config_info=config_info, callback=callback)
+        self.save_text_version("pinyin", pinyin_tagged_text, user=user, label=label, source='ai_generated')
+        return api_calls
+
+    # Call ChatGPT-4 to improve existing pinyin annotations
+    def improve_pinyin_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        pinyin_tagged_text = self.load_text_version("pinyin")
+        new_pinyin_tagged_text, api_calls = improve_pinyin_tagged_version(pinyin_tagged_text, self.l2_language,
+                                                                          config_info=config_info, callback=callback)
+        self.save_text_version("pinyin", new_pinyin_tagged_text, user=user, label=label, source='ai_revised')
+        return api_calls
+
     # Call ChatGPT-4 to improve existing lemma_and_gloss annotations
     def improve_lemma_and_gloss_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         lemma_and_gloss_tagged_text = self.load_text_version("lemma_and_gloss")
@@ -752,15 +786,15 @@ class CLARAProjectInternal:
         return api_calls
 
     # Do any ChatGPT-4 annotation that hasn't already been done
-    def do_all_chatgpt4_annotation(self) -> List[APICall]:
-        all_api_calls = []
-        if not self.text_versions['segmented']:
-            all_api_calls += self.create_segmented_text()
-        if not self.text_versions['gloss']:
-            all_api_calls += self.create_glossed_text()
-        if not self.text_versions['lemma']:
-            all_api_calls += self.create_lemma_tagged_text()
-        return all_api_calls
+##    def do_all_chatgpt4_annotation(self) -> List[APICall]:
+##        all_api_calls = []
+##        if not self.text_versions['segmented']:
+##            all_api_calls += self.create_segmented_text()
+##        if not self.text_versions['gloss']:
+##            all_api_calls += self.create_glossed_text()
+##        if not self.text_versions['lemma']:
+##            all_api_calls += self.create_lemma_tagged_text()
+##        return all_api_calls
 
     # Create an internalised version of the text including gloss and lemma annotations 
     # Requires 'gloss' and 'lemma' texts
@@ -780,19 +814,22 @@ class CLARAProjectInternal:
             internalised_glossed_text = internalize_text(glossed_text, self.l2_language, self.l1_language, 'gloss')
             internalised_tagged_text = internalize_text(lemma_tagged_text, self.l2_language, self.l1_language, 'lemma')
             merged_text = merge_glossed_and_tagged(internalised_glossed_text, internalised_tagged_text)
-            return merged_text
+            if self.text_versions["pinyin"]:
+                pinyin_tagged_text = self.load_text_version("pinyin")
+                internalised_pinyin_text = internalize_text(pinyin_tagged_text, self.l2_language, self.l1_language, 'pinyin')
+                merged_text_with_pinyin = merge_glossed_and_tagged_with_pinyin(merged_text, internalised_pinyin_text)
+                return merged_text_with_pinyin
+            else:
+                return merged_text
 
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
-    # Tried caching the internalised version, but it's hard to make this work.
     def get_internalised_and_annotated_text(self,
                                             title=None,
                                             human_voice_id=None,
                                             audio_type_for_words='tts', audio_type_for_segments='tts',
                                             preferred_tts_engine=None, preferred_tts_voice=None,
                                             phonetic=False, callback=None) -> str:
-##        if self.internalised_and_annotated_text:
-##            return self.internalised_and_annotated_text
         post_task_update(callback, f"--- Creating internalised text")
         text_object = self.get_internalised_text(phonetic=phonetic) 
         post_task_update(callback, f"--- Internalised text created")

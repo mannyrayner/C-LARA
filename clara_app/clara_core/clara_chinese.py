@@ -1,13 +1,19 @@
 
 """
-Use the Jieba package to segment a Chinese plain text file and write out the result as another file.
-
+- segment_text_using_jieba(text)
+Use the Jieba package to segment a Chinese plain text string and produce a segmented text string.
 Legacy code from LARA, slightly adapted.
+
+- pinyin_tag_text_using_pypinyin(text)
+Use pypinyin to add pinyin annotations to a Chinese segmented text string and produce a pinyin-annotated text string
 """
 
+from pypinyin import pinyin, Style
 import jieba
 import regex
 
+from .clara_internalise import internalize_text
+from .clara_classes import Text, Page, Segment, ContentElement
 from .clara_utils import print_and_flush
 
 def is_chinese_language(LangId):
@@ -108,6 +114,42 @@ def add_end_of_segment_mark_to_punctuation_token_if_necessary(Token):
             I += 1
     # Should never get here but just in case
     return OutToken
+
+# ----------------------------------------------
+
+def pinyin_tag_text_using_pypinyin(input_text):
+    l2_language = 'mandarin'
+    l1_language = 'irrelevant'
+    text_object = internalize_text(input_text, l2_language, l1_language, 'segmented')
+
+    out_pages = []
+    for page in text_object.pages:
+        out_segments = []
+        for segment in page.segments:
+            out_content_elements = []
+            for content_element in segment.content_elements:
+                out_content_element = pinyin_tagged_version_of_content_element(content_element)
+                out_content_elements.append(out_content_element)
+            out_segment = Segment(out_content_elements)
+            out_segments.append(out_segment)
+        out_page = Page(out_segments)
+        out_pages.append(out_page)
+    out_text_object = Text(out_pages, l2_language, l1_language)
+
+    return out_text_object.to_text(annotation_type='pinyin')
+
+# The output of calling pinyin on text looks like this:
+#
+# pinyin('中心')
+# [['zhōng'], ['xīn']]
+#
+# We concatenate the first elements in each sublist with spaces between so that here we get "zhōng xīn"
+def pinyin_tagged_version_of_content_element(content_element):
+    if content_element.type == 'Word':
+        pinyin_annotation = ' '.join([ item[0] for item in pinyin(content_element.content) ])
+        content_element.annotations['pinyin'] = pinyin_annotation
+
+    return content_element
 
 # ----------------------------------------------
 

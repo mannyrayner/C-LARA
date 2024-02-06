@@ -23,23 +23,6 @@ import regex
 import re
 import pprint
 
-##def internalize_text(input_text, l2_language, l1_language, text_type):
-##    pages = input_text.split("<page>")
-##    internalized_pages = []
-##
-##    for page_text in pages:
-##        segments_text = page_text.split("||")
-##        internalized_segments = []
-##
-##        for segment_text in segments_text:
-##            content_elements = parse_content_elements(segment_text, text_type)
-##            internalized_segments.append(Segment(content_elements))
-##
-##        internalized_pages.append(Page(internalized_segments))
-##
-##    internalized_text = Text(internalized_pages, l2_language=l2_language, l1_language=l1_language)
-##    return internalized_text
-
 def internalize_text(input_text, l2_language, l1_language, text_type):
     # Check if the first page starts with a <page> tag, if not prepend one
     if not input_text.startswith('<page'):

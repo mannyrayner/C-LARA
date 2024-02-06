@@ -1,6 +1,6 @@
 
 
-from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, get_file_time
+from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, get_file_time, is_chinese_language
 from .clara_classes import InternalCLARAError
 
 from datetime import datetime, timezone
@@ -16,6 +16,7 @@ class CLARADependencies:
                  format_preferences=None, content_object=None,
                  callback=None):
         self.clara_project_internal = clara_project_internal
+        self.l2 = clara_project_internal.l2_language
         self.project_id = project_id
         self.human_audio_info = human_audio_info
         self.phonetic_human_audio_info = phonetic_human_audio_info
@@ -53,6 +54,9 @@ class CLARADependencies:
                                     # Accessible from CLARAProjectInternal object
             
             "lemma",                # Typically AI-generated lemma-tagged version of text
+                                    # Accessible from CLARAProjectInternal object
+
+            "pinyin",               # Typically AI-generated pinyin-tagged version of text
                                     # Accessible from CLARAProjectInternal object
             
             "audio",                # Declarations for how to attach audio to normal text
@@ -97,6 +101,8 @@ class CLARADependencies:
             "gloss": [ "segmented", "segmented_title" ],
             
             "lemma": [ "segmented", "segmented_title" ],
+
+            "pinyin": [ "segmented", "segmented_title" ],
             
             "audio": [ "segmented" ],
 
@@ -104,12 +110,22 @@ class CLARADependencies:
             
             "format_preferences": [ "segmented" ],
             
-            "render": [ "title", "gloss", "lemma", "images", "audio", "format_preferences" ],
+            "render": [ "title", "gloss", "lemma", "pinyin", "images", "audio", "format_preferences" ],
 
             "render_phonetic": [ "phonetic", "images", "audio_phonetic", "format_preferences" ],
             
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
             }
+
+    def irrelevant_processing_phase(self, processing_phase_id):
+        if processing_phase_id == 'pinyin' and not is_chinese_language(self.l2):
+            return True
+        else:
+            return False
+
+    def remove_irrelevant_processing_phases(self, processing_phase_ids):
+        return [ processing_phase_id for processing_phase_id in processing_phase_ids
+                 if not self.irrelevant_processing_phase(processing_phase_id) ]
 
     # Create the transitive closure of _immediate_dependencies to get the full list of dependencies
     def get_dependencies(self, processing_phase_id):
@@ -119,7 +135,8 @@ class CLARADependencies:
             return []
         else:
             immediate_dependencies = self._immediate_dependencies[processing_phase_id]
-            all_dependencies += immediate_dependencies
+            relevant_immediate_dependencies = self.remove_irrelevant_processing_phases(immediate_dependencies)
+            all_dependencies += relevant_immediate_dependencies
         
         for dependency_processing_phase_id in immediate_dependencies:
             all_dependencies += self.get_dependencies(dependency_processing_phase_id)
@@ -129,7 +146,7 @@ class CLARADependencies:
     # Get the latest timestamp for files and database records associated with a processing phase
     def timestamp_for_phase(self, processing_phase_id):
         if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
-                                    "segmented", "phonetic", "gloss", "lemma" ]:
+                                    "segmented", "phonetic", "gloss", "lemma", "pinyin" ]:
             try:
                 if not self.clara_project_internal.text_versions[processing_phase_id]:
                     return None

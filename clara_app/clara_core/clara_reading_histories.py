@@ -80,17 +80,15 @@ class ReadingHistoryInternal:
     def add_component_project_and_create_combined_text_object(self, new_component_project, phonetic=False, callback=None):
         try:
             self.component_clara_project_internals.append(new_component_project)
-            old_combined_object = clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
-            if not old_combined_object:
+            combined_text_object = clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
+            if not combined_text_object:
                 post_task_update(callback, f"*** Error: no internalised text (phonetic={phonetic}) found for reading history")
                 raise ReadingHistoryError
-            else:
-                text_objects.append(text_object)
             new_text_object = new_component_project.get_saved_internalised_and_annotated_text(phonetic=phonetic)
             if not new_text_object:
                 post_task_update(callback, f"*** Error: no internalised text (phonetic={phonetic}) found for '{new_component_project.id}'")
                 raise ReadingHistoryError
-            new_combined_text_object = combine_text_objects([ old_combined_object, new_text_object ])
+            new_combined_text_object = combine_text_objects([ combined_text_object, new_text_object ])
             self.clara_project_internal.save_internalised_and_annotated_text(new_combined_text_object, phonetic=phonetic)
         except Exception as e:
             post_task_update(callback, f'*** Error when trying to update combined text for reading history')

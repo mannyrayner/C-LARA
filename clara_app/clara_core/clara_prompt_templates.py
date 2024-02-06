@@ -41,7 +41,7 @@ class PromptTemplateRepository:
 
     # Return the contents of file version, or None.
     # template_or_examples is one of ( "template", "examples" )
-    # annotation_type is one of ( "segmented", "gloss", "lemma", "lemma_and_gloss" )
+    # annotation_type is one of ( "segmented", "gloss", "lemma", "pinyin", "lemma_and_gloss" )
     # operation is one of ( "annotate", "improve" )
     # Optionally load from a specified archive path probably extracted from the metadata
     def load_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str, archive_path=None):
@@ -49,6 +49,7 @@ class PromptTemplateRepository:
             file_path = archive_path
         else:
             file_path = self._get_file_path(template_or_examples, annotation_type, operation)
+            
         if file_exists(file_path):
             data = read_json_or_txt_file(file_path)
             if isinstance(data, str):
@@ -59,9 +60,18 @@ class PromptTemplateRepository:
         check_well_formed_for_loading(data, template_or_examples, annotation_type, operation, self.language)
         return data
 
+    # If we don't even have anything in the default templates and examples, return blank contents so that something can be added
+    def blank_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str):
+        if template_or_examples == 'template':
+            return ' '
+        elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
+            return [ ' ' ]
+        else:
+            return [ ( ' ', ' ' ) ]
+
     # Write a file version, archive the old one if necessary, and update the metadata.
     # template_or_examples is one of ( "template", "examples" )
-    # annotation_type is one of ( "segmented", "gloss", "lemma", "lemma_and_gloss" )
+    # annotation_type is one of ( "segmented", "gloss", "lemma", "pinyin", "lemma_and_gloss" )
     # operation is one of ( "annotate", "improve" )
     # data is the data to store
     # user is the userid to put in the metadata
@@ -165,6 +175,15 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                         raise TemplateError(message = f'"{string}" is not good "gloss" "annotate" data')
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
+    elif annotation_type == 'pinyin' and operation == 'annotate':
+        for string in data:
+            try:
+                elements = string_to_list_of_content_elements(string, 'pinyin')
+                for e in elements:
+                    if e.type == 'Word' and not 'pinyin' in e.annotations:
+                        raise TemplateError(message = f'"{string}" is not good "pinyin" "annotate" data')
+            except:
+                raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
     elif operation == 'lemma' and annotation_type == 'annotate':
         for string in data:
             try:
@@ -182,6 +201,16 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                     for e in elements:
                         if e.type == 'Word' and not 'gloss' in e.annotations:
                             raise TemplateError(message = f'"{string}" is not good "gloss" "improve" data')
+                except:
+                    raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
+    elif annotation_type == 'pinyin' and operation == 'improve':
+        for pair in data:
+            for string in pair:
+                try:
+                    elements = string_to_list_of_content_elements(string, 'pinyin')
+                    for e in elements:
+                        if e.type == 'Word' and not 'pinyin' in e.annotations:
+                            raise TemplateError(message = f'"{string}" is not good "pinyin" "improve" data')
                 except:
                     raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
     elif annotation_type == 'lemma' and operation == 'improve':

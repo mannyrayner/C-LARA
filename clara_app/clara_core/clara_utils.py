@@ -790,6 +790,10 @@ def is_rtl_language(language):
     rtl_languages = ['arabic', 'hebrew', 'farsi', 'urdu', 'yemeni']
     return language in rtl_languages
 
+def is_chinese_language(language):
+    chinese_languages = [ 'chinese', 'mandarin', 'cantonese', 'taiwanese' ]
+    return language in chinese_languages
+
 def make_line_breaks_canonical_linesep(text):
     # Normalize all line breaks to '\n' first
     text = text.replace('\r\n', '\n').replace('\r', '\n')
