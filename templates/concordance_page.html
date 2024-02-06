@@ -20,7 +20,7 @@
 		  {%- if element.type == "Word" -%}
 			{%- if not phonetic -%}
 			  <span class="word {% if element.annotations.lemma == lemma %}concordance-highlight{% endif %}"
-					data-gloss="{{ element.annotations.gloss }}"
+					data-gloss="{%- if element.annotations.pinyin -%}{{ element.annotations.pinyin }}; {%- endif -%}{{ element.annotations.gloss }}"
 					data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
 					data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
 			{%- elif phonetic and element.annotations.phonetic -%}
