@@ -3806,20 +3806,28 @@ def reading_history(request, l2_language):
         # Adding a project to the end of the reading history     
         elif action == 'add_project':
             if reading_history:
-                new_project_id = request.POST['project_id']
-                new_project = get_object_or_404(CLARAProject, pk=new_project_id)
-                reading_history.add_project(new_project)
-                reading_history.save()
+                try:
+                    new_project_id = request.POST['project_id']
+                    new_project = get_object_or_404(CLARAProject, pk=new_project_id)
+                    reading_history.add_project(new_project)
+                    reading_history.save()
 
-                projects_in_history = reading_history.get_ordered_projects()
+                    projects_in_history = reading_history.get_ordered_projects()
 
-                if projects_in_history:
-                    internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-                                                     for project in projects_in_history ]
-                    reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
-                    reading_history_internal.create_combined_text_object()
-                    reading_history_internal.render_combined_text_object()
-                    project_id = clara_project.id
+                    if projects_in_history:
+                        internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+                                                         for project in projects_in_history ]
+                        reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
+##                      reading_history_internal.create_combined_text_object()
+                        new_project_internal = CLARAProjectInternal(new_project.internal_id, new_project.l2, new_project.l1)
+                        reading_history_internal.add_component_project_and_create_combined_text_object(new_project_internal, phonetic=False)
+                        reading_history_internal.render_combined_text_object()
+                        project_id = clara_project.id
+
+                except Exception as e:
+                    messages.error(request, f"Something went wrong when trying to add project to reading history")
+                    print(f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('reading_history', l2_language)
             else:
                 messages.error(request, f"Unable to add project to reading history")
             return redirect('reading_history', l2_language)
