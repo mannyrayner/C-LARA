@@ -35,7 +35,7 @@ from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTag
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
-from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm
+from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
 from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
@@ -3780,6 +3780,7 @@ def register_project_content_helper(project_id, phonetic_or_normal):
 def reading_history(request, l2_language, status):
     user = request.user
     reading_history, created = ReadingHistory.objects.get_or_create(user=user, l2=l2_language)
+    require_phonetic_text = reading_history.require_phonetic_text
 
     if created:
         create_project_and_project_internal_for_reading_history(reading_history, user, l2_language)
@@ -3797,13 +3798,22 @@ def reading_history(request, l2_language, status):
             messages.success(request, f"Now on reading history for {l2_language}.")
             return redirect('reading_history', l2_language, 'init')
 
-                # Deleting the reading history for the currently selected language
+        # Deleting the reading history for the currently selected language
         elif action == 'delete_reading_history':
             reading_history.delete()
             clara_project.delete()
+            clara_project_internal.delete_rendered_html(project_id)
             clara_project_internal.delete()
             messages.success(request, "Reading history deleted successfully.")
-            return redirect('reading_history', l2_language, 'init')  
+            return redirect('reading_history', l2_language, 'init')
+
+        # Changing the status of the require_phonetic_text field for the reading history
+        elif action == 'update_phonetic_preference':
+            require_phonetic_text = True if request.POST['require_phonetic_text'] == 'on' else False
+            reading_history.require_phonetic_text = require_phonetic_text
+            reading_history.save()
+            messages.success(request, "Your preference for phonetic texts has been updated.")
+            return redirect('reading_history', l2_language, 'init')
 
         # Adding a project to the end of the reading history     
         elif action == 'add_project':
@@ -3820,60 +3830,73 @@ def reading_history(request, l2_language, status):
                         internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
                                                          for project in projects_in_history ]
                         reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
-##                      reading_history_internal.create_combined_text_object()
                         new_project_internal = CLARAProjectInternal(new_project.internal_id, new_project.l2, new_project.l1)
 
                         task_type = f'update_reading_history'
                         callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-                        async_task(update_reading_history, reading_history_internal, new_project_internal, l2_language, callback=callback)
+                        async_task(update_reading_history, reading_history_internal, new_project_internal, l2_language,
+                                   require_phonetic_text=require_phonetic_text, callback=callback)
 
                         # Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('update_reading_history_monitor', l2_language, report_id)
                         
-##                        reading_history_internal.add_component_project_and_create_combined_text_object(new_project_internal, phonetic=False)
-##                        reading_history_internal.render_combined_text_object()
-##                        project_id = clara_project.id
-
                 except Exception as e:
-                    messages.error(request, f"Something went wrong when trying to add project to reading history")
+                    messages.error(request, "Something went wrong when updating the reading history. Try looking at the 'Recent task updates' view")
                     print(f"Exception: {str(e)}\n{traceback.format_exc()}")
-                    return redirect('reading_history', l2_language)
+                    return redirect('reading_history', l2_language, 'error')
             else:
                 messages.error(request, f"Unable to add project to reading history")
-            return redirect('reading_history', l2_language)
+            return redirect('reading_history', l2_language, 'error')
 
     # GET request
-    # Display the language, the current reading history projects, a link to the compiled reading history, and controls
+    # Display the language, the current reading history projects, a link to the compiled reading history, and controls.
+    # If 'status' is 'finished' or 'error', i.e. we got here from a redirect after adding a text, display a suitable message.
     else:
         if status == 'finished':
             messages.success(request, f'Reading history successfully updated')
         elif status == 'error':
             messages.error(request, "Something went wrong when updating the reading history. Try looking at the 'Recent task updates' view")
-        languages_available = l2s_in_posted_content()
+
+        phonetic_resources_available = phonetic_resources_are_available(l2_language)
+        languages_available = l2s_in_posted_content(require_phonetic_text=require_phonetic_text)
         projects_in_history = reading_history.get_ordered_projects()
-        projects_available = projects_available_for_adding_to_history(l2_language, projects_in_history)
+        projects_available = projects_available_for_adding_to_history(l2_language, projects_in_history, require_phonetic_text=require_phonetic_text)
         
         l2_form = L2LanguageSelectionForm(languages_available=languages_available, l2=l2_language)
         add_project_form = AddProjectToReadingHistoryForm(projects_available=projects_available)
+        require_phonetic_text_form = RequirePhoneticTextForm(initial={ 'require_phonetic_text': require_phonetic_text } )
+        rendered_html_exists = clara_project_internal.rendered_html_exists(project_id)
 
     clara_version = get_user_config(request.user)['clara_version']
 
     return render(request, 'clara_app/reading_history.html', {
         'l2_form': l2_form,
         'add_project_form': add_project_form,
+        'require_phonetic_text_form': require_phonetic_text_form,
+        'phonetic_resources_available': phonetic_resources_available,
         'projects_in_history': projects_in_history,
         # project_id is used to construct the link to the compiled reading history
         'project_id': project_id,
+        'rendered_html_exists': rendered_html_exists,
         'projects_available': projects_available,
-        'clara_version':clara_version
+        'clara_version': clara_version
     })
 
 # Function to call in asynch process. Update and render the CLARAProjectInternal associated with the reading history
-def update_reading_history(reading_history_internal, new_project_internal, l2_language, callback=None):
+def update_reading_history(reading_history_internal, new_project_internal, l2_language, require_phonetic_text=False, callback=None):
     try:
+        original_number_of_component_projects = len(reading_history_internal.component_clara_project_internals)
         reading_history_internal.add_component_project_and_create_combined_text_object(new_project_internal, phonetic=False)
-        reading_history_internal.render_combined_text_object()
+        reading_history_internal.render_combined_text_object(phonetic=False)
+
+        if require_phonetic_text:
+            reading_history_internal.add_component_project_and_create_combined_text_object(new_project_internal, phonetic=True)
+            reading_history_internal.render_combined_text_object(phonetic=True)
+            # If this is the first time we're compiling this reading history,
+            # recompile with phonetic=False to get a link to the phonetic=True version
+            if original_number_of_component_projects == 0:
+                reading_history_internal.render_combined_text_object(phonetic=False)
 
         post_task_update(callback, f"finished")
     except Exception as e:
@@ -3924,15 +3947,19 @@ def create_project_and_project_internal_for_reading_history(reading_history, use
 # Find the L2s such that
 #   - they are the L2 of a piece of posted content
 #   - whose project has a saved internalised text
-def l2s_in_posted_content():
+def l2s_in_posted_content(require_phonetic_text=False):
     # Get all Content objects that are linked to a CLARAProject
     contents_with_projects = Content.objects.exclude(project=None)
     l2_languages = set()
 
     for content in contents_with_projects:
         # Check if the associated project has saved internalized text
-        if content.project.has_saved_internalised_and_annotated_text():
-            l2_languages.add(content.l2)
+        if not require_phonetic_text:
+            if content.project.has_saved_internalised_and_annotated_text():
+                l2_languages.add(content.l2)
+        else:
+            if content.project.has_saved_internalised_and_annotated_text() and content.project.has_saved_internalised_and_annotated_text(phonetic=True):
+                l2_languages.add(content.l2)
 
     return list(l2_languages)
 
@@ -3941,7 +3968,7 @@ def l2s_in_posted_content():
 #   - have been posted as content,
 #   - have a saved internalised text,
 #   - are not already in the history
-def projects_available_for_adding_to_history(l2_language, projects_in_history):
+def projects_available_for_adding_to_history(l2_language, projects_in_history, require_phonetic_text=False):
     # Get all projects that have been posted as content with the specified L2 language
     projects = CLARAProject.objects.filter(
         l2=l2_language,
@@ -3951,9 +3978,14 @@ def projects_available_for_adding_to_history(l2_language, projects_in_history):
     available_projects = []
 
     for project in projects:
-        # Check if the project has saved internalized text and is not already in the history
-        if project.has_saved_internalised_and_annotated_text() and project not in projects_in_history:
-            available_projects.append(project)
+        # Check if the project has the required saved internalized text and is not already in the history
+        if not require_phonetic_text:
+            if project.has_saved_internalised_and_annotated_text() and project not in projects_in_history:
+                available_projects.append(project)
+        else:
+            if project.has_saved_internalised_and_annotated_text() and project.has_saved_internalised_and_annotated_text(phonetic=True) \
+               and project not in projects_in_history:
+                available_projects.append(project)
 
     return available_projects
         

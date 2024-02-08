@@ -364,6 +364,7 @@ class ReadingHistory(models.Model):
     project = models.OneToOneField(CLARAProject, on_delete=models.CASCADE, null=True, blank=True, unique=True)
     internal_id = models.CharField(max_length=200, null=True)
     projects = models.ManyToManyField('CLARAProject', through=ReadingHistoryProjectOrder, related_name='included_in_reading_histories')
+    require_phonetic_text = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'l2')

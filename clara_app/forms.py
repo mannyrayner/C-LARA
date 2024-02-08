@@ -146,6 +146,13 @@ class L2LanguageSelectionForm(forms.Form):
         if l2:
             self.fields['l2'].initial = l2
 
+class RequirePhoneticTextForm(forms.Form):
+    require_phonetic_text = forms.BooleanField(
+        required=False,  # Make it optional so users can choose not to require phonetic texts
+        label='Require phonetic texts',
+        help_text='Check this box if you want your reading history to include only texts with phonetic versions.'
+    )
+
 class AddProjectToReadingHistoryForm(forms.Form):
     project_id = forms.ChoiceField(required=False)
 
