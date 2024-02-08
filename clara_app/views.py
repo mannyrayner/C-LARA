@@ -3271,10 +3271,12 @@ def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None)
         prompt = f"""Please read the following (it is written in {text_language.capitalize()}) and create an image to go with it:
 
 {text}
-
-Do not include text in the image unless that is specifically necessary for some reason.
 """
-#Could you create an image to go on the front page?"""
+        if project.l2 != 'english':
+            prompt += "Since the above is written in {text_language.capitalize()}), do not include English text in the image."
+        else:
+            prompt += "Do not include text in the image unless that is specifically necessary for some reason."
+            
         if advice_prompt:
             prompt += f"""
 When generating the image, keep the following advice in mind:
