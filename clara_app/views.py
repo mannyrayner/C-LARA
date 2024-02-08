@@ -3809,7 +3809,7 @@ def reading_history(request, l2_language, status):
 
         # Changing the status of the require_phonetic_text field for the reading history
         elif action == 'update_phonetic_preference':
-            require_phonetic_text = True if request.POST['require_phonetic_text'] == 'on' else False
+            require_phonetic_text = True if 'require_phonetic_text' in request.POST and request.POST['require_phonetic_text'] == 'on' else False
             reading_history.require_phonetic_text = require_phonetic_text
             reading_history.save()
             messages.success(request, "Your preference for phonetic texts has been updated.")
