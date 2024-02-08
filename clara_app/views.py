@@ -3820,26 +3820,36 @@ def reading_history(request, l2_language, status):
             if reading_history:
                 try:
                     new_project_id = request.POST['project_id']
-                    new_project = get_object_or_404(CLARAProject, pk=new_project_id)
-                    reading_history.add_project(new_project)
-                    reading_history.save()
+## Material now moved to async function:
+##                    new_project = get_object_or_404(CLARAProject, pk=new_project_id)
+##                    reading_history.add_project(new_project)
+##                    reading_history.save()
+##
+##                    projects_in_history = reading_history.get_ordered_projects()
+##
+##                    if projects_in_history:
+##                        internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##                                                         for project in projects_in_history ]
+##                        reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
+##                        new_project_internal = CLARAProjectInternal(new_project.internal_id, new_project.l2, new_project.l1)
+##
+##                        task_type = f'update_reading_history'
+##                        callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+##
+##                        async_task(update_reading_history, reading_history_internal, new_project_internal, l2_language,
+##                                   require_phonetic_text=require_phonetic_text, callback=callback)
+##
+##                        # Redirect to the monitor view, passing the task ID and report ID as parameters
+##                        return redirect('update_reading_history_monitor', l2_language, report_id)
 
-                    projects_in_history = reading_history.get_ordered_projects()
+                    task_type = f'update_reading_history'
+                    callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-                    if projects_in_history:
-                        internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-                                                         for project in projects_in_history ]
-                        reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
-                        new_project_internal = CLARAProjectInternal(new_project.internal_id, new_project.l2, new_project.l1)
+                    async_task(update_reading_history, reading_history, clara_project_internal, project_id, new_project_id, l2_language,
+                               require_phonetic_text=require_phonetic_text, callback=callback)
 
-                        task_type = f'update_reading_history'
-                        callback, report_id = make_asynch_callback_and_report_id(request, task_type)
-
-                        async_task(update_reading_history, reading_history_internal, new_project_internal, l2_language,
-                                   require_phonetic_text=require_phonetic_text, callback=callback)
-
-                        # Redirect to the monitor view, passing the task ID and report ID as parameters
-                        return redirect('update_reading_history_monitor', l2_language, report_id)
+                    # Redirect to the monitor view, passing the task ID and report ID as parameters
+                    return redirect('update_reading_history_monitor', l2_language, report_id)
                         
                 except Exception as e:
                     messages.error(request, "Something went wrong when updating the reading history. Try looking at the 'Recent task updates' view")
@@ -3884,9 +3894,23 @@ def reading_history(request, l2_language, status):
     })
 
 # Function to call in asynch process. Update and render the CLARAProjectInternal associated with the reading history
-def update_reading_history(reading_history_internal, new_project_internal, l2_language, require_phonetic_text=False, callback=None):
+def update_reading_history(reading_history, clara_project_internal, project_id, new_project_id, l2_language,
+                           require_phonetic_text=False, callback=None):
     try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        new_project = get_object_or_404(CLARAProject, pk=new_project_id)
+        
+        reading_history.add_project(new_project)
+        reading_history.save()
+
+        projects_in_history = reading_history.get_ordered_projects()
+        
+        internal_projects_in_history = [ CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+                                         for project in projects_in_history ]
+        reading_history_internal = ReadingHistoryInternal(project_id, clara_project_internal, internal_projects_in_history)
+        new_project_internal = CLARAProjectInternal(new_project.internal_id, new_project.l2, new_project.l1)
         original_number_of_component_projects = len(reading_history_internal.component_clara_project_internals)
+        
         reading_history_internal.add_component_project_and_create_combined_text_object(new_project_internal, phonetic=False)
         reading_history_internal.render_combined_text_object(phonetic=False)
 
@@ -3904,6 +3928,29 @@ def update_reading_history(reading_history_internal, new_project_internal, l2_la
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         
         post_task_update(callback, f"error")
+
+# Original version of function, which (it turned out) unnecessaily split the processing between the two threads.
+
+##def update_reading_history(reading_history_internal, new_project_internal, l2_language, require_phonetic_text=False, callback=None):
+##    try:
+##        original_number_of_component_projects = len(reading_history_internal.component_clara_project_internals)
+##        reading_history_internal.add_component_project_and_create_combined_text_object(new_project_internal, phonetic=False)
+##        reading_history_internal.render_combined_text_object(phonetic=False)
+##
+##        if require_phonetic_text:
+##            reading_history_internal.add_component_project_and_create_combined_text_object(new_project_internal, phonetic=True)
+##            reading_history_internal.render_combined_text_object(phonetic=True)
+##            # If this is the first time we're compiling this reading history,
+##            # recompile with phonetic=False to get a link to the phonetic=True version
+##            if original_number_of_component_projects == 0:
+##                reading_history_internal.render_combined_text_object(phonetic=False)
+##
+##        post_task_update(callback, f"finished")
+##    except Exception as e:
+##        post_task_update(callback, f"Something went wrong when trying to add project to reading history")
+##        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+##        
+##        post_task_update(callback, f"error")
 
 @login_required
 def update_reading_history_status(request, l2_language, report_id):
