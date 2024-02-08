@@ -11,6 +11,17 @@
     <button type="submit" name="action" value="select_language">Change Language</button>
 </form>
 
+<!-- Form to select phonetic preferences. Only meaningful if the language supports phonetic texts and the history is empty -->
+{% if phonetic_resources_available and not projects_in_history %} 
+	<br>
+	<form method="post">
+		{% csrf_token %}
+		<h3>Do you require phonetic texts to be available?</h3>
+		{{ require_phonetic_text_form.as_p }}
+		<button type="submit" name="action" value="update_phonetic_preference">Update phonetic preferences</button>
+	</form>
+{% endif %}
+
 <!-- List of projects in the reading history -->
 <br>
 <h3>Texts in Reading History</h3>
@@ -23,8 +34,10 @@
 </ul>
 
 <!-- Link to view the rendered content of the reading history -->
-{% if projects_in_history %}
-<p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Content</a></p>
+{% if rendered_html_exists %}
+	<p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Content</a></p>
+{% else %}
+	<p>No multimedia text found</p>
 {% endif %}
 
 <!-- Form to add a project to the reading history -->
