@@ -885,17 +885,20 @@ def post_task_update(callback, message):
 def canonical_word_for_audio(text):
     return text.lower()
 
-def canonical_text_for_audio(text):
-    # Remove HTML markup
-    text = re.sub(r'<[^>]*>', '', text)
+def canonical_text_for_audio(text, phonetic=False):
+    if phonetic:
+        return canonical_word_for_audio(text)
+    else:
+        # Remove HTML markup
+        text = re.sub(r'<[^>]*>', '', text)
 
-    # Consolidate sequences of whitespaces to a single space
-    text = re.sub(r'\s+', ' ', text)
+        # Consolidate sequences of whitespaces to a single space
+        text = re.sub(r'\s+', ' ', text)
 
-    # Trim leading and trailing spaces
-    text = text.strip()
+        # Trim leading and trailing spaces
+        text = text.strip()
 
-    return text
+        return text
 
 def remove_blank_lines(text):
     lines = text.split('\n')

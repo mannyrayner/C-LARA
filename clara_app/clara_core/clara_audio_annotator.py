@@ -47,11 +47,23 @@ class AudioAnnotator:
         # TTS for segments
         if tts_engine_type:
             self.segment_tts_engine = create_tts_engine(tts_engine_type)
-        else:
+        # If phonetic=False, then 'segments' really does mean segments, and we pass in preferred_tts_engine if we have it
+        # because it's relevant
+        elif not phonetic:
             self.segment_tts_engine = get_tts_engine(language, words_or_segments='segments', preferred_tts_engine=preferred_tts_engine,
                                                      phonetic=False, callback=callback)
+        # If phonetic=True, then 'segments' actually means 'words', so preferred_tts_engine isn't relevant
+        # and we want the TTS engine we'd use for words with phonetic=False.
+        else:
+            self.segment_tts_engine = get_tts_engine(language, words_or_segments='words', 
+                                                     phonetic=False, callback=callback)
         self.segment_engine_id = self.segment_tts_engine.tts_engine_type if self.segment_tts_engine else None
-        self.segment_voice_id = get_default_voice(language, preferred_tts_voice, 'sentences', self.segment_tts_engine) if self.segment_tts_engine else None
+
+        if not phonetic:
+            self.segment_voice_id = get_default_voice(language, preferred_tts_voice, 'sentences', self.segment_tts_engine) if self.segment_tts_engine else None
+        else:
+            self.segment_voice_id = get_default_voice(language, preferred_tts_voice, 'words', self.segment_tts_engine) if self.segment_tts_engine else None
+            
         self.segment_language_id = get_language_id(language, self.segment_tts_engine) if self.segment_tts_engine else None
 
         # TTS for phonemes
@@ -140,7 +152,7 @@ class AudioAnnotator:
         for page in text_obj.pages:
             for segment in page.segments:
                 segment_text_plain = segment.to_text()
-                segment_text_canonical = canonical_text_for_audio(segment_text_plain)
+                segment_text_canonical = canonical_text_for_audio(segment_text_plain, phonetic=phonetic)
                 if not string_has_no_audio_content(segment_text_canonical):
                 #if not segment_has_no_audio_content(segment):
                     segments_data.append([segment_text_plain, segment_text_canonical])
@@ -192,7 +204,7 @@ class AudioAnnotator:
         words_metadata = [{"word": canonical_word_for_audio(word_data[0]), "file": word_data[1]}
                           for word_data in words_data
                           if word_data[0]]
-        segments_metadata = [{"segment": canonical_text_for_audio(segment_data[0]), "file": segment_data[1]}
+        segments_metadata = [{"segment": canonical_text_for_audio(segment_data[0], phonetic=phonetic), "file": segment_data[1]}
                              for segment_data in segments_data
                              if segment_data[0]]
 
@@ -230,7 +242,7 @@ class AudioAnnotator:
         text_file_paths = []
 
         for i, text in enumerate(text_items, 1):
-            canonical_text = canonical_text_for_audio(text) if words_or_segments == 'segments' else canonical_word_for_audio(text)
+            canonical_text = canonical_text_for_audio(text, phonetic=phonetic) if words_or_segments == 'segments' else canonical_word_for_audio(text)
             post_task_update(callback, f"--- Creating mp3 for '{canonical_text}' ({i}/{len(text_items)})")
             try:
                 unique_filename = f"{uuid.uuid4()}.mp3"
@@ -345,9 +357,12 @@ class AudioAnnotator:
                         else:
                             audio_word = None
 
-                        if audio_word:
-                            #file_path = self.audio_repository.get_entry(self.word_engine_id, self.word_language_id, self.word_voice_id, canonical_word)
-                            file_path = word_cache[audio_word] if audio_word in word_cache else None
+                        if not audio_word:
+                            file_path = None
+                        elif phonetic and audio_word == '(silent)':
+                            file_path = None
+                        elif audio_word in word_cache:
+                            file_path = word_cache[audio_word]
                         else:
                             file_path = None
                             
