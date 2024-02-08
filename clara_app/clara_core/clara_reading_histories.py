@@ -78,11 +78,15 @@ class ReadingHistoryInternal:
     # Extract the saved annotated text object from the clara_project_internal and the new component project,
     # glue them together, and save the result in the clara_project_internal
     def add_component_project_and_create_combined_text_object(self, new_component_project, phonetic=False, callback=None):
+        post_task_update(callback, f"--- Adding '{new_component_project.id}' (phonetic={phonetic}) to reading history")
         try:
-            self.component_clara_project_internals.append(new_component_project)
+            # If we perform this operation for both the normal and the phonetic versions,
+            # we only want to add the new project once to self.component_clara_project_internals
+            if not new_component_project in self.component_clara_project_internals:
+                self.component_clara_project_internals.append(new_component_project)
             new_text_object = new_component_project.get_saved_internalised_and_annotated_text(phonetic=phonetic)
             if not new_text_object:
-                post_task_update(callback, f"*** Error: no internalised text (phonetic={phonetic}) found for project '{new_component_project.title}'")
+                post_task_update(callback, f"*** Error: no internalised text (phonetic={phonetic}) found for project '{new_component_project.id}'")
                 raise ReadingHistoryError
             combined_text_object = self.clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
             if combined_text_object:
@@ -100,6 +104,7 @@ class ReadingHistoryInternal:
 
     # Extract the saved annotated text object from the clara_project_internal and render it
     def render_combined_text_object(self, phonetic=False, callback=None):
+        post_task_update(callback, f"--- Rendering reading history (phonetic={phonetic})")
         try:
             text_object = self.clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
             if not text_object:
@@ -121,6 +126,15 @@ class ReadingHistoryInternal:
             post_task_update(callback, error_message)
             raise ReadingHistoryError
 
+    def delete_rendered_text(self, phonetic=False, callback=None):
+        renderer = StaticHTMLRenderer(self.project_id, self.clara_project_internal.id, phonetic=phonetic)
+        renderer.delete_rendered_html_directory()
+
+    def rendered_html_exists(phonetic=False, callback=None):
+        if phonetic == False:
+            return self.clara_project_internal.rendered_html_exists(self, self.project_id)
+        else:
+            return self.clara_project_internal.rendered_phonetic_html_exists(self, self.project_id)
 
 def combine_text_objects(text_objects, phonetic=False, callback=None):
     if not text_objects:

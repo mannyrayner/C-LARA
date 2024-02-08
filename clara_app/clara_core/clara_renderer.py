@@ -25,7 +25,6 @@ config = get_config()
 
 class StaticHTMLRenderer:
     def __init__(self, project_id, project_id_internal,
-                 #title=None,
                  phonetic=False, format_preferences_info=None,
                  normal_html_exists=False, phonetic_html_exists=False, callback=None):
         post_task_update(callback, f'--- Creating StaticHTMLRenderer, format_preferences_info = {format_preferences_info}')
@@ -45,13 +44,20 @@ class StaticHTMLRenderer:
         phonetic_or_normal = "phonetic" if self.phonetic else "normal"
         self.output_dir = Path(output_dir_for_project_id(project_id, phonetic_or_normal))
         
-        # Remove the existing output_dir if we're not on S3 and it exists
-        if not _s3_storage and directory_exists(self.output_dir):
-            remove_directory(self.output_dir)
+##        # Remove the existing output_dir if we're not on S3 and it exists
+##        if not _s3_storage and directory_exists(self.output_dir):
+##            remove_directory(self.output_dir)
+
+        self.delete_rendered_html_directory()
         
         make_directory(self.output_dir, parents=True)
 
         self._copy_static_files()
+
+    def delete_rendered_html_directory(self):
+        # Remove the existing output_dir if we're not on S3 and it exists
+        if not _s3_storage and directory_exists(self.output_dir):
+            remove_directory(self.output_dir)
         
     # Copy the files in the 'static' folder to the output_dir
     # Use format_preferences_info to modify the parametrised CSS file,

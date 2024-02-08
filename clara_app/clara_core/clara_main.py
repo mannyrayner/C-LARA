@@ -1094,13 +1094,16 @@ class CLARAProjectInternal:
         phonetic_html_exists = self.rendered_phonetic_html_exists(project_id)
         post_task_update(callback, f"--- phonetic_html_exists: {phonetic_html_exists}")
         renderer = StaticHTMLRenderer(project_id, self.id,
-                                      #title=title,
                                       phonetic=phonetic, format_preferences_info=format_preferences_info,
                                       normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists, callback=callback)
         post_task_update(callback, f"--- Start creating pages")
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
         post_task_update(callback, f"finished")
         return renderer.output_dir
+
+    def delete_rendered_html(self, project_id, phonetic=False):
+        renderer = StaticHTMLRenderer(project_id, self.id, phonetic=phonetic)
+        renderer.delete_rendered_html_directory()
 
     # Determine whether the rendered HTML has been created
     def rendered_html_exists(self, project_id):
