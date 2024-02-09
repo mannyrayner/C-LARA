@@ -96,7 +96,6 @@ def call_openai_api_interpret_image(prompt, image_path, gpt_model='gpt-4-vision-
     }
 
     payload = {
-      #"model": "gpt-4-vision-preview",
       "model": gpt_model,
       "messages": [
         {
@@ -104,7 +103,6 @@ def call_openai_api_interpret_image(prompt, image_path, gpt_model='gpt-4-vision-
           "content": [
             {
               "type": "text",
-              #"text": "What’s in this image?"
               "text": prompt
             },
             {
@@ -117,7 +115,6 @@ def call_openai_api_interpret_image(prompt, image_path, gpt_model='gpt-4-vision-
           ]
         }
       ],
-      #"max_tokens": 300
       "max_tokens": max_tokens
     }
 
