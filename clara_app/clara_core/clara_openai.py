@@ -62,7 +62,7 @@ def cost_of_gpt4v_api_call(file_path, prompt, response_string, gpt_model='gpt-4-
     image_cost = n_image_tokens * message_rate
     prompt_cost = n_prompt_tokens * message_rate
     response_cost = n_response_tokens * response_rate
-    return image_cost + input_cost + response_cost
+    return image_cost + prompt_cost + response_cost
 
 
 def num_gpt4_tokens_for_messages(messages):

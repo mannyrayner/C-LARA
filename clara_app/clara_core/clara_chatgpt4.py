@@ -88,7 +88,6 @@ def call_openai_api_interpret_image(prompt, image_path, gpt_model='gpt-4-vision-
       with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode('utf-8')
 
-    # Getting the base64 string
     base64_image = encode_image(image_path)
 
     headers = {
@@ -111,9 +110,9 @@ def call_openai_api_interpret_image(prompt, image_path, gpt_model='gpt-4-vision-
             {
               "type": "image_url",
               "image_url": {
-                "url": f"data:image/jpeg;base64,{base64_image}"
-              }#,
-              #"detail": "high"
+                "url": f"data:image/jpeg;base64,{base64_image}",
+                "detail": "high"
+              }
             }
           ]
         }
@@ -251,7 +250,8 @@ async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model
     # Once the API call is done:
     response = api_task.result()
 
-    response_string = response.choices[0].message.content
+    #response_string = response.choices[0].message.content
+    response_string = response.json()['choices'][0]['message']['content']
     if n_response_chars != 0:
         truncated_response = response_string if len(response_string) <= n_response_chars else response_string[:n_response_chars] + '...'
         await post_task_update_async(callback, f'--- Received response from {gpt_model}: "{truncated_response}"')
