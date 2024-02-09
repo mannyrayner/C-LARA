@@ -154,7 +154,6 @@ class AudioAnnotator:
                 segment_text_plain = segment.to_text()
                 segment_text_canonical = canonical_text_for_audio(segment_text_plain, phonetic=phonetic)
                 if not string_has_no_audio_content(segment_text_canonical):
-                #if not segment_has_no_audio_content(segment):
                     segments_data.append([segment_text_plain, segment_text_canonical])
                 
                 for content_element in segment.content_elements:
