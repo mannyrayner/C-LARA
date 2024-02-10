@@ -14,17 +14,39 @@
 	  <h3>Languages</h3>
 	  <p>Text language: {{ form.l2 }}</p>
 	  <p>Annotation language: {{ form.l1 }}</p>
+	  <p>What do you want to do? {{ form.simple_clara_type }}</p>
       <button type="submit" name="action" value="create_project">Create Project</button>
     {% endif %}
-	{% if status != 'No project' %}
+	{% if simple_clara_type == 'create_text_and_image' and status != 'No project' %}
 	   <h3>Prompt</h3>
 	   <p>{{ form.prompt }}</p>
 	{% endif %}
-	{% if status == 'No prompt' or status == 'No text' %}
-      <button type="submit" name="action" value="create_text_and_image">Create Text and Image</button>
+	
+	{% if simple_clara_type == 'create_text_and_image' %}
+		{% if status == 'No prompt' or status == 'No text' %}
+			<button type="submit" name="action" value="create_text_and_image">Create Text and Image</button>
+		{% endif %}
     {% endif %}
 	
-	{% if status != 'No project' and status != 'No prompt' and status != 'No text' %}
+	{% if simple_clara_type == 'create_text_from_image' %}
+		{% if status == 'No image prompt' or status == 'No text'  %}
+		   <h3>Image and instructions</h3>
+		   <p>Tell the AI to create text from an image you upload, e.g. "Write an imaginative story in {{l2}} based on this image"</p>
+		   <p>Instructions: {{ form.prompt }}</p>
+		   <p>Image: {{ form.image_file_path }} <p><button type="submit" name="action" value="save_uploaded_image_prompt">Create text from image</button></p>
+		{% else %}
+		   <h3>Original image</h3>
+		   <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
+		{% endif %}
+	{% endif %}
+	
+	{% if simple_clara_type == 'annotate_existing_text' and status == 'No text' %}
+	   <h3>Provide your own text</h3>
+	   <p>{{ form.plain_text }}
+	     <button type="submit" name="action" value="save_text_to_annotate">Save Text</button></p>
+	{% endif %}
+	
+	{% if status != 'No project' and status != 'No prompt' and status != 'No image prompt' and status != 'No text' %}
 	  <h3>Generated text title</h3>
 	  <p>{{ form.text_title }}
 	     <button type="submit" name="action" value="save_text_title">Save Edited Text Title</button></p>
@@ -34,19 +56,22 @@
 	     <button type="submit" name="action" value="rewrite_text">Rewrite Text</button></p>
 	  <br>
     {% endif %}
-    {% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' %}
-	  <h3>Image</h3>
-      <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
-	  <p>You can try adding advice in the box below if you regenerate the image.</p>
-	   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
-	{% elif status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
-	   <h3>Image</h3>
-	   <p>Image generation failed, probably due to constraints on appropriate content. Sometimes adding advice in the box below and regenerating will fix this.</p>
-	   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
-    {% endif %}
-	{% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' or status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
-	   <h3>Uploaded image (alternative to AI-generated image)</h3>
-	   <p>{{ form.image_file_path }} <button type="submit" name="action" value="save_uploaded_image">Save Uploaded Image</button><p>
+	
+	{% if simple_clara_type != 'create_text_from_image' %}
+		{% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' %}
+		  <h3>Image</h3>
+		  <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
+		  <p>You can try adding advice in the box below if you regenerate the image.</p>
+		   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
+		{% elif status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
+		   <h3>Image</h3>
+		   <p>Image generation failed, probably due to constraints on appropriate content. Sometimes adding advice in the box below and regenerating will fix this.</p>
+		   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
+		{% endif %}
+		{% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' or status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
+		   <h3>Uploaded image (alternative to AI-generated image)</h3>
+		   <p>{{ form.image_file_path }} <button type="submit" name="action" value="save_uploaded_image">Save Uploaded Image</button><p>
+		{% endif %}
 	{% endif %}
   
     {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
