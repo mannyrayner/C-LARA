@@ -1,7 +1,7 @@
 from django.db import models
 from django.urls import reverse
 
-from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
+from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SIMPLE_CLARA_TYPES
 
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
@@ -68,6 +68,7 @@ class CLARAProject(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     l2 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
+    simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
 
     def has_saved_internalised_and_annotated_text(self, phonetic=False):
         clara_project_internal = CLARAProjectInternal(self.internal_id, self.l2, self.l1)

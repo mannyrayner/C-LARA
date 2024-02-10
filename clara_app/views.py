@@ -57,7 +57,7 @@ from .clara_core.clara_grapheme_phoneme_resources import grapheme_phoneme_resour
 from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_core.clara_chinese import is_chinese_language
 from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure
-from .clara_core.clara_chatgpt4 import call_chat_gpt4_image
+from .clara_core.clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
 from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
 from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
@@ -1179,7 +1179,7 @@ def get_simple_clara_resources_helper(project_id):
             resources_available['up_to_date_dict'] = {}
             return resources_available
 
-        # We have a project, add the L2, L1 and title to available resources
+        # We have a project, add the L2, L1, title and simple_clara_type to available resources
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal)
@@ -1188,30 +1188,72 @@ def get_simple_clara_resources_helper(project_id):
         resources_available['rtl_language'] = is_rtl_language(project.l2)
         resources_available['l1'] = project.l1
         resources_available['title'] = project.title
+        resources_available['simple_clara_type'] = project.simple_clara_type
         resources_available['internal_title'] = clara_project_internal.id
         resources_available['up_to_date_dict'] = up_to_date_dict
 
-        if not clara_project_internal.text_versions['prompt']:
-            # We have a project, but no prompt
-            resources_available['status'] = 'No prompt'
-            return resources_available
-        else:
-            resources_available['prompt'] = clara_project_internal.load_text_version('prompt')
+        # In the create_text_and_image version, we start with a prompt and create a plain_text and image
+        if project.simple_clara_type == 'create_text_and_image':
+            if not clara_project_internal.text_versions['prompt']:
+                # We have a project, but no prompt
+                resources_available['status'] = 'No prompt'
+                return resources_available
+            else:
+                resources_available['prompt'] = clara_project_internal.load_text_version('prompt')
 
-        if not clara_project_internal.text_versions['plain']:
-            # We have a prompt, but no plain text
-            resources_available['status'] = 'No text'
-            return resources_available
-        else:
-            resources_available['plain_text'] = clara_project_internal.load_text_version('plain')
-            resources_available['text_title'] = clara_project_internal.load_text_version_or_null('title')
+            if not clara_project_internal.text_versions['plain']:
+                # We have a prompt, but no plain text
+                resources_available['status'] = 'No text'
+                return resources_available
+            else:
+                resources_available['plain_text'] = clara_project_internal.load_text_version('plain')
+                resources_available['text_title'] = clara_project_internal.load_text_version_or_null('title')
 
-        image = clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text')
-        if image:
-            resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
+            image = clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text')
+            if image:
+                resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
 
-        # For uploaded image, in case we want to use one
-        resources_available['image_file_path'] = None
+            # For uploaded image, in case we want to use one
+            resources_available['image_file_path'] = None
+
+        # In the create_text_from_image version, we start with an image and possibly a prompt and create a plain_text
+        elif project.simple_clara_type == 'create_text_from_image':
+            image = clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text')
+            if not image:
+                # We have a project, but no image
+                resources_available['status'] = 'No image prompt'
+                return resources_available
+            else:
+                resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
+
+            # The prompt is optional in create_text_from_image, we can meaningfully use a default
+            if clara_project_internal.text_versions['prompt']:
+                resources_available['prompt'] = clara_project_internal.load_text_version('prompt')
+
+            if not clara_project_internal.text_versions['plain']:
+                # We have an image, but no plain text
+                resources_available['status'] = 'No text'
+                return resources_available
+            else:
+                resources_available['plain_text'] = clara_project_internal.load_text_version('plain')
+                resources_available['text_title'] = clara_project_internal.load_text_version_or_null('title')
+
+        # In the annotate_existing_text version, we start with plain text and create an image
+        elif project.simple_clara_type == 'annotate_existing_text':
+            if not clara_project_internal.text_versions['plain']:
+                # We have an image, but no plain text
+                resources_available['status'] = 'No text'
+                return resources_available
+            else:
+                resources_available['plain_text'] = clara_project_internal.load_text_version('plain')
+                resources_available['text_title'] = clara_project_internal.load_text_version_or_null('title')
+
+            image = clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text')
+            if image:
+                resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
+
+            # For uploaded image, in case we want to use one
+            resources_available['image_file_path'] = None
 
         if clara_project_internal.text_versions['segmented']:
             # We have segmented text
@@ -1246,12 +1288,12 @@ def simple_clara(request, project_id, status):
     username = request.user.username
     # Get resources available for display based on the current state
     resources = get_simple_clara_resources_helper(project_id)
-    #print(f'Resources:')
-    #pprint.pprint(resources)
+    print(f'Resources:')
+    pprint.pprint(resources)
     
     status = resources['status']
+    simple_clara_type = resources['simple_clara_type'] if 'simple_clara_type' in resources else None
     rtl_language = resources['rtl_language'] if 'rtl_language' in resources else False
-    print(f'--- rtl_language = {rtl_language}')
     up_to_date_dict = resources['up_to_date_dict'] 
     form = SimpleClaraForm(initial=resources, is_rtl_language=rtl_language)
     content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
@@ -1259,23 +1301,37 @@ def simple_clara(request, project_id, status):
     if request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
-        #print(f'Action = {action}')
+        print(f'Action = {action}')
         if action:
             form = SimpleClaraForm(request.POST, request.FILES, is_rtl_language=rtl_language)
             if form.is_valid():
-                #print(f'form.cleaned_data')
-                #pprint.pprint(form.cleaned_data)
+                print(f'Status: {status}')
+                print(f'form.cleaned_data')
+                pprint.pprint(form.cleaned_data)
                 if action == 'create_project':
                     l2 = form.cleaned_data['l2']
                     l1 = form.cleaned_data['l1']
                     title = form.cleaned_data['title']
-                    simple_clara_action = { 'action': 'create_project', 'l2': l2, 'l1': l1, 'title': title }
+                    simple_clara_type = form.cleaned_data['simple_clara_type']
+                    simple_clara_action = { 'action': 'create_project', 'l2': l2, 'l1': l1, 'title': title, 'simple_clara_type': simple_clara_type }
                 elif action == 'change_title':
                     title = form.cleaned_data['title']
                     simple_clara_action = { 'action': 'change_title', 'title': title }
                 elif action == 'create_text_and_image':
                     prompt = form.cleaned_data['prompt']
                     simple_clara_action = { 'action': 'create_text_and_image', 'prompt': prompt }
+                elif action == 'save_uploaded_image_prompt':
+                    if form.cleaned_data['image_file_path']:
+                        uploaded_image_file_path = form.cleaned_data['image_file_path']
+                        image_file_path = uploaded_file_to_file(uploaded_image_file_path)
+                        prompt = form.cleaned_data['prompt'] if 'prompt' in form.cleaned_data else ''
+                        simple_clara_action = { 'action': 'save_image_and_create_text', 'image_file_path': image_file_path, 'prompt': prompt }
+                    else:
+                        messages.error(request, f"Error: no image to upload")
+                        return redirect('simple_clara', project_id, 'error')
+                elif action == 'save_text_to_annotate':
+                    plain_text = form.cleaned_data['plain_text']
+                    simple_clara_action = { 'action': 'save_text_and_create_image', 'plain_text': plain_text }
                 elif action == 'save_text':
                     plain_text = form.cleaned_data['plain_text']
                     simple_clara_action = { 'action': 'save_text', 'plain_text': plain_text }
@@ -1341,6 +1397,7 @@ def simple_clara(request, project_id, status):
         'form': form,
         'content': content,
         'status': status,
+        'simple_clara_type': simple_clara_type,
         'clara_version': clara_version
     })
 
@@ -1355,7 +1412,8 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
     try:
         action_type = simple_clara_action['action']
         if action_type == 'create_project':
-            # simple_clara_action should be of form { 'action': 'create_project', 'l2': text_language, 'l1': annotation_language, 'title': title }
+            # simple_clara_action should be of form { 'action': 'create_project', 'l2': text_language, 'l1': annotation_language,
+            #                                         'title': title, 'simple_clara_type': simple_clara_type }
             result = simple_clara_create_project_helper(username, simple_clara_action, callback=callback)
         elif action_type == 'change_title':
             # simple_clara_action should be of form { 'action': 'create_project', 'l2': text_language, 'l1': annotation_language, 'title': title }
@@ -1363,6 +1421,12 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'create_text_and_image':
             # simple_clara_action should be of form { 'action': 'create_text_and_image', 'prompt': prompt }
             result = simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_image_and_create_text':
+            # simple_clara_action should be of form { 'action': 'save_image_and_create_text', 'image_file_path': image_file_path, 'prompt': prompt }
+            result = simple_clara_save_image_and_create_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_text_and_create_image':
+            # simple_clara_action should be of form { 'action': 'save_text_and_create_image', 'plain_text': plain_text }
+            result = simple_clara_save_text_and_create_image_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'save_text':
             # simple_clara_action should be of form { 'action': 'save_text', 'plain_text': plain_text }
             result = simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -1434,13 +1498,15 @@ def simple_clara_create_project_helper(username, simple_clara_action, callback=N
     l2_language = simple_clara_action['l2']
     l1_language = simple_clara_action['l1']
     title = simple_clara_action['title']
+    simple_clara_type = simple_clara_action['simple_clara_type']
     # Create a new project in Django's database, associated with the current user
     user = User.objects.get(username=username)
     clara_project = CLARAProject(title=title, user=user, l2=l2_language, l1=l1_language)
     clara_project.save()
     internal_id = create_internal_project_id(title, clara_project.id)
-    # Update the Django project with the internal_id
+    # Update the Django project with the internal_id and simple_clara_type
     clara_project.internal_id = internal_id
+    clara_project.simple_clara_type = simple_clara_type
     clara_project.save()
     # Create a new internal project in the C-LARA framework
     clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
@@ -1480,7 +1546,7 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
     # Create the title
     post_task_update(callback, f"STARTED TASK: create text title")
     api_calls = clara_project_internal.create_title(user=username, config_info=config_info, callback=callback)
-    store_api_calls(api_calls, project, user, 'plain')
+    store_api_calls(api_calls, project, user, 'text_title')
     post_task_update(callback, f"ENDED TASK: create text title")
 
     # Create the image
@@ -1496,6 +1562,83 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
     else:
         return { 'status': 'finished',
                  'message': 'Created text and title but was unable to create image. Probably DALL-E-3 thought something was inappropriate.' }
+
+# simple_clara_action should be of form { 'action': 'save_text_and_create_image', 'plain_text': plain_text }
+def simple_clara_save_text_and_create_image_helper(username, project_id, simple_clara_action, callback=None):
+    plain_text = simple_clara_action['plain_text']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    title = project.title
+    user = project.user
+    config_info = get_user_config(user)
+
+    # Save the text
+    clara_project_internal.save_text_version('plain', plain_text, user=user.username, source='user_provided')
+
+    # Create the title
+    post_task_update(callback, f"STARTED TASK: create text title")
+    api_calls = clara_project_internal.create_title(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'text_title')
+    post_task_update(callback, f"ENDED TASK: create text title")
+
+    # Create the image
+    post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
+    create_and_add_dall_e_3_image(project_id, callback=None)
+    #api_calls are stored inside create_and_add_dall_e_3_image
+    #store_api_calls(api_calls, project, user, 'image')
+    post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
+
+    if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
+        return { 'status': 'finished',
+                 'message': 'Created title and image' }
+    else:
+        return { 'status': 'finished',
+                 'message': 'Created title but was unable to create image. Probably DALL-E-3 thought something was inappropriate.' }
+
+# simple_clara_action should be of form { 'action': 'save_image_and_create_text', 'image_file_path': image_file_path, 'prompt': prompt }
+def simple_clara_save_image_and_create_text_helper(username, project_id, simple_clara_action, callback=None):
+    image_file_path = simple_clara_action['image_file_path']
+    prompt = simple_clara_action['prompt']
+
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    title = project.title
+    user = project.user
+    l2 = project.l2
+    config_info = get_user_config(user)
+
+    image_name = 'DALLE-E-3-Image-For-Whole-Text'
+    clara_project_internal.add_project_image(image_name, image_file_path, 
+                                             associated_text='', associated_areas='',
+                                             page=1, position='top')
+
+    permanent_image_file_path = clara_project_internal.get_project_image(image_name, callback=callback).image_file_path
+
+    if not prompt:
+        prompt = f'Write an imaginative story in {l2} based on this image.'
+    else:
+        language_reminder = f'\nThe text you produce must be written in {l2}'
+        prompt += language_reminder
+
+    # Create the text from the image
+    post_task_update(callback, f"STARTED TASK: create plain text from image")
+    api_call = call_chat_gpt4_interpret_image(prompt, permanent_image_file_path, config_info=config_info, callback=callback)
+    plain_text = api_call.response
+    clara_project_internal.save_text_version('plain', plain_text, user=user.username, source='ai_generated')
+    store_api_calls([ api_call ], project, user, 'plain')
+    post_task_update(callback, f"ENDED TASK: create plain text from image")
+
+    # Create the title
+    post_task_update(callback, f"STARTED TASK: create text title")
+    api_calls = clara_project_internal.create_title(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'text_title')
+    post_task_update(callback, f"ENDED TASK: create text title")
+
+    return { 'status': 'finished',
+             'message': 'Created text and title from image' }
 
 def simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=None):
     plain_text = simple_clara_action['plain_text']

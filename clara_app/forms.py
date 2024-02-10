@@ -6,7 +6,7 @@ from .models import Content, UserProfile, UserConfiguration, LanguageMaster
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from django.contrib.auth.models import User
 
-from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT
+from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SIMPLE_CLARA_TYPES
 
 from .clara_core.clara_utils import is_rtl_language, is_chinese_language
         
@@ -96,6 +96,8 @@ class SimpleClaraForm(forms.Form):
     l1 = forms.ChoiceField(label='Annotation language', choices=SUPPORTED_LANGUAGES, required=False)
     # Name of the Django-level project (CLARAProject)
     title = forms.CharField(label='Title', max_length=200, required=False)
+    # What we are going to do in this project
+    simple_clara_type = forms.ChoiceField(choices=SIMPLE_CLARA_TYPES, required=False)
     # Id of the CLARAProjectInternal
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
     # L2 title to appear on the first page of the text
