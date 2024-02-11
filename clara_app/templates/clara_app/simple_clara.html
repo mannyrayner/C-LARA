@@ -31,7 +31,7 @@
 	{% if simple_clara_type == 'create_text_from_image' %}
 		{% if status == 'No image prompt' or status == 'No text'  %}
 		   <h3>Image and instructions</h3>
-		   <p>Tell the AI to create text from an image you upload, e.g. "Write an imaginative story in {{l2}} based on this image"</p>
+		   <p>Tell the AI to create text from an image you upload, e.g. "Write an imaginative story based on this image"</p>
 		   <p>Instructions: {{ form.prompt }}</p>
 		   <p>Image: {{ form.image_file_path }} <p><button type="submit" name="action" value="save_uploaded_image_prompt">Create text from image</button></p>
 		{% else %}
