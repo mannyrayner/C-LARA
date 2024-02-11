@@ -14,7 +14,8 @@
 	  <h3>Languages</h3>
 	  <p>Text language: {{ form.l2 }}</p>
 	  <p>Annotation language: {{ form.l1 }}</p>
-	  <p>What do you want to do? {{ form.simple_clara_type }}</p>
+	  <h3>What do you want to do?</h3>
+	  {{ form.simple_clara_type }}
       <button type="submit" name="action" value="create_project">Create Project</button>
     {% endif %}
 	{% if simple_clara_type == 'create_text_and_image' and status != 'No project' %}
