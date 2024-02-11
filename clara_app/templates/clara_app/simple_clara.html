@@ -36,7 +36,10 @@
 		   <p>Image: {{ form.image_file_path }} <p><button type="submit" name="action" value="save_uploaded_image_prompt">Create text from image</button></p>
 		{% else %}
 		   <h3>Original image</h3>
-		   <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
+		   <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;"></p>
+		   <p>Tell the AI what you require, if you wish to regenerate the text</p>
+		   <p>{{ form.prompt }}
+		   <button type="submit" name="action" value="regenerate_text_from_image">Regenerate text from image</button><p>
 		{% endif %}
 	{% endif %}
 	
@@ -53,14 +56,16 @@
 	  <h3>Generated text</h3>
 	  <p>{{ form.plain_text }}
 	     <button type="submit" name="action" value="save_text">Save Edited Text</button>
-	     <button type="submit" name="action" value="rewrite_text">Rewrite Text</button></p>
+		 {% if simple_clara_type != 'create_text_from_image' %}
+			<button type="submit" name="action" value="rewrite_text">Rewrite Text</button></p>
+		 {% endif %}
 	  <br>
     {% endif %}
 	
 	{% if simple_clara_type != 'create_text_from_image' %}
 		{% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' %}
 		  <h3>Image</h3>
-		  <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;">
+		  <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;"></p>
 		  <p>You can try adding advice in the box below if you regenerate the image.</p>
 		   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
 		{% elif status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
