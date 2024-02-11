@@ -1288,8 +1288,8 @@ def simple_clara(request, project_id, status):
     username = request.user.username
     # Get resources available for display based on the current state
     resources = get_simple_clara_resources_helper(project_id)
-    print(f'Resources:')
-    pprint.pprint(resources)
+    #print(f'Resources:')
+    #pprint.pprint(resources)
     
     status = resources['status']
     simple_clara_type = resources['simple_clara_type'] if 'simple_clara_type' in resources else None
@@ -1301,13 +1301,13 @@ def simple_clara(request, project_id, status):
     if request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
-        print(f'Action = {action}')
+        #print(f'Action = {action}')
         if action:
             form = SimpleClaraForm(request.POST, request.FILES, is_rtl_language=rtl_language)
             if form.is_valid():
-                print(f'Status: {status}')
-                print(f'form.cleaned_data')
-                pprint.pprint(form.cleaned_data)
+                #print(f'Status: {status}')
+                #print(f'form.cleaned_data')
+                #pprint.pprint(form.cleaned_data)
                 if action == 'create_project':
                     l2 = form.cleaned_data['l2']
                     l1 = form.cleaned_data['l1']
@@ -1627,6 +1627,8 @@ def simple_clara_save_image_and_create_text_helper(username, project_id, simple_
 
     permanent_image_file_path = clara_project_internal.get_project_image(image_name, callback=callback).image_file_path
 
+    clara_project_internal.save_text_version('prompt', prompt, user=user.username, source='user_supplied')
+
     if not prompt:
         prompt = f'Write an imaginative story in {l2} based on this image.'
     else:
@@ -1670,12 +1672,14 @@ def simple_clara_regenerate_text_from_image_helper(username, project_id, simple_
                   'error': f'There is no image to generate from' }
     permanent_image_file_path = image.image_file_path
 
+    clara_project_internal.save_text_version('prompt', prompt, user=user.username, source='user_supplied')
+
     language_reminder = f'\nThe text you produce must be written in {l2}.'
-    prompt += language_reminder
+    full_prompt = prompt + language_reminder
 
     # Create the text from the image
     post_task_update(callback, f"STARTED TASK: regenerate plain text from image")
-    api_call = call_chat_gpt4_interpret_image(prompt, permanent_image_file_path, config_info=config_info, callback=callback)
+    api_call = call_chat_gpt4_interpret_image(full_prompt, permanent_image_file_path, config_info=config_info, callback=callback)
     plain_text = api_call.response
     clara_project_internal.save_text_version('plain', plain_text, user=user.username, source='ai_generated')
     store_api_calls([ api_call ], project, user, 'plain')
