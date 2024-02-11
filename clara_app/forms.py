@@ -97,7 +97,10 @@ class SimpleClaraForm(forms.Form):
     # Name of the Django-level project (CLARAProject)
     title = forms.CharField(label='Title', max_length=200, required=False)
     # What we are going to do in this project
-    simple_clara_type = forms.ChoiceField(choices=SIMPLE_CLARA_TYPES, required=False)
+    simple_clara_type = forms.ChoiceField(choices=SIMPLE_CLARA_TYPES,
+                                          widget=forms.RadioSelect,
+                                          initial='create_text_and_image',
+                                          required=False)
     # Id of the CLARAProjectInternal
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
     # L2 title to appear on the first page of the text
