@@ -35,8 +35,9 @@
 			  data-segment-audio="{{ segment.annotations.tts.file_path if segment.annotations.tts else '' }}">
 		  {%- for element in segment.content_elements -%}
 		    {%- if element.type == "Image" -%}
-			  <div class="image-container" style="width: {{ element.content.width }}px; height: {{ element.content.height }}px;">
-				<img src="{{ '/accounts/projects/serve_project_image/' + element.content.project_id_internal + '/' + element.content.src }}" alt="Project Image" style="max-width: 500px; max-height: 700px;">
+			  <!-- <div class="image-container" style="width: {{ element.content.width }}px; height: {{ element.content.height }}px;"> -->
+			  <div class="image-container" style="width: 500px; height: 500px;">
+				<img src="{{ '/accounts/projects/serve_project_image/' + element.content.project_id_internal + '/' + element.content.src }}" alt="Project Image" style="max-width: 500px; max-height: 500px;">
 				{%- if not phonetic and element.content.transformed_segments -%}
 				  <svg viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
 				  {%- for segment in element.content.transformed_segments -%}
