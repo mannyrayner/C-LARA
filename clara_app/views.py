@@ -1329,6 +1329,13 @@ def simple_clara(request, project_id, status):
                     else:
                         messages.error(request, f"Error: no image to upload")
                         return redirect('simple_clara', project_id, 'error')
+                elif action == 'regenerate_text_from_image':
+                    prompt = form.cleaned_data['prompt'] if 'prompt' in form.cleaned_data else ''
+                    if prompt:
+                        simple_clara_action = { 'action': 'regenerate_text_from_image', 'prompt': prompt }
+                    else:
+                        messages.error(request, f"Error: no instructions about how to regenerate image")
+                        return redirect('simple_clara', project_id, 'error')
                 elif action == 'save_text_to_annotate':
                     plain_text = form.cleaned_data['plain_text']
                     simple_clara_action = { 'action': 'save_text_and_create_image', 'plain_text': plain_text }
@@ -1427,6 +1434,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'save_text_and_create_image':
             # simple_clara_action should be of form { 'action': 'save_text_and_create_image', 'plain_text': plain_text }
             result = simple_clara_save_text_and_create_image_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'regenerate_text_from_image':
+            # simple_clara_action should be of form { 'action': 'regenerate_text_from_image', 'prompt': prompt }
+            result = simple_clara_regenerate_text_from_image_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'save_text':
             # simple_clara_action should be of form { 'action': 'save_text', 'plain_text': plain_text }
             result = simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -1620,7 +1630,7 @@ def simple_clara_save_image_and_create_text_helper(username, project_id, simple_
     if not prompt:
         prompt = f'Write an imaginative story in {l2} based on this image.'
     else:
-        language_reminder = f'\nThe text you produce must be written in {l2}'
+        language_reminder = f'\nThe text you produce must be written in {l2}.'
         prompt += language_reminder
 
     # Create the text from the image
@@ -1639,6 +1649,46 @@ def simple_clara_save_image_and_create_text_helper(username, project_id, simple_
 
     return { 'status': 'finished',
              'message': 'Created text and title from image' }
+
+
+# simple_clara_action should be of form { 'action': 'regenerate_text_from_image', 'prompt': prompt }
+def simple_clara_regenerate_text_from_image_helper(username, project_id, simple_clara_action, callback=None):
+    prompt = simple_clara_action['prompt']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    title = project.title
+    user = project.user
+    l2 = project.l2
+    config_info = get_user_config(user)
+
+    image_name = 'DALLE-E-3-Image-For-Whole-Text'
+    image = clara_project_internal.get_project_image(image_name, callback=callback)
+    if not image:
+         return { 'status': 'error',
+                  'error': f'There is no image to generate from' }
+    permanent_image_file_path = image.image_file_path
+
+    language_reminder = f'\nThe text you produce must be written in {l2}.'
+    prompt += language_reminder
+
+    # Create the text from the image
+    post_task_update(callback, f"STARTED TASK: regenerate plain text from image")
+    api_call = call_chat_gpt4_interpret_image(prompt, permanent_image_file_path, config_info=config_info, callback=callback)
+    plain_text = api_call.response
+    clara_project_internal.save_text_version('plain', plain_text, user=user.username, source='ai_generated')
+    store_api_calls([ api_call ], project, user, 'plain')
+    post_task_update(callback, f"ENDED TASK: regenerate plain text from image")
+
+    # Create the title
+    post_task_update(callback, f"STARTED TASK: create text title")
+    api_calls = clara_project_internal.create_title(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'text_title')
+    post_task_update(callback, f"ENDED TASK: create text title")
+
+    return { 'status': 'finished',
+             'message': 'Regenerated text and title from image' }
 
 def simple_clara_save_text_helper(username, project_id, simple_clara_action, callback=None):
     plain_text = simple_clara_action['plain_text']
