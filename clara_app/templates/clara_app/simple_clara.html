@@ -18,12 +18,13 @@
 	  {{ form.simple_clara_type }}
       <button type="submit" name="action" value="create_project">Create Project</button>
     {% endif %}
+	
 	{% if simple_clara_type == 'create_text_and_image' and status != 'No project' %}
 	   <h3>Prompt</h3>
 	   <p>{{ form.prompt }}</p>
 	{% endif %}
 	
-	{% if simple_clara_type == 'create_text_and_image' %}
+	{% if simple_clara_type == 'create_text_from_image' %}
 		{% if status == 'No prompt' or status == 'No text' %}
 			<button type="submit" name="action" value="create_text_and_image">Create Text and Image</button>
 		{% endif %}
@@ -38,7 +39,7 @@
 		{% else %}
 		   <h3>Original image</h3>
 		   <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;"></p>
-		   <p>Tell the AI what you require, if you wish to regenerate the text</p>
+		   <p>Reuse the previous instructions to the AI, or update them:</p>
 		   <p>{{ form.prompt }}
 		   <button type="submit" name="action" value="regenerate_text_from_image">Regenerate text from image</button><p>
 		{% endif %}
