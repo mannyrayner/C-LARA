@@ -1861,14 +1861,19 @@ def import_project_from_zip_file(zip_file, project_id, internal_id, callback=Non
         clara_project.l2 = clara_project_internal.l2_language
         clara_project.save() 
 
-        # Update human audio info from the global metadata, which looks like this:
+        # Update simple_clara_type and human audio info from the global metadata, which looks like this:
         #{
+        #  "simple_clara_type": "create_text_and_image",
         #  "human_voice_id": "mannyrayner",
         #  "human_voice_id_phonetic": "mannyrayner",
         #  "audio_type_for_words": "human",
         #  "audio_type_for_segments": "tts"
         #}
         if global_metadata and isinstance(global_metadata, dict):
+            if "simple_clara_type" in global_metadata:
+                clara_project.simple_clara_type = global_metadata["simple_clara_type"]
+                clara_project.save()
+                
             if "human_voice_id" in global_metadata and global_metadata["human_voice_id"]:                       
                 plain_human_audio_info, plain_created = HumanAudioInfo.objects.get_or_create(project=clara_project)
                 plain_human_audio_info.voice_talent_id = global_metadata["human_voice_id"]
@@ -3475,12 +3480,14 @@ def create_dall_e_3_image_monitor(request, project_id, report_id):
     
 
 def clara_project_internal_make_export_zipfile(clara_project_internal,
+                                               simple_clara_type='create_text_and_image',
                                                human_voice_id=None, human_voice_id_phonetic=None,
                                                audio_type_for_words='tts', audio_type_for_segments='tts', 
                                                callback=None):
     print(f'--- Asynchronous rendering task started for creating export zipfile')
     try:
-        clara_project_internal.create_export_zipfile(human_voice_id=human_voice_id, human_voice_id_phonetic=human_voice_id_phonetic,
+        clara_project_internal.create_export_zipfile(simple_clara_type=simple_clara_type,
+                                                     human_voice_id=human_voice_id, human_voice_id_phonetic=human_voice_id_phonetic,
                                                      audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                      callback=callback)
         post_task_update(callback, f"finished")
@@ -3515,18 +3522,13 @@ def make_export_zipfile(request, project_id):
     if request.method == 'POST':
         form = MakeExportZipForm(request.POST)
         if form.is_valid():
-            # Create a unique ID to tag messages posted by this task
-            #report_id = uuid.uuid4()
-
-            # Define a callback as list of the callback function and the first argument
-            # We can't use a lambda function or a closure because async_task can't apply pickle to them
-            #callback = [post_task_update_in_db, report_id]
             task_type = f'make_export_zipfile'
             callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
             # Enqueue the task
             try:
                 task_id = async_task(clara_project_internal_make_export_zipfile, clara_project_internal,
+                                     simple_clara_type=project.simple_clara_type,
                                      human_voice_id=human_voice_id, human_voice_id_phonetic=human_voice_id_phonetic,
                                      audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                      callback=callback)
