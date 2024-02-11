@@ -24,7 +24,7 @@
 	   <p>{{ form.prompt }}</p>
 	{% endif %}
 	
-	{% if simple_clara_type == 'create_text_from_image' %}
+	{% if simple_clara_type == 'create_text_and_image' %}
 		{% if status == 'No prompt' or status == 'No text' %}
 			<button type="submit" name="action" value="create_text_and_image">Create Text and Image</button>
 		{% endif %}
