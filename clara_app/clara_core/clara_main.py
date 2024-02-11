@@ -297,6 +297,10 @@ class CLARAProjectInternal:
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
             self._copy_text_version_if_it_exists("gloss", new_project)
+        # Copy over any images we may have (it's possible we will choose to delete them later)
+        images = self.get_all_project_images()
+        if images:
+            new_project.copy_image_objects_to_project(images)
 
     # Copy a text version to another project if it exists
     def _copy_text_version_if_it_exists(self, version: str, other_project: 'CLARAProjectInternal') -> None:
@@ -1069,6 +1073,29 @@ class CLARAProjectInternal:
             # Handle the exception as needed
             return None
 
+    def copy_image_objects_to_project(self, images, callback=None):
+        project_id = self.id
+        
+        try:
+            post_task_update(callback, f"--- Adding {len(images)} images to project {project_id}")            
+            
+            for image in images:
+                self.add_project_image(image.image_name,
+                                       image.image_file_path,
+                                       associated_text=image.associated_text,
+                                       associated_areas=image.associated_areas,
+                                       page=image.page,
+                                       position=image.position,
+                                       callback=callback)
+            
+            post_task_update(callback, f"--- {len(images)} images added successfully")
+            return True
+        except Exception as e:
+            post_task_update(callback, f"*** CLARAProjectInternal: error when copying images to project")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            # Handle the exception as needed
+            return None
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.
@@ -1143,9 +1170,11 @@ class CLARAProjectInternal:
         return None if not audio_annotator else audio_annotator.printname_for_voice()
 
     # Make a zipfile for exporting the project and other metadata
-    def create_export_zipfile(self, human_voice_id=None, human_voice_id_phonetic=None,
+    def create_export_zipfile(self, simple_clara_type='create_text_and_image',
+                              human_voice_id=None, human_voice_id_phonetic=None,
                               audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
-        global_metadata = { 'human_voice_id': human_voice_id,
+        global_metadata = { 'simple_clara_type': simple_clara_type,
+                            'human_voice_id': human_voice_id,
                             'human_voice_id_phonetic': human_voice_id_phonetic,
                             'audio_type_for_words': audio_type_for_words,
                             'audio_type_for_segments': audio_type_for_segments }
