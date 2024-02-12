@@ -157,6 +157,7 @@ def check_well_formed_for_loading(data, template_or_examples, annotation_type, o
 # When we're saving the data, we carry out a more fine-grained check to try and make sure
 # that the result is going to be usable.
 def check_well_formed_for_saving(data, template_or_examples, annotation_type, operation, language):
+    #print(f'check_well_formed_for_saving({data}, {template_or_examples}, {annotation_type}, {operation}, {language})')
     check_well_formed_for_loading(data, template_or_examples, annotation_type, operation, language)
     if template_or_examples == 'template':
         check_validity_of_template(data, annotation_type)
@@ -184,7 +185,7 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                         raise TemplateError(message = f'"{string}" is not good "pinyin" "annotate" data')
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
-    elif operation == 'lemma' and annotation_type == 'annotate':
+    elif annotation_type == 'lemma' and operation == 'annotate':
         for string in data:
             try:
                 elements = string_to_list_of_content_elements(string, 'lemma')
@@ -234,7 +235,7 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                 except:
                     raise TemplateError(message = f'Cannot internalise "{string}" as "lemma_and_gloss" data')
     else:
-        raise TemplateError(message = f'Cannot check well-formedness of "{string}" as "{annotation_type}" "{operation}" data')
+        raise TemplateError(message = f'Cannot check well-formedness of "{data}" as "{annotation_type}" "{operation}" data')
 
 # Check that the template and annotated example list were found,
 # and that the template does not have any inappropriate arguments.
