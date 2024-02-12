@@ -188,7 +188,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
         try:
             api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
-            annotated_simplified_elements = parse_chatgpt_gloss_response(api_call.response, simplified_elements, gloss_or_lemma_or_pinyin)
+            annotated_simplified_elements = parse_chatgpt_gloss_response(api_call.response, simplified_elements, gloss_or_lemma_or_pinyin, callback=callback)
             nontrivial_annotated_elements = [ unsimplify_element(element, gloss_or_lemma_or_pinyin) for element in annotated_simplified_elements ]
             annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, gloss_or_lemma_or_pinyin)
             return ( annotated_elements, api_calls )
@@ -456,13 +456,17 @@ def unsimplify_element(element, gloss_or_lemma_or_pinyin):
     else:
         raise InternalCLARAError(message = f'Bad call: unsimplify_element({element}, {gloss_or_lemma_or_pinyin})')
 
-def parse_chatgpt_gloss_response(response, simplified_elements, gloss_or_lemma_or_pinyin):
+def parse_chatgpt_gloss_response(response, simplified_elements, gloss_or_lemma_or_pinyin, callback=None):
     try:
         response_object = json.loads(response)
     except:
-        raise ChatGPTError(message = 'Response is not correctly formatted JSON')
+        try:
+            response_object = extract_json_list_from_response_string_ignoring_wrappers(response, callback=callback)
+        except:
+            raise ChatGPTError(message = f'Response is not correctly formatted JSON: {response}')
     if not isinstance(response_object, list):
-        raise ChatGPTError(message = 'Response is not a list')
+        raise ChatGPTError(message = f'Response is not a list: {response}')
+    
     usable_response_object = []
     for element in response_object:
         if not well_formed_element_in_glossing_or_tagging_or_pinyin_response(element, gloss_or_lemma_or_pinyin):
@@ -472,10 +476,26 @@ def parse_chatgpt_gloss_response(response, simplified_elements, gloss_or_lemma_o
     original_text = ' '.join([ element if isinstance(element, str) else element[0] for element in simplified_elements ])
     annotated_text = ' '.join([ element[0] for element in usable_response_object ])
     if not original_text == annotated_text:
-        error = f"""*** Warning: original text and annotated text are different.
+        warning = f"""*** Warning: original text and annotated text are different.
  Original text: {original_text}
 Annotated text: {annotated_text}"""
+        post_task_update(callback, warning)
     return usable_response_object
+
+def extract_json_list_from_response_string_ignoring_wrappers(response, callback=None):
+    # Attempt to find the start and end of the JSON list
+    start_index = response.find('[')
+    end_index = response.rfind(']') + 1  # Include the closing bracket
+
+    if start_index != -1 and end_index != -1:
+        # Extract the JSON string
+        json_str = response[start_index:end_index]
+        # Parse the JSON string into a Python object
+        result = json.loads(json_str)
+        post_task_update(callback, f'--- Removed "{response[:start_index]}" from start of response and "{response[end_index:]}" from end')
+        return result
+    else:
+        raise ValueError("Valid JSON list not found in response")
 
 def simplified_element_list_to_text(simplified_elements):
     return ' '.join([ element if isinstance(element, str) else element[0]
