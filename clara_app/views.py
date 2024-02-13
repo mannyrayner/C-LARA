@@ -2154,7 +2154,16 @@ def project_list(request, clara_version):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'clara_app/project_list.html', {'search_form': search_form, 'page_obj': page_obj, 'clara_version': clara_version})
+    # Display the project using this version of C-LARA
+    clara_version_to_access_with = clara_version
+    # Display the menus using this version of C-LARA
+    clara_version_for_menus = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/project_list.html',
+                  {'search_form': search_form,
+                   'page_obj': page_obj,
+                   'clara_version_to_access_with': clara_version_to_access_with,
+                   'clara_version': clara_version_for_menus})
 
 # Delete a project
 @login_required
