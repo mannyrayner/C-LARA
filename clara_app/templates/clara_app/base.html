@@ -72,111 +72,166 @@
     white-space: nowrap;
 }
 
-
   </style>
   <title>{% block title %}C-LARA{% endblock %}</title>
 </head>
 <body>
   <header>
-    <nav>
-      <ul>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+	  <a class="navbar-brand" href="#">C-LARA</a>
+	  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	  </button>
+	  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+		<ul class="navbar-nav">
         {% if user.is_authenticated %}
-		  <li><a href="{% url 'profile' %}"
-		         data-tooltip="Display your location, bio, profile picture etc.">
-		         Display user profile</a></li>
-		  <li><a href="{% url 'edit_profile' %}"
-		         data-tooltip="Enter/edit your location, bio, profile picture etc.">
-				 Edit user profile</a></li>
-		  <li><a href="{% url 'update_feed' %}"
-		         data-tooltip="Get a summary of recent C-LARA activity from you and your friends.">
-				 Update feed</a></li>
-		  <li><a href="{% url 'friends' %}"
-		         data-tooltip="Show friends and outstanding friend requests.">
-				 Display friends</a></li>
-		  <li><a href="{% url 'user_config' %}"
-		         data-tooltip="Choose between simple C-LARA and full C-LARA. In full C-LARA mode, also specify the GPT-4 model you want to use and other related parameters.">
-				 Choose between simple C-LARA and full C-LARA</a></li>
-		  <li><a href="{% url 'credit_balance' %}"
-		         data-tooltip="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
-				 Credit balance for ChatGPT-4 API calls</a></li>
-		  <li><a href="{% url 'transfer_credit' %}"
-		         data-tooltip="Transfer some of the credit from your GPT-4 call account to another user.">
-				 Transfer credit to another user</a></li>
-		  {% if clara_version != 'simple_clara' %}
-			  <li><a href="{% url 'view_task_updates' %}"
-					 data-tooltip="Show trace output from C-LARA tasks produced during the last hour.">
-					 Recent task updates</a></li>
-		  {% endif %}
+		  <!-- User profile, configuration, credit, task updates -->
+		  <li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  User profile etc
+			</a>
+			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+			  <a class="dropdown-item" href="{% url 'profile' %}"
+					 data-toggle="tooltip" title="Display your location, bio, profile picture etc.">
+					 Display user profile</a>
+			  <a class="dropdown-item" href="{% url 'edit_profile' %}"
+					 data-toggle="tooltip" title="Enter/edit your location, bio, profile picture etc.">
+					 Edit user profile</a>
+			  <a class="dropdown-item" href="{% url 'user_config' %}"
+					 data-toggle="tooltip" title="Choose between simple C-LARA and full C-LARA. In full C-LARA mode, also specify the GPT-4 model you want to use and other related parameters.">
+					 Edit configuration information</a>
+			  <a class="dropdown-item" href="{% url 'credit_balance' %}"
+					 data-toggle="tooltip" title="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
+					 Credit balance for ChatGPT-4 API calls</a>
+			  <a class="dropdown-item" href="{% url 'transfer_credit' %}"
+					 data-toggle="tooltip" title="Transfer some of the credit from your GPT-4 call account to another user.">
+					 Transfer credit to another user</a>
+			  {% if clara_version != 'simple_clara' %}
+				  <a class="dropdown-item" href="{% url 'view_task_updates' %}"
+					 data-toggle="tooltip" title="Show trace output from C-LARA tasks produced during the last hour.">
+					 Recent task updates</a>
+			</div>
+          </li>
+		{% endif %}
+				 
+		  <!-- C-LARA social network -->
+		  <li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  Social network
+			</a>
+			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+			  <a class="dropdown-item" href="{% url 'content_list' %}"
+					 data-toggle="tooltip" title="List all the content that has been registered in the C-LARA social network.">
+					 Posted content</a>
+			  <a class="dropdown-item" href="{% url 'reading_history' 'english' 'init' %}"
+					 data-toggle="tooltip" title="Access your reading history for a given language, or add a new project to it.">
+					 Reading histories</a>
+			  <a class="dropdown-item" href="{% url 'update_feed' %}"
+					 data-toggle="tooltip" title="Get a summary of recent C-LARA activity from you and your friends.">
+					 Update feed</a>
+			  <a class="dropdown-item" href="{% url 'friends' %}"
+					 data-toggle="tooltip" title="Show friends and outstanding friend requests.">
+					 Friends</a>
+			  </div>
+          </li>
+		  
+		  <!-- Admin functions -->
 		  {% if user.userprofile.is_admin %}
-			<li><a href="{% url 'add_credit' %}"
-				   data-tooltip="Add credit to a user's GPT-4 call account">
-				   Add credit to user</a></li>
-            <li><a href="{% url 'admin_password_reset' %}"
-			       data-tooltip="Manually reset a user's password, in case they cannot use the normal password reset.">
-				   Manually reset user's password</a></li>
-		    <li><a href="{% url 'admin_project_ownership' %}"
-			       data-tooltip="Give yourself a COOWNER role on a project, if you are an admin and need to access it urgently for some reason.">
-				   Make yourself co-owner of a project</a></li>
-			<li><a href="{% url 'manage_language_masters' %}"
-			       data-tooltip="Give users 'language master' privileges, so that they can customise annotation prompts and edit phonetic lexicon data.">
-				   Manage language masters</a></li>
-			<li><a href="{% url 'delete_tts_data' %}"
-			       data-tooltip="Remove all cached TTS data for a given language.">
-				   Delete TTS data</a></li>
+		    <li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  Admin
+			  </a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+					<a class="dropdown-item" href="{% url 'add_credit' %}"
+						   data-toggle="tooltip" title="Add credit to a user's GPT-4 call account">
+						   Add credit to user</a>
+					<a class="dropdown-item" href="{% url 'admin_password_reset' %}"
+						   data-toggle="tooltip" title="Manually reset a user's password, in case they cannot use the normal password reset.">
+						   Manually reset user's password</a>
+					<a class="dropdown-item" href="{% url 'admin_project_ownership' %}"
+						   data-toggle="tooltip" title="Give yourself a COOWNER role on a project, if you are an admin and need to access it urgently for some reason.">
+						   Make yourself co-owner of a project</a>
+					<a class="dropdown-item" href="{% url 'manage_language_masters' %}"
+						   data-toggle="tooltip" title="Give users 'language master' privileges, so that they can customise annotation prompts and edit phonetic lexicon data.">
+						   Manage language masters</a>
+					<a class="dropdown-item" href="{% url 'delete_tts_data' %}"
+						   data-toggle="tooltip" title="Remove all cached TTS data for a given language.">
+						   Delete TTS data</a>
+				</div>
+            </li>
           {% endif %}
+		  
+		  <!-- Language master functions -->
 		  {% if user.userprofile.is_language_master %}
-			<li><a href="{% url 'edit_prompt' %}"
-			       data-tooltip="Edit the GPT-4 prompt templates and examples used to create text annotations for languages where you are a language master.">
-				   Edit annotation prompts</a></li>
-			<li><a href="{% url 'edit_phonetic_lexicon' %}"
-			       data-tooltip="Upload or edit phonetic lexicon data for languages where you are a language master.">
-				   Edit phonetic lexicon</a></li>
-		  {% endif %}
-		  {% if clara_version != 'simple_clara' %}
-			  <li><a href="{% url 'create_project' %}"
-					 data-tooltip="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
-					 Create new C-LARA project</a></li>
-		  {% endif %}
-		  <li><a href="{% url 'simple_clara' 0 'initial' %}"
-		         data-tooltip="Create a new C-LARA project using Simple-C-LARA.">
-				 Create new C-LARA project using Simple-C-LARA</a></li>
-		  {% if clara_version != 'simple_clara' %}
-			  <li><a href="{% url 'import_project' %}"
-					 data-tooltip="Import a project from a zipfile created using the 'Export zipfile' command.">
-					 Import C-LARA project from zipfile</a></li>
-			  <li><a href="{% url 'project_list' 'full_clara' %}"
-					 data-tooltip="List all the projects you have created or have been assigned a role in.">
-					 List your C-LARA projects</a></li>
-		  {% endif %}
-		  <li><a href="{% url 'project_list' 'simple_clara' %}"
-		         data-tooltip="List all the projects you have created or have been assigned a role in, using Simple-C-LARA.">
-		         List your C-LARA projects using Simple-C-LARA</a></li>
-		  <li><a href="{% url 'content_list' %}"
-		         data-tooltip="List all the content that has been registered in the C-LARA social network.">
-				 List registered content</a></li>
-		  <li><a href="{% url 'reading_history' 'english' 'init' %}"
-		         data-tooltip="Access your reading history for a given language, or add a new project to it.">
-		         Reading histories</a></li>
-		  {% if clara_version != 'simple_clara' %}
-			  <li><a href="{% url 'register_content' %}"
-					 data-tooltip="Register a piece of LARA content to make it accessible through the C-LARA social network.">
-					 Register external LARA content</a></li>
-		  {% endif %}
-          <li><a href="{% url 'logout' %}"
-		         data-tooltip="Exit C-LARA.">
-				 Logout</a></li>
+		    <li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  Language master
+			  </a>
+			    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+					<a class="dropdown-item" href="{% url 'edit_prompt' %}"
+						   data-toggle="tooltip" title="Edit the GPT-4 prompt templates and examples used to create text annotations for languages where you are a language master.">
+						   Edit annotation prompts</a>
+					<a class="dropdown-item" href="{% url 'edit_phonetic_lexicon' %}"
+						   data-toggle="tooltip" title="Upload or edit phonetic lexicon data for languages where you are a language master.">
+						   Edit phonetic lexicon</a>
+				</div>
+            </li>
+	      {% endif %}
+		  
+		  <!-- My projects -->
+		  <li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  My projects
+			  </a>
+			    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+				  <a class="dropdown-item" href="{% url 'project_list' 'simple_clara' %}"
+						 data-toggle="tooltip" title="List all the projects you have created or have been assigned a role in, using Simple-C-LARA.">
+						 List my C-LARA projects using Simple-C-LARA</a>
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'project_list' 'full_clara' %}"
+							 data-toggle="tooltip" title="List all the projects you have created or have been assigned a role in.">
+							 List my C-LARA projects using full C-LARA</a>
+				  {% endif %}
+				  <a class="dropdown-item" href="{% url 'simple_clara' 0 'initial' %}"
+						 data-toggle="tooltip" title="Create a new C-LARA project using Simple-C-LARA.">
+						 Create new C-LARA project using Simple-C-LARA</a>
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'create_project' %}"
+							 data-toggle="tooltip" title="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
+							 Create new C-LARA project using full C-LARA</a>
+				  {% endif %}
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'import_project' %}"
+							 data-toggle="tooltip" title="Import a project from a zipfile created using the 'Export zipfile' command.">
+							 Import C-LARA project from zipfile</a>
+				  {% endif %}
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'register_content' %}"
+							 data-toggle="tooltip" title="Register a piece of LARA content to make it accessible through the C-LARA social network.">
+							 Register external LARA content</a>
+				  {% endif %}
+				</div>
+           </li>
+		  <!-- Logout -->
+		   <li class="nav-item">
+			  <a class="nav-link" href="{% url 'logout' %}" data-toggle="tooltip" title="Exit C-LARA.">Logout</a>
+		   </li>
+				 
         {% else %}
-          <li><a href="{% url 'login' %}"
-		         data-tooltip="Log in using your userid and password.">
-				 Login</a></li>
-          <li><a href="{% url 'register' %}"
-		         data-tooltip="Create a new account, giving a userid, password and email address.">
-				 Register</a></li>
-		  <li><a href="{% url 'password_reset' %}"
-		         data-tooltip="Reset your password if you have lost it or want to change it. You need to have given an email address.">
-				 Password reset</a></li>
+		  <li class="nav-item">
+			<a class="nav-link" href="{% url 'login' %}" data-toggle="tooltip" title="Log in using your userid and password.">Login</a>
+		  </li>
+		  <!-- Register -->
+		  <li class="nav-item">
+			<a class="nav-link" href="{% url 'register' %}" data-toggle="tooltip" title="Create a new account, giving a userid, password and email address.">Register</a>
+		  </li>
+		  <!-- Password Reset -->
+		  <li class="nav-item">
+			<a class="nav-link" href="{% url 'password_reset' %}" data-toggle="tooltip" title="Reset your password if you have lost it or want to change it. You need to have given an email address.">Password reset</a>
+		  </li>
         {% endif %}
-      </ul>
+        </ul>
+	  </div>
     </nav>
   </header>
 
@@ -190,5 +245,11 @@
     {% block content %}
     {% endblock %}
   </main>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+  <script>
+	  $(document).ready(function(){
+		$('[data-toggle="tooltip"]').tooltip(); // Initialize tooltips
+	  });
+  </script>
 </body>
 </html>

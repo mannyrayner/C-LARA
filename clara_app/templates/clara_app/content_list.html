@@ -1,7 +1,7 @@
 {% extends 'clara_app/base.html' %}
 
 {% block content %}
-  <h2>Registered Content</h2>
+  <h2>Posted Content</h2>
   <form method="get" action="{% url 'content_list' %}">
     <p>Text language: {{ search_form.l2 }}</p>
 	<p>Annotation language: {{ search_form.l1 }}</p>
@@ -13,7 +13,7 @@
     {% for content in contents %}
       <li><a href="{{ content.get_absolute_url }}">{% if content.title %} {{ content.title }} {% else %} (No title) {% endif %}</a></li>
     {% empty %}
-      <li>No content has been registered yet.</li>
+      <li>No content has been posted yet.</li>
     {% endfor %}
   </ul>
   

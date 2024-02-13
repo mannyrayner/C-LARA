@@ -1,7 +1,7 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-  {% if clara_version == "simple_clara" %}
+  {% if clara_version_to_access_with == "simple_clara" %}
      <h1>Your Projects (Access through simple C-LARA)</h1>
   {% else %}
      <h1>Your Projects (Access through full C-LARA)</h1>
@@ -18,7 +18,7 @@
   <ul>
     {% for project, data in page_obj %}
       <li>
-	    {% if clara_version == "simple_clara" %}
+	    {% if clara_version_to_access_with == "simple_clara" %}
 	      <a href="{% url 'simple_clara' project.id 'initial' %}">{% if project.title %} {{ project.title }} {% else %} (No title) {% endif %}</a> (Role: {{ data.role }})
 		{% else %}
           <a href="{% url 'project_detail' project.id %}">{% if project.title %} {{ project.title }} {% else %} (No title) {% endif %}</a> (Role: {{ data.role }})
