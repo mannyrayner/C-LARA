@@ -1,11 +1,19 @@
 """
 clara_chatgpt4.py
 
-This module provides functionality to interact with OpenAI's ChatGPT-4 model for the CLARA application. It offers methods to send a prompt to the ChatGPT-4 API and return the generated response.
+This module provides functionality to interact with OpenAI's GPT-4 and other models for the CLARA application.
 
 Functions:
-- call_chat_gpt4(prompt): Sends a prompt to ChatGPT-4 and returns the response.
-- get_api_chatgpt4_response(prompt): Sends a prompt to the ChatGPT-4 API and returns the response.
+
+- call_chat_gpt4(prompt, config_info={}, callback=None)
+Sends a prompt to ChatGPT-4 and returns an APICall object including the response
+
+- call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None)
+Sends a prompt to DALL-E-3, saves the resulting image in image_file, and returns an APICall object
+
+- call_chat_gpt4_interpret_image(prompt, image_file, config_info={}, callback=None):
+Sends a prompt to ChatGPT-4V asking to interpret the image in image_file according to the instructions
+in prompt, and returns an APICall object including the response
 
 """
 
