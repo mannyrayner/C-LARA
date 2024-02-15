@@ -24,11 +24,12 @@ import traceback
 config = get_config()
 
 class StaticHTMLRenderer:
-    def __init__(self, project_id, project_id_internal,
+    def __init__(self, project_id, project_id_internal, l2,
                  phonetic=False, format_preferences_info=None,
                  normal_html_exists=False, phonetic_html_exists=False, callback=None):
         post_task_update(callback, f'--- Creating StaticHTMLRenderer, format_preferences_info = {format_preferences_info}')
         #self.title = title
+        self.l2 = l2
         self.phonetic = phonetic
         self.format_preferences_info = format_preferences_info
         self.template_env = Environment(loader=FileSystemLoader(absolute_file_name(config.get('renderer', 'template_dir'))))
@@ -63,14 +64,10 @@ class StaticHTMLRenderer:
     # Use format_preferences_info to modify the parametrised CSS file,
     # creating two versions: clara_styles.css and clara_styles_conconcordance.css
     def _copy_static_files(self):
+        l2 = self.l2
         static_src = absolute_file_name('$CLARA/static')
         static_dst = self.output_dir / 'static'
-        if _s3_storage:
-            copy_directory_to_s3(static_src, s3_pathname=static_dst)
-        else:
-            copy_directory(static_src, static_dst)
-
-    def _copy_static_files(self):
+        
         FONT_SIZE_MAP = {
             'small': '0.8em',
             'medium': '1.2em',
@@ -82,15 +79,13 @@ class StaticHTMLRenderer:
         DEFAULT_FORMAT_PREFERENCES = {
             'font_type': 'sans-serif',
             'font_size': 'medium',
-            'text_align': 'left',
+            'text_align': 'left' if not is_rtl_language(l2) else 'right',
             
             'concordance_font_type': 'sans-serif',
             'concordance_font_size': 'medium',
-            'concordance_text_align': 'left',
+            'concordance_text_align': 'left' if not is_rtl_language(l2) else 'right',
             }
 
-        static_src = absolute_file_name('$CLARA/static')
-        static_dst = self.output_dir / 'static'
         if _s3_storage:
             copy_directory_to_s3(static_src, s3_pathname=static_dst)
         else:
@@ -102,14 +97,19 @@ class StaticHTMLRenderer:
         # Read the parametrized CSS file
         css_content = read_txt_file(static_dst / 'clara_styles_parametrised.css')
 
+        # We want to align gloss popups with words on the left in an LTR language and on the right in an RTL language
+        left_or_right_for_gloss_popup = 'left' if not is_rtl_language(l2) else 'right'
+
         # Replace placeholders with actual values
         css_content_main = css_content.replace('{{ font_size }}', FONT_SIZE_MAP[format_preferences['font_size']])
         css_content_main = css_content_main.replace('{{ font_type }}', format_preferences['font_type'])
         css_content_main = css_content_main.replace('{{ text_align }}', format_preferences['text_align'])
+        css_content_main = css_content_main.replace('{{ left_or_right_for_gloss_popup }}', left_or_right_for_gloss_popup)
 
         css_content_concordance = css_content.replace('{{ font_size }}', FONT_SIZE_MAP[format_preferences['concordance_font_size']])
         css_content_concordance = css_content_concordance.replace('{{ font_type }}', format_preferences['concordance_font_type'])
         css_content_concordance = css_content_concordance.replace('{{ text_align }}', format_preferences['concordance_text_align'])
+        css_content_concordance = css_content_concordance.replace('{{ left_or_right_for_gloss_popup }}', left_or_right_for_gloss_popup)
 
         # Write the modified CSS to the output directory
         write_txt_file(css_content_main, static_dst / 'clara_styles_main.css')

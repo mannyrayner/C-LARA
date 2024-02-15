@@ -1107,6 +1107,7 @@ class CLARAProjectInternal:
                     audio_type_for_words='tts', audio_type_for_segments='tts', format_preferences_info=None,
                     phonetic=False, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
+        l2 = self.l2_language
         title = self.load_text_version_or_null("title")
         text_object = self.get_internalised_and_annotated_text(title=title,
                                                                preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
@@ -1120,7 +1121,7 @@ class CLARAProjectInternal:
         post_task_update(callback, f"--- normal_html_exists: {normal_html_exists}")
         phonetic_html_exists = self.rendered_phonetic_html_exists(project_id)
         post_task_update(callback, f"--- phonetic_html_exists: {phonetic_html_exists}")
-        renderer = StaticHTMLRenderer(project_id, self.id,
+        renderer = StaticHTMLRenderer(project_id, self.id, l2,
                                       phonetic=phonetic, format_preferences_info=format_preferences_info,
                                       normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists, callback=callback)
         post_task_update(callback, f"--- Start creating pages")

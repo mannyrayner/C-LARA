@@ -526,9 +526,11 @@ class IPAReaderEngine(TTSEngine):
             return False
 
 
-TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
+#TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
+TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), IPAReaderEngine()]
 
-TTS_ENGINES_OPENAI_FIRST = [ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
+#TTS_ENGINES_OPENAI_FIRST = [ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
+TTS_ENGINES_OPENAI_FIRST = [ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), IPAReaderEngine()]
 
 def create_tts_engine(engine_type):
     if engine_type == 'readspeaker':

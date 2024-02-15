@@ -112,7 +112,7 @@ class ReadingHistoryInternal:
                 raise ReadingHistoryError
             normal_html_exists = self.clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=True)
             phonetic_html_exists = self.clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=False)
-            renderer = StaticHTMLRenderer(self.project_id, self.clara_project_internal.id,
+            renderer = StaticHTMLRenderer(self.project_id, self.clara_project_internal.id, self.clara_project_internal.l2_language,
                                           phonetic=phonetic,
                                           # Try to find a way to get format_preferences if possible
                                           format_preferences_info=None,
