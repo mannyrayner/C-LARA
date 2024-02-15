@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ l2_language }} dir="{{ 'rtl' if is_rtl else 'ltr' }}">
+<html lang="{{ l2_language }}" dir="{{ 'rtl' if is_rtl else 'ltr' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,7 +26,7 @@
 	</nav>
   </header>
   <!-- Wrap the main text pane and concordance pane in a container div -->
-  <div class="page-container {{ 'rtl' if is_rtl else '' }}">
+  <div class="page-container {{ 'dir="rtl"' if is_rtl else '' }}">
     <div class="main-text-pane-wrapper">
 	  <div class="page" id="main-text-pane">
 		{%- for segment in page.segments -%}
