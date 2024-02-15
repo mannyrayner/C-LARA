@@ -3484,7 +3484,7 @@ def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None)
 {text}
 """
         if project.l2 != 'english':
-            prompt += "Since the above is written in {text_language.capitalize()}), do not include English text in the image."
+            prompt += f"Since the above is written in {text_language.capitalize()}), do not include English text in the image."
         else:
             prompt += "Do not include text in the image unless that is specifically necessary for some reason."
             
