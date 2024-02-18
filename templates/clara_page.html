@@ -36,7 +36,7 @@
 		  {%- for element in segment.content_elements -%}
 		    {%- if element.type == "Image" -%}
 			  <!-- <div class="image-container" style="width: {{ element.content.width }}px; height: {{ element.content.height }}px;"> -->
-			  <div class="image-container" style="width: 500px; height: 500px;">
+			  <!-- <div class="image-container" style="width: 500px; height: 500px;"> -->
 				<img src="{{ '/accounts/projects/serve_project_image/' + element.content.project_id_internal + '/' + element.content.src }}" alt="Project Image" style="max-width: 500px; max-height: 500px;">
 				{%- if not phonetic and element.content.transformed_segments -%}
 				  <svg viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
@@ -69,7 +69,7 @@
 				  {%- endfor -%}
 				  </svg>
 				{%- endif -%}
-			  </div>
+			  <!-- </div> -->
 			{%- elif element.type == "Word" -%}
 				{%- if not phonetic -%}
 					<span class="word" data-gloss="{%- if element.annotations.pinyin -%}{{ element.annotations.pinyin }}; {%- endif -%}{{ element.annotations.gloss }}" 
