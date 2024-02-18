@@ -1,4 +1,5 @@
 {% extends "clara_app/base.html" %}
+{% load clara_tags %}
 
 {% block content %}
 	<h1>{{ project.title }}</h1>
@@ -7,8 +8,8 @@
         {{ form.as_p }}
         <button type="submit">Update Title</button>
     </form>
-	<p>Text Language: {{ project.l2 }}</p>
-	<p>Annotation Language: {{ project.l1 }}</p>
+	<p>Text Language: {{ project.l2|titlecase }}</p>
+	<p>Annotation Language: {{ project.l1|titlecase }}</p>
 	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
 	<p><a href="{% url 'create_plain_text' project.id %}" 
 	      data-tooltip="Tell the AI to create the original text for your project. Alternately, edit the result or paste in your own text." >
