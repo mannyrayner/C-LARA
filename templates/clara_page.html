@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    {% if page.annotations.title %} <p>"{{ page.annotations.title }}" p. {{ page_number }}</p> {% endif %}
+    {% if page.annotations.title %} <p>"{{ page.annotations.title }}" p. {{ page_number }}/{{ total_pages }}</p> {% endif %}
 	<nav class="nav-bar">
 	  <a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">First</a>
 	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
@@ -94,6 +94,23 @@
 	  <iframe id="concordance-pane" src="" frameborder="0" class="concordance-iframe"></iframe>
     </div>
   </div>
+  <footer>
+	<nav class="nav-bar">
+	  <a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">First</a>
+	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
+	  <a href="{{ 'page_' ~ (page_number + 1) ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Next</a>
+	  <a href="{{ 'page_' ~ total_pages ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Last</a>
+	  <button id="vocab-frequency-btn">Frequency</button>
+	  <button id="vocab-alphabetical-btn">Alphabetical</button>
+	  
+	  <!-- Conditional link to the other version -->
+	  {% if phonetic and normal_html_exists %}
+		<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'normal' + '/' + 'page_' + page_number_str + '.html' }}">Words</a>
+	  {% elif not phonetic and phonetic_html_exists %}
+		<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'phonetic' + '/' + 'page_' + page_number_str + '.html' }}">Sounds</a>
+	  {% endif %}
+	</nav>
+  </footer>
   <script src="./static/clara_scripts.js"></script>
   <script>
     function removeClassAfterDuration(element, className, duration) {
