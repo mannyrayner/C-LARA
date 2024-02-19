@@ -57,6 +57,7 @@ body {
   margin: 5rem;
   padding: 2rem 1rem; /* Increase the top padding from 1rem to 2rem */
   font-family: {{ font_type }}; /* Placeholder for font type */
+  font-size: {{ font_size }}; /* Placeholder for font size */
   text-align: {{ text_align }}; /* Placeholder for text alignment */
 }
 
