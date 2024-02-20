@@ -9,24 +9,39 @@ def process_transcripts(directory='$CLARA/ChatGPTTranscripts',
     abs_directory = absolute_file_name(directory)
     
     transcripts = []
+    turn_id = 1
     total_turns = 0
+    total_user_words = 0
+    total_chatgpt_words = 0
 
     for filename in os.listdir(abs_directory):
         if filename.endswith(".txt"):  # Assuming transcripts are in .txt files
             file_path = os.path.join(abs_directory, filename)
             turns = parse_transcript_file(file_path)
+            for turn in turns:
+                n_words = len(turn['text'].split())
+                if turn['speaker'] == 'User':
+                    total_user_words += n_words
+                else:
+                    total_chatgpt_words += n_words
+                turn['turn_words'] = n_words
+                turn['turn_id'] = turn_id
+                turn_id += 1
             transcripts.append({"file": filename, "turns": turns})
             total_turns += len(turns)
     
     write_json_to_file_plain_utf8(transcripts, outfile)
     print(f'--- Written parsed transcript ({total_turns} turns) to {outfile}')
+    print(f'--- Total User words: {total_user_words}')
+    print(f'--- Total ChatGPT words: {total_chatgpt_words}')
 
 def parse_transcript_file(file_path):
     lines = read_txt_file(file_path).split('\n')
     print(f'--- Read transcript file ({len(lines)} lines), {file_path}')
 
     turns = []
-    current_speaker = None
+    # A session always starts with the User speaking
+    current_speaker = "User"
     current_turn = []
 
     for line in lines:
