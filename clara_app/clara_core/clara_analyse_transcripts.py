@@ -1,8 +1,11 @@
 from .clara_chatgpt4 import call_chat_gpt4
-from .clara_utils import absolute_file_name, read_txt_file, write_json_to_file_plain_utf8
+from .clara_utils import absolute_file_name, read_txt_file, write_json_to_file_plain_utf8, read_json_file, file_exists
+from .clara_utils import make_directory, merge_dicts
 
 import json
 import os
+
+_annotated_turns_dir = '$CLARA/ChatGPTTranscripts/annotated_turns'
 
 def process_transcripts(directory='$CLARA/ChatGPTTranscripts',
                         outfile='$CLARA/ChatGPTTranscripts/parsed_transcripts.json'):
@@ -61,3 +64,31 @@ def parse_transcript_file(file_path):
     print(f'--- Parsed transcript file ({len(turns)} turns)')
     return turns
 
+def read_parsed_transcript(parsed_file='$CLARA/ChatGPTTranscripts/parsed_transcripts.json'):
+    data = read_json_file(parsed_file)
+    transcript_dict = {}
+    for file_data in data:
+        for turn in file_data['turns']:
+            transcript_dict[turn['turn_id']] = turn
+
+    print(f'--- Read transcript file ({len(transcript_dict)} turns) {parsed_file}')
+    return transcript_dict
+
+def store_annotated_turn(turn, annotations):
+    make_directory(_annotated_turns_dir, parents=True, exist_ok=True)
+    turn_id = turn['turn_id']
+    file = stored_turn_pathname(turn_id)
+    
+    annotated_turn = merge_dicts(turn, annotations)
+    write_json_to_file_plain_utf8(annotated_turn, file)
+    print(f'--- Written annotated turn {turn_id} to {file}')
+
+def read_annotated_turn(turn_id):
+    file = stored_turn_pathname(turn_id)
+    if not file_exists(file):
+        return None
+    else:
+        return read_json_file(file)
+
+def stored_turn_pathname(turn_id):
+    return f'{_annotated_turns_dir}/turn_{turn_id}.json'
