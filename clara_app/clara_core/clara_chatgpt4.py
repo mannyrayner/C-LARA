@@ -35,7 +35,7 @@ from io import BytesIO
 config = get_config()
 
 def call_chat_gpt4(prompt, config_info={}, callback=None):
-    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4'
+    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
     return asyncio.run(get_api_chatgpt4_response(prompt, gpt_model=gpt_model, callback=callback))
 
 def call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None):
@@ -288,7 +288,7 @@ def save_openai_response_image(url, image_file):
 
 # Quite often, JSON responses come back wrapped in some text, usually
 #
-#   json``<CorrectJSON>''
+#   json```<CorrectJSON>```
 #
 # Try stripping off the wrapper, assuming there is a JSON string of the right type, and try again
 def interpret_chat_gpt4_response_as_json(response, object_type='list', callback=None):

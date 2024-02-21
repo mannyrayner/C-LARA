@@ -1,9 +1,11 @@
 from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json
 from .clara_utils import absolute_file_name, read_txt_file, write_json_to_file_plain_utf8, read_json_file, file_exists
-from .clara_utils import make_directory, merge_dicts
+from .clara_utils import make_directory, merge_dicts, post_task_update
+from .clara_classes import ChatGPTError
 
 import json
 import os
+import traceback
 
 _annotated_turns_dir = '$CLARA/ChatGPTTranscripts/annotated_turns'
 
@@ -73,6 +75,41 @@ def read_parsed_transcript(parsed_file='$CLARA/ChatGPTTranscripts/parsed_transcr
 
     print(f'--- Read transcript file ({len(transcript_dict)} turns) {parsed_file}')
     return transcript_dict
+
+def annotate_transcript(turn_id, config_info={}, callback=None):
+    try:
+        prompt = create_annotation_prompt_for_turn(turn_id)
+        annotations, api_calls = call_gpt4_to_get_annotations(prompt, config_info=config_info, callback=callback)
+        turn = read_annotated_turn(turn_id)
+        store_annotated_turn(turn, annotations)
+        return api_calls
+    except Exception as e:
+        post_task_update(callback, f'*** Warning: error when trying to annotate turn {turn_id}')
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        post_task_update(callback, error_message)
+
+def call_gpt4_to_get_annotations(prompt, config_info={}, callback=None):
+    api_calls = []
+    n_attempts = 0
+    limit = 5
+    while True:
+        if n_attempts >= limit:
+            raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
+        n_attempts += 1
+        post_task_update(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to annotate turn')
+        try:
+            api_call = call_chat_gpt4(prompt, config_info=config_info, callback=callback)
+            api_calls += [ api_call ]
+            annotations = interpret_chat_gpt4_response_as_json(api_call.response, object_type='dict', callback=callback)
+            return annotations, api_calls
+        except ChatGPTError as e:
+            post_task_update(callback, f'*** Warning: unable to parse response from ChatGPT-4')
+            post_task_update(callback, e.message)
+        except Exception as e:
+            post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            
 
 def create_annotation_prompt_for_turn(turn_id):
     max_number_of_preceding_turns = 4
