@@ -5,9 +5,13 @@ from .clara_classes import ChatGPTError
 
 import json
 import os
+import time
 import traceback
 
 _annotated_turns_dir = '$CLARA/ChatGPTTranscripts/annotated_turns'
+
+# ---------------------------------------
+# Parsing raw transcript files into JSON form
 
 def process_transcripts(directory='$CLARA/ChatGPTTranscripts',
                         outfile='$CLARA/ChatGPTTranscripts/parsed_transcripts.json'):
@@ -75,6 +79,19 @@ def read_parsed_transcript(parsed_file='$CLARA/ChatGPTTranscripts/parsed_transcr
 
     print(f'--- Read transcript file ({len(transcript_dict)} turns) {parsed_file}')
     return transcript_dict
+
+# ---------------------------------------
+# Initial GPT-4-based annotation of transcripts
+
+def annotate_multiple_transcripts(first_turn_id, n_turns, config_info={}, callback=None):
+    start_time = time.time()
+    total_cost = 0.0
+    for turn_id in range(first_turn_id, first_turn_id + n_turns):
+        post_task_update(callback, f'--------- TURN {turn_id} -------------')
+        api_calls = annotate_transcript(turn_id, config_info=config_info, callback=callback)
+        total_cost += sum( [ api_call.cost for api_call in api_calls ] )
+    elapsed_time = time.time() - start_time
+    post_task_update(callback, f'--- Annotated (${total_cost:.2f}; {elapsed_time:.1f} secs)')
 
 def annotate_transcript(turn_id, config_info={}, callback=None):
     try:
