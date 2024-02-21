@@ -1,4 +1,4 @@
-from .clara_chatgpt4 import call_chat_gpt4
+from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json
 from .clara_utils import absolute_file_name, read_txt_file, write_json_to_file_plain_utf8, read_json_file, file_exists
 from .clara_utils import make_directory, merge_dicts
 

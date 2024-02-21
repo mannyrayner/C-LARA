@@ -457,13 +457,14 @@ def unsimplify_element(element, gloss_or_lemma_or_pinyin):
         raise InternalCLARAError(message = f'Bad call: unsimplify_element({element}, {gloss_or_lemma_or_pinyin})')
 
 def parse_chatgpt_gloss_response(response, simplified_elements, gloss_or_lemma_or_pinyin, callback=None):
-    try:
-        response_object = json.loads(response)
-    except:
-        try:
-            response_object = extract_json_list_from_response_string_ignoring_wrappers(response, callback=callback)
-        except:
-            raise ChatGPTError(message = f'Response is not correctly formatted JSON: {response}')
+##    try:
+##        response_object = json.loads(response)
+##    except:
+##        try:
+##            response_object = extract_json_list_from_response_string_ignoring_wrappers(response, callback=callback)
+##        except:
+##            raise ChatGPTError(message = f'Response is not correctly formatted JSON: {response}')
+    response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
     if not isinstance(response_object, list):
         raise ChatGPTError(message = f'Response is not a list: {response}')
     
@@ -481,21 +482,6 @@ def parse_chatgpt_gloss_response(response, simplified_elements, gloss_or_lemma_o
 Annotated text: {annotated_text}"""
         post_task_update(callback, warning)
     return usable_response_object
-
-def extract_json_list_from_response_string_ignoring_wrappers(response, callback=None):
-    # Attempt to find the start and end of the JSON list
-    start_index = response.find('[')
-    end_index = response.rfind(']') + 1  # Include the closing bracket
-
-    if start_index != -1 and end_index != -1:
-        # Extract the JSON string
-        json_str = response[start_index:end_index]
-        # Parse the JSON string into a Python object
-        result = json.loads(json_str)
-        post_task_update(callback, f'--- Removed "{response[:start_index]}" from start of response and "{response[end_index:]}" from end')
-        return result
-    else:
-        raise ValueError("Valid JSON list not found in response")
 
 def simplified_element_list_to_text(simplified_elements):
     return ' '.join([ element if isinstance(element, str) else element[0]
