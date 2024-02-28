@@ -95,8 +95,8 @@ def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_cont
         segments = [canonical_text_for_audio(segment) for segment in segments]
 
         post_task_update(callback, f'--- Found {len(segments)} segments')
-        print(f'--- segments:')
-        pprint.pprint(segments)
+        #print(f'--- segments:')
+        #pprint.pprint(segments)
 
         # Parse the Audacity label file
         times = [float(line.split("\t")[0]) for line in audacity_label_content.split("\n") if line]
