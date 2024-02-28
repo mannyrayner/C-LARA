@@ -2386,15 +2386,17 @@ def human_audio_processing(request, project_id):
                             print(f'--- Invalid form data: {form}')
                             messages.error(request, "Invalid form data.")
                             return redirect('human_audio_processing', project_id=project_id)
-                        
+
                         if form.cleaned_data.get('audio_file_path'):
                             text = form.cleaned_data.get('text')
+                            context = form.cleaned_data.get('context')
+                            pprint.pprint({'text': text, 'context': context})
                             uploaded_audio_file_path = form.cleaned_data.get('audio_file_path')
                             real_audio_file_path = uploaded_file_to_file(uploaded_audio_file_path)
                             #print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
                             stored_audio_file_path = audio_repository.store_mp3('human_voice', project.l2, human_voice_id, real_audio_file_path)
-                            audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path)
-                            #print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
+                            audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path, context=context)
+                            print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}, context={context}")
                             n_files_uploaded += 1
                                 
                 messages.success(request, f"{n_files_uploaded} audio files uploaded from {len(formset)} items")
@@ -2463,7 +2465,8 @@ def human_audio_processing(request, project_id):
                         
                         # The metadata file can either be a .json file with start and end times, or a .txt file of Audacity labels
                         metadata = read_json_or_txt_file(metadata_file)
-                        async_task(process_manual_alignment, clara_project_internal, audio_file, metadata, human_voice_id, callback=callback)
+                        async_task(process_manual_alignment, clara_project_internal, audio_file, metadata, human_voice_id,
+                                   use_context=human_audio_info.use_context, callback=callback)
                         
                         print("--- Started async task to process manual alignment data")
 
@@ -2479,6 +2482,8 @@ def human_audio_processing(request, project_id):
         form = HumanAudioInfoForm(instance=human_audio_info)
         if human_audio_info.method == 'upload':
             audio_item_initial_data = initial_data_for_audio_upload_formset(clara_project_internal, human_audio_info)
+            print(f'audio_item_initial_data =')
+            pprint.pprint(audio_item_initial_data)
             audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
         else:
             audio_item_formset = None
@@ -2497,19 +2502,20 @@ def human_audio_processing(request, project_id):
     return render(request, 'clara_app/human_audio_processing.html', context)
 
 def initial_data_for_audio_upload_formset(clara_project_internal, human_audio_info):
+    use_context = human_audio_info.use_context
     metadata = []
     human_voice_id = human_audio_info.voice_talent_id
     if human_audio_info.use_for_words:
         metadata += clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
-                                                              audio_type_for_words='human', type='words',
-                                                              format='text_and_full_file')
+                                                              audio_type_for_words='human', type='words')
     if human_audio_info.use_for_segments:
         metadata += clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
                                                               audio_type_for_segments='human', type='segments',
-                                                              format='text_and_full_file')
-    initial_data = [ { 'text': item['text'],
-                       'audio_file_path': item['full_file'],
-                       'audio_file_base_name': basename(item['full_file']) }
+                                                              use_context=use_context)
+    initial_data = [ { 'text': item['canonical_text'],
+                       'audio_file_path': item['file_path'],
+                       'audio_file_base_name': basename(item['file_path']) if item['file_path'] else None,
+                       'context': item['context']}
                      for item in metadata ]
     
     return initial_data
@@ -2564,7 +2570,7 @@ def human_audio_processing_phonetic(request, project_id):
                             real_audio_file_path = uploaded_file_to_file(uploaded_audio_file_path)
                             print(f'--- real_audio_file_path for {text} (from upload) = {real_audio_file_path}')
                             stored_audio_file_path = audio_repository.store_mp3('human_voice', project.l2, human_voice_id, real_audio_file_path)
-                            audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path)
+                            audio_repository.add_or_update_entry('human_voice', project.l2, human_voice_id, text, stored_audio_file_path, context='')
                             print(f"--- audio_repository.add_or_update_entry('human_voice', {project.l2}, {human_voice_id}, '{text}', {stored_audio_file_path}")
                             n_files_uploaded += 1
                             
@@ -2619,11 +2625,11 @@ def initial_data_for_audio_upload_formset_phonetic(clara_project_internal, human
     human_voice_id = human_audio_info.voice_talent_id
     metadata = clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
                                                          audio_type_for_words='human', type='words',
-                                                         format='text_and_full_file', phonetic=True)
+                                                         phonetic=True)
 
-    initial_data = [ { 'text': item['text'],
-                       'audio_file_path': item['full_file'],
-                       'audio_file_base_name': basename(item['full_file']) }
+    initial_data = [ { 'text': item['canonical_text'],
+                       'audio_file_path': item['file_path'],
+                       'audio_file_base_name': basename(item['file_path']) if item['file_path'] else None }
                      for item in metadata ]
     
     return initial_data
@@ -2649,14 +2655,14 @@ def process_ldt_zipfile(clara_project_internal, zip_file, human_voice_id, callba
         # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
         remove_file(zip_file)
 
-def process_manual_alignment(clara_project_internal, audio_file, metadata, human_voice_id, callback=None):
+def process_manual_alignment(clara_project_internal, audio_file, metadata, human_voice_id, use_context=True, callback=None):
     post_task_update(callback, "--- Started process_manual_alignment in async thread")
     try:
         # Retrieve files from S3 to local
         copy_s3_file_to_local_if_necessary(audio_file, callback=callback)
 
         # Process the manual alignment
-        result = clara_project_internal.process_manual_alignment(audio_file, metadata, human_voice_id, callback=callback)
+        result = clara_project_internal.process_manual_alignment(audio_file, metadata, human_voice_id, use_context=use_context, callback=callback)
         
         if result:
             post_task_update(callback, f"finished")

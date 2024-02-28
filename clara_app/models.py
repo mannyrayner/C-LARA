@@ -95,9 +95,9 @@ class HumanAudioInfo(models.Model):
     METHOD_CHOICES = [
         ('tts_only', 'TTS only'),
         ('upload', 'Upload'),
-        ('record', 'Record'),
+        #('record', 'Record'),
         ('manual_align', 'Manual Align'),
-        ('automatic_align', 'Automatic Align'),
+        #('automatic_align', 'Automatic Align'),
     ]
 
     TTS_CHOICES = [
@@ -126,6 +126,7 @@ class HumanAudioInfo(models.Model):
     preferred_tts_voice = models.CharField(max_length=20, choices=VOICE_CHOICES, default='none')
     use_for_segments = models.BooleanField(default=False)
     use_for_words = models.BooleanField(default=False)
+    use_context = models.BooleanField(default=False)
     voice_talent_id = models.CharField(max_length=200, default='anonymous')
     audio_file = models.CharField(max_length=500, blank=True, null=True)
     manual_align_metadata_file = models.CharField(max_length=500, blank=True, null=True)

@@ -508,7 +508,7 @@ class HumanAudioInfoForm(forms.ModelForm):
     class Meta:
         model = HumanAudioInfo
         fields = ['method', 'preferred_tts_engine', 'preferred_tts_voice',
-                  'use_for_segments', 'use_for_words', 'voice_talent_id',
+                  'use_for_segments', 'use_for_words', 'use_context', 'voice_talent_id',
                   'audio_file', 'manual_align_metadata_file']
 
 class PhoneticHumanAudioInfoForm(forms.ModelForm):
@@ -524,6 +524,12 @@ class AudioItemForm(forms.Form):
         widget=forms.TextInput(attrs={'readonly': 'readonly'}),
         required=True
     )
+    context = forms.CharField(
+        label='Context',
+        max_length=500,
+        widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+        required=False
+    )
     audio_file_path = forms.FileField(
         label='Audio File',
         required=False
@@ -535,7 +541,7 @@ class AudioItemForm(forms.Form):
         required=False
     )
 
-AudioItemFormSet = formset_factory(AudioItemForm, extra=1)
+AudioItemFormSet = formset_factory(AudioItemForm, extra=0)
     
 class PhoneticLexiconForm(forms.Form):
     language = forms.ChoiceField(choices=[])  # Empty choices initially
