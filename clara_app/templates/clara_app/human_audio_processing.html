@@ -21,16 +21,20 @@
         <label for="{{ form.preferred_tts_voice.id_for_label }}">Preferred TTS voice:</label>
         {{ form.preferred_tts_voice }}
     </p>
-    <p>
-        <label for="{{ form.use_for_segments.id_for_label }}">Use human audio for segments:</label>
-        {{ form.use_for_segments }}
-    </p>
-    <p>
+	<p>
         <label for="{{ form.use_for_words.id_for_label }}">Use human audio for words:</label>
         {{ form.use_for_words }}
     </p>
     <p>
-        <label for="{{ form.voice_talent_id.id_for_label }}">Voice Talent ID:</label>
+        <label for="{{ form.use_for_segments.id_for_label }}">Use human audio for segments:</label>
+        {{ form.use_for_segments }}
+    </p>
+	<p>
+        <label for="{{ form.use_for_segments.id_for_label }}">Use context for segment audio:</label>
+        {{ form.use_context }}
+    </p>
+    <p>
+        <label for="{{ form.voice_talent_id.id_for_label }}">Human Voice ID:</label>
         {{ form.voice_talent_id }}
     </p>
 	
@@ -41,6 +45,7 @@
 			<tr>
 			  <th>Audio</th>
 			  <th>Text</th>
+			  <!-- <th>Context</th> -->
 			  <th>Upload File</th>
 			</tr>
 		  </thead>
@@ -58,6 +63,7 @@
 			  {% endif %}
 			  </td>
 			  <td>{{ audio_form.text }}</td>
+			  <!-- <td>{{ audio_form.context }}</td> -->
 			  <td>{{ audio_form.audio_file_path }}</td>
 			{% endfor %}
 		  </tbody>
@@ -100,28 +106,28 @@
 
     </p>
 
-    <!-- Control to upload the metadata file from the audio/text alignment tool -->
+    <!-- Control to upload the metadata file from the audio/text alignment tool, currently Audacity -->
     <p>
-      <strong>Upload Metadata File:</strong>
+      <strong>Upload Audacity Label File:</strong>
 	  <!--  <input type="file" name="manual_align_metadata_file" accept=".json"> -->
-	  <!--  Use Audacity label file in initial testing -->
+	  <!--  Use Audacity label file -->
       <input type="file" name="metadata_file" accept=".txt">
 	  {% if manual_align_metadata_file %}
 		[{{ manual_align_metadata_file }}]
       {% endif %}
     </p>
 	
-	<p>
+	<!-- <p>
       <strong>Access Uni Melbourne Alignment Tool:</strong>
       <a href="https://manual-alignment.netlify.app/project/{{ project.id }}" class="btn btn-special" target="_blank">Go to Alignment Tool</a>
-    </p>
+    </p> -->
 	{% endif %}
 
 
     <button type="submit" id="submit-button">Update & Process</button>
   </form>
 
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  <p><a href="{% url 'project_detail' project.id %}">Back to Project</a></p>
 
   <script type="text/javascript">
     document.getElementById('human-audio-processing-form').onsubmit = function() {
