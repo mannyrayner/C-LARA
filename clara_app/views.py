@@ -2350,7 +2350,7 @@ def human_audio_processing(request, project_id):
     form = HumanAudioInfoForm(instance=human_audio_info)
     audio_item_formset = None
     labelled_segmented_text = clara_project_internal.get_labelled_segmented_text()
-    labelled_segmented_text_form = None
+    labelled_segmented_text_form = LabelledSegmentedTextForm(initial={'labelled_segmented_text': labelled_segmented_text})
 
     # Handle POST request
     if request.method == 'POST':
