@@ -90,11 +90,16 @@
 	{% endif %}
 	
 	{% if form.method.value == "manual_align" %}
-    <!-- Control to download the annotated segmented file. Now picked up through endpoint 1 -->
-    <p>
+    <!-- Control to download the annotated segmented file. -->
+    <!-- <p>
       <strong>Download Annotated Segmented File:</strong>
       <a href="{% url 'generate_annotated_segmented_file' project.id %}" class="btn">Download</a>
-    </p> 
+    </p> -->
+	
+	<p><strong>Segmented text with labels to use in Audacity:</strong></p>
+	<p>
+        {{ labelled_segmented_text_form.labelled_segmented_text }}
+    </p>
 
     <!-- Control to upload the original audio file -->
     <p>
