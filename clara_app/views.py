@@ -29,7 +29,7 @@ from .forms import AssignLanguageMasterForm, AddProjectMemberForm
 from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
-from .forms import HumanAudioInfoForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
+from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
@@ -2349,6 +2349,7 @@ def human_audio_processing(request, project_id):
     # Initialize the form with the current instance of HumanAudioInfo
     form = HumanAudioInfoForm(instance=human_audio_info)
     audio_item_formset = None
+    labelled_segmented_text = clara_project_internal.get_labelled_segmented_text()
 
     # Handle POST request
     if request.method == 'POST':
@@ -2482,11 +2483,13 @@ def human_audio_processing(request, project_id):
         form = HumanAudioInfoForm(instance=human_audio_info)
         if human_audio_info.method == 'upload':
             audio_item_initial_data = initial_data_for_audio_upload_formset(clara_project_internal, human_audio_info)
-            print(f'audio_item_initial_data =')
-            pprint.pprint(audio_item_initial_data)
+            #print(f'audio_item_initial_data =')
+            #pprint.pprint(audio_item_initial_data)
             audio_item_formset = AudioItemFormSet(initial=audio_item_initial_data) if audio_item_initial_data else None
+            labelled_segmented_text_form = None
         else:
             audio_item_formset = None
+            labelled_segmented_text_form = LabelledSegmentedTextForm(initial={'labelled_segmented_text': labelled_segmented_text})
 
     clara_version = get_user_config(request.user)['clara_version']
     
@@ -2496,6 +2499,7 @@ def human_audio_processing(request, project_id):
         'formset': audio_item_formset,
         'audio_file': human_audio_info.audio_file,
         'manual_align_metadata_file': human_audio_info.manual_align_metadata_file,
+        'labelled_segmented_text_form': labelled_segmented_text_form,
         'clara_version': clara_version
     }
 

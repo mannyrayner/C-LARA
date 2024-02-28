@@ -511,6 +511,11 @@ class HumanAudioInfoForm(forms.ModelForm):
                   'use_for_segments', 'use_for_words', 'use_context', 'voice_talent_id',
                   'audio_file', 'manual_align_metadata_file']
 
+class LabelledSegmentedTextForm(forms.Form):
+    labelled_segmented_text = forms.CharField(widget=forms.Textarea(attrs={'rows': 15,
+                                                                           'cols': 80,
+                                                                           'readonly': 'readonly'}))
+
 class PhoneticHumanAudioInfoForm(forms.ModelForm):
     class Meta:
         model = PhoneticHumanAudioInfo
