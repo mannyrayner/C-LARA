@@ -169,16 +169,14 @@ class CLARADependencies:
             metadata = []
             if self.human_audio_info.use_for_words:
                 metadata += self.clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
-                                                                           audio_type_for_words='human', type='words',
-                                                                           format='text_and_full_file')
+                                                                           audio_type_for_words='human', type='words')
             if self.human_audio_info.use_for_segments:
                 metadata += self.clara_project_internal.get_audio_metadata(human_voice_id=human_voice_id,
-                                                                           audio_type_for_segments='human', type='segments',
-                                                                           format='text_and_full_file')
-            objects_and_timestamps = [ [ item['full_file'], get_file_time(item['full_file'], time_format='timestamp') ]
+                                                                           audio_type_for_segments='human', type='segments')
+            objects_and_timestamps = [ [ item['file_path'], get_file_time(item['file_path'], time_format='timestamp') ]
                                        for item in metadata
                                        # We can have null files for items that haven't been recorded
-                                       if item['full_file'] ]
+                                       if item['file_path'] ]
 
             if self.human_audio_info.updated_at:
                 objects_and_timestamps.append([ 'human_audio_info record', self.human_audio_info.updated_at ])
@@ -192,12 +190,11 @@ class CLARADependencies:
             metadata = []
             if self.human_audio_info.use_for_words:
                 metadata += self.clara_project_internal.get_audio_metadata(phonetic=True, human_voice_id=human_voice_id,
-                                                                           audio_type_for_words='human', type='words',
-                                                                           format='text_and_full_file')
-            objects_and_timestamps = [ [ item['full_file'], get_file_time(item['full_file'], time_format='timestamp') ]
+                                                                           audio_type_for_words='human', type='words')
+            objects_and_timestamps = [ [ item['file_path'], get_file_time(item['file_path'], time_format='timestamp') ]
                                        for item in metadata
                                        # We can have null files for items that haven't been recorded
-                                       if item['full_file'] ]
+                                       if item['file_path'] ]
 
             if self.phonetic_human_audio_info.updated_at:
                 objects_and_timestamps.append([ 'phonetic_human_audio_info record', self.phonetic_human_audio_info.updated_at ])

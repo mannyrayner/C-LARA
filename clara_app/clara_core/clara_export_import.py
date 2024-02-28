@@ -86,8 +86,8 @@ def copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False, callback
                     printform_for_words_or_segments = words_or_segments
                 post_task_update(callback, f'--- Copying {len(sub_metadata)} audio files for {printform_for_words_or_segments}')
                 for item in audio_metadata[words_or_segments]:
-                    if 'file' in item and item['file'] and file_exists(item['file']):
-                        pathname = item['file']
+                    if 'file_path' in item and item['file_path'] and file_exists(item['file_path']):
+                        pathname = item['file_path']
                         zipfile_pathname = os.path.join(tmp_audio_dir, basename(pathname))
                         copy_to_local_file(pathname, zipfile_pathname)
                         item['file'] = basename(pathname)
@@ -288,12 +288,12 @@ def update_regular_audio_from_imported_directory(project, tmp_dir, callback=None
         words_metadata_for_update = [ { 'text': item['word'], 'file': item['file'] }
                                       for item in audio_metadata['words'] ]
         post_task_update(callback, 'Storing human audio for words ({len(words_metadata_for_update)} items)')
-        annotator._store_existing_human_audio_mp3s(words_metadata_for_update, audio_dir, callback=callback)
+        annotator._store_existing_human_audio_mp3s(words_metadata_for_update, audio_dir, words_or_segments='words', callback=callback)
     if global_metadata['audio_type_for_segments'] == 'human':
         segments_metadata_for_update = [ { 'text': item['segment'], 'file': item['file'] }
                                       for item in audio_metadata['segments'] ]
         post_task_update(callback, 'Storing human audio for segments ({len(segments_metadata_for_update)} items)')
-        annotator._store_existing_human_audio_mp3s(segments_metadata_for_update, audio_dir, callback=callback)
+        annotator._store_existing_human_audio_mp3s(segments_metadata_for_update, audio_dir, words_or_segments='segments', callback=callback)
                                          
 def update_phonetic_audio_from_imported_directory(project, tmp_dir, callback=None):
     audio_dir = absolute_local_file_name(os.path.join(tmp_dir, 'phonetic_audio'))

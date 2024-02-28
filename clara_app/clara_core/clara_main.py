@@ -516,6 +516,8 @@ class CLARAProjectInternal:
     def load_text_version(self, version: str) -> str:
         if version == 'segmented_with_images':
             return self._create_and_load_segmented_with_images_text()
+        if version == 'segmented_with_title':
+            return self._create_and_load_segmented_with_title_text()
         elif version == 'lemma_and_gloss':
                 return self._create_and_load_lemma_and_gloss_file()
         else:
@@ -532,7 +534,7 @@ class CLARAProjectInternal:
         except FileNotFoundError:
             return ''
 
-    # Get text consisting of "segmented" text, plus suitably tagged segmented text for any images that may be present
+    # Get text consisting of "segmented" text, plus segmented title if available, plus suitably tagged segmented text for any images that may be present
     def _create_and_load_segmented_with_images_text(self, callback=None):
         segmented_text = self.load_text_version("segmented")
         images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
@@ -542,6 +544,15 @@ class CLARAProjectInternal:
             # We need to put segment breaks around the text_title to get the right interaction with segment audio
             segmented_with_images_text = f'<h1>||{text_title}||</h1><page>\n' + segmented_with_images_text
         return segmented_with_images_text
+
+    # Get text consisting of "segmented" text, plus segmented title if available
+    def _create_and_load_segmented_with_title_text(self, callback=None):
+        segmented_text = self.load_text_version("segmented")
+        text_title = self.load_text_version_or_null("segmented_title")
+        if text_title != '':
+            # We need to put segment breaks around the text_title to get the right interaction with segment audio
+            segmented_with_title_text = f'<h1>||{text_title}||</h1><page>\n' + segmented_text
+        return segmented_with_title_text
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
     def _create_and_load_lemma_and_gloss_file(self) -> str:
@@ -680,7 +691,7 @@ class CLARAProjectInternal:
 
     # Get "labelled segmented" version of text, used for manual audio/text alignment
     def get_labelled_segmented_text(self) -> str:
-        segmented_text = self.load_text_version("segmented")
+        segmented_text = self.load_text_version("segmented_with_title")
         return add_indices_to_segmented_text(segmented_text)
 
     # Call ChatGPT-4 to improve existing segmentation annotations
@@ -918,17 +929,17 @@ class CLARAProjectInternal:
     # The 'phonetic' parameter distinguishes between normal and phonetic versions of the text.
     # With phonetic = True, 'words' actually means letter-groups, and 'segments' actually means words.
     def get_audio_metadata(self, tts_engine_type=None, human_voice_id=None,
-                           audio_type_for_words='tts', audio_type_for_segments='tts', type='all', format='default',
-                           phonetic=False, callback=None):
+                           audio_type_for_words='tts', audio_type_for_segments='tts', use_context=False, 
+                           type='all', phonetic=False, callback=None):
         post_task_update(callback, f"--- Getting audio metadata (phonetic = {phonetic})")
         text_object = self.get_internalised_text(phonetic=phonetic)
 
         if text_object:
             post_task_update(callback, f"--- Internalised text created")
             audio_annotator = AudioAnnotator(self.l2_language, tts_engine_type=tts_engine_type, human_voice_id=human_voice_id,
-                                             audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                             phonetic=phonetic, callback=callback)
-            return audio_annotator.generate_audio_metadata(text_object, type=type, format=format, phonetic=phonetic, callback=callback)
+                                             audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments, 
+                                             use_context=use_context, phonetic=phonetic, callback=callback)
+            return audio_annotator.generate_audio_metadata(text_object, type=type, phonetic=phonetic, callback=callback)
         else:
             post_task_update(callback, f"--- Cannot create internalised text (phonetic = {phonetic})")
             return []
@@ -955,7 +966,7 @@ class CLARAProjectInternal:
     # Process content of a metadata file and audio file received from manual audio/text alignment.
     # The content of the metadata file can be a list (JSON metadata file) or a string (Audacity label file)
     # Use the metadata to extract audio segments and store them in the audio repository.
-    def process_manual_alignment(self, audio_file, metadata_or_audacity_label_data, human_voice_id, callback=None):
+    def process_manual_alignment(self, audio_file, metadata_or_audacity_label_data, human_voice_id, use_context=True, callback=None):
         post_task_update(callback, f"--- Trying to process manual alignment with audio_file {audio_file} and human voice ID {human_voice_id}")
         
         if not local_file_exists(audio_file):
@@ -965,7 +976,7 @@ class CLARAProjectInternal:
             post_task_update(callback, f'--- {audio_file} found')
         
         try:
-            # During initial testing, the metadata is the contents of an Audacity label file. Temporary code to convert it to the real form.
+            # If the metadata is the contents of an Audacity label file, convert it to JSON form.
             annotated_segment_data = self.get_labelled_segmented_text()
             post_task_update(callback, f'--- Found labelled segmented text')
 
@@ -976,7 +987,7 @@ class CLARAProjectInternal:
                 # It's JSON metadata
                 metadata = metadata_or_audacity_label_data
                 
-            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, phonetic=False, callback=callback)
+            audio_annotator = AudioAnnotator(self.l2_language, human_voice_id=human_voice_id, phonetic=False, use_context=use_context, callback=callback)
             post_task_update(callback, f'--- Calling process_manual_alignment')
             return audio_annotator.process_manual_alignment(metadata, audio_file, callback=callback)
         except Exception as e:

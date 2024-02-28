@@ -61,6 +61,7 @@ class AudioRepository:
                                    language_id TEXT,
                                    voice_id TEXT,
                                    text TEXT,
+                                   context TEXT,
                                    file_path TEXT)''')
                 cursor.execute('''CREATE INDEX IF NOT EXISTS idx_text ON metadata (text)''')
             # Assume Postgres, which does auto-incrementing differently
@@ -72,6 +73,7 @@ class AudioRepository:
                                    language_id TEXT,
                                    voice_id TEXT,
                                    text TEXT,
+                                   context TEXT,
                                    file_path TEXT)''')
                 cursor.execute('''CREATE INDEX IF NOT EXISTS idx_text ON metadata (text)''')
                                    
@@ -105,18 +107,18 @@ class AudioRepository:
             post_task_update(callback, error_message)
             post_task_update(callback, f'error')
 
-    def add_or_update_entry(self, engine_id, language_id, voice_id, text, file_path, callback=None):
+    def add_or_update_entry(self, engine_id, language_id, voice_id, text, file_path, context='', callback=None):
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
 
             # Check if the entry already exists
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT COUNT(*) FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ?",
-                               (engine_id, language_id, voice_id, text))
+                cursor.execute("SELECT COUNT(*) FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ? AND context = ?",
+                               (engine_id, language_id, voice_id, text, context))
             else:  # Assume postgres
-                cursor.execute("SELECT COUNT(*) FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s",
-                               (engine_id, language_id, voice_id, text))
+                cursor.execute("SELECT COUNT(*) FROM metadata WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s AND context = %s",
+                               (engine_id, language_id, voice_id, text, context))
 
             result = cursor.fetchone()
             if result is not None:
@@ -132,19 +134,19 @@ class AudioRepository:
             if exists:
                 # Update existing entry
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    cursor.execute("""UPDATE metadata SET file_path = ? WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ?""",
-                                   (file_path, engine_id, language_id, voice_id, text))
+                    cursor.execute("""UPDATE metadata SET file_path = ? WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ? AND context = ?""",
+                                   (file_path, engine_id, language_id, voice_id, text, context))
                 else:  # Assume postgres
-                    cursor.execute("""UPDATE metadata SET file_path = %s WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s""",
-                                   (file_path, engine_id, language_id, voice_id, text))
+                    cursor.execute("""UPDATE metadata SET file_path = %s WHERE engine_id = %s AND language_id = %s AND voice_id = %s AND text = %s AND context = %s""",
+                                   (file_path, engine_id, language_id, voice_id, text, context))
             else:
                 # Insert new entry
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    cursor.execute("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (?, ?, ?, ?, ?)",
-                                   (engine_id, language_id, voice_id, text, file_path))
+                    cursor.execute("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path, context) VALUES (?, ?, ?, ?, ?, ?)",
+                                   (engine_id, language_id, voice_id, text, file_path, context))
                 else:  # Assume postgres
-                    cursor.execute("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path) VALUES (%s, %s, %s, %s, %s)",
-                                   (engine_id, language_id, voice_id, text, file_path))
+                    cursor.execute("INSERT INTO metadata (engine_id, language_id, voice_id, text, file_path, context) VALUES (%s, %s, %s, %s, %s, %s)",
+                                   (engine_id, language_id, voice_id, text, file_path, context))
 
             connection.commit()
             connection.close()
@@ -161,25 +163,27 @@ class AudioRepository:
         copy_local_file(source_file, destination_path)
         return destination_path
 
-    def get_entry(self, engine_id, language_id, voice_id, text, callback=None):
+    def get_entry(self, engine_id, language_id, voice_id, text, context='', callback=None):
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
             if os.getenv('DB_TYPE') == 'sqlite':
-                cursor.execute("SELECT file_path FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ?",
-                               (engine_id, language_id, voice_id, text))
+                cursor.execute("SELECT file_path FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ? AND context = ?",
+                               (engine_id, language_id, voice_id, text, context))
             else:
                 # Assume postgres
                 cursor.execute("""SELECT file_path FROM metadata 
                                   WHERE engine_id = %(engine_id)s 
                                   AND language_id = %(language_id)s 
                                   AND voice_id = %(voice_id)s 
-                                  AND text = %(text)s""",
+                                  AND text = %(text)s
+                                  AND context = %(context)s""",
                                {
                                   'engine_id': engine_id,
                                   'language_id': language_id,
                                   'voice_id': voice_id,
-                                  'text': text
+                                  'text': text,
+                                  'context': context,
                                })
             result = cursor.fetchone()
             connection.close()
@@ -193,28 +197,32 @@ class AudioRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='TTS database inconsistency')
 
-    def get_entry_batch(self, engine_id, language_id, voice_id, text_items, callback=None):
+    def get_entry_batch(self, engine_id, language_id, voice_id, text_and_context_items, callback=None):
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
             results = {}
-            
-            for text in text_items:
+
+            for item in text_and_context_items:
+                text = item['canonical_text']
+                context = item['context']
                 if os.getenv('DB_TYPE') == 'sqlite':
-                    cursor.execute("SELECT file_path FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ?",
-                                   (engine_id, language_id, voice_id, text))
+                    cursor.execute("SELECT file_path FROM metadata WHERE engine_id = ? AND language_id = ? AND voice_id = ? AND text = ? AND context = ?",
+                                   (engine_id, language_id, voice_id, text, context))
                 else:
                     # Assume postgres
                     cursor.execute("""SELECT file_path FROM metadata 
                                       WHERE engine_id = %(engine_id)s 
                                       AND language_id = %(language_id)s 
                                       AND voice_id = %(voice_id)s 
-                                      AND text = %(text)s""",
+                                      AND text = %(text)s
+                                      AND context = %(context)s""",
                                    {
                                       'engine_id': engine_id,
                                       'language_id': language_id,
                                       'voice_id': voice_id,
-                                      'text': text
+                                      'text': text,
+                                      'context': context
                                    })
                 result = cursor.fetchone()
             
@@ -223,7 +231,7 @@ class AudioRepository:
                 else:  # Assuming PostgreSQL
                     file_path = result['file_path'] if result else None
 
-                results[text] = file_path
+                results[( text, context )] = file_path
 
             connection.close()
             return results

@@ -9,6 +9,7 @@ import time
 import traceback
 
 _annotated_turns_dir = '$CLARA/ChatGPTTranscripts/annotated_turns'
+_max_number_of_preceding_turns = 10
 
 # ---------------------------------------
 # Parsing raw transcript files into JSON form
@@ -129,7 +130,6 @@ def call_gpt4_to_get_annotations(prompt, config_info={}, callback=None):
             
 
 def create_annotation_prompt_for_turn(turn_id):
-    max_number_of_preceding_turns = 4
     template = """I am going to show you a small part of a conversation between an instance of ChatGPT-4 and
 a human software engineer. The overall theme is a collaboration between the AI and the human to build an online platform,
 "C-LARA", that allows users to construct and view multimodal texts in a variety of languages. The project has been running for
@@ -146,6 +146,11 @@ I want you to return JSON annotations for the current turn in the same format as
 topics with a tag for each topic saying how the turn has changed its status. Typical tags might be "start", "end", "ask question",
 "answer question", "provide code" and "give feedback".
 
+When annotating the current turn, please refer to the topics shown as associated with previous turns.
+Try to align the current turn's topics with these existing topics where appropriate, using the same topic labels
+if the discussion continues or evolves on the same themes. This will help us track how topics develop over the course
+of the conversation.
+
 Since the output will be read by a Python script, return only the JSON.
 
 Here are the annotations for the {number_of_preceding_turns} preceding turns:
@@ -161,7 +166,7 @@ Here is the turn to annotate:
 {current_turn}
 """
 
-    formatted_annotations, number_of_preceding_turns = formatted_annotations_for_preceding_turns(turn_id, max_number_of_preceding_turns)
+    formatted_annotations, number_of_preceding_turns = formatted_annotations_for_preceding_turns(turn_id, _max_number_of_preceding_turns)
     preceding_turn = formatted_turn(turn_id - 1)
     current_turn = formatted_turn(turn_id)
     prompt = template.replace('{annotations}', formatted_annotations).replace('{number_of_preceding_turns}', str(number_of_preceding_turns))
@@ -184,10 +189,14 @@ def formatted_annotations_for_preceding_turns(turn_id, max_number):
 def formatted_turn(turn_id):
     try:
         turn = read_annotated_turn(turn_id)
-        return f"""speaker: {turn['speaker']}
-turn_id: {turn['turn_id']}
-text: {turn['text']}
-"""
+        turn_to_display = { 'turn_id': turn['turn_id'],
+                            'speaker': turn['speaker'],
+                            'text': turn['text']
+                            }
+        if 'topics' in turn:
+            turn_to_display['topics'] = turn['topics']
+                            
+        return json.dumps(turn_to_display)
     except:
         return f'(Turn {turn_id} not found)'
 

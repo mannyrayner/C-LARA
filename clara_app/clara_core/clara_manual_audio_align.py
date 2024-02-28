@@ -12,6 +12,7 @@ import subprocess
 import traceback
 import re
 import requests
+import pprint
 
 def add_indices_to_segmented_text(segmented_text):
     """
@@ -81,6 +82,8 @@ def process_alignment_metadata(metadata, audio_file, output_dir, callback=None):
             'file': segment_file
         })
 
+    #print(f'--- Output from process_alignment_metadata:')
+    #pprint.pprint(new_metadata)
     return new_metadata
 
 def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_content, audacity_label_content, callback=None):
@@ -92,6 +95,8 @@ def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_cont
         segments = [canonical_text_for_audio(segment) for segment in segments]
 
         post_task_update(callback, f'--- Found {len(segments)} segments')
+        print(f'--- segments:')
+        pprint.pprint(segments)
 
         # Parse the Audacity label file
         times = [float(line.split("\t")[0]) for line in audacity_label_content.split("\n") if line]
@@ -125,11 +130,19 @@ def annotated_segmented_file_and_label_file_to_metadata_file(segmented_file, aud
     metadata = annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_content, audacity_label_content)
     write_json_to_file_plain_utf8(metadata, metadata_file)
 
-def annotated_segmented_file_and_label_file_to_metadata_file_sample():
-    segmented_file = '$CLARA/tmp/FatherWilliamSegmentedAnnotated.txt'
-    audacity_label_file = '$CLARA/tmp/FatherWilliamLabels.txt'
-    metadata_file = '$CLARA/tmp/FatherWilliamBreakpoints.json'
-    annotated_segmented_file_and_label_file_to_metadata_file(segmented_file, audacity_label_file, metadata_file)
+def annotated_segmented_file_and_label_file_to_metadata_file_sample(id):
+    if id == 'father_william':
+        segmented_file = '$CLARA/tmp/FatherWilliamSegmentedAnnotated.txt'
+        audacity_label_file = '$CLARA/tmp/FatherWilliamLabels.txt'
+        metadata_file = '$CLARA/tmp/FatherWilliamBreakpoints.json'
+        annotated_segmented_file_and_label_file_to_metadata_file(segmented_file, audacity_label_file, metadata_file)
+    elif id == 'thieving_boy':
+        segmented_file = '$CLARA/tmp/thieving_boy/labelled_segmented_text_thieving_boy.txt'
+        audacity_label_file = '$CLARA/tmp/thieving_boy/thieving_boy_labels.txt'
+        metadata_file = '$CLARA/tmp/thieving_boy/thieving_boy_breakpoints.json'
+        annotated_segmented_file_and_label_file_to_metadata_file(segmented_file, audacity_label_file, metadata_file)
+    else:
+        print('*** Unknown id: {id}')
 
 def test_endpoint2_heroku():
     test_endpoint2(local='heroku', project_id=139, json_file_path="$CLARA/tmp/FatherWilliamBreakpoints.json")
