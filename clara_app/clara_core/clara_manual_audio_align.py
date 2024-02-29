@@ -71,7 +71,7 @@ def process_alignment_metadata(metadata, audio_file, output_dir, callback=None):
         
         try:
             subprocess.run(cmd, check=True)
-            post_task_update(callback, f'--- Extracted audio for "{text}, start_time = {start_time}, duration = {duration}"')
+            post_task_update(callback, f'--- Extracted audio for "{text}, start_time = {start_time:.2f}, duration = {duration:.2f}"')
         except Exception as e:
             post_task_update(callback, f'--- Error when trying to extract audio for "{text}": {str(e)}')
             raise InternalCLARAError( message=f'*** Error: something went wrong when trying to extract audio for "{text}"') 

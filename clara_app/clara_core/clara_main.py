@@ -552,6 +552,8 @@ class CLARAProjectInternal:
         if text_title != '':
             # We need to put segment breaks around the text_title to get the right interaction with segment audio
             segmented_with_title_text = f'<h1>||{text_title}||</h1><page>\n' + segmented_text
+        else:
+            segmented_with_title_text = segmented_text
         return segmented_with_title_text
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
