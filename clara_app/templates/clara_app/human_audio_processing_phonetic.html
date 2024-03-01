@@ -7,7 +7,7 @@
 {% block content %}
   <h2>Audio Processing, phonetic ("{{ project.title }}")</h2>
   
-  <form method="post" enctype="multipart/form-data" id="human-audio-processing-form">
+  <form method="post" enctype="multipart/form-data" id="phonetic-human-audio-processing-form">
     {% csrf_token %}
 	<p>
         <label for="{{ form.method.id_for_label }}">Method:</label>
@@ -78,7 +78,7 @@
     <button type="submit" id="submit-button">Update & Process</button>
   </form>
 
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  <p><a href="{% url 'project_detail' project.id %}">Back to Project</a></p>
 
   <script type="text/javascript">
     document.getElementById('human-audio-processing-form').onsubmit = function() {
