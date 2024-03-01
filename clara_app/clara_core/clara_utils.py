@@ -887,7 +887,7 @@ def canonical_word_for_audio(text):
 
 def canonical_text_for_audio(text, phonetic=False):
     if phonetic:
-        return canonical_word_for_audio(text)
+        return canonical_word_for_audio(text.strip())
     else:
         # Remove HTML markup
         text = re.sub(r'<[^>]*>', '', text)

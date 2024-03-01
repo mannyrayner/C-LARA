@@ -26,9 +26,13 @@ from .clara_classes import InternalCLARAError
 from pathlib import Path
 
 import os
+import pprint
 import traceback
 
 config = get_config()
+
+_trace = False
+# _trace = True
 
 class AudioRepository:
     def __init__(self, callback=None):   
@@ -198,6 +202,9 @@ class AudioRepository:
             raise InternalCLARAError(message='TTS database inconsistency')
 
     def get_entry_batch(self, engine_id, language_id, voice_id, text_and_context_items, callback=None):
+        if _trace:
+            print(f'--- get_entry_batch({engine_id}, {language_id}, {voice_id},')
+            pprint.pprint(text_and_context_items)
         try:
             connection = connect(self.db_file)
             cursor = connection.cursor()
@@ -234,6 +241,9 @@ class AudioRepository:
                 results[( text, context )] = file_path
 
             connection.close()
+            if _trace:
+                print(f'--- results:')
+                pprint.pprint(results)
             return results
 
         except Exception as e:
