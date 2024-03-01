@@ -106,6 +106,9 @@
 	  {% else %}
 	    <p><a href="{{ content.get_absolute_url }}" target="_blank">View Social Network Page</a></p>
 	  {% endif %}
+	  <h3>Satisfaction questionnaire</h3>
+	  <p><a href="{% url 'satisfaction_questionnaire' project_id %}" target="_blank">
+		  Go to Questionnaire</a></p>
     {% endif %}
   </form>
   {% if status != 'No project' %}

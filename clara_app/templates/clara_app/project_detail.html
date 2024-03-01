@@ -101,6 +101,11 @@
 	      {% if not rendered_phonetic_html_exists %}class="disabled-link"{% endif %}>
 		  Register Rendered Phonetic Text</a>
 		  {% if up_to_date_dict.social_network %}✓{% endif %}</p>
+	<p><a href="{% url 'satisfaction_questionnaire' project.id %}" 
+	      data-tooltip="Answer a short satisfaction questionnaire about this project." 
+	      {% if not rendered_html_exists and not rendered_phonetic_html_exists %}class="disabled-link"{% endif %}>
+		  Answer Satisfaction Questionnaire</a>
+		  {% if up_to_date_dict.questionnaire %}✓{% endif %}</p>
 	<p><a href="{% url 'make_export_zipfile' project.id %}"
 	      data-tooltip="Package up the project as a zipfile, to archive it or move it to another server."> 
 	      Export zipfile</a></p>

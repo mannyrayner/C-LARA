@@ -1,0 +1,37 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Aggregated Questionnaire Results{% endblock %}
+
+{% block content %}
+<h2>Aggregated Questionnaire Results</h2>
+
+<h3>Average Ratings</h3>
+<p>Number of Responses: {{ ratings.count }}</p>
+<ul>
+    <li>The text C-LARA produced corresponded well to my request: {{ ratings.text_correspondence_avg|floatformat:2 }}</li>
+    <li>The language in the text was correct: {{ ratings.language_correctness_avg|floatformat:2 }}</li>
+    <li>The text was engaging (funny/cute/moving): {{ ratings.text_engagement_avg|floatformat:2 }}</li>
+    <li>The text was culturally appropriate: {{ ratings.cultural_appropriateness_avg|floatformat:2 }}</li>
+    <li>The image(s) matched the text well: {{ ratings.image_match_avg|floatformat:2 }}</li>
+    <li>I liked the text enough that I showed it to some other people: {{ ratings.shared_with_others_avg|floatformat:2 }}</li>
+</ul>
+
+<h3>What do you think the most important thing is to improve C-LARA's functionality?</h3>
+<ul>
+    {% for suggestion in improvements %}
+        <li>{{ suggestion }}</li>
+    {% empty %}
+        <li>No suggestions provided yet.</li>
+    {% endfor %}
+</ul>
+
+<h3>What do you think the most important thing is to improve C-LARA's design?</h3>
+<ul>
+    {% for feedback in design_feedback %}
+        <li>{{ feedback }}</li>
+    {% empty %}
+        <li>No feedback provided yet.</li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
