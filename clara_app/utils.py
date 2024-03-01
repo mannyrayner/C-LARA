@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
 
 from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences
-from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content
+from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content, SatisfactionQuestionnaire
 
 from .clara_core.clara_dependencies import CLARADependencies
 
@@ -274,7 +274,7 @@ def create_update(user, update_type, obj):
     print(f'--- Posted update: "{update}"')
     return update
 
-def get_phase_up_to_date_dict(project, clara_project_internal):
+def get_phase_up_to_date_dict(project, clara_project_internal, user):
     """
     Returns a dict which pairs each phase ID ("plain", "title", "gloss" etc) with
     a Boolean value saying whether the resource in question exists and is up to date.
@@ -282,8 +282,10 @@ def get_phase_up_to_date_dict(project, clara_project_internal):
     human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
     phonetic_human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
     format_preferences = FormatPreferences.objects.filter(project=project).first()
-    content_object = Content.objects.filter(project=project).first() 
+    content_object = Content.objects.filter(project=project).first()
+    questionnaire = SatisfactionQuestionnaire.objects.filter(project=project, user=user).first() 
     clara_dependencies = CLARADependencies(clara_project_internal, project.id,
                                            human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
-                                           format_preferences=format_preferences, content_object=content_object)
-    return clara_dependencies.up_to_date_dict(debug=False)
+                                           format_preferences=format_preferences, content_object=content_object,
+                                           questionnaire=questionnaire)
+    return clara_dependencies.up_to_date_dict(debug=True)

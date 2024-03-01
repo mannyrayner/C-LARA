@@ -2,7 +2,7 @@ from django import forms
 from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Content, UserProfile, UserConfiguration, LanguageMaster
+from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -636,3 +636,10 @@ class AccentCharacterForm(forms.Form):
     unicode_value = forms.CharField(widget=forms.TextInput(attrs={'dir': 'ltr'}))
 
 AccentCharacterFormSet = formset_factory(AccentCharacterForm, extra=1)
+
+class SatisfactionQuestionnaireForm(forms.ModelForm):
+    class Meta:
+        model = SatisfactionQuestionnaire
+        fields = ['text_correspondence', 'language_correctness', 'text_engagement',
+                  'cultural_appropriateness', 'image_match', 'shared_text',
+                  'functionality_improvement', 'design_improvement']

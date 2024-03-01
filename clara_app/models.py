@@ -397,3 +397,28 @@ class ReadingHistory(models.Model):
     def projects_through(self):
         """Helper property to access the through model directly."""
         return ReadingHistoryProjectOrder.objects.filter(reading_history=self)
+
+class SatisfactionQuestionnaire(models.Model):
+    LIKERT_CHOICES = [
+        (1, 'Strongly disagree'),
+        (2, 'Disagree'),
+        (3, 'Neutral or not applicable'),
+        (4, 'Agree'),
+        (5, 'Strongly agree'),
+        ]
+        
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    project = models.ForeignKey('CLARAProject', on_delete=models.CASCADE)
+    text_correspondence = models.IntegerField("The text C-LARA produced corresponded well to my request", choices=LIKERT_CHOICES)
+    language_correctness = models.IntegerField("The language in the text was correct", choices=LIKERT_CHOICES)
+    text_engagement = models.IntegerField("The text was engaging (funny/cute/moving)", choices=LIKERT_CHOICES)
+    cultural_appropriateness = models.IntegerField("The text was culturally appropriate", choices=LIKERT_CHOICES)
+    image_match = models.IntegerField("The image(s) matched the text well", choices=LIKERT_CHOICES)
+    shared_text = models.IntegerField("I liked the text enough that I showed it to some other people", choices=LIKERT_CHOICES)
+    functionality_improvement = models.TextField("What do you think the most important thing is to improve C-LARA's functionality?", blank=True)
+    design_improvement = models.TextField("What do you think the most important thing is to improve C-LARA's design?", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "project")
+    

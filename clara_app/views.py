@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.conf import settings
 from django import forms
-from django.db.models import Avg, Q
+from django.db.models import Count, Avg, Q, Max
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
@@ -17,7 +17,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
+from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory, SatisfactionQuestionnaire
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -35,7 +35,7 @@ from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTag
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
-from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm
+from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
 from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
@@ -1169,7 +1169,7 @@ def create_project(request):
         
         return render(request, 'clara_app/create_project.html', {'form': form, 'clara_version':clara_version})
 
-def get_simple_clara_resources_helper(project_id):
+def get_simple_clara_resources_helper(project_id, user):
     try:
         resources_available = {}
         
@@ -1182,7 +1182,7 @@ def get_simple_clara_resources_helper(project_id):
         # We have a project, add the L2, L1, title and simple_clara_type to available resources
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-        up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal)
+        up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal, user)
 
         resources_available['l2'] = project.l2
         resources_available['rtl_language'] = is_rtl_language(project.l2)
@@ -1285,9 +1285,10 @@ def get_simple_clara_resources_helper(project_id):
 
 @login_required
 def simple_clara(request, project_id, status):
+    user = request.user
     username = request.user.username
     # Get resources available for display based on the current state
-    resources = get_simple_clara_resources_helper(project_id)
+    resources = get_simple_clara_resources_helper(project_id, user)
     #print(f'Resources:')
     #pprint.pprint(resources)
     
@@ -2188,7 +2189,7 @@ def project_detail(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     text_versions = clara_project_internal.text_versions
-    up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal)
+    up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal, request.user)
 
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_segmented_title = clara_project_internal.text_versions["title"]
@@ -4212,6 +4213,71 @@ def projects_available_for_adding_to_history(l2_language, projects_in_history, r
                 available_projects.append(project)
 
     return available_projects
+
+# Show a satisfaction questionnaire
+@login_required
+def satisfaction_questionnaire(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    user = request.user
+
+    # Try to get an existing questionnaire response for this project and user
+    try:
+        existing_questionnaire = SatisfactionQuestionnaire.objects.get(project=project, user=user)
+    except SatisfactionQuestionnaire.DoesNotExist:
+        existing_questionnaire = None
+    
+    if request.method == 'POST':
+        if existing_questionnaire:
+            # If an existing questionnaire is found, update it
+            form = SatisfactionQuestionnaireForm(request.POST, instance=existing_questionnaire)
+        else:
+            # No existing questionnaire, so create a new instance
+            form = SatisfactionQuestionnaireForm(request.POST)
+            
+        if form.is_valid():
+            questionnaire = form.save(commit=False)
+            questionnaire.project = project
+            questionnaire.user = request.user 
+            questionnaire.save()
+            messages.success(request, 'Thank you for your feedback!')
+            return redirect('project_detail', project_id=project.id)
+    else:
+        if existing_questionnaire:
+            form = SatisfactionQuestionnaireForm(instance=existing_questionnaire)
+        else:
+            form = SatisfactionQuestionnaireForm()
+
+    return render(request, 'clara_app/satisfaction_questionnaire.html', {'form': form, 'project': project})
+
+def aggregated_questionnaire_results(request):
+    # Aggregate data for each question. Adjust these queries based on your actual model fields.
+    # For Likert scale questions, calculating the average rating
+    ratings = SatisfactionQuestionnaire.objects.aggregate(
+        text_correspondence_avg=Avg('text_correspondence'),
+        language_correctness_avg=Avg('language_correctness'),
+        text_engagement_avg=Avg('text_engagement'),
+        cultural_appropriateness_avg=Avg('cultural_appropriateness'),
+        image_match_avg=Avg('image_match'),
+        shared_with_others_avg=Avg('shared_text'),
+
+        count=Count('id')  
+    )
+
+    # For free-form questions, you might want to list recent responses or categorize them in some way
+    # Here, just fetching the latest 10 responses for illustration
+    improvements = SatisfactionQuestionnaire.objects.values_list('functionality_improvement', flat=True).order_by('-id')
+    design_feedback = SatisfactionQuestionnaire.objects.values_list('design_improvement', flat=True).order_by('-id')
+
+    improvements = [ item for item in improvements if item ][:50]
+    design_feedback = [ item for item in design_feedback if item ][:50]
+
+    context = {
+        'ratings': ratings,
+        'improvements': improvements,
+        'design_feedback': design_feedback
+    }
+
+    return render(request, 'clara_app/aggregated_questionnaire_results.html', context)
         
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, phonetic_or_normal, filename):
