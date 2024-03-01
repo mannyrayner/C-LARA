@@ -2043,25 +2043,27 @@ def clone_project(request, project_id):
     if request.method == 'POST':
         form = ProjectCreationForm(request.POST)
         if form.is_valid():
-            # Extract the title and the new L2 and L1 language selections
-            new_title = form.cleaned_data['title']
-            new_l2 = form.cleaned_data['l2']
-            new_l1 = form.cleaned_data['l1']
+            try:
+                # Extract the title and the new L2 and L1 language selections
+                new_title = form.cleaned_data['title']
+                new_l2 = form.cleaned_data['l2']
+                new_l1 = form.cleaned_data['l1']
+                # Created the cloned project with the new language selections and a new internal ID
+                new_project = CLARAProject(title=new_title, user=request.user, l2=new_l2, l1=new_l1)
+                new_internal_id = create_internal_project_id(new_title, new_project.id)
+                new_project.internal_id = new_internal_id
+                new_project.save()
+                # Create a new internal project using the new internal ID
+                new_project_internal = CLARAProjectInternal(new_internal_id, new_l2, new_l1)
+                # Copy relevant files from the old project
+                project_internal.copy_files_to_newly_cloned_project(new_project_internal)
 
-            # Created the cloned project with the new language selections
-            new_project = CLARAProject(title=new_title, user=request.user, l2=new_l2, l1=new_l1)
-            new_project.save()
-            new_internal_id = create_internal_project_id(new_title, new_project.id)
-            # Update the Django project with the internal_id
-            new_project.internal_id = new_internal_id
-            new_project.save()
-            # Create a new internal project 
-            new_project_internal = CLARAProjectInternal(new_internal_id, new_l2, new_l1)
-            # Copy any relevant files from the old project
-            project_internal.copy_files_to_newly_cloned_project(new_project_internal)
-
-            # Redirect the user to the cloned project detail page or show a success message
-            return redirect('project_detail', project_id=new_project.id)
+                # Redirect the user to the cloned project detail page and show a success message
+                messages.success(request, "Cloned project created")
+                return redirect('project_detail', project_id=new_project.id)
+            except Exception as e:
+                messages.error(request, f"Something went wrong when cloning the project: {str(e)}\n{traceback.format_exc()}")
+                return redirect('project_detail', project_id=project_id)
     else:
         # Prepopulate the form with the copied title and the current language selections as defaults
         new_title = project.title + " - copy"
@@ -2069,7 +2071,8 @@ def clone_project(request, project_id):
 
     clara_version = get_user_config(request.user)['clara_version']
 
-    return render(request, 'clara_app/create_cloned_project.html', {'form': form, 'project': project, 'clara_version': clara_version})
+    return render(request, 'clara_app/create_cloned_project.html',
+                  {'form': form, 'project': project, 'clara_version': clara_version})
 
 # Manage the users associated with a project. Users can have the roles 'Owner', 'Annotator' or 'Viewer'
 @login_required
@@ -2546,16 +2549,23 @@ def human_audio_processing_phonetic(request, project_id):
     if request.method == 'POST':
         form = PhoneticHumanAudioInfoForm(request.POST, request.FILES, instance=human_audio_info)
 
-        if form.is_valid():
+        #if form.is_valid():
+        try:
     
             # 1. Update the model with any new values from the form. Get the method and human_voice_id
+            print(f'keys: {request.POST.keys()}')
             method = request.POST['method']
             human_voice_id = request.POST['voice_talent_id']
-
+            use_for_segments = True if 'use_for_segments' in request.POST and request.POST['use_for_segments'] == 'on' else False
+            use_for_words = True if 'use_for_words' in request.POST and request.POST['use_for_words'] == 'on' else False
+            print(f'use_for_segments = {use_for_segments}')
+            print(f'use_for_words = {use_for_words}')
+            human_audio_info.method = method
+            human_audio_info.voice_talent_id = human_voice_id
+            human_audio_info.use_for_segments = use_for_segments
+            human_audio_info.use_for_words = use_for_words
             human_audio_info.save()  # Save the restored data back to the database
 
-            # Try forcing this choice to see if we still get 502 errors
-            #method = 'upload_zipfile'
 
             # 2. Update from the formset and save new files
             if method == 'upload_individual' and human_voice_id:
@@ -2605,8 +2615,11 @@ def human_audio_processing_phonetic(request, project_id):
                         # Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('process_ldt_zipfile_monitor', project_id, report_id)
 
-        else:
-            messages.error(request, "There was an error processing the form. Please check your input.")
+        #else:
+            #messages.error(request, "There was an error processing the form. Please check your input.")
+        except Exception as e:
+            messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+            return redirect('human_audio_processing_phonetic', project_id)
 
     # Handle GET request
     form = PhoneticHumanAudioInfoForm(instance=human_audio_info)
@@ -3627,8 +3640,6 @@ def make_export_zipfile(request, project_id):
 def make_export_zipfile_status(request, project_id, report_id):
     messages = get_task_updates(report_id)
     print(f'{len(messages)} messages received')
-    #if len(messages) != 0:
-    #    pprint.pprint(messages)
     if 'error' in messages:
         status = 'error'
     elif 'finished' in messages:
@@ -3761,6 +3772,8 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
         human_voice_id = None
         preferred_tts_engine = None
         preferred_tts_voice = None
+
+    #print(f'audio_type_for_words = {audio_type_for_words}, audio_type_for_segments = {audio_type_for_segments}, human_voice_id = {human_voice_id}')
 
     if request.method == 'POST':
         form = RenderTextForm(request.POST)

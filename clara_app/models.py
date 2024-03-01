@@ -1,7 +1,7 @@
 from django.db import models
 from django.urls import reverse
 
-from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SIMPLE_CLARA_TYPES
+from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
@@ -421,4 +421,39 @@ class SatisfactionQuestionnaire(models.Model):
 
     class Meta:
         unique_together = ("user", "project")
+
+class FundingRequest(models.Model):
+    CONTENT_TYPE_CHOICES = [
+        ('short_stories', 'Short stories'),
+        ('essays', 'Essays'),
+        ('poems', 'Poems'),
+        ('picturebooks', 'Picture books'),
+        ('existing_texts', 'Annotating existing texts'),
+        ('other', 'Other'),
+        ]
+
+    PURPOSE_CHOICES = [
+        ('just_curious', 'Just curious'),
+        ('improve_own_skills', 'Want to improve own language skills'),
+        ('classroom', 'Use for language teaching'),
+        ('other', 'Other'),
+        ]
+
+    STATUS_CHOICES = [
+        ('submitted', 'Submitted'),
+        ('under_review', 'Under review'),
+        ('accepted', 'Accepted'),
+        ('rejected', 'Rejected'),
+        ]
+        
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    language = models.CharField("In which language will you mostly be creating texts?", max_length=50, choices=SUPPORTED_LANGUAGES_AND_OTHER)
+    other_language = models.CharField("Specify other language if necessary", max_length=50)
+    native_or_near_native = models.BooleanField("Are you a native/near-native speaker of this language?", default=False)
+    text_type = models.CharField("What kind of texts are you most interested in creating?", max_length=50, choices=CONTENT_TYPE_CHOICES)
+    purpose = models.CharField("Why are you interested in using C-LARA?", max_length=50, choices=PURPOSE_CHOICES)
+    other_purpose = models.TextField("If you wish, describe in a couple of sentences what you are plannng to do.", blank=True)
+    status = models.CharField("Current status of request", max_length=50, choices=STATUS_CHOICES, default='submitted')
+    
+
     

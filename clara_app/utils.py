@@ -288,4 +288,4 @@ def get_phase_up_to_date_dict(project, clara_project_internal, user):
                                            human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
                                            format_preferences=format_preferences, content_object=content_object,
                                            questionnaire=questionnaire)
-    return clara_dependencies.up_to_date_dict(debug=True)
+    return clara_dependencies.up_to_date_dict(debug=False)
