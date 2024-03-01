@@ -13,7 +13,7 @@ class CLARADependencies:
     # Initialise with the information needed to calculate whether processing phases are up to date.
     def __init__(self, clara_project_internal, project_id,
                  human_audio_info=None, phonetic_human_audio_info=None,
-                 format_preferences=None, content_object=None,
+                 format_preferences=None, content_object=None, questionnaire=None,
                  callback=None):
         self.clara_project_internal = clara_project_internal
         self.l2 = clara_project_internal.l2_language
@@ -22,6 +22,7 @@ class CLARADependencies:
         self.phonetic_human_audio_info = phonetic_human_audio_info
         self.format_preferences = format_preferences
         self.content_object = content_object
+        self.questionnaire = questionnaire
 
         # The different C-LARA processing phases we will evaluate for being up to date
         self._processing_phases = [
@@ -75,6 +76,9 @@ class CLARADependencies:
 
             "render_phonetic",      # Rendered version of phonetic text
                                     # Accessible from CLARAProjectInternal object
+
+            "questionnaire",        # Satisfaction questionnaire results
+                                    # Accessible from CLARAProject object
             
             "social_network",       # Social network page if text is posted there
                                     # Accessible from CLARAProject object
@@ -115,6 +119,9 @@ class CLARADependencies:
             "render_phonetic": [ "phonetic", "images", "audio_phonetic", "format_preferences" ],
             
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
+
+            "questionnaire": [ "render", "render_phonetic" ]
+
             }
 
     def irrelevant_processing_phase(self, processing_phase_id):
@@ -206,6 +213,12 @@ class CLARADependencies:
                 return None
             else:
                 return self.format_preferences.updated_at
+
+        elif processing_phase_id == 'questionnaire':
+            if not self.questionnaire:
+                return None
+            else:
+                return self.questionnaire.created_at
             
         elif processing_phase_id == 'render':
             if not self.clara_project_internal.rendered_html_exists(self.project_id):
