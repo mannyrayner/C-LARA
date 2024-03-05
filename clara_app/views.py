@@ -4400,7 +4400,7 @@ def review_funding_requests(request):
             recipient_email = request.user.email
             send_mail_or_print_trace('Confirm Funding Approvals',
                                      f'Please confirm your funding approvals totaling USD {total_amount:.2f} using this code: {confirmation_code}',
-                                     'clara-no-reply@example.com',
+                                     'clara-no-reply@unisa.edu.au',
                                      [ recipient_email ],
                                      fail_silently=False)
             anonymised_email = recipient_email[0:3] + '*' * ( len(recipient_email) - 10 ) + recipient_email[-7:]
@@ -4452,19 +4452,19 @@ def confirm_funding_approvals(request):
                     funding_request.funder = request.user
                     funding_request.save()
                     # Perform the credit transfer
-                    print(f'Old requester credit ({funding_request.user.username}): {funding_request.user.userprofile.credit}')
-                    print(f'Old funder credit ({request.user.username}): {request.user.userprofile.credit}')
+                    #print(f'Old requester credit ({funding_request.user.username}): {funding_request.user.userprofile.credit}')
+                    #print(f'Old funder credit ({request.user.username}): {request.user.userprofile.credit}')
                     if funding_request.user != request.user:
                         funding_request.user.userprofile.credit += Decimal(transfer['amount'])
                         funding_request.user.userprofile.save()
                         request.user.userprofile.credit -= Decimal(transfer['amount'])
                         request.user.userprofile.save()
-                    print(f'New requester credit ({funding_request.user.username}): {funding_request.user.userprofile.credit}')
-                    print(f'New funder credit ({request.user.username}): {request.user.userprofile.credit}')
+                    #print(f'New requester credit ({funding_request.user.username}): {funding_request.user.userprofile.credit}')
+                    #print(f'New funder credit ({request.user.username}): {request.user.userprofile.credit}')
                     # Send an email to the requester to let them know the request has been approved
                     send_mail_or_print_trace('Your C-LARA funding request has been approved',
                                              f'Your C-LARA funding request was approved, and USD {transfer["amount"]:.2f} has been added to your account balance.',
-                                             'clara-no-reply@example.com',
+                                             'clara-no-reply@unisa.edu.au',
                                              [ funding_request.user.email ],
                                              fail_silently=False)
                 del request.session['funding_transfers']
