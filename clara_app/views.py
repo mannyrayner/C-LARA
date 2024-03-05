@@ -17,15 +17,16 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory, SatisfactionQuestionnaire
+from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
+from .models import SatisfactionQuestionnaire, FundingRequest
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
 from django_q.models import Task
 
-from .forms import RegistrationForm, UserForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
-from .forms import AssignLanguageMasterForm, AddProjectMemberForm
+from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
+from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
 from .forms import ContentSearchForm, ContentRegistrationForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
@@ -64,6 +65,8 @@ from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3
 from .clara_core.clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
 from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language, is_chinese_language
 from .clara_core.clara_utils import make_mp3_version_of_audio_file_if_necessary
+
+from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 
 from pathlib import Path
 from decimal import Decimal
@@ -345,6 +348,36 @@ def admin_password_reset(request):
     
     return render(request, 'clara_app/admin_password_reset.html', {'form': form, 'clara_version': clara_version})
 
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def manage_user_permissions(request):
+    user_select_form = UserSelectForm(request.POST or None)
+    permissions_form = None
+    selected_user_id = None  # Initialize selected_user_id
+
+    if request.method == 'POST' and 'select_user' in request.POST:
+        if user_select_form.is_valid():
+            selected_user = user_select_form.cleaned_data['user']
+            selected_user_id = selected_user.id  # Store the selected user's ID
+            permissions_form = UserPermissionsForm(instance=selected_user.userprofile)
+    elif request.method == 'POST':
+        selected_user_id = request.POST.get('selected_user_id')  # Retrieve the selected user's ID from the POST data
+        selected_user_profile = get_object_or_404(UserProfile, user__id=selected_user_id)
+        permissions_form = UserPermissionsForm(request.POST, instance=selected_user_profile)
+        if permissions_form.is_valid():
+            permissions_form.save()
+            messages.success(request, 'User permissions updated successfully.')
+            return redirect('manage_user_permissions')
+    else:
+        user_select_form = UserSelectForm()
+
+    return render(request, 'clara_app/manage_user_permissions.html', {
+        'user_select_form': user_select_form,
+        'permissions_form': permissions_form,
+        'selected_user_id': selected_user_id,  # Pass selected_user_id to the template
+    })
+
+
 # Add credit to account
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
@@ -467,15 +500,13 @@ def delete_tts_data(request):
         if form.is_valid():
             language = form.cleaned_data['language']
             
-            # Create a unique ID to tag messages posted by this task, and a callback
-            #report_id = uuid.uuid4()
-            #callback = [post_task_update_in_db, report_id]
+            # Create a unique ID to tag messages posted by this task and a callback
             task_type = f'delete_tts'
             callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
             async_task(delete_tts_data_for_language, language, callback=callback)
             print(f'--- Started delete task {language}')
-            #Redirect to the monitor view, passing the task ID and report ID as parameters
+            #Redirect to the monitor view, passing the language and report ID as parameters
             return redirect('delete_tts_data_monitor', language, report_id)
 
     else:
@@ -518,9 +549,6 @@ def delete_tts_data_complete(request, language, status):
         if form.is_valid():
             language = form.cleaned_data['language']
             
-            # Create a unique ID to tag messages posted by this task, and a callback
-            #report_id = uuid.uuid4()
-            #callback = [post_task_update_in_db, report_id]
             task_type = f'delete_tts'
             callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
@@ -2056,7 +2084,7 @@ def clone_project(request, project_id):
                 # Create a new internal project using the new internal ID
                 new_project_internal = CLARAProjectInternal(new_internal_id, new_l2, new_l1)
                 # Copy relevant files from the old project
-                project_internal.copy_files_to_newly_cloned_project(new_project_internal)
+                project_internal.copy_files_to_new_project(new_project_internal)
 
                 # Redirect the user to the cloned project detail page and show a success message
                 messages.success(request, "Cloned project created")
@@ -4291,6 +4319,143 @@ def aggregated_questionnaire_results(request):
     }
 
     return render(request, 'clara_app/aggregated_questionnaire_results.html', context)
+
+@login_required
+def funding_request(request):
+    if request.method == 'POST':
+        form = FundingRequestForm(request.POST)
+        if form.is_valid():
+            funding_request = form.save(commit=False)
+            funding_request.user = request.user
+            funding_request.save()
+            messages.success(request, 'Your funding request has been submitted.')
+            return redirect('profile')  
+    else:
+        form = FundingRequestForm()
+
+    return render(request, 'clara_app/funding_request.html', {'form': form})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_funding_reviewer)
+def review_funding_requests(request):
+    search_form = FundingRequestSearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        language = search_form.cleaned_data.get('language')
+        native_or_near_native = search_form.cleaned_data.get('native_or_near_native')
+        text_type = search_form.cleaned_data.get('text_type')
+        purpose = search_form.cleaned_data.get('purpose')
+        status = search_form.cleaned_data.get('status')
+
+        if language and language != '':
+            query &= Q(language=language)
+        if native_or_near_native and native_or_near_native != '':
+            query &= Q(native_or_near_native=native_or_near_native)
+        if text_type and text_type != '':
+            query &= Q(text_type=text_type)
+        if purpose and purpose != '':
+            query &= Q(purpose=purpose)
+        if status and status != '':
+            query &= Q(status=status)
+
+    formset = ApproveFundingRequestFormSet(request.POST or None)
+    
+    if request.method == 'POST' and formset.is_valid():
+        transfers = []
+        total_amount = 0
+        for form in formset:
+            if form.cleaned_data.get('credit_assigned') and form.cleaned_data.get('credit_assigned') > 0.0:
+                total_amount += form.cleaned_data['credit_assigned']
+                transfers.append({
+                    'funding_request_id': form.instance.id,
+                    'amount': form.cleaned_data['credit_assigned']
+                })
+
+        if request.user.userprofile.credit >= total_amount:
+            confirmation_code = str(uuid.uuid4())
+            request.session['funding_transfers'] = {
+                'transfers': transfers,
+                'total_amount': total_amount,
+                'confirmation_code': confirmation_code,
+            }
+            # Send an email to the reviewer for confirmation
+            send_mail(
+                'Confirm Funding Approvals',
+                f'Please confirm your funding approvals totaling {total_amount} credits using this code: {confirmation_code}',
+                'clara-no-reply@example.com',
+                [request.user.email],
+                fail_silently=False,
+            )
+            messages.info(request, 'A confirmation email has been sent. Please check your email to complete the approvals.')
+            return redirect('confirm_funding_approvals')
+        else:
+            messages.error(request, 'Insufficient funds for these approvals.')
+
+    else:
+        # Populate the formset based on the search criteria etc
+        own_credit_balance = request.user.userprofile.credit
+        filtered_requests = FundingRequest.objects.filter(query)
+        n_filtered_requests = len(filtered_requests)
+        initial_data = [{'id': fr.id,
+                         'user': fr.user.username,
+                         #'language': dict(SUPPORTED_LANGUAGES_AND_OTHER)[fr.language],
+                         #'native_or_near_native': 'Yes' if fr.native_or_near_native else 'No',
+                         'language_native_or_near_native': f'{dict(SUPPORTED_LANGUAGES_AND_OTHER)[fr.language]}/{"Yes" if fr.native_or_near_native else "No"}',
+                         'text_type': dict(FundingRequest.CONTENT_TYPE_CHOICES)[fr.text_type],
+                         'purpose': dict(FundingRequest.PURPOSE_CHOICES)[fr.purpose],
+                         'other_purpose': fr.other_purpose[:500],
+                         'status': dict(FundingRequest.STATUS_CHOICES)[fr.status]}
+                        for fr in filtered_requests]
+        #print(f'--- initial_data from filtered_requests')
+        #pprint.pprint(initial_data)
+        formset = ApproveFundingRequestFormSet(initial=initial_data)
+
+    return render(request, 'clara_app/review_funding_requests.html',
+                  {'own_credit_balance': own_credit_balance, 'n_filtered_requests': n_filtered_requests,
+                   'formset': formset, 'search_form': search_form})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_funding_reviewer)
+def confirm_funding_approvals(request):
+    if request.method == 'POST':
+        form = ConfirmTransferForm(request.POST)  
+        if form.is_valid():
+            confirmation_code = form.cleaned_data['confirmation_code']
+            session_data = request.session.get('funding_transfers')
+
+            if not session_data:
+                messages.error(request, 'No transfers found.')
+            elif not confirmation_code == session_data['confirmation_code']:
+                messages.error(request, 'Invalid confirmation code.')
+            else:
+                for transfer in session_data['transfers']:
+                    # Update the funding_request
+                    funding_request = FundingRequest.objects.get(id=transfer['funding_request_id'])
+                    funding_request.status = 'accepted'
+                    funding_request.credit_assigned = transfer['amount']
+                    funding_request.decision_made_at = timezone.now()
+                    funding_request.funder = request.user
+                    funding_request.save()
+                    # Perform the credit transfer 
+                    funding_request.user.userprofile.credit += Decimal(transfer['amount'])
+                    request.user.userprofile.credit -= Decimal(transfer['amount'])
+                    request.user.userprofile.save()
+                    # Send an email to the requester to let them know the request has been approved
+                    send_mail('Your C-LARA funding request has been approved',
+                              f'Your C-LARA funding request was approved, and ${funding_request.credit_assigned:.2f} has been added to your account balance.',
+                              'clara-no-reply@example.com',
+                              [request.user.email],
+                              fail_silently=False,
+                              )
+                del request.session['funding_transfers']
+                messages.success(request, 'Funding approvals confirmed and funds transferred.')
+                return redirect('review_funding_requests')
+    # GET request            
+    else:
+        form = ConfirmTransferForm()
+
+    return render(request, 'clara_app/confirm_funding_approvals.html', {'form': form})
         
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, phonetic_or_normal, filename):
