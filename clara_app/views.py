@@ -4338,6 +4338,8 @@ def funding_request(request):
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_funding_reviewer)
 def review_funding_requests(request):
+    own_credit_balance = request.user.userprofile.credit
+    
     search_form = FundingRequestSearchForm(request.GET or None)
     query = Q()
 
@@ -4358,21 +4360,35 @@ def review_funding_requests(request):
             query &= Q(purpose=purpose)
         if status and status != '':
             query &= Q(status=status)
-
-    formset = ApproveFundingRequestFormSet(request.POST or None)
     
-    if request.method == 'POST' and formset.is_valid():
+    if request.method == 'POST':
+        formset = ApproveFundingRequestFormSet(request.POST)
+        n_filtered_requests = len(formset)
+        #print(f'--- Found {n_filtered_requests} requests')
         transfers = []
         total_amount = 0
         for form in formset:
-            if form.cleaned_data.get('credit_assigned') and form.cleaned_data.get('credit_assigned') > 0.0:
-                total_amount += form.cleaned_data['credit_assigned']
-                transfers.append({
-                    'funding_request_id': form.instance.id,
-                    'amount': form.cleaned_data['credit_assigned']
-                })
-
-        if request.user.userprofile.credit >= total_amount:
+            if not form.is_valid():
+                print(f'--- Invalid form data: {form}')
+            else:
+                request_id = int(form.cleaned_data.get('id'))
+                status = form.cleaned_data.get('status')
+                credit_assigned = int(form.cleaned_data.get('credit_assigned')) if form.cleaned_data.get('credit_assigned') else 0.0
+                #print(f'--- id: {id}, status: {status}, credit_assigned: {credit_assigned}')
+                if status != 'Submitted' and credit_assigned > 0.0:
+                    messages.error(request, f'Request {request_id}: not meaningful to fund a request with status "{status}"')
+                if status == 'Submitted' and credit_assigned > 0.0:
+                    total_amount += credit_assigned
+                    transfers.append({
+                        'funding_request_id': request_id,
+                        'amount': credit_assigned
+                    })
+        print(f'--- total_amount = {total_amount}')
+        if total_amount == 0:
+            messages.error(request, 'No requests to approve.')
+        elif total_amount > request.user.userprofile.credit:
+            messages.error(request, 'Insufficient funds for these approvals.')
+        else:
             confirmation_code = str(uuid.uuid4())
             request.session['funding_transfers'] = {
                 'transfers': transfers,
@@ -4380,32 +4396,23 @@ def review_funding_requests(request):
                 'confirmation_code': confirmation_code,
             }
             # Send an email to the reviewer for confirmation
-            send_mail(
-                'Confirm Funding Approvals',
-                f'Please confirm your funding approvals totaling {total_amount} credits using this code: {confirmation_code}',
-                'clara-no-reply@example.com',
-                [request.user.email],
-                fail_silently=False,
-            )
+            send_funding_approval_confirmation_email(request.user, total_amount, confirmation_code)
             messages.info(request, 'A confirmation email has been sent. Please check your email to complete the approvals.')
-            return redirect('confirm_funding_approvals')
-        else:
-            messages.error(request, 'Insufficient funds for these approvals.')
+            return redirect('confirm_funding_approvals')            
 
     else:
         # Populate the formset based on the search criteria etc
-        own_credit_balance = request.user.userprofile.credit
         filtered_requests = FundingRequest.objects.filter(query)
         n_filtered_requests = len(filtered_requests)
         initial_data = [{'id': fr.id,
                          'user': fr.user.username,
-                         #'language': dict(SUPPORTED_LANGUAGES_AND_OTHER)[fr.language],
-                         #'native_or_near_native': 'Yes' if fr.native_or_near_native else 'No',
                          'language_native_or_near_native': f'{dict(SUPPORTED_LANGUAGES_AND_OTHER)[fr.language]}/{"Yes" if fr.native_or_near_native else "No"}',
                          'text_type': dict(FundingRequest.CONTENT_TYPE_CHOICES)[fr.text_type],
                          'purpose': dict(FundingRequest.PURPOSE_CHOICES)[fr.purpose],
                          'other_purpose': fr.other_purpose[:500],
-                         'status': dict(FundingRequest.STATUS_CHOICES)[fr.status]}
+                         'status': dict(FundingRequest.STATUS_CHOICES)[fr.status],
+                         'credit_assigned': fr.credit_assigned,
+                         }
                         for fr in filtered_requests]
         #print(f'--- initial_data from filtered_requests')
         #pprint.pprint(initial_data)
@@ -4414,6 +4421,16 @@ def review_funding_requests(request):
     return render(request, 'clara_app/review_funding_requests.html',
                   {'own_credit_balance': own_credit_balance, 'n_filtered_requests': n_filtered_requests,
                    'formset': formset, 'search_form': search_form})
+
+def send_funding_approval_confirmation_email(user, total_amount, confirmation_code):
+    subject = 'Confirm Funding Approvals'
+    body = f'Please confirm your funding approvals totaling USD {total_amount:.2f} using this code: {confirmation_code}'
+    from_address = 'clara-no-reply@example.com'
+    to_addresses = [user.email]
+    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+        send_mail(subject, body, from_address, to_addresses, fail_silently=False)
+    else:
+        print(f' --- On UniSA would do: send_mail({subject}, {body}, {from_address}, {to_addresses}, fail_silently=False)')
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_funding_reviewer)
@@ -4433,7 +4450,7 @@ def confirm_funding_approvals(request):
                     # Update the funding_request
                     funding_request = FundingRequest.objects.get(id=transfer['funding_request_id'])
                     funding_request.status = 'accepted'
-                    funding_request.credit_assigned = transfer['amount']
+                    funding_request.credit_assigned = Decimal(transfer['amount'])
                     funding_request.decision_made_at = timezone.now()
                     funding_request.funder = request.user
                     funding_request.save()
@@ -4442,12 +4459,7 @@ def confirm_funding_approvals(request):
                     request.user.userprofile.credit -= Decimal(transfer['amount'])
                     request.user.userprofile.save()
                     # Send an email to the requester to let them know the request has been approved
-                    send_mail('Your C-LARA funding request has been approved',
-                              f'Your C-LARA funding request was approved, and ${funding_request.credit_assigned:.2f} has been added to your account balance.',
-                              'clara-no-reply@example.com',
-                              [request.user.email],
-                              fail_silently=False,
-                              )
+                    send_funding_approval_email(funding_request.user, funding_request.credit_assigned)
                 del request.session['funding_transfers']
                 messages.success(request, 'Funding approvals confirmed and funds transferred.')
                 return redirect('review_funding_requests')
@@ -4456,7 +4468,17 @@ def confirm_funding_approvals(request):
         form = ConfirmTransferForm()
 
     return render(request, 'clara_app/confirm_funding_approvals.html', {'form': form})
-        
+
+def send_funding_approval_email(user, credit_assigned):
+    subject = 'Your C-LARA funding request has been approved'
+    body = f'Your C-LARA funding request was approved, and USD {credit_assigned:.2f} has been added to your account balance.'
+    from_address = 'clara-no-reply@example.com'
+    to_addresses = [user.email]
+    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+        send_mail(subject, body, from_address, to_addresses, fail_silently=False)
+    else:
+        print(f' --- On UniSA would do: send_mail({subject}, {body}, {from_address}, {to_addresses}, fail_silently=False)')
+
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, phonetic_or_normal, filename):
     file_path = absolute_file_name(Path(output_dir_for_project_id(project_id, phonetic_or_normal)) / f"{filename}")

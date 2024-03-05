@@ -658,24 +658,23 @@ class FundingRequestForm(forms.ModelForm):
         model = FundingRequest
         exclude = ['user', 'status', 'funder', 'credit_assigned', 'decision_comment', 'decision_made_at']
 
-class ApproveFundingRequestForm(forms.ModelForm):
-    #credit_assigned = forms.DecimalField(max_digits=10, decimal_places=2, required=False, help_text="Amount of credit to assign")
+class ApproveFundingRequestForm(forms.Form):
+    id = forms.DecimalField(max_digits=10, required=True)
+    credit_assigned = forms.DecimalField(max_digits=10, decimal_places=2, required=False, help_text="Amount of credit to assign")
     user = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     #language = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     #native_or_near_native = forms.CharField(max_length=3, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
-    language_native_or_near_native = forms.CharField(max_length=3, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    language_native_or_near_native = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     text_type = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
     purpose = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
-    other_purpose = forms.CharField(max_length=500, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    other_purpose = forms.CharField(max_length=500, widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
     status = forms.CharField(max_length=500, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
 
-    class Meta:
-        model = FundingRequest
-        fields = ['id',
-                  #'user', 'language', 'native_or_near_native', 'text_type', 'purpose', 'other_purpose', 'status',  
-                  'credit_assigned']
+##    class Meta:
+##        model = FundingRequest
+##        fields = ['id', 'credit_assigned']
 
-        widgets = {'id': forms.HiddenInput()}
+        #widgets = {'id': forms.HiddenInput()}
 
 ApproveFundingRequestFormSet = formset_factory(ApproveFundingRequestForm, extra=0)
         
