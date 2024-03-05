@@ -25,7 +25,7 @@ an initial empty project.
 
 - from_directory(directory) [classmethod]. Creates a CLARAProjectInternal from its associated directory.
 
-- copy_files_to_newly_cloned_project(new_project) Copy relevant files from this project
+- copy_files_to_new_project(new_project) Copy relevant files from this project
 to a newly created clone of it.
 
 - save_text_version(version, text). Saves one of the associated texts. "version" is one
@@ -279,7 +279,7 @@ class CLARAProjectInternal:
                 self.text_versions[version] = str(file_path)
 
     # Copy relevant files from this project to a newly created clone of it.
-    def copy_files_to_newly_cloned_project(self, new_project: 'CLARAProjectInternal') -> None:
+    def copy_files_to_new_project(self, new_project: 'CLARAProjectInternal') -> None:
         # Always copy the prompt and plain text file if available.
         # Even not directly useable, we may want to transform them in some way
         self._copy_text_version_if_it_exists("prompt", new_project)
