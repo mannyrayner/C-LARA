@@ -111,9 +111,6 @@
 			  <a class="dropdown-item" href="{% url 'credit_balance' %}"
 					 data-toggle="tooltip" title="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
 					 Credit balance for ChatGPT-4 API calls</a>
-			  <a class="dropdown-item" href="{% url 'funding_request' %}"
-					 data-toggle="tooltip" title="Submit a request to have credit added to your balance">
-					 Credit request</a>
 			  <a class="dropdown-item" href="{% url 'transfer_credit' %}"
 					 data-toggle="tooltip" title="Transfer some of the credit from your GPT-4 call account to another user.">
 					 Transfer credit to another user</a>
@@ -185,6 +182,9 @@
 			  Funding reviewer
 			  </a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+					<a class="dropdown-item" href="{% url 'funding_request' %}"
+					 data-toggle="tooltip" title="Submit a request to have credit added to your balance">
+					 Credit request</a>
 					<a class="dropdown-item" href="{% url 'review_funding_requests' %}"
 						   data-toggle="tooltip" title="Review funding requests">
 						   Review funding requests</a>
