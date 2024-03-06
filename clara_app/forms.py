@@ -2,11 +2,11 @@ from django import forms
 from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire
+from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from django.contrib.auth.models import User
 
-from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SIMPLE_CLARA_TYPES
+from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 
 from .clara_core.clara_utils import is_rtl_language, is_chinese_language
         
@@ -22,6 +22,10 @@ class UserForm(forms.ModelForm):
         model = User
         fields = ['email']
 
+class UserSelectForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'),
+                                  label="Select a user", empty_label="Choose a user")
+
 class AdminPasswordResetForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
     new_password = forms.CharField(widget=forms.PasswordInput())
@@ -30,6 +34,11 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = ['bio', 'location', 'birth_date', 'profile_picture', 'is_private']
+
+class UserPermissionsForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['is_admin', 'is_moderator', 'is_funding_reviewer']
 
 class FriendRequestForm(forms.Form):
     action = forms.CharField(widget=forms.HiddenInput())
@@ -643,3 +652,36 @@ class SatisfactionQuestionnaireForm(forms.ModelForm):
         fields = ['text_correspondence', 'language_correctness', 'text_engagement',
                   'cultural_appropriateness', 'image_match', 'shared_text',
                   'functionality_improvement', 'design_improvement']
+
+class FundingRequestForm(forms.ModelForm):
+    class Meta:
+        model = FundingRequest
+        exclude = ['user', 'status', 'funder', 'credit_assigned', 'decision_comment', 'decision_made_at']
+
+class ApproveFundingRequestForm(forms.Form):
+    id = forms.DecimalField(max_digits=10, required=True)
+    credit_assigned = forms.DecimalField(max_digits=10, decimal_places=2, required=False, help_text="Amount of credit to assign")
+    user = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    #language = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    #native_or_near_native = forms.CharField(max_length=3, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    language_native_or_near_native = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    text_type = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    purpose = forms.CharField(max_length=50, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+    other_purpose = forms.CharField(max_length=500, widget=forms.TextInput(attrs={'readonly': 'readonly'}), required=False)
+    status = forms.CharField(max_length=500, widget=forms.TextInput(attrs={'readonly': 'readonly'}))
+
+##    class Meta:
+##        model = FundingRequest
+##        fields = ['id', 'credit_assigned']
+
+        #widgets = {'id': forms.HiddenInput()}
+
+ApproveFundingRequestFormSet = formset_factory(ApproveFundingRequestForm, extra=0)
+        
+class FundingRequestSearchForm(forms.Form):
+    language = forms.ChoiceField(choices=[('', 'Any')] + list(SUPPORTED_LANGUAGES_AND_OTHER), required=False)
+    native_or_near_native = forms.ChoiceField(choices = [('', 'Any'), (True, 'Yes'), (False, 'No')], required=False)
+    text_type = forms.ChoiceField(choices=[('', 'Any')] + FundingRequest.CONTENT_TYPE_CHOICES, required=False)
+    purpose = forms.ChoiceField(choices=[('', 'Any')] + FundingRequest.PURPOSE_CHOICES, required=False)
+    status = forms.ChoiceField(choices=[('', 'Any')] + FundingRequest.STATUS_CHOICES, required=False)
+

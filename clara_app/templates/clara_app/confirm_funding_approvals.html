@@ -1,0 +1,12 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Confirm Funding Approvals{% endblock %}
+
+{% block content %}
+  <h2>Confirm Funding Approvals</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Confirm</button>
+  </form>
+{% endblock %}

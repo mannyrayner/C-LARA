@@ -1,0 +1,21 @@
+{% extends 'clara_app/base.html' %}
+
+{% block content %}
+<h2>Manage User Permissions</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ user_select_form.as_p }}
+    <button type="submit" name="select_user">Select User</button>
+</form>
+
+{% if permissions_form %}
+    <h3>Editing Permissions for {{ permissions_form.instance.user.username }}</h3>
+    <form method="post">
+        {% csrf_token %}
+		<input type="hidden" name="selected_user_id" value="{{ selected_user_id }}" />  <!-- Hidden field for selected_user_id -->
+        {{ permissions_form.as_p }}
+        <button type="submit">Update Permissions</button>
+    </form>
+{% endif %}
+{% endblock %}

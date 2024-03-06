@@ -1,0 +1,51 @@
+{% extends 'clara_app/base.html' %}
+
+{% block content %}
+<h2>Review Funding Requests</h2>
+
+<p><b>Your current credit balance: ${{ own_credit_balance|floatformat:2 }}</b></p>
+
+<form method="GET">
+    <p>Language: {{ search_form.language }}</p>
+	<p>Native/near-native: {{ search_form.native_or_near_native }}</p>
+	<p>Text type: {{ search_form.text_type }}</p>
+	<p>Purpose: {{ search_form.purpose }}</p>
+	<p>Status: {{ search_form.status }}</p>
+    <input type="submit" value="Search">
+  </form>
+
+{% if n_filtered_requests == 0 %}
+  <p>No funding requests found</p>
+{% else %}
+	<h3>Funding requests</h3>
+    <form method="post">
+		{% csrf_token %}
+		{{ formset.management_form }}
+			<table border="2">
+				<tr>
+					<th>Id</th>
+					<th>Requester</th>
+					<th>Language/Native</th>
+					<th>Type</th>
+					<th>Purpose</th>
+					<th>Other information</th>
+					<th>Status</th>
+					<th>Amount ($)</th>
+				</tr>
+				{% for form in formset %}
+				<tr>
+					<td>{{ form.id }}</td>
+					<td>{{ form.user }}</td>
+					<td>{{ form.language_native_or_near_native }}</td>
+					<td>{{ form.text_type }}</td>
+					<td>{{ form.purpose }}</td>
+					<td>{{ form.other_purpose }}</td>
+					<td>{{ form.status }}</td>
+					<td>{{ form.credit_assigned }}</td>
+				</tr>
+				{% endfor %}
+			</table>
+		<input type="submit" value="Approve funding">
+    </form>
+{% endif %}
+{% endblock %}

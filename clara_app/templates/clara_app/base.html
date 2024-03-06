@@ -156,6 +156,9 @@
 					<a class="dropdown-item" href="{% url 'add_credit' %}"
 						   data-toggle="tooltip" title="Add credit to a user's GPT-4 call account">
 						   Add credit to user</a>
+					<a class="dropdown-item" href="{% url 'manage_user_permissions' %}"
+						   data-toggle="tooltip" title="Manage permissions for funding request reviewer, moderator and admin">
+						   Manage permissions</a>
 					<a class="dropdown-item" href="{% url 'admin_password_reset' %}"
 						   data-toggle="tooltip" title="Manually reset a user's password, in case they cannot use the normal password reset.">
 						   Manually reset user's password</a>
@@ -168,6 +171,23 @@
 					<a class="dropdown-item" href="{% url 'delete_tts_data' %}"
 						   data-toggle="tooltip" title="Remove all cached TTS data for a given language.">
 						   Delete TTS data</a>
+				</div>
+            </li>
+          {% endif %}
+		  
+		  <!-- Funding reviewer functions -->
+		  {% if user.userprofile.is_funding_reviewer %}
+		    <li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  Funding reviewer
+			  </a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+					<a class="dropdown-item" href="{% url 'funding_request' %}"
+					 data-toggle="tooltip" title="Submit a request to have credit added to your balance">
+					 Credit request</a>
+					<a class="dropdown-item" href="{% url 'review_funding_requests' %}"
+						   data-toggle="tooltip" title="Review funding requests">
+						   Review funding requests</a>
 				</div>
             </li>
           {% endif %}

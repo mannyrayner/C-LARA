@@ -4,6 +4,8 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 
 from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences
 from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content, SatisfactionQuestionnaire
@@ -289,3 +291,18 @@ def get_phase_up_to_date_dict(project, clara_project_internal, user):
                                            format_preferences=format_preferences, content_object=content_object,
                                            questionnaire=questionnaire)
     return clara_dependencies.up_to_date_dict(debug=False)
+
+def send_mail_or_print_trace(subject, body, from_address, to_addresses, fail_silently=False):
+    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+        send_mail(subject, body, from_address, to_addresses, fail_silently=False)
+    else:
+        print(f' --- On UniSA would do: send_mail({subject}, {body}, {from_address}, {to_addresses}, fail_silently=False)')
+
+def EmailMessage_send_or_print_trace(subject, message, from_email, to_addresses):
+    if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+        email = EmailMessage(subject, message, from_email, to_addresses)
+        email.content_subtype = "html"  # Set the email content type to HTML
+        email.send()
+    else:
+        print(f' --- On UniSA would do: EmailMessage(subject, message, from_email, to_addresses).send()')
+        

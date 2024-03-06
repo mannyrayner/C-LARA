@@ -1,0 +1,13 @@
+{% extends 'clara_app/base.html' %}
+
+{% block title %}Funding Request{% endblock %}
+
+{% block content %}
+<h2>Funding Request</h2>
+<p><b>You can open an account on C-LARA and access texts for free, but if you want to use the AI functions you need a positive credit balance to pay for the OpenAI time. Creating a 300 word story typically costs about USD 0.50. Submit a request here if you would like some credit to experiment.</b></p>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+</form>
+{% endblock %}

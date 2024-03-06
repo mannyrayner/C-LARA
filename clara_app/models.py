@@ -19,6 +19,7 @@ class UserProfile(models.Model):
     profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
     is_admin = models.BooleanField(default=False)
     is_moderator = models.BooleanField(default=False)
+    is_funding_reviewer = models.BooleanField(default=False)
     credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     is_private = models.BooleanField(default=False)
 
@@ -441,19 +442,23 @@ class FundingRequest(models.Model):
 
     STATUS_CHOICES = [
         ('submitted', 'Submitted'),
-        ('under_review', 'Under review'),
         ('accepted', 'Accepted'),
         ('rejected', 'Rejected'),
         ]
         
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    user = models.ForeignKey(User, related_name='funding_request_user', on_delete=models.SET_NULL, null=True, blank=True)
+    purpose = models.CharField("Why are you interested in using C-LARA?", max_length=50, choices=PURPOSE_CHOICES)
     language = models.CharField("In which language will you mostly be creating texts?", max_length=50, choices=SUPPORTED_LANGUAGES_AND_OTHER)
-    other_language = models.CharField("Specify other language if necessary", max_length=50)
+    other_language = models.CharField("Specify the language if it was not listed in the menu", max_length=50, blank=True)
     native_or_near_native = models.BooleanField("Are you a native/near-native speaker of this language?", default=False)
     text_type = models.CharField("What kind of texts are you most interested in creating?", max_length=50, choices=CONTENT_TYPE_CHOICES)
-    purpose = models.CharField("Why are you interested in using C-LARA?", max_length=50, choices=PURPOSE_CHOICES)
-    other_purpose = models.TextField("If you wish, describe in a couple of sentences what you are plannng to do.", blank=True)
+    other_purpose = models.TextField("If you wish, describe in a couple of sentences what you are planning to do.", blank=True)
     status = models.CharField("Current status of request", max_length=50, choices=STATUS_CHOICES, default='submitted')
+    funder = models.ForeignKey(User, related_name='funding_request_funder', on_delete=models.SET_NULL, null=True, blank=True)
+    credit_assigned = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    decision_comment = models.TextField("Comment on Decision", blank=True, help_text="Feedback or reason for decision.")
+    decision_made_at = models.DateTimeField("Decision Made At", null=True, blank=True)
     
+        
 
     

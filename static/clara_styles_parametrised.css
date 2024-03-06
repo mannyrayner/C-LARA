@@ -24,7 +24,7 @@
   top: -2em;
   {{ left_or_right_for_gloss_popup }}: 0; 
   min-width: 100%; /* Ensure the gloss popup is never smaller than the word it is glossing */
-  white-space: nowrap; /* Prevent the gloss from wrapping to a new line */
+  white-space: normal; /* Allow gloss to wrap to a new line */
 }
 
 /* Additional RTL styling */
@@ -44,7 +44,7 @@
   top: -2em;
   {{ left_or_right_for_gloss_popup }}: 0; 
   min-width: 100%; /* Ensure the gloss popup is never smaller than the word it is glossing */
-  white-space: nowrap; /* Prevent the gloss from wrapping to a new line */
+  white-space: normal; /* Allow gloss to wrap to a new line */
 }
 
 /* Additional RTL styling */
