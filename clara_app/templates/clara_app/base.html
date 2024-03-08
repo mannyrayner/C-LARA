@@ -106,7 +106,7 @@
 					 data-toggle="tooltip" title="Enter/edit your location, bio, profile picture etc.">
 					 Edit user profile</a>
 			  <a class="dropdown-item" href="{% url 'user_config' %}"
-					 data-toggle="tooltip" title="Choose between simple C-LARA and full C-LARA. In full C-LARA mode, also specify the GPT-4 model you want to use and other related parameters.">
+					 data-toggle="tooltip" title="Specify the GPT-4 model you want to use, optionally give an API key, and edit other related parameters.">
 					 Edit configuration information</a>
 			  <a class="dropdown-item" href="{% url 'credit_balance' %}"
 					 data-toggle="tooltip" title="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
@@ -183,8 +183,8 @@
 			  </a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
 					<a class="dropdown-item" href="{% url 'funding_request' %}"
-					 data-toggle="tooltip" title="Submit a request to have credit added to your balance">
-					 Credit request</a>
+							data-toggle="tooltip" title="Submit a request to have credit added to your balance">
+							Funding request</a>
 					<a class="dropdown-item" href="{% url 'review_funding_requests' %}"
 						   data-toggle="tooltip" title="Review funding requests">
 						   Review funding requests</a>
