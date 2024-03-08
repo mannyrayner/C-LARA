@@ -38,7 +38,7 @@ from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
-from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
+from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates
@@ -1423,8 +1423,9 @@ def simple_clara(request, project_id, last_operation_status):
                         messages.success(request, success_message)
                     return redirect('simple_clara', new_project_id, new_status)
                 else:
-                    if not request.user.userprofile.credit > 0:
-                        messages.error(request, f"Sorry, you need money in your account to perform this operation")
+                    #if not request.user.userprofile.credit > 0:
+                    if not user_has_open_ai_key_or_credit(user):
+                        messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                         return redirect('simple_clara', project_id, 'initial')
                     else:
                         task_type = f'simple_clara_action'
@@ -3003,8 +3004,9 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         text_choice = 'generate'
                     current_version = ""
             # We're using the AI or a tagger to create a new version of a file
-            elif text_choice in ( 'generate', 'correct', 'improve' ) and not request.user.userprofile.credit > 0:
-                messages.error(request, f"Sorry, you need money in your account to perform this operation")
+            #elif text_choice in ( 'generate', 'correct', 'improve' ) and not request.user.userprofile.credit > 0:
+            elif text_choice in ( 'generate', 'correct', 'improve' ) and not user_has_open_ai_key_or_credit(user):
+                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
             elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin' ):
@@ -3462,13 +3464,17 @@ def edit_images(request, project_id, dall_e_3_image_status):
 
     if request.method == 'POST':
         if 'action' in request.POST and request.POST['action'] == 'create_dalle_image':
-            task_type = f'create_dalle_e_3_image'
-            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+            if not user_has_open_ai_key_or_credit(request.user):
+                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
+                return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+            else:
+                task_type = f'create_dalle_e_3_image'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-            async_task(create_and_add_dall_e_3_image, project_id, callback=callback)
-            print(f'--- Started DALL-E-3 image generation task')
-            #Redirect to the monitor view, passing the task ID and report ID as parameters
-            return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+                async_task(create_and_add_dall_e_3_image, project_id, callback=callback)
+                print(f'--- Started DALL-E-3 image generation task')
+                #Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
 
         else:
             formset = ImageFormSet(request.POST, request.FILES)

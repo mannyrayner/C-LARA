@@ -46,6 +46,10 @@ def get_user_config(user):
         'max_annotation_words': user_config.max_annotation_words,
     }
 
+def user_has_open_ai_key_or_credit(user):
+    user_config = get_user_config(user)
+    return ( 'open_ai_api_key' in user_config and user_config['open_ai_api_key'] ) or user.userprofile.credit > 0
+
 def make_asynch_callback_and_report_id(request, task_type):
     # Create a unique ID to tag messages posted by this task
     report_id = uuid.uuid4()
