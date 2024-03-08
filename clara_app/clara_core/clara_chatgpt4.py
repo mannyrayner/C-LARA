@@ -34,26 +34,40 @@ from io import BytesIO
 
 config = get_config()
 
+def get_open_ai_api_key(config_info):
+    if 'open_ai_api_key' in config_info and config_info['open_ai_api_key']:
+        key = config_info['open_ai_api_key']
+        source = 'C-LARA config'
+    else:
+        key = os.environ.get("OPENAI_API_KEY")
+        source = 'env variable OPENAI_API_KEY'
+        
+    #print(f'open_ai_api_key = "{key}" (from {source})')
+    return key
+
 def call_chat_gpt4(prompt, config_info={}, callback=None):
-    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
-    return asyncio.run(get_api_chatgpt4_response(prompt, gpt_model=gpt_model, callback=callback))
+    #gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
+    return asyncio.run(get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback))
 
 def call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None):
-    return asyncio.run(get_api_chatgpt4_image_response(prompt, image_file, callback=callback))
+    return asyncio.run(get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback))
 
 def call_chat_gpt4_interpret_image(prompt, image_file, config_info={}, callback=None):
-    return asyncio.run(get_api_chatgpt4_interpret_image_response(prompt, image_file, callback=callback))
+    return asyncio.run(get_api_chatgpt4_interpret_image_response(prompt, image_file, config_info=config_info, callback=callback))
 
-def call_openai_api(messages, gpt_model):
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+def call_openai_api(messages, config_info):
+    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
+    api_key = get_open_ai_api_key(config_info)
+    client = OpenAI(api_key=api_key)
     chat_completion = client.chat.completions.create(
         messages=messages,
         model=gpt_model
         )
     return chat_completion
 
-def call_openai_api_image(prompt, gpt_model, size):
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+def call_openai_api_image(prompt, gpt_model, size, config_info):
+    api_key = get_open_ai_api_key(config_info)
+    client = OpenAI(api_key=api_key)
     response = client.images.generate(
         model=gpt_model,
         prompt=prompt,
@@ -63,8 +77,9 @@ def call_openai_api_image(prompt, gpt_model, size):
         )
     return response
 
-def call_openai_api_interpret_image_url(prompt, image_url, gpt_model='gpt-4-vision-preview', max_tokens=2000):
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+def call_openai_api_interpret_image_url(prompt, image_url, gpt_model, max_tokens, config_info):
+    api_key = get_open_ai_api_key(config_info)
+    client = OpenAI(api_key=api_key)
 
     response = client.chat.completions.create(
       model=gpt_model,
@@ -89,8 +104,9 @@ def call_openai_api_interpret_image_url(prompt, image_url, gpt_model='gpt-4-visi
 
     return response
 
-def call_openai_api_interpret_image(prompt, image_path, gpt_model='gpt-4-vision-preview', max_tokens=2000):
-    api_key = os.environ.get("OPENAI_API_KEY")
+def call_openai_api_interpret_image(prompt, image_path, gpt_model, max_tokens, config_info):
+    api_key = get_open_ai_api_key(config_info)
+    client = OpenAI(api_key=api_key)
 
     # Function to encode the image
     def encode_image(image_path):
@@ -131,8 +147,9 @@ def call_openai_api_interpret_image(prompt, image_path, gpt_model='gpt-4-vision-
 
     return response
 
-async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4-1106-preview', callback=None):
+async def get_api_chatgpt4_response(prompt, config_info={}, callback=None):
     start_time = time.time()
+    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
     n_prompt_chars = int(config.get('chatgpt4_trace', 'max_prompt_chars_to_show'))
     n_response_chars = int(config.get('chatgpt4_trace', 'max_response_chars_to_show'))
     if n_prompt_chars != 0:
@@ -144,7 +161,7 @@ async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4-1106-preview', call
     loop = asyncio.get_event_loop()
 
     # Start the API call in a separate thread to not block the event loop
-    api_task = loop.run_in_executor(None, call_openai_api, messages, gpt_model)
+    api_task = loop.run_in_executor(None, call_openai_api, messages, config_info)
 
     time_waited = 0
     while not api_task.done():
@@ -180,7 +197,7 @@ async def get_api_chatgpt4_response(prompt, gpt_model='gpt-4-1106-preview', call
     return api_call
 
 # Version of get_api_chatgpt4_response for creating DALL-E-3 images
-async def get_api_chatgpt4_image_response(prompt, image_file, callback=None):
+async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, callback=None):
     gpt_model = 'dall-e-3'
     size='1024x1024'
     
@@ -193,7 +210,7 @@ async def get_api_chatgpt4_image_response(prompt, image_file, callback=None):
     loop = asyncio.get_event_loop()
 
     # Start the API call in a separate thread to not block the event loop
-    api_task = loop.run_in_executor(None, call_openai_api_image, prompt, gpt_model, size)
+    api_task = loop.run_in_executor(None, call_openai_api_image, prompt, gpt_model, size, config_info)
 
     time_waited = 0
     while not api_task.done():
@@ -228,7 +245,7 @@ async def get_api_chatgpt4_image_response(prompt, image_file, callback=None):
     
     return api_call
 
-async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model='gpt-4-vision-preview', callback=None):
+async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model='gpt-4-vision-preview', config_info={}, callback=None):
     max_tokens = int(config.get('chatgpt4v', 'max_tokens_to_produce'))
     
     start_time = time.time()
@@ -241,7 +258,7 @@ async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model
     loop = asyncio.get_event_loop()
 
     # Start the API call in a separate thread to not block the event loop
-    api_task = loop.run_in_executor(None, call_openai_api_interpret_image, prompt, file_path, gpt_model, max_tokens)
+    api_task = loop.run_in_executor(None, call_openai_api_interpret_image, prompt, file_path, gpt_model, max_tokens, config_info)
 
     time_waited = 0
     while not api_task.done():
