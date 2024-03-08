@@ -41,6 +41,7 @@ def get_user_config(user):
 
     return {
         'clara_version': user_config.clara_version,
+        'open_ai_api_key': user_config.open_ai_api_key,
         'gpt_model': user_config.gpt_model,
         'max_annotation_words': user_config.max_annotation_words,
     }

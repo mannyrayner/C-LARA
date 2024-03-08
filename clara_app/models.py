@@ -53,6 +53,7 @@ class UserConfiguration(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     clara_version = models.CharField(max_length=20, choices=CLARA_VERSION_CHOICES, default='full_clara')
+    open_ai_api_key = models.CharField(max_length=200, blank=True, null=True)
     gpt_model = models.CharField(max_length=50, default='gpt-4-1106-preview')
     max_annotation_words = models.IntegerField(default=250)
 

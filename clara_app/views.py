@@ -306,6 +306,8 @@ def user_config(request):
     if request.method == 'POST':
         form = UserConfigForm(request.POST, instance=user_config)
         if form.is_valid():
+            #open_ai_api_key = form.cleaned_data['open_ai_api_key']
+            #print(f'open_ai_api_key = {open_ai_api_key}')
             form.save()
             messages.success(request, f'Configuration information has been updated')
             return redirect('user_config')
@@ -1313,7 +1315,7 @@ def get_simple_clara_resources_helper(project_id, user):
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
 @login_required
-def simple_clara(request, project_id, status):
+def simple_clara(request, project_id, last_operation_status):
     user = request.user
     username = request.user.username
     # Get resources available for display based on the current state
@@ -1328,7 +1330,14 @@ def simple_clara(request, project_id, status):
     form = SimpleClaraForm(initial=resources, is_rtl_language=rtl_language)
     content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
 
-    if request.method == 'POST':
+    if request.method == 'GET':
+        if last_operation_status == 'finished':
+             messages.success(request, f"Operation completed successfully")
+             return redirect('simple_clara', project_id, 'init')
+        elif last_operation_status == 'error':
+             messages.error(request, "Something went wrong. Try looking at the 'Recent task updates' view")
+             return redirect('simple_clara', project_id, 'init')
+    elif request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
         #print(f'Action = {action}')
@@ -1592,8 +1601,6 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, callback=None)
-    #api_calls are stored inside create_and_add_dall_e_3_image
-    #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
@@ -1626,8 +1633,6 @@ def simple_clara_save_text_and_create_image_helper(username, project_id, simple_
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, callback=None)
-    #api_calls are stored inside create_and_add_dall_e_3_image
-    #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
@@ -1805,17 +1810,15 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: regenerate DALL-E-3 image")
-    create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
-    #api_calls are stored inside create_and_add_dall_e_3_image
-    #store_api_calls(api_calls, project, user, 'image')
+    result = create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
     post_task_update(callback, f"ENDED TASK: regenerate DALL-E-3 image")
 
-    if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
+    if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text') and result:
         return { 'status': 'finished',
                  'message': 'Regenerated the image' }
     else:
-        return { 'status': 'finished',
-                 'message': 'Unable to regenerate the image. Probably DALL-E-3 thought something was inappropriate.' }
+        return { 'status': 'error',
+                 'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
 
 def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
@@ -3532,7 +3535,8 @@ def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         text = clara_project_internal.load_text_version('plain')
         text_language = project.l2
-        #prompt = f"""Here is something in {text_language} that another instance of you wrote:
+        user = project.user
+        config_info = get_user_config(user)
         prompt = f"""Please read the following (it is written in {text_language.capitalize()}) and create an image to go with it:
 
 {text}
@@ -3551,7 +3555,7 @@ When generating the image, keep the following advice in mind:
         tmp_image_file = os.path.join(temp_dir, 'image_for_whole_text.jpg')
         
         post_task_update(callback, f"--- Creating a new DALL-E-3 image based on the whole project text")
-        api_call = call_chat_gpt4_image(prompt, tmp_image_file, config_info={}, callback=callback)
+        api_call = call_chat_gpt4_image(prompt, tmp_image_file, config_info=config_info, callback=callback)
         post_task_update(callback, f"--- Image created: {tmp_image_file}")
 
         image_name = 'DALLE-E-3-Image-For-Whole-Text'
@@ -3562,11 +3566,11 @@ When generating the image, keep the following advice in mind:
         post_task_update(callback, f"finished")
         api_calls = [ api_call ]
         store_api_calls(api_calls, project, project.user, 'image')
-        return api_calls
+        return True
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
-        return []
+        return False
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)

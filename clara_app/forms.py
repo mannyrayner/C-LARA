@@ -47,7 +47,7 @@ class FriendRequestForm(forms.Form):
 class UserConfigForm(forms.ModelForm):
     class Meta:
         model = UserConfiguration
-        fields = ['clara_version', 'gpt_model', 'max_annotation_words']  
+        fields = ['clara_version', 'open_ai_api_key', 'gpt_model', 'max_annotation_words']  
         widgets = {
             'clara_version': forms.Select(choices=[('simple_clara', 'Simple C-LARA'),
                                                    ('full_clara', 'Full C-LARA'),]),
