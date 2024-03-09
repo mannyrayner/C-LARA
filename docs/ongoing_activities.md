@@ -1,6 +1,7 @@
 <div style="overflow: hidden; background-color: #f1f1f1;">
 
   <a href="index.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Overview</a>
+  <a href="using.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Use C-LARA</a>
   <a href="examples.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Example content</a>
   <a href="ongoing_activities.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Ongoing Activities</a>
   <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
@@ -15,9 +16,9 @@
 
 Our current activities include the following:
 
-**"Simple C-LARA" interface**
+**"Simple C-LARA"**
 
-We want to make it easy for children and people unconfident with technology to create C-LARA documents. We are consequently creating a simplified version of the platform, where nearly all processing is done using defaults and the user only needed to input an initial prompt.
+We want to make it easy for children and people unconfident with technology to create illustrated C-LARA texts. Our initial version of "Simple C-LARA" gives you three options. In the first, you briefly say what you want, and the AI creates a text and image. In the second, you upload an image with some instructions, and the AI makes a text based on it. In the third, you upload an existing text and the AI annotates it.
 
 **Social network**
 
@@ -25,8 +26,4 @@ We are expanding the initial set of social network functions, to allow people to
 
 **Phonetic texts**
 
-For languages where a phonetic lexicon is available (currently Dutch, English, French, German, Icelandic, Romanian and the Oceanic language Drehu), C-LARA now includes functionality to present texts in "phonetic" form, where words are broken down into smaller units associated with phonetic values. This lets beginner learners step through text a sound at a time. We are working on ways to let GPT-4 help more effectively in constructing these resources.
-
-**Images and AI**
-
-We have added a preliminary integration of OpenAI's DALL-E-3, which currently lets the user instruct the AI to add an image based on the whole text. We plan to add further functionality. We will also integrate GPT-4V, so that users can upload an image and tell the AI to construct text from it.
+For languages where a phonetic lexicon is available (currently Dutch, English, French, German, Icelandic, Romanian and the Oceanic language Drehu), C-LARA includes functionality to present texts in "phonetic" form, where words are broken down into smaller units associated with phonetic values. This lets beginner learners step through text a sound at a time. We are working on ways to let GPT-4 help more effectively in constructing these resources.
