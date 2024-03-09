@@ -143,6 +143,9 @@
 			  <a class="dropdown-item" href="{% url 'aggregated_questionnaire_results' %}"
 					 data-toggle="tooltip" title="Show summary results for satisfaction questionnaires.">
 					 Questionnaire summary</a>
+			  <a class="dropdown-item" href="{% url 'funding_request' %}"
+					 data-toggle="tooltip" title="Submit a request to get a small amount of OpenAI credit">
+					 Funding request</a>
 			  </div>
           </li>
 		  
@@ -182,9 +185,6 @@
 			  Funding reviewer
 			  </a>
 				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-					<a class="dropdown-item" href="{% url 'funding_request' %}"
-							data-toggle="tooltip" title="Submit a request to have credit added to your balance">
-							Funding request</a>
 					<a class="dropdown-item" href="{% url 'review_funding_requests' %}"
 						   data-toggle="tooltip" title="Review funding requests">
 						   Review funding requests</a>
