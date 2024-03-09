@@ -453,7 +453,7 @@ class FundingRequest(models.Model):
     other_language = models.CharField("Specify the language if it was not listed in the menu", max_length=50, blank=True)
     native_or_near_native = models.BooleanField("Are you a native/near-native speaker of this language?", default=False)
     text_type = models.CharField("What kind of texts are you most interested in creating?", max_length=50, choices=CONTENT_TYPE_CHOICES)
-    other_purpose = models.TextField("If you wish, describe in a couple of sentences what you are planning to do.", blank=True)
+    other_purpose = models.TextField("Explain briefly what you want to do and why you cannot use an API key.", blank=True)
     status = models.CharField("Current status of request", max_length=50, choices=STATUS_CHOICES, default='submitted')
     funder = models.ForeignKey(User, related_name='funding_request_funder', on_delete=models.SET_NULL, null=True, blank=True)
     credit_assigned = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
