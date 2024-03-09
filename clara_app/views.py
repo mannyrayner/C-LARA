@@ -1200,6 +1200,27 @@ def create_project(request):
         
         return render(request, 'clara_app/create_project.html', {'form': form, 'clara_version':clara_version})
 
+# Get summary tables for projects and content, broken down by language
+def language_statistics(request):
+    # Aggregate project counts by l2 language
+    project_stats = (
+        CLARAProject.objects.values('l2')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # Aggregate content counts by l2 language
+    content_stats = (
+        Content.objects.values('l2')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    return render(request, 'clara_app/language_statistics.html', {
+        'project_stats': project_stats,
+        'content_stats': content_stats,
+    })
+
 def get_simple_clara_resources_helper(project_id, user):
     try:
         resources_available = {}
