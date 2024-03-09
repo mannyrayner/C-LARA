@@ -3026,7 +3026,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     current_version = ""
             # We're using the AI or a tagger to create a new version of a file
             #elif text_choice in ( 'generate', 'correct', 'improve' ) and not request.user.userprofile.credit > 0:
-            elif text_choice in ( 'generate', 'correct', 'improve' ) and not user_has_open_ai_key_or_credit(user):
+            elif text_choice in ( 'generate', 'correct', 'improve' ) and not user_has_open_ai_key_or_credit(request.user):
                 messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
