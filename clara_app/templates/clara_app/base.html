@@ -114,13 +114,11 @@
 			  <a class="dropdown-item" href="{% url 'transfer_credit' %}"
 					 data-toggle="tooltip" title="Transfer some of the credit from your GPT-4 call account to another user.">
 					 Transfer credit to another user</a>
-			  {% if clara_version != 'simple_clara' %}
-				  <a class="dropdown-item" href="{% url 'view_task_updates' %}"
+			  <a class="dropdown-item" href="{% url 'view_task_updates' %}"
 					 data-toggle="tooltip" title="Show trace output from C-LARA tasks produced during the last hour.">
 					 Recent task updates</a>
 			</div>
           </li>
-		{% endif %}
 				 
 		  <!-- C-LARA social network -->
 		  <li class="nav-item dropdown">
