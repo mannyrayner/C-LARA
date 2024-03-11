@@ -54,6 +54,8 @@ class ContentElement:
                 lemma, pos = ( annotations['lemma'], annotations['pos'] )
                 escaped_lemma = escape_special_chars(lemma)
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
+            elif annotation_type == 'plain':
+                return self.content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])
                 return f"{escaped_content}#{escaped_annotation}#"
@@ -83,8 +85,13 @@ class Segment:
             # When producing 'segmented' or 'phonetic' text, we need to add | markers between continuous Words.
             if annotation_type in ( 'segmented', 'phonetic' ) and this_type == 'Word' and last_type == 'Word':
                 out_text += '|'
-            if element.type in ( 'Word', 'NonWordText', 'Markup' ):
-                out_text += element.to_text(annotation_type)
+            if annotation_type == 'segmented_for_labelled':
+                if element.type in ( 'Word', 'NonWordText' ):
+                    # We don't want @ ... @ around multiwords
+                    out_text += element.to_text('plain')
+            else:
+                if element.type in ( 'Word', 'NonWordText', 'Markup' ):
+                    out_text += element.to_text(annotation_type)
             last_type = this_type
         return out_text
 
@@ -114,11 +121,13 @@ class Page:
 
     def to_text(self, annotation_type=None):
         segment_texts = "||".join([segment.to_text(annotation_type) for segment in self.segments])
-        if self.annotations:
+        if annotation_type == 'segmented_for_labelled':
+            return segment_texts
+        elif self.annotations:
             attributes_str = ' '.join([f"{key}='{value}'" for key, value in self.annotations.items()])
-            return f"<page {attributes_str}>\n{segment_texts}"
+            return f"<page {attributes_str}>{segment_texts}"
         else:
-            return f"<page>\n{segment_texts}"
+            return f"<page>{segment_texts}"
 
     def word_count(self, phonetic=False):
         return sum([ segment.word_count(phonetic=phonetic) for segment in self.segments ])

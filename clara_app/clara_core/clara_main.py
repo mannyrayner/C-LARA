@@ -516,8 +516,10 @@ class CLARAProjectInternal:
     def load_text_version(self, version: str) -> str:
         if version == 'segmented_with_images':
             return self._create_and_load_segmented_with_images_text()
-        if version == 'segmented_with_title':
+        elif version == 'segmented_with_title':
             return self._create_and_load_segmented_with_title_text()
+        elif version == 'segmented_with_title_for_labelled':
+            return self._create_and_load_segmented_with_title_for_labelled_text()
         elif version == 'lemma_and_gloss':
                 return self._create_and_load_lemma_and_gloss_file()
         else:
@@ -546,7 +548,7 @@ class CLARAProjectInternal:
         return segmented_with_images_text
 
     # Get text consisting of "segmented" text, plus segmented title if available
-    def _create_and_load_segmented_with_title_text(self, callback=None):
+    def _create_and_load_segmented_with_title_text(self):
         segmented_text = self.load_text_version("segmented")
         text_title = self.load_text_version_or_null("segmented_title")
         if text_title != '':
@@ -555,6 +557,11 @@ class CLARAProjectInternal:
         else:
             segmented_with_title_text = segmented_text
         return segmented_with_title_text
+
+    def _create_and_load_segmented_with_title_for_labelled_text(self):
+        segmented_with_title_text = self._create_and_load_segmented_with_title_text()
+        text_object = internalize_text(segmented_with_title_text, self.l2_language, self.l1_language, 'segmented')
+        return text_object.to_text(annotation_type='segmented_for_labelled')
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
     def _create_and_load_lemma_and_gloss_file(self) -> str:
@@ -693,7 +700,7 @@ class CLARAProjectInternal:
 
     # Get "labelled segmented" version of text, used for manual audio/text alignment
     def get_labelled_segmented_text(self) -> str:
-        segmented_text = self.load_text_version("segmented_with_title")
+        segmented_text = self.load_text_version("segmented_with_title_for_labelled")
         return add_indices_to_segmented_text(segmented_text)
 
     # Call ChatGPT-4 to improve existing segmentation annotations
