@@ -1202,8 +1202,9 @@ class CLARAProjectInternal:
         project_directory = self.project_dir
         audio_metadata = self.get_audio_metadata(tts_engine_type=None,
                                                  human_voice_id=human_voice_id, 
-                                                 audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                                 type='all', format='default',
+                                                 audio_type_for_words=audio_type_for_words,
+                                                 audio_type_for_segments=audio_type_for_segments,
+                                                 type='all', 
                                                  phonetic=False, callback=callback)
         if self.text_versions['phonetic'] and human_voice_id_phonetic:
             audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,
