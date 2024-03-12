@@ -91,7 +91,7 @@ def annotated_segmented_data_and_label_file_data_to_metadata(segmented_file_cont
 
     try:        
         # Parse the annotated segmented file using regex
-        segments = re.findall(r'\|\d+\|([^|]+)', segmented_file_content)
+        segments = re.findall(r'\|\d+\|([^|]*)', segmented_file_content)
         segments = [canonical_text_for_audio(segment) for segment in segments]
 
         post_task_update(callback, f'--- Found {len(segments)} segments')

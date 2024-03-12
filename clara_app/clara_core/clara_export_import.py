@@ -285,13 +285,15 @@ def update_regular_audio_from_imported_directory(project, tmp_dir, callback=None
         return
     
     if global_metadata['audio_type_for_words'] == 'human':
-        words_metadata_for_update = [ { 'text': item['word'], 'file': item['file'] }
-                                      for item in audio_metadata['words'] ]
+        words_metadata_for_update = [ { 'text': item['text'], 'file': item['file'] }
+                                      for item in audio_metadata['words']
+                                      if 'file' in item and item['file'] ]
         post_task_update(callback, 'Storing human audio for words ({len(words_metadata_for_update)} items)')
         annotator._store_existing_human_audio_mp3s(words_metadata_for_update, audio_dir, words_or_segments='words', callback=callback)
     if global_metadata['audio_type_for_segments'] == 'human':
-        segments_metadata_for_update = [ { 'text': item['segment'], 'file': item['file'] }
-                                      for item in audio_metadata['segments'] ]
+        segments_metadata_for_update = [ { 'text': item['text'], 'file': item['file'] }
+                                         for item in audio_metadata['segments']
+                                         if 'file' in item and item['file'] ]
         post_task_update(callback, 'Storing human audio for segments ({len(segments_metadata_for_update)} items)')
         annotator._store_existing_human_audio_mp3s(segments_metadata_for_update, audio_dir, words_or_segments='segments', callback=callback)
                                          
