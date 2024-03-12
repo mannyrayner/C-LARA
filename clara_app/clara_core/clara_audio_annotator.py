@@ -348,7 +348,7 @@ class AudioAnnotator:
                 if file:
                     post_task_update(callback, f"--- Adding mp3 to repository for '{text}', ({i}/{len(metadata)})")
                     temp_file = os.path.join(temp_dir, file)
-                    file_path = self.audio_repository.store_mp3('human_voice', self.language, self.human_voice_id, temp_file, keep_file_name=True)
+                    file_path = self.audio_repository.store_mp3('human_voice', self.language, self.human_voice_id, temp_file, keep_file_name=False)
                     self.audio_repository.add_or_update_entry('human_voice', self.language, self.human_voice_id, text_canonical, file_path, context=context)
                     previous_canonical_texts.append(text_canonical)
                     previous_canonical_text = ' '.join(previous_canonical_texts) 
