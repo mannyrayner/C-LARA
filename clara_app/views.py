@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
-from .models import SatisfactionQuestionnaire, FundingRequest
+from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -27,7 +27,7 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
-from .forms import ContentSearchForm, ContentRegistrationForm
+from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
@@ -1199,6 +1199,25 @@ def create_project(request):
         clara_version = get_user_config(request.user)['clara_version']
         
         return render(request, 'clara_app/create_project.html', {'form': form, 'clara_version':clara_version})
+
+def edit_acknowledgements(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    try:
+        acknowledgements = project.acknowledgements
+    except Acknowledgements.DoesNotExist:
+        acknowledgements = None
+
+    if request.method == 'POST':
+        form = AcknowledgementsForm(request.POST, instance=acknowledgements)
+        if form.is_valid():
+            ack = form.save(commit=False)
+            ack.project = project
+            ack.save()
+            return redirect('project_detail', project_id=project.id)
+    else:
+        form = AcknowledgementsForm(instance=acknowledgements)
+
+    return render(request, 'clara_app/edit_acknowledgements.html', {'form': form, 'project': project})
 
 # Get summary tables for projects and content, broken down by language
 def language_statistics(request):
@@ -3773,10 +3792,13 @@ def clara_project_internal_render_text(clara_project_internal, project_id,
     try:
         project = get_object_or_404(CLARAProject, pk=project_id)
         format_preferences_info = FormatPreferences.objects.filter(project=project).first()
+        acknowledgements_info = Acknowledgements.objects.filter(project=project).first()
         clara_project_internal.render_text(project_id,
                                            audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                            preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
-                                           human_voice_id=human_voice_id, format_preferences_info=format_preferences_info,
+                                           human_voice_id=human_voice_id,
+                                           format_preferences_info=format_preferences_info,
+                                           acknowledgements_info=acknowledgements_info,
                                            self_contained=self_contained, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"finished")
     except Exception as e:

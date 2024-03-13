@@ -91,6 +91,23 @@ class ProjectPermissions(models.Model):
     class Meta:
         unique_together = ("user", "project")
 
+class Acknowledgements(models.Model):
+    project = models.OneToOneField('CLARAProject', on_delete=models.CASCADE, related_name='acknowledgements')
+    short_text = models.TextField("Short Acknowledgements Text", blank=True,
+                                  help_text="To appear in the footer of every page.")
+    long_text = models.TextField("Long Acknowledgements Text", blank=True,
+                                 help_text="To be included once in the final rendered text.")
+    long_text_location = models.CharField("Location of Long Acknowledgements", max_length=20,
+                                          choices=[('first_page', 'Bottom of First Page'),
+                                                   ('extra_page', 'Extra Page at End')], blank=True)
+
+    # Timestamps for dependency tracking
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    def __str__(self):
+        return f"Acknowledgements for {self.project.title}"
+
 # This is used if we have human-recorded audio instead of TTS
 class HumanAudioInfo(models.Model):
     # Choices for the 'method' field

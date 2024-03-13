@@ -2,7 +2,7 @@ from django import forms
 from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest
+from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest, Acknowledgements
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -94,6 +94,11 @@ class ProjectCreationForm(forms.ModelForm):
     class Meta:
         model = CLARAProject
         fields = ['title', 'l2', 'l1']
+
+class AcknowledgementsForm(forms.ModelForm):
+    class Meta:
+        model = Acknowledgements
+        fields = ['short_text', 'long_text', 'long_text_location']
 
 class ProjectImportForm(forms.Form):
     title = forms.CharField(label='Project Title', max_length=255)

@@ -60,6 +60,7 @@ urlpatterns = [
     path('project/<int:project_id>/import_project_complete/<str:status>/', views.import_project_complete, name='import_project_complete'),
     path('project_list/<str:clara_version>/', views.project_list, name='project_list'),
     path('project/<int:project_id>/', views.project_detail, name='project_detail'),
+    path('project/<int:project_id>/edit_acknowledgements/', views.edit_acknowledgements, name='edit_acknowledgements'),  
     path('project/<int:project_id>/manage_project_members/', views.manage_project_members, name='manage_project_members'),
     path('project/<int:permission_id>/remove_project_member/', views.remove_project_member, name='remove_project_member'),
     path('project/<int:project_id>/delete/', views.delete_project, name='delete_project'),  

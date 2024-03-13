@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 
-from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences
+from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences, Acknowledgements
 from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content, SatisfactionQuestionnaire
 
 from .clara_core.clara_dependencies import CLARADependencies
@@ -289,11 +289,14 @@ def get_phase_up_to_date_dict(project, clara_project_internal, user):
     human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
     phonetic_human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
     format_preferences = FormatPreferences.objects.filter(project=project).first()
+    acknowledgements = Acknowledgements.objects.filter(project=project).first()
     content_object = Content.objects.filter(project=project).first()
     questionnaire = SatisfactionQuestionnaire.objects.filter(project=project, user=user).first() 
     clara_dependencies = CLARADependencies(clara_project_internal, project.id,
                                            human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
-                                           format_preferences=format_preferences, content_object=content_object,
+                                           format_preferences=format_preferences,
+                                           acknowledgements=acknowledgements,
+                                           content_object=content_object,
                                            questionnaire=questionnaire)
     return clara_dependencies.up_to_date_dict(debug=False)
 
