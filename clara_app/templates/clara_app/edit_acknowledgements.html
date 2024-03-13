@@ -9,4 +9,6 @@
     {{ form.as_p }}
     <button type="submit">Submit</button>
   </form>
+  
+  <p><a href="{% url 'project_detail' project.id %}">Back to Project</a></p>
 {% endblock %}
