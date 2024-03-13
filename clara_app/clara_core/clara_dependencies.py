@@ -13,7 +13,8 @@ class CLARADependencies:
     # Initialise with the information needed to calculate whether processing phases are up to date.
     def __init__(self, clara_project_internal, project_id,
                  human_audio_info=None, phonetic_human_audio_info=None,
-                 format_preferences=None, content_object=None, questionnaire=None,
+                 format_preferences=None, acknowledgements=None,
+                 content_object=None, questionnaire=None,
                  callback=None):
         self.clara_project_internal = clara_project_internal
         self.l2 = clara_project_internal.l2_language
@@ -21,6 +22,7 @@ class CLARADependencies:
         self.human_audio_info = human_audio_info
         self.phonetic_human_audio_info = phonetic_human_audio_info
         self.format_preferences = format_preferences
+        self.acknowledgements = acknowledgements
         self.content_object = content_object
         self.questionnaire = questionnaire
 
@@ -70,6 +72,9 @@ class CLARADependencies:
             
             "format_preferences",   # Declarations for formatting, e.g. font and text alignment
                                     # Accessible from CLARAProject object
+
+            "acknowledgements",     # Acknowledgements text
+                                    # Accessible from CLARAProject object
             
             "render",               # Rendered version of normal text
                                     # Accessible from CLARAProjectInternal object
@@ -113,10 +118,14 @@ class CLARADependencies:
             "audio_phonetic": [ "phonetic" ],
             
             "format_preferences": [ "segmented" ],
-            
-            "render": [ "title", "gloss", "lemma", "pinyin", "images", "audio", "format_preferences" ],
 
-            "render_phonetic": [ "phonetic", "images", "audio_phonetic", "format_preferences" ],
+            "acknowledgements": [],
+            
+            "render": [ "title", "gloss", "lemma", "pinyin", "images", "audio",
+                        "format_preferences", "acknowledgements" ],
+
+            "render_phonetic": [ "phonetic", "images", "audio_phonetic",
+                                 "format_preferences", "acknowledgements" ],
             
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
 
@@ -213,6 +222,12 @@ class CLARADependencies:
                 return None
             else:
                 return self.format_preferences.updated_at
+
+        elif processing_phase_id == 'acknowledgements':
+            if not self.acknowledgements:
+                return None
+            else:
+                return self.acknowledgements.updated_at
 
         elif processing_phase_id == 'questionnaire':
             if not self.questionnaire:

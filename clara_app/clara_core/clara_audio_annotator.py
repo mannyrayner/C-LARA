@@ -239,7 +239,7 @@ class AudioAnnotator:
             return { 'words': words_data, 'segments': segments_data }
 
     def _create_and_store_missing_mp3s(self, text_items, words_or_segments, phonetic=False, callback=None):
-        print(f"_create_and_store_missing_mp3s({text_items}, {words_or_segments}, phonetic={phonetic})")
+        #print(f"_create_and_store_missing_mp3s({text_items}, {words_or_segments}, phonetic={phonetic})")
         if words_or_segments == 'words':
             tts_engine_to_use = self.word_tts_engine
             engine_id_to_use = self.word_engine_id
