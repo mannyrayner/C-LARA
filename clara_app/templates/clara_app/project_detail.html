@@ -81,6 +81,10 @@
 	      {% if not can_render_normal and not can_render_phonetic %}class="disabled-link"{% endif %}>
 		  Set Format Preferences</a>
 		  {% if up_to_date_dict.format_preferences and can_render_normal %}✓{% endif %}</p>
+	<p><a href="{% url 'edit_acknowledgements' project.id %}" 
+	      data-tooltip="Add or edit acknowledgements texts for project">
+		  Acknowledgements</a>
+		  {% if up_to_date_dict.acknowledgements %}✓{% endif %}</p>
 	<p><a href="{% url 'render_text_start_normal' project.id %}" 
 	      data-tooltip="Create the final multimedia version of the text. Usually this will involve using TTS to produce the audio." 
 	      {% if not can_render_normal %}class="disabled-link"{% endif %}>
