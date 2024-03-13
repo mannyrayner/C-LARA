@@ -110,6 +110,7 @@
 		<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'phonetic' + '/' + 'page_' + page_number_str + '.html' }}">Sounds</a>
 	  {% endif %}
 	</nav>
+	{% if page.annotations.acknowledgements %} <p>{{ page.annotations.acknowledgements }} </p> {% endif %}
   </footer>
   <script src="./static/clara_scripts.js"></script>
   <script>
