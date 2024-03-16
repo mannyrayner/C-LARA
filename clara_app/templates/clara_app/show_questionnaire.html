@@ -1,16 +1,29 @@
 {% extends "clara_app/base.html" %}
 
+{% load clara_tags %}
+
 {% block content %}
 <h2>Questionnaire Response</h2>
 <p>Project: {{ project.title }}</p>
+<p>Version of C-LARA: {{ questionnaire.clara_version|clara_type_display }}</p>
+<p>Text language: {{ project.l2|titlecase }}</p>
 <p>User: {{ questionnaire.user.username }}</p>
 <p>Created at: {{ questionnaire.created_at|date:"Y-m-d H:i" }}</p>
-<p>Text Correspondence: {{ questionnaire.get_text_correspondence_display }}</p>
-<p>Language Correctness: {{ questionnaire.get_language_correctness_display }}</p>
-<p>Text Engagement: {{ questionnaire.get_text_engagement_display }}</p>
-<p>Cultural Appropriateness: {{ questionnaire.get_cultural_appropriateness_display }}</p>
-<p>Image Match: {{ questionnaire.get_image_match_display }}</p>
-<p>Showed Text: {{ questionnaire.get_shared_text_display }}</p>
-<p>Functionality Improvement Suggestion: {{ questionnaire.functionality_improvement }}</p>
-<p>Design Improvement Suggestion: {{ questionnaire.design_improvement }}</p>
+
+<p>Type of Text: {{ questionnaire.text_type|text_type_display }}</p>
+<p>Grammar Correctness: {{ questionnaire.grammar_correctness }}</p>
+<p>Vocabulary Appropriateness: {{ questionnaire.vocabulary_appropriateness }}</p>
+<p>Style Appropriateness: {{ questionnaire.style_appropriateness }}</p>
+<p>Content Appropriateness: {{ questionnaire.content_appropriateness }}</p>
+<p>Cultural Elements: {{ questionnaire.cultural_elements }}</p>
+<p>Text Engagement: {{ questionnaire.text_engagement }}</p>
+<p>Correction Time (Text): {{ questionnaire.correction_time_text|time_spent_display }}</p>
+<p>Correction Time (Annotations): {{ questionnaire.correction_time_annotations|time_spent_display }}</p>
+<p>Image Match: {{ questionnaire.image_match }}</p>
+<p>Image Editing Time: {{ questionnaire.image_editing_time|time_spent_display }}</p>
+<p>Shared/Intent to Share: {{ questionnaire.shared_intent|share_choice_display }}</p>
+<p>Purpose of Text: {{ questionnaire.purpose_text }}</p>
+<p>Functionality Suggestion: {{ questionnaire.functionality_suggestion }}</p>
+<p>UI Improvement Suggestion: {{ questionnaire.ui_improvement_suggestion }}</p>
 {% endblock %}
+
