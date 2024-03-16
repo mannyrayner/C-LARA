@@ -20,6 +20,7 @@ class UserProfile(models.Model):
     is_admin = models.BooleanField(default=False)
     is_moderator = models.BooleanField(default=False)
     is_funding_reviewer = models.BooleanField(default=False)
+    is_questionnaire_reviewer = models.BooleanField(default=False)
     credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     is_private = models.BooleanField(default=False)
 

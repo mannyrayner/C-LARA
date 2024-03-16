@@ -4344,6 +4344,33 @@ def satisfaction_questionnaire(request, project_id):
 
     return render(request, 'clara_app/satisfaction_questionnaire.html', {'form': form, 'project': project})
 
+# Just show the questionnaire without allowing any editing
+@login_required
+def show_questionnaire(request, project_id, user_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    user = get_object_or_404(User, pk=user_id)
+    
+    # Retrieve the existing questionnaire response for this project and user
+    questionnaire = get_object_or_404(SatisfactionQuestionnaire, project=project, user=user)
+
+    return render(request, 'clara_app/show_questionnaire.html', {'questionnaire': questionnaire, 'project': project})
+
+# Show all q
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
+def manage_questionnaires(request):
+    if request.method == 'POST':
+        # Handle the deletion of selected questionnaire responses
+        selected_ids = request.POST.getlist('selected_responses')
+        if selected_ids:
+            SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
+            messages.success(request, "Selected responses have been deleted.")
+            return redirect('manage_questionnaires')
+    
+    # Display all questionnaire responses
+    questionnaires = SatisfactionQuestionnaire.objects.all()
+    return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
+
 def aggregated_questionnaire_results(request):
     # Aggregate data for each question. Adjust these queries based on your actual model fields.
     # For Likert scale questions, calculating the average rating

@@ -38,7 +38,7 @@ class UserProfileForm(forms.ModelForm):
 class UserPermissionsForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['is_admin', 'is_moderator', 'is_funding_reviewer']
+        fields = ['is_admin', 'is_moderator', 'is_funding_reviewer', 'is_questionnaire_reviewer']
 
 class FriendRequestForm(forms.Form):
     action = forms.CharField(widget=forms.HiddenInput())
