@@ -150,6 +150,41 @@
 			  </div>
           </li>
 		  
+		  <!-- My projects -->
+		  <li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  My projects
+			  </a>
+			    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+				  <a class="dropdown-item" href="{% url 'project_list' 'simple_clara' %}"
+						 data-toggle="tooltip" title="List all the projects you have created or have been assigned a role in, using Simple-C-LARA.">
+						 List my C-LARA projects using Simple-C-LARA</a>
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'project_list' 'full_clara' %}"
+							 data-toggle="tooltip" title="List all the projects you have created or have been assigned a role in.">
+							 List my C-LARA projects using Advanced C-LARA</a>
+				  {% endif %}
+				  <a class="dropdown-item" href="{% url 'simple_clara' 0 'initial' %}"
+						 data-toggle="tooltip" title="Create a new C-LARA project using Simple-C-LARA.">
+						 Create new C-LARA project using Simple-C-LARA</a>
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'create_project' %}"
+							 data-toggle="tooltip" title="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
+							 Create new C-LARA project using Advanced C-LARA</a>
+				  {% endif %}
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'import_project' %}"
+							 data-toggle="tooltip" title="Import a project from a zipfile created using the 'Export zipfile' command.">
+							 Import C-LARA project from zipfile</a>
+				  {% endif %}
+				  {% if clara_version != 'simple_clara' %}
+					  <a class="dropdown-item" href="{% url 'register_content' %}"
+							 data-toggle="tooltip" title="Register a piece of LARA content to make it accessible through the C-LARA social network.">
+							 Register external LARA content</a>
+				  {% endif %}
+				</div>
+           </li>
+		  
 		  <!-- Admin functions -->
 		  {% if user.userprofile.is_admin %}
 		    <li class="nav-item dropdown">
@@ -179,21 +214,7 @@
             </li>
           {% endif %}
 		  
-		  <!-- Funding reviewer functions -->
-		  {% if user.userprofile.is_funding_reviewer %}
-		    <li class="nav-item dropdown">
-			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			  Funding reviewer
-			  </a>
-				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-					<a class="dropdown-item" href="{% url 'review_funding_requests' %}"
-						   data-toggle="tooltip" title="Review funding requests">
-						   Review funding requests</a>
-				</div>
-            </li>
-          {% endif %}
-		  
-		  <!-- Language master functions -->
+		  		  <!-- Language master functions -->
 		  {% if user.userprofile.is_language_master %}
 		    <li class="nav-item dropdown">
 			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -210,40 +231,35 @@
             </li>
 	      {% endif %}
 		  
-		  <!-- My projects -->
-		  <li class="nav-item dropdown">
+		  <!-- Funding reviewer functions -->
+		  {% if user.userprofile.is_funding_reviewer %}
+		    <li class="nav-item dropdown">
 			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			  My projects
+			  Funding reviewer
 			  </a>
-			    <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-				  <a class="dropdown-item" href="{% url 'project_list' 'simple_clara' %}"
-						 data-toggle="tooltip" title="List all the projects you have created or have been assigned a role in, using Simple-C-LARA.">
-						 List my C-LARA projects using Simple-C-LARA</a>
-				  {% if clara_version != 'simple_clara' %}
-					  <a class="dropdown-item" href="{% url 'project_list' 'full_clara' %}"
-							 data-toggle="tooltip" title="List all the projects you have created or have been assigned a role in.">
-							 List my C-LARA projects using full C-LARA</a>
-				  {% endif %}
-				  <a class="dropdown-item" href="{% url 'simple_clara' 0 'initial' %}"
-						 data-toggle="tooltip" title="Create a new C-LARA project using Simple-C-LARA.">
-						 Create new C-LARA project using Simple-C-LARA</a>
-				  {% if clara_version != 'simple_clara' %}
-					  <a class="dropdown-item" href="{% url 'create_project' %}"
-							 data-toggle="tooltip" title="Create a new C-LARA project, specifying the title, the text language, and the annotation language.">
-							 Create new C-LARA project using full C-LARA</a>
-				  {% endif %}
-				  {% if clara_version != 'simple_clara' %}
-					  <a class="dropdown-item" href="{% url 'import_project' %}"
-							 data-toggle="tooltip" title="Import a project from a zipfile created using the 'Export zipfile' command.">
-							 Import C-LARA project from zipfile</a>
-				  {% endif %}
-				  {% if clara_version != 'simple_clara' %}
-					  <a class="dropdown-item" href="{% url 'register_content' %}"
-							 data-toggle="tooltip" title="Register a piece of LARA content to make it accessible through the C-LARA social network.">
-							 Register external LARA content</a>
-				  {% endif %}
+				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+					<a class="dropdown-item" href="{% url 'review_funding_requests' %}"
+						   data-toggle="tooltip" title="Review funding requests">
+						   Review funding requests</a>
 				</div>
-           </li>
+            </li>
+          {% endif %}
+		  
+		  <!-- Questionnaire reviewer functions -->
+		  {% if user.userprofile.is_questionnaire_reviewer %}
+		    <li class="nav-item dropdown">
+			  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			  Questionnaire reviewer
+			  </a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+					<a class="dropdown-item" href="{% url 'manage_questionnaires' %}"
+						   data-toggle="tooltip" title="Review and possibly delete questionnaires">
+						   Review questionnaires</a>
+				</div>
+            </li>
+          {% endif %}
+		  
+
 		  <!-- Logout -->
 		   <li class="nav-item">
 			  <a class="nav-link" href="{% url 'logout' %}" data-toggle="tooltip" title="Exit C-LARA.">Logout</a>
