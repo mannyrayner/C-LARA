@@ -654,9 +654,42 @@ AccentCharacterFormSet = formset_factory(AccentCharacterForm, extra=1)
 class SatisfactionQuestionnaireForm(forms.ModelForm):
     class Meta:
         model = SatisfactionQuestionnaire
-        fields = ['text_correspondence', 'language_correctness', 'text_engagement',
-                  'cultural_appropriateness', 'image_match', 'shared_text',
-                  'functionality_improvement', 'design_improvement']
+        fields = [
+            'clara_version',
+            'text_type',
+            'grammar_correctness',
+            'vocabulary_appropriateness',
+            'style_appropriateness',
+            'content_appropriateness',
+            'cultural_elements',
+            'text_engagement',
+            'correction_time_text',
+            'correction_time_annotations',
+            'image_match',
+            'image_editing_time',
+            'shared_intent',
+            'purpose_text',
+            'functionality_suggestion',
+            'ui_improvement_suggestion',
+        ]
+        widgets = {
+            'clara_version': forms.Select(attrs={'class': 'form-control'}),
+            'text_type': forms.Select(attrs={'class': 'form-control'}),
+            'grammar_correctness': forms.Select(attrs={'class': 'form-control'}),
+            'vocabulary_appropriateness': forms.Select(attrs={'class': 'form-control'}),
+            'style_appropriateness': forms.Select(attrs={'class': 'form-control'}),
+            'content_appropriateness': forms.Select(attrs={'class': 'form-control'}),
+            'cultural_elements': forms.Select(attrs={'class': 'form-control'}),
+            'text_engagement': forms.Select(attrs={'class': 'form-control'}),
+            'correction_time_text': forms.Select(attrs={'class': 'form-control'}),
+            'correction_time_annotations': forms.Select(attrs={'class': 'form-control'}),
+            'image_match': forms.Select(attrs={'class': 'form-control'}),
+            'image_editing_time': forms.Select(attrs={'class': 'form-control'}),
+            'shared_intent': forms.Select(attrs={'class': 'form-control'}),
+            'purpose_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'functionality_suggestion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'ui_improvement_suggestion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
 
 class FundingRequestForm(forms.ModelForm):
     class Meta:

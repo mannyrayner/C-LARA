@@ -419,24 +419,74 @@ class ReadingHistory(models.Model):
         return ReadingHistoryProjectOrder.objects.filter(reading_history=self)
 
 class SatisfactionQuestionnaire(models.Model):
+    CLARA_VERSION_CHOICES = [
+        ('simple_clara', 'Simple C-LARA'),
+        ('advanced_clara', 'Advanced C-LARA'),
+    ]
+
+    TEXT_TYPE_CHOICES = [
+        ('story', 'Story'),
+        ('essay', 'Essay'),
+        ('poem', 'Poem'),
+        ('play', 'Play'),
+        ('newspaper_article', 'Newspaper Article'),
+        ('annotated_existing_text', 'Annotating Existing Text'),
+        ('other', 'Other'),
+    ]
+
+    TIME_SPENT_CHOICES = [
+        ('not_applicable', 'Not applicable'),
+        ('did_not_correct', "Didn't correct"),
+        ('1_2_mins', '1-2 mins'),
+        ('3_5_mins', '3-5 mins'),
+        ('6_10_mins', '6-10 mins'),
+        ('11_20_mins', '11-20 mins'),
+        ('more_than_20_mins', 'More than 20 mins'),
+    ]
+
+    TIME_SPENT_CHOICES_IMAGES = [
+        ('not_applicable', 'Not applicable'),
+        ('did_not_correct', "Didn't correct"),
+        ('1_5_mins', '1-5 mins'),
+        ('6_15_mins', '6-15 mins'),
+        ('15_mins_hour', '15 mins to an hour'),
+        ('more_than_an_hour', 'More than an hour'),
+    ]
+
+    SHARE_CHOICES = [
+        ('have_shared', 'Have shared'),
+        ('will_certainly_share', 'Will certainly share'),
+        ('may_share', 'May share'),
+        ('wont_share', "Won't share"),
+    ]
+
     LIKERT_CHOICES = [
         (1, 'Strongly disagree'),
         (2, 'Disagree'),
         (3, 'Neutral or not applicable'),
         (4, 'Agree'),
         (5, 'Strongly agree'),
-        ]
-        
+    ]
+
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     project = models.ForeignKey('CLARAProject', on_delete=models.CASCADE)
-    text_correspondence = models.IntegerField("The text C-LARA produced corresponded well to my request", choices=LIKERT_CHOICES)
-    language_correctness = models.IntegerField("The language in the text was correct", choices=LIKERT_CHOICES)
-    text_engagement = models.IntegerField("The text was engaging (funny/cute/moving)", choices=LIKERT_CHOICES)
-    cultural_appropriateness = models.IntegerField("The text was culturally appropriate", choices=LIKERT_CHOICES)
-    image_match = models.IntegerField("The image(s) matched the text well", choices=LIKERT_CHOICES)
-    shared_text = models.IntegerField("I liked the text enough that I showed it to some other people", choices=LIKERT_CHOICES)
-    functionality_improvement = models.TextField("What do you think the most important thing is to improve C-LARA's functionality?", blank=True)
-    design_improvement = models.TextField("What do you think the most important thing is to improve C-LARA's design?", blank=True)
+    clara_version = models.CharField("Which version of C-LARA do your answers apply to?", max_length=20, choices=CLARA_VERSION_CHOICES, null=True)
+    text_type = models.CharField("What type of text did you produce?", max_length=30, choices=TEXT_TYPE_CHOICES, null=True)
+    grammar_correctness = models.IntegerField("The grammar in the text was correct", choices=LIKERT_CHOICES, null=True)
+    vocabulary_appropriateness = models.IntegerField("The vocabulary/choice of words was appropriate", choices=LIKERT_CHOICES, null=True)
+    style_appropriateness = models.IntegerField("The style was appropriate", choices=LIKERT_CHOICES, null=True)
+    content_appropriateness = models.IntegerField("The overall content was appropriate", choices=LIKERT_CHOICES, null=True)
+    cultural_elements = models.IntegerField("The text included appropriate elements of local culture", choices=[(0, 'Not applicable')] + LIKERT_CHOICES, null=True)
+    text_engagement = models.IntegerField("I found the text engaging (funny/cute/moving/etc)", choices=LIKERT_CHOICES, null=True)
+    correction_time_text = models.CharField("Time I spent correcting the text:", max_length=30, choices=TIME_SPENT_CHOICES, null=True)
+    correction_time_annotations = models.CharField("Time I spent correcting the annotations (segmentation/glosses/lemmas)", max_length=20,
+                                                   choices=TIME_SPENT_CHOICES, null=True)
+    image_match = models.IntegerField("The image(s) matched the content of the text", choices=[(0, 'Not applicable')] + LIKERT_CHOICES, null=True)
+    image_editing_time = models.CharField("Time spent regenerating/editing the image(s)", max_length=30, choices=TIME_SPENT_CHOICES_IMAGES, null=True)
+    shared_intent = models.CharField("I have shared/intend to share this text with other people", max_length=30, choices=SHARE_CHOICES, null=True)
+    purpose_text = models.TextField("Tell us about the purpose of the text you created (e.g. educational material, professional report, creative writing, articles for public use, technical documentation, personal use, social media content, research and analysis, entertainment, etc.)", blank=True)
+    functionality_suggestion = models.TextField("What other functionality would you like to add to C-LARA?", blank=True)
+    ui_improvement_suggestion = models.TextField("How would you suggest we could improve the user interface design in C-LARA?", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

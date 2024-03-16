@@ -4372,31 +4372,42 @@ def manage_questionnaires(request):
     return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
 
 def aggregated_questionnaire_results(request):
-    # Aggregate data for each question. Adjust these queries based on your actual model fields.
-    # For Likert scale questions, calculating the average rating
+    # Aggregate data for each Likert scale question
     ratings = SatisfactionQuestionnaire.objects.aggregate(
-        text_correspondence_avg=Avg('text_correspondence'),
-        language_correctness_avg=Avg('language_correctness'),
+        grammar_correctness_avg=Avg('grammar_correctness'),
+        vocabulary_appropriateness_avg=Avg('vocabulary_appropriateness'),
+        style_appropriateness_avg=Avg('style_appropriateness'),
+        content_appropriateness_avg=Avg('content_appropriateness'),
+        cultural_elements_avg=Avg('cultural_elements'),
         text_engagement_avg=Avg('text_engagement'),
-        cultural_appropriateness_avg=Avg('cultural_appropriateness'),
         image_match_avg=Avg('image_match'),
-        shared_with_others_avg=Avg('shared_text'),
-
-        count=Count('id')  
+        count=Count('id')
     )
+    
+    # For choices questions (time spent, shared intent, etc.), it might be useful to calculate the distribution
+    # For example, how many selected each time range for correction_time_text
+    correction_time_text_distribution = SatisfactionQuestionnaire.objects.values('correction_time_text').annotate(total=Count('correction_time_text')).order_by('correction_time_text')
+    correction_time_annotations_distribution = SatisfactionQuestionnaire.objects.values('correction_time_annotations').annotate(total=Count('correction_time_annotations')).order_by('correction_time_annotations')
+    image_editing_time_distribution = SatisfactionQuestionnaire.objects.values('image_editing_time').annotate(total=Count('image_editing_time')).order_by('image_editing_time')
+    shared_intent_distribution = SatisfactionQuestionnaire.objects.values('shared_intent').annotate(total=Count('shared_intent')).order_by('shared_intent')
 
-    # For free-form questions, you might want to list recent responses or categorize them in some way
-    # Here, just fetching the latest 10 responses for illustration
-    improvements = SatisfactionQuestionnaire.objects.values_list('functionality_improvement', flat=True).order_by('-id')
-    design_feedback = SatisfactionQuestionnaire.objects.values_list('design_improvement', flat=True).order_by('-id')
-
-    improvements = [ item for item in improvements if item ][:50]
-    design_feedback = [ item for item in design_feedback if item ][:50]
+    text_type_distribution = SatisfactionQuestionnaire.objects.values('text_type').annotate(total=Count('text_type')).order_by('text_type')
+    
+    # For open-ended questions, fetching the latest 50 responses for illustration
+    purpose_texts = SatisfactionQuestionnaire.objects.values_list('purpose_text', flat=True).order_by('-created_at')[:50]
+    functionality_suggestions = SatisfactionQuestionnaire.objects.values_list('functionality_suggestion', flat=True).order_by('-created_at')[:50]
+    ui_improvement_suggestions = SatisfactionQuestionnaire.objects.values_list('ui_improvement_suggestion', flat=True).order_by('-created_at')[:50]
 
     context = {
         'ratings': ratings,
-        'improvements': improvements,
-        'design_feedback': design_feedback
+        'correction_time_text_distribution': correction_time_text_distribution,
+        'correction_time_annotations_distribution': correction_time_annotations_distribution,
+        'image_editing_time_distribution': image_editing_time_distribution,
+        'shared_intent_distribution': shared_intent_distribution,
+        'text_type_distribution': text_type_distribution,
+        'purpose_texts': list(purpose_texts),
+        'functionality_suggestions': list(functionality_suggestions),
+        'ui_improvement_suggestions': list(ui_improvement_suggestions),
     }
 
     return render(request, 'clara_app/aggregated_questionnaire_results.html', context)
