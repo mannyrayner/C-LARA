@@ -18,6 +18,10 @@
             <td>{{ stat.total }}</td>
         </tr>
         {% endfor %}
+		<tr>
+			<td><strong>Total</strong></td>
+			<td><strong>{{ total_projects }}</strong></td>
+		</tr>
     </tbody>
 </table>
 
@@ -36,6 +40,10 @@
             <td>{{ stat.total }}</td>
         </tr>
         {% endfor %}
+		<tr>
+            <td><strong>Total</strong></td>
+            <td><strong>{{ total_contents }}</strong></td>
+        </tr>
     </tbody>
 </table>
 {% endblock %}
