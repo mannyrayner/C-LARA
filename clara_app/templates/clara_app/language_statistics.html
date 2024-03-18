@@ -1,5 +1,7 @@
 {% extends "clara_app/base.html" %}
 
+{% load clara_tags %}
+
 {% block content %}
 <h2>Language Statistics</h2>
 
@@ -14,7 +16,7 @@
     <tbody>
         {% for stat in project_stats %}
         <tr>
-            <td>{{ stat.l2 }}</td>
+            <td>{{ stat.l2|titlecase }}</td>
             <td>{{ stat.total }}</td>
         </tr>
         {% endfor %}
@@ -36,7 +38,7 @@
     <tbody>
         {% for stat in content_stats %}
         <tr>
-            <td>{{ stat.l2 }}</td>
+            <td>{{ stat.l2|titlecase }}</td>
             <td>{{ stat.total }}</td>
         </tr>
         {% endfor %}
