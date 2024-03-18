@@ -1235,9 +1235,15 @@ def language_statistics(request):
         .order_by('-total')
     )
 
+    # Calculate the totals
+    total_projects = sum(stat['total'] for stat in project_stats)
+    total_contents = sum(stat['total'] for stat in content_stats)
+
     return render(request, 'clara_app/language_statistics.html', {
         'project_stats': project_stats,
         'content_stats': content_stats,
+        'total_projects': total_projects,
+        'total_contents': total_contents,
     })
 
 def get_simple_clara_resources_helper(project_id, user):
