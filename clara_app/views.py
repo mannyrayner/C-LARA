@@ -4380,13 +4380,13 @@ def manage_questionnaires(request):
 def aggregated_questionnaire_results(request):
     # Aggregate data for each Likert scale question
     ratings = SatisfactionQuestionnaire.objects.aggregate(
-        grammar_correctness_avg=Avg('grammar_correctness'),
-        vocabulary_appropriateness_avg=Avg('vocabulary_appropriateness'),
-        style_appropriateness_avg=Avg('style_appropriateness'),
-        content_appropriateness_avg=Avg('content_appropriateness'),
-        cultural_elements_avg=Avg('cultural_elements'),
-        text_engagement_avg=Avg('text_engagement'),
-        image_match_avg=Avg('image_match'),
+        grammar_correctness_avg=Avg('grammar_correctness', filter=Q(grammar_correctness__gt=0)),
+        vocabulary_appropriateness_avg=Avg('vocabulary_appropriateness', filter=Q(vocabulary_appropriateness__gt=0)),
+        style_appropriateness_avg=Avg('style_appropriateness', filter=Q(style_appropriateness__gt=0)),
+        content_appropriateness_avg=Avg('content_appropriateness', filter=Q(content_appropriateness__gt=0)),
+        cultural_elements_avg=Avg('cultural_elements', filter=Q(cultural_elements__gt=0)),
+        text_engagement_avg=Avg('text_engagement', filter=Q(text_engagement__gt=0)),
+        image_match_avg=Avg('image_match', filter=Q(image_match__gt=0)),
         count=Count('id')
     )
     

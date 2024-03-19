@@ -656,6 +656,7 @@ class SatisfactionQuestionnaireForm(forms.ModelForm):
         model = SatisfactionQuestionnaire
         fields = [
             'clara_version',
+            'generated_by_ai',
             'text_type',
             'grammar_correctness',
             'vocabulary_appropriateness',
@@ -674,6 +675,7 @@ class SatisfactionQuestionnaireForm(forms.ModelForm):
         ]
         widgets = {
             'clara_version': forms.Select(attrs={'class': 'form-control'}),
+            'generated_by_ai': forms.Select(attrs={'class': 'form-control'}),
             'text_type': forms.Select(attrs={'class': 'form-control'}),
             'grammar_correctness': forms.Select(attrs={'class': 'form-control'}),
             'vocabulary_appropriateness': forms.Select(attrs={'class': 'form-control'}),
