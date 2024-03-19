@@ -12,6 +12,10 @@ def zip_lists(a, b):
 def titlecase(value):
     return value.title()  # Converts to title case
 
+@register.filter
+def ai_generated_display(value):
+    return dict(SatisfactionQuestionnaire.GENERATED_BY_AI_CHOICES).get(value, "Unknown")
+
 # Filters for translating choice codes to human-readable text
 @register.filter
 def text_type_display(value):
