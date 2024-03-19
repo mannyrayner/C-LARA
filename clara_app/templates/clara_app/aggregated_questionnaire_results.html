@@ -10,18 +10,18 @@
 <h3>Average Ratings</h3>
 <p>Number of Responses: {{ ratings.count }}</p>
 <ul>
-    <li>Grammar correctness: {{ ratings.grammar_correctness_avg|floatformat:2 }}</li>
-    <li>Vocabulary appropriateness: {{ ratings.vocabulary_appropriateness_avg|floatformat:2 }}</li>
-    <li>Style appropriateness: {{ ratings.style_appropriateness_avg|floatformat:2 }}</li>
-    <li>Content appropriateness: {{ ratings.content_appropriateness_avg|floatformat:2 }}</li>
-    <li>Cultural elements inclusion: {{ ratings.cultural_elements_avg|floatformat:2 }}</li>
-    <li>Text engagement: {{ ratings.text_engagement_avg|floatformat:2 }}</li>
-    <li>Image-content match: {{ ratings.image_match_avg|floatformat:2 }}</li>
+    <li>The grammar in the text was correct (Likert/5): {{ ratings.grammar_correctness_avg|floatformat:2 }}</li>
+    <li>The vocabulary/choice of words was appropriate (Likert/5): {{ ratings.vocabulary_appropriateness_avg|floatformat:2 }}</li>
+    <li>The style was appropriate (Likert/5): {{ ratings.style_appropriateness_avg|floatformat:2 }}</li>
+    <li>The overall content was appropriate (Likert/5): {{ ratings.content_appropriateness_avg|floatformat:2 }}</li>
+    <li>The text included appropriate elements of local culture (Likert/5): {{ ratings.cultural_elements_avg|floatformat:2 }}</li>
+    <li>I found the text engaging (funny/cute/moving/etc) (Likert/5): {{ ratings.text_engagement_avg|floatformat:2 }}</li>
+    <li>The image(s) matched the content of the text (Likert/5): {{ ratings.image_match_avg|floatformat:2 }}</li>
 </ul>
 
 <h3>Properties of the Text</h3>
 <ul>
-    <li>Type of text:
+    <li>What type of text did you produce?:
 		<ul>
 			{% for type in text_type_distribution %}
 				<li>{{ type.text_type|text_type_display }}: {{ type.total }} response(s)</li>
@@ -30,7 +30,7 @@
 			{% endfor %}
 		</ul>
     </li>
-	<li>Sharing the text:
+	<li>I have shared/intend to share this text with other people:
 		<ul>
 			{% for entry in shared_intent_distribution %}
 				<li>{{ entry.shared_intent|share_choice_display }}: {{ entry.total }} response(s)</li>
@@ -43,7 +43,7 @@
 
 <h3>Time Spent on Corrections and Editing</h3>
 <ul>
-    <li>Time spent correcting the text:
+    <li>Time I spent correcting the text:
         <ul>
             {% for entry in correction_time_text_distribution %}
                 <li>{{ entry.correction_time_text|time_spent_display }}: {{ entry.total }} response(s)</li>
@@ -52,7 +52,7 @@
             {% endfor %}
         </ul>
     </li>
-    <li>Time spent correcting annotations:
+    <li>Time I spent correcting the annotations (segmentation/glosses/lemmas):
         <ul>
             {% for entry in correction_time_annotations_distribution %}
                 <li>{{ entry.correction_time_annotations|time_spent_display }}: {{ entry.total }} response(s)</li>
@@ -61,7 +61,7 @@
             {% endfor %}
         </ul>
     </li>
-    <li>Time spent on image editing:
+    <li>Time spent regenerating/editing the image(s):
         <ul>
             {% for entry in image_editing_time_distribution %}
                 <li>{{ entry.image_editing_time|time_spent_display }}: {{ entry.total }} response(s)</li>
@@ -74,7 +74,7 @@
 	
 <h3>Improvements and Suggestions</h3>
 <ul>
-	<li>Purpose when creating the text: 
+	<li>Tell us about the purpose of the text you created (e.g. educational material, professional report, creative writing, articles for public use, technical documentation, personal use, social media content, research and analysis, entertainment, etc.): 
         <ul>
             {% for purpose in purpose_texts %}
                 <li>{{ purpose }}</li>
@@ -83,7 +83,7 @@
             {% endfor %}
         </ul>
     </li>
-    <li>Functionality suggestions: 
+    <li>What other functionality would you like to add to C-LARA?: 
         <ul>
             {% for suggestion in functionality_suggestions %}
                 <li>{{ suggestion }}</li>
@@ -92,7 +92,7 @@
             {% endfor %}
         </ul>
     </li>
-    <li>UI design improvement suggestions: 
+    <li>How would you suggest we could improve the user interface design in C-LARA?: 
         <ul>
             {% for feedback in ui_improvement_suggestions %}
                 <li>{{ feedback }}</li>
