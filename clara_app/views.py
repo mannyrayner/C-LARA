@@ -4395,8 +4395,9 @@ def aggregated_questionnaire_results(request):
     correction_time_text_distribution = SatisfactionQuestionnaire.objects.values('correction_time_text').annotate(total=Count('correction_time_text')).order_by('correction_time_text')
     correction_time_annotations_distribution = SatisfactionQuestionnaire.objects.values('correction_time_annotations').annotate(total=Count('correction_time_annotations')).order_by('correction_time_annotations')
     image_editing_time_distribution = SatisfactionQuestionnaire.objects.values('image_editing_time').annotate(total=Count('image_editing_time')).order_by('image_editing_time')
-    shared_intent_distribution = SatisfactionQuestionnaire.objects.values('shared_intent').annotate(total=Count('shared_intent')).order_by('shared_intent')
 
+    generated_by_ai_distribution = SatisfactionQuestionnaire.objects.values('generated_by_ai').annotate(total=Count('generated_by_ai')).order_by('generated_by_ai')
+    shared_intent_distribution = SatisfactionQuestionnaire.objects.values('shared_intent').annotate(total=Count('shared_intent')).order_by('shared_intent')
     text_type_distribution = SatisfactionQuestionnaire.objects.values('text_type').annotate(total=Count('text_type')).order_by('text_type')
     
     # For open-ended questions, fetching the latest 50 responses for illustration
@@ -4409,6 +4410,7 @@ def aggregated_questionnaire_results(request):
         'correction_time_text_distribution': correction_time_text_distribution,
         'correction_time_annotations_distribution': correction_time_annotations_distribution,
         'image_editing_time_distribution': image_editing_time_distribution,
+        'generated_by_ai_distribution': generated_by_ai_distribution,
         'shared_intent_distribution': shared_intent_distribution,
         'text_type_distribution': text_type_distribution,
         'purpose_texts': list(purpose_texts),
