@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.conf import settings
 from django import forms
-from django.db.models import Count, Avg, Q, Max
+from django.db.models import Count, Avg, Q, Max, F
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
@@ -85,6 +85,7 @@ import pprint
 import uuid
 import traceback
 import tempfile
+import pandas as pd
 
 # Create a new account    
 def register(request):
@@ -4361,19 +4362,51 @@ def show_questionnaire(request, project_id, user_id):
 
     return render(request, 'clara_app/show_questionnaire.html', {'questionnaire': questionnaire, 'project': project})
 
-# Show all q
+# Show all questionnaires
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
+##def manage_questionnaires(request):
+##    if request.method == 'POST':
+##        # Handle the deletion of selected questionnaire responses
+##        selected_ids = request.POST.getlist('selected_responses')
+##        if selected_ids:
+##            SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
+##            messages.success(request, "Selected responses have been deleted.")
+##            return redirect('manage_questionnaires')
+##    
+##    # Display all questionnaire responses
+##    questionnaires = SatisfactionQuestionnaire.objects.all()
+##    return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
+
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
 def manage_questionnaires(request):
     if request.method == 'POST':
-        # Handle the deletion of selected questionnaire responses
-        selected_ids = request.POST.getlist('selected_responses')
-        if selected_ids:
-            SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
-            messages.success(request, "Selected responses have been deleted.")
-            return redirect('manage_questionnaires')
-    
-    # Display all questionnaire responses
+        if 'export' in request.POST:
+            # Convert questionnaire data to a pandas DataFrame
+            qs = SatisfactionQuestionnaire.objects.all().values()
+            
+            df = pd.DataFrame(qs)
+            
+            # Convert timezone-aware 'created_at' to timezone-naive
+            df['created_at'] = df['created_at'].apply(lambda x: timezone.make_naive(x) if x is not None else x)
+
+            # Convert DataFrame to Excel file
+            response = HttpResponse(content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="questionnaires.xlsx"'
+
+            with pd.ExcelWriter(response, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False)
+
+            return response
+        elif 'delete' in request.POST:
+            # Handle the deletion of selected questionnaire responses
+            selected_ids = request.POST.getlist('selected_responses')
+            if selected_ids:
+                SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
+                messages.success(request, "Selected responses have been deleted.")
+                return redirect('manage_questionnaires')
+
     questionnaires = SatisfactionQuestionnaire.objects.all()
     return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
 
