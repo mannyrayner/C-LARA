@@ -12,6 +12,8 @@
 
 </div>
 ## Documents
+- <a href="https://www.researchgate.net/publication/379119435_ChatGPT-Based_Learning_And_Reading_Assistant_C-LARA_Second_Report" target="_blank">ChatGPT-Based Learning And Reading Assistant (C-LARA): Second Report</a>. A comprehensive report as of late March 2024
+
 - <a href="https://www.researchgate.net/publication/375999167_Using_C-LARA_to_evaluate_GPT-4's_multilingual_processing/stats" target="_blank">Using C-LARA to evaluate GPT-4's multilingual processing</a>. Paper presented at the 21st Annual Workshop of the Australasian Language Technology Association, Melbourne, Australia, December 2023.
 
 - <a href="https://www.researchgate.net/publication/372526096_ChatGPT-Based_Learning_And_Reading_Assistant_Initial_Report" target="_blank">ChatGPT-Based Learning And Reading Assistant: Initial Report</a>. A comprehensive report as of late July 2023
