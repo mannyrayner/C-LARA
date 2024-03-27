@@ -10,16 +10,18 @@ from django.core.mail import EmailMessage
 from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences, Acknowledgements
 from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content, SatisfactionQuestionnaire
 
-from .clara_core.clara_dependencies import CLARADependencies
+from .clara_dependencies import CLARADependencies
 
-from .clara_core.clara_utils import write_json_to_file_plain_utf8, read_json_file
+from .clara_utils import write_json_to_file_plain_utf8, read_json_file
 
 from functools import wraps
 from decimal import Decimal
 import re
 import os
-import datetime
-import time
+#import datetime
+from datetime import datetime, timedelta, time
+import pytz
+#import time
 import tempfile
 import hashlib
 import uuid
@@ -113,7 +115,10 @@ def create_internal_project_id(title, project_id):
 def store_api_calls(api_calls, project, user, operation):
     user_profile = user.userprofile
     for api_call in api_calls:
-        timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
+        # Now do import datetime from datetime
+        # instead of import datetime
+        #timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
+        timestamp = datetime.fromtimestamp(api_call.timestamp)
         APICall.objects.create(
             user=user,
             project=project,
@@ -313,4 +318,23 @@ def EmailMessage_send_or_print_trace(subject, message, from_email, to_addresses)
         email.send()
     else:
         print(f' --- On UniSA would do: EmailMessage(subject, message, from_email, to_addresses).send()')
-        
+
+# Gets start time of most recent C-LARA Zoom meeting, assuming it's at 10.30 Swiss time on a Thursday.        
+def get_zoom_meeting_start_date():
+    adelaide_tz = pytz.timezone('Australia/Adelaide')
+    geneva_tz = pytz.timezone('Europe/Zurich')
+
+    now_adelaide = datetime.now(adelaide_tz)
+    # Convert 'now' in Adelaide time to Geneva time to calculate based on the meeting start time in Geneva
+    now_geneva = now_adelaide.astimezone(geneva_tz)
+
+    # Find the most recent Thursday based on Geneva time
+    days_behind = (now_geneva.weekday() - 3) % 7  # Thursday is 3
+    last_thursday_geneva = now_geneva.date() - timedelta(days=days_behind)
+    # Create a Geneva datetime for last Thursday at 10:30
+    meeting_start_geneva = datetime.combine(last_thursday_geneva, time(10, 30), tzinfo=geneva_tz)
+
+    # Convert the meeting time back to Adelaide time to align with server's timezone
+    meeting_start_adelaide = meeting_start_geneva.astimezone(adelaide_tz).date()
+
+    return meeting_start_adelaide

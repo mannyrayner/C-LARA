@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.conf import settings
 from django import forms
-from django.db.models import Count, Avg, Q, Max, F
+from django.db.models import Count, Avg, Q, Max, F, Case, When, IntegerField, Sum
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
@@ -18,7 +18,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
-from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements
+from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements, Activity, ActivityRegistration, ActivityComment, ActivityVote
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -27,7 +27,7 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
-from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm
+from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, ActivityForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
@@ -43,29 +43,29 @@ from .utils import get_user_api_cost, get_project_api_cost, get_project_operatio
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates
 from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
-from .utils import send_mail_or_print_trace
+from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date
 
-from .clara_core.clara_main import CLARAProjectInternal
-from .clara_core.clara_audio_repository import AudioRepository
-from .clara_core.clara_audio_annotator import AudioAnnotator
-from .clara_core.clara_phonetic_lexicon_repository import PhoneticLexiconRepository
-from .clara_core.clara_prompt_templates import PromptTemplateRepository
-from .clara_core.clara_dependencies import CLARADependencies
-from .clara_core.clara_reading_histories import ReadingHistoryInternal
-from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+from .clara_main import CLARAProjectInternal
+from .clara_audio_repository import AudioRepository
+from .clara_audio_annotator import AudioAnnotator
+from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+from .clara_prompt_templates import PromptTemplateRepository
+from .clara_dependencies import CLARADependencies
+from .clara_reading_histories import ReadingHistoryInternal
+from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
 
-from .clara_core.clara_internalise import internalize_text
-from .clara_core.clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
-from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
-from .clara_core.clara_chinese import is_chinese_language
-from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure
-from .clara_core.clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
-from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
-from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
-from .clara_core.clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
-from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language, is_chinese_language
-from .clara_core.clara_utils import make_mp3_version_of_audio_file_if_necessary
+from .clara_internalise import internalize_text
+from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
+from .clara_conventional_tagging import fully_supported_treetagger_language
+from .clara_chinese import is_chinese_language
+from .clara_annotated_images import make_uninstantiated_annotated_image_structure
+from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
+from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
+from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
+from .clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
+from .clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
+from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language, is_chinese_language
+from .clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 
@@ -1168,6 +1168,148 @@ def content_detail(request, content_id):
         'average_rating': average_rating['rating__avg'],
         'clara_version': clara_version
         
+    })
+
+@login_required
+def create_activity(request):
+    if request.method == 'POST':
+        form = ActivityForm(request.POST)
+        if form.is_valid():
+            activity = form.save(commit=False)
+            activity.creator = request.user
+            activity.save()
+            messages.success(request, 'Activity created successfully!')
+            return redirect('activity_detail', activity_id=activity.id)
+    else:
+        form = ActivityForm()
+
+        return render(request, 'clara_app/create_activity.html', {'form': form})
+
+@login_required
+def activity_detail(request, activity_id):
+    activity = get_object_or_404(Activity, pk=activity_id)
+    user = request.user
+    comments = ActivityComment.objects.filter(activity=activity).order_by('created_at')
+    new_comment = None  # For POST method to assign new comment
+
+    # Check if the user is already registered
+    registration = ActivityRegistration.objects.filter(user=user, activity=activity).first()
+
+    # Check if the user has already voted
+    week_start = get_zoom_meeting_start_date()
+    current_vote = ActivityVote.objects.filter(user=user, activity=activity, week=week_start).first()
+
+    if request.method == 'POST':
+        comment_form = ActivityCommentForm(request.POST)
+        if 'submit_comment' in request.POST and comment_form.is_valid():
+            new_comment = comment_form.save(commit=False)
+            new_comment.user = request.user
+            new_comment.activity = activity
+            new_comment.save()
+
+            # Notify other registered users who want email updates
+            registered_users = ActivityRegistration.objects.filter(activity=activity, wants_email=True).exclude(user=user)
+            recipients = [reg.user for reg in registered_users if reg.user.email]
+            # Assuming a function similar to send_rating_or_comment_notification_email is adapted for activities
+            send_activity_comment_notification_email(request, recipients, activity, new_comment)
+
+            return redirect('activity_detail', activity_id=activity.id)
+        elif 'register' in request.POST:
+            form = ActivityRegistrationForm(request.POST, instance=registration)
+            if form.is_valid():
+                registration, created = ActivityRegistration.objects.update_or_create(
+                    user=user,
+                    activity=activity,
+                    defaults={'wants_email': form.cleaned_data['wants_email']}
+                )
+                messages.success(request, "Your registration status has been updated.")
+                return redirect('activity_detail', activity_id=activity.id)
+        elif 'unregister' in request.POST and registration:
+            registration.delete()
+            messages.success(request, "You have been unregistered from this activity.")
+            return redirect('activity_detail', activity_id=activity.id)
+        elif 'vote' in request.POST:
+            form = ActivityVoteForm(request.POST)
+            if form.is_valid():
+                importance = form.cleaned_data['importance'] if 'importance' in form.cleaned_data else 0
+                if importance != 0:
+                    # Check if the user has already voted with the same importance this week
+                    existing_vote = ActivityVote.objects.filter(user=request.user, week=week_start, importance=importance).exclude(activity=activity).first()
+                    if existing_vote:
+                        messages.error(request, f"You've already assigned priority '{importance}' to activity '{existing_vote.activity.title}' this week.")
+                        return redirect('activity_detail', activity_id=activity.id)
+
+                # Save or update vote
+                ActivityVote.objects.update_or_create(
+                    user=request.user, 
+                    activity=activity, 
+                    week=week_start,
+                    defaults={'importance': importance}
+                )
+                messages.success(request, "Your vote has been recorded.")
+            return redirect('activity_detail', activity_id=activity.id)
+    else:
+        form = ActivityRegistrationForm(instance=registration)
+        comment_form = ActivityCommentForm()
+        vote_form = ActivityVoteForm(initial={'importance': current_vote.importance if current_vote else 0})
+
+    return render(request, 'clara_app/activity_detail.html', {
+        'activity': activity,
+        'form': form,
+        'registration': registration,
+        'comments': comments,
+        'comment_form': comment_form,
+        'vote_form': vote_form,
+    })
+
+def send_activity_comment_notification_email(request, recipients, activity, comment):
+    full_url = request.build_absolute_uri(activity.get_absolute_url())
+    subject = f"New comment on C-LARA activity: {activity.title}"
+    context = {
+        'comment': comment,
+        'activity_title': activity.title,
+        'full_url': full_url,
+    }
+    message = render_to_string('activity_comment_notification_email.html', context)
+    from_email = 'clara-no-reply@unisa.edu.au'
+    recipient_list = [user.email for user in recipients
+                      if user.email and not user == request.user]
+
+    if len(recipient_list) != 0:
+        if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+            email = EmailMessage(subject, message, from_email, recipient_list)
+            email.content_subtype = "html"  # Set the email content type to HTML
+            email.send()
+        else:
+            print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
+
+##@login_required
+##def list_activities(request):
+##    activities = Activity.objects.all().order_by('-created_at')
+##    return render(request, 'clara_app/list_activities.html', {
+##        'activities': activities
+##    })
+
+@login_required
+def list_activities(request):
+    week_start = get_zoom_meeting_start_date()
+    activities = Activity.objects.all()
+
+    # Annotate each activity with its score based on votes for the current week
+    activities = activities.annotate(
+        vote_score=Sum(
+            Case(
+                When(activityvote__week=week_start, activityvote__importance=1, then=10),
+                When(activityvote__week=week_start, activityvote__importance=2, then=7),
+                When(activityvote__week=week_start, activityvote__importance=3, then=5),
+                default=0,
+                output_field=IntegerField()
+            )
+        )
+    ).order_by('-vote_score', '-created_at')  # Order by vote score and then by creation date
+
+    return render(request, 'clara_app/list_activities.html', {
+        'activities': activities,
     })
 
 # Create a new project

@@ -4,11 +4,13 @@ from django.contrib.auth.forms import UserCreationForm
 
 from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest, Acknowledgements
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
+from .models import Activity, ActivityRegistration, ActivityComment, ActivityVote
+
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 
-from .clara_core.clara_utils import is_rtl_language, is_chinese_language
+from .clara_utils import is_rtl_language, is_chinese_language
         
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -412,6 +414,28 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['comment']
+
+class ActivityCommentForm(forms.ModelForm):
+    class Meta:
+        model = ActivityComment
+        fields = ['comment']
+
+class ActivityForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = ['title', 'category', 'description']
+
+class ActivityRegistrationForm(forms.ModelForm):
+    wants_email = forms.BooleanField(required=False, label='Receive email notifications for updates')
+
+    class Meta:
+        model = ActivityRegistration
+        fields = ['wants_email']
+
+class ActivityVoteForm(forms.ModelForm):
+    class Meta:
+        model = ActivityVote
+        fields = ['importance']
         
 class DiffSelectionForm(forms.Form):
     version_choices = [  

@@ -34,12 +34,14 @@ class AudioRepositoryORM:
     def __init__(self, initialise_from_non_orm=False, callback=None):
         self.base_dir = absolute_file_name(config.get('audio_repository', 'base_dir_orm'))
 
-        if initialise_from_non_orm:
-            self.initialise_from_non_orm_repository(callback=callback)
-        # Create base_dir if we didn't do that as part of initialise_from_non_orm_repository and it doesn't exist
-        elif not directory_exists(self.base_dir):
-            make_directory(self.base_dir, parents=True, exist_ok=True)
-            post_task_update(callback, f'--- Created base directory for audio repository, {self.base_dir}')
+        if not directory_exists(self.base_dir):
+            # Performing initialise_from_non_orm_repository copies base_dir from the non-ORM one and also initialises the database        
+            if initialise_from_non_orm:
+                self.initialise_from_non_orm_repository(callback=callback)
+            # Otherwise just create base_dir 
+            else:
+                make_directory(self.base_dir, parents=True, exist_ok=True)
+                post_task_update(callback, f'--- Created base directory for audio repository, {self.base_dir}')
 
     def initialise_from_non_orm_repository(self, callback=None):
         from .clara_audio_repository import AudioRepository

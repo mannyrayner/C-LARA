@@ -9,7 +9,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
-from .clara_core.clara_main import CLARAProjectInternal
+from .clara_main import CLARAProjectInternal
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -534,7 +534,86 @@ class FundingRequest(models.Model):
     credit_assigned = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     decision_comment = models.TextField("Comment on Decision", blank=True, help_text="Feedback or reason for decision.")
     decision_made_at = models.DateTimeField("Decision Made At", null=True, blank=True)
+
+# Models for activities
+
+class Activity(models.Model):
+    CATEGORY_CHOICES = [
+        ('human_ai_interaction', 'Analysis of human/AI collaboration'),
+        ('annotation', 'Annotation of texts by AI'),
+        ('classroom', 'Classroom experiments'),
+        ('multimodal_formatting', 'Formatting/behaviour of multimodal texts'),
+        ('languages_covered_by_ai', 'Languages covered by AI'),
+        ('languages_not_covered_by_ai', 'Languages not covered by AI'),
+        ('legacy_content', 'Legacy content'),
+        ('legacy_software', 'Legacy software'),
+        ('phonetic_texts', 'Phonetic texts'),
+        ('refactoring', 'Refactoring software'),
+        ('simple_clara', 'Simple C-LARA'),
+        ('social_network', 'Social network'),
+        ('other', 'Other'),
+        ]
     
+    title = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    description = models.TextField()
+    creator = models.ForeignKey(User, related_name='created_activities', on_delete=models.CASCADE)
+    registered_users = models.ManyToManyField(User, through='ActivityRegistration', related_name='registered_activities')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_absolute_url(self):
+        return reverse('activity_detail', args=[str(self.id)])
+
+class ActivityRegistration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    wants_email = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'activity')  # Prevent duplicate registrations
+
+class ActivityComment(models.Model):
+    activity = models.ForeignKey(Activity, related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class ActivityVote(models.Model):
+    ACTIVITY_VOTE_CHOICES = [(0, 'No vote'),
+                             (1, 'Most important'),
+                             (2, 'Second most important'),
+                             (3, 'Third most important')
+                             ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    importance = models.IntegerField(choices=ACTIVITY_VOTE_CHOICES)
+    week = models.DateField()  # To group votes by week. Value will be start date of the week in which vote was posted
+
+    class Meta:
+        unique_together = ('user', 'activity', 'week')
         
+# Django ORM versions of database relations for repository classes
+
+class AudioMetadata(models.Model):
+    engine_id = models.CharField(max_length=255)
+    language_id = models.CharField(max_length=255)
+    voice_id = models.CharField(max_length=255)
+    text = models.TextField()
+    context = models.TextField(default='')
+    file_path = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Audio Metadata'
+        verbose_name_plural = 'Audio Metadata'
+        indexes = [
+            models.Index(fields=['engine_id', 'language_id', 'voice_id', 'text', 'context'], name='audio_meta_composite_idx')
+        ]
+
+    def __str__(self):
+        return f"{self.engine_id} | {self.language_id} | {self.voice_id} | {self.text[:50]}"
 
     
