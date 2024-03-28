@@ -1147,14 +1147,16 @@ def content_detail(request, content_id):
                 create_update(request.user, 'COMMENT', new_comment)
 
         # Identify recipients
-        content_creator = content.project.user
-        co_owners = User.objects.filter(projectpermissions__project=content.project, projectpermissions__role='OWNER')
-        previous_commenters = User.objects.filter(comment__content=content).distinct()
-        recipients = set([content_creator] + list(co_owners) + list(previous_commenters))
+        # For external content, there will be no project
+        if content.project and content.project.user:  
+            content_creator = content.project.user
+            co_owners = User.objects.filter(projectpermissions__project=content.project, projectpermissions__role='OWNER')
+            previous_commenters = User.objects.filter(comment__content=content).distinct()
+            recipients = set([content_creator] + list(co_owners) + list(previous_commenters))
 
-        # Send email notification
-        action = 'rating' if 'submit_rating' in request.POST else 'comment'
-        send_rating_or_comment_notification_email(request, recipients, content, action)
+            # Send email notification
+            action = 'rating' if 'submit_rating' in request.POST else 'comment'
+            send_rating_or_comment_notification_email(request, recipients, content, action)
 
         return redirect('content_detail', content_id=content_id)
 
