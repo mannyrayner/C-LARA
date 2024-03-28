@@ -47,6 +47,7 @@ SUPPORTED_LANGUAGES = [
     ('māori', 'Māori'),
     ('norwegian', 'Norwegian'),
     ('old norse', 'Old Norse'),
+    ('pitjantjatjara', 'Pitjantjatjara'),
     ('polish', 'Polish'),
     ('portuguese', 'Portuguese'),
     ('romanian', 'Romanian'),
