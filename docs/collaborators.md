@@ -17,6 +17,8 @@
 - **BELINDA CHIERA**: Project coordination, statistical analysis
 - **CATHY CHUA**: Project coordination, ethical aspects
 - **CATIA CUCCHIARINI**: User studies, Italian and Dutch evaluation
+- **ANNE-LAURE DOTTE**: Kanak languages
+- **STEPHANIE GENEIX-RABAULT**: Kanak languages
 - **CHRISTELE MAIZONNIAUX**: French evaluation
 - **JEREMIAH MCPADDEN**: Latin, Discord server
 - **LOUIS MILLS**: Python coding, constructing multimodal texts
