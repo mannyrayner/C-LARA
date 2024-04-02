@@ -13,6 +13,7 @@ SIMPLE_CLARA_TYPES = [
 
 SUPPORTED_LANGUAGES = [
     ('american english', 'American English'),
+    ('ancient egyptian', 'Ancient Egyptian'),
     ('arabic', 'Arabic'),
     ('australian english', 'Australian English'),
     ('barngarla', 'Barngarla'),
@@ -38,6 +39,7 @@ SUPPORTED_LANGUAGES = [
     ('iaai', 'Iaai'),
     ('icelandic', 'Icelandic'),
     ('indonesian', 'Indonesian'),
+    ('irish', 'Irish'),
     ('italian', 'Italian'),
     ('japanese', 'Japanese'),
     ('korean', 'Korean'),
@@ -47,6 +49,7 @@ SUPPORTED_LANGUAGES = [
     ('māori', 'Māori'),
     ('norwegian', 'Norwegian'),
     ('old norse', 'Old Norse'),
+    ('paicî', 'Paicî'),
     ('pitjantjatjara', 'Pitjantjatjara'),
     ('polish', 'Polish'),
     ('portuguese', 'Portuguese'),
@@ -61,6 +64,7 @@ SUPPORTED_LANGUAGES = [
     ('turkish', 'Turkish'),
     ('ukrainian', 'Ukrainian'),
     ('vietnamese', 'Vietnamese'),
+    ('welsh', 'Welsh'),
 ]
 
 SUPPORTED_LANGUAGES_AND_DEFAULT = [ ('default', 'Default') ] + SUPPORTED_LANGUAGES
