@@ -936,3 +936,8 @@ def make_mp3_version_of_audio_file_if_necessary(source_file):
             if local_file_exists(temp_file_path):
                 remove_local_file(temp_file_path)
             raise InternalCLARAError(message=f'*** Error: Exception occurred during conversion of {source_file} to mp3: {str(e)}')
+
+def generate_unique_file_name(base_name, extension='mp3'):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4()
+    return f"{base_name}_{timestamp}_{unique_id}.{extension}"
