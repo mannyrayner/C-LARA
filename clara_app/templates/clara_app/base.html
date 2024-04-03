@@ -213,6 +213,9 @@
 					<a class="dropdown-item" href="{% url 'delete_tts_data' %}"
 						   data-toggle="tooltip" title="Remove all cached TTS data for a given language.">
 						   Delete TTS data</a>
+					<a class="dropdown-item" href="{% url 'initialise_orm_repositories' %}"
+						   data-toggle="tooltip" title="Initialise ORM repositories from old non-ORM repositories.">
+						   Initialise ORM repositories</a>
 				</div>
             </li>
           {% endif %}

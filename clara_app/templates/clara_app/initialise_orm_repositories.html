@@ -1,0 +1,11 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>Initialise ORM repositories</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Initialise repositories</button>
+</form>
+{% endblock %}
