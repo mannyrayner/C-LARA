@@ -70,6 +70,9 @@ class AssignLanguageMasterForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
     language = forms.ChoiceField(choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
 
+class InitialiseORMRepositoriesForm(forms.Form):
+    pass
+
 class DeleteTTSDataForm(forms.Form):
     language = forms.ChoiceField(choices=SUPPORTED_LANGUAGES)
 

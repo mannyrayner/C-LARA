@@ -10,6 +10,8 @@ Classes:
 The AudioRepositoryORM class provides methods for adding entries, retrieving entries, getting the voice directory, and storing mp3 files.
 """
 
+from django.db.models import Q
+
 from .models import AudioMetadata
 
 from .clara_tts_api import get_tts_engine_types
@@ -28,7 +30,7 @@ from pathlib import Path
 config = get_config()
 
 _trace = False
-# _trace = True
+#_trace = True
 
 class AudioRepositoryORM:
     def __init__(self, initialise_from_non_orm=False, callback=None):
@@ -201,6 +203,12 @@ class AudioRepositoryORM:
 
                 query_set = AudioMetadata.objects.filter(query)
                 results = {(entry.text, entry.context): entry.file_path for entry in query_set}
+
+            # Whichever method we chose, add null values for the keys that have no value
+            for item in text_and_context_items:
+                key = (item['canonical_text'], item['context'])
+                if not key in results:
+                    results[key] = None
 
             if _trace:
                 print('--- results:')

@@ -29,7 +29,7 @@ from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, 
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
 from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, ActivityForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
-from .forms import DeleteTTSDataForm, AudioMetadataForm
+from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
@@ -41,12 +41,13 @@ from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet,
 from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
-from .utils import post_task_update_in_db, get_task_updates
+from .utils import post_task_update_in_db, get_task_updates, has_saved_internalised_and_annotated_text
 from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
 from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date
 
 from .clara_main import CLARAProjectInternal
 from .clara_audio_repository import AudioRepository
+from .clara_audio_repository_orm import AudioRepositoryORM
 from .clara_audio_annotator import AudioAnnotator
 from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_prompt_templates import PromptTemplateRepository
@@ -61,6 +62,7 @@ from .clara_chinese import is_chinese_language
 from .clara_annotated_images import make_uninstantiated_annotated_image_structure
 from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
 from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
+from .clara_utils import _use_orm_repositories
 from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
 from .clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
@@ -489,6 +491,89 @@ def confirm_transfer(request):
     clara_version = get_user_config(request.user)['clara_version']
 
     return render(request, 'clara_app/confirm_transfer.html', {'form': form, 'clara_version': clara_version})
+
+def initialise_orm_repositories_from_non_orm(callback=None):
+    post_task_update(callback, f"--- Initialising ORM repositories from non-ORM repositories")
+    post_task_update(callback, f"--- Initialising ORM audio repository")
+    tts_repo = AudioRepositoryORM(initialise_from_non_orm=True, callback=callback)
+    post_task_update(callback, f"finished")
+    
+# Delete cached TTS data for language   
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def initialise_orm_repositories(request):
+    if request.method == 'POST':
+        form = InitialiseORMRepositoriesForm(request.POST)
+        if form.is_valid():
+            
+            # Create a unique ID to tag messages posted by this task and a callback
+            task_type = f'initialise_orm_repositories'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
+            print(f'--- Started initialise task')
+            #Redirect to the monitor view, passing report ID as parameter
+            return redirect('initialise_orm_repositories_monitor', report_id)
+
+    else:
+        form = InitialiseORMRepositoriesForm()
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/initialise_orm_repositories.html', {
+        'form': form, 'clara_version': clara_version
+    })
+
+# This is the API endpoint that the JavaScript will poll
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def initialise_orm_repositories_status(request, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def initialise_orm_repositories_monitor(request, report_id):
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/initialise_orm_repositories_monitor.html',
+                  {'report_id': report_id, 'clara_version': clara_version})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def initialise_orm_repositories_complete(request, status):
+    if request.method == 'POST':
+        form = InitialiseORMRepositoriesForm(request.POST)
+        if form.is_valid():
+            
+            task_type = f'initialise_orm_repositories'
+            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
+            print(f'--- Started delete task for {language}')
+            #Redirect to the monitor view, passing the task ID and report ID as parameters
+            return redirect('initialise_orm_repositories_monitor', report_id)
+    else:
+        if status == 'error':
+            messages.error(request, f"Something went wrong when initialising the ORM repositories. Try looking at the 'Recent task updates' view")
+        else:
+            messages.success(request, f'Initialised ORM respositories')
+
+        form = InitialiseORMRepositoriesForm()
+
+        clara_version = get_user_config(request.user)['clara_version']
+
+        return render(request, 'clara_app/initialise_orm_repositories.html',
+                      { 'form': form, 'clara_version': clara_version, } )
+
 
 def delete_tts_data_for_language(language, callback=None):
     post_task_update(callback, f"--- Starting delete task for language {language}")
@@ -2606,7 +2691,8 @@ def human_audio_processing(request, project_id):
 
             if method == 'upload' and human_voice_id:
 
-                audio_repository = AudioRepository()
+                #audio_repository = AudioRepository()
+                audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository()
                 formset = AudioItemFormSet(request.POST, request.FILES)
                 n_files_uploaded = 0
                 print(f'--- Updating from formset ({len(formset)} items)')
@@ -2793,7 +2879,8 @@ def human_audio_processing_phonetic(request, project_id):
 
             # 2. Update from the formset and save new files
             if method == 'upload_individual' and human_voice_id:
-                audio_repository = AudioRepository()
+                #audio_repository = AudioRepository()
+                audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
                 formset = AudioItemFormSet(request.POST, request.FILES)
                 n_files_uploaded = 0
                 print(f'--- Updating from formset ({len(formset)} items)')
@@ -4426,10 +4513,12 @@ def l2s_in_posted_content(require_phonetic_text=False):
     for content in contents_with_projects:
         # Check if the associated project has saved internalized text
         if not require_phonetic_text:
-            if content.project.has_saved_internalised_and_annotated_text():
+            #if content.project.has_saved_internalised_and_annotated_text():
+            if has_saved_internalised_and_annotated_text(content.project):
                 l2_languages.add(content.l2)
         else:
-            if content.project.has_saved_internalised_and_annotated_text() and content.project.has_saved_internalised_and_annotated_text(phonetic=True):
+            #if content.project.has_saved_internalised_and_annotated_text() and content.project.has_saved_internalised_and_annotated_text(phonetic=True):
+            if has_saved_internalised_and_annotated_text(content.project) and has_saved_internalised_and_annotated_text(content.project, phonetic=True):
                 l2_languages.add(content.l2)
 
     return list(l2_languages)
@@ -4451,10 +4540,12 @@ def projects_available_for_adding_to_history(l2_language, projects_in_history, r
     for project in projects:
         # Check if the project has the required saved internalized text and is not already in the history
         if not require_phonetic_text:
-            if project.has_saved_internalised_and_annotated_text() and project not in projects_in_history:
+            #if project.has_saved_internalised_and_annotated_text() and project not in projects_in_history:
+            if has_saved_internalised_and_annotated_text(project) and project not in projects_in_history:
                 available_projects.append(project)
         else:
-            if project.has_saved_internalised_and_annotated_text() and project.has_saved_internalised_and_annotated_text(phonetic=True) \
+            #if project.has_saved_internalised_and_annotated_text() and project.has_saved_internalised_and_annotated_text(phonetic=True) \
+            if has_saved_internalised_and_annotated_text(project) and has_saved_internalised_and_annotated_text(project, phonetic=True) \
                and project not in projects_in_history:
                 available_projects.append(project)
 
@@ -4846,7 +4937,8 @@ def serve_project_image(request, project_id, base_filename):
 
 @login_required
 def serve_audio_file(request, engine_id, l2, voice_id, base_filename):
-    audio_repository = AudioRepository()
+    #audio_repository = AudioRepository()
+    audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
     base_dir = audio_repository.base_dir
     file_path = absolute_file_name( Path(base_dir) / engine_id / l2 / voice_id / base_filename )
     if file_exists(file_path):

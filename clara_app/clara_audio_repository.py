@@ -181,7 +181,7 @@ class AudioRepository:
             post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             raise InternalCLARAError(message='TTS database inconsistency')
 
-    def store_mp3(self, engine_id, language_id, voice_id, source_file, keep_file_name=False):
+    def store_mp3(self, engine_id, language_id, voice_id, source_file, keep_file_name=False, callback=None):
         voice_dir = self.get_voice_directory(engine_id, language_id, voice_id)
         make_directory(voice_dir, parents=True, exist_ok=True)
         file_name = basename(source_file) if keep_file_name else f"{voice_id}_{len(list_files_in_directory(voice_dir)) + 1}.mp3"

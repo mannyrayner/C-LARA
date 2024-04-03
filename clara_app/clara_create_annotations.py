@@ -31,7 +31,7 @@ There are also several utility functions to help with the annotation process.
 from . import clara_prompt_templates
 from . import clara_chatgpt4
 from . import clara_internalise
-from . import clara_test
+#from . import clara_test
 
 from .clara_utils import get_config, post_task_update
 from .clara_classes import *

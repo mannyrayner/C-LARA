@@ -8,8 +8,6 @@ from django.db import models
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-
-from .clara_main import CLARAProjectInternal
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -73,9 +71,11 @@ class CLARAProject(models.Model):
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
 
-    def has_saved_internalised_and_annotated_text(self, phonetic=False):
-        clara_project_internal = CLARAProjectInternal(self.internal_id, self.l2, self.l1)
-        return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
+# Move this to utils.py to avoid circular import
+
+##    def has_saved_internalised_and_annotated_text(self, phonetic=False):
+##        clara_project_internal = CLARAProjectInternal(self.internal_id, self.l2, self.l1)
+##        return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [

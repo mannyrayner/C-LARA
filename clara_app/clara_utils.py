@@ -28,6 +28,11 @@ from asgiref.sync import sync_to_async
 
 from .clara_classes import InternalCLARAError
 
+# New version of repository modules implemented using Django's ORM
+#_use_orm_repositories = True
+# Old version implemented using explicit SQL
+_use_orm_repositories = False
+
 _s3_storage = True if os.getenv('FILE_STORAGE_TYPE') == 'S3' else False
 
 

@@ -10,6 +10,8 @@ from django.core.mail import EmailMessage
 from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences, Acknowledgements
 from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content, SatisfactionQuestionnaire
 
+from .clara_main import CLARAProjectInternal
+
 from .clara_dependencies import CLARADependencies
 
 from .clara_utils import write_json_to_file_plain_utf8, read_json_file
@@ -51,6 +53,10 @@ def get_user_config(user):
 def user_has_open_ai_key_or_credit(user):
     user_config = get_user_config(user)
     return ( 'open_ai_api_key' in user_config and user_config['open_ai_api_key'] ) or user.userprofile.credit > 0
+
+def has_saved_internalised_and_annotated_text(project, phonetic=False):
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
 
 def make_asynch_callback_and_report_id(request, task_type):
     # Create a unique ID to tag messages posted by this task
