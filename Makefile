@@ -4,7 +4,7 @@ migrate:
 
 runserver:
 	python3 manage.py runserver
-	
+
 qcluster:
 	python3 manage.py qcluster
 
@@ -26,3 +26,5 @@ count_lines:
 heroku_log:
 	heroku logs --tail --app c-lara
 
+backup_db:
+	cp db.sqlite3 db.sqlite3.bkp
