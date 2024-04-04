@@ -218,7 +218,7 @@ class ImageRepositoryORM:
             make_directory(project_dir, parents=True, exist_ok=True)
 
             # Use UUID for generating a unique file name if not keeping the original file name
-            file_name = basename(source_file) if keep_file_name else generate_unique_file_name(f'{project_{project_id}', extension='png')
+            file_name = basename(source_file) if keep_file_name else generate_unique_file_name(f'project_{project_id}', extension='png')
             destination_path = str(Path(project_dir) / file_name)
             copy_local_file(source_file, destination_path)
 
@@ -241,6 +241,48 @@ class ImageRepositoryORM:
             error_message = f'*** Error when storing image "{source_file}" in image repository: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image repository error')
+
+    def remove_entry(self, project_id, image_name, callback=None):
+        try:
+            project_id = str(project_id)
+            post_task_update(callback, f'--- Attempting to remove entry for image {image_name} in project {project_id}')
+            
+            # Attempt to fetch and delete the specified entry
+            entry = ImageMetadata.objects.get(project_id=project_id, image_name=image_name)
+            entry.delete()
+            
+            post_task_update(callback, f'--- Entry for image {image_name} in project {project_id} removed successfully')
+        except ObjectDoesNotExist:
+            post_task_update(callback, f'*** No entry found for image {image_name} in project {project_id}')
+        except Exception as e:
+            error_message = f'*** Error when removing entry for image {image_name} in project {project_id}: {str(e)}\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def get_annotated_image_text(self, project_id, callback=None):
+        try:
+            project_id = str(project_id)
+            post_task_update(callback, f'--- Retrieving annotated image text for project {project_id}')
+            
+            entries = ImageMetadata.objects.filter(project_id=project_id).order_by('page', 'position')
+            
+            annotated_image_text = ""
+            for entry in entries:
+                image_name = entry.image_name
+                associated_text = entry.associated_text
+                page = entry.page
+                position = entry.position
+                annotated_image_text += f"<page img='{image_name}' page='{page}' position='{position}'>\n{associated_text}\n"
+
+            post_task_update(callback, f'--- Annotated image text for project {project_id} generated')
+            return annotated_image_text
+
+        except ObjectDoesNotExist:
+            return "" # Return an empty string if no entries found
+        except Exception as e:
+            error_message = f'*** Error when retrieving annotated image text for project {project_id}: {str(e)}\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image database inconsistency')
 
     def get_project_directory(self, project_id):
         # Returns the directory path where images for a specific project are stored

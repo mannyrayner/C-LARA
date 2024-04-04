@@ -616,4 +616,28 @@ class AudioMetadata(models.Model):
     def __str__(self):
         return f"{self.engine_id} | {self.language_id} | {self.voice_id} | {self.text[:50]}"
 
-    
+
+class ImageMetadata(models.Model):
+    POSITION_CHOICES = [
+        ('top', 'Top'),
+        ('bottom', 'Bottom'),
+        ('inline', 'Inline'),
+    ]
+
+    project_id = models.CharField(max_length=255)
+    image_name = models.CharField(max_length=255)
+    file_path = models.TextField()
+    associated_text = models.TextField(blank=True, default='')
+    associated_areas = models.TextField(blank=True, default='')
+    page = models.IntegerField(default=1)
+    position = models.CharField(max_length=10, choices=POSITION_CHOICES, default='top')
+
+    class Meta:
+        verbose_name = 'Image Metadata'
+        verbose_name_plural = 'Image Metadata'
+        constraints = [
+            models.UniqueConstraint(fields=['project_id', 'image_name'], name='unique_project_image')
+        ]
+
+    def __str__(self):
+        return f"{self.project_id} | {self.image_name} | {self.position} | Page {self.page}"

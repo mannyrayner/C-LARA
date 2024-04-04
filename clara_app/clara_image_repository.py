@@ -80,6 +80,29 @@ class ImageRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 
+    def export_image_metadata(self, callback=None):
+        try:
+            connection = connect(self.db_file)
+            cursor = connection.cursor()
+            cursor.execute("SELECT project_id, image_name, file_path, associated_text, associated_areas, page, position FROM image_metadata")
+            entries = cursor.fetchall()
+            exported_data = []
+            for entry in entries:
+                exported_data.append({
+                    'project_id': entry[0],
+                    'image_name': entry[1],
+                    'file_path': entry[2],
+                    'associated_text': entry[3] if entry[3] else '',
+                    'associated_areas': entry[4] if entry[4] else '',
+                    'page': entry[5],
+                    'position': entry[6],
+                })
+            connection.close()
+            return exported_data
+        except Exception as e:
+            post_task_update(callback, f'Error exporting image metadata: "{str(e)}"\n{traceback.format_exc()}')
+            return []
+
     def delete_entries_for_project(self, project_id, callback=None):
         try:
             project_id = str(project_id)

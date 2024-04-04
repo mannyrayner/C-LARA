@@ -29,9 +29,9 @@ from asgiref.sync import sync_to_async
 from .clara_classes import InternalCLARAError
 
 # New version of repository modules implemented using Django's ORM
-#_use_orm_repositories = True
+_use_orm_repositories = True
 # Old version implemented using explicit SQL
-_use_orm_repositories = False
+#_use_orm_repositories = False
 
 _s3_storage = True if os.getenv('FILE_STORAGE_TYPE') == 'S3' else False
 
@@ -781,7 +781,10 @@ def output_dir_for_project_id(id, phonetic_or_normal):
 
 def image_dir_for_project_id(id):
     config = get_config()
-    return str( Path(absolute_file_name(config.get('image_repository', 'base_dir'))) / str(id) )
+    if _use_orm_repositories:
+        return str( Path(absolute_file_name(config.get('image_repository', 'base_dir_orm'))) / str(id) )
+    else:
+        return str( Path(absolute_file_name(config.get('image_repository', 'base_dir'))) / str(id) )
 
 def is_rtl_language(language):
     rtl_languages = ['arabic', 'hebrew', 'farsi', 'urdu', 'yemeni']
@@ -946,3 +949,15 @@ def generate_unique_file_name(base_name, extension='mp3'):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_id = uuid.uuid4()
     return f"{base_name}_{timestamp}_{unique_id}.{extension}"
+
+def adjust_file_path_for_imported_data(file_path, base_dir_non_orm, base_dir_orm, callback=None):
+    abs_file_path = absolute_file_name(file_path)
+    if not abs_file_path.startswith(base_dir_non_orm):
+        error_message = f'Non-ORM file path {abs_file_path} does not start with directory name {base_dir_non_orm}'
+        post_task_update(callback, error_message)
+        raise InternalCLARAError(message=error_message)
+    return abs_file_path.replace(str(base_dir_non_orm), str(base_dir_orm))
+
+def generate_thumbnail_name(original_file_name):
+    name, ext = os.path.splitext(original_file_name)
+    return f"{name}_thumbnail{ext}"

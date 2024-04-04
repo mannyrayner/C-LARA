@@ -17,7 +17,7 @@ from .models import AudioMetadata
 from .clara_tts_api import get_tts_engine_types
 from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, copy_local_file, basename
 from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory, copy_directory
-from .clara_utils import list_files_in_directory, post_task_update, generate_unique_file_name
+from .clara_utils import list_files_in_directory, post_task_update, generate_unique_file_name, adjust_file_path_for_imported_data
 
 from .clara_classes import InternalCLARAError
 
@@ -49,14 +49,6 @@ class AudioRepositoryORM:
 
     def initialise_from_non_orm_repository(self, callback=None):
         from .clara_audio_repository import AudioRepository
-
-        def adjust_file_path_for_imported_data(file_path, base_dir_non_orm, base_dir_orm, callback=None):
-            abs_file_path = absolute_file_name(file_path)
-            if not abs_file_path.startswith(base_dir_non_orm):
-                error_message = f'Non-ORM file path {abs_file_path} does not start with directory name {base_dir_non_orm}'
-                post_task_update(callback, error_message)
-                raise InternalCLARAError(message=error_message)
-            return abs_file_path.replace(str(base_dir_non_orm), str(base_dir_orm))
 
         try:
             non_orm_repository = AudioRepository(callback=callback)

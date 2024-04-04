@@ -48,6 +48,7 @@ from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date
 from .clara_main import CLARAProjectInternal
 from .clara_audio_repository import AudioRepository
 from .clara_audio_repository_orm import AudioRepositoryORM
+from .clara_image_repository_orm import ImageRepositoryORM
 from .clara_audio_annotator import AudioAnnotator
 from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_prompt_templates import PromptTemplateRepository
@@ -493,10 +494,19 @@ def confirm_transfer(request):
     return render(request, 'clara_app/confirm_transfer.html', {'form': form, 'clara_version': clara_version})
 
 def initialise_orm_repositories_from_non_orm(callback=None):
-    post_task_update(callback, f"--- Initialising ORM repositories from non-ORM repositories")
-    post_task_update(callback, f"--- Initialising ORM audio repository")
-    tts_repo = AudioRepositoryORM(initialise_from_non_orm=True, callback=callback)
-    post_task_update(callback, f"finished")
+    try:
+        post_task_update(callback, f"--- Initialising ORM repositories from non-ORM repositories")
+        
+        post_task_update(callback, f"--- Initialising ORM audio repository")
+        tts_repo = AudioRepositoryORM(initialise_from_non_orm=True, callback=callback)
+        
+        post_task_update(callback, f"--- Initialising ORM image repository")
+        image_repo = ImageRepositoryORM(initialise_from_non_orm=True, callback=callback)
+        
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f'Error initialising from non-ORM repositories: "{str(e)}"\n{traceback.format_exc()}')
+        post_task_update(callback, f"error")
     
 # Delete cached TTS data for language   
 @login_required
@@ -558,7 +568,7 @@ def initialise_orm_repositories_complete(request, status):
             callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
             async_task(initialise_orm_repositories_from_non_orm, callback=callback)
-            print(f'--- Started delete task for {language}')
+            print(f'--- Started initialise task')
             #Redirect to the monitor view, passing the task ID and report ID as parameters
             return redirect('initialise_orm_repositories_monitor', report_id)
     else:

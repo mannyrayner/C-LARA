@@ -1,11 +1,14 @@
 from .clara_classes import InternalCLARAError
+from .clara_utils import _use_orm_repositories
 from .clara_utils import absolute_local_file_name, pathname_parts, file_exists, local_file_exists, basename, copy_local_file, copy_to_local_file, remove_local_file
 from .clara_utils import make_local_directory, copy_directory_to_local_directory, local_directory_exists, remove_local_directory
 from .clara_utils import get_immediate_subdirectories_in_local_directory, get_files_in_local_directory, rename_file
 from .clara_utils import make_tmp_file, write_json_to_local_file, read_json_local_file, make_zipfile, unzip_file, post_task_update
 from .clara_audio_annotator import AudioAnnotator
-from .clara_audio_repository import AudioRepository
-from .clara_image_repository import ImageRepository
+##from .clara_audio_repository import AudioRepository
+##from .clara_audio_repository_orm import AudioRepositoryORM
+##from .clara_image_repository import ImageRepository
+##from .clara_image_repository_orm import ImageRepositoryORM
 
 from pathlib import Path
 import os
