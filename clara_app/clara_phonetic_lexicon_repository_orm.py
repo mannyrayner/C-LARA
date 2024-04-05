@@ -61,7 +61,8 @@ class PhoneticLexiconRepositoryORM:
                 status=data['status']
             ) for data in exported_data['plain']
         ]
-        PlainPhoneticLexicon.objects.bulk_create(plain_instances, ignore_conflicts=True)
+        # batch_size to mitigate issues with database locking interfering with DjangoQ
+        PlainPhoneticLexicon.objects.bulk_create(plain_instances, ignore_conflicts=True, batch_size=1000)  
         post_task_update(callback, f'--- Imported {len(exported_data["plain"])} plain lexicon entries')
 
     def set_encoding_for_language(self, language, encoding, callback=None):
@@ -272,6 +273,9 @@ class PhoneticLexiconRepositoryORM:
 
     def record_plain_entries(self, plain_entries, language, status, callback=None):
         try:
+            # Start by deleting any existing records that may conflict
+            self.delete_plain_entries(plain_entries, language, callback=callback)
+            
             # Prepare new objects for bulk insertion
             new_objects = [PlainPhoneticLexicon(
                 word=entry['word'],
@@ -313,6 +317,9 @@ class PhoneticLexiconRepositoryORM:
 
     def record_aligned_entries(self, aligned_entries, language, status, callback=None):
         try:
+            # Start by deleting any existing records that may conflict
+            self.delete_aligned_entries(aligned_entries, language, callback=callback)
+            
             new_objects = []
             for entry in aligned_entries:
                 # The 'phonemes' field is constructed from 'aligned_phonemes' if it's missing
@@ -359,9 +366,12 @@ class PhoneticLexiconRepositoryORM:
 
     def record_aligned_entries(self, aligned_entries, language, status, callback=None):
         try:
+            # Delete existing entries to avoid uniqueness constraint violations
+            self.delete_aligned_entries(aligned_entries, language, callback)
+
+            # Prepare new objects for batch creation
             new_objects = []
             for entry in aligned_entries:
-                # The 'phonemes' field is constructed from 'aligned_phonemes' if it's missing
                 phonemes = entry.get('phonemes', entry.get('aligned_phonemes').replace('|', ''))
                 new_objects.append(AlignedPhoneticLexicon(
                     word=entry['word'],
@@ -374,7 +384,6 @@ class PhoneticLexiconRepositoryORM:
 
             # Use bulk_create for efficient batch insertion, ignoring conflicts
             AlignedPhoneticLexicon.objects.bulk_create(new_objects, ignore_conflicts=True)
-
             post_task_update(callback, f'--- Recorded {len(aligned_entries)} aligned phonetic entries for language {language} with status {status}')
         except Exception as e:
             error_message = f'*** Error when recording aligned entries for language "{language}": "{str(e)}"\n{traceback.format_exc()}'

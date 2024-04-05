@@ -609,6 +609,9 @@ class AudioMetadata(models.Model):
     class Meta:
         verbose_name = 'Audio Metadata'
         verbose_name_plural = 'Audio Metadata'
+        # Unique audio file for combination of engine, language, voice, text and context
+        # Unfortunately, adding this line reveals that the current database is inconsistent
+        #unique_together = ('engine_id', 'language_id', 'voice_id', 'text', 'context')
         indexes = [
             models.Index(fields=['engine_id', 'language_id', 'voice_id', 'text', 'context'], name='audio_meta_composite_idx')
         ]
@@ -635,9 +638,8 @@ class ImageMetadata(models.Model):
     class Meta:
         verbose_name = 'Image Metadata'
         verbose_name_plural = 'Image Metadata'
-        constraints = [
-            models.UniqueConstraint(fields=['project_id', 'image_name'], name='unique_project_image')
-        ]
+        # Unique image for combination of project and image_name
+        unique_together = ('project_id', 'image_name')
 
     def __str__(self):
         return f"{self.project_id} | {self.image_name} | {self.position} | Page {self.page}"
@@ -656,6 +658,8 @@ class PlainPhoneticLexicon(models.Model):
     )
 
     class Meta:
+        # Unique plain phonetic lexicon entry for combination of language, word and phoneme
+        unique_together = ('language', 'word', 'phonemes')
         indexes = [
             models.Index(fields=['word'], name='idx_word_plain'),
         ]
@@ -672,6 +676,8 @@ class AlignedPhoneticLexicon(models.Model):
     )
 
     class Meta:
+        # Unique aligned phonetic lexicon entry for combination of language, word and phoneme
+        unique_together = ('language', 'word', 'phonemes')
         indexes = [
             models.Index(fields=['word'], name='idx_word_aligned'),
         ]

@@ -65,7 +65,7 @@ from .clara_annotated_images import make_uninstantiated_annotated_image_structur
 from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
 from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
 from .clara_utils import _use_orm_repositories
-from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
+from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, get_config, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
 from .clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
 from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language, is_chinese_language
@@ -90,6 +90,8 @@ import uuid
 import traceback
 import tempfile
 import pandas as pd
+
+config = get_config()
 
 # Create a new account    
 def register(request):
@@ -579,7 +581,7 @@ def initialise_orm_repositories_complete(request, status):
         if status == 'error':
             messages.error(request, f"Something went wrong when initialising the ORM repositories. Try looking at the 'Recent task updates' view")
         else:
-            messages.success(request, f'Initialised ORM respositories')
+            messages.success(request, f'Initialised ORM repositories')
 
         form = InitialiseORMRepositoriesForm()
 
@@ -861,7 +863,7 @@ def edit_phonetic_lexicon(request):
                     plain_words_saved = [ item['word'] for item in plain_words_to_save ]
                     messages.success(request, f"{len(plain_words_saved)} plain lexicon entries saved: {', '.join(plain_words_saved)}")
                 if len(plain_words_to_delete) != 0:
-                    phonetic_lexicon_repo.delete_plain_entries(plain_words_to_save, language)
+                    phonetic_lexicon_repo.delete_plain_entries(plain_words_to_delete, language)
                     plain_words_deleted = [ item['word'] for item in plain_words_to_delete ]
                     messages.success(request, f"{len(plain_words_deleted)} plain lexicon entries deleted: {', '.join(plain_words_deleted)}")
                     
@@ -942,18 +944,20 @@ def edit_phonetic_lexicon(request):
                                                                           'display_approved_aligned_lexicon_entries': display_approved_aligned_lexicon_entries,
                                                                           })
                 grapheme_phoneme_data, accents_data = orthography_repo.get_parsed_entry(language, formatting='new')
+
+                max_entries_to_show = int(config.get('phonetic_lexicon_repository', 'max_entries_to_show'))
                 
                 plain_lexicon_data = []
                 if display_new_plain_lexicon_entries:
-                    plain_lexicon_data += phonetic_lexicon_repo.get_generated_plain_entries(language)
+                    plain_lexicon_data += phonetic_lexicon_repo.get_generated_plain_entries(language)[:max_entries_to_show]
                 if display_approved_plain_lexicon_entries:
-                    plain_lexicon_data += phonetic_lexicon_repo.get_reviewed_plain_entries(language)
+                    plain_lexicon_data += phonetic_lexicon_repo.get_reviewed_plain_entries(language)[:max_entries_to_show]
 
                 aligned_lexicon_data = []
                 if display_new_aligned_lexicon_entries:
-                    aligned_lexicon_data += phonetic_lexicon_repo.get_generated_aligned_entries(language)
+                    aligned_lexicon_data += phonetic_lexicon_repo.get_generated_aligned_entries(language)[:max_entries_to_show]
                 if display_approved_aligned_lexicon_entries:
-                    aligned_lexicon_data += phonetic_lexicon_repo.get_reviewed_aligned_entries(language)
+                    aligned_lexicon_data += phonetic_lexicon_repo.get_reviewed_aligned_entries(language)[:max_entries_to_show]
                 #print(f'--- edit_phonetic_lexicon found {len(plain_lexicon_data)} plain lexicon entries to review')
                 #print(f'--- edit_phonetic_lexicon found {len(aligned_lexicon_data)} aligned lexicon entries to review')
                 
