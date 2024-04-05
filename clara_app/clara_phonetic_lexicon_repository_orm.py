@@ -1,4 +1,6 @@
 
+from .models import PhoneticEncoding, PlainPhoneticLexicon, AlignedPhoneticLexicon
+
 from .clara_utils import _use_orm_repositories
 from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name
 from .clara_utils import file_exists, local_file_exists, basename, extension_for_file_path
@@ -23,7 +25,7 @@ class PhoneticLexiconRepositoryORM:
             self.initialise_from_non_orm_repository(callback=callback)
 
     def initialise_from_non_orm_repository(self, callback=None):
-        from .phonetic_lexicon_repository import PhoneticLexiconRepository
+        from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
         
         non_orm_repository = PhoneticLexiconRepository(callback=callback)
         exported_data = non_orm_repository.export_phonetic_lexicon_data(callback)
@@ -34,6 +36,7 @@ class PhoneticLexiconRepositoryORM:
             for data in exported_data['encoding']
         ]
         PhoneticEncoding.objects.bulk_create(encoding_instances, ignore_conflicts=True)
+        post_task_update(callback, f'--- Imported phonetic encoding for {len(exported_data["encoding"])} languages')
 
         # Handle aligned lexicon entries using bulk_create
         aligned_instances = [
@@ -47,6 +50,7 @@ class PhoneticLexiconRepositoryORM:
             ) for data in exported_data['aligned']
         ]
         AlignedPhoneticLexicon.objects.bulk_create(aligned_instances, ignore_conflicts=True)
+        post_task_update(callback, f'--- Imported {len(exported_data["aligned"])} aligned lexicon entries')
 
         # Handle plain lexicon entries using bulk_create
         plain_instances = [
@@ -58,8 +62,7 @@ class PhoneticLexiconRepositoryORM:
             ) for data in exported_data['plain']
         ]
         PlainPhoneticLexicon.objects.bulk_create(plain_instances, ignore_conflicts=True)
-
-        post_task_update(callback, f'--- Imported phonetic encoding for {len(exported_data["encoding"])} languages, {len(exported_data["aligned"])} aligned and {len(exported_data["plain"])} plain lexicon entries')
+        post_task_update(callback, f'--- Imported {len(exported_data["plain"])} plain lexicon entries')
 
     def set_encoding_for_language(self, language, encoding, callback=None):
         try:

@@ -641,3 +641,50 @@ class ImageMetadata(models.Model):
 
     def __str__(self):
         return f"{self.project_id} | {self.image_name} | {self.position} | Page {self.page}"
+
+class PhoneticEncoding(models.Model):
+    language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES, primary_key=True)
+    encoding = models.CharField(max_length=255, choices=(('ipa', 'IPA'), ('arpabet_like', 'Arpabet-like')))
+
+class PlainPhoneticLexicon(models.Model):
+    word = models.TextField()
+    phonemes = models.TextField()
+    language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES)
+    status = models.CharField(
+        max_length=255,
+        choices=(('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed'))
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['word'], name='idx_word_plain'),
+        ]
+
+class AlignedPhoneticLexicon(models.Model):
+    word = models.TextField()
+    phonemes = models.TextField()
+    aligned_graphemes = models.TextField()
+    aligned_phonemes = models.TextField()
+    language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES)
+    status = models.CharField(
+        max_length=255,
+        choices=(('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed'))
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['word'], name='idx_word_aligned'),
+        ]
+
+class PhoneticLexiconHistory(models.Model):
+    word = models.TextField()
+    modification_date = models.DateTimeField()
+    previous_value = models.JSONField()
+    new_value = models.JSONField()
+    modified_by = models.CharField(max_length=255)
+    comments = models.TextField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['word'], name='idx_word_history'),
+        ]

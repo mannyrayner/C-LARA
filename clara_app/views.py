@@ -51,6 +51,7 @@ from .clara_audio_repository_orm import AudioRepositoryORM
 from .clara_image_repository_orm import ImageRepositoryORM
 from .clara_audio_annotator import AudioAnnotator
 from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_prompt_templates import PromptTemplateRepository
 from .clara_dependencies import CLARADependencies
 from .clara_reading_histories import ReadingHistoryInternal
@@ -502,6 +503,9 @@ def initialise_orm_repositories_from_non_orm(callback=None):
         
         post_task_update(callback, f"--- Initialising ORM image repository")
         image_repo = ImageRepositoryORM(initialise_from_non_orm=True, callback=callback)
+
+        post_task_update(callback, f"--- Initialising phonetic lexicon repository")
+        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM(initialise_from_non_orm=True, callback=callback)
         
         post_task_update(callback, f"finished")
     except Exception as e:
@@ -766,7 +770,7 @@ def view_task_updates(request):
 @language_master_required
 def edit_phonetic_lexicon(request):
     orthography_repo = PhoneticOrthographyRepository()
-    phonetic_lexicon_repo = PhoneticLexiconRepository()
+    phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     plain_lexicon_formset = None
     aligned_lexicon_formset = None
     grapheme_phoneme_formset = None
@@ -981,7 +985,7 @@ def upload_and_install_plain_phonetic_lexicon(file_path, language, callback=None
     post_task_update(callback, f"--- Installing phonetic lexicon for {language}")
 
     try:
-        phonetic_lexicon_repo = PhoneticLexiconRepository() 
+        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository() 
 
         result, details = phonetic_lexicon_repo.load_and_initialise_plain_lexicon(file_path, language, callback=callback)
         

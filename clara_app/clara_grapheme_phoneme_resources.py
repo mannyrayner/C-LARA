@@ -1,10 +1,12 @@
 
 from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_classes import InternalCLARAError
+from .clara_utils import _use_orm_repositories
 from .clara_utils import local_file_exists, read_local_json_file, post_task_update, merge_dicts
 
 def grapheme_phoneme_resources_available(l2):
-    repository = PhoneticLexiconRepository()
+    repository = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     # Only request the plain entries, since initially there will be no aligned entries.
     #return repository.aligned_entries_exist_for_language(l2) and repository.plain_phonetic_entries_exist_for_language(l2)
     return repository.plain_phonetic_entries_exist_for_language(l2)
@@ -20,7 +22,7 @@ def get_phonetic_lexicon_resources_for_words_and_l2(words, l2, callback=None):
              'internalised_aligned_lexicon': internalised_aligned_lexicon }
 
 def get_phonetic_encoding_for_language(l2, callback=None):
-    repository = PhoneticLexiconRepository()
+    repository = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     return repository.get_encoding_for_language(l2, callback=callback)
 
 def add_plain_entries_to_resources(resources, new_plain_entries):
@@ -28,7 +30,7 @@ def add_plain_entries_to_resources(resources, new_plain_entries):
    return resources
 
 def get_plain_entries_for_words(words, l2, callback=None):
-    repository = PhoneticLexiconRepository()
+    repository = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     plain_entries = repository.get_plain_entries_batch(words, l2, callback=callback)
     data = { plain_entry['word']: plain_entry['phonemes']
              for plain_entry in plain_entries
@@ -37,7 +39,7 @@ def get_plain_entries_for_words(words, l2, callback=None):
     return data
 
 def get_aligned_entries_for_words(words, l2, callback=None):
-    repository = PhoneticLexiconRepository()
+    repository = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     aligned_entries = repository.get_aligned_entries_batch(words, l2, callback=callback)
     data = { aligned_entry['word']: ( aligned_entry['aligned_graphemes'], aligned_entry['aligned_phonemes'] )
              for aligned_entry in aligned_entries
@@ -46,7 +48,7 @@ def get_aligned_entries_for_words(words, l2, callback=None):
     return data
 
 def get_internalised_aligned_grapheme_phoneme_lexicon(l2, callback=None):
-    repository = PhoneticLexiconRepository()
+    repository = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     aligned_entries = repository.get_all_aligned_entries_for_language(l2, callback=callback)
     encoding = repository.get_encoding_for_language(l2, callback=callback)
     data = { aligned_entry['word']: ( aligned_entry['aligned_graphemes'], aligned_entry['aligned_phonemes'] )

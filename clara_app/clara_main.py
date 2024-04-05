@@ -151,6 +151,7 @@ from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository import ImageRepository
 from .clara_image_repository_orm import ImageRepositoryORM
 from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
@@ -725,7 +726,7 @@ class CLARAProjectInternal:
         api_calls = phonetic_text_result['api_calls']
         
         self.save_text_version("phonetic", phonetic_text, user=user, label=label, source='generated')
-        repository = PhoneticLexiconRepository(callback=callback)
+        repository = PhoneticLexiconRepositoryORM(callback=callback) if _use_orm_repositories else PhoneticLexiconRepository(callback=callback)
         repository.record_guessed_plain_entries(guessed_plain_entries, self.l2_language, callback=callback)
         repository.record_guessed_aligned_entries(guessed_aligned_entries, self.l2_language, callback=callback)
         return api_calls
