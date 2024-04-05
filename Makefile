@@ -28,3 +28,6 @@ heroku_log:
 
 backup_db:
 	cp db.sqlite3 db.sqlite3.bkp
+
+restore_db:
+	cp db.sqlite3.bkp db.sqlite3 
