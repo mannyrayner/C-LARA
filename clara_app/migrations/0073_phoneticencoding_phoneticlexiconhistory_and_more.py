@@ -46,19 +46,19 @@ class Migration(migrations.Migration):
 ##                'indexes': [models.Index(fields=['word'], name='idx_word_plain')],
 ##            },
 ##        ),
-        migrations.CreateModel(
-            name='AlignedPhoneticLexicon',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('word', models.TextField()),
-                ('phonemes', models.TextField()),
-                ('aligned_graphemes', models.TextField()),
-                ('aligned_phonemes', models.TextField()),
-                ('status', models.CharField(choices=[('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed')], max_length=255)),
-                ('language', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='clara_app.phoneticencoding')),
-            ],
-            options={
-                'indexes': [models.Index(fields=['word'], name='idx_word_aligned')],
-            },
-        ),
+##        migrations.CreateModel(
+##            name='AlignedPhoneticLexicon',
+##            fields=[
+##                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+##                ('word', models.TextField()),
+##                ('phonemes', models.TextField()),
+##                ('aligned_graphemes', models.TextField()),
+##                ('aligned_phonemes', models.TextField()),
+##                ('status', models.CharField(choices=[('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed')], max_length=255)),
+##                ('language', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='clara_app.phoneticencoding')),
+##            ],
+##            options={
+##                'indexes': [models.Index(fields=['word'], name='idx_word_aligned')],
+##            },
+##        ),
     ]
