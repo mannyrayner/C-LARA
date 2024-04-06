@@ -682,15 +682,15 @@ class AlignedPhoneticLexicon(models.Model):
             models.Index(fields=['word'], name='idx_word_aligned'),
         ]
 
-class PhoneticLexiconHistory(models.Model):
-    word = models.TextField()
-    modification_date = models.DateTimeField()
-    previous_value = models.JSONField()
-    new_value = models.JSONField()
-    modified_by = models.CharField(max_length=255)
-    comments = models.TextField()
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['word'], name='idx_word_history1'),
-        ]
+##class PhoneticLexiconHistory(models.Model):
+##    word = models.TextField()
+##    modification_date = models.DateTimeField()
+##    previous_value = models.JSONField()
+##    new_value = models.JSONField()
+##    modified_by = models.CharField(max_length=255)
+##    comments = models.TextField()
+##
+##    class Meta:
+##        indexes = [
+##            models.Index(fields=['word'], name='idx_word_history1'),
+##        ]
