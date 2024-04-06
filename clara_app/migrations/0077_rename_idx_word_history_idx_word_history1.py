@@ -9,10 +9,10 @@ class Migration(migrations.Migration):
         ('clara_app', '0076_alter_audiometadata_unique_together'),
     ]
 
-    operations = [
-        migrations.RenameIndex(
-            model_name='phoneticlexiconhistory',
-            new_name='idx_word_history1',
-            old_name='idx_word_history',
-        ),
-    ]
+##    operations = [
+##        migrations.RenameIndex(
+##            model_name='phoneticlexiconhistory',
+##            new_name='idx_word_history1',
+##            old_name='idx_word_history',
+##        ),
+##    ]

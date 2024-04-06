@@ -18,21 +18,21 @@ class Migration(migrations.Migration):
                 ('encoding', models.CharField(choices=[('ipa', 'IPA'), ('arpabet_like', 'Arpabet-like')], max_length=255)),
             ],
         ),
-        migrations.CreateModel(
-            name='PhoneticLexiconHistory',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('word', models.TextField()),
-                ('modification_date', models.DateTimeField()),
-                ('previous_value', models.JSONField()),
-                ('new_value', models.JSONField()),
-                ('modified_by', models.CharField(max_length=255)),
-                ('comments', models.TextField()),
-            ],
-            options={
-                'indexes': [models.Index(fields=['word'], name='idx_word_history')],
-            },
-        ),
+##        migrations.CreateModel(
+##            name='PhoneticLexiconHistory',
+##            fields=[
+##                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+##                ('word', models.TextField()),
+##                ('modification_date', models.DateTimeField()),
+##                ('previous_value', models.JSONField()),
+##                ('new_value', models.JSONField()),
+##                ('modified_by', models.CharField(max_length=255)),
+##                ('comments', models.TextField()),
+##            ],
+##            options={
+##                'indexes': [models.Index(fields=['word'], name='idx_word_history')],
+##            },
+##        ),
         migrations.CreateModel(
             name='PlainPhoneticLexicon',
             fields=[

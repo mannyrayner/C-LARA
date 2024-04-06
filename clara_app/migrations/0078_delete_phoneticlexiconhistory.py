@@ -9,8 +9,8 @@ class Migration(migrations.Migration):
         ('clara_app', '0077_rename_idx_word_history_idx_word_history1'),
     ]
 
-    operations = [
-        migrations.DeleteModel(
-            name='PhoneticLexiconHistory',
-        ),
-    ]
+##    operations = [
+##        migrations.DeleteModel(
+##            name='PhoneticLexiconHistory',
+##        ),
+##    ]
