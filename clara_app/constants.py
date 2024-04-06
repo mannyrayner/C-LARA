@@ -65,6 +65,7 @@ SUPPORTED_LANGUAGES = [
     ('ukrainian', 'Ukrainian'),
     ('vietnamese', 'Vietnamese'),
     ('welsh', 'Welsh'),
+    ('west greenlandic', 'West Greenlandic'),
 ]
 
 SUPPORTED_LANGUAGES_AND_DEFAULT = [ ('default', 'Default') ] + SUPPORTED_LANGUAGES
