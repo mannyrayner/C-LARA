@@ -42,9 +42,9 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed')], max_length=255)),
                 ('language', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='clara_app.phoneticencoding')),
             ],
-##            options={
-##                'indexes': [models.Index(fields=['word'], name='idx_word_plain')],
-##            },
+            options={
+                'indexes': [models.Index(fields=['word'], name='idx_word_plain1')],
+            },
         ),
         migrations.CreateModel(
             name='AlignedPhoneticLexicon',
@@ -57,8 +57,8 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(choices=[('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed')], max_length=255)),
                 ('language', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='clara_app.phoneticencoding')),
             ],
-##            options={
-##                'indexes': [models.Index(fields=['word'], name='idx_word_aligned')],
-##            },
+            options={
+                'indexes': [models.Index(fields=['word'], name='idx_word_aligned1')],
+            },
         ),
     ]
