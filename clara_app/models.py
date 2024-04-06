@@ -692,5 +692,5 @@ class PhoneticLexiconHistory(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['word'], name='idx_word_history'),
+            models.Index(fields=['word'], name='idx_word_history1'),
         ]
