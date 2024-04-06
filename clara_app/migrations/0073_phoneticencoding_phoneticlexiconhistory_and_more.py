@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
             ],
 ##            options={
 ##                'indexes': [models.Index(fields=['word'], name='idx_word_plain')],
-            },
+##            },
         ),
         migrations.CreateModel(
             name='AlignedPhoneticLexicon',
@@ -59,6 +59,6 @@ class Migration(migrations.Migration):
             ],
 ##            options={
 ##                'indexes': [models.Index(fields=['word'], name='idx_word_aligned')],
-            },
+##            },
         ),
     ]
