@@ -80,6 +80,29 @@ class ImageRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 
+##    def export_image_metadata(self, callback=None):
+##        try:
+##            connection = connect(self.db_file)
+##            cursor = connection.cursor()
+##            cursor.execute("SELECT project_id, image_name, file_path, associated_text, associated_areas, page, position FROM image_metadata")
+##            entries = cursor.fetchall()
+##            exported_data = []
+##            for entry in entries:
+##                exported_data.append({
+##                    'project_id': entry[0],
+##                    'image_name': entry[1],
+##                    'file_path': entry[2],
+##                    'associated_text': entry[3] if entry[3] else '',
+##                    'associated_areas': entry[4] if entry[4] else '',
+##                    'page': entry[5],
+##                    'position': entry[6],
+##                })
+##            connection.close()
+##            return exported_data
+##        except Exception as e:
+##            post_task_update(callback, f'Error exporting image metadata: "{str(e)}"\n{traceback.format_exc()}')
+##            return []
+
     def export_image_metadata(self, callback=None):
         try:
             connection = connect(self.db_file)
@@ -88,20 +111,35 @@ class ImageRepository:
             entries = cursor.fetchall()
             exported_data = []
             for entry in entries:
-                exported_data.append({
-                    'project_id': entry[0],
-                    'image_name': entry[1],
-                    'file_path': entry[2],
-                    'associated_text': entry[3] if entry[3] else '',
-                    'associated_areas': entry[4] if entry[4] else '',
-                    'page': entry[5],
-                    'position': entry[6],
-                })
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # For SQLite, access by index
+                    data_dict = {
+                        'project_id': entry[0],
+                        'image_name': entry[1],
+                        'file_path': entry[2],
+                        'associated_text': entry[3] if entry[3] else '',
+                        'associated_areas': entry[4] if entry[4] else '',
+                        'page': entry[5],
+                        'position': entry[6],
+                    }
+                else:
+                    # For PostgreSQL, access by column name
+                    data_dict = {
+                        'project_id': entry['project_id'],
+                        'image_name': entry['image_name'],
+                        'file_path': entry['file_path'],
+                        'associated_text': entry['associated_text'] if entry['associated_text'] else '',
+                        'associated_areas': entry['associated_areas'] if entry['associated_areas'] else '',
+                        'page': entry['page'],
+                        'position': entry['position'],
+                    }
+                exported_data.append(data_dict)
             connection.close()
             return exported_data
         except Exception as e:
             post_task_update(callback, f'Error exporting image metadata: "{str(e)}"\n{traceback.format_exc()}')
             return []
+
 
     def delete_entries_for_project(self, project_id, callback=None):
         try:

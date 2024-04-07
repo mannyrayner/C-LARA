@@ -90,6 +90,28 @@ class AudioRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='TTS database inconsistency')
 
+##    def export_audio_metadata(self, callback=None):
+##        try:
+##            connection = connect(self.db_file)
+##            cursor = connection.cursor()
+##            cursor.execute("SELECT engine_id, language_id, voice_id, text, context, file_path FROM metadata")
+##            entries = cursor.fetchall()
+##            exported_data = []
+##            for entry in entries:
+##                exported_data.append({
+##                    'engine_id': entry[0],
+##                    'language_id': entry[1],
+##                    'voice_id': entry[2],
+##                    'text': entry[3],
+##                    'context': entry[4] if entry[4] else '',
+##                    'file_path': entry[5],
+##                })
+##            connection.close()
+##            return exported_data
+##        except Exception as e:
+##            post_task_update(callback, f'Error exporting audio metadata: "{str(e)}"\n{traceback.format_exc()}')
+##            return []
+
     def export_audio_metadata(self, callback=None):
         try:
             connection = connect(self.db_file)
@@ -98,14 +120,27 @@ class AudioRepository:
             entries = cursor.fetchall()
             exported_data = []
             for entry in entries:
-                exported_data.append({
-                    'engine_id': entry[0],
-                    'language_id': entry[1],
-                    'voice_id': entry[2],
-                    'text': entry[3],
-                    'context': entry[4] if entry[4] else '',
-                    'file_path': entry[5],
-                })
+                if os.getenv('DB_TYPE') == 'sqlite':
+                    # SQLite returns tuples, so you access columns by index
+                    data_dict = {
+                        'engine_id': entry[0],
+                        'language_id': entry[1],
+                        'voice_id': entry[2],
+                        'text': entry[3],
+                        'context': entry[4] if entry[4] else '',
+                        'file_path': entry[5],
+                    }
+                else:
+                    # PostgreSQL returns dict-like objects, you can access columns by name
+                    data_dict = {
+                        'engine_id': entry['engine_id'],
+                        'language_id': entry['language_id'],
+                        'voice_id': entry['voice_id'],
+                        'text': entry['text'],
+                        'context': entry['context'] if entry['context'] else '',
+                        'file_path': entry['file_path'],
+                    }
+                exported_data.append(data_dict)
             connection.close()
             return exported_data
         except Exception as e:
