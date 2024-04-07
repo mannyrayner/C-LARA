@@ -667,7 +667,7 @@ class PlainPhoneticLexicon(models.Model):
         # Unique plain phonetic lexicon entry for combination of language, word and phoneme
         unique_together = ('language', 'word', 'phonemes')
         indexes = [
-            models.Index(fields=['word'], name='idx_word_plain'),
+            models.Index(fields=['word'], name='idx_orm_word_plain'),
         ]
 
 class AlignedPhoneticLexicon(models.Model):
@@ -686,7 +686,7 @@ class AlignedPhoneticLexicon(models.Model):
         # Unique aligned phonetic lexicon entry for combination of language, word and phoneme
         unique_together = ('language', 'word', 'phonemes')
         indexes = [
-            models.Index(fields=['word'], name='idx_word_aligned'),
+            models.Index(fields=['word'], name='idx_orm_word_aligned'),
         ]
 
 class PhoneticLexiconHistory(models.Model):
@@ -700,5 +700,5 @@ class PhoneticLexiconHistory(models.Model):
     class Meta:
         db_table = 'orm_phonetic_lexicon_history'
         indexes = [
-            models.Index(fields=['word'], name='idx_word_history'),
+            models.Index(fields=['word'], name='idx_orm_word_history'),
         ]
