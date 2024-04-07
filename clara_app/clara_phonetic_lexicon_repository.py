@@ -101,6 +101,51 @@ class PhoneticLexiconRepository:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Phonetic lexicon database inconsistency')
 
+##    def export_phonetic_lexicon_data(self, callback=None):
+##        try:
+##            connection = connect(self.db_file)
+##            cursor = connection.cursor()
+##
+##            # Export phonetic encoding data
+##            cursor.execute("SELECT language, encoding FROM phonetic_encoding")
+##            encoding_entries = cursor.fetchall()
+##
+##            # Export aligned phonetic lexicon data
+##            cursor.execute("SELECT word, phonemes, aligned_graphemes, aligned_phonemes, language, status FROM aligned_phonetic_lexicon")
+##            aligned_entries = cursor.fetchall()
+##            
+##            # Export plain phonetic lexicon data
+##            cursor.execute("SELECT word, phonemes, language, status FROM plain_phonetic_lexicon")
+##            plain_entries = cursor.fetchall()
+##
+##            connection.close()
+##
+##            encoding_data = [{
+##                'language': entry[0],
+##                'encoding': entry[1],
+##            } for entry in encoding_entries]
+##
+##            aligned_data = [{
+##                'word': entry[0],
+##                'phonemes': entry[1],
+##                'aligned_graphemes': entry[2],
+##                'aligned_phonemes': entry[3],
+##                'language': entry[4],
+##                'status': entry[5],
+##            } for entry in aligned_entries]
+##
+##            plain_data = [{
+##                'word': entry[0],
+##                'phonemes': entry[1],
+##                'language': entry[2],
+##                'status': entry[3],
+##            } for entry in plain_entries]
+##
+##            return {'encoding': encoding_data, 'aligned': aligned_data, 'plain': plain_data}
+##        except Exception as e:
+##            post_task_update(callback, f'Error exporting phonetic lexicon data: "{str(e)}"\n{traceback.format_exc()}')
+##            return {'encoding': [], 'aligned': [], 'plain': []}
+
     def export_phonetic_lexicon_data(self, callback=None):
         try:
             connection = connect(self.db_file)
@@ -121,24 +166,24 @@ class PhoneticLexiconRepository:
             connection.close()
 
             encoding_data = [{
-                'language': entry[0],
-                'encoding': entry[1],
+                'language': entry[0] if os.getenv('DB_TYPE') == 'sqlite' else entry['language'],
+                'encoding': entry[1] if os.getenv('DB_TYPE') == 'sqlite' else entry['encoding'],
             } for entry in encoding_entries]
 
             aligned_data = [{
-                'word': entry[0],
-                'phonemes': entry[1],
-                'aligned_graphemes': entry[2],
-                'aligned_phonemes': entry[3],
-                'language': entry[4],
-                'status': entry[5],
+                'word': entry[0] if os.getenv('DB_TYPE') == 'sqlite' else entry['word'],
+                'phonemes': entry[1] if os.getenv('DB_TYPE') == 'sqlite' else entry['phonemes'],
+                'aligned_graphemes': entry[2] if os.getenv('DB_TYPE') == 'sqlite' else entry['aligned_graphemes'],
+                'aligned_phonemes': entry[3] if os.getenv('DB_TYPE') == 'sqlite' else entry['aligned_phonemes'],
+                'language': entry[4] if os.getenv('DB_TYPE') == 'sqlite' else entry['language'],
+                'status': entry[5] if os.getenv('DB_TYPE') == 'sqlite' else entry['status'],
             } for entry in aligned_entries]
 
             plain_data = [{
-                'word': entry[0],
-                'phonemes': entry[1],
-                'language': entry[2],
-                'status': entry[3],
+                'word': entry[0] if os.getenv('DB_TYPE') == 'sqlite' else entry['word'],
+                'phonemes': entry[1] if os.getenv('DB_TYPE') == 'sqlite' else entry['phonemes'],
+                'language': entry[2] if os.getenv('DB_TYPE') == 'sqlite' else entry['language'],
+                'status': entry[3] if os.getenv('DB_TYPE') == 'sqlite' else entry['status'],
             } for entry in plain_entries]
 
             return {'encoding': encoding_data, 'aligned': aligned_data, 'plain': plain_data}
