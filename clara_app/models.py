@@ -607,6 +607,7 @@ class AudioMetadata(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'orm_audio_metadata'
         verbose_name = 'Audio Metadata'
         verbose_name_plural = 'Audio Metadata'
         # Unique audio file for combination of engine, language, voice, text and context
@@ -636,6 +637,7 @@ class ImageMetadata(models.Model):
     position = models.CharField(max_length=10, choices=POSITION_CHOICES, default='top')
 
     class Meta:
+        db_table = 'orm_image_metadata'
         verbose_name = 'Image Metadata'
         verbose_name_plural = 'Image Metadata'
         # Unique image for combination of project and image_name
@@ -648,6 +650,9 @@ class PhoneticEncoding(models.Model):
     language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES, primary_key=True)
     encoding = models.CharField(max_length=255, choices=(('ipa', 'IPA'), ('arpabet_like', 'Arpabet-like')))
 
+    class Meta:
+        db_table = 'orm_phonetic_encoding'
+
 class PlainPhoneticLexicon(models.Model):
     word = models.TextField()
     phonemes = models.TextField()
@@ -658,10 +663,11 @@ class PlainPhoneticLexicon(models.Model):
     )
 
     class Meta:
+        db_table = 'orm_phonetic_lexicon'
         # Unique plain phonetic lexicon entry for combination of language, word and phoneme
         unique_together = ('language', 'word', 'phonemes')
         indexes = [
-            models.Index(fields=['word'], name='idx_word_plain1'),
+            models.Index(fields=['word'], name='idx_word_plain'),
         ]
 
 class AlignedPhoneticLexicon(models.Model):
@@ -676,21 +682,23 @@ class AlignedPhoneticLexicon(models.Model):
     )
 
     class Meta:
+        db_table = 'orm_aligned_phonetic_lexicon'
         # Unique aligned phonetic lexicon entry for combination of language, word and phoneme
         unique_together = ('language', 'word', 'phonemes')
         indexes = [
-            models.Index(fields=['word'], name='idx_word_aligned1'),
+            models.Index(fields=['word'], name='idx_word_aligned'),
         ]
 
-##class PhoneticLexiconHistory(models.Model):
-##    word = models.TextField()
-##    modification_date = models.DateTimeField()
-##    previous_value = models.JSONField()
-##    new_value = models.JSONField()
-##    modified_by = models.CharField(max_length=255)
-##    comments = models.TextField()
-##
-##    class Meta:
-##        indexes = [
-##            models.Index(fields=['word'], name='idx_word_history1'),
-##        ]
+class PhoneticLexiconHistory(models.Model):
+    word = models.TextField()
+    modification_date = models.DateTimeField()
+    previous_value = models.JSONField()
+    new_value = models.JSONField()
+    modified_by = models.CharField(max_length=255)
+    comments = models.TextField()
+
+    class Meta:
+        db_table = 'orm_phonetic_lexicon_history'
+        indexes = [
+            models.Index(fields=['word'], name='idx_word_history'),
+        ]
