@@ -148,9 +148,9 @@ from .clara_diff import diff_text_objects
 from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glossed_and_tagged_with_pinyin
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
-from .clara_image_repository import ImageRepository
+#from .clara_image_repository import ImageRepository
 from .clara_image_repository_orm import ImageRepositoryORM
-from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+#from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
@@ -158,7 +158,7 @@ from .clara_phonetic_text import segmented_text_to_phonetic_text
 from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
-from .clara_utils import _use_orm_repositories
+#from .clara_utils import _use_orm_repositories
 from .clara_utils import absolute_file_name, absolute_local_file_name
 from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
@@ -205,7 +205,8 @@ class CLARAProjectInternal:
         }
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
         self.internalised_and_annotated_text_path_phonetic = self.project_dir / 'internalised_and_annotated_text_phonetic.pickle'
-        self.image_repository = ImageRepositoryORM() if _use_orm_repositories else ImageRepository()
+        self.image_repository = ImageRepositoryORM()
+        #self.image_repository = ImageRepositoryORM() if _use_orm_repositories else ImageRepository()
         self._ensure_directories()
         self._store_information_in_dir()
         self._load_existing_text_versions()
@@ -726,7 +727,8 @@ class CLARAProjectInternal:
         api_calls = phonetic_text_result['api_calls']
         
         self.save_text_version("phonetic", phonetic_text, user=user, label=label, source='generated')
-        repository = PhoneticLexiconRepositoryORM(callback=callback) if _use_orm_repositories else PhoneticLexiconRepository(callback=callback)
+        repository = PhoneticLexiconRepositoryORM(callback=callback)
+        #repository = PhoneticLexiconRepositoryORM(callback=callback) if _use_orm_repositories else PhoneticLexiconRepository(callback=callback)
         repository.record_guessed_plain_entries(guessed_plain_entries, self.l2_language, callback=callback)
         repository.record_guessed_aligned_entries(guessed_aligned_entries, self.l2_language, callback=callback)
         return api_calls

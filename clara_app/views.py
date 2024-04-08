@@ -47,11 +47,11 @@ from .utils import uploaded_file_to_file, create_update, current_friends_of_user
 from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date
 
 from .clara_main import CLARAProjectInternal
-from .clara_audio_repository import AudioRepository
+#from .clara_audio_repository import AudioRepository
 from .clara_audio_repository_orm import AudioRepositoryORM
 from .clara_image_repository_orm import ImageRepositoryORM
 from .clara_audio_annotator import AudioAnnotator
-from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+#from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_prompt_templates import PromptTemplateRepository
 from .clara_dependencies import CLARADependencies
@@ -65,7 +65,7 @@ from .clara_chinese import is_chinese_language
 from .clara_annotated_images import make_uninstantiated_annotated_image_structure
 from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
 from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_utils import _use_orm_repositories
+#from .clara_utils import _use_orm_repositories
 from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, get_config, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
 from .clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
@@ -497,99 +497,99 @@ def confirm_transfer(request):
 
     return render(request, 'clara_app/confirm_transfer.html', {'form': form, 'clara_version': clara_version})
 
-def initialise_orm_repositories_from_non_orm(callback=None):
-    try:
-        post_task_update(callback, f"--- Initialising ORM repositories from non-ORM repositories")
-        
-        post_task_update(callback, f"--- Initialising ORM audio repository")
-        tts_repo = AudioRepositoryORM(initialise_from_non_orm=True, callback=callback)
-        
-        post_task_update(callback, f"--- Initialising ORM image repository")
-        image_repo = ImageRepositoryORM(initialise_from_non_orm=True, callback=callback)
-
-        post_task_update(callback, f"--- Initialising phonetic lexicon repository")
-        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM(initialise_from_non_orm=True, callback=callback)
-        
-        post_task_update(callback, f"finished")
-    except Exception as e:
-        post_task_update(callback, f'Error initialising from non-ORM repositories: "{str(e)}"\n{traceback.format_exc()}')
-        post_task_update(callback, f"error")
+##def initialise_orm_repositories_from_non_orm(callback=None):
+##    try:
+##        post_task_update(callback, f"--- Initialising ORM repositories from non-ORM repositories")
+##        
+##        post_task_update(callback, f"--- Initialising ORM audio repository")
+##        tts_repo = AudioRepositoryORM(initialise_from_non_orm=True, callback=callback)
+##        
+##        post_task_update(callback, f"--- Initialising ORM image repository")
+##        image_repo = ImageRepositoryORM(initialise_from_non_orm=True, callback=callback)
+##
+##        post_task_update(callback, f"--- Initialising phonetic lexicon repository")
+##        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM(initialise_from_non_orm=True, callback=callback)
+##        
+##        post_task_update(callback, f"finished")
+##    except Exception as e:
+##        post_task_update(callback, f'Error initialising from non-ORM repositories: "{str(e)}"\n{traceback.format_exc()}')
+##        post_task_update(callback, f"error")
     
 # Delete cached TTS data for language   
-@login_required
-@user_passes_test(lambda u: u.userprofile.is_admin)
-def initialise_orm_repositories(request):
-    if request.method == 'POST':
-        form = InitialiseORMRepositoriesForm(request.POST)
-        if form.is_valid():
-            
-            # Create a unique ID to tag messages posted by this task and a callback
-            task_type = f'initialise_orm_repositories'
-            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
-
-            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
-            print(f'--- Started initialise task')
-            #Redirect to the monitor view, passing report ID as parameter
-            return redirect('initialise_orm_repositories_monitor', report_id)
-
-    else:
-        form = InitialiseORMRepositoriesForm()
-
-    clara_version = get_user_config(request.user)['clara_version']
-    
-    return render(request, 'clara_app/initialise_orm_repositories.html', {
-        'form': form, 'clara_version': clara_version
-    })
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+##def initialise_orm_repositories(request):
+##    if request.method == 'POST':
+##        form = InitialiseORMRepositoriesForm(request.POST)
+##        if form.is_valid():
+##            
+##            # Create a unique ID to tag messages posted by this task and a callback
+##            task_type = f'initialise_orm_repositories'
+##            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+##
+##            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
+##            print(f'--- Started initialise task')
+##            #Redirect to the monitor view, passing report ID as parameter
+##            return redirect('initialise_orm_repositories_monitor', report_id)
+##
+##    else:
+##        form = InitialiseORMRepositoriesForm()
+##
+##    clara_version = get_user_config(request.user)['clara_version']
+##    
+##    return render(request, 'clara_app/initialise_orm_repositories.html', {
+##        'form': form, 'clara_version': clara_version
+##    })
 
 # This is the API endpoint that the JavaScript will poll
-@login_required
-@user_passes_test(lambda u: u.userprofile.is_admin)
-def initialise_orm_repositories_status(request, report_id):
-    messages = get_task_updates(report_id)
-    print(f'{len(messages)} messages received')
-    if 'error' in messages:
-        status = 'error'
-    elif 'finished' in messages:
-        status = 'finished'  
-    else:
-        status = 'unknown'    
-    return JsonResponse({'messages': messages, 'status': status})
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+##def initialise_orm_repositories_status(request, report_id):
+##    messages = get_task_updates(report_id)
+##    print(f'{len(messages)} messages received')
+##    if 'error' in messages:
+##        status = 'error'
+##    elif 'finished' in messages:
+##        status = 'finished'  
+##    else:
+##        status = 'unknown'    
+##    return JsonResponse({'messages': messages, 'status': status})
 
-@login_required
-@user_passes_test(lambda u: u.userprofile.is_admin)
-def initialise_orm_repositories_monitor(request, report_id):
-
-    clara_version = get_user_config(request.user)['clara_version']
-    
-    return render(request, 'clara_app/initialise_orm_repositories_monitor.html',
-                  {'report_id': report_id, 'clara_version': clara_version})
-
-@login_required
-@user_passes_test(lambda u: u.userprofile.is_admin)
-def initialise_orm_repositories_complete(request, status):
-    if request.method == 'POST':
-        form = InitialiseORMRepositoriesForm(request.POST)
-        if form.is_valid():
-            
-            task_type = f'initialise_orm_repositories'
-            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
-
-            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
-            print(f'--- Started initialise task')
-            #Redirect to the monitor view, passing the task ID and report ID as parameters
-            return redirect('initialise_orm_repositories_monitor', report_id)
-    else:
-        if status == 'error':
-            messages.error(request, f"Something went wrong when initialising the ORM repositories. Try looking at the 'Recent task updates' view")
-        else:
-            messages.success(request, f'Initialised ORM repositories')
-
-        form = InitialiseORMRepositoriesForm()
-
-        clara_version = get_user_config(request.user)['clara_version']
-
-        return render(request, 'clara_app/initialise_orm_repositories.html',
-                      { 'form': form, 'clara_version': clara_version, } )
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+##def initialise_orm_repositories_monitor(request, report_id):
+##
+##    clara_version = get_user_config(request.user)['clara_version']
+##    
+##    return render(request, 'clara_app/initialise_orm_repositories_monitor.html',
+##                  {'report_id': report_id, 'clara_version': clara_version})
+##
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+##def initialise_orm_repositories_complete(request, status):
+##    if request.method == 'POST':
+##        form = InitialiseORMRepositoriesForm(request.POST)
+##        if form.is_valid():
+##            
+##            task_type = f'initialise_orm_repositories'
+##            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+##
+##            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
+##            print(f'--- Started initialise task')
+##            #Redirect to the monitor view, passing the task ID and report ID as parameters
+##            return redirect('initialise_orm_repositories_monitor', report_id)
+##    else:
+##        if status == 'error':
+##            messages.error(request, f"Something went wrong when initialising the ORM repositories. Try looking at the 'Recent task updates' view")
+##        else:
+##            messages.success(request, f'Initialised ORM repositories')
+##
+##        form = InitialiseORMRepositoriesForm()
+##
+##        clara_version = get_user_config(request.user)['clara_version']
+##
+##        return render(request, 'clara_app/initialise_orm_repositories.html',
+##                      { 'form': form, 'clara_version': clara_version, } )
 
 
 def delete_tts_data_for_language(language, callback=None):
@@ -773,7 +773,8 @@ def view_task_updates(request):
 @language_master_required
 def edit_phonetic_lexicon(request):
     orthography_repo = PhoneticOrthographyRepository()
-    phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
+    phonetic_lexicon_repo = PhoneticLexiconRepositoryORM()
+    #phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     plain_lexicon_formset = None
     aligned_lexicon_formset = None
     grapheme_phoneme_formset = None
@@ -990,7 +991,8 @@ def upload_and_install_plain_phonetic_lexicon(file_path, language, callback=None
     post_task_update(callback, f"--- Installing phonetic lexicon for {language}")
 
     try:
-        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository() 
+        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM()
+        #phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository() 
 
         result, details = phonetic_lexicon_repo.load_and_initialise_plain_lexicon(file_path, language, callback=callback)
         
@@ -2745,8 +2747,8 @@ def human_audio_processing(request, project_id):
 
             if method == 'upload' and human_voice_id:
 
-                #audio_repository = AudioRepository()
-                audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository()
+                audio_repository = AudioRepositoryORM()
+                #audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository()
                 formset = AudioItemFormSet(request.POST, request.FILES)
                 n_files_uploaded = 0
                 print(f'--- Updating from formset ({len(formset)} items)')
@@ -2933,8 +2935,8 @@ def human_audio_processing_phonetic(request, project_id):
 
             # 2. Update from the formset and save new files
             if method == 'upload_individual' and human_voice_id:
-                #audio_repository = AudioRepository()
-                audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
+                audio_repository = AudioRepositoryORM()
+                #audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
                 formset = AudioItemFormSet(request.POST, request.FILES)
                 n_files_uploaded = 0
                 print(f'--- Updating from formset ({len(formset)} items)')
@@ -4991,8 +4993,8 @@ def serve_project_image(request, project_id, base_filename):
 
 @login_required
 def serve_audio_file(request, engine_id, l2, voice_id, base_filename):
-    #audio_repository = AudioRepository()
-    audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
+    audio_repository = AudioRepositoryORM()
+    #audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
     base_dir = audio_repository.base_dir
     file_path = absolute_file_name( Path(base_dir) / engine_id / l2 / voice_id / base_filename )
     if file_exists(file_path):

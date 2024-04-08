@@ -29,7 +29,7 @@ from asgiref.sync import sync_to_async
 from .clara_classes import InternalCLARAError
 
 # New version of repository modules implemented using Django's ORM
-_use_orm_repositories = True
+#_use_orm_repositories = True
 # Old version implemented using explicit SQL
 #_use_orm_repositories = False
 
@@ -781,10 +781,11 @@ def output_dir_for_project_id(id, phonetic_or_normal):
 
 def image_dir_for_project_id(id):
     config = get_config()
-    if _use_orm_repositories:
-        return str( Path(absolute_file_name(config.get('image_repository', 'base_dir_orm'))) / str(id) )
-    else:
-        return str( Path(absolute_file_name(config.get('image_repository', 'base_dir'))) / str(id) )
+    return str( Path(absolute_file_name(config.get('image_repository', 'base_dir_orm'))) / str(id) )
+##    if _use_orm_repositories:
+##        return str( Path(absolute_file_name(config.get('image_repository', 'base_dir_orm'))) / str(id) )
+##    else:
+##        return str( Path(absolute_file_name(config.get('image_repository', 'base_dir'))) / str(id) )
 
 def is_rtl_language(language):
     rtl_languages = ['arabic', 'hebrew', 'farsi', 'urdu', 'yemeni']

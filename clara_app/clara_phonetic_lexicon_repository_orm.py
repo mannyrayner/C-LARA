@@ -1,7 +1,7 @@
 
 from .models import PhoneticEncoding, PlainPhoneticLexicon, AlignedPhoneticLexicon
 
-from .clara_utils import _use_orm_repositories
+#from .clara_utils import _use_orm_repositories
 from .clara_utils import _s3_storage, get_config, absolute_file_name, absolute_local_file_name
 from .clara_utils import file_exists, local_file_exists, basename, extension_for_file_path
 from .clara_utils import make_directory, directory_exists, local_directory_exists, make_local_directory
@@ -19,51 +19,52 @@ import pprint
 config = get_config()
 
 class PhoneticLexiconRepositoryORM:
-    def __init__(self, initialise_from_non_orm=False, callback=None):
+    #def __init__(self, initialise_from_non_orm=False, callback=None):
+    def __init__(self, callback=None):
         self.possible_encodings = ( 'ipa', 'arpabet_like' )
-        if initialise_from_non_orm:
-            self.initialise_from_non_orm_repository(callback=callback)
+##        if initialise_from_non_orm:
+##            self.initialise_from_non_orm_repository(callback=callback)
 
-    def initialise_from_non_orm_repository(self, callback=None):
-        from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
-        
-        non_orm_repository = PhoneticLexiconRepository(callback=callback)
-        exported_data = non_orm_repository.export_phonetic_lexicon_data(callback)
-
-        # Handle phonetic encoding data using bulk_create
-        encoding_instances = [
-            PhoneticEncoding(language=data['language'], encoding=data['encoding'])
-            for data in exported_data['encoding']
-        ]
-        PhoneticEncoding.objects.bulk_create(encoding_instances, ignore_conflicts=True)
-        post_task_update(callback, f'--- Imported phonetic encoding for {len(exported_data["encoding"])} languages')
-
-        # Handle aligned lexicon entries using bulk_create
-        aligned_instances = [
-            AlignedPhoneticLexicon(
-                word=data['word'],
-                phonemes=data['phonemes'],
-                aligned_graphemes=data['aligned_graphemes'],
-                aligned_phonemes=data['aligned_phonemes'],
-                language=data['language'],
-                status=data['status']
-            ) for data in exported_data['aligned']
-        ]
-        AlignedPhoneticLexicon.objects.bulk_create(aligned_instances, ignore_conflicts=True)
-        post_task_update(callback, f'--- Imported {len(exported_data["aligned"])} aligned lexicon entries')
-
-        # Handle plain lexicon entries using bulk_create
-        plain_instances = [
-            PlainPhoneticLexicon(
-                word=data['word'],
-                phonemes=data['phonemes'],
-                language=data['language'],
-                status=data['status']
-            ) for data in exported_data['plain']
-        ]
-        # batch_size to mitigate issues with database locking interfering with DjangoQ
-        PlainPhoneticLexicon.objects.bulk_create(plain_instances, ignore_conflicts=True, batch_size=1000)  
-        post_task_update(callback, f'--- Imported {len(exported_data["plain"])} plain lexicon entries')
+##    def initialise_from_non_orm_repository(self, callback=None):
+##        from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+##        
+##        non_orm_repository = PhoneticLexiconRepository(callback=callback)
+##        exported_data = non_orm_repository.export_phonetic_lexicon_data(callback)
+##
+##        # Handle phonetic encoding data using bulk_create
+##        encoding_instances = [
+##            PhoneticEncoding(language=data['language'], encoding=data['encoding'])
+##            for data in exported_data['encoding']
+##        ]
+##        PhoneticEncoding.objects.bulk_create(encoding_instances, ignore_conflicts=True)
+##        post_task_update(callback, f'--- Imported phonetic encoding for {len(exported_data["encoding"])} languages')
+##
+##        # Handle aligned lexicon entries using bulk_create
+##        aligned_instances = [
+##            AlignedPhoneticLexicon(
+##                word=data['word'],
+##                phonemes=data['phonemes'],
+##                aligned_graphemes=data['aligned_graphemes'],
+##                aligned_phonemes=data['aligned_phonemes'],
+##                language=data['language'],
+##                status=data['status']
+##            ) for data in exported_data['aligned']
+##        ]
+##        AlignedPhoneticLexicon.objects.bulk_create(aligned_instances, ignore_conflicts=True)
+##        post_task_update(callback, f'--- Imported {len(exported_data["aligned"])} aligned lexicon entries')
+##
+##        # Handle plain lexicon entries using bulk_create
+##        plain_instances = [
+##            PlainPhoneticLexicon(
+##                word=data['word'],
+##                phonemes=data['phonemes'],
+##                language=data['language'],
+##                status=data['status']
+##            ) for data in exported_data['plain']
+##        ]
+##        # batch_size to mitigate issues with database locking interfering with DjangoQ
+##        PlainPhoneticLexicon.objects.bulk_create(plain_instances, ignore_conflicts=True, batch_size=1000)  
+##        post_task_update(callback, f'--- Imported {len(exported_data["plain"])} plain lexicon entries')
 
     def set_encoding_for_language(self, language, encoding, callback=None):
         try:

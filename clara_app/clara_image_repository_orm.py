@@ -15,7 +15,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from .models import ImageMetadata
 
-from .clara_image_repository import ImageRepository
+#from .clara_image_repository import ImageRepository
 
 from .clara_utils import get_config, absolute_file_name, absolute_local_file_name, file_exists, local_file_exists, copy_local_file, basename
 from .clara_utils import make_directory, remove_directory, directory_exists, local_directory_exists, make_local_directory, copy_directory
@@ -34,53 +34,56 @@ import traceback
 config = get_config()
 
 class ImageRepositoryORM:
-    def __init__(self, initialise_from_non_orm=False, callback=None):
+    #def __init__(self, initialise_from_non_orm=False, callback=None):
+    def __init__(self, callback=None):
         self.base_dir = absolute_file_name(config.get('image_repository', 'base_dir_orm'))
 
         if not directory_exists(self.base_dir):
-            if initialise_from_non_orm:
-                self.initialise_from_non_orm_repository(callback=callback)
-            else:
-                make_directory(self.base_dir, parents=True, exist_ok=True)
-                post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
-        elif initialise_from_non_orm:
-            post_task_update(callback, f'--- Image repository already initialised, {self.base_dir} exists')
+            make_directory(self.base_dir, parents=True, exist_ok=True)
+            post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
+##            if initialise_from_non_orm:
+##                self.initialise_from_non_orm_repository(callback=callback)
+##            else:
+##                make_directory(self.base_dir, parents=True, exist_ok=True)
+##                post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
+##        elif initialise_from_non_orm:
+##            post_task_update(callback, f'--- Image repository already initialised, {self.base_dir} exists')
 
-    def initialise_from_non_orm_repository(self, callback=None):
-        try:
-            non_orm_repository = ImageRepository(callback=callback)
-            exported_data = non_orm_repository.export_image_metadata()
-
-            if not exported_data:
-                post_task_update(callback, f'--- No data found in non-ORM repository')
-                make_directory(self.base_dir, parents=True, exist_ok=True)
-                post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
-                return
-
-            post_task_update(callback, f'--- Importing {len(exported_data)} items from non-ORM repository')
-            
-            base_dir_non_orm = absolute_file_name(config.get('image_repository', 'base_dir'))
-            base_dir_orm = absolute_file_name(config.get('image_repository', 'base_dir_orm'))
-            
-            new_objects = []
-            for data in exported_data:
-                new_file_path = adjust_file_path_for_imported_data(data['file_path'], base_dir_non_orm, base_dir_orm, callback=callback)
-                new_objects.append(ImageMetadata(
-                    project_id=data['project_id'],
-                    image_name=data['image_name'],
-                    file_path=new_file_path,
-                    associated_text=data['associated_text'],
-                    associated_areas=data['associated_areas'],
-                    page=data['page'],
-                    position=data['position'],
-                ))
-
-            ImageMetadata.objects.bulk_create(new_objects)
-            copy_directory(base_dir_non_orm, base_dir_orm)
-
-        except Exception as e:
-            post_task_update(callback, f'Error initialising from non-ORM repository: "{str(e)}"\n{traceback.format_exc()}')
-            return []
+##    def initialise_from_non_orm_repository(self, callback=None):
+##        try:
+##            non_orm_repository = ImageRepository(callback=callback)
+##            exported_data = non_orm_repository.export_image_metadata()
+##
+##            if not exported_data:
+##                post_task_update(callback, f'--- No data found in non-ORM repository')
+##                make_directory(self.base_dir, parents=True, exist_ok=True)
+##                post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
+##                return
+##
+##            post_task_update(callback, f'--- Importing {len(exported_data)} items from non-ORM repository')
+##            
+##            base_dir_non_orm = absolute_file_name(config.get('image_repository', 'base_dir'))
+##            base_dir_orm = absolute_file_name(config.get('image_repository', 'base_dir_orm'))
+##            
+##            new_objects = []
+##            for data in exported_data:
+##                new_file_path = adjust_file_path_for_imported_data(data['file_path'], base_dir_non_orm, base_dir_orm, callback=callback)
+##                new_objects.append(ImageMetadata(
+##                    project_id=data['project_id'],
+##                    image_name=data['image_name'],
+##                    file_path=new_file_path,
+##                    associated_text=data['associated_text'],
+##                    associated_areas=data['associated_areas'],
+##                    page=data['page'],
+##                    position=data['position'],
+##                ))
+##
+##            ImageMetadata.objects.bulk_create(new_objects)
+##            copy_directory(base_dir_non_orm, base_dir_orm)
+##
+##        except Exception as e:
+##            post_task_update(callback, f'Error initialising from non-ORM repository: "{str(e)}"\n{traceback.format_exc()}')
+##            return []
 
     def delete_entries_for_project(self, project_id, callback=None):
         try:
