@@ -27,7 +27,8 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
-from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, ActivityForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm
+from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm
+from .forms import ActivityForm, ActivitySearchForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm, ActivityStatusForm, ActivityResolutionForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
@@ -1333,6 +1334,24 @@ def activity_detail(request, activity_id):
             registration.delete()
             messages.success(request, "You have been unregistered from this activity.")
             return redirect('activity_detail', activity_id=activity.id)
+        elif 'update_status' in request.POST:
+            if not (user == activity.creator or user.userprofile.is_admin):
+                messages.error(request, "Only the person who posted the activity and admins can change the status")
+                return redirect('activity_detail', activity_id=activity.id)
+            status_form = ActivityStatusForm(request.POST, instance=activity)
+            if status_form.is_valid():
+                status_form.save()
+                messages.success(request, "Activity status updated successfully.")
+                return redirect('activity_detail', activity_id=activity.id)
+        elif 'update_resolution' in request.POST:
+            if not (user == activity.creator or user.userprofile.is_admin):
+                messages.error(request, "Only the person who posted the activity and admins can change the resolution")
+                return redirect('activity_detail', activity_id=activity.id)
+            resolution_form = ActivityResolutionForm(request.POST, instance=activity)
+            if resolution_form.is_valid():
+                resolution_form.save()
+                messages.success(request, "Activity resolution updated successfully.")
+                return redirect('activity_detail', activity_id=activity.id)
         elif 'vote' in request.POST:
             form = ActivityVoteForm(request.POST)
             if form.is_valid():
@@ -1357,14 +1376,19 @@ def activity_detail(request, activity_id):
         form = ActivityRegistrationForm(instance=registration)
         comment_form = ActivityCommentForm()
         vote_form = ActivityVoteForm(initial={'importance': current_vote.importance if current_vote else 0})
+        status_form = ActivityStatusForm(instance=activity) 
+        resolution_form = ActivityResolutionForm(instance=activity)  
 
     return render(request, 'clara_app/activity_detail.html', {
         'activity': activity,
+        'user': user,
         'form': form,
         'registration': registration,
         'comments': comments,
         'comment_form': comment_form,
         'vote_form': vote_form,
+        'status_form': status_form,  
+        'resolution_form': resolution_form,  
     })
 
 def send_activity_comment_notification_email(request, recipients, activity, comment):
@@ -1388,17 +1412,28 @@ def send_activity_comment_notification_email(request, recipients, activity, comm
         else:
             print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
 
-##@login_required
-##def list_activities(request):
-##    activities = Activity.objects.all().order_by('-created_at')
-##    return render(request, 'clara_app/list_activities.html', {
-##        'activities': activities
-##    })
-
 @login_required
 def list_activities(request):
     week_start = get_zoom_meeting_start_date()
-    activities = Activity.objects.all()
+
+    search_form = ActivitySearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        category = search_form.cleaned_data.get('category')
+        status = search_form.cleaned_data.get('status')
+        resolution = search_form.cleaned_data.get('resolution')
+
+        if category:
+            query &= Q(category=category)
+        if status:
+            query &= Q(status=status)
+        if resolution:
+            query &= Q(resolution=resolution)
+
+        activities = Activity.objects.filter(query)
+    else:
+        activities = Activity.objects.all()
 
     # Annotate each activity with its score based on votes for the current week
     activities = activities.annotate(
@@ -1415,6 +1450,7 @@ def list_activities(request):
 
     return render(request, 'clara_app/list_activities.html', {
         'activities': activities,
+        'search_form': search_form,
     })
 
 # Create a new project

@@ -9,6 +9,7 @@ from .models import Activity, ActivityRegistration, ActivityComment, ActivityVot
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
 
 from .clara_utils import is_rtl_language, is_chinese_language
         
@@ -418,6 +419,11 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ['comment']
 
+class ActivitySearchForm(forms.Form):
+    category = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_CATEGORY_CHOICES, required=False, label="Category")
+    status = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_STATUS_CHOICES, required=False, label="Status")
+    resolution = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_RESOLUTION_CHOICES, required=False, label="Resolution")
+
 class ActivityCommentForm(forms.ModelForm):
     class Meta:
         model = ActivityComment
@@ -427,6 +433,16 @@ class ActivityForm(forms.ModelForm):
     class Meta:
         model = Activity
         fields = ['title', 'category', 'description']
+
+class ActivityStatusForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = ['status']
+
+class ActivityResolutionForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = ['resolution']
 
 class ActivityRegistrationForm(forms.ModelForm):
     wants_email = forms.BooleanField(required=False, label='Receive email notifications for updates')

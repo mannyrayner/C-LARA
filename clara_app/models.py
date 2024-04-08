@@ -2,6 +2,7 @@ from django.db import models
 from django.urls import reverse
 
 from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
 
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
@@ -538,24 +539,10 @@ class FundingRequest(models.Model):
 # Models for activities
 
 class Activity(models.Model):
-    CATEGORY_CHOICES = [
-        ('human_ai_interaction', 'Analysis of human/AI collaboration'),
-        ('annotation', 'Annotation of texts by AI'),
-        ('classroom', 'Classroom experiments'),
-        ('multimodal_formatting', 'Formatting/behaviour of multimodal texts'),
-        ('languages_covered_by_ai', 'Languages covered by AI'),
-        ('languages_not_covered_by_ai', 'Languages not covered by AI'),
-        ('legacy_content', 'Legacy content'),
-        ('legacy_software', 'Legacy software'),
-        ('phonetic_texts', 'Phonetic texts'),
-        ('refactoring', 'Refactoring software'),
-        ('simple_clara', 'Simple C-LARA'),
-        ('social_network', 'Social network'),
-        ('other', 'Other'),
-        ]
-    
     title = models.CharField(max_length=255)
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    category = models.CharField(max_length=50, choices=ACTIVITY_CATEGORY_CHOICES)
+    status = models.CharField(max_length=20, choices=ACTIVITY_STATUS_CHOICES, default='posted')
+    resolution = models.CharField(max_length=20, choices=ACTIVITY_RESOLUTION_CHOICES, default='unresolved')
     description = models.TextField()
     creator = models.ForeignKey(User, related_name='created_activities', on_delete=models.CASCADE)
     registered_users = models.ManyToManyField(User, through='ActivityRegistration', related_name='registered_activities')
