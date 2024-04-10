@@ -456,6 +456,9 @@ class ActivityVoteForm(forms.ModelForm):
     class Meta:
         model = ActivityVote
         fields = ['importance']
+
+class AIActivitiesUpdateForm(forms.Form):
+    updates_json = forms.CharField(widget=forms.Textarea(attrs={'placeholder': 'Enter JSON with updates'}), label="AI Updates JSON")
         
 class DiffSelectionForm(forms.Form):
     version_choices = [  

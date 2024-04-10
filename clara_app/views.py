@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.conf import settings
 from django import forms
+from django.db import transaction
 from django.db.models import Count, Avg, Q, Max, F, Case, When, IntegerField, Sum
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
@@ -29,6 +30,7 @@ from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, 
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
 from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm
 from .forms import ActivityForm, ActivitySearchForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm, ActivityStatusForm, ActivityResolutionForm
+from .forms import AIActivitiesUpdateForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
@@ -1534,7 +1536,66 @@ def list_activities_text(request):
         
         text_content += "\n"  # Extra newline for separation between activities
 
+    example_of_json_text = """
+Here is an example of the format to use when replying, showing one comment and one new activity.
+There can be zero or more of each:
+
+{
+
+  "activityUpdates": [
+    {
+      "activityId": 123,
+      "comments": [
+        {
+          "text": "This is an AI-generated comment on activity 123."
+        }
+      ]
+    },
+    {
+      "newActivity": true,
+      "title": "New Activity Suggested by AI",
+      "category": "refactoring",
+      "description": "Here is a detailed description of the new activity..."
+    }
+  ]
+}
+"""
+    text_content += example_of_json_text
+
     return HttpResponse(text_content, content_type="text/plain")
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def ai_activities_reply(request):
+    if request.method == 'POST':
+        form = AIActivitiesUpdateForm(request.POST)
+        if form.is_valid():
+            try:
+                ai_user = User.objects.get(username='ai_user')  # Adjust the username as needed
+                updates = json.loads(form.cleaned_data['updates_json'])
+                
+                with transaction.atomic():
+                    for update in updates['activityUpdates']:
+                        if 'comments' in update and 'activityId' in update:
+                            activity = Activity.objects.get(id=update['activityId'])
+                            for comment in update['comments']:
+                                ActivityComment.objects.create(activity=activity, user=ai_user, comment=comment['text'])
+                        elif 'newActivity' in update:
+                            Activity.objects.create(
+                                title=update['title'],
+                                category=update['category'],
+                                description=update['description'],
+                                creator=ai_user
+                            )
+                    
+                messages.success(request, "Activities have been successfully updated.")
+                return redirect('list_activities')
+            except Exception as e:
+                messages.error(request, f"Failed to process updates: {str(e)}")
+    else:
+        form = AIActivitiesUpdateForm()
+
+    return render(request, 'clara_app/ai_activities_reply.html', {'form': form})
 
 # Create a new project
 @login_required
