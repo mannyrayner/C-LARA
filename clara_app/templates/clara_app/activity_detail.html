@@ -31,16 +31,6 @@
 			<button type="submit" name="update_resolution">Update Resolution</button>
 		</form>
     {% endif %}
-    <h3>Following</h3>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        {% if registration %}
-            <button type="submit" name="unregister">Stop following</button>
-        {% else %}
-            <button type="submit" name="register">Follow</button>
-        {% endif %}
-    </form>
 	<h3>Voting</h3>
 	<form method="post">
         {% csrf_token %}
