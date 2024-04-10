@@ -38,6 +38,7 @@ urlpatterns = [
     path('activity/<int:activity_id>/activity_detail/', views.activity_detail, name='activity_detail'),
     path('create_activity/', views.create_activity, name='create_activity'),
     path('list_activities/', views.list_activities, name='list_activities'),
+    path('list_activities_text/', views.list_activities_text, name='list_activities_text'),
     path('delete_tts_data/', views.delete_tts_data, name='delete_tts_data'),
     path('delete_tts_data_status/<str:report_id>/', views.delete_tts_data_status, name='delete_tts_data_status'),
     path('delete_tts_data_monitor/<str:language>/<str:report_id>/', views.delete_tts_data_monitor, name='delete_tts_data_monitor'),

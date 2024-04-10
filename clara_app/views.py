@@ -1455,6 +1455,63 @@ def list_activities(request):
         'search_form': search_form,
     })
 
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def list_activities_text(request):
+    week_start = get_zoom_meeting_start_date()
+
+    search_form = ActivitySearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        category = search_form.cleaned_data.get('category')
+        status = search_form.cleaned_data.get('status')
+        resolution = search_form.cleaned_data.get('resolution')
+
+        if category:
+            query &= Q(category=category)
+        if status:
+            query &= Q(status=status)
+        if resolution:
+            query &= Q(resolution=resolution)
+
+    activities = Activity.objects.filter(query).annotate(
+        vote_score=Sum(
+            Case(
+                When(activityvote__week=week_start, activityvote__importance=1, then=10),
+                When(activityvote__week=week_start, activityvote__importance=2, then=7),
+                When(activityvote__week=week_start, activityvote__importance=3, then=5),
+                default=0,
+                output_field=IntegerField()
+            )
+        )
+    ).order_by('-vote_score', '-created_at')
+
+    # Prepare plain text content
+    text_content = "Activities Summary\n\n"
+    for activity in activities:
+        text_content += f"Title: {activity.title}\n"
+        text_content += f"Category: {activity.get_category_display()}\n"
+        text_content += f"Description: {activity.description}\n"
+        text_content += f"Status: {activity.get_status_display()}\n"
+        text_content += f"Resolution: {activity.get_resolution_display()}\n"
+        text_content += f"Vote Score: {activity.vote_score or 0}\n"
+        text_content += f"Created At: {activity.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        text_content += f"Updated At: {activity.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+
+        # Fetch and append comments for the activity
+        comments = ActivityComment.objects.filter(activity=activity).order_by('created_at')
+        if comments.exists():
+            text_content += "Comments:\n"
+            for comment in comments:
+                text_content += f"\t{comment.user.username} ({comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}): {comment.comment}\n"
+        else:
+            text_content += "No comments.\n"
+        
+        text_content += "\n"  # Extra newline for separation between activities
+
+    return HttpResponse(text_content, content_type='text/plain')
+
 # Create a new project
 @login_required
 def create_project(request):
