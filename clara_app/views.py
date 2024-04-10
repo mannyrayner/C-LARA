@@ -73,6 +73,7 @@ from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, po
 from .clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
 
 from pathlib import Path
 from decimal import Decimal
@@ -1458,8 +1459,21 @@ def list_activities(request):
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
 def list_activities_text(request):
-    week_start = get_zoom_meeting_start_date()
+    # Instructions for using query parameters for filtering
+    category_options = ", ".join([f"'{code}' for {name}" for code, name in ACTIVITY_CATEGORY_CHOICES])
+    status_options = ", ".join([f"'{code}' for {name}" for code, name in ACTIVITY_STATUS_CHOICES])
+    resolution_options = ", ".join([f"'{code}' for {name}" for code, name in ACTIVITY_RESOLUTION_CHOICES])
 
+    instructions = (
+        "To filter activities, append query parameters to the URL. "
+        "For example, '?category=annotation&status=posted'. "
+        "Use 'category', 'status', and 'resolution' as parameters. Possible values are:\n\n"
+        f"Category: {category_options}\n\n"
+        f"Status: {status_options}\n\n"
+        f"Resolution: {resolution_options}\n\n"
+    )
+
+    week_start = get_zoom_meeting_start_date()
     search_form = ActivitySearchForm(request.GET or None)
     query = Q()
 
@@ -1468,11 +1482,11 @@ def list_activities_text(request):
         status = search_form.cleaned_data.get('status')
         resolution = search_form.cleaned_data.get('resolution')
 
-        if category:
+        if category and category != 'any':
             query &= Q(category=category)
-        if status:
+        if status and status != 'any':
             query &= Q(status=status)
-        if resolution:
+        if resolution and resolution != 'any':
             query &= Q(resolution=resolution)
 
     activities = Activity.objects.filter(query).annotate(
@@ -1488,7 +1502,7 @@ def list_activities_text(request):
     ).order_by('-vote_score', '-created_at')
 
     # Prepare plain text content
-    text_content = "Activities Summary\n\n"
+    text_content = instructions + "Activities Summary\n\n"
     for activity in activities:
         text_content += f"Title: {activity.title}\n"
         text_content += f"Category: {activity.get_category_display()}\n"
@@ -1497,20 +1511,20 @@ def list_activities_text(request):
         text_content += f"Resolution: {activity.get_resolution_display()}\n"
         text_content += f"Vote Score: {activity.vote_score or 0}\n"
         text_content += f"Created At: {activity.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
-        text_content += f"Updated At: {activity.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        text_content += f"Updated At: {activity.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
 
         # Fetch and append comments for the activity
         comments = ActivityComment.objects.filter(activity=activity).order_by('created_at')
         if comments.exists():
             text_content += "Comments:\n"
             for comment in comments:
-                text_content += f"\t{comment.user.username} ({comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}): {comment.comment}\n"
+                text_content += f"{comment.user.username} ({comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}): {comment.comment}\n"
         else:
             text_content += "No comments.\n"
         
         text_content += "\n"  # Extra newline for separation between activities
 
-    return HttpResponse(text_content, content_type='text/plain')
+    return HttpResponse(text_content, content_type="text/plain")
 
 # Create a new project
 @login_required
