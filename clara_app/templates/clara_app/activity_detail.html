@@ -1,7 +1,7 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-    <h2>{{ activity.title }}</h2>
+    <h2>{{ activity.title }} (Activity #{{ activity.id }})</h2>
     <p>{{ activity.description }}</p>
 	<h3>Following</h3>
     <form method="post">

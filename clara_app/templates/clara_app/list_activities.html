@@ -4,6 +4,9 @@
 <h2>Activities</h2>
 <form method="get" action="{% url 'list_activities' %}">
     <div>
+        {{ search_form.id.label_tag }} {{ search_form.id }}
+    </div>
+	<div>
         {{ search_form.category.label_tag }} {{ search_form.category }}
     </div>
     <div>
@@ -19,6 +22,7 @@
     <thead>
         <tr>
             <th>Title</th>
+			<th>ID</th>
             <th>Category</th>
             <th>Status</th>
             <th>Resolution</th>
@@ -29,6 +33,7 @@
         {% for activity in activities %}
         <tr>
             <td><a href="{% url 'activity_detail' activity.id %}">{{ activity.title }}</a></td>
+			<td>{{ activity.id }}</td>
             <td>{{ activity.get_category_display }}</td>
             <td>{{ activity.get_status_display }}</td>
             <td>{{ activity.get_resolution_display }}</td>
