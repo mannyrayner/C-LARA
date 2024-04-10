@@ -1423,16 +1423,21 @@ def list_activities(request):
     query = Q()
 
     if search_form.is_valid():
+        activity_id = search_form.cleaned_data.get('id')
         category = search_form.cleaned_data.get('category')
         status = search_form.cleaned_data.get('status')
         resolution = search_form.cleaned_data.get('resolution')
 
-        if category:
-            query &= Q(category=category)
-        if status:
-            query &= Q(status=status)
-        if resolution:
-            query &= Q(resolution=resolution)
+        if activity_id:
+            query &= Q(id=activity_id)
+
+        else:
+            if category:
+                query &= Q(category=category)
+            if status:
+                query &= Q(status=status)
+            if resolution:
+                query &= Q(resolution=resolution)
 
         activities = Activity.objects.filter(query)
     else:
@@ -1466,8 +1471,8 @@ def list_activities_text(request):
 
     instructions = (
         "To filter activities, append query parameters to the URL. "
-        "For example, '?category=annotation&status=posted'. "
-        "Use 'category', 'status', and 'resolution' as parameters. Possible values are:\n\n"
+        "For example, '?id=5' or '?category=annotation&status=posted'. "
+        "Use 'id', 'category', 'status', and 'resolution' as parameters. Possible values for the last three are:\n\n"
         f"Category: {category_options}\n\n"
         f"Status: {status_options}\n\n"
         f"Resolution: {resolution_options}\n\n"
@@ -1478,16 +1483,20 @@ def list_activities_text(request):
     query = Q()
 
     if search_form.is_valid():
+        activity_id = int(search_form.cleaned_data.get('id'))
         category = search_form.cleaned_data.get('category')
         status = search_form.cleaned_data.get('status')
         resolution = search_form.cleaned_data.get('resolution')
 
-        if category and category != 'any':
-            query &= Q(category=category)
-        if status and status != 'any':
-            query &= Q(status=status)
-        if resolution and resolution != 'any':
-            query &= Q(resolution=resolution)
+        if activity_id:
+            query &= Q(id=activity_id)
+        else:
+            if category and category != 'any':
+                query &= Q(category=category)
+            if status and status != 'any':
+                query &= Q(status=status)
+            if resolution and resolution != 'any':
+                query &= Q(resolution=resolution)
 
     activities = Activity.objects.filter(query).annotate(
         vote_score=Sum(
@@ -1505,6 +1514,7 @@ def list_activities_text(request):
     text_content = instructions + "Activities Summary\n\n"
     for activity in activities:
         text_content += f"Title: {activity.title}\n"
+        text_content += f"ID: {activity.id}\n"
         text_content += f"Category: {activity.get_category_display()}\n"
         text_content += f"Description: {activity.description}\n"
         text_content += f"Status: {activity.get_status_display()}\n"

@@ -420,6 +420,7 @@ class CommentForm(forms.ModelForm):
         fields = ['comment']
 
 class ActivitySearchForm(forms.Form):
+    id = forms.IntegerField(required=False, label="Activity ID", widget=forms.NumberInput(attrs={'placeholder': 'Enter Activity ID'}))
     category = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_CATEGORY_CHOICES, required=False, label="Category")
     status = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_STATUS_CHOICES, required=False, label="Status")
     resolution = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_RESOLUTION_CHOICES, required=False, label="Resolution")
