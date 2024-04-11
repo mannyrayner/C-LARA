@@ -1311,7 +1311,7 @@ def activity_detail(request, activity_id):
     current_vote = ActivityVote.objects.filter(user=user, activity=activity, week=week_start).first()
 
     all_current_votes = ActivityVote.objects.filter(activity=activity, week=week_start)
-    voting_users = {vote.user for vote in all_current_votes}
+    voting_users = {vote.user for vote in all_current_votes if vote.importance != 0}
 
     if request.method == 'POST':
         comment_form = ActivityCommentForm(request.POST)
@@ -1479,6 +1479,14 @@ def list_activities(request):
     else:
         activities = Activity.objects.all()
 
+    activities = annotate_and_order_activities_for_display(activities)
+
+    return render(request, 'clara_app/list_activities.html', {
+        'activities': activities,
+        'search_form': search_form,
+    })
+
+def annotate_and_order_activities_for_display(activities):
     # Annotate each activity with its score based on current votes
     activities = activities.annotate(
     vote_score=Sum(
@@ -1504,12 +1512,7 @@ def list_activities(request):
     )
 
     # Order by vote score, custom status order, and then by creation date
-    activities = activities.order_by('-vote_score', 'status_order', '-created_at')
-
-    return render(request, 'clara_app/list_activities.html', {
-        'activities': activities,
-        'search_form': search_form,
-    })
+    return activities.order_by('-vote_score', 'status_order', '-created_at')
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
@@ -1548,17 +1551,9 @@ def list_activities_text(request):
             if resolution and resolution != 'any':
                 query &= Q(resolution=resolution)
 
-    activities = Activity.objects.filter(query).annotate(
-        vote_score=Sum(
-            Case(
-                When(activityvote__week=week_start, activityvote__importance=1, then=10),
-                When(activityvote__week=week_start, activityvote__importance=2, then=7),
-                When(activityvote__week=week_start, activityvote__importance=3, then=5),
-                default=0,
-                output_field=IntegerField()
-            )
-        )
-    ).order_by('-vote_score', '-created_at')
+    activities =  Activity.objects.filter(query)
+
+    activities = annotate_and_order_activities_for_display(activities)
 
     # Prepare plain text content
     text_content = instructions + "Activities Summary\n\n"
@@ -1671,6 +1666,12 @@ def ai_activities_reply(request):
                                 user=ai_user,
                                 activity_id=activity_id,
                                 week=week_start,
+                                defaults={'importance': importance}
+                            )
+                            # Update current standing vote
+                            CurrentActivityVote.objects.update_or_create(
+                                user=ai_user, 
+                                activity_id=activity_id, 
                                 defaults={'importance': importance}
                             )
                     
