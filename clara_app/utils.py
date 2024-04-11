@@ -344,3 +344,27 @@ def get_zoom_meeting_start_date():
     meeting_start_adelaide = meeting_start_geneva.astimezone(adelaide_tz).date()
 
     return meeting_start_adelaide
+
+from datetime import datetime, timedelta, time
+import pytz
+
+def get_previous_week_start_date():
+    adelaide_tz = pytz.timezone('Australia/Adelaide')
+    geneva_tz = pytz.timezone('Europe/Zurich')
+
+    now_adelaide = datetime.now(adelaide_tz)
+    # Convert 'now' in Adelaide time to Geneva time to calculate based on the meeting start time in Geneva
+    now_geneva = now_adelaide.astimezone(geneva_tz)
+
+    # Find the most recent Thursday based on Geneva time
+    days_behind = (now_geneva.weekday() - 3) % 7  # Thursday is 3
+    # Subtract an additional week to get to the previous week's Thursday
+    last_thursday_geneva = now_geneva.date() - timedelta(days=days_behind + 7)
+    # Create a Geneva datetime for last Thursday at 10:30
+    meeting_start_geneva = datetime.combine(last_thursday_geneva, time(10, 30), tzinfo=geneva_tz)
+
+    # Convert the meeting time back to Adelaide time to align with server's timezone
+    meeting_start_adelaide = meeting_start_geneva.astimezone(adelaide_tz).date()
+
+    return meeting_start_adelaide
+

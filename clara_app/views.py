@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.conf import settings
 from django import forms
 from django.db import transaction
-from django.db.models import Count, Avg, Q, Max, F, Case, When, IntegerField, Sum
+from django.db.models import Count, Avg, Q, Max, F, Case, Value, When, IntegerField, Sum
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
@@ -19,7 +19,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
-from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements, Activity, ActivityRegistration, ActivityComment, ActivityVote
+from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements, Activity, ActivityRegistration, ActivityComment, ActivityVote, CurrentActivityVote
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -46,7 +46,7 @@ from .utils import get_user_api_cost, get_project_api_cost, get_project_operatio
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates, has_saved_internalised_and_annotated_text
 from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
-from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date
+from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date, get_previous_week_start_date
 
 from .clara_main import CLARAProjectInternal
 #from .clara_audio_repository import AudioRepository
@@ -1310,6 +1310,9 @@ def activity_detail(request, activity_id):
     week_start = get_zoom_meeting_start_date()
     current_vote = ActivityVote.objects.filter(user=user, activity=activity, week=week_start).first()
 
+    all_current_votes = ActivityVote.objects.filter(activity=activity, week=week_start)
+    voting_users = {vote.user for vote in all_current_votes}
+
     if request.method == 'POST':
         comment_form = ActivityCommentForm(request.POST)
         if 'submit_comment' in request.POST and comment_form.is_valid():
@@ -1318,11 +1321,7 @@ def activity_detail(request, activity_id):
             new_comment.activity = activity
             new_comment.save()
 
-            # Notify other registered users who want email updates
-            registered_users = ActivityRegistration.objects.filter(activity=activity, wants_email=True).exclude(user=user)
-            recipients = [reg.user for reg in registered_users if reg.user.email]
-            # Assuming a function similar to send_rating_or_comment_notification_email is adapted for activities
-            send_activity_comment_notification_email(request, recipients, activity, new_comment)
+            notify_activity_participants(activity, new_comment)
 
             return redirect('activity_detail', activity_id=activity.id)
         elif 'register' in request.POST:
@@ -1368,11 +1367,17 @@ def activity_detail(request, activity_id):
                         messages.error(request, f"You've already assigned priority '{importance}' to activity '{existing_vote.activity.title}' this week.")
                         return redirect('activity_detail', activity_id=activity.id)
 
-                # Save or update vote
+                # Update historical vote
                 ActivityVote.objects.update_or_create(
                     user=request.user, 
                     activity=activity, 
                     week=week_start,
+                    defaults={'importance': importance}
+                )
+                # Update current standing vote
+                CurrentActivityVote.objects.update_or_create(
+                    user=request.user, 
+                    activity=activity, 
                     defaults={'importance': importance}
                 )
                 messages.success(request, "Your vote has been recorded.")
@@ -1393,8 +1398,37 @@ def activity_detail(request, activity_id):
         'comment_form': comment_form,
         'vote_form': vote_form,
         'status_form': status_form,  
-        'resolution_form': resolution_form,  
+        'resolution_form': resolution_form,
+        'voting_users': voting_users,  
     })
+
+def notify_activity_participants(activity, new_comment):
+    # Get the activity creator
+    creator = {activity.creator}
+
+    # Get users who voted for the activity
+    voters = set(User.objects.filter(
+        activityvote__activity=activity
+    ).distinct())
+
+    # Get users who commented on the activity
+    commenters = set(User.objects.filter(
+        activitycomment__activity=activity
+    ).distinct())
+
+    # Combine all, remove duplicates
+    potential_recipients = creator.union(voters, commenters)
+
+    # Exclude users who opted out
+    opted_out_users = set(ActivityRegistration.objects.filter(
+        activity=activity, wants_email=False
+    ).values_list('user', flat=True))
+
+    recipients = potential_recipients - opted_out_users
+
+    # Send notification emails, except to the new comment's author
+    recipients.discard(new_comment.user)
+    send_activity_comment_notification_email(activity, new_comment, list(recipients))
 
 def send_activity_comment_notification_email(request, recipients, activity, comment):
     full_url = request.build_absolute_uri(activity.get_absolute_url())
@@ -1445,18 +1479,32 @@ def list_activities(request):
     else:
         activities = Activity.objects.all()
 
-    # Annotate each activity with its score based on votes for the current week
+    # Annotate each activity with its score based on current votes
     activities = activities.annotate(
-        vote_score=Sum(
-            Case(
-                When(activityvote__week=week_start, activityvote__importance=1, then=10),
-                When(activityvote__week=week_start, activityvote__importance=2, then=7),
-                When(activityvote__week=week_start, activityvote__importance=3, then=5),
-                default=0,
-                output_field=IntegerField()
-            )
+    vote_score=Sum(
+        Case(
+            When(currentactivityvote__importance=1, then=Value(10)),
+            When(currentactivityvote__importance=2, then=Value(7)),
+            When(currentactivityvote__importance=3, then=Value(5)),
+            default=Value(0),
+            output_field=IntegerField()
         )
-    ).order_by('-vote_score', '-created_at')  # Order by vote score and then by creation date
+    )
+    )
+
+    # Annotate activities with a custom order for status
+    activities = activities.annotate(
+        status_order=Case(
+            When(status='in_progress', then=Value(1)),
+            When(status='posted', then=Value(2)),
+            When(status='resolved', then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+    )
+
+    # Order by vote score, custom status order, and then by creation date
+    activities = activities.order_by('-vote_score', 'status_order', '-created_at')
 
     return render(request, 'clara_app/list_activities.html', {
         'activities': activities,
@@ -1537,11 +1585,10 @@ def list_activities_text(request):
         text_content += "\n"  # Extra newline for separation between activities
 
     example_of_json_text = """
-Here is an example of the format to use when replying, showing one comment and one new activity.
+Here is an example of the format to use when replying, showing one comment, one new activity and a set of votes.
 There can be zero or more of each:
 
 {
-
   "activityUpdates": [
     {
       "activityId": 123,
@@ -1557,8 +1604,14 @@ There can be zero or more of each:
       "category": "refactoring",
       "description": "Here is a detailed description of the new activity..."
     }
-  ]
+  ],
+  "aiVotes": {
+    "firstPreference": 123,
+    "secondPreference": 124,
+    "thirdPreference": 125
+  }
 }
+
 """
     text_content += example_of_json_text
 
@@ -1571,7 +1624,8 @@ def ai_activities_reply(request):
         form = AIActivitiesUpdateForm(request.POST)
         if form.is_valid():
             try:
-                ai_user = User.objects.get(username='ai_user')  # Adjust the username as needed
+                ai_user = User.objects.get(username='ai_user')  
+                week_start = get_zoom_meeting_start_date()
                 updates = json.loads(form.cleaned_data['updates_json'])
                 
                 with transaction.atomic():
@@ -1579,13 +1633,45 @@ def ai_activities_reply(request):
                         if 'comments' in update and 'activityId' in update:
                             activity = Activity.objects.get(id=update['activityId'])
                             for comment in update['comments']:
-                                ActivityComment.objects.create(activity=activity, user=ai_user, comment=comment['text'])
+                                new_comment = ActivityComment.objects.create(activity=activity, user=ai_user, comment=comment['text'])
+                                # Notify relevant users about the new comment
+                                notify_activity_participants(activity, new_comment)
                         elif 'newActivity' in update:
                             Activity.objects.create(
                                 title=update['title'],
                                 category=update['category'],
                                 description=update['description'],
                                 creator=ai_user
+                            )
+
+                # Process AI votes if there are any
+                if 'aiVotes' in updates:
+                    ai_votes = updates['aiVotes']
+                    for importance, activity_id in enumerate([ai_votes.get('firstPreference'),
+                                                              ai_votes.get('secondPreference'),
+                                                              ai_votes.get('thirdPreference')],
+                                                             start=1):
+                        if activity_id:
+                            # Check if AI has already voted with the same importance this week for a different activity
+                            existing_vote = ActivityVote.objects.filter(
+                                user=ai_user,
+                                week=week_start,
+                                importance=importance
+                            ).exclude(activity_id=activity_id).first()
+                            
+                            if existing_vote:
+                                # If an existing vote is found, it might be appropriate to either skip updating this vote,
+                                # or to implement some logic to handle this case (e.g., reassign votes).
+                                # For now, let's just warn and skip to the next vote to maintain data integrity.
+                                messages.error(request, f"AI user has already voted with importance {importance} for activity {existing_vote.activity.id} this week.")
+                                continue
+
+                            # Save or update vote, ensuring uniqueness of importance per week for the AI
+                            ActivityVote.objects.update_or_create(
+                                user=ai_user,
+                                activity_id=activity_id,
+                                week=week_start,
+                                defaults={'importance': importance}
                             )
                     
                 messages.success(request, "Activities have been successfully updated.")

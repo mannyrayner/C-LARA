@@ -580,6 +580,14 @@ class ActivityVote(models.Model):
 
     class Meta:
         unique_together = ('user', 'activity', 'week')
+
+class CurrentActivityVote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    importance = models.IntegerField(choices=ActivityVote.ACTIVITY_VOTE_CHOICES)
+
+    class Meta:
+        unique_together = ('user', 'activity')
         
 # Django ORM versions of database relations for repository classes
 
