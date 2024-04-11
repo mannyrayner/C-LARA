@@ -1586,7 +1586,7 @@ def list_activities_text(request):
 
     example_of_json_text = """
 Here is an example of the format to use when replying, showing one comment, one new activity and a set of votes.
-There can be zero or more of each:
+There can be zero or more comments or activities, and at most one set of votes:
 
 {
   "activityUpdates": [
