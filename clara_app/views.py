@@ -1321,7 +1321,7 @@ def activity_detail(request, activity_id):
             new_comment.activity = activity
             new_comment.save()
 
-            notify_activity_participants(activity, new_comment)
+            notify_activity_participants(request, activity, new_comment)
 
             return redirect('activity_detail', activity_id=activity.id)
         elif 'register' in request.POST:
@@ -1402,7 +1402,7 @@ def activity_detail(request, activity_id):
         'voting_users': voting_users,  
     })
 
-def notify_activity_participants(activity, new_comment):
+def notify_activity_participants(request, activity, new_comment):
     # Get the activity creator
     creator = {activity.creator}
 
@@ -1428,7 +1428,7 @@ def notify_activity_participants(activity, new_comment):
 
     # Send notification emails, except to the new comment's author
     recipients.discard(new_comment.user)
-    send_activity_comment_notification_email(activity, new_comment, list(recipients))
+    send_activity_comment_notification_email(request, list(recipients), activity, new_comment)
 
 def send_activity_comment_notification_email(request, recipients, activity, comment):
     full_url = request.build_absolute_uri(activity.get_absolute_url())
@@ -1635,7 +1635,7 @@ def ai_activities_reply(request):
                             for comment in update['comments']:
                                 new_comment = ActivityComment.objects.create(activity=activity, user=ai_user, comment=comment['text'])
                                 # Notify relevant users about the new comment
-                                notify_activity_participants(activity, new_comment)
+                                notify_activity_participants(request, activity, new_comment)
                         elif 'newActivity' in update:
                             Activity.objects.create(
                                 title=update['title'],
