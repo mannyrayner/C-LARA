@@ -347,9 +347,18 @@ class ABAIREngine(TTSEngine):
         self.languages = { 'irish':
                             {  'language_id': 'ga-IE',
                                'voices': [
-                                   'ga_UL_anb_nnmnkwii',
-                                   'ga_MU_nnc_nnmnkwii',
-                                   'ga_MU_cmg_nnmnkwii'                           
+                                   'ga_UL_anb_nemo',
+                                   'ga_UL_anb_exthts',
+                                   'ga_UL_anb_piper',
+                                   'ga_CO_snc_nemo',
+                                   'ga_CO_snc_exthts',
+                                   'ga_CO_snc_piper',
+                                   'ga_CO_pmc_exthts',
+                                   'ga_CO_pmc_nemo',
+                                   'ga_MU_nnc_nemo',
+                                   'ga_MU_nnc_exthts',
+                                   'ga_MU_dms_nemo',
+                                   'ga_MU_dms_piper',
                                ]
                             }
                           }
