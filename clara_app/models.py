@@ -136,9 +136,18 @@ class HumanAudioInfo(models.Model):
         ( 'onyx', 'Onyx (OpenAI)' ),
         ( 'nova', 'Nova (OpenAI)' ),
         ( 'shimmer', 'Shimmer (OpenAI)' ),
-        ( 'ga_UL_anb_nnmnkwii', 'ga_UL_anb_nnmnkwii (ABAIR)' ),
-        ( 'ga_MU_nnc_nnmnkwii', 'ga_MU_nnc_nnmnkwii (ABAIR)' ),
-        ( 'ga_MU_cmg_nnmnkwii', 'ga_MU_cmg_nnmnkwii (ABAIR)' ),      
+        ( 'ga_UL_anb_nemo', 'ga_UL_anb_nemo (ABAIR)' ),
+        ( 'ga_UL_anb_exthts', 'ga_UL_anb_exthts (ABAIR)' ),
+        ( 'ga_UL_anb_piper', 'ga_UL_anb_piper (ABAIR)' ),
+        ( 'ga_CO_snc_nemo', 'ga_CO_snc_nemo (ABAIR)' ),
+        ( 'ga_CO_snc_exthts', 'ga_CO_snc_exthts (ABAIR)' ),
+        ( 'ga_CO_snc_piper', 'ga_CO_snc_piper (ABAIR)' ),
+        ( 'ga_CO_pmc_exthts', 'ga_CO_pmc_exthts (ABAIR)' ),
+        ( 'ga_CO_pmc_nemo', 'ga_CO_pmc_nemo (ABAIR)' ),
+        ( 'ga_MU_nnc_nemo', 'ga_MU_nnc_nemo (ABAIR)' ),
+        ( 'ga_MU_nnc_exthts', 'ga_MU_nnc_exthts (ABAIR)' ),
+        ( 'ga_MU_dms_nemo', 'ga_MU_dms_nemo (ABAIR)' ),
+        ( 'ga_MU_dms_piper', 'ga_MU_dms_piper (ABAIR)' ),
     ]
     
     # Fields
