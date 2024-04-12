@@ -16,6 +16,7 @@ ACTIVITY_CATEGORY_CHOICES = [
     ('annotation', 'Annotation of texts by AI'),
     ('classroom', 'Classroom experiments'),
     ('creating_texts', 'Creation of texts by AI'),
+    ('design', 'Design issues for C-LARA platform'),
     ('multimodal_formatting', 'Formatting/behaviour of multimodal texts'),
     ('languages_covered_by_ai', 'Languages covered by AI'),
     ('languages_not_covered_by_ai', 'Languages not covered by AI'),
@@ -40,6 +41,14 @@ ACTIVITY_RESOLUTION_CHOICES = [
     ('unresolved', 'Unresolved'),
     ('solved', 'Solved'),
     ('wont_do', "Won't Do"),
+    ]
+
+ACTIVITY_TIME_PERIOD_CHOICES = [
+    (1, 'Last day'),
+    (3, 'Last three days'),
+    (7, 'Last week'),
+    (31, 'Last month'),
+    (93, 'Last three months'),
     ]
 
 SUPPORTED_LANGUAGES = [

@@ -9,7 +9,7 @@ from .models import Activity, ActivityRegistration, ActivityComment, ActivityVot
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
-from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, ACTIVITY_TIME_PERIOD_CHOICES
 
 from .clara_utils import is_rtl_language, is_chinese_language
         
@@ -424,6 +424,7 @@ class ActivitySearchForm(forms.Form):
     category = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_CATEGORY_CHOICES, required=False, label="Category")
     status = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_STATUS_CHOICES, required=False, label="Status")
     resolution = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_RESOLUTION_CHOICES, required=False, label="Resolution")
+    time_period = forms.ChoiceField(choices=[('', 'Any time')] + ACTIVITY_TIME_PERIOD_CHOICES, required=False, label="Most recently active")
 
 class ActivityCommentForm(forms.ModelForm):
     class Meta:

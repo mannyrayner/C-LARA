@@ -1321,6 +1321,10 @@ def activity_detail(request, activity_id):
             new_comment.activity = activity
             new_comment.save()
 
+            # Update the activity's updated_at field
+            activity.updated_at = timezone.now()
+            activity.save()
+
             notify_activity_participants(request, activity, new_comment)
 
             return redirect('activity_detail', activity_id=activity.id)
@@ -1380,6 +1384,11 @@ def activity_detail(request, activity_id):
                     activity=activity, 
                     defaults={'importance': importance}
                 )
+
+                # Update the activity's updated_at field
+                activity.updated_at = timezone.now()
+                activity.save()
+            
                 messages.success(request, "Your vote has been recorded.")
             return redirect('activity_detail', activity_id=activity.id)
     else:
@@ -1463,6 +1472,7 @@ def list_activities(request):
         category = search_form.cleaned_data.get('category')
         status = search_form.cleaned_data.get('status')
         resolution = search_form.cleaned_data.get('resolution')
+        time_period = search_form.cleaned_data.get('time_period')
 
         if activity_id:
             query &= Q(id=activity_id)
@@ -1474,6 +1484,10 @@ def list_activities(request):
                 query &= Q(status=status)
             if resolution:
                 query &= Q(resolution=resolution)
+            if time_period:
+                # Calculate the date offset based on the selected time period
+                days_ago = timezone.now() - timedelta(days=int(time_period))
+                query &= Q(updated_at__gte=days_ago)
 
         activities = Activity.objects.filter(query)
     else:
@@ -1524,8 +1538,8 @@ def list_activities_text(request):
 
     instructions = (
         "To filter activities, append query parameters to the URL. "
-        "For example, '?id=5' or '?category=annotation&status=posted'. "
-        "Use 'id', 'category', 'status', and 'resolution' as parameters. Possible values for the last three are:\n\n"
+        "For example, '?id=5' or 'time_period=30' or '?category=annotation&status=posted'. "
+        "Use 'id', 'time_period', 'category', 'status', and 'resolution' as parameters. Possible values for the last three are:\n\n"
         f"Category: {category_options}\n\n"
         f"Status: {status_options}\n\n"
         f"Resolution: {resolution_options}\n\n"
@@ -1536,10 +1550,11 @@ def list_activities_text(request):
     query = Q()
 
     if search_form.is_valid():
-        activity_id = int(search_form.cleaned_data.get('id'))
+        activity_id = int(search_form.cleaned_data.get('id')) if search_form.cleaned_data.get('id') else None
         category = search_form.cleaned_data.get('category')
         status = search_form.cleaned_data.get('status')
         resolution = search_form.cleaned_data.get('resolution')
+        time_period = int(search_form.cleaned_data.get('time_period')) if search_form.cleaned_data.get('time_period') else None
 
         if activity_id:
             query &= Q(id=activity_id)
@@ -1550,6 +1565,10 @@ def list_activities_text(request):
                 query &= Q(status=status)
             if resolution and resolution != 'any':
                 query &= Q(resolution=resolution)
+            if time_period:
+                # Calculate the date offset based on the selected time period
+                days_ago = timezone.now() - timedelta(days=int(time_period))
+                query &= Q(updated_at__gte=days_ago)
 
     activities =  Activity.objects.filter(query)
 
