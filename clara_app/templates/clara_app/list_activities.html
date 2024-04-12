@@ -15,9 +15,13 @@
     <div>
         {{ search_form.resolution.label_tag }} {{ search_form.resolution }}
     </div>
+	<div>
+        {{ search_form.time_period.label_tag }} {{ search_form.time_period }}
+    </div>
     <button type="submit">Search</button>
 </form>
 <p>Scores refer to this week's voting on priorities: top priority = 10, second = 7, third = 5</p>
+<a href="{% url 'create_activity' %}">Create a new activity</a>
 <table border="2">
     <thead>
         <tr>
@@ -47,5 +51,5 @@
     </tbody>
 </table>
 
-<a href="{% url 'create_activity' %}">Create a new activity</a>
+<p><a href="{% url 'create_activity' %}">Create a new activity</a></p>
 {% endblock %}
