@@ -2,7 +2,7 @@
 
 {% block content %}
     <h2>{{ activity.title }} (Activity #{{ activity.id }})</h2>
-    <p>{{ activity.description }}</p>
+    <p>{{ activity.description|linebreaksbr }}</p>
 	{% if voting_users %}
     <h3>Voters this week</h3>
 		<ul>
@@ -50,7 +50,7 @@
 		<p>
 			<a href="{% url 'external_profile' user_id=comment.user.id %}"><strong>{{ comment.user.username }}</strong></a>
 			({{ comment.created_at|date:"F j, Y, P" }}):
-			{{ comment.comment }}
+			{{ comment.comment|linebreaksbr }}
 		</p>
 	{% endfor %}
 	<form method="post">
