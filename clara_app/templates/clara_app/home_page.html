@@ -7,15 +7,6 @@
     {{ search_form.as_p }}
     <button type="submit" title="Update the list based on the selected time period">Update View</button>
 </form>
-<h3>Recent Activities</h3>
-<ul>
-    {% for activity in activities %}
-    <li><a href="{% url 'activity_detail' activity.id %}">{{ activity.title }}</a> ({{ activity.get_status_display }})</li>
-    {% empty %}
-    <li>No recent activities found.</li>
-    {% endfor %}
-</ul>
-<p>For more detailed activity tracking, go to <a href="{% url 'list_activities' %}">Social network > Activities</a></p>
 <h3>Recent Content</h3>
 <ul>
     {% for content in contents %}
@@ -25,5 +16,14 @@
     {% endfor %}
 </ul>
 <p>For other search options, go to <a href="{% url 'content_list' %}">Social network > Posted content</a></p>
+<h3>Recent Activities</h3>
+<ul>
+    {% for activity in activities %}
+    <li><a href="{% url 'activity_detail' activity.id %}">{{ activity.title }}</a> ({{ activity.get_status_display }})</li>
+    {% empty %}
+    <li>No recent activities found.</li>
+    {% endfor %}
+</ul>
+<p>For more detailed activity tracking, go to <a href="{% url 'list_activities' %}">Social network > Activities</a></p>
 
 {% endblock %}
