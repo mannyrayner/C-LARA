@@ -9,7 +9,7 @@ from .models import Activity, ActivityRegistration, ActivityComment, ActivityVot
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
-from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, ACTIVITY_TIME_PERIOD_CHOICES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, RECENT_TIME_PERIOD_CHOICES, DEFAULT_RECENT_TIME_PERIOD
 
 from .clara_utils import is_rtl_language, is_chinese_language
         
@@ -92,9 +92,18 @@ class FormatPreferencesForm(forms.ModelForm):
                   'concordance_font_type', 'concordance_font_size', 'concordance_text_align']
 
 class ContentSearchForm(forms.Form):
+    title = forms.CharField(max_length=255, required=False)
     l2 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)
     l1 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)
-    title = forms.CharField(max_length=255, required=False)
+    time_period = forms.ChoiceField(choices=[('', 'Any time')] + RECENT_TIME_PERIOD_CHOICES, required=False, label="Most recently active")
+
+class UnifiedSearchForm(forms.Form):
+    time_period = forms.ChoiceField(
+        choices=RECENT_TIME_PERIOD_CHOICES,
+        required=False,
+        label="Showing updates for",
+        initial=DEFAULT_RECENT_TIME_PERIOD
+    )
 
 class ProjectCreationForm(forms.ModelForm):
     class Meta:
@@ -424,7 +433,7 @@ class ActivitySearchForm(forms.Form):
     category = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_CATEGORY_CHOICES, required=False, label="Category")
     status = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_STATUS_CHOICES, required=False, label="Status")
     resolution = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_RESOLUTION_CHOICES, required=False, label="Resolution")
-    time_period = forms.ChoiceField(choices=[('', 'Any time')] + ACTIVITY_TIME_PERIOD_CHOICES, required=False, label="Most recently active")
+    time_period = forms.ChoiceField(choices=[('', 'Any time')] + RECENT_TIME_PERIOD_CHOICES, required=False, label="Most recently active")
 
 class ActivityCommentForm(forms.ModelForm):
     class Meta:

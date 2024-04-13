@@ -28,7 +28,7 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
-from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm
+from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, UnifiedSearchForm
 from .forms import ActivityForm, ActivitySearchForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm, ActivityStatusForm, ActivityResolutionForm
 from .forms import AIActivitiesUpdateForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
@@ -75,7 +75,7 @@ from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, po
 from .clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
-from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, DEFAULT_RECENT_TIME_PERIOD
 
 from pathlib import Path
 from decimal import Decimal
@@ -124,7 +124,28 @@ def register(request):
 def home(request):
     
     #return HttpResponse("Welcome to C-LARA!")
-    return redirect('profile')
+    return redirect('home_page')
+
+@login_required
+def home_page(request):
+    time_period = DEFAULT_RECENT_TIME_PERIOD
+    search_form = UnifiedSearchForm(request.GET or None)
+    time_period_query = Q()
+
+    if search_form.is_valid() and search_form.cleaned_data.get('time_period'):
+        time_period = int(search_form.cleaned_data['time_period'])
+
+    days_ago = timezone.now() - timedelta(days=time_period)
+    time_period_query = Q(updated_at__gte=days_ago)
+
+    contents = Content.objects.filter(time_period_query).order_by('-updated_at')
+    activities = Activity.objects.filter(time_period_query).order_by('-updated_at')
+
+    return render(request, 'clara_app/home_page.html', {
+        'contents': contents,
+        'activities': activities,
+        'search_form': search_form
+    })
 
 # Show user profile
 @login_required
@@ -1182,6 +1203,7 @@ def content_list(request):
         l2 = search_form.cleaned_data.get('l2')
         l1 = search_form.cleaned_data.get('l1')
         title = search_form.cleaned_data.get('title')
+        time_period = search_form.cleaned_data.get('time_period')
 
         if l2:
             query &= Q(l2__icontains=l2)
@@ -1189,6 +1211,10 @@ def content_list(request):
             query &= Q(l1__icontains=l1)
         if title:
             query &= Q(title__icontains=title)
+        if time_period:
+            # Calculate the date offset based on the selected time period
+            days_ago = timezone.now() - timedelta(days=int(time_period))
+            query &= Q(updated_at__gte=days_ago)
 
     content_list = Content.objects.filter(query).order_by(Lower('title'))
     paginator = Paginator(content_list, 10)  # Show 10 content items per page
@@ -1538,7 +1564,7 @@ def list_activities_text(request):
 
     instructions = (
         "To filter activities, append query parameters to the URL. "
-        "For example, '?id=5' or 'time_period=30' or '?category=annotation&status=posted'. "
+        "For example, '?id=5' or '?time_period=30' or '?category=annotation&status=posted'. "
         "Use 'id', 'time_period', 'category', 'status', and 'resolution' as parameters. Possible values for the last three are:\n\n"
         f"Category: {category_options}\n\n"
         f"Status: {status_options}\n\n"

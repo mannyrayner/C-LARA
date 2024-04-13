@@ -12,6 +12,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/', views.register, name='register'),
     path('home/', views.home, name='home'),
+    path('home_page/', views.home_page, name='home_page'),
     # Password reset links (ref: https://github.com/django/django/blob/master/django/contrib/auth/urls.py)
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),

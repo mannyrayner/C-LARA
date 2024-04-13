@@ -43,13 +43,15 @@ ACTIVITY_RESOLUTION_CHOICES = [
     ('wont_do', "Won't Do"),
     ]
 
-ACTIVITY_TIME_PERIOD_CHOICES = [
+RECENT_TIME_PERIOD_CHOICES = [
     (1, 'Last day'),
     (3, 'Last three days'),
     (7, 'Last week'),
     (31, 'Last month'),
     (93, 'Last three months'),
     ]
+
+DEFAULT_RECENT_TIME_PERIOD = 3
 
 SUPPORTED_LANGUAGES = [
     ('american english', 'American English'),
