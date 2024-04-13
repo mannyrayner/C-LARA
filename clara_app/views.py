@@ -139,13 +139,30 @@ def home_page(request):
     time_period_query = Q(updated_at__gte=days_ago)
 
     contents = Content.objects.filter(time_period_query).order_by('-updated_at')
-    activities = Activity.objects.filter(time_period_query).order_by('-updated_at')
+    
+    activities = Activity.objects.filter(time_period_query)
+    activities = annotate_and_order_activities_for_home_page(activities)
 
     return render(request, 'clara_app/home_page.html', {
         'contents': contents,
         'activities': activities,
         'search_form': search_form
     })
+
+def annotate_and_order_activities_for_home_page(activities):
+    # Annotate activities with a custom order for status
+    activities = activities.annotate(
+        status_order=Case(
+            When(status='in_progress', then=Value(1)),
+            When(status='resolved', then=Value(2)),
+            When(status='posted', then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+    )
+
+    # Order by vote score, custom status order, and then by creation date
+    return activities.order_by('status_order', '-created_at')
 
 # Show user profile
 @login_required
