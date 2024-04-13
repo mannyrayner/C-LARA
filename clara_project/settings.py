@@ -133,6 +133,8 @@ else:
 #AUTH_USER_MODEL = 'clara_app.User'
 AUTH_USER_MODEL = 'auth.User'
 
+LOGIN_REDIRECT_URL = 'home_page'
+
 AUTHENTICATION_BACKENDS = ['clara_app.backends.CustomUserModelBackend']
 
 # Password validation
