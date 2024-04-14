@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from django.views.generic.base import RedirectView
 
 urlpatterns = [
-    path('', RedirectView.as_view(url=reverse_lazy('login'), permanent=False), name='root-redirect'),
+    #path('', RedirectView.as_view(url=reverse_lazy('login'), permanent=False), name='root-redirect'),
     path('admin/', admin.site.urls),
     path('accounts/', include('clara_app.urls')) 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
