@@ -1633,6 +1633,13 @@ def list_activities_text(request):
         text_content += f"Created At: {activity.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
         text_content += f"Updated At: {activity.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
 
+        # Fetch and append voters
+        voters = ActivityVote.objects.filter(activity=activity, importance__gt=0).values_list('user__username', flat=True).distinct()
+        if voters:
+            text_content += f"Voters: {', '.join(voters)}\n"
+        else:
+            text_content += "No voters.\n"
+
         # Fetch and append comments for the activity
         comments = ActivityComment.objects.filter(activity=activity).order_by('created_at')
         if comments.exists():
