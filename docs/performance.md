@@ -16,7 +16,7 @@ C-LARA is implemented in Python using the Django framework, with Django-Q for as
 The code is available from the public [GitHub repository](https://github.com/mannyrayner/C-LARA).
 
 The repository contains, in descending order of size, Python, HTML template, prompt template and example, documentation, JavaScript and CSS files.
-It currently totals about 12K lines. All the material has been created by ChatGPT-4 working in close collaboration with Manny Rayner,
+It currently totals about 26K lines. All the material has been created by ChatGPT-4 working in close collaboration with Manny Rayner,
 with the AI responsible for about 90% of the code and the greater part of the software design.
 
 Further details about the structure of the repository are available in the <a href="https://github.com/mannyrayner/C-LARA/blob/main/README.txt" target="_blank">README file</a>.
