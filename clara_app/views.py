@@ -97,6 +97,9 @@ import pandas as pd
 
 config = get_config()
 
+def redirect_login(request):
+    return redirect('login')
+
 # Create a new account    
 def register(request):
     if request.method == 'POST':

@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
+    path('', views.redirect_login, name='home-redirect'),
     path('login/', auth_views.LoginView.as_view(template_name='clara_app/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('register/', views.register, name='register'),
