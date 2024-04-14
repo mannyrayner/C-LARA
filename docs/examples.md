@@ -21,3 +21,5 @@ Hover over a word to get a gloss, click on a word or speaker icon to hear TTS au
 - <a href="https://c-lara.unisa.edu.au/accounts/rendered_texts/57/normal/page_1.html" target="_blank">Hildegard (German)</a>. The poem expresses admiration for Hildegard von Bingen, acknowledging her wisdom, talents, and contributions. It expresses longing for her presence and guidance in current times.
 
 - <a href="https://c-lara.unisa.edu.au/accounts/rendered_texts/82/normal/page_1.html" target="_blank">Xiao Zhi wants to be a Formula 1 champion (Mandarin)</a>. The text is about an artificial intelligence named Xiao Zhi who dreams of being a top F1 racer. Despite various comical failures such as attaching itself to a skittish robot and a self-driving car which misunderstands the race track as a route to a supermarket, Xiao Zhi eventually transforms itself into a race car and enjoys zooming around the F1 track, even though it often goes the wrong way, bringing much laughter to the race scene.
+
+A searchable list of all posted content is available on the [C-LARA content page](https://c-lara.unisa.edu.au/accounts/content_list/).
