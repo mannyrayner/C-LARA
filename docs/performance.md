@@ -28,7 +28,4 @@ to write entertaining texts on a wide variety of subjects, with an error rate of
 rates for glossing and lemma tagging for these languages are typically in the mid single digits,
 with errors most commonly being due to incorrect treatment of multi-words (phrases). Performance
 on smaller and less highly prioritised languages is substantially worse. The platform offers
-many options for tuning language-specific performance, and we are actively investigating this topic.
-A paper describing these issues in more detail will be presented at the ALTA 2023 conference.
-
-Initial experiments suggest that performance with the new GPT-4 Turbo model is substantially better.
+many options for tuning language-specific performance.
