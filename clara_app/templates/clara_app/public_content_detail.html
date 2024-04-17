@@ -1,0 +1,41 @@
+{% extends 'clara_app/base.html' %}
+{% load clara_tags %}
+
+{% block content %}
+  <h2>{{ content.title }}</h2>
+  <p>URL: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  {% if average_rating %}
+    <p>Average Rating: {{ average_rating }}</p>
+  {% else %}
+    <p>No ratings yet.</p>
+  {% endif %}
+
+  <p>Text language: {{ content.l2|titlecase }}</p>
+  <p>Annotation language: {{ content.l1|titlecase }}</p>
+  {% if content.project %}
+     <p>Created by: {{ content.project.user.username|slice:":3" }}***</p>  <!-- Anonymizing creator's name -->
+  {% else %}
+     <p>Created by: {{ content.annotator|slice:":3" }}</p>
+  {% endif %}
+  <p>Summary: {{ content.summary }}</p>
+  <p>Length in words: {{ content.length_in_words }}</p>
+  <p>Author: {{ content.author }}</p>
+  <p>Voice: {{ content.voice }}</p>
+  <p>Difficulty Level: {{ content.difficulty_level }}</p>
+
+  <h3>Comments</h3>
+  {% for comment in comments %}
+    <p>
+      <strong>{{ comment.user.username|slice:":3" }}***</strong>
+      ({{ comment.timestamp|date:"F j, Y, P" }}):  <!-- Anonymized comment user's name -->
+      {{ comment.comment }}
+    </p>
+  {% empty %}
+    <p>No comments yet.</p>
+  {% endfor %}
+  
+  <div class="call-to-action">
+    <p>Want to participate? <a href="{% url 'login' %}?next={{ content.get_absolute_url }}">Log in or register</a> to comment and vote!</p>
+</div>
+
+{% endblock %}
