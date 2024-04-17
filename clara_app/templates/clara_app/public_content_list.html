@@ -2,7 +2,7 @@
 
 {% block content %}
   <h2>Posted Content</h2>
-  <form method="get" action="{% url 'content_list' %}">
+  <form method="get" action="{% url 'public_content_list' %}">
 	<p>Title: {{ search_form.title }}</p>
     <p>Text language: {{ search_form.l2 }}</p>
 	<p>Annotation language: {{ search_form.l1 }}</p>
