@@ -1246,6 +1246,36 @@ def content_list(request):
 
     return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form, 'clara_version': clara_version})
 
+
+def public_content_list(request):
+    search_form = ContentSearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        l2 = search_form.cleaned_data.get('l2')
+        l1 = search_form.cleaned_data.get('l1')
+        title = search_form.cleaned_data.get('title')
+        time_period = search_form.cleaned_data.get('time_period')
+
+        if l2:
+            query &= Q(l2__icontains=l2)
+        if l1:
+            query &= Q(l1__icontains=l1)
+        if title:
+            query &= Q(title__icontains=title)
+        if time_period:
+            # Calculate the date offset based on the selected time period
+            days_ago = timezone.now() - timedelta(days=int(time_period))
+            query &= Q(updated_at__gte=days_ago)
+
+    content_list = Content.objects.filter(query).order_by(Lower('title'))
+    paginator = Paginator(content_list, 10)  # Show 10 content items per page
+
+    page = request.GET.get('page')
+    contents = paginator.get_page(page)
+
+    return render(request, 'clara_app/public_content_list.html', {'contents': contents, 'search_form': search_form})
+
 def send_rating_or_comment_notification_email(request, recipients, content, action):
     full_url = request.build_absolute_uri(content.get_absolute_url())
     subject = f"New {action} on your content: {content.title}"
@@ -1325,6 +1355,17 @@ def content_detail(request, content_id):
         'average_rating': average_rating['rating__avg'],
         'clara_version': clara_version
         
+    })
+
+def public_content_detail(request, content_id):
+    content = get_object_or_404(Content, id=content_id)
+    comments = Comment.objects.filter(content=content).order_by('timestamp')  
+    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))  
+
+    return render(request, 'clara_app/public_content_detail.html', {
+        'content': content,
+        'comments': comments,
+        'average_rating': average_rating['rating__avg']
     })
 
 @login_required

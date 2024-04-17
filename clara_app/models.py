@@ -286,6 +286,9 @@ class Content(models.Model):
 
     def get_absolute_url(self):
         return reverse('content_detail', args=[str(self.id)])
+
+    def get_public_absolute_url(self):
+        return reverse('public_content_detail', args=[str(self.id)])
         
     def url(self):
         if self.project:
