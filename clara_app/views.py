@@ -30,7 +30,7 @@ from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, 
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
 from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, UnifiedSearchForm
 from .forms import ActivityForm, ActivitySearchForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm, ActivityStatusForm, ActivityResolutionForm
-from .forms import AIActivitiesUpdateForm
+from .forms import AIActivitiesUpdateForm, DeleteContentForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
@@ -561,7 +561,7 @@ def confirm_transfer(request):
     
 # Delete cached TTS data for language   
 ##@login_required
-##@user_passes_test(lambda u: u.userprofile.is_admin)
+##@user_passes_test(lambda u: u.userprofile)
 ##def initialise_orm_repositories(request):
 ##    if request.method == 'POST':
 ##        form = InitialiseORMRepositoriesForm(request.POST)
@@ -1306,8 +1306,18 @@ def content_detail(request, content_id):
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
     comment_form = CommentForm()  # initialize empty comment form
     rating_form = RatingForm()  # initialize empty rating form
+    delete_form = DeleteContentForm()
+    can_delete = ( content.project and request.user == content.project.user ) or request.user.userprofile.is_admin
     
     if request.method == 'POST':
+        if 'delete' in request.POST:
+            if can_delete:
+                content.delete()
+                messages.success(request, "Content successfully unregistered.")
+                return redirect('content_list')
+            else:
+                messages.error(request, "You do not have permission to delete this content.")
+                return redirect('content_detail', content_id=content_id)
         if 'submit_rating' in request.POST:
             rating_form = RatingForm(request.POST)
             if rating_form.is_valid():
@@ -1348,6 +1358,8 @@ def content_detail(request, content_id):
     clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/content_detail.html', {
+        'can_delete': can_delete,
+        'delete_form': delete_form,
         'content': content,
         'rating_form': rating_form,
         'comment_form': comment_form,

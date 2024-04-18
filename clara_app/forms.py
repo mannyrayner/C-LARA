@@ -77,6 +77,9 @@ class InitialiseORMRepositoriesForm(forms.Form):
 class DeleteTTSDataForm(forms.Form):
     language = forms.ChoiceField(choices=SUPPORTED_LANGUAGES)
 
+class DeleteContentForm(forms.Form):
+    pass
+
 class ContentRegistrationForm(forms.ModelForm):
     class Meta:
         model = Content
