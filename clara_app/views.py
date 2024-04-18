@@ -8,7 +8,8 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.conf import settings
 from django import forms
-from django.db.models import Count, Avg, Q, Max
+from django.db import transaction
+from django.db.models import Count, Avg, Q, Max, F, Case, Value, When, IntegerField, Sum
 from django.db.models.functions import Lower
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
@@ -18,7 +19,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
-from .models import SatisfactionQuestionnaire, FundingRequest
+from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements, Activity, ActivityRegistration, ActivityComment, ActivityVote, CurrentActivityVote
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
 
@@ -27,9 +28,11 @@ from django_q.models import Task
 
 from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
-from .forms import ContentSearchForm, ContentRegistrationForm
+from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, UnifiedSearchForm
+from .forms import ActivityForm, ActivitySearchForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm, ActivityStatusForm, ActivityResolutionForm
+from .forms import AIActivitiesUpdateForm, DeleteContentForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
-from .forms import DeleteTTSDataForm, AudioMetadataForm
+from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
 from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
@@ -38,36 +41,41 @@ from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
-from .utils import get_user_config, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
+from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
-from .utils import post_task_update_in_db, get_task_updates
+from .utils import post_task_update_in_db, get_task_updates, has_saved_internalised_and_annotated_text
 from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
-from .utils import send_mail_or_print_trace
+from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date, get_previous_week_start_date
 
-from .clara_core.clara_main import CLARAProjectInternal
-from .clara_core.clara_audio_repository import AudioRepository
-from .clara_core.clara_audio_annotator import AudioAnnotator
-from .clara_core.clara_phonetic_lexicon_repository import PhoneticLexiconRepository
-from .clara_core.clara_prompt_templates import PromptTemplateRepository
-from .clara_core.clara_dependencies import CLARADependencies
-from .clara_core.clara_reading_histories import ReadingHistoryInternal
-from .clara_core.clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+from .clara_main import CLARAProjectInternal
+#from .clara_audio_repository import AudioRepository
+from .clara_audio_repository_orm import AudioRepositoryORM
+from .clara_image_repository_orm import ImageRepositoryORM
+from .clara_audio_annotator import AudioAnnotator
+#from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
+from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
+from .clara_prompt_templates import PromptTemplateRepository
+from .clara_dependencies import CLARADependencies
+from .clara_reading_histories import ReadingHistoryInternal
+from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
 
-from .clara_core.clara_internalise import internalize_text
-from .clara_core.clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
-from .clara_core.clara_conventional_tagging import fully_supported_treetagger_language
-from .clara_core.clara_chinese import is_chinese_language
-from .clara_core.clara_annotated_images import make_uninstantiated_annotated_image_structure
-from .clara_core.clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
-from .clara_core.clara_classes import TemplateError, InternalCLARAError, InternalisationError
-from .clara_core.clara_utils import _s3_storage, _s3_bucket, s3_file_name, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
-from .clara_core.clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
-from .clara_core.clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
-from .clara_core.clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language, is_chinese_language
-from .clara_core.clara_utils import make_mp3_version_of_audio_file_if_necessary
+from .clara_internalise import internalize_text
+from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
+from .clara_conventional_tagging import fully_supported_treetagger_language
+from .clara_chinese import is_chinese_language
+from .clara_annotated_images import make_uninstantiated_annotated_image_structure
+from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
+from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
+#from .clara_utils import _use_orm_repositories
+from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, get_config, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
+from .clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
+from .clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
+from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, post_task_update, is_rtl_language, is_chinese_language
+from .clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, DEFAULT_RECENT_TIME_PERIOD
 
 from pathlib import Path
 from decimal import Decimal
@@ -85,6 +93,12 @@ import pprint
 import uuid
 import traceback
 import tempfile
+import pandas as pd
+
+config = get_config()
+
+def redirect_login(request):
+    return redirect('login')
 
 # Create a new account    
 def register(request):
@@ -113,7 +127,45 @@ def register(request):
 def home(request):
     
     #return HttpResponse("Welcome to C-LARA!")
-    return redirect('profile')
+    return redirect('home_page')
+
+@login_required
+def home_page(request):
+    time_period = DEFAULT_RECENT_TIME_PERIOD
+    search_form = UnifiedSearchForm(request.GET or None)
+    time_period_query = Q()
+
+    if search_form.is_valid() and search_form.cleaned_data.get('time_period'):
+        time_period = int(search_form.cleaned_data['time_period'])
+
+    days_ago = timezone.now() - timedelta(days=time_period)
+    time_period_query = Q(updated_at__gte=days_ago)
+
+    contents = Content.objects.filter(time_period_query).order_by('-updated_at')
+    
+    activities = Activity.objects.filter(time_period_query)
+    activities = annotate_and_order_activities_for_home_page(activities)
+
+    return render(request, 'clara_app/home_page.html', {
+        'contents': contents,
+        'activities': activities,
+        'search_form': search_form
+    })
+
+def annotate_and_order_activities_for_home_page(activities):
+    # Annotate activities with a custom order for status
+    activities = activities.annotate(
+        status_order=Case(
+            When(status='in_progress', then=Value(1)),
+            When(status='resolved', then=Value(2)),
+            When(status='posted', then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+    )
+
+    # Order by vote score, custom status order, and then by creation date
+    return activities.order_by('status_order', '-created_at')
 
 # Show user profile
 @login_required
@@ -306,6 +358,8 @@ def user_config(request):
     if request.method == 'POST':
         form = UserConfigForm(request.POST, instance=user_config)
         if form.is_valid():
+            #open_ai_api_key = form.cleaned_data['open_ai_api_key']
+            #print(f'open_ai_api_key = {open_ai_api_key}')
             form.save()
             messages.success(request, f'Configuration information has been updated')
             return redirect('user_config')
@@ -486,6 +540,101 @@ def confirm_transfer(request):
     clara_version = get_user_config(request.user)['clara_version']
 
     return render(request, 'clara_app/confirm_transfer.html', {'form': form, 'clara_version': clara_version})
+
+##def initialise_orm_repositories_from_non_orm(callback=None):
+##    try:
+##        post_task_update(callback, f"--- Initialising ORM repositories from non-ORM repositories")
+##        
+##        post_task_update(callback, f"--- Initialising ORM audio repository")
+##        tts_repo = AudioRepositoryORM(initialise_from_non_orm=True, callback=callback)
+##        
+##        post_task_update(callback, f"--- Initialising ORM image repository")
+##        image_repo = ImageRepositoryORM(initialise_from_non_orm=True, callback=callback)
+##
+##        post_task_update(callback, f"--- Initialising phonetic lexicon repository")
+##        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM(initialise_from_non_orm=True, callback=callback)
+##        
+##        post_task_update(callback, f"finished")
+##    except Exception as e:
+##        post_task_update(callback, f'Error initialising from non-ORM repositories: "{str(e)}"\n{traceback.format_exc()}')
+##        post_task_update(callback, f"error")
+    
+# Delete cached TTS data for language   
+##@login_required
+##@user_passes_test(lambda u: u.userprofile)
+##def initialise_orm_repositories(request):
+##    if request.method == 'POST':
+##        form = InitialiseORMRepositoriesForm(request.POST)
+##        if form.is_valid():
+##            
+##            # Create a unique ID to tag messages posted by this task and a callback
+##            task_type = f'initialise_orm_repositories'
+##            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+##
+##            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
+##            print(f'--- Started initialise task')
+##            #Redirect to the monitor view, passing report ID as parameter
+##            return redirect('initialise_orm_repositories_monitor', report_id)
+##
+##    else:
+##        form = InitialiseORMRepositoriesForm()
+##
+##    clara_version = get_user_config(request.user)['clara_version']
+##    
+##    return render(request, 'clara_app/initialise_orm_repositories.html', {
+##        'form': form, 'clara_version': clara_version
+##    })
+
+# This is the API endpoint that the JavaScript will poll
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+##def initialise_orm_repositories_status(request, report_id):
+##    messages = get_task_updates(report_id)
+##    print(f'{len(messages)} messages received')
+##    if 'error' in messages:
+##        status = 'error'
+##    elif 'finished' in messages:
+##        status = 'finished'  
+##    else:
+##        status = 'unknown'    
+##    return JsonResponse({'messages': messages, 'status': status})
+
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+##def initialise_orm_repositories_monitor(request, report_id):
+##
+##    clara_version = get_user_config(request.user)['clara_version']
+##    
+##    return render(request, 'clara_app/initialise_orm_repositories_monitor.html',
+##                  {'report_id': report_id, 'clara_version': clara_version})
+##
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+##def initialise_orm_repositories_complete(request, status):
+##    if request.method == 'POST':
+##        form = InitialiseORMRepositoriesForm(request.POST)
+##        if form.is_valid():
+##            
+##            task_type = f'initialise_orm_repositories'
+##            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+##
+##            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
+##            print(f'--- Started initialise task')
+##            #Redirect to the monitor view, passing the task ID and report ID as parameters
+##            return redirect('initialise_orm_repositories_monitor', report_id)
+##    else:
+##        if status == 'error':
+##            messages.error(request, f"Something went wrong when initialising the ORM repositories. Try looking at the 'Recent task updates' view")
+##        else:
+##            messages.success(request, f'Initialised ORM repositories')
+##
+##        form = InitialiseORMRepositoriesForm()
+##
+##        clara_version = get_user_config(request.user)['clara_version']
+##
+##        return render(request, 'clara_app/initialise_orm_repositories.html',
+##                      { 'form': form, 'clara_version': clara_version, } )
+
 
 def delete_tts_data_for_language(language, callback=None):
     post_task_update(callback, f"--- Starting delete task for language {language}")
@@ -668,7 +817,8 @@ def view_task_updates(request):
 @language_master_required
 def edit_phonetic_lexicon(request):
     orthography_repo = PhoneticOrthographyRepository()
-    phonetic_lexicon_repo = PhoneticLexiconRepository()
+    phonetic_lexicon_repo = PhoneticLexiconRepositoryORM()
+    #phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository()
     plain_lexicon_formset = None
     aligned_lexicon_formset = None
     grapheme_phoneme_formset = None
@@ -759,7 +909,7 @@ def edit_phonetic_lexicon(request):
                     plain_words_saved = [ item['word'] for item in plain_words_to_save ]
                     messages.success(request, f"{len(plain_words_saved)} plain lexicon entries saved: {', '.join(plain_words_saved)}")
                 if len(plain_words_to_delete) != 0:
-                    phonetic_lexicon_repo.delete_plain_entries(plain_words_to_save, language)
+                    phonetic_lexicon_repo.delete_plain_entries(plain_words_to_delete, language)
                     plain_words_deleted = [ item['word'] for item in plain_words_to_delete ]
                     messages.success(request, f"{len(plain_words_deleted)} plain lexicon entries deleted: {', '.join(plain_words_deleted)}")
                     
@@ -840,18 +990,20 @@ def edit_phonetic_lexicon(request):
                                                                           'display_approved_aligned_lexicon_entries': display_approved_aligned_lexicon_entries,
                                                                           })
                 grapheme_phoneme_data, accents_data = orthography_repo.get_parsed_entry(language, formatting='new')
+
+                max_entries_to_show = int(config.get('phonetic_lexicon_repository', 'max_entries_to_show'))
                 
                 plain_lexicon_data = []
                 if display_new_plain_lexicon_entries:
-                    plain_lexicon_data += phonetic_lexicon_repo.get_generated_plain_entries(language)
+                    plain_lexicon_data += phonetic_lexicon_repo.get_generated_plain_entries(language)[:max_entries_to_show]
                 if display_approved_plain_lexicon_entries:
-                    plain_lexicon_data += phonetic_lexicon_repo.get_reviewed_plain_entries(language)
+                    plain_lexicon_data += phonetic_lexicon_repo.get_reviewed_plain_entries(language)[:max_entries_to_show]
 
                 aligned_lexicon_data = []
                 if display_new_aligned_lexicon_entries:
-                    aligned_lexicon_data += phonetic_lexicon_repo.get_generated_aligned_entries(language)
+                    aligned_lexicon_data += phonetic_lexicon_repo.get_generated_aligned_entries(language)[:max_entries_to_show]
                 if display_approved_aligned_lexicon_entries:
-                    aligned_lexicon_data += phonetic_lexicon_repo.get_reviewed_aligned_entries(language)
+                    aligned_lexicon_data += phonetic_lexicon_repo.get_reviewed_aligned_entries(language)[:max_entries_to_show]
                 #print(f'--- edit_phonetic_lexicon found {len(plain_lexicon_data)} plain lexicon entries to review')
                 #print(f'--- edit_phonetic_lexicon found {len(aligned_lexicon_data)} aligned lexicon entries to review')
                 
@@ -883,7 +1035,8 @@ def upload_and_install_plain_phonetic_lexicon(file_path, language, callback=None
     post_task_update(callback, f"--- Installing phonetic lexicon for {language}")
 
     try:
-        phonetic_lexicon_repo = PhoneticLexiconRepository() 
+        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM()
+        #phonetic_lexicon_repo = PhoneticLexiconRepositoryORM() if _use_orm_repositories else PhoneticLexiconRepository() 
 
         result, details = phonetic_lexicon_repo.load_and_initialise_plain_lexicon(file_path, language, callback=callback)
         
@@ -1070,6 +1223,7 @@ def content_list(request):
         l2 = search_form.cleaned_data.get('l2')
         l1 = search_form.cleaned_data.get('l1')
         title = search_form.cleaned_data.get('title')
+        time_period = search_form.cleaned_data.get('time_period')
 
         if l2:
             query &= Q(l2__icontains=l2)
@@ -1077,6 +1231,10 @@ def content_list(request):
             query &= Q(l1__icontains=l1)
         if title:
             query &= Q(title__icontains=title)
+        if time_period:
+            # Calculate the date offset based on the selected time period
+            days_ago = timezone.now() - timedelta(days=int(time_period))
+            query &= Q(updated_at__gte=days_ago)
 
     content_list = Content.objects.filter(query).order_by(Lower('title'))
     paginator = Paginator(content_list, 10)  # Show 10 content items per page
@@ -1087,6 +1245,36 @@ def content_list(request):
     clara_version = get_user_config(request.user)['clara_version']
 
     return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form, 'clara_version': clara_version})
+
+
+def public_content_list(request):
+    search_form = ContentSearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        l2 = search_form.cleaned_data.get('l2')
+        l1 = search_form.cleaned_data.get('l1')
+        title = search_form.cleaned_data.get('title')
+        time_period = search_form.cleaned_data.get('time_period')
+
+        if l2:
+            query &= Q(l2__icontains=l2)
+        if l1:
+            query &= Q(l1__icontains=l1)
+        if title:
+            query &= Q(title__icontains=title)
+        if time_period:
+            # Calculate the date offset based on the selected time period
+            days_ago = timezone.now() - timedelta(days=int(time_period))
+            query &= Q(updated_at__gte=days_ago)
+
+    content_list = Content.objects.filter(query).order_by(Lower('title'))
+    paginator = Paginator(content_list, 10)  # Show 10 content items per page
+
+    page = request.GET.get('page')
+    contents = paginator.get_page(page)
+
+    return render(request, 'clara_app/public_content_list.html', {'contents': contents, 'search_form': search_form})
 
 def send_rating_or_comment_notification_email(request, recipients, content, action):
     full_url = request.build_absolute_uri(content.get_absolute_url())
@@ -1118,8 +1306,18 @@ def content_detail(request, content_id):
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
     comment_form = CommentForm()  # initialize empty comment form
     rating_form = RatingForm()  # initialize empty rating form
+    delete_form = DeleteContentForm()
+    can_delete = ( content.project and request.user == content.project.user ) or request.user.userprofile.is_admin
     
     if request.method == 'POST':
+        if 'delete' in request.POST:
+            if can_delete:
+                content.delete()
+                messages.success(request, "Content successfully unregistered.")
+                return redirect('content_list')
+            else:
+                messages.error(request, "You do not have permission to delete this content.")
+                return redirect('content_detail', content_id=content_id)
         if 'submit_rating' in request.POST:
             rating_form = RatingForm(request.POST)
             if rating_form.is_valid():
@@ -1144,20 +1342,24 @@ def content_detail(request, content_id):
                 create_update(request.user, 'COMMENT', new_comment)
 
         # Identify recipients
-        content_creator = content.project.user
-        co_owners = User.objects.filter(projectpermissions__project=content.project, projectpermissions__role='OWNER')
-        previous_commenters = User.objects.filter(comment__content=content).distinct()
-        recipients = set([content_creator] + list(co_owners) + list(previous_commenters))
+        # For external content, there will be no project
+        if content.project and content.project.user:  
+            content_creator = content.project.user
+            co_owners = User.objects.filter(projectpermissions__project=content.project, projectpermissions__role='OWNER')
+            previous_commenters = User.objects.filter(comment__content=content).distinct()
+            recipients = set([content_creator] + list(co_owners) + list(previous_commenters))
 
-        # Send email notification
-        action = 'rating' if 'submit_rating' in request.POST else 'comment'
-        send_rating_or_comment_notification_email(request, recipients, content, action)
+            # Send email notification
+            action = 'rating' if 'submit_rating' in request.POST else 'comment'
+            send_rating_or_comment_notification_email(request, recipients, content, action)
 
         return redirect('content_detail', content_id=content_id)
 
     clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/content_detail.html', {
+        'can_delete': can_delete,
+        'delete_form': delete_form,
         'content': content,
         'rating_form': rating_form,
         'comment_form': comment_form,
@@ -1166,6 +1368,446 @@ def content_detail(request, content_id):
         'clara_version': clara_version
         
     })
+
+def public_content_detail(request, content_id):
+    content = get_object_or_404(Content, id=content_id)
+    comments = Comment.objects.filter(content=content).order_by('timestamp')  
+    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))  
+
+    return render(request, 'clara_app/public_content_detail.html', {
+        'content': content,
+        'comments': comments,
+        'average_rating': average_rating['rating__avg']
+    })
+
+@login_required
+def create_activity(request):
+    if request.method == 'POST':
+        form = ActivityForm(request.POST)
+        if form.is_valid():
+            activity = form.save(commit=False)
+            activity.creator = request.user
+            activity.save()
+            messages.success(request, 'Activity created successfully!')
+            return redirect('activity_detail', activity_id=activity.id)
+    else:
+        form = ActivityForm()
+
+        return render(request, 'clara_app/create_activity.html', {'form': form})
+
+@login_required
+def activity_detail(request, activity_id):
+    activity = get_object_or_404(Activity, pk=activity_id)
+    user = request.user
+    comments = ActivityComment.objects.filter(activity=activity).order_by('created_at')
+    new_comment = None  # For POST method to assign new comment
+
+    # Check if the user is already registered
+    registration = ActivityRegistration.objects.filter(user=user, activity=activity).first()
+
+    # Check if the user has already voted
+    week_start = get_zoom_meeting_start_date()
+    current_vote = ActivityVote.objects.filter(user=user, activity=activity, week=week_start).first()
+
+    all_current_votes = ActivityVote.objects.filter(activity=activity, week=week_start)
+    voting_users = {vote.user for vote in all_current_votes if vote.importance != 0}
+
+    if request.method == 'POST':
+        comment_form = ActivityCommentForm(request.POST)
+        if 'submit_comment' in request.POST and comment_form.is_valid():
+            new_comment = comment_form.save(commit=False)
+            new_comment.user = request.user
+            new_comment.activity = activity
+            new_comment.save()
+
+            # Update the activity's updated_at field
+            activity.updated_at = timezone.now()
+            activity.save()
+
+            notify_activity_participants(request, activity, new_comment)
+
+            return redirect('activity_detail', activity_id=activity.id)
+        elif 'register' in request.POST:
+            form = ActivityRegistrationForm(request.POST, instance=registration)
+            if form.is_valid():
+                registration, created = ActivityRegistration.objects.update_or_create(
+                    user=user,
+                    activity=activity,
+                    defaults={'wants_email': form.cleaned_data['wants_email']}
+                )
+                messages.success(request, "Your registration status has been updated.")
+                return redirect('activity_detail', activity_id=activity.id)
+        elif 'unregister' in request.POST and registration:
+            registration.delete()
+            messages.success(request, "You have been unregistered from this activity.")
+            return redirect('activity_detail', activity_id=activity.id)
+        elif 'update_status' in request.POST:
+            if not (user == activity.creator or user.userprofile.is_admin):
+                messages.error(request, "Only the person who posted the activity and admins can change the status")
+                return redirect('activity_detail', activity_id=activity.id)
+            status_form = ActivityStatusForm(request.POST, instance=activity)
+            if status_form.is_valid():
+                status_form.save()
+                messages.success(request, "Activity status updated successfully.")
+                return redirect('activity_detail', activity_id=activity.id)
+        elif 'update_resolution' in request.POST:
+            if not (user == activity.creator or user.userprofile.is_admin):
+                messages.error(request, "Only the person who posted the activity and admins can change the resolution")
+                return redirect('activity_detail', activity_id=activity.id)
+            resolution_form = ActivityResolutionForm(request.POST, instance=activity)
+            if resolution_form.is_valid():
+                resolution_form.save()
+                messages.success(request, "Activity resolution updated successfully.")
+                return redirect('activity_detail', activity_id=activity.id)
+        elif 'vote' in request.POST:
+            form = ActivityVoteForm(request.POST)
+            if form.is_valid():
+                importance = form.cleaned_data['importance'] if 'importance' in form.cleaned_data else 0
+                if importance != 0:
+                    # Check if the user has already voted with the same importance this week
+                    existing_vote = ActivityVote.objects.filter(user=request.user, week=week_start, importance=importance).exclude(activity=activity).first()
+                    if existing_vote:
+                        messages.error(request, f"You've already assigned priority '{importance}' to activity '{existing_vote.activity.title}' this week.")
+                        return redirect('activity_detail', activity_id=activity.id)
+
+                # Update historical vote
+                ActivityVote.objects.update_or_create(
+                    user=request.user, 
+                    activity=activity, 
+                    week=week_start,
+                    defaults={'importance': importance}
+                )
+                # Update current standing vote
+                CurrentActivityVote.objects.update_or_create(
+                    user=request.user, 
+                    activity=activity, 
+                    defaults={'importance': importance}
+                )
+
+                # Update the activity's updated_at field
+                activity.updated_at = timezone.now()
+                activity.save()
+            
+                messages.success(request, "Your vote has been recorded.")
+            return redirect('activity_detail', activity_id=activity.id)
+    else:
+        form = ActivityRegistrationForm(instance=registration)
+        comment_form = ActivityCommentForm()
+        vote_form = ActivityVoteForm(initial={'importance': current_vote.importance if current_vote else 0})
+        status_form = ActivityStatusForm(instance=activity) 
+        resolution_form = ActivityResolutionForm(instance=activity)  
+
+    return render(request, 'clara_app/activity_detail.html', {
+        'activity': activity,
+        'user': user,
+        'form': form,
+        'registration': registration,
+        'comments': comments,
+        'comment_form': comment_form,
+        'vote_form': vote_form,
+        'status_form': status_form,  
+        'resolution_form': resolution_form,
+        'voting_users': voting_users,  
+    })
+
+def notify_activity_participants(request, activity, new_comment):
+    # Get the activity creator
+    creator = {activity.creator}
+
+    # Get users who voted for the activity
+    voters = set(User.objects.filter(
+        activityvote__activity=activity
+    ).distinct())
+
+    # Get users who commented on the activity
+    commenters = set(User.objects.filter(
+        activitycomment__activity=activity
+    ).distinct())
+
+    # Combine all, remove duplicates
+    potential_recipients = creator.union(voters, commenters)
+
+    # Exclude users who opted out
+    opted_out_users = set(ActivityRegistration.objects.filter(
+        activity=activity, wants_email=False
+    ).values_list('user', flat=True))
+
+    recipients = potential_recipients - opted_out_users
+
+    # Send notification emails, except to the new comment's author
+    recipients.discard(new_comment.user)
+    send_activity_comment_notification_email(request, list(recipients), activity, new_comment)
+
+def send_activity_comment_notification_email(request, recipients, activity, comment):
+    full_url = request.build_absolute_uri(activity.get_absolute_url())
+    subject = f"New comment on C-LARA activity: {activity.title}"
+    context = {
+        'comment': comment,
+        'activity_title': activity.title,
+        'full_url': full_url,
+    }
+    message = render_to_string('activity_comment_notification_email.html', context)
+    from_email = 'clara-no-reply@unisa.edu.au'
+    recipient_list = [user.email for user in recipients
+                      if user.email and not user == request.user]
+
+    if len(recipient_list) != 0:
+        if os.getenv('CLARA_ENVIRONMENT') == 'unisa':
+            email = EmailMessage(subject, message, from_email, recipient_list)
+            email.content_subtype = "html"  # Set the email content type to HTML
+            email.send()
+        else:
+            print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
+
+@login_required
+def list_activities(request):
+    week_start = get_zoom_meeting_start_date()
+
+    search_form = ActivitySearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        activity_id = search_form.cleaned_data.get('id')
+        category = search_form.cleaned_data.get('category')
+        status = search_form.cleaned_data.get('status')
+        resolution = search_form.cleaned_data.get('resolution')
+        time_period = search_form.cleaned_data.get('time_period')
+
+        if activity_id:
+            query &= Q(id=activity_id)
+
+        else:
+            if category:
+                query &= Q(category=category)
+            if status:
+                query &= Q(status=status)
+            if resolution:
+                query &= Q(resolution=resolution)
+            if time_period:
+                # Calculate the date offset based on the selected time period
+                days_ago = timezone.now() - timedelta(days=int(time_period))
+                query &= Q(updated_at__gte=days_ago)
+
+        activities = Activity.objects.filter(query)
+    else:
+        activities = Activity.objects.all()
+
+    activities = annotate_and_order_activities_for_display(activities)
+
+    return render(request, 'clara_app/list_activities.html', {
+        'activities': activities,
+        'search_form': search_form,
+    })
+
+def annotate_and_order_activities_for_display(activities):
+    # Annotate each activity with its score based on current votes
+    activities = activities.annotate(
+    vote_score=Sum(
+        Case(
+            When(currentactivityvote__importance=1, then=Value(10)),
+            When(currentactivityvote__importance=2, then=Value(7)),
+            When(currentactivityvote__importance=3, then=Value(5)),
+            default=Value(0),
+            output_field=IntegerField()
+        )
+    )
+    )
+
+    # Annotate activities with a custom order for status
+    activities = activities.annotate(
+        status_order=Case(
+            When(status='in_progress', then=Value(1)),
+            When(status='posted', then=Value(2)),
+            When(status='resolved', then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+    )
+
+    # Order by vote score, custom status order, and then by creation date
+    return activities.order_by('-vote_score', 'status_order', '-created_at')
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def list_activities_text(request):
+    # Instructions for using query parameters for filtering
+    category_options = ", ".join([f"'{code}' for {name}" for code, name in ACTIVITY_CATEGORY_CHOICES])
+    status_options = ", ".join([f"'{code}' for {name}" for code, name in ACTIVITY_STATUS_CHOICES])
+    resolution_options = ", ".join([f"'{code}' for {name}" for code, name in ACTIVITY_RESOLUTION_CHOICES])
+
+    instructions = (
+        "To filter activities, append query parameters to the URL. "
+        "For example, '?id=5' or '?time_period=30' or '?category=annotation&status=posted'. "
+        "Use 'id', 'time_period', 'category', 'status', and 'resolution' as parameters. Possible values for the last three are:\n\n"
+        f"Category: {category_options}\n\n"
+        f"Status: {status_options}\n\n"
+        f"Resolution: {resolution_options}\n\n"
+    )
+
+    week_start = get_zoom_meeting_start_date()
+    search_form = ActivitySearchForm(request.GET or None)
+    query = Q()
+
+    if search_form.is_valid():
+        activity_id = int(search_form.cleaned_data.get('id')) if search_form.cleaned_data.get('id') else None
+        category = search_form.cleaned_data.get('category')
+        status = search_form.cleaned_data.get('status')
+        resolution = search_form.cleaned_data.get('resolution')
+        time_period = int(search_form.cleaned_data.get('time_period')) if search_form.cleaned_data.get('time_period') else None
+
+        if activity_id:
+            query &= Q(id=activity_id)
+        else:
+            if category and category != 'any':
+                query &= Q(category=category)
+            if status and status != 'any':
+                query &= Q(status=status)
+            if resolution and resolution != 'any':
+                query &= Q(resolution=resolution)
+            if time_period:
+                # Calculate the date offset based on the selected time period
+                days_ago = timezone.now() - timedelta(days=int(time_period))
+                query &= Q(updated_at__gte=days_ago)
+
+    activities =  Activity.objects.filter(query)
+
+    activities = annotate_and_order_activities_for_display(activities)
+
+    # Prepare plain text content
+    text_content = instructions + "Activities Summary\n\n"
+    for activity in activities:
+        text_content += f"Title: {activity.title}\n"
+        text_content += f"ID: {activity.id}\n"
+        text_content += f"Category: {activity.get_category_display()}\n"
+        text_content += f"Description: {activity.description}\n"
+        text_content += f"Status: {activity.get_status_display()}\n"
+        text_content += f"Resolution: {activity.get_resolution_display()}\n"
+        text_content += f"Vote Score: {activity.vote_score or 0}\n"
+        text_content += f"Created At: {activity.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+        text_content += f"Updated At: {activity.updated_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+
+        # Fetch and append voters
+        voters = ActivityVote.objects.filter(activity=activity, importance__gt=0).values_list('user__username', flat=True).distinct()
+        if voters:
+            text_content += f"Voters: {', '.join(voters)}\n"
+        else:
+            text_content += "No voters.\n"
+
+        # Fetch and append comments for the activity
+        comments = ActivityComment.objects.filter(activity=activity).order_by('created_at')
+        if comments.exists():
+            text_content += "Comments:\n"
+            for comment in comments:
+                text_content += f"{comment.user.username} ({comment.created_at.strftime('%Y-%m-%d %H:%M:%S')}): {comment.comment}\n"
+        else:
+            text_content += "No comments.\n"
+        
+        text_content += "\n"  # Extra newline for separation between activities
+
+    example_of_json_text = """
+Here is an example of the format to use when replying, showing one comment, one new activity and a set of votes.
+There can be zero or more comments or activities, and at most one set of votes:
+
+{
+  "activityUpdates": [
+    {
+      "activityId": 123,
+      "comments": [
+        {
+          "text": "This is an AI-generated comment on activity 123."
+        }
+      ]
+    },
+    {
+      "newActivity": true,
+      "title": "New Activity Suggested by AI",
+      "category": "refactoring",
+      "description": "Here is a detailed description of the new activity..."
+    }
+  ],
+  "aiVotes": {
+    "firstPreference": 123,
+    "secondPreference": 124,
+    "thirdPreference": 125
+  }
+}
+
+"""
+    text_content += example_of_json_text
+
+    return HttpResponse(text_content, content_type="text/plain")
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def ai_activities_reply(request):
+    if request.method == 'POST':
+        form = AIActivitiesUpdateForm(request.POST)
+        if form.is_valid():
+            try:
+                ai_user = User.objects.get(username='ai_user')  
+                week_start = get_zoom_meeting_start_date()
+                updates = json.loads(form.cleaned_data['updates_json'])
+                
+                with transaction.atomic():
+                    for update in updates['activityUpdates']:
+                        if 'comments' in update and 'activityId' in update:
+                            activity = Activity.objects.get(id=update['activityId'])
+                            for comment in update['comments']:
+                                new_comment = ActivityComment.objects.create(activity=activity, user=ai_user, comment=comment['text'])
+                                # Notify relevant users about the new comment
+                                notify_activity_participants(request, activity, new_comment)
+                        elif 'newActivity' in update:
+                            Activity.objects.create(
+                                title=update['title'],
+                                category=update['category'],
+                                description=update['description'],
+                                creator=ai_user
+                            )
+
+                # Process AI votes if there are any
+                if 'aiVotes' in updates:
+                    ai_votes = updates['aiVotes']
+                    for importance, activity_id in enumerate([ai_votes.get('firstPreference'),
+                                                              ai_votes.get('secondPreference'),
+                                                              ai_votes.get('thirdPreference')],
+                                                             start=1):
+                        if activity_id:
+                            # Check if AI has already voted with the same importance this week for a different activity
+                            existing_vote = ActivityVote.objects.filter(
+                                user=ai_user,
+                                week=week_start,
+                                importance=importance
+                            ).exclude(activity_id=activity_id).first()
+                            
+                            if existing_vote:
+                                # If an existing vote is found, it might be appropriate to either skip updating this vote,
+                                # or to implement some logic to handle this case (e.g., reassign votes).
+                                # For now, let's just warn and skip to the next vote to maintain data integrity.
+                                messages.error(request, f"AI user has already voted with importance {importance} for activity {existing_vote.activity.id} this week.")
+                                continue
+
+                            # Save or update vote, ensuring uniqueness of importance per week for the AI
+                            ActivityVote.objects.update_or_create(
+                                user=ai_user,
+                                activity_id=activity_id,
+                                week=week_start,
+                                defaults={'importance': importance}
+                            )
+                            # Update current standing vote
+                            CurrentActivityVote.objects.update_or_create(
+                                user=ai_user, 
+                                activity_id=activity_id, 
+                                defaults={'importance': importance}
+                            )
+                    
+                messages.success(request, "Activities have been successfully updated.")
+                return redirect('list_activities')
+            except Exception as e:
+                messages.error(request, f"Failed to process updates: {str(e)}")
+    else:
+        form = AIActivitiesUpdateForm()
+
+    return render(request, 'clara_app/ai_activities_reply.html', {'form': form})
 
 # Create a new project
 @login_required
@@ -1197,6 +1839,52 @@ def create_project(request):
         clara_version = get_user_config(request.user)['clara_version']
         
         return render(request, 'clara_app/create_project.html', {'form': form, 'clara_version':clara_version})
+
+def edit_acknowledgements(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    try:
+        acknowledgements = project.acknowledgements
+    except Acknowledgements.DoesNotExist:
+        acknowledgements = None
+
+    if request.method == 'POST':
+        form = AcknowledgementsForm(request.POST, instance=acknowledgements)
+        if form.is_valid():
+            ack = form.save(commit=False)
+            ack.project = project
+            ack.save()
+            return redirect('project_detail', project_id=project.id)
+    else:
+        form = AcknowledgementsForm(instance=acknowledgements)
+
+    return render(request, 'clara_app/edit_acknowledgements.html', {'form': form, 'project': project})
+
+# Get summary tables for projects and content, broken down by language
+def language_statistics(request):
+    # Aggregate project counts by l2 language
+    project_stats = (
+        CLARAProject.objects.values('l2')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # Aggregate content counts by l2 language
+    content_stats = (
+        Content.objects.values('l2')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # Calculate the totals
+    total_projects = sum(stat['total'] for stat in project_stats)
+    total_contents = sum(stat['total'] for stat in content_stats)
+
+    return render(request, 'clara_app/language_statistics.html', {
+        'project_stats': project_stats,
+        'content_stats': content_stats,
+        'total_projects': total_projects,
+        'total_contents': total_contents,
+    })
 
 def get_simple_clara_resources_helper(project_id, user):
     try:
@@ -1313,7 +2001,7 @@ def get_simple_clara_resources_helper(project_id, user):
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
 @login_required
-def simple_clara(request, project_id, status):
+def simple_clara(request, project_id, last_operation_status):
     user = request.user
     username = request.user.username
     # Get resources available for display based on the current state
@@ -1328,7 +2016,14 @@ def simple_clara(request, project_id, status):
     form = SimpleClaraForm(initial=resources, is_rtl_language=rtl_language)
     content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
 
-    if request.method == 'POST':
+    if request.method == 'GET':
+        if last_operation_status == 'finished':
+             messages.success(request, f"Operation completed successfully")
+             return redirect('simple_clara', project_id, 'init')
+        elif last_operation_status == 'error':
+             messages.error(request, "Something went wrong. Try looking at the 'Recent task updates' view")
+             return redirect('simple_clara', project_id, 'init')
+    elif request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
         #print(f'Action = {action}')
@@ -1414,8 +2109,9 @@ def simple_clara(request, project_id, status):
                         messages.success(request, success_message)
                     return redirect('simple_clara', new_project_id, new_status)
                 else:
-                    if not request.user.userprofile.credit > 0:
-                        messages.error(request, f"Sorry, you need money in your account to perform this operation")
+                    #if not request.user.userprofile.credit > 0:
+                    if not user_has_open_ai_key_or_credit(user):
+                        messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                         return redirect('simple_clara', project_id, 'initial')
                     else:
                         task_type = f'simple_clara_action'
@@ -1592,8 +2288,6 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, callback=None)
-    #api_calls are stored inside create_and_add_dall_e_3_image
-    #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
@@ -1626,8 +2320,6 @@ def simple_clara_save_text_and_create_image_helper(username, project_id, simple_
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
     create_and_add_dall_e_3_image(project_id, callback=None)
-    #api_calls are stored inside create_and_add_dall_e_3_image
-    #store_api_calls(api_calls, project, user, 'image')
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
@@ -1805,17 +2497,15 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: regenerate DALL-E-3 image")
-    create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
-    #api_calls are stored inside create_and_add_dall_e_3_image
-    #store_api_calls(api_calls, project, user, 'image')
+    result = create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
     post_task_update(callback, f"ENDED TASK: regenerate DALL-E-3 image")
 
-    if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
+    if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text') and result:
         return { 'status': 'finished',
                  'message': 'Regenerated the image' }
     else:
-        return { 'status': 'finished',
-                 'message': 'Unable to regenerate the image. Probably DALL-E-3 thought something was inappropriate.' }
+        return { 'status': 'error',
+                 'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
 
 def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
@@ -2411,7 +3101,8 @@ def human_audio_processing(request, project_id):
 
             if method == 'upload' and human_voice_id:
 
-                audio_repository = AudioRepository()
+                audio_repository = AudioRepositoryORM()
+                #audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository()
                 formset = AudioItemFormSet(request.POST, request.FILES)
                 n_files_uploaded = 0
                 print(f'--- Updating from formset ({len(formset)} items)')
@@ -2598,7 +3289,8 @@ def human_audio_processing_phonetic(request, project_id):
 
             # 2. Update from the formset and save new files
             if method == 'upload_individual' and human_voice_id:
-                audio_repository = AudioRepository()
+                audio_repository = AudioRepositoryORM()
+                #audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
                 formset = AudioItemFormSet(request.POST, request.FILES)
                 n_files_uploaded = 0
                 print(f'--- Updating from formset ({len(formset)} items)')
@@ -3000,8 +3692,9 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         text_choice = 'generate'
                     current_version = ""
             # We're using the AI or a tagger to create a new version of a file
-            elif text_choice in ( 'generate', 'correct', 'improve' ) and not request.user.userprofile.credit > 0:
-                messages.error(request, f"Sorry, you need money in your account to perform this operation")
+            #elif text_choice in ( 'generate', 'correct', 'improve' ) and not request.user.userprofile.credit > 0:
+            elif text_choice in ( 'generate', 'correct', 'improve' ) and not user_has_open_ai_key_or_credit(request.user):
+                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
             elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin' ):
@@ -3459,13 +4152,17 @@ def edit_images(request, project_id, dall_e_3_image_status):
 
     if request.method == 'POST':
         if 'action' in request.POST and request.POST['action'] == 'create_dalle_image':
-            task_type = f'create_dalle_e_3_image'
-            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+            if not user_has_open_ai_key_or_credit(request.user):
+                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
+                return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+            else:
+                task_type = f'create_dalle_e_3_image'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-            async_task(create_and_add_dall_e_3_image, project_id, callback=callback)
-            print(f'--- Started DALL-E-3 image generation task')
-            #Redirect to the monitor view, passing the task ID and report ID as parameters
-            return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+                async_task(create_and_add_dall_e_3_image, project_id, callback=callback)
+                print(f'--- Started DALL-E-3 image generation task')
+                #Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
 
         else:
             formset = ImageFormSet(request.POST, request.FILES)
@@ -3532,7 +4229,8 @@ def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         text = clara_project_internal.load_text_version('plain')
         text_language = project.l2
-        #prompt = f"""Here is something in {text_language} that another instance of you wrote:
+        user = project.user
+        config_info = get_user_config(user)
         prompt = f"""Please read the following (it is written in {text_language.capitalize()}) and create an image to go with it:
 
 {text}
@@ -3551,7 +4249,7 @@ When generating the image, keep the following advice in mind:
         tmp_image_file = os.path.join(temp_dir, 'image_for_whole_text.jpg')
         
         post_task_update(callback, f"--- Creating a new DALL-E-3 image based on the whole project text")
-        api_call = call_chat_gpt4_image(prompt, tmp_image_file, config_info={}, callback=callback)
+        api_call = call_chat_gpt4_image(prompt, tmp_image_file, config_info=config_info, callback=callback)
         post_task_update(callback, f"--- Image created: {tmp_image_file}")
 
         image_name = 'DALLE-E-3-Image-For-Whole-Text'
@@ -3562,11 +4260,11 @@ When generating the image, keep the following advice in mind:
         post_task_update(callback, f"finished")
         api_calls = [ api_call ]
         store_api_calls(api_calls, project, project.user, 'image')
-        return api_calls
+        return True
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
-        return []
+        return False
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
@@ -3742,10 +4440,13 @@ def clara_project_internal_render_text(clara_project_internal, project_id,
     try:
         project = get_object_or_404(CLARAProject, pk=project_id)
         format_preferences_info = FormatPreferences.objects.filter(project=project).first()
+        acknowledgements_info = Acknowledgements.objects.filter(project=project).first()
         clara_project_internal.render_text(project_id,
                                            audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                            preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
-                                           human_voice_id=human_voice_id, format_preferences_info=format_preferences_info,
+                                           human_voice_id=human_voice_id,
+                                           format_preferences_info=format_preferences_info,
+                                           acknowledgements_info=acknowledgements_info,
                                            self_contained=self_contained, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"finished")
     except Exception as e:
@@ -4222,10 +4923,12 @@ def l2s_in_posted_content(require_phonetic_text=False):
     for content in contents_with_projects:
         # Check if the associated project has saved internalized text
         if not require_phonetic_text:
-            if content.project.has_saved_internalised_and_annotated_text():
+            #if content.project.has_saved_internalised_and_annotated_text():
+            if has_saved_internalised_and_annotated_text(content.project):
                 l2_languages.add(content.l2)
         else:
-            if content.project.has_saved_internalised_and_annotated_text() and content.project.has_saved_internalised_and_annotated_text(phonetic=True):
+            #if content.project.has_saved_internalised_and_annotated_text() and content.project.has_saved_internalised_and_annotated_text(phonetic=True):
+            if has_saved_internalised_and_annotated_text(content.project) and has_saved_internalised_and_annotated_text(content.project, phonetic=True):
                 l2_languages.add(content.l2)
 
     return list(l2_languages)
@@ -4247,10 +4950,12 @@ def projects_available_for_adding_to_history(l2_language, projects_in_history, r
     for project in projects:
         # Check if the project has the required saved internalized text and is not already in the history
         if not require_phonetic_text:
-            if project.has_saved_internalised_and_annotated_text() and project not in projects_in_history:
+            #if project.has_saved_internalised_and_annotated_text() and project not in projects_in_history:
+            if has_saved_internalised_and_annotated_text(project) and project not in projects_in_history:
                 available_projects.append(project)
         else:
-            if project.has_saved_internalised_and_annotated_text() and project.has_saved_internalised_and_annotated_text(phonetic=True) \
+            #if project.has_saved_internalised_and_annotated_text() and project.has_saved_internalised_and_annotated_text(phonetic=True) \
+            if has_saved_internalised_and_annotated_text(project) and has_saved_internalised_and_annotated_text(project, phonetic=True) \
                and project not in projects_in_history:
                 available_projects.append(project)
 
@@ -4291,32 +4996,104 @@ def satisfaction_questionnaire(request, project_id):
 
     return render(request, 'clara_app/satisfaction_questionnaire.html', {'form': form, 'project': project})
 
+# Just show the questionnaire without allowing any editing
+@login_required
+def show_questionnaire(request, project_id, user_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    user = get_object_or_404(User, pk=user_id)
+    
+    # Retrieve the existing questionnaire response for this project and user
+    questionnaire = get_object_or_404(SatisfactionQuestionnaire, project=project, user=user)
+
+    return render(request, 'clara_app/show_questionnaire.html', {'questionnaire': questionnaire, 'project': project})
+
+# Show all questionnaires
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
+##def manage_questionnaires(request):
+##    if request.method == 'POST':
+##        # Handle the deletion of selected questionnaire responses
+##        selected_ids = request.POST.getlist('selected_responses')
+##        if selected_ids:
+##            SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
+##            messages.success(request, "Selected responses have been deleted.")
+##            return redirect('manage_questionnaires')
+##    
+##    # Display all questionnaire responses
+##    questionnaires = SatisfactionQuestionnaire.objects.all()
+##    return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
+def manage_questionnaires(request):
+    if request.method == 'POST':
+        if 'export' in request.POST:
+            # Convert questionnaire data to a pandas DataFrame
+            qs = SatisfactionQuestionnaire.objects.all().values()
+            
+            df = pd.DataFrame(qs)
+            
+            # Convert timezone-aware 'created_at' to timezone-naive
+            df['created_at'] = df['created_at'].apply(lambda x: timezone.make_naive(x) if x is not None else x)
+
+            # Convert DataFrame to Excel file
+            response = HttpResponse(content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = 'attachment; filename="questionnaires.xlsx"'
+
+            with pd.ExcelWriter(response, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False)
+
+            return response
+        elif 'delete' in request.POST:
+            # Handle the deletion of selected questionnaire responses
+            selected_ids = request.POST.getlist('selected_responses')
+            if selected_ids:
+                SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
+                messages.success(request, "Selected responses have been deleted.")
+                return redirect('manage_questionnaires')
+
+    questionnaires = SatisfactionQuestionnaire.objects.all()
+    return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
+
 def aggregated_questionnaire_results(request):
-    # Aggregate data for each question. Adjust these queries based on your actual model fields.
-    # For Likert scale questions, calculating the average rating
+    # Aggregate data for each Likert scale question
     ratings = SatisfactionQuestionnaire.objects.aggregate(
-        text_correspondence_avg=Avg('text_correspondence'),
-        language_correctness_avg=Avg('language_correctness'),
-        text_engagement_avg=Avg('text_engagement'),
-        cultural_appropriateness_avg=Avg('cultural_appropriateness'),
-        image_match_avg=Avg('image_match'),
-        shared_with_others_avg=Avg('shared_text'),
-
-        count=Count('id')  
+        grammar_correctness_avg=Avg('grammar_correctness', filter=Q(grammar_correctness__gt=0)),
+        vocabulary_appropriateness_avg=Avg('vocabulary_appropriateness', filter=Q(vocabulary_appropriateness__gt=0)),
+        style_appropriateness_avg=Avg('style_appropriateness', filter=Q(style_appropriateness__gt=0)),
+        content_appropriateness_avg=Avg('content_appropriateness', filter=Q(content_appropriateness__gt=0)),
+        cultural_elements_avg=Avg('cultural_elements', filter=Q(cultural_elements__gt=0)),
+        text_engagement_avg=Avg('text_engagement', filter=Q(text_engagement__gt=0)),
+        image_match_avg=Avg('image_match', filter=Q(image_match__gt=0)),
+        count=Count('id')
     )
+    
+    # For choices questions (time spent, shared intent, etc.), it might be useful to calculate the distribution
+    # For example, how many selected each time range for correction_time_text
+    correction_time_text_distribution = SatisfactionQuestionnaire.objects.values('correction_time_text').annotate(total=Count('correction_time_text')).order_by('correction_time_text')
+    correction_time_annotations_distribution = SatisfactionQuestionnaire.objects.values('correction_time_annotations').annotate(total=Count('correction_time_annotations')).order_by('correction_time_annotations')
+    image_editing_time_distribution = SatisfactionQuestionnaire.objects.values('image_editing_time').annotate(total=Count('image_editing_time')).order_by('image_editing_time')
 
-    # For free-form questions, you might want to list recent responses or categorize them in some way
-    # Here, just fetching the latest 10 responses for illustration
-    improvements = SatisfactionQuestionnaire.objects.values_list('functionality_improvement', flat=True).order_by('-id')
-    design_feedback = SatisfactionQuestionnaire.objects.values_list('design_improvement', flat=True).order_by('-id')
-
-    improvements = [ item for item in improvements if item ][:50]
-    design_feedback = [ item for item in design_feedback if item ][:50]
+    generated_by_ai_distribution = SatisfactionQuestionnaire.objects.values('generated_by_ai').annotate(total=Count('generated_by_ai')).order_by('generated_by_ai')
+    shared_intent_distribution = SatisfactionQuestionnaire.objects.values('shared_intent').annotate(total=Count('shared_intent')).order_by('shared_intent')
+    text_type_distribution = SatisfactionQuestionnaire.objects.values('text_type').annotate(total=Count('text_type')).order_by('text_type')
+    
+    # For open-ended questions, fetching the latest 50 responses for illustration
+    purpose_texts = SatisfactionQuestionnaire.objects.values_list('purpose_text', flat=True).order_by('-created_at')[:50]
+    functionality_suggestions = SatisfactionQuestionnaire.objects.values_list('functionality_suggestion', flat=True).order_by('-created_at')[:50]
+    ui_improvement_suggestions = SatisfactionQuestionnaire.objects.values_list('ui_improvement_suggestion', flat=True).order_by('-created_at')[:50]
 
     context = {
         'ratings': ratings,
-        'improvements': improvements,
-        'design_feedback': design_feedback
+        'correction_time_text_distribution': correction_time_text_distribution,
+        'correction_time_annotations_distribution': correction_time_annotations_distribution,
+        'image_editing_time_distribution': image_editing_time_distribution,
+        'generated_by_ai_distribution': generated_by_ai_distribution,
+        'shared_intent_distribution': shared_intent_distribution,
+        'text_type_distribution': text_type_distribution,
+        'purpose_texts': list(purpose_texts),
+        'functionality_suggestions': list(functionality_suggestions),
+        'ui_improvement_suggestions': list(ui_improvement_suggestions),
     }
 
     return render(request, 'clara_app/aggregated_questionnaire_results.html', context)
@@ -4570,7 +5347,8 @@ def serve_project_image(request, project_id, base_filename):
 
 @login_required
 def serve_audio_file(request, engine_id, l2, voice_id, base_filename):
-    audio_repository = AudioRepository()
+    audio_repository = AudioRepositoryORM()
+    #audio_repository = AudioRepositoryORM() if _use_orm_repositories else AudioRepository() 
     base_dir = audio_repository.base_dir
     file_path = absolute_file_name( Path(base_dir) / engine_id / l2 / voice_id / base_filename )
     if file_exists(file_path):

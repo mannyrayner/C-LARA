@@ -1,6 +1,7 @@
 <div style="overflow: hidden; background-color: #f1f1f1;">
 
   <a href="index.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Overview</a>
+  <a href="using.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Use C-LARA</a>
   <a href="examples.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Example content</a>
   <a href="ongoing_activities.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Ongoing Activities</a>
   <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
@@ -11,6 +12,10 @@
 
 </div>
 ## Documents
+- <a href="https://www.researchgate.net/publication/379119435_ChatGPT-Based_Learning_And_Reading_Assistant_C-LARA_Second_Report" target="_blank">ChatGPT-Based Learning And Reading Assistant (C-LARA): Second Report</a>. A comprehensive report as of late March 2024
+
+- <a href="https://www.researchgate.net/publication/379148115_T_is_for_Treu_but_how_do_you_pronounce_that_Using_C-LARA_to_create_phonetic_texts_for_Kanak_languages" target="_blank">T is for Treu, but how do you pronounce that? Using C-LARA to create phonetic texts for Kanak languages</a>. Paper presented at 7th Workshop on the Use of Computational Methods in the Study of Endangered Languages (ComputEL-7), Malta, March 2024
+
 - <a href="https://www.researchgate.net/publication/375999167_Using_C-LARA_to_evaluate_GPT-4's_multilingual_processing/stats" target="_blank">Using C-LARA to evaluate GPT-4's multilingual processing</a>. Paper presented at the 21st Annual Workshop of the Australasian Language Technology Association, Melbourne, Australia, December 2023.
 
 - <a href="https://www.researchgate.net/publication/372526096_ChatGPT-Based_Learning_And_Reading_Assistant_Initial_Report" target="_blank">ChatGPT-Based Learning And Reading Assistant: Initial Report</a>. A comprehensive report as of late July 2023
@@ -21,9 +26,4 @@
 
 - <a href="https://github.com/mannyrayner/C-LARA/blob/main/README.txt" target="_blank">README file</a>. Installation instructions, list of files.
 
-- <a href="https://github.com/mannyrayner/C-LARA/blob/main/FUNCTIONALITY.txt" target="_blank">FUNCTIONALITIES file</a>. List of all top-level platform functionalities.
-
-- <a href="https://github.com/mannyrayner/C-LARA/blob/main/CURRENT_PRIORITIES.txt" target="_blank">CURRENT PRIORITIES file</a>. Current and planned near-future tasks. Updated frequently.
-
-- <a href="https://github.com/mannyrayner/C-LARA/blob/main/TODO.txt" target="_blank">TODO file</a>. Remaining and completed to-do items.
 

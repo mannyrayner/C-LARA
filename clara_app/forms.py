@@ -2,13 +2,16 @@ from django import forms
 from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
-from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest
+from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest, Acknowledgements
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
+from .models import Activity, ActivityRegistration, ActivityComment, ActivityVote
+
 from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, RECENT_TIME_PERIOD_CHOICES, DEFAULT_RECENT_TIME_PERIOD
 
-from .clara_core.clara_utils import is_rtl_language, is_chinese_language
+from .clara_utils import is_rtl_language, is_chinese_language
         
 class RegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -38,7 +41,7 @@ class UserProfileForm(forms.ModelForm):
 class UserPermissionsForm(forms.ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['is_admin', 'is_moderator', 'is_funding_reviewer']
+        fields = ['is_admin', 'is_moderator', 'is_funding_reviewer', 'is_questionnaire_reviewer']
 
 class FriendRequestForm(forms.Form):
     action = forms.CharField(widget=forms.HiddenInput())
@@ -47,7 +50,7 @@ class FriendRequestForm(forms.Form):
 class UserConfigForm(forms.ModelForm):
     class Meta:
         model = UserConfiguration
-        fields = ['clara_version', 'gpt_model', 'max_annotation_words']  
+        fields = ['clara_version', 'open_ai_api_key', 'gpt_model', 'max_annotation_words']  
         widgets = {
             'clara_version': forms.Select(choices=[('simple_clara', 'Simple C-LARA'),
                                                    ('full_clara', 'Full C-LARA'),]),
@@ -68,8 +71,14 @@ class AssignLanguageMasterForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
     language = forms.ChoiceField(choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
 
+class InitialiseORMRepositoriesForm(forms.Form):
+    pass
+
 class DeleteTTSDataForm(forms.Form):
     language = forms.ChoiceField(choices=SUPPORTED_LANGUAGES)
+
+class DeleteContentForm(forms.Form):
+    pass
 
 class ContentRegistrationForm(forms.ModelForm):
     class Meta:
@@ -86,14 +95,28 @@ class FormatPreferencesForm(forms.ModelForm):
                   'concordance_font_type', 'concordance_font_size', 'concordance_text_align']
 
 class ContentSearchForm(forms.Form):
+    title = forms.CharField(max_length=255, required=False)
     l2 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)
     l1 = forms.ChoiceField(choices=[('', 'Any')] + SUPPORTED_LANGUAGES, required=False)
-    title = forms.CharField(max_length=255, required=False)
+    time_period = forms.ChoiceField(choices=[('', 'Any time')] + RECENT_TIME_PERIOD_CHOICES, required=False, label="Most recently active")
+
+class UnifiedSearchForm(forms.Form):
+    time_period = forms.ChoiceField(
+        choices=RECENT_TIME_PERIOD_CHOICES,
+        required=False,
+        label="Showing updates for",
+        initial=DEFAULT_RECENT_TIME_PERIOD
+    )
 
 class ProjectCreationForm(forms.ModelForm):
     class Meta:
         model = CLARAProject
         fields = ['title', 'l2', 'l1']
+
+class AcknowledgementsForm(forms.ModelForm):
+    class Meta:
+        model = Acknowledgements
+        fields = ['short_text', 'long_text', 'long_text_location']
 
 class ProjectImportForm(forms.Form):
     title = forms.CharField(label='Project Title', max_length=255)
@@ -407,6 +430,48 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['comment']
+
+class ActivitySearchForm(forms.Form):
+    id = forms.IntegerField(required=False, label="Activity ID", widget=forms.NumberInput(attrs={'placeholder': 'Enter Activity ID'}))
+    category = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_CATEGORY_CHOICES, required=False, label="Category")
+    status = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_STATUS_CHOICES, required=False, label="Status")
+    resolution = forms.ChoiceField(choices=[('', 'Any')] + ACTIVITY_RESOLUTION_CHOICES, required=False, label="Resolution")
+    time_period = forms.ChoiceField(choices=[('', 'Any time')] + RECENT_TIME_PERIOD_CHOICES, required=False, label="Most recently active")
+
+class ActivityCommentForm(forms.ModelForm):
+    class Meta:
+        model = ActivityComment
+        fields = ['comment']
+
+class ActivityForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = ['title', 'category', 'description']
+
+class ActivityStatusForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = ['status']
+
+class ActivityResolutionForm(forms.ModelForm):
+    class Meta:
+        model = Activity
+        fields = ['resolution']
+
+class ActivityRegistrationForm(forms.ModelForm):
+    wants_email = forms.BooleanField(required=False, label='Receive email notifications for updates')
+
+    class Meta:
+        model = ActivityRegistration
+        fields = ['wants_email']
+
+class ActivityVoteForm(forms.ModelForm):
+    class Meta:
+        model = ActivityVote
+        fields = ['importance']
+
+class AIActivitiesUpdateForm(forms.Form):
+    updates_json = forms.CharField(widget=forms.Textarea(attrs={'placeholder': 'Enter JSON with updates'}), label="AI Updates JSON")
         
 class DiffSelectionForm(forms.Form):
     version_choices = [  
@@ -649,9 +714,44 @@ AccentCharacterFormSet = formset_factory(AccentCharacterForm, extra=1)
 class SatisfactionQuestionnaireForm(forms.ModelForm):
     class Meta:
         model = SatisfactionQuestionnaire
-        fields = ['text_correspondence', 'language_correctness', 'text_engagement',
-                  'cultural_appropriateness', 'image_match', 'shared_text',
-                  'functionality_improvement', 'design_improvement']
+        fields = [
+            'clara_version',
+            'generated_by_ai',
+            'text_type',
+            'grammar_correctness',
+            'vocabulary_appropriateness',
+            'style_appropriateness',
+            'content_appropriateness',
+            'cultural_elements',
+            'text_engagement',
+            'correction_time_text',
+            'correction_time_annotations',
+            'image_match',
+            'image_editing_time',
+            'shared_intent',
+            'purpose_text',
+            'functionality_suggestion',
+            'ui_improvement_suggestion',
+        ]
+        widgets = {
+            'clara_version': forms.Select(attrs={'class': 'form-control'}),
+            'generated_by_ai': forms.Select(attrs={'class': 'form-control'}),
+            'text_type': forms.Select(attrs={'class': 'form-control'}),
+            'grammar_correctness': forms.Select(attrs={'class': 'form-control'}),
+            'vocabulary_appropriateness': forms.Select(attrs={'class': 'form-control'}),
+            'style_appropriateness': forms.Select(attrs={'class': 'form-control'}),
+            'content_appropriateness': forms.Select(attrs={'class': 'form-control'}),
+            'cultural_elements': forms.Select(attrs={'class': 'form-control'}),
+            'text_engagement': forms.Select(attrs={'class': 'form-control'}),
+            'correction_time_text': forms.Select(attrs={'class': 'form-control'}),
+            'correction_time_annotations': forms.Select(attrs={'class': 'form-control'}),
+            'image_match': forms.Select(attrs={'class': 'form-control'}),
+            'image_editing_time': forms.Select(attrs={'class': 'form-control'}),
+            'shared_intent': forms.Select(attrs={'class': 'form-control'}),
+            'purpose_text': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'functionality_suggestion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'ui_improvement_suggestion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
 
 class FundingRequestForm(forms.ModelForm):
     class Meta:

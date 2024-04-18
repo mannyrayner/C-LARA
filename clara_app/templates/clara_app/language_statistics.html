@@ -1,0 +1,51 @@
+{% extends "clara_app/base.html" %}
+
+{% load clara_tags %}
+
+{% block content %}
+<h2>Language Statistics</h2>
+
+<h3>Project Statistics by Language</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Language</th>
+            <th>Number of Projects</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stat in project_stats %}
+        <tr>
+            <td>{{ stat.l2|titlecase }}</td>
+            <td>{{ stat.total }}</td>
+        </tr>
+        {% endfor %}
+		<tr>
+			<td><strong>Total</strong></td>
+			<td><strong>{{ total_projects }}</strong></td>
+		</tr>
+    </tbody>
+</table>
+
+<h3>Content Statistics by Language</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Language</th>
+            <th>Number of Contents</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for stat in content_stats %}
+        <tr>
+            <td>{{ stat.l2|titlecase }}</td>
+            <td>{{ stat.total }}</td>
+        </tr>
+        {% endfor %}
+		<tr>
+            <td><strong>Total</strong></td>
+            <td><strong>{{ total_contents }}</strong></td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %}

@@ -21,10 +21,12 @@
   padding: 4px 10px;
   border-radius: 3px;
   font-size: 1em; /* Increase font size for better readability */
-  top: -2em;
+  top: 1.2em;
   {{ left_or_right_for_gloss_popup }}: 0; 
   min-width: 100%; /* Ensure the gloss popup is never smaller than the word it is glossing */
   white-space: normal; /* Allow gloss to wrap to a new line */
+  z-index: 100; /* Ensure the popup appears above other content */
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.5); /* Add a subtle shadow for depth */
 }
 
 /* Additional RTL styling */
@@ -45,6 +47,8 @@
   {{ left_or_right_for_gloss_popup }}: 0; 
   min-width: 100%; /* Ensure the gloss popup is never smaller than the word it is glossing */
   white-space: normal; /* Allow gloss to wrap to a new line */
+  z-index: 100; /* Ensure the popup appears above other content */
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.5); /* Add a subtle shadow for depth */
 }
 
 /* Additional RTL styling */
@@ -54,7 +58,6 @@
 }
 
 body {
-  margin: 5rem;
   padding: 2rem 1rem; /* Increase the top padding from 1rem to 2rem */
   font-family: {{ font_type }}; /* Placeholder for font type */
   font-size: {{ font_size }}; /* Placeholder for font size */
@@ -171,6 +174,10 @@ nav {
   flex-direction: row-reverse;
 }
 
+.page {
+  margin: 5%;
+}
+
 .concordance-pane-wrapper {
   width: 50%;
   height: 100vh;
@@ -185,7 +192,6 @@ nav {
 .main-text-pane-wrapper {
   width: 50%;
   height: 100vh;
-  margin: 2rem;
   overflow-y: auto;
   padding-top: 2rem; /* Add padding-top to create space at the top of the main text */
 }

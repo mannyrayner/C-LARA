@@ -153,6 +153,7 @@ from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
+from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_utils import absolute_file_name, absolute_local_file_name
@@ -516,8 +517,10 @@ class CLARAProjectInternal:
     def load_text_version(self, version: str) -> str:
         if version == 'segmented_with_images':
             return self._create_and_load_segmented_with_images_text()
-        if version == 'segmented_with_title':
+        elif version == 'segmented_with_title':
             return self._create_and_load_segmented_with_title_text()
+        elif version == 'segmented_with_title_for_labelled':
+            return self._create_and_load_segmented_with_title_for_labelled_text()
         elif version == 'lemma_and_gloss':
                 return self._create_and_load_lemma_and_gloss_file()
         else:
@@ -546,7 +549,7 @@ class CLARAProjectInternal:
         return segmented_with_images_text
 
     # Get text consisting of "segmented" text, plus segmented title if available
-    def _create_and_load_segmented_with_title_text(self, callback=None):
+    def _create_and_load_segmented_with_title_text(self):
         segmented_text = self.load_text_version("segmented")
         text_title = self.load_text_version_or_null("segmented_title")
         if text_title != '':
@@ -555,6 +558,11 @@ class CLARAProjectInternal:
         else:
             segmented_with_title_text = segmented_text
         return segmented_with_title_text
+
+    def _create_and_load_segmented_with_title_for_labelled_text(self):
+        segmented_with_title_text = self._create_and_load_segmented_with_title_text()
+        text_object = internalize_text(segmented_with_title_text, self.l2_language, self.l1_language, 'segmented')
+        return text_object.to_text(annotation_type='segmented_for_labelled')
 
     # The "lemma_and_gloss" version is initially a merge of the "lemma" and "gloss" versions
     def _create_and_load_lemma_and_gloss_file(self) -> str:
@@ -693,7 +701,7 @@ class CLARAProjectInternal:
 
     # Get "labelled segmented" version of text, used for manual audio/text alignment
     def get_labelled_segmented_text(self) -> str:
-        segmented_text = self.load_text_version("segmented_with_title")
+        segmented_text = self.load_text_version("segmented_with_title_for_labelled")
         return add_indices_to_segmented_text(segmented_text)
 
     # Call ChatGPT-4 to improve existing segmentation annotations
@@ -846,6 +854,7 @@ class CLARAProjectInternal:
                                             human_voice_id=None,
                                             audio_type_for_words='tts', audio_type_for_segments='tts',
                                             preferred_tts_engine=None, preferred_tts_voice=None,
+                                            acknowledgements_info=None,
                                             phonetic=False, callback=None) -> str:
         post_task_update(callback, f"--- Creating internalised text")
         text_object = self.get_internalised_text(phonetic=phonetic) 
@@ -865,6 +874,10 @@ class CLARAProjectInternal:
                                          phonetic=phonetic, callback=callback)
         audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
         post_task_update(callback, f"--- Audio annotations done")
+
+        # Add acknowledgements after audio annotation, because we don't want audio on them
+        if acknowledgements_info:
+            add_acknowledgements_to_text_object(text_object, acknowledgements_info)
 
         images = self.get_all_project_images()
         post_task_update(callback, f"--- Found {len(images)} images")
@@ -1117,7 +1130,8 @@ class CLARAProjectInternal:
     def render_text(self, project_id, self_contained=False,
                     preferred_tts_engine=None, preferred_tts_voice=None,
                     human_voice_id=None,
-                    audio_type_for_words='tts', audio_type_for_segments='tts', format_preferences_info=None,
+                    audio_type_for_words='tts', audio_type_for_segments='tts',
+                    format_preferences_info=None, acknowledgements_info=None,
                     phonetic=False, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
         l2 = self.l2_language
@@ -1125,7 +1139,9 @@ class CLARAProjectInternal:
         text_object = self.get_internalised_and_annotated_text(title=title,
                                                                preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                                                human_voice_id=human_voice_id,
-                                                               audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                                               audio_type_for_words=audio_type_for_words,
+                                                               audio_type_for_segments=audio_type_for_segments,
+                                                               acknowledgements_info=acknowledgements_info,
                                                                phonetic=phonetic, callback=callback)
  
         post_task_update(callback, f"--- Created internalised and annotated text")
@@ -1195,8 +1211,9 @@ class CLARAProjectInternal:
         project_directory = self.project_dir
         audio_metadata = self.get_audio_metadata(tts_engine_type=None,
                                                  human_voice_id=human_voice_id, 
-                                                 audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                                 type='all', format='default',
+                                                 audio_type_for_words=audio_type_for_words,
+                                                 audio_type_for_segments=audio_type_for_segments,
+                                                 type='all', 
                                                  phonetic=False, callback=callback)
         if self.text_versions['phonetic'] and human_voice_id_phonetic:
             audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,

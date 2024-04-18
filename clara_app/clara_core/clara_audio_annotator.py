@@ -239,7 +239,7 @@ class AudioAnnotator:
             return { 'words': words_data, 'segments': segments_data }
 
     def _create_and_store_missing_mp3s(self, text_items, words_or_segments, phonetic=False, callback=None):
-        print(f"_create_and_store_missing_mp3s({text_items}, {words_or_segments}, phonetic={phonetic})")
+        #print(f"_create_and_store_missing_mp3s({text_items}, {words_or_segments}, phonetic={phonetic})")
         if words_or_segments == 'words':
             tts_engine_to_use = self.word_tts_engine
             engine_id_to_use = self.word_engine_id
@@ -348,7 +348,7 @@ class AudioAnnotator:
                 if file:
                     post_task_update(callback, f"--- Adding mp3 to repository for '{text}', ({i}/{len(metadata)})")
                     temp_file = os.path.join(temp_dir, file)
-                    file_path = self.audio_repository.store_mp3('human_voice', self.language, self.human_voice_id, temp_file, keep_file_name=True)
+                    file_path = self.audio_repository.store_mp3('human_voice', self.language, self.human_voice_id, temp_file, keep_file_name=False)
                     self.audio_repository.add_or_update_entry('human_voice', self.language, self.human_voice_id, text_canonical, file_path, context=context)
                     previous_canonical_texts.append(text_canonical)
                     previous_canonical_text = ' '.join(previous_canonical_texts) 

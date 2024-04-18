@@ -1,0 +1,62 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+    <h2>{{ activity.title }} (Activity #{{ activity.id }})</h2>
+    <p>{{ activity.description|linebreaksbr }}</p>
+	{% if voting_users %}
+    <h3>Voters this week</h3>
+		<ul>
+			{% for voter in voting_users %}
+				<li><a href="{% url 'external_profile' user_id=voter.id %}">{{ voter.username }}</a></li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+	<h3>Following</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if registration %}
+            <button type="submit" name="unregister">Stop following</button>
+        {% else %}
+            <button type="submit" name="register">Follow</button>
+        {% endif %}
+    </form>
+	<!-- Activity Status Update Form -->
+    {% if user == activity.creator or user.userprofile.is_admin %}
+		<h3>Update Status</h3>
+		<form method="post">
+			{% csrf_token %}
+			{{ status_form.as_p }}
+			<button type="submit" name="update_status">Update Status</button>
+		</form>
+    {% endif %}
+	<!-- Activity Resolution Update Form -->
+    {% if user == activity.creator or user.userprofile.is_admin %}
+		<h3>Update Resolution</h3>
+		<form method="post">
+			{% csrf_token %}
+			{{ resolution_form.as_p }}
+			<button type="submit" name="update_resolution">Update Resolution</button>
+		</form>
+    {% endif %}
+	<h3>Voting</h3>
+	<form method="post">
+        {% csrf_token %}
+        {{ vote_form.as_p }}
+        <button type="submit" name="vote">Vote for this activity</button>
+    </form>
+	<h3>Comments</h3>
+	{% for comment in comments %}
+		<p>
+			<a href="{% url 'external_profile' user_id=comment.user.id %}"><strong>{{ comment.user.username }}</strong></a>
+			({{ comment.created_at|date:"F j, Y, P" }}):
+			{{ comment.comment|linebreaksbr }}
+		</p>
+	{% endfor %}
+	<form method="post">
+		{% csrf_token %}
+		{{ comment_form.as_p }}
+		<button type="submit" name="submit_comment">Submit comment</button>
+	</form>
+	<a href="{% url 'list_activities' %}">Back to activities page</a>
+{% endblock %}

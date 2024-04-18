@@ -4,7 +4,7 @@
 
 {% block content %}
 <h2>Funding Request</h2>
-<p><b>You can open an account on C-LARA and access texts for free, but if you want to use the AI functions you need a positive credit balance to pay for the OpenAI time. Creating a 300 word story typically costs about USD 0.50. Submit a request here if you would like some credit to experiment.</b></p>
+<p><b>You can open an account on C-LARA and access texts for free, but if you want to use the AI functions you need to be able to pay for the OpenAI calls. The preferred solution is to get an OpenAI API key valid for GPT-4 and enter it under User profile etc > Edit configuration, but if this isn't possible we have a small amount of funding available to help people experiment. Submit a request here.</b></p>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}

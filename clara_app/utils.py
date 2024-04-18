@@ -7,19 +7,23 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 
-from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences
+from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences, Acknowledgements
 from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content, SatisfactionQuestionnaire
 
-from .clara_core.clara_dependencies import CLARADependencies
+from .clara_main import CLARAProjectInternal
 
-from .clara_core.clara_utils import write_json_to_file_plain_utf8, read_json_file
+from .clara_dependencies import CLARADependencies
+
+from .clara_utils import write_json_to_file_plain_utf8, read_json_file
 
 from functools import wraps
 from decimal import Decimal
 import re
 import os
-import datetime
-import time
+#import datetime
+from datetime import datetime, timedelta, time
+import pytz
+#import time
 import tempfile
 import hashlib
 import uuid
@@ -41,9 +45,18 @@ def get_user_config(user):
 
     return {
         'clara_version': user_config.clara_version,
+        'open_ai_api_key': user_config.open_ai_api_key,
         'gpt_model': user_config.gpt_model,
         'max_annotation_words': user_config.max_annotation_words,
     }
+
+def user_has_open_ai_key_or_credit(user):
+    user_config = get_user_config(user)
+    return ( 'open_ai_api_key' in user_config and user_config['open_ai_api_key'] ) or user.userprofile.credit > 0
+
+def has_saved_internalised_and_annotated_text(project, phonetic=False):
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
 
 def make_asynch_callback_and_report_id(request, task_type):
     # Create a unique ID to tag messages posted by this task
@@ -108,7 +121,10 @@ def create_internal_project_id(title, project_id):
 def store_api_calls(api_calls, project, user, operation):
     user_profile = user.userprofile
     for api_call in api_calls:
-        timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
+        # Now do import datetime from datetime
+        # instead of import datetime
+        #timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
+        timestamp = datetime.fromtimestamp(api_call.timestamp)
         APICall.objects.create(
             user=user,
             project=project,
@@ -284,11 +300,14 @@ def get_phase_up_to_date_dict(project, clara_project_internal, user):
     human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
     phonetic_human_audio_info = PhoneticHumanAudioInfo.objects.filter(project=project).first()
     format_preferences = FormatPreferences.objects.filter(project=project).first()
+    acknowledgements = Acknowledgements.objects.filter(project=project).first()
     content_object = Content.objects.filter(project=project).first()
     questionnaire = SatisfactionQuestionnaire.objects.filter(project=project, user=user).first() 
     clara_dependencies = CLARADependencies(clara_project_internal, project.id,
                                            human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
-                                           format_preferences=format_preferences, content_object=content_object,
+                                           format_preferences=format_preferences,
+                                           acknowledgements=acknowledgements,
+                                           content_object=content_object,
                                            questionnaire=questionnaire)
     return clara_dependencies.up_to_date_dict(debug=False)
 
@@ -305,4 +324,47 @@ def EmailMessage_send_or_print_trace(subject, message, from_email, to_addresses)
         email.send()
     else:
         print(f' --- On UniSA would do: EmailMessage(subject, message, from_email, to_addresses).send()')
-        
+
+# Gets start time of most recent C-LARA Zoom meeting, assuming it's at 10.30 Swiss time on a Thursday.        
+def get_zoom_meeting_start_date():
+    adelaide_tz = pytz.timezone('Australia/Adelaide')
+    geneva_tz = pytz.timezone('Europe/Zurich')
+
+    now_adelaide = datetime.now(adelaide_tz)
+    # Convert 'now' in Adelaide time to Geneva time to calculate based on the meeting start time in Geneva
+    now_geneva = now_adelaide.astimezone(geneva_tz)
+
+    # Find the most recent Thursday based on Geneva time
+    days_behind = (now_geneva.weekday() - 3) % 7  # Thursday is 3
+    last_thursday_geneva = now_geneva.date() - timedelta(days=days_behind)
+    # Create a Geneva datetime for last Thursday at 10:30
+    meeting_start_geneva = datetime.combine(last_thursday_geneva, time(10, 30), tzinfo=geneva_tz)
+
+    # Convert the meeting time back to Adelaide time to align with server's timezone
+    meeting_start_adelaide = meeting_start_geneva.astimezone(adelaide_tz).date()
+
+    return meeting_start_adelaide
+
+from datetime import datetime, timedelta, time
+import pytz
+
+def get_previous_week_start_date():
+    adelaide_tz = pytz.timezone('Australia/Adelaide')
+    geneva_tz = pytz.timezone('Europe/Zurich')
+
+    now_adelaide = datetime.now(adelaide_tz)
+    # Convert 'now' in Adelaide time to Geneva time to calculate based on the meeting start time in Geneva
+    now_geneva = now_adelaide.astimezone(geneva_tz)
+
+    # Find the most recent Thursday based on Geneva time
+    days_behind = (now_geneva.weekday() - 3) % 7  # Thursday is 3
+    # Subtract an additional week to get to the previous week's Thursday
+    last_thursday_geneva = now_geneva.date() - timedelta(days=days_behind + 7)
+    # Create a Geneva datetime for last Thursday at 10:30
+    meeting_start_geneva = datetime.combine(last_thursday_geneva, time(10, 30), tzinfo=geneva_tz)
+
+    # Convert the meeting time back to Adelaide time to align with server's timezone
+    meeting_start_adelaide = meeting_start_geneva.astimezone(adelaide_tz).date()
+
+    return meeting_start_adelaide
+

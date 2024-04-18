@@ -4,7 +4,7 @@ import traceback
 
 categories = {
     'Core': {
-        'Python': '$CLARA/clara_app/clara_core/*.py',
+        'Python': '$CLARA/clara_app/clara_*.py',
         'HTML templates': '$CLARA/templates/*.html',
         'Prompt templates and examples': '$CLARA/prompt_templates/*/*_*_*.*',
         'CSS': '$CLARA/static/*.css',
@@ -12,7 +12,12 @@ categories = {
         'Config': '$CLARA/clara_app/clara_core/*.ini',
     },
     'Django': {
-        'Python': '$CLARA/clara_app/*.py',
+        'Python': [ '$CLARA/clara_app/constants.py',
+                    '$CLARA/clara_app/forms.py',
+                    '$CLARA/clara_app/models.py',
+                    '$CLARA/clara_app/urls.py',
+                    '$CLARA/clara_app/views.py'
+                    ],
         'HTML templates': '$CLARA/clara_app/templates/clara_app/*.html',
         'CSS': '$CLARA/clara_app/static/clara_app/*.css',
         'JavaScript': '$CLARA/clara_app/static/clara_app/scripts/*.js',
@@ -26,9 +31,12 @@ categories = {
 }
 
 def count_lines(files_pattern):
-    files_pattern = os.path.expandvars(files_pattern)
-    files = glob.glob(files_pattern)
-    return sum(count_lines_in_file(file) for file in files)
+    if isinstance(files_pattern, (list, tuple)):
+        return sum(count_lines(pattern) for pattern in files_pattern)
+    else:
+        files_pattern = os.path.expandvars(files_pattern)
+        files = glob.glob(files_pattern)
+        return sum(count_lines_in_file(file) for file in files)
 
 def count_lines_in_file(file):
     try:

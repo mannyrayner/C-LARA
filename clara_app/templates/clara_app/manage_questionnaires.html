@@ -1,0 +1,41 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>Manage Satisfaction Questionnaires</h2>
+
+<form method="post">
+  {% csrf_token %}
+  <table>
+    <thead>
+      <tr>
+        <th>Select</th>
+        <th>User</th>
+        <th>Project Title</th>
+        <th>Created At</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for questionnaire in questionnaires %}
+      <tr>
+        <td><input type="checkbox" name="selected_responses" value="{{ questionnaire.id }}"></td>
+        <td>{{ questionnaire.user.username }}</td>
+        <td>{{ questionnaire.project.title }}</td>
+        <td>{{ questionnaire.created_at }}</td>
+        <td>
+          <!-- Optionally add other actions like view or edit -->
+          <a href="{% url 'show_questionnaire' questionnaire.project.id questionnaire.user.id %}">View</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">No questionnaires found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <input type="submit" value="Delete Selected">
+  <input type="submit" name="export" value="Export to Excel">
+</form>
+
+{% endblock %}

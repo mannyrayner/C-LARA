@@ -11,8 +11,51 @@ SIMPLE_CLARA_TYPES = [
         ('annotate_existing_text', 'Paste in your own text and use the AI to convert it to multimodal form'),        
     ]
 
+ACTIVITY_CATEGORY_CHOICES = [
+    ('human_ai_interaction', 'Analysis of human/AI collaboration'),
+    ('annotation', 'Annotation of texts by AI'),
+    ('classroom', 'Classroom experiments'),
+    ('creating_texts', 'Creation of texts by AI'),
+    ('design', 'Design issues for C-LARA platform'),
+    ('multimodal_formatting', 'Formatting/behaviour of multimodal texts'),
+    ('languages_covered_by_ai', 'Languages covered by AI'),
+    ('languages_not_covered_by_ai', 'Languages not covered by AI'),
+    ('legacy_content', 'Legacy content'),
+    ('legacy_software', 'Legacy software'),
+    ('new_functionality', 'New C-LARA functionality not in other categories'),
+    ('phonetic_texts', 'Phonetic texts'),
+    ('publications_and_conferences', 'Publications, conferences and workshops'),
+    ('refactoring', 'Refactoring software'),
+    ('simple_clara', 'Simple C-LARA'),
+    ('social_network', 'Social network'),
+    ('other', 'Other'),
+    ]
+
+ACTIVITY_STATUS_CHOICES = [
+    ('posted', 'Posted'),
+    ('in_progress', 'In Progress'),
+    ('resolved', 'Resolved'),
+    ]
+
+ACTIVITY_RESOLUTION_CHOICES = [
+    ('unresolved', 'Unresolved'),
+    ('solved', 'Solved'),
+    ('wont_do', "Won't Do"),
+    ]
+
+RECENT_TIME_PERIOD_CHOICES = [
+    (1, 'Last day'),
+    (3, 'Last three days'),
+    (7, 'Last week'),
+    (31, 'Last month'),
+    (93, 'Last three months'),
+    ]
+
+DEFAULT_RECENT_TIME_PERIOD = 3
+
 SUPPORTED_LANGUAGES = [
     ('american english', 'American English'),
+    ('ancient egyptian', 'Ancient Egyptian'),
     ('arabic', 'Arabic'),
     ('australian english', 'Australian English'),
     ('barngarla', 'Barngarla'),
@@ -38,6 +81,7 @@ SUPPORTED_LANGUAGES = [
     ('iaai', 'Iaai'),
     ('icelandic', 'Icelandic'),
     ('indonesian', 'Indonesian'),
+    ('irish', 'Irish'),
     ('italian', 'Italian'),
     ('japanese', 'Japanese'),
     ('korean', 'Korean'),
@@ -47,6 +91,8 @@ SUPPORTED_LANGUAGES = [
     ('māori', 'Māori'),
     ('norwegian', 'Norwegian'),
     ('old norse', 'Old Norse'),
+    ('paicî', 'Paicî'),
+    ('pitjantjatjara', 'Pitjantjatjara'),
     ('polish', 'Polish'),
     ('portuguese', 'Portuguese'),
     ('romanian', 'Romanian'),
@@ -60,6 +106,8 @@ SUPPORTED_LANGUAGES = [
     ('turkish', 'Turkish'),
     ('ukrainian', 'Ukrainian'),
     ('vietnamese', 'Vietnamese'),
+    ('welsh', 'Welsh'),
+    ('west greenlandic', 'West Greenlandic'),
 ]
 
 SUPPORTED_LANGUAGES_AND_DEFAULT = [ ('default', 'Default') ] + SUPPORTED_LANGUAGES

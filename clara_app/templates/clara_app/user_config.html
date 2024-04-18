@@ -4,11 +4,31 @@
   <h2>Edit configuration information</h2>
   <form method="POST">
     {% csrf_token %}
-    <p>C-LARA version: {{ form.clara_version }}</p>
+    <p>C-LARA version: {{ form.clara_version }}</p> 
+	<!-- <p>OpenAI API key: {{ form.open_ai_api_key }}</p> 
+	<!-- API Key Field Hidden By Default -->
+    <div>
+        <label for="id_open_ai_api_key">OpenAI API Key:</label>
+        <input type="password" name="open_ai_api_key" id="id_open_ai_api_key" value="{{ form.open_ai_api_key.value }}" autocomplete="off"/>
+        <button type="button" onclick="toggleApiKeyVisibility()">View</button>
+    </div> 
 	{% if clara_version == 'full_clara' %}
 	  <p>GPT-4 model: {{ form.gpt_model }}</p>
 	  <p>Max annotation words: {{ form.max_annotation_words }}</p>
 	{% endif %}
     <button type="submit">Save</button>
   </form>
+  <script>
+    function toggleApiKeyVisibility() {
+        var apiKeyInput = document.getElementById('id_open_ai_api_key');
+        if (apiKeyInput.type === "password") {
+            apiKeyInput.type = "text";
+        } else {
+            apiKeyInput.type = "password";
+        }
+    }
+  </script>
 {% endblock %}
+
+
+

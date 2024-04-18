@@ -2,14 +2,13 @@ from django.db import models
 from django.urls import reverse
 
 from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
+from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
 
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-
-from .clara_core.clara_main import CLARAProjectInternal
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -20,6 +19,7 @@ class UserProfile(models.Model):
     is_admin = models.BooleanField(default=False)
     is_moderator = models.BooleanField(default=False)
     is_funding_reviewer = models.BooleanField(default=False)
+    is_questionnaire_reviewer = models.BooleanField(default=False)
     credit = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     is_private = models.BooleanField(default=False)
 
@@ -53,6 +53,7 @@ class UserConfiguration(models.Model):
     
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     clara_version = models.CharField(max_length=20, choices=CLARA_VERSION_CHOICES, default='full_clara')
+    open_ai_api_key = models.CharField(max_length=200, blank=True, null=True)
     gpt_model = models.CharField(max_length=50, default='gpt-4-1106-preview')
     max_annotation_words = models.IntegerField(default=250)
 
@@ -71,9 +72,11 @@ class CLARAProject(models.Model):
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
 
-    def has_saved_internalised_and_annotated_text(self, phonetic=False):
-        clara_project_internal = CLARAProjectInternal(self.internal_id, self.l2, self.l1)
-        return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
+# Move this to utils.py to avoid circular import
+
+##    def has_saved_internalised_and_annotated_text(self, phonetic=False):
+##        clara_project_internal = CLARAProjectInternal(self.internal_id, self.l2, self.l1)
+##        return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [
@@ -89,6 +92,23 @@ class ProjectPermissions(models.Model):
 
     class Meta:
         unique_together = ("user", "project")
+
+class Acknowledgements(models.Model):
+    project = models.OneToOneField('CLARAProject', on_delete=models.CASCADE, related_name='acknowledgements')
+    short_text = models.TextField("Short Acknowledgements Text", blank=True,
+                                  help_text="To appear in the footer of every page.")
+    long_text = models.TextField("Long Acknowledgements Text", blank=True,
+                                 help_text="To be included once in the final rendered text.")
+    long_text_location = models.CharField("Location of Long Acknowledgements", max_length=20,
+                                          choices=[('first_page', 'Bottom of First Page'),
+                                                   ('extra_page', 'Extra Page at End')], blank=True)
+
+    # Timestamps for dependency tracking
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+
+    def __str__(self):
+        return f"Acknowledgements for {self.project.title}"
 
 # This is used if we have human-recorded audio instead of TTS
 class HumanAudioInfo(models.Model):
@@ -116,9 +136,18 @@ class HumanAudioInfo(models.Model):
         ( 'onyx', 'Onyx (OpenAI)' ),
         ( 'nova', 'Nova (OpenAI)' ),
         ( 'shimmer', 'Shimmer (OpenAI)' ),
-        ( 'ga_UL_anb_nnmnkwii', 'ga_UL_anb_nnmnkwii (ABAIR)' ),
-        ( 'ga_MU_nnc_nnmnkwii', 'ga_MU_nnc_nnmnkwii (ABAIR)' ),
-        ( 'ga_MU_cmg_nnmnkwii', 'ga_MU_cmg_nnmnkwii (ABAIR)' ),      
+        ( 'ga_UL_anb_nemo', 'ga_UL_anb_nemo (ABAIR)' ),
+        ( 'ga_UL_anb_exthts', 'ga_UL_anb_exthts (ABAIR)' ),
+        ( 'ga_UL_anb_piper', 'ga_UL_anb_piper (ABAIR)' ),
+        ( 'ga_CO_snc_nemo', 'ga_CO_snc_nemo (ABAIR)' ),
+        ( 'ga_CO_snc_exthts', 'ga_CO_snc_exthts (ABAIR)' ),
+        ( 'ga_CO_snc_piper', 'ga_CO_snc_piper (ABAIR)' ),
+        ( 'ga_CO_pmc_exthts', 'ga_CO_pmc_exthts (ABAIR)' ),
+        ( 'ga_CO_pmc_nemo', 'ga_CO_pmc_nemo (ABAIR)' ),
+        ( 'ga_MU_nnc_nemo', 'ga_MU_nnc_nemo (ABAIR)' ),
+        ( 'ga_MU_nnc_exthts', 'ga_MU_nnc_exthts (ABAIR)' ),
+        ( 'ga_MU_dms_nemo', 'ga_MU_dms_nemo (ABAIR)' ),
+        ( 'ga_MU_dms_piper', 'ga_MU_dms_piper (ABAIR)' ),
     ]
     
     # Fields
@@ -257,6 +286,9 @@ class Content(models.Model):
 
     def get_absolute_url(self):
         return reverse('content_detail', args=[str(self.id)])
+
+    def get_public_absolute_url(self):
+        return reverse('public_content_detail', args=[str(self.id)])
         
     def url(self):
         if self.project:
@@ -400,24 +432,81 @@ class ReadingHistory(models.Model):
         return ReadingHistoryProjectOrder.objects.filter(reading_history=self)
 
 class SatisfactionQuestionnaire(models.Model):
+    CLARA_VERSION_CHOICES = [
+        ('simple_clara', 'Simple C-LARA'),
+        ('advanced_clara', 'Advanced C-LARA'),
+    ]
+
+    GENERATED_BY_AI_CHOICES = [
+        (True, 'Generated by C-LARA/another AI'),
+        (False, 'Written by a human'),
+    ]
+
+    TEXT_TYPE_CHOICES = [
+        ('story', 'Story'),
+        ('essay', 'Essay'),
+        ('poem', 'Poem'),
+        ('play', 'Play'),
+        ('newspaper_article', 'Newspaper Article'),
+        ('annotated_existing_text', 'Annotating Existing Text'),
+        ('other', 'Other'),
+    ]
+
+    TIME_SPENT_CHOICES = [
+        ('NOT APPLICABLE', 'Not applicable'),
+        ('did_not_correct', "Didn't correct"),
+        ('1_2_mins', '1-2 mins'),
+        ('3_5_mins', '3-5 mins'),
+        ('6_10_mins', '6-10 mins'),
+        ('11_20_mins', '11-20 mins'),
+        ('more_than_20_mins', 'More than 20 mins'),
+    ]
+
+    TIME_SPENT_CHOICES_IMAGES = [
+        ('NOT APPLICABLE', 'Not applicable'),
+        ('did_not_correct', "Didn't correct"),
+        ('1_5_mins', '1-5 mins'),
+        ('6_15_mins', '6-15 mins'),
+        ('15_mins_hour', '15 mins to an hour'),
+        ('more_than_an_hour', 'More than an hour'),
+    ]
+
+    SHARE_CHOICES = [
+        ('have_shared', 'Have shared'),
+        ('will_certainly_share', 'Will certainly share'),
+        ('may_share', 'May share'),
+        ('wont_share', "Won't share"),
+    ]
+
     LIKERT_CHOICES = [
-        (1, 'Strongly disagree'),
-        (2, 'Disagree'),
-        (3, 'Neutral or not applicable'),
-        (4, 'Agree'),
+        (0, 'NOT APPLICABLE'),
         (5, 'Strongly agree'),
-        ]
-        
+        (4, 'Agree'),
+        (3, 'Neutral'),
+        (2, 'Disagree'),
+        (1, 'Strongly disagree'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     project = models.ForeignKey('CLARAProject', on_delete=models.CASCADE)
-    text_correspondence = models.IntegerField("The text C-LARA produced corresponded well to my request", choices=LIKERT_CHOICES)
-    language_correctness = models.IntegerField("The language in the text was correct", choices=LIKERT_CHOICES)
-    text_engagement = models.IntegerField("The text was engaging (funny/cute/moving)", choices=LIKERT_CHOICES)
-    cultural_appropriateness = models.IntegerField("The text was culturally appropriate", choices=LIKERT_CHOICES)
-    image_match = models.IntegerField("The image(s) matched the text well", choices=LIKERT_CHOICES)
-    shared_text = models.IntegerField("I liked the text enough that I showed it to some other people", choices=LIKERT_CHOICES)
-    functionality_improvement = models.TextField("What do you think the most important thing is to improve C-LARA's functionality?", blank=True)
-    design_improvement = models.TextField("What do you think the most important thing is to improve C-LARA's design?", blank=True)
+    clara_version = models.CharField("Which version of C-LARA do your answers apply to?", max_length=20, choices=CLARA_VERSION_CHOICES, null=True)
+    generated_by_ai = models.BooleanField("Was your text generated by C-LARA/another AI, or was it written by a human?", choices=GENERATED_BY_AI_CHOICES, null=True)
+    text_type = models.CharField("What type of text did you produce?", max_length=30, choices=TEXT_TYPE_CHOICES, null=True)
+    grammar_correctness = models.IntegerField("The grammar in the text was correct", choices=LIKERT_CHOICES, null=True)
+    vocabulary_appropriateness = models.IntegerField("The vocabulary/choice of words was appropriate", choices=LIKERT_CHOICES, null=True)
+    style_appropriateness = models.IntegerField("The style was appropriate", choices=LIKERT_CHOICES, null=True)
+    content_appropriateness = models.IntegerField("The overall content was appropriate", choices=LIKERT_CHOICES, null=True)
+    cultural_elements = models.IntegerField("The text included appropriate elements of local culture", choices=LIKERT_CHOICES, null=True)
+    text_engagement = models.IntegerField("I found the text engaging (funny/cute/moving/etc)", choices=LIKERT_CHOICES, null=True)
+    correction_time_text = models.CharField("Time I spent correcting the text:", max_length=30, choices=TIME_SPENT_CHOICES, null=True)
+    correction_time_annotations = models.CharField("Time I spent correcting the annotations (segmentation/glosses/lemmas)", max_length=20,
+                                                   choices=TIME_SPENT_CHOICES, null=True)
+    image_match = models.IntegerField("The image(s) matched the content of the text", choices=LIKERT_CHOICES, null=True)
+    image_editing_time = models.CharField("Time spent regenerating/editing the image(s)", max_length=30, choices=TIME_SPENT_CHOICES_IMAGES, null=True)
+    shared_intent = models.CharField("I have shared/intend to share this text with other people", max_length=30, choices=SHARE_CHOICES, null=True)
+    purpose_text = models.TextField("Tell us about the purpose of the text you created (e.g. educational material, professional report, creative writing, articles for public use, technical documentation, personal use, social media content, research and analysis, entertainment, etc.)", blank=True)
+    functionality_suggestion = models.TextField("What other functionality would you like to add to C-LARA?", blank=True)
+    ui_improvement_suggestion = models.TextField("How would you suggest we could improve the user interface design in C-LARA?", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -452,13 +541,171 @@ class FundingRequest(models.Model):
     other_language = models.CharField("Specify the language if it was not listed in the menu", max_length=50, blank=True)
     native_or_near_native = models.BooleanField("Are you a native/near-native speaker of this language?", default=False)
     text_type = models.CharField("What kind of texts are you most interested in creating?", max_length=50, choices=CONTENT_TYPE_CHOICES)
-    other_purpose = models.TextField("If you wish, describe in a couple of sentences what you are planning to do.", blank=True)
+    other_purpose = models.TextField("Explain briefly what you want to do and why you cannot use an API key.", blank=True)
     status = models.CharField("Current status of request", max_length=50, choices=STATUS_CHOICES, default='submitted')
     funder = models.ForeignKey(User, related_name='funding_request_funder', on_delete=models.SET_NULL, null=True, blank=True)
     credit_assigned = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     decision_comment = models.TextField("Comment on Decision", blank=True, help_text="Feedback or reason for decision.")
     decision_made_at = models.DateTimeField("Decision Made At", null=True, blank=True)
-    
-        
 
+# Models for activities
+
+class Activity(models.Model):
+    title = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=ACTIVITY_CATEGORY_CHOICES)
+    status = models.CharField(max_length=20, choices=ACTIVITY_STATUS_CHOICES, default='posted')
+    resolution = models.CharField(max_length=20, choices=ACTIVITY_RESOLUTION_CHOICES, default='unresolved')
+    description = models.TextField()
+    creator = models.ForeignKey(User, related_name='created_activities', on_delete=models.CASCADE)
+    registered_users = models.ManyToManyField(User, through='ActivityRegistration', related_name='registered_activities')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def get_absolute_url(self):
+        return reverse('activity_detail', args=[str(self.id)])
+
+class ActivityRegistration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    wants_email = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'activity')  # Prevent duplicate registrations
+
+class ActivityComment(models.Model):
+    activity = models.ForeignKey(Activity, related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class ActivityVote(models.Model):
+    ACTIVITY_VOTE_CHOICES = [(0, 'No vote'),
+                             (1, 'Most important'),
+                             (2, 'Second most important'),
+                             (3, 'Third most important')
+                             ]
     
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    importance = models.IntegerField(choices=ACTIVITY_VOTE_CHOICES)
+    week = models.DateField()  # To group votes by week. Value will be start date of the week in which vote was posted
+
+    class Meta:
+        unique_together = ('user', 'activity', 'week')
+
+class CurrentActivityVote(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
+    importance = models.IntegerField(choices=ActivityVote.ACTIVITY_VOTE_CHOICES)
+
+    class Meta:
+        unique_together = ('user', 'activity')
+        
+# Django ORM versions of database relations for repository classes
+
+class AudioMetadata(models.Model):
+    engine_id = models.CharField(max_length=255)
+    language_id = models.CharField(max_length=255)
+    voice_id = models.CharField(max_length=255)
+    text = models.TextField()
+    context = models.TextField(default='')
+    file_path = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'orm_audio_metadata'
+        verbose_name = 'Audio Metadata'
+        verbose_name_plural = 'Audio Metadata'
+        # Unique audio file for combination of engine, language, voice, text and context
+        # Unfortunately, adding this line reveals that the current database is inconsistent
+        #unique_together = ('engine_id', 'language_id', 'voice_id', 'text', 'context')
+        indexes = [
+            models.Index(fields=['engine_id', 'language_id', 'voice_id', 'text', 'context'], name='audio_meta_composite_idx')
+        ]
+
+    def __str__(self):
+        return f"{self.engine_id} | {self.language_id} | {self.voice_id} | {self.text[:50]}"
+
+
+class ImageMetadata(models.Model):
+    POSITION_CHOICES = [
+        ('top', 'Top'),
+        ('bottom', 'Bottom'),
+        ('inline', 'Inline'),
+    ]
+
+    project_id = models.CharField(max_length=255)
+    image_name = models.CharField(max_length=255)
+    file_path = models.TextField()
+    associated_text = models.TextField(blank=True, default='')
+    associated_areas = models.TextField(blank=True, default='')
+    page = models.IntegerField(default=1)
+    position = models.CharField(max_length=10, choices=POSITION_CHOICES, default='top')
+
+    class Meta:
+        db_table = 'orm_image_metadata'
+        verbose_name = 'Image Metadata'
+        verbose_name_plural = 'Image Metadata'
+        # Unique image for combination of project and image_name
+        unique_together = ('project_id', 'image_name')
+
+    def __str__(self):
+        return f"{self.project_id} | {self.image_name} | {self.position} | Page {self.page}"
+
+class PhoneticEncoding(models.Model):
+    language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES, primary_key=True)
+    encoding = models.CharField(max_length=255, choices=(('ipa', 'IPA'), ('arpabet_like', 'Arpabet-like')))
+
+    class Meta:
+        db_table = 'orm_phonetic_encoding'
+
+class PlainPhoneticLexicon(models.Model):
+    word = models.TextField()
+    phonemes = models.TextField()
+    language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES)
+    status = models.CharField(
+        max_length=255,
+        choices=(('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed'))
+    )
+
+    class Meta:
+        db_table = 'orm_phonetic_lexicon'
+        # Unique plain phonetic lexicon entry for combination of language, word and phoneme
+        unique_together = ('language', 'word', 'phonemes')
+        indexes = [
+            models.Index(fields=['word'], name='idx_orm_word_plain'),
+        ]
+
+class AlignedPhoneticLexicon(models.Model):
+    word = models.TextField()
+    phonemes = models.TextField()
+    aligned_graphemes = models.TextField()
+    aligned_phonemes = models.TextField()
+    language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES)
+    status = models.CharField(
+        max_length=255,
+        choices=(('uploaded', 'Uploaded'), ('generated', 'Generated'), ('reviewed', 'Reviewed'))
+    )
+
+    class Meta:
+        db_table = 'orm_aligned_phonetic_lexicon'
+        # Unique aligned phonetic lexicon entry for combination of language, word and phoneme
+        unique_together = ('language', 'word', 'phonemes')
+        indexes = [
+            models.Index(fields=['word'], name='idx_orm_word_aligned'),
+        ]
+
+class PhoneticLexiconHistory(models.Model):
+    word = models.TextField()
+    modification_date = models.DateTimeField()
+    previous_value = models.JSONField()
+    new_value = models.JSONField()
+    modified_by = models.CharField(max_length=255)
+    comments = models.TextField()
+
+    class Meta:
+        db_table = 'orm_phonetic_lexicon_history'
+        indexes = [
+            models.Index(fields=['word'], name='idx_orm_word_history'),
+        ]

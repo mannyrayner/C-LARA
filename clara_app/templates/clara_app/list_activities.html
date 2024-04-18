@@ -1,0 +1,55 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>Activities</h2>
+<form method="get" action="{% url 'list_activities' %}">
+    <div>
+        {{ search_form.id.label_tag }} {{ search_form.id }}
+    </div>
+	<div>
+        {{ search_form.category.label_tag }} {{ search_form.category }}
+    </div>
+    <div>
+        {{ search_form.status.label_tag }} {{ search_form.status }}
+    </div>
+    <div>
+        {{ search_form.resolution.label_tag }} {{ search_form.resolution }}
+    </div>
+	<div>
+        {{ search_form.time_period.label_tag }} {{ search_form.time_period }}
+    </div>
+    <button type="submit">Search</button>
+</form>
+<p>Scores refer to this week's voting on priorities: top priority = 10, second = 7, third = 5</p>
+<a href="{% url 'create_activity' %}">Create a new activity</a>
+<table border="2">
+    <thead>
+        <tr>
+            <th>Title</th>
+			<th>ID</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Resolution</th>
+            <th>Score</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for activity in activities %}
+        <tr>
+            <td><a href="{% url 'activity_detail' activity.id %}">{{ activity.title }}</a></td>
+			<td>{{ activity.id }}</td>
+            <td>{{ activity.get_category_display }}</td>
+            <td>{{ activity.get_status_display }}</td>
+            <td>{{ activity.get_resolution_display }}</td>
+            <td>{{ activity.vote_score|default_if_none:"0" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No activities found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><a href="{% url 'create_activity' %}">Create a new activity</a></p>
+{% endblock %}
