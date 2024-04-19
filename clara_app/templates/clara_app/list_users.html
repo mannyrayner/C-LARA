@@ -1,0 +1,22 @@
+{% extends 'clara_app/base.html' %}
+
+{% block content %}
+  <h2>User List</h2>
+  <p>Total Users: {{ page_obj.paginator.count }}</p>
+  <div class="user-list">
+    <ul>
+      {% for user in page_obj %}
+        <li><a href="{% url 'external_profile' user.id %}">{{ user.username }}</a></li>
+      {% endfor %}
+    </ul>
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+      {% endif %}
+      <span class="page-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">next</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

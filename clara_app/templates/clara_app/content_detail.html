@@ -45,7 +45,7 @@
   <form method="post">
     {% csrf_token %}
 	{{ delete_form.as_p }}
-    <button type="submit" class="btn btn-danger" name="delete" onclick="return confirm('Are you sure you want to unregister this content? This will not delete any associated projects.');">Unregister</button>
+    <button type="submit" class="btn btn-danger" name="delete" onclick="return confirm('Are you sure you want to unregister this content? This will not delete any associated projects.');" title="Unregistering this content removes it from visible lists but does not delete any associated projects.">Unregister</button>
   </form>
 {% endif %}
 
