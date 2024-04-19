@@ -271,6 +271,16 @@ def external_profile(request, user_id):
     })
 
 @login_required
+def list_users(request):
+    users = User.objects.all().order_by('-date_joined')  # Assuming you want the newest users first
+    paginator = Paginator(users, 10)  # Show 10 users per page
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'clara_app/list_users.html', {'page_obj': page_obj})
+
+@login_required
 def friends(request):
     # Get the current user's profile
     user_profile = request.user.userprofile
