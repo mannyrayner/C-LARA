@@ -137,7 +137,6 @@ class SimpleClaraForm(forms.Form):
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
     # L2 title to appear on the first page of the text
     text_title = forms.CharField(
-        #widget=forms.Textarea(attrs={'rows': 2, 'cols': 40}),
         widget=forms.Textarea(attrs={'rows': 2}),
         required=False,
         initial='' )
@@ -145,7 +144,11 @@ class SimpleClaraForm(forms.Form):
     image_file_path = forms.ImageField(label='Image File', required=False)
     image_advice_prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False)
-    segmented_text = forms.CharField(label='Segmented text', widget=forms.Textarea, required=False) 
+    segmented_text = forms.CharField(label='Segmented text', widget=forms.Textarea, required=False)
+    segmented_title = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        initial='' )
     image_basename = forms.CharField(required=False)
     rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)
     content_id = forms.CharField(required=False)

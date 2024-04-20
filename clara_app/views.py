@@ -1982,13 +1982,24 @@ def get_simple_clara_resources_helper(project_id, user):
             # For uploaded image, in case we want to use one
             resources_available['image_file_path'] = None
 
-        if clara_project_internal.text_versions['segmented']:
+        #if clara_project_internal.text_versions['segmented']:
+        if up_to_date_dict['segmented']:
             # We have segmented text
             resources_available['segmented_text'] = clara_project_internal.load_text_version('segmented')
 
-        if not clara_project_internal.rendered_html_exists(project_id):
+        #if clara_project_internal.text_versions['segmented_title']:
+        if up_to_date_dict['segmented_title']:
+            # We have segmented text
+            resources_available['segmented_title'] = clara_project_internal.load_text_version('segmented_title')
+
+        #if not clara_project_internal.rendered_html_exists(project_id):
+        if not up_to_date_dict['render']:
             # We have plain text and image, but no rendered HTML
-            resources_available['status'] = 'No multimedia' if image else 'No image'
+            #if not clara_project_internal.text_versions['segmented'] or not clara_project_internal.text_versions['segmented_title']:
+            if not up_to_date_dict['segmented'] or not up_to_date_dict['segmented_title']:
+                resources_available['status'] = 'No segmented text'
+            else:
+                resources_available['status'] = 'No multimedia' if image else 'No image'
             return resources_available
         else:
             # We have the rendered HTML
@@ -2022,7 +2033,8 @@ def simple_clara(request, project_id, last_operation_status):
     status = resources['status']
     simple_clara_type = resources['simple_clara_type'] if 'simple_clara_type' in resources else None
     rtl_language = resources['rtl_language'] if 'rtl_language' in resources else False
-    up_to_date_dict = resources['up_to_date_dict'] 
+    up_to_date_dict = resources['up_to_date_dict']
+    
     form = SimpleClaraForm(initial=resources, is_rtl_language=rtl_language)
     content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
 
@@ -2080,6 +2092,9 @@ def simple_clara(request, project_id, last_operation_status):
                 elif action == 'save_segmented_text':
                     segmented_text = form.cleaned_data['segmented_text']
                     simple_clara_action = { 'action': 'save_segmented_text', 'segmented_text': segmented_text }
+                elif action == 'save_segmented_title':
+                    segmented_title = form.cleaned_data['segmented_title']
+                    simple_clara_action = { 'action': 'save_segmented_title', 'segmented_title': segmented_title }
                 elif action == 'save_text_title':
                     text_title = form.cleaned_data['text_title']
                     simple_clara_action = { 'action': 'save_text_title', 'text_title': text_title }
@@ -2097,6 +2112,8 @@ def simple_clara(request, project_id, last_operation_status):
                 elif action == 'regenerate_image':
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
+                elif action == 'create_segmented_text':
+                    simple_clara_action = { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'create_rendered_text':
                     simple_clara_action = { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'post_rendered_text':
@@ -2105,7 +2122,7 @@ def simple_clara(request, project_id, last_operation_status):
                     messages.error(request, f"Error: unknown action '{action}'")
                     return redirect('simple_clara', project_id, 'error')
 
-                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text',
+                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text', 'save_segmented_title',
                                                              'save_text_title', 'save_uploaded_image', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
@@ -2179,6 +2196,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'save_segmented_text':
             # simple_clara_action should be of form { 'action': 'save_segmented_text', 'segmented_text': segmented_text }
             result = simple_clara_save_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_segmented_title':
+            # simple_clara_action should be of form { 'action': 'save_segmented_title', 'segmented_title': segmented_title }
+            result = simple_clara_save_segmented_title_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'save_text_title':
             # simple_clara_action should be of form { 'action': 'save_text_title', 'text_title': text_title }
             result = simple_clara_save_text_title_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2191,6 +2211,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'regenerate_image':
             # simple_clara_action should be of form { 'action': 'regenerate_image', 'image_advice_prompt': image_advice_prompt }
             result = simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_segmented_text':
+            # simple_clara_action should be of form { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
+            result = simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_rendered_text':
             # simple_clara_action should be of form { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2462,6 +2485,18 @@ def simple_clara_save_text_title_helper(username, project_id, simple_clara_actio
     return { 'status': 'finished',
              'message': 'Saved the text title.'}
 
+def simple_clara_save_segmented_title_helper(username, project_id, simple_clara_action, callback=None):
+    segmented_title = simple_clara_action['segmented_title']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Save the segmented title
+    clara_project_internal.save_text_version('segmented_title', segmented_title, source='human_revised', user=username)
+
+    return { 'status': 'finished',
+             'message': 'Saved the segmented title.'}
+
 # simple_clara_action should be of form 'action': 'save_uploaded_image', 'image_file_path': image_file_path }
 def simple_clara_save_uploaded_image_helper(username, project_id, simple_clara_action, callback=None):
     image_file_path = simple_clara_action['image_file_path']
@@ -2517,6 +2552,32 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
         return { 'status': 'error',
                  'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
+def simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=None):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    up_to_date_dict = simple_clara_action['up_to_date_dict']
+
+    l2 = project.l2
+    title = project.title
+    user = project.user
+    config_info = get_user_config(user)
+
+    # Create segmented text
+    if not up_to_date_dict['segmented']:
+        post_task_update(callback, f"STARTED TASK: add segmentation information")
+        api_calls = clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'segmented')
+        post_task_update(callback, f"ENDED TASK: add segmentation information")
+
+    # Create segmented title. This will just have been done as part of create_segmented_text if we ran that step
+    if up_to_date_dict['segmented'] and not up_to_date_dict['segmented_title']:
+        post_task_update(callback, f"STARTED TASK: add segmentation information to text title")
+        api_calls = clara_project_internal.create_segmented_title(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'segmented_title')
+        post_task_update(callback, f"ENDED TASK: add segmentation information to text title")
+
+    return { 'status': 'finished',
+             'message': 'Created the segmented text.'}
 
 def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
     project = get_object_or_404(CLARAProject, pk=project_id)
