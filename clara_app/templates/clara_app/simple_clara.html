@@ -81,18 +81,24 @@
 		{% endif %}
 	{% endif %}
   
-    {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
-	  {% if status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+    {% if status == 'No image' or status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+	  {% if status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+	    <h3>Segmented title</h3>
+		<p>{{ form.segmented_title }}
+	    <button type="submit" name="action" value="save_segmented_title">Save Edited Segmented Title</button>
+		<br>
 	    <h3>Segmented text</h3>
 		<p>{{ form.segmented_text }}
 	    <button type="submit" name="action" value="save_segmented_text">Save Edited Segmented Text</button>
 		<br>
 	  {% endif %}
 	  <h3>Multimedia text</h3>
-	  {% if status != 'No image' and status != 'No multimedia' %}
-	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
+	  {% if status != 'No image' and status != 'No multimedia' and status != 'No segmented text' %}
+	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Multimedia Text</a></p>
 	  {% endif %}
-	  {% if status == 'No image' or status == 'No multimedia' %}
+	  {% if status == 'No segmented text' %}
+        <button type="submit" name="action" value="create_segmented_text">Generate Segmented Text</button>
+	  {% elif status == 'No image' or status == 'No multimedia' %}
         <button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button>
 	  {% else %}
       <p><button type="submit" name="action" value="create_rendered_text">Regenerate Multimedia Text</button><p>
@@ -106,9 +112,9 @@
 	  {% else %}
 	    <p><a href="{{ content.get_absolute_url }}" target="_blank">View Social Network Page</a></p>
 	  {% endif %}
+	  <br>
 	  <h3>Satisfaction questionnaire</h3>
-	  <p><a href="{% url 'satisfaction_questionnaire' project_id %}" target="_blank">
-		  Go to Questionnaire</a></p>
+	  <p><a href="{% url 'satisfaction_questionnaire' project_id %}" target="_blank">Go to Questionnaire</a></p>
     {% endif %}
   </form>
   {% if status != 'No project' %}
