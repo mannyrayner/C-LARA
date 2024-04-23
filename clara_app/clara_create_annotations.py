@@ -40,6 +40,7 @@ import json
 import regex
 import difflib
 import traceback
+import copy
 
 config = get_config()
 
@@ -111,8 +112,6 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
 
 def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or_pinyin, annotated_text, l1_language, l2_language,
                                           config_info={}, callback=None):
-
-    #post_task_update(callback, f'--- Call generate_or_improve_annotated_version, config_info = {config_info}')
     
     source_version = 'segmented' if annotate_or_improve == 'annotate' else gloss_or_lemma_or_pinyin
     internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
@@ -128,11 +127,48 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
     # Extract a list of Word and NonWordText items 
     elements = internalised_annotated_text.content_elements()
 
-    # Split the elements list into smaller chunks if necessary
-    def split_elements(elements, max_elements):
-        return [elements[i:i + max_elements] for i in range(0, len(elements), max_elements)]
+##    # Split the elements list into smaller chunks if necessary
+##    def split_elements(elements, max_elements):
+##        return [elements[i:i + max_elements] for i in range(0, len(elements), max_elements)]
+##
+##    chunks = split_elements(elements, max_elements)
 
-    chunks = split_elements(elements, max_elements)
+    def split_elements_by_segments(segmented_elements, max_elements):
+        chunks = []
+        current_chunk = []
+        current_count = 0
+
+        for segment0 in segmented_elements:
+            segment = copy.copy(segment0)   # Copy the segment, since we don't want to modify it in the 'extend' line
+            segment_length = len(segment)
+            if current_count + segment_length > max_elements:
+                if current_chunk:  # if the current chunk is not empty, push it to chunks
+                    chunks.append(current_chunk)
+                    current_chunk = []
+                    current_count = 0
+                # If a single segment is larger than max_elements, split it using the stupid method
+                # Keeping it unsplit can easily confuse GPT-4
+                if segment_length > max_elements:
+                    #chunks.append(segment)
+                    split_segment = [segment[i:i + max_elements] for i in range(0, segment_length, max_elements)]
+                    chunks += split_segment
+                else:
+                    current_chunk = segment
+                    current_count = segment_length
+            else:
+                current_chunk.extend(segment)
+                current_count += segment_length
+
+        if current_chunk:  # Don't forget to add the last chunk if it exists
+            chunks.append(current_chunk)
+
+        return chunks
+
+    # Get the segmented elements from the internalised text
+    segmented_elements = internalised_annotated_text.segmented_elements()
+
+    # Create chunks consisting of whole segmemts
+    chunks = split_elements_by_segments(segmented_elements, max_elements)
 
     # Annotate each chunk separately and store the results in the annotated_elements list
     annotated_elements = []
@@ -457,13 +493,6 @@ def unsimplify_element(element, gloss_or_lemma_or_pinyin):
         raise InternalCLARAError(message = f'Bad call: unsimplify_element({element}, {gloss_or_lemma_or_pinyin})')
 
 def parse_chatgpt_gloss_response(response, simplified_elements, gloss_or_lemma_or_pinyin, callback=None):
-##    try:
-##        response_object = json.loads(response)
-##    except:
-##        try:
-##            response_object = extract_json_list_from_response_string_ignoring_wrappers(response, callback=callback)
-##        except:
-##            raise ChatGPTError(message = f'Response is not correctly formatted JSON: {response}')
     response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
     if not isinstance(response_object, list):
         raise ChatGPTError(message = f'Response is not a list: {response}')

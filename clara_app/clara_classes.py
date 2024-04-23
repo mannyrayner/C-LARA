@@ -176,6 +176,14 @@ class Text:
         for page in self.pages:
             elements.extend(page.content_elements())
         return elements
+
+    # Returns a list of lists of content elements, one per segment
+    def segmented_elements(self):
+        segment_list = []
+        for page in self.pages:
+            for segment in page.segments:
+                segment_list.append(segment.content_elements)
+        return segment_list
     
     def word_count(self, phonetic=False):
         return sum([ page.word_count(phonetic=phonetic) for page in self.pages ])
