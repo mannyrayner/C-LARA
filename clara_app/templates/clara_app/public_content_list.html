@@ -1,15 +1,35 @@
 {% extends 'clara_app/base.html' %}
 
 {% block content %}
-  <h2>Posted Content</h2>
+  <h2>Published Content</h2>
+  <br>
+  <p><b>Filter using any combination of the search boxes below</b></p>
   <form method="get" action="{% url 'public_content_list' %}">
-	<p>Title: {{ search_form.title }}</p>
-    <p>Text language: {{ search_form.l2 }}</p>
-	<p>Annotation language: {{ search_form.l1 }}</p>
-	<p>Most recently updated: {{ search_form.time_period }}</p>
-    <button type="submit">Search</button>
+	  <table>
+		<tr>
+		  <td><label for="title">Content title:</label></td>
+		  <td>{{ search_form.title }}</td>
+		</tr>
+		<tr>
+		  <td><label for="l2">Content language:</label></td>
+		  <td>{{ search_form.l2 }}</td>
+		</tr>
+		<tr>
+		  <td><label for="l1">Translation language:</label></td>
+		  <td>{{ search_form.l1 }}</td>
+		</tr>
+		<tr>
+		  <td><label for="time_period">Published during:</label></td>
+		  <td>{{ search_form.time_period }}</td>
+		</tr>
+		<tr>
+		  <td></td>
+		  <td><button type="submit">Search</button></td>
+		</tr>
+	  </table>
   </form>
-
+  <br>
+  <b>Content found</b>
   <ul>
     {% for content in contents %}
       <li><a href="{{ content.get_public_absolute_url }}">{% if content.title %} {{ content.title }} {% else %} (No title) {% endif %}</a></li>

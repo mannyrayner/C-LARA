@@ -12,11 +12,13 @@
   <style>
   main {
   margin-left: 20px; /* Adjust the value as needed */
-  }
+  /* background-color: #F1F7FA; Very light and greyish blue */
+  background-color: #F5F1E9; /* Approx colour of C-LARA blog */
   
   body {
   font-size: 16px; /* Or whatever size you prefer */
   }
+  
 
   .disabled-link {
     pointer-events: none;
@@ -286,11 +288,15 @@
 		  </li>
 		  <!-- Register -->
 		  <li class="nav-item">
-			<a class="nav-link" href="{% url 'register' %}" data-toggle="tooltip" title="Create a new account, giving a userid, password and email address.">Register</a>
+			<a class="nav-link" href="{% url 'register' %}" data-toggle="tooltip" title="Create a new account, giving a userid, password and email address.">Sign up</a>
 		  </li>
-		  <!-- Password Reset -->
+		  <!-- Password reset 
 		  <li class="nav-item">
 			<a class="nav-link" href="{% url 'password_reset' %}" data-toggle="tooltip" title="Reset your password if you have lost it or want to change it. You need to have given an email address.">Password reset</a>
+		  </li> -->
+		  <!-- Content -->
+		  <li class="nav-item">
+			<a class="nav-link" href="{% url 'public_content_list' %}" data-toggle="tooltip" title="Browse C-LARA and LARA content without logging in.">Content</a>
 		  </li>
         {% endif %}
         </ul>
