@@ -41,6 +41,7 @@ import regex
 import difflib
 import traceback
 import copy
+import pprint
 
 config = get_config()
 
@@ -73,8 +74,10 @@ def improve_segmented_version(text, l2_language, config_info={}, callback=None):
     return generate_or_improve_segmented_version('improve', text, l2_language, config_info=config_info, callback=callback)
 
 # Annotate the text with glosses
-def generate_glossed_version(segmented_text, l1_language, l2_language, config_info={}, callback=None):
-    return generate_or_improve_annotated_version('annotate', 'gloss', segmented_text, l1_language, l2_language, config_info=config_info, callback=callback)
+def generate_glossed_version(segmented_text, l1_language, l2_language,
+                             current_glossed_text=None, config_info={}, callback=None):
+    return generate_or_improve_annotated_version('annotate', 'gloss', segmented_text, l1_language, l2_language,
+                                                 current_annotated_text=current_glossed_text, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with glosses
 def improve_glossed_version(glossed_text, l1_language, l2_language, config_info={}, callback=None):
@@ -91,9 +94,11 @@ def improve_pinyin_tagged_version(pinyin_tagged_text, l2_language, config_info={
     return generate_or_improve_annotated_version('improve', 'pinyin', tagged_text, l1_language, l2_language, config_info=config_info, callback=callback)
 
 # Annotate the text with lemmas
-def generate_tagged_version(segmented_text, l2_language, config_info={}, callback=None):
+def generate_tagged_version(segmented_text, l2_language,
+                            current_lemma_tagged_text=None, config_info={}, callback=None):
     l1_language = 'irrelevant'
-    return generate_or_improve_annotated_version('annotate', 'lemma', segmented_text, l1_language, l2_language, config_info=config_info, callback=callback)
+    return generate_or_improve_annotated_version('annotate', 'lemma', segmented_text, l1_language, l2_language,
+                                                 current_annotated_text=current_lemma_tagged_text, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with lemmas
 def improve_tagged_version(tagged_text, l2_language, config_info={}, callback=None):
@@ -111,12 +116,18 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
     return ( api_call.response, [ api_call ] )
 
 def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or_pinyin, annotated_text, l1_language, l2_language,
-                                          config_info={}, callback=None):
+                                          current_annotated_text=None, config_info={}, callback=None):
     
     source_version = 'segmented' if annotate_or_improve == 'annotate' else gloss_or_lemma_or_pinyin
-    internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
+    internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
+    if current_annotated_text and annotate_or_improve == 'annotate' and gloss_or_lemma_or_pinyin == 'gloss':
+        internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'gloss')
+    elif current_annotated_text and annotate_or_improve == 'annotate' and gloss_or_lemma_or_pinyin == 'lemma':
+        internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'lemma')
+    else:
+        internalised_current_annotated_text = None
 
     # Use max_annotation_words from config_info if available, otherwise default to a preset value
     if 'max_annotation_words' in config_info:
@@ -124,60 +135,47 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
     else:
         max_elements = int(config.get('chatgpt4_annotation', 'max_elements_to_annotate'))
 
-    # Extract a list of Word and NonWordText items 
-    elements = internalised_annotated_text.content_elements()
-
-##    # Split the elements list into smaller chunks if necessary
-##    def split_elements(elements, max_elements):
-##        return [elements[i:i + max_elements] for i in range(0, len(elements), max_elements)]
-##
-##    chunks = split_elements(elements, max_elements)
-
-    def split_elements_by_segments(segmented_elements, max_elements):
-        chunks = []
-        current_chunk = []
-        current_count = 0
-
-        for segment0 in segmented_elements:
-            segment = copy.copy(segment0)   # Copy the segment, since we don't want to modify it in the 'extend' line
-            segment_length = len(segment)
-            if current_count + segment_length > max_elements:
-                if current_chunk:  # if the current chunk is not empty, push it to chunks
-                    chunks.append(current_chunk)
-                    current_chunk = []
-                    current_count = 0
-                # If a single segment is larger than max_elements, split it using the stupid method
-                # Keeping it unsplit can easily confuse GPT-4
-                if segment_length > max_elements:
-                    #chunks.append(segment)
-                    split_segment = [segment[i:i + max_elements] for i in range(0, segment_length, max_elements)]
-                    chunks += split_segment
-                else:
-                    current_chunk = segment
-                    current_count = segment_length
-            else:
-                current_chunk.extend(segment)
-                current_count += segment_length
-
-        if current_chunk:  # Don't forget to add the last chunk if it exists
-            chunks.append(current_chunk)
-
-        return chunks
-
-    # Get the segmented elements from the internalised text
+    # segmented_elements is a list of lists of elements, each one corresponding to a segment in the internalised text
     segmented_elements = internalised_annotated_text.segmented_elements()
-
-    # Create chunks consisting of whole segmemts
-    chunks = split_elements_by_segments(segmented_elements, max_elements)
 
     # Annotate each chunk separately and store the results in the annotated_elements list
     annotated_elements = []
     all_api_calls = []
-    for chunk in chunks:
-        annotated_chunk, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
-                                                                                   l1_language, l2_language, config_info=config_info, callback=callback)
-        annotated_elements += annotated_chunk
-        all_api_calls += api_calls
+
+    current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
+    current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
+    
+    if few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, config_info):
+        # We're reusing the saved annotations and only redoing the new segments
+        print(f'--- Redoing {gloss_or_lemma_or_pinyin}, trying to reuse material from previous version')
+        for elements in segmented_elements:
+            key = key_for_segment_elements(elements)
+            if key in current_segmented_elements_dict:
+                #print(f'--- Found material for {key} in previous version')
+                annotated_elements += current_segmented_elements_dict[key]
+            else:
+                # In the worst case, the segment is too long and needs to be split up
+                # Usually, chunks is the same as [ elements ]
+                #print(f'--- Annotating material for {key}')
+                chunks = split_elements_by_segments([ elements ], max_elements)
+                for chunk in chunks:
+                    annotated_chunk, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
+                                                                                               l1_language, l2_language,
+                                                                                               config_info=config_info, callback=callback)
+                    annotated_elements += annotated_chunk
+                    all_api_calls += api_calls
+
+    else:
+        # We're doing everything from scratch
+        #print(f'--- Doing {gloss_or_lemma_or_pinyin} element by element')
+        chunks = split_elements_by_segments(segmented_elements, max_elements)
+        
+        for chunk in chunks:
+            annotated_chunk, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
+                                                                                       l1_language, l2_language,
+                                                                                       config_info=config_info, callback=callback)
+            annotated_elements += annotated_chunk
+            all_api_calls += api_calls
 
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
@@ -190,9 +188,77 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
     human_readable_text = internalised_annotated_text.to_text(gloss_or_lemma_or_pinyin)
     return ( human_readable_text, all_api_calls )
 
-def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, elements, l1_language, l2_language, config_info={}, callback=None):
+# We index on tuples consisting of the content of each element.
+# Typically we have not more than a hundred segments in a text and a few dozen content elements in a segment, so this is acceptably efficient
+def key_for_segment_elements(elements):
+    return tuple([ element.content for element in elements ])
+
+# Index a list of segmented elements on the key given above
+def segmented_elements_to_dict(segmented_elements):
+    if not segmented_elements:
+        return None
+    
+    return { key_for_segment_elements(elements): elements for elements in segmented_elements }
+
+# Find how many segments aren't in the previous version and compare with the limit
+def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, config_info):
+    if not current_segmented_elements_dict:
+        return False
+    
+    limit = int(config.get('chatgpt4_annotation', 'max_segments_to_reannotate_separately'))
+    new_segments = [ key_for_segment_elements(elements) for elements in segmented_elements
+                     if not key_for_segment_elements(elements) in current_segmented_elements_dict \
+                     and len(word_items_in_element_list(elements)) > 0 ]
+    #print(f'--- Limit = {limit}. {len(new_segments)} new segments:')
+    #pprint.pprint(new_segments)
+    return len(new_segments) <= limit
+
+def word_and_non_word_text_items_in_element_list(elements):
+    return [ element for element in elements if element.type in ( 'Word', 'NonWordText' ) ]
+
+def word_items_in_element_list(elements):
+    return [ element for element in elements if element.type in ( 'Word' ) ]
+
+def split_elements_by_segments(segmented_elements, max_elements):
+    chunks = []
+    current_chunk = []
+    current_count = 0
+
+    for segment0 in segmented_elements:
+        segment = copy.copy(segment0)   # Copy the segment, since we don't want to modify it in the 'extend' line
+        segment_length = len(segment)
+        if current_count + segment_length > max_elements:
+            if current_chunk:  # if the current chunk is not empty, push it to chunks
+                chunks.append(current_chunk)
+                current_chunk = []
+                current_count = 0
+            # If a single segment is larger than max_elements, split it using the stupid method
+            # Keeping it unsplit can easily confuse GPT-4
+            if segment_length > max_elements:
+                #chunks.append(segment)
+                split_segment = [segment[i:i + max_elements] for i in range(0, segment_length, max_elements)]
+                chunks += split_segment
+            else:
+                current_chunk = segment
+                current_count = segment_length
+        else:
+            current_chunk.extend(segment)
+            current_count += segment_length
+
+    if current_chunk:  # Don't forget to add the last chunk if it exists
+        chunks.append(current_chunk)
+
+    return chunks
+
+def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, elements,
+                                                  l1_language, l2_language, config_info={}, callback=None):
+    word_elements = word_items_in_element_list(elements)
+    if len(word_elements) == 0:
+        return ( elements, [] )
+
     # Remove markup from the elements before passing to GPT-4 to make things easier for the AI
-    word_and_non_word_text_elements = [ element for element in elements if element.type in ( 'Word', 'NonWordText' ) ]
+    word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(elements)
+    
     if annotate_or_improve == 'annotate':
         simplified_elements0 = [ simplify_element_to_string(element) for element in word_and_non_word_text_elements ]
     else:
