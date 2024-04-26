@@ -109,6 +109,9 @@ class UnifiedSearchForm(forms.Form):
     )
 
 class ProjectCreationForm(forms.ModelForm):
+    #title = forms.CharField(widget=forms.TextInput(attrs={'style': 'width: 100%;'}))  # Uses full width of its container
+    title = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))  
+
     class Meta:
         model = CLARAProject
         fields = ['title', 'l2', 'l1']
@@ -127,7 +130,8 @@ class SimpleClaraForm(forms.Form):
     l2 = forms.ChoiceField(label='Text language', choices=SUPPORTED_LANGUAGES, required=False)
     l1 = forms.ChoiceField(label='Annotation language', choices=SUPPORTED_LANGUAGES, required=False)
     # Name of the Django-level project (CLARAProject)
-    title = forms.CharField(label='Title', max_length=200, required=False)
+    title = forms.CharField(label='Title', max_length=200, required=False,
+                            widget=forms.TextInput(attrs={'size': '60'}))
     # What we are going to do in this project
     simple_clara_type = forms.ChoiceField(choices=SIMPLE_CLARA_TYPES,
                                           widget=forms.RadioSelect,
@@ -425,6 +429,11 @@ class RegisterAsContentForm(forms.Form):
     register_as_content = forms.BooleanField(required=False, initial=False)
 
 class RatingForm(forms.ModelForm):
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]  # Assuming 1-5 rating
+
+    rating = forms.ChoiceField(choices=reversed(RATING_CHOICES),
+                               widget=forms.RadioSelect)
+    
     class Meta:
         model = Rating
         fields = ['rating']

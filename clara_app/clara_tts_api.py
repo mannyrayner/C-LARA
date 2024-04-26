@@ -386,6 +386,66 @@ class ABAIREngine(TTSEngine):
         else:
             return False
 
+class ElevenLabsEngine(TTSEngine):
+    def __init__(self, base_url=None):
+        self.tts_engine_type = 'eleven_labs'
+        self.phonetic = False
+        self.base_url = base_url
+        self.languages = {}
+
+    def get_voices(self):
+        url = "https://api.elevenlabs.io/v1/voices"
+
+        headers = {
+            "Accept": "application/json",
+            "xi-api-key": os.environ["ELEVEN_LABS_API_KEY"],
+            "Content-Type": "application/json"
+            }
+
+        response = requests.get(url, headers=headers)
+        
+        data = response.json()
+
+        return data['voices']
+
+    def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
+        CHUNK_SIZE = 1024  # Size of chunks to read/write at a time
+        XI_API_KEY = os.environ["ELEVEN_LABS_API_KEY"]
+        VOICE_ID = voice_id  # ID of the voice model to use
+        TEXT_TO_SPEAK = text  # Text you want to convert to speech
+        OUTPUT_PATH = "output.mp3"  # Path to save the output audio file
+
+        tts_url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}/stream"
+
+        # Set up headers for the API request, including the API key for authentication
+        headers = {
+            "Accept": "application/json",
+            "xi-api-key": XI_API_KEY
+        }
+
+        # Set up the data payload for the API request, including the text and voice settings
+        data = {
+            "text": TEXT_TO_SPEAK,
+            "model_id": "eleven_multilingual_v2",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.8,
+                "style": 0.0,
+                "use_speaker_boost": True
+            }
+        }
+
+        response = requests.post(tts_url, headers=headers, json=data, stream=True)
+
+        if response.ok:
+            with open(output_file, "wb") as f:
+                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                    f.write(chunk)
+            return True
+        else:
+            print(response.text)
+            return False
+        
 ## Use ipa-reader.xyz to create an mp3 for a piece of IPA text.
 ##
 ## Code slightly adapted from a solution found by Claudia
