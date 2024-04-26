@@ -125,6 +125,7 @@ class HumanAudioInfo(models.Model):
         ( 'none', 'None' ),
         ( 'google', 'Google TTS' ),
         ( 'openai', 'OpenAI TTS' ),
+        ( 'eleven_labs', 'Eleven Labs TTS' ),
         ( 'abair', 'ABAIR' ),
     ]
 

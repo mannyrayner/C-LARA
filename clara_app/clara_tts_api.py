@@ -391,7 +391,19 @@ class ElevenLabsEngine(TTSEngine):
         self.tts_engine_type = 'eleven_labs'
         self.phonetic = False
         self.base_url = base_url
-        self.languages = {}
+        self.languages = { 'american english':
+                            {  'language_id': 'en-US',
+                               'voices': [
+                                   '3z9q8Y7plHbvhDZehEII',
+                               ]
+                            },
+                           'romanian':
+                           {  'language_id': 'ro-RO',
+                               'voices': [
+                                   'XS5fYqdP9mR1As3yhU5V',
+                               ]
+                            }
+                          }
 
     def get_voices(self):
         url = "https://api.elevenlabs.io/v1/voices"
@@ -408,42 +420,53 @@ class ElevenLabsEngine(TTSEngine):
 
         return data['voices']
 
+    # Code slightly adapted from https://elevenlabs.io/docs/api-reference/getting-started
     def create_mp3(self, language_id, voice_id, text, output_file, callback=None):
-        CHUNK_SIZE = 1024  # Size of chunks to read/write at a time
-        XI_API_KEY = os.environ["ELEVEN_LABS_API_KEY"]
-        VOICE_ID = voice_id  # ID of the voice model to use
-        TEXT_TO_SPEAK = text  # Text you want to convert to speech
-        OUTPUT_PATH = "output.mp3"  # Path to save the output audio file
+        try:
+            CHUNK_SIZE = 1024  # Size of chunks to read/write at a time
+            XI_API_KEY = os.environ["ELEVEN_LABS_API_KEY"]
+            VOICE_ID = voice_id  # ID of the voice model to use
+            TEXT_TO_SPEAK = text  # Text you want to convert to speech
+            OUTPUT_PATH = absolute_local_file_name(output_file)  # Path to save the output audio file
 
-        tts_url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}/stream"
+            tts_url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}/stream"
 
-        # Set up headers for the API request, including the API key for authentication
-        headers = {
-            "Accept": "application/json",
-            "xi-api-key": XI_API_KEY
-        }
-
-        # Set up the data payload for the API request, including the text and voice settings
-        data = {
-            "text": TEXT_TO_SPEAK,
-            "model_id": "eleven_multilingual_v2",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.8,
-                "style": 0.0,
-                "use_speaker_boost": True
+            # Set up headers for the API request, including the API key for authentication
+            headers = {
+                "Accept": "application/json",
+                "xi-api-key": XI_API_KEY
             }
-        }
 
-        response = requests.post(tts_url, headers=headers, json=data, stream=True)
+            # Set up the data payload for the API request, including the text and voice settings
+            data = {
+                "text": TEXT_TO_SPEAK,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {
+                    "stability": 0.5,
+                    "similarity_boost": 0.8,
+                    "style": 0.0,
+                    "use_speaker_boost": True
+                }
+            }
 
-        if response.ok:
-            with open(output_file, "wb") as f:
-                for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
-                    f.write(chunk)
-            return True
-        else:
-            print(response.text)
+            response = requests.post(tts_url, headers=headers, json=data, stream=True)
+
+            if response.ok:
+                with open(OUTPUT_PATH, "wb") as f:
+                    for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                        f.write(chunk)
+                return True
+            else:
+                print(response.text)
+                return False
+        except requests.exceptions.RequestException as e:
+            post_task_update(callback, f"*** Warning: Network error while creating ElevenLabs TTS mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+        except IOError as e:
+            post_task_update(callback, f"*** Warning: IOError while saving ElevenLabs TTS mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
+            return False
+        except Exception as e:
+            post_task_update(callback, f"*** Warning: unable to create ElevenLabs TTS mp3 for '{text}': '{str(e)}'\n{traceback.format_exc()}")
             return False
         
 ## Use ipa-reader.xyz to create an mp3 for a piece of IPA text.
@@ -596,10 +619,12 @@ class IPAReaderEngine(TTSEngine):
 
 
 #TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
-TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), IPAReaderEngine()]
+TTS_ENGINES = [ABAIREngine(), GoogleTTSEngine(), OpenAITTSEngine(), ElevenLabsEngine(), IPAReaderEngine()]
 
 #TTS_ENGINES_OPENAI_FIRST = [ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), ReadSpeakerEngine(), IPAReaderEngine()]
-TTS_ENGINES_OPENAI_FIRST = [ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), IPAReaderEngine()]
+TTS_ENGINES_OPENAI_FIRST = [ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), ElevenLabsEngine(), IPAReaderEngine()]
+
+TTS_ENGINES_ELEVEN_LABS_FIRST = [ElevenLabsEngine(), ABAIREngine(), OpenAITTSEngine(), GoogleTTSEngine(), IPAReaderEngine()]
 
 def create_tts_engine(engine_type):
     if engine_type == 'readspeaker':
@@ -610,6 +635,8 @@ def create_tts_engine(engine_type):
         return ABAIREngine()
     elif engine_type == 'openai':
         return OpenAITTSEngine()
+    elif engine_type == 'eleven_labs':
+        return ElevenLabsEngine()
     elif engine_type == 'ipa_reader':
         return IPAReaderEngine()
     else:
@@ -618,6 +645,8 @@ def create_tts_engine(engine_type):
 def get_tts_engine(language, words_or_segments='words', preferred_tts_engine=None, phonetic=False, callback=None):
     if words_or_segments == 'segments' and phonetic == False and preferred_tts_engine == 'openai':
         TTS_ENGINE_LIST_TO_USE = TTS_ENGINES_OPENAI_FIRST
+    elif words_or_segments == 'segments' and phonetic == False and preferred_tts_engine == 'eleven_labs':
+        TTS_ENGINE_LIST_TO_USE = TTS_ENGINES_ELEVEN_LABS_FIRST
     else:
         TTS_ENGINE_LIST_TO_USE = TTS_ENGINES 
     for tts_engine in TTS_ENGINE_LIST_TO_USE:
