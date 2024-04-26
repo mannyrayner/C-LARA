@@ -5,6 +5,7 @@
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script type="text/javascript">
     var csrf_token = "{% csrf_token %}";
@@ -19,6 +20,14 @@
   font-size: 16px; /* Or whatever size you prefer */
   }
   
+  table {
+  border-collapse: collapse;
+  }
+
+  td {
+    padding: 8px;
+    border: 1px solid #ddd; /* light grey border for the cells */
+  }
 
   .disabled-link {
     pointer-events: none;
@@ -82,6 +91,34 @@
     white-space: nowrap;
 }
 
+.rating {
+  unicode-bidi: bidi-override;
+  direction: rtl;
+}
+
+.rating-input {
+  display: none;
+}
+
+.rating-star {
+  color: #ddd; /* Color of non-selected stars */
+  display: inline-block;
+  padding: 0 0px; /* Spacing between stars */
+  cursor: pointer;
+  font-size: 32px; /* Size of stars */
+}
+
+.rating-star:before {
+  content: "★";
+}
+
+.rating-input:checked ~ .rating-star:before,
+.rating-input:checked ~ .rating-star ~ .rating-star:before,
+.rating:hover ~ .rating-star:before,
+.rating:hover ~ .rating-star ~ .rating-star:before {
+  color: #f5ac0f; /* Color of selected stars */
+}
+
   </style>
   <title>{% block title %}C-LARA{% endblock %}</title>
 </head>
@@ -95,36 +132,10 @@
 	  <div class="collapse navbar-collapse" id="navbarNavDropdown">
 		<ul class="navbar-nav">
         {% if user.is_authenticated %}
-		  <!-- User profile, configuration, credit, task updates -->
-		  <li class="nav-item dropdown">
-			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-			  User profile etc
-			</a>
-			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-			  <a class="dropdown-item" href="{% url 'home_page' %}"
-					 data-toggle="tooltip" title="Home page: show recent activities and content">
-					 Home</a>
-			  <a class="dropdown-item" href="{% url 'profile' %}"
-					 data-toggle="tooltip" title="Display your location, bio, profile picture etc.">
-					 Display user profile</a>
-			  <a class="dropdown-item" href="{% url 'edit_profile' %}"
-					 data-toggle="tooltip" title="Enter/edit your location, bio, profile picture etc.">
-					 Edit user profile</a>
-			  <a class="dropdown-item" href="{% url 'user_config' %}"
-					 data-toggle="tooltip" title="Specify the GPT-4 model you want to use, optionally give an API key, and edit other related parameters.">
-					 Edit configuration information</a>
-			  <a class="dropdown-item" href="{% url 'credit_balance' %}"
-					 data-toggle="tooltip" title="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
-					 Credit balance for ChatGPT-4 API calls</a>
-			  <a class="dropdown-item" href="{% url 'transfer_credit' %}"
-					 data-toggle="tooltip" title="Transfer some of the credit from your GPT-4 call account to another user.">
-					 Transfer credit to another user</a>
-			  <a class="dropdown-item" href="{% url 'view_task_updates' %}"
-					 data-toggle="tooltip" title="Show trace output from C-LARA tasks produced during the last hour.">
-					 Recent task updates</a>
-			</div>
-          </li>
-				 
+		  <!-- Home -->
+		   <li class="nav-item">
+			  <a class="nav-link" href="{% url 'home_page' %}" data-toggle="tooltip" title="Home page: show recent activities and content"><i class="fas fa-home"></i></a>
+		   </li>	 
 		  <!-- C-LARA social network -->
 		  <li class="nav-item dropdown">
 			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -133,10 +144,10 @@
 			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
 			  <a class="dropdown-item" href="{% url 'content_list' %}"
 					 data-toggle="tooltip" title="List all the content that has been registered in the C-LARA social network.">
-					 Posted content</a>
+					 Published content</a>
 			  <a class="dropdown-item" href="{% url 'list_activities' %}"
 					 data-toggle="tooltip" title="List ongoing project activities or register a new activity.">
-					 Activities</a>
+					 Project activities</a>
 			  <a class="dropdown-item" href="{% url 'reading_history' 'english' 'init' %}"
 					 data-toggle="tooltip" title="Access your reading history for a given language, or add a new project to it.">
 					 Reading histories</a>
@@ -276,11 +287,33 @@
             </li>
           {% endif %}
 		  
-
-		  <!-- Logout -->
-		   <li class="nav-item">
-			  <a class="nav-link" href="{% url 'logout' %}" data-toggle="tooltip" title="Exit C-LARA.">Logout</a>
-		   </li>
+		  <!-- User profile, configuration, credit, task updates -->
+		  <li class="nav-item dropdown">
+			<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+			   <i class="fas fa-user"></i> 
+			</a>
+			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+			  <a class="dropdown-item" href="{% url 'profile' %}"
+					 data-toggle="tooltip" title="Display your location, bio, profile picture etc.">
+					 Display user profile</a>
+			  <a class="dropdown-item" href="{% url 'edit_profile' %}"
+					 data-toggle="tooltip" title="Enter/edit your location, bio, profile picture etc.">
+					 Edit user profile</a>
+			  <a class="dropdown-item" href="{% url 'user_config' %}"
+					 data-toggle="tooltip" title="Specify the GPT-4 model you want to use, optionally give an API key, and edit other related parameters.">
+					 Edit configuration information</a>
+			  <a class="dropdown-item" href="{% url 'credit_balance' %}"
+					 data-toggle="tooltip" title="C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.">
+					 Credit balance for ChatGPT-4 API calls</a>
+			  <a class="dropdown-item" href="{% url 'transfer_credit' %}"
+					 data-toggle="tooltip" title="Transfer some of the credit from your GPT-4 call account to another user.">
+					 Transfer credit to another user</a>
+			  <a class="dropdown-item" href="{% url 'view_task_updates' %}"
+					 data-toggle="tooltip" title="Show trace output from C-LARA tasks produced during the last hour.">
+					 Recent task updates</a>
+			  <a class="dropdown-item" href="{% url 'logout' %}" data-toggle="tooltip" title="Exit C-LARA.">Logout</a>
+			</div>
+		</li>
 				 
         {% else %}
 		  <li class="nav-item">

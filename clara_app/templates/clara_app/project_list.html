@@ -2,19 +2,38 @@
 
 {% block content %}
   {% if clara_version_to_access_with == "simple_clara" %}
-     <h1>Your Projects (Access through simple C-LARA)</h1>
+     <h1>My Projects (Access through Simple C-LARA)</h1>
   {% else %}
-     <h1>Your Projects (Access through full C-LARA)</h1>
+     <h1>My Projects (Access through Advanced C-LARA)</h1>
   {% endif %}
-  <form method="GET">
-    <p>Text language: {{ search_form.l2 }}</p>
-	<p>Annotation language: {{ search_form.l1 }}</p>
-	<p>Title: {{ search_form.title }}</p>
-    <input type="submit" value="Search">
-  </form>
+  <br>
+  <p><b>Filter using any combination of the search boxes below</b></p>
+	<form method="GET">
+	  <table>
+	    <tr>
+		  <td><label for="id_title">Title:</label></td>
+		  <td>{{ form.title }}</td>
+		</tr>
+		<tr>
+		  <td><label for="l2">Text language:</label></td>
+		  <td>{{ search_form.l2 }}</td>
+		</tr>
+		<tr>
+		  <td><label for="l1">Annotation language:</label></td>
+		  <td>{{ search_form.l1 }}</td>
+		</tr>
+		<tr>
+		  <td></td>
+		  <td><input type="submit" value="Search"></td>
+		</tr>
+	  </table>
+	</form>
 
   <button id="toggleCosts">Show/hide costs</button>
   <button id="toggleDurations">Show/hide durations</button>
+  <br>
+  <br>
+  <b>Activities found</b>
   <ul>
     {% for project, data in page_obj %}
       <li>

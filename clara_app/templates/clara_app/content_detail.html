@@ -3,30 +3,64 @@
 
 {% block content %}
   <h2>{{ content.title }}</h2>
-  <p>URL: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
   {% if average_rating %}
     <p>Average Rating: {{ average_rating }}</p>
   {% else %}
     <p>No ratings yet</p>
   {% endif %}
   <form method="post">
-    {% csrf_token %}
-    {{ rating_form.as_p }}
-    <button type="submit" name="submit_rating">Submit rating</button>
-</form>
+	  {% csrf_token %}
+	  <div class="rating">
+		  {% for choice in rating_form.fields.rating.choices %}
+			<input id="star{{ forloop.counter }}" type="radio" name="rating" value="{{ choice.0 }}" class="rating-input">
+            <label for="star{{ forloop.counter }}" class="rating-star"></label>
+		  {% endfor %}
+	  </div>
+	  <button type="submit" name="submit_rating">Submit rating</button>
+  </form>
 
-  <p>Text language: {{ content.l2|titlecase }}</p>
-  <p>Annotation language: {{ content.l1|titlecase }}</p>
+  <table>
+  <tr>
+    <td>Text language:</td>
+    <td>{{ content.l2|titlecase }}</td>
+  </tr>
+  <tr>
+    <td>Annotation language:</td>
+    <td>{{ content.l1|titlecase }}</td>
+  </tr>
   {% if content.project %}
-     <p>Created by: <a href="{% url 'external_profile' user_id=content.project.user.id %}"><strong>{{ content.project.user.username }}</strong></a></p>
+  <tr>
+    <td>Created by:</td>
+    <td><a href="{% url 'external_profile' user_id=content.project.user.id %}"><strong>{{ content.project.user.username }}</strong></a></td>
+  </tr>
   {% else %}
-     <p>Created by: {{ content.annotator }}</p>
+  <tr>
+    <td>Created by:</td>
+    <td>{{ content.annotator }}</td>
+  </tr>
   {% endif %}
-  <p>Summary: {{ content.summary }}</p>
-  <p>Length in words: {{ content.length_in_words }}</p>
-  <p>Author: {{ content.author }}</p>
-  <p>Voice: {{ content.voice }}</p>
-  <p>Difficulty Level: {{ content.difficulty_level }}</p>
+  <tr>
+    <td>Summary:</td>
+    <td>{{ content.summary }}</td>
+  </tr>
+  <tr>
+    <td>Length in words:</td>
+    <td>{{ content.length_in_words }}</td>
+  </tr>
+  <tr>
+    <td>Author:</td>
+    <td>{{ content.author }}</td>
+  </tr>
+  <tr>
+    <td>Voice:</td>
+    <td>{{ content.voice }}</td>
+  </tr>
+  <tr>
+    <td>Difficulty Level:</td>
+    <td>{{ content.difficulty_level }}</td>
+  </tr>
+</table>
   
   {% for comment in comments %}
     <p>
