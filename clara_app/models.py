@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
+from .constants import TTS_CHOICES
 
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
@@ -119,14 +120,6 @@ class HumanAudioInfo(models.Model):
         #('record', 'Record'),
         ('manual_align', 'Manual Align'),
         #('automatic_align', 'Automatic Align'),
-    ]
-
-    TTS_CHOICES = [
-        ( 'none', 'None' ),
-        ( 'google', 'Google TTS' ),
-        ( 'openai', 'OpenAI TTS' ),
-        ( 'eleven_labs', 'Eleven Labs TTS' ),
-        ( 'abair', 'ABAIR' ),
     ]
 
     VOICE_CHOICES = [

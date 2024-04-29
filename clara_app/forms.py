@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, RECENT_TIME_PERIOD_CHOICES, DEFAULT_RECENT_TIME_PERIOD
+from .constants import TTS_CHOICES
 
 from .clara_utils import is_rtl_language, is_chinese_language
         
@@ -154,6 +155,7 @@ class SimpleClaraForm(forms.Form):
         required=False,
         initial='' )
     image_basename = forms.CharField(required=False)
+    preferred_tts_engine = forms.ChoiceField(label='Preferred TTS engine', choices=TTS_CHOICES, required=False)
     rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)
     content_id = forms.CharField(required=False)
 

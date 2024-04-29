@@ -114,3 +114,10 @@ SUPPORTED_LANGUAGES_AND_DEFAULT = [ ('default', 'Default') ] + SUPPORTED_LANGUAG
 
 SUPPORTED_LANGUAGES_AND_OTHER = SUPPORTED_LANGUAGES + [ ('other', 'Other') ]
 
+TTS_CHOICES = [
+    ( 'none', 'None' ),
+    ( 'google', 'Google TTS' ),
+    ( 'openai', 'OpenAI TTS' ),
+    ( 'eleven_labs', 'Eleven Labs TTS' ),
+    ( 'abair', 'ABAIR' ),
+]

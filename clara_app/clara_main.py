@@ -165,7 +165,7 @@ from .clara_utils import rename_file, remove_file, get_file_time, file_exists, l
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import local_directory_exists, remove_local_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp, get_file_time
-from .clara_utils import unzip_file, post_task_update
+from .clara_utils import unzip_file, post_task_update, convert_to_timezone_aware
 
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Union
@@ -1142,7 +1142,7 @@ class CLARAProjectInternal:
                     audio_type_for_words='tts', audio_type_for_segments='tts',
                     format_preferences_info=None, acknowledgements_info=None,
                     phonetic=False, callback=None) -> None:
-        post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
+        post_task_update(callback, f"--- Start rendering text (phonetic={phonetic}, preferred_tts_voice={preferred_tts_voice})")
         l2 = self.l2_language
         title = self.load_text_version_or_null("title")
         text_object = self.get_internalised_and_annotated_text(title=title,
@@ -1175,9 +1175,12 @@ class CLARAProjectInternal:
     def rendered_html_exists(self, project_id):
         return file_exists(self.rendered_html_page_1_file(project_id))
 
-    def rendered_html_timestamp(self, project_id, time_format='float'):
+    def rendered_html_timestamp(self, project_id, time_format='float', debug=False):
         page1 = self.rendered_html_page_1_file(project_id)
-        return None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        result = None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        if debug:
+            print(f'rendered_html_timestamp: {result}')
+        return result
 
     def rendered_html_page_1_file(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'normal')
@@ -1188,9 +1191,12 @@ class CLARAProjectInternal:
     def rendered_phonetic_html_exists(self, project_id):
         return file_exists(self.rendered_phonetic_html_page_1_file(project_id))
 
-    def rendered_phonetic_html_timestamp(self, project_id, time_format='float'):
+    def rendered_phonetic_html_timestamp(self, project_id, time_format='float', debug=False):
         page1 = self.rendered_phonetic_html_page_1_file(project_id)
-        return None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        result = None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        if debug:
+            print(f'rendered_phonetic_html_timestamp: {result}')
+        return result
 
     def rendered_phonetic_html_page_1_file(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'phonetic')

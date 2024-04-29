@@ -65,6 +65,7 @@ from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_availab
 from .clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_chinese import is_chinese_language
 from .clara_annotated_images import make_uninstantiated_annotated_image_structure
+from .clara_tts_api import tts_engine_type_supports_language
 from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
 from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
 #from .clara_utils import _use_orm_repositories
@@ -76,6 +77,7 @@ from .clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, DEFAULT_RECENT_TIME_PERIOD
+from .constants import TTS_CHOICES
 
 from pathlib import Path
 from decimal import Decimal
@@ -1992,6 +1994,12 @@ def get_simple_clara_resources_helper(project_id, user):
             # We have segmented text
             resources_available['segmented_title'] = clara_project_internal.load_text_version('segmented_title')
 
+        try:
+            human_audio_info, human_audio_info_created = HumanAudioInfo.objects.get_or_create(project=project)
+            resources_available['preferred_tts_engine'] = human_audio_info.preferred_tts_engine
+        except Exception as e:
+            resources_available['preferred_tts_engine'] = 'none'
+
         #if not clara_project_internal.rendered_html_exists(project_id):
         if not up_to_date_dict['render']:
             # We have plain text and image, but no rendered HTML
@@ -2021,14 +2029,18 @@ def get_simple_clara_resources_helper(project_id, user):
     except Exception as e:
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
+_simple_clara_trace = False
+#_simple_clara_trace = True
+
 @login_required
 def simple_clara(request, project_id, last_operation_status):
     user = request.user
     username = request.user.username
     # Get resources available for display based on the current state
     resources = get_simple_clara_resources_helper(project_id, user)
-    #print(f'Resources:')
-    #pprint.pprint(resources)
+    if _simple_clara_trace:
+        print(f'Resources:')
+        pprint.pprint(resources)
     
     status = resources['status']
     simple_clara_type = resources['simple_clara_type'] if 'simple_clara_type' in resources else None
@@ -2048,13 +2060,15 @@ def simple_clara(request, project_id, last_operation_status):
     elif request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
-        #print(f'Action = {action}')
+        if _simple_clara_trace:
+            print(f'Action = {action}')
         if action:
             form = SimpleClaraForm(request.POST, request.FILES, is_rtl_language=rtl_language)
             if form.is_valid():
-                #print(f'Status: {status}')
-                #print(f'form.cleaned_data')
-                #pprint.pprint(form.cleaned_data)
+                if _simple_clara_trace:
+                    print(f'Status: {status}')
+                    print(f'form.cleaned_data')
+                    pprint.pprint(form.cleaned_data)
                 if action == 'create_project':
                     l2 = form.cleaned_data['l2']
                     l1 = form.cleaned_data['l1']
@@ -2114,6 +2128,9 @@ def simple_clara(request, project_id, last_operation_status):
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
                 elif action == 'create_segmented_text':
                     simple_clara_action = { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
+                elif action == 'save_preferred_tts_engine':
+                    preferred_tts_engine = form.cleaned_data['preferred_tts_engine']
+                    simple_clara_action = { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
                 elif action == 'create_rendered_text':
                     simple_clara_action = { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'post_rendered_text':
@@ -2123,10 +2140,12 @@ def simple_clara(request, project_id, last_operation_status):
                     return redirect('simple_clara', project_id, 'error')
 
                 _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text', 'save_segmented_title',
-                                                             'save_text_title', 'save_uploaded_image', 'post_rendered_text' )
+                                                             'save_text_title', 'save_uploaded_image', 'save_preferred_tts_engine', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
                     result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
+                    if _simple_clara_trace:
+                        print(f'result = {result}')
                     new_project_id = result['project_id'] if 'project_id' in result else project_id
                     new_status = result['status']
                     if new_status == 'error':
@@ -2214,6 +2233,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'create_segmented_text':
             # simple_clara_action should be of form { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_preferred_tts_engine':
+            # simple_clara_action should be of form { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
+            result = simple_clara_save_preferred_tts_engine_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_rendered_text':
             # simple_clara_action should be of form { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2512,6 +2534,29 @@ def simple_clara_save_uploaded_image_helper(username, project_id, simple_clara_a
     return { 'status': 'finished',
              'message': 'Saved the image.'}
 
+# simple_clara_action should be of form { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
+def simple_clara_save_preferred_tts_engine_helper(username, project_id, simple_clara_action, callback=None):
+    preferred_tts_engine = simple_clara_action['preferred_tts_engine']
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    language = project.l2
+
+    human_audio_info, human_audio_info_created = HumanAudioInfo.objects.get_or_create(project=project)
+    human_audio_info.preferred_tts_engine = preferred_tts_engine
+    human_audio_info.save()
+
+    preferred_tts_engine_name = dict(TTS_CHOICES)[preferred_tts_engine]
+    if preferred_tts_engine == 'openai' and language != 'english':
+        warning = f' Warning: although {preferred_tts_engine_name} is supposed to be multilingual, it is optimised for English.'
+    elif preferred_tts_engine != 'none' and not tts_engine_type_supports_language(preferred_tts_engine, language):
+        warning = f' Warning: {preferred_tts_engine_name} does not currently support {language.capitalize()}.'
+    else:
+        warning = ''
+
+    message = f'Saved {preferred_tts_engine_name} as preferred TTS engine.' + warning
+
+    return { 'status': 'finished',
+             'message': message}
+
 def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=None):
     prompt = simple_clara_action['prompt']
     
@@ -2589,6 +2634,10 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
     user = project.user
     config_info = get_user_config(user)
 
+    audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    preferred_tts_engine = audio_info.preferred_tts_engine if audio_info else None
+    print(f'--- preferred_tts_engine = {preferred_tts_engine}')
+
     # Create summary
     if not up_to_date_dict['summary']:
         post_task_update(callback, f"STARTED TASK: create summary")
@@ -2649,7 +2698,8 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
     # Render
     if not up_to_date_dict['render']:
         post_task_update(callback, f"STARTED TASK: create TTS audio and multimodal text")
-        clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
+        clara_project_internal.render_text(project_id, phonetic=False, preferred_tts_engine=preferred_tts_engine,
+                                           self_contained=True, callback=callback)
         post_task_update(callback, f"ENDED TASK: create TTS audio and multimodal text")
 
     if phonetic_resources_are_available(project.l2):

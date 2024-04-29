@@ -21,6 +21,10 @@ import hashlib
 import traceback
 import requests
 import subprocess
+import copy
+import pytz
+
+from datetime import datetime, timezone
 
 from PIL import Image
 
@@ -732,7 +736,8 @@ def get_file_time(pathname, time_format='float'):
         float_value = Path(abspathname).stat().st_mtime
 
     if time_format == 'timestamp':
-        return datetime.fromtimestamp(float_value)
+        tz = pytz.timezone("UTC")
+        return datetime.fromtimestamp(float_value, tz)
     else:
         return float_value
       
@@ -962,3 +967,12 @@ def adjust_file_path_for_imported_data(file_path, base_dir_non_orm, base_dir_orm
 def generate_thumbnail_name(original_file_name):
     name, ext = os.path.splitext(original_file_name)
     return f"{name}_thumbnail{ext}"
+
+# Convert naive datetime objects to timezone-aware objects (using UTC)
+def convert_to_timezone_aware(timestamp):
+    try:
+        return timestamp if timestamp.tzinfo else copy.copy(timestamp).replace(tzinfo=timezone.utc)
+    except:
+        return timestamp
+    
+

@@ -1,6 +1,7 @@
 
 
-from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, get_file_time, is_chinese_language
+from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, is_chinese_language
+from .clara_utils import get_file_time, convert_to_timezone_aware
 from .clara_classes import InternalCLARAError
 
 from datetime import datetime, timezone
@@ -161,6 +162,10 @@ class CLARADependencies:
 
     # Get the latest timestamp for files and database records associated with a processing phase
     def timestamp_for_phase(self, processing_phase_id):
+        #return convert_to_timezone_aware(self.timestamp_for_phase_main(processing_phase_id))
+        return self.timestamp_for_phase_main(processing_phase_id)
+        
+    def timestamp_for_phase_main(self, processing_phase_id):
         if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
                                     "segmented", "phonetic", "gloss", "lemma", "pinyin" ]:
             try:
@@ -176,7 +181,7 @@ class CLARADependencies:
                 images = self.clara_project_internal.get_all_project_images()
                 timestamps = [ get_file_time(image.image_file_path, time_format='timestamp')
                                for image in images ]
-                return latest_timestamp(timestamps)
+                return latest_timestamp(timestamps, debug=False)
             
         elif processing_phase_id == 'audio':
             if not self.human_audio_info:
@@ -239,13 +244,13 @@ class CLARADependencies:
             if not self.clara_project_internal.rendered_html_exists(self.project_id):
                 return None
             else:
-                return self.clara_project_internal.rendered_html_timestamp(self.project_id, time_format='timestamp')
+                return self.clara_project_internal.rendered_html_timestamp(self.project_id, time_format='timestamp', debug=False)
             
         elif processing_phase_id == 'render_phonetic':
             if not self.clara_project_internal.rendered_phonetic_html_exists(self.project_id):
                 return None
             else:
-                return self.clara_project_internal.rendered_phonetic_html_timestamp(self.project_id, time_format='timestamp')
+                return self.clara_project_internal.rendered_phonetic_html_timestamp(self.project_id, time_format='timestamp', debug=False)
             
         elif processing_phase_id == 'social_network':
             if not self.content_object:
@@ -278,7 +283,7 @@ class CLARADependencies:
             dependencies = self.get_dependencies(processing_phase_id)
             timestamps = [ processing_phase_timestamp_dict[dependency_processing_phase_id] for
                            dependency_processing_phase_id in dependencies ]
-            result[processing_phase_id] = latest_timestamp(timestamps)
+            result[processing_phase_id] = latest_timestamp(timestamps, debug=False)
             
         return result
 
@@ -320,10 +325,12 @@ class CLARADependencies:
 # Utility functions
 
 # Return the latest in a list of timestamps. If list is empty, return None
-def latest_timestamp(timestamps):
+def latest_timestamp(timestamps, debug=False):
     try:
         aware_timestamps = [convert_to_timezone_aware(timestamp)
                             for timestamp in timestamps if timestamp is not None]
+        if debug:
+            print(f'latest_timestamp: try to find max of: {aware_timestamps}')
         return max(aware_timestamps)
     except ValueError:
         # Return None if the list is empty (i.e., all timestamps are None)
@@ -342,8 +349,10 @@ def latest_timestamp_from_objects_and_timestamps(objects_and_timestamps, label=N
             ( latest_object, latest_timestamp ) = ( x, timestamp)
 
     if debug:
+        #now_timestamp = datetime.now()
         print(f'latest_timestamp_from_objects_and_timestamps (label={label})')
         print(f'latest_timestamp: {latest_timestamp}')
+        #print(f'now_timestamp: {now_timestamp}')
         print(f'latest_age: {timestamp_to_age_in_seconds(latest_timestamp)}')
         print(f'latest_object: "{latest_object}"')
 
@@ -367,10 +376,4 @@ def timestamp_to_age_in_seconds(timestamp):
     now = datetime.now().timestamp()
     return int(now - timestamp.timestamp())
 
-# Convert naive datetime objects to timezone-aware objects (using UTC)
-def convert_to_timezone_aware(timestamp):
-    try:
-        return timestamp if timestamp.tzinfo else timestamp.replace(tzinfo=timezone.utc)
-    except:
-        return timestamp
-    
+

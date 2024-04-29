@@ -391,13 +391,7 @@ class ElevenLabsEngine(TTSEngine):
         self.tts_engine_type = 'eleven_labs'
         self.phonetic = False
         self.base_url = base_url
-        self.languages = { 'american english':
-                            {  'language_id': 'en-US',
-                               'voices': [
-                                   '3z9q8Y7plHbvhDZehEII',
-                               ]
-                            },
-                           'romanian':
+        self.languages = { 'romanian':
                            {  'language_id': 'ro-RO',
                                'voices': [
                                    'XS5fYqdP9mR1As3yhU5V',
@@ -643,6 +637,7 @@ def create_tts_engine(engine_type):
         raise ValueError(f"Unknown TTS engine type: {engine_type}")
     
 def get_tts_engine(language, words_or_segments='words', preferred_tts_engine=None, phonetic=False, callback=None):
+    post_task_update(callback, f"--- clara_tts_api looking for TTS engine for '{language}', preferred = '{preferred_tts_engine}'")
     if words_or_segments == 'segments' and phonetic == False and preferred_tts_engine == 'openai':
         TTS_ENGINE_LIST_TO_USE = TTS_ENGINES_OPENAI_FIRST
     elif words_or_segments == 'segments' and phonetic == False and preferred_tts_engine == 'eleven_labs':
@@ -654,6 +649,15 @@ def get_tts_engine(language, words_or_segments='words', preferred_tts_engine=Non
             post_task_update(callback, f"--- clara_tts_api found TTS engine of type '{tts_engine.tts_engine_type}'")
             return tts_engine
     return None
+
+def tts_engine_type_supports_language(engine_type, language):
+    if engine_type == 'openai':
+        return True # OpenAI TTS is supposed to be multilingual, though quality varies a lot
+    else:
+        for tts_engine in TTS_ENGINES:
+            if tts_engine.tts_engine_type == engine_type and language in tts_engine.languages:
+                return True
+        return False
 
 def get_tts_engine_types():
     return [ tts_engine.tts_engine_type for tts_engine in TTS_ENGINES ]
