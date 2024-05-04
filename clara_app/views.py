@@ -35,7 +35,8 @@ from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm,
 from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
-from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
+from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateMWETaggedTextForm
+from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
@@ -1116,7 +1117,7 @@ def edit_prompt(request):
             annotation_type = prompt_selection_form.cleaned_data['annotation_type']
             if template_or_examples == 'template':
                 PromptFormSet = forms.formset_factory(TemplateForm, formset=CustomTemplateFormSet, extra=0)
-            elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
+            elif template_or_examples == 'examples' and annotation_type != 'mwe' and (operation == 'annotate' or annotation_type == 'segmented'):
                 PromptFormSet = forms.formset_factory(StringForm, formset=CustomStringFormSet, extra=1)
             else:
                 PromptFormSet = forms.formset_factory(StringPairForm, formset=CustomStringPairFormSet, extra=1)
@@ -1160,7 +1161,7 @@ def edit_prompt(request):
                 # Prepare data
                 if template_or_examples == 'template':
                     initial_data = [{'template': prompts}]
-                elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
+                elif template_or_examples == 'examples' and annotation_type != 'mwe' and (operation == 'annotate' or annotation_type == 'segmented'):
                     initial_data = [{'string': example} for example in prompts]
                 else:
                     initial_data = [{'string1': pair[0], 'string2': pair[1]} for pair in prompts]
@@ -1173,7 +1174,7 @@ def edit_prompt(request):
                     # Prepare data for saving
                     if template_or_examples == 'template':
                         new_prompts = prompt_formset[0].cleaned_data.get('template')
-                    elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
+                    elif template_or_examples == 'examples' and annotation_type != 'mwe' and (operation == 'annotate' or annotation_type == 'segmented'):
                         new_prompts = [form.cleaned_data.get('string') for form in prompt_formset]
                         if not new_prompts[-1]:
                             # We didn't use the extra last field
@@ -1183,6 +1184,8 @@ def edit_prompt(request):
                         if not new_prompts[-1][0] or not new_prompts[-1][1]:
                             # We didn't use the extra last field
                             new_prompts = new_prompts[:-1]
+                    print(f'new_prompts:')
+                    pprint.pprint(new_prompts)
                     try:
                         prompt_repo.save_template_or_examples(template_or_examples, annotation_type, operation, new_prompts, request.user.username)
                         messages.success(request, "Data saved successfully")
@@ -3740,7 +3743,7 @@ def compare_versions(request, project_id):
     return render(request, 'clara_app/diff_and_diff_result.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 # Generic code for the operations which support creating, annotating, improving and editing text,
-# to produce and edit the "plain", "title", "summary", "cefr", "segmented", "gloss" and "lemma" versions.
+# to produce and edit the "plain", "title", "summary", "cefr", "segmented", "gloss", "lemma" and "mwe" versions.
 # It is also possible to retrieve archived versions of the files if they exist.
 #
 # The argument 'this_version' is the version we are currently creating/editing.
@@ -4029,6 +4032,8 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreateGlossedTextForm(*args, **kwargs)
     elif version == 'lemma':
         return CreateLemmaTaggedTextForm(*args, **kwargs)
+    elif version == 'mwe':
+        return CreateMWETaggedTextForm(*args, **kwargs)
     elif version == 'pinyin':
         return CreatePinyinTaggedTextForm(*args, **kwargs)
     elif version == 'lemma_and_gloss':
@@ -4085,6 +4090,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
         return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
         return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'mwe':
+        return ( 'generate', clara_project_internal.create_mwe_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'pinyin':
         return ( 'generate', clara_project_internal.create_pinyin_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     # There is no generate operation for lemma_and_gloss, since we make it by merging lemma and gloss
@@ -4142,6 +4149,8 @@ def previous_version_and_template_for_version(this_version):
         return ( 'segmented_with_images', 'clara_app/create_glossed_text.html' )
     elif this_version == 'lemma':
         return ( 'segmented_with_images', 'clara_app/create_lemma_tagged_text.html' )
+    elif this_version == 'mwe':
+        return ( 'segmented_with_images', 'clara_app/create_mwe_tagged_text.html' )
     elif this_version == 'pinyin':
         return ( 'segmented_with_images', 'clara_app/create_pinyin_tagged_text.html' )
     elif this_version == 'lemma_and_gloss':
@@ -4224,6 +4233,14 @@ def create_glossed_text(request, project_id):
 @user_has_a_project_role
 def create_lemma_tagged_text(request, project_id):
     this_version = 'lemma'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
+# Create or edit "mwe" version of the text 
+@login_required
+@user_has_a_project_role
+def create_mwe_tagged_text(request, project_id):
+    this_version = 'mwe'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 

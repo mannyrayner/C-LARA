@@ -42,6 +42,9 @@ class CLARADependencies:
                                     # Accessible from CLARAProjectInternal object
 
             "segmented_title",      # Typically AI-generated segmented version of title for first page of text
+                                    # Accessible from CLARAProjectInternal object
+
+            "mwe",                  # Typically AI-generated MWE-tagged version of text
                                     # Accessible from CLARAProjectInternal object 
             
             "segmented",            # Typically AI-generated segmented version of text
@@ -103,6 +106,8 @@ class CLARADependencies:
             "segmented_title": [ "title" ],
             
             "segmented": [ "plain" ],
+
+            "mwe": [ "segmented", "segmented_title" ],
             
             "images": [ "plain" ],
             
@@ -166,7 +171,7 @@ class CLARADependencies:
         return self.timestamp_for_phase_main(processing_phase_id)
         
     def timestamp_for_phase_main(self, processing_phase_id):
-        if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title",
+        if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title", "mwe",
                                     "segmented", "phonetic", "gloss", "lemma", "pinyin" ]:
             try:
                 if not self.clara_project_internal.text_versions[processing_phase_id]:

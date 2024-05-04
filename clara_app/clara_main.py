@@ -17,6 +17,7 @@ can be very large. We have seven types of text, as follows:
 "lemma". Text with segmentation annotations plus a lemma annotation for each word.
 "pinyin". Text with segmentation annotations plus a pinyin annotation for each word.
 "lemma_and_gloss". Text with segmentation annotations plus a lemma, gloss and POS annotation for each word.
+"mwe". Text with segmentation annotations plus a mwe annotation for each segment.
 
 The main methods are the following:
 
@@ -134,7 +135,7 @@ from .clara_create_annotations import invoke_templates_on_trivial_text
 from .clara_create_annotations import generate_glossed_version, generate_segmented_version, generate_tagged_version
 from .clara_create_annotations import improve_glossed_version, improve_segmented_version, improve_tagged_version
 from .clara_create_annotations import generate_pinyin_tagged_version, improve_pinyin_tagged_version
-from .clara_create_annotations import improve_lemma_and_gloss_tagged_version
+from .clara_create_annotations import improve_lemma_and_gloss_tagged_version, generate_mwe_tagged_version
 from .clara_conventional_tagging import generate_tagged_version_with_treetagger, generate_tagged_version_with_trivial_tags
 from .clara_create_story import generate_story, improve_story
 from .clara_cefr import estimate_cefr_reading_level
@@ -202,6 +203,7 @@ class CLARAProjectInternal:
             "lemma": None,
             "lemma_and_gloss": None,
             "pinyin": None,
+            "mwe": None,
         }
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
         self.internalised_and_annotated_text_path_phonetic = self.project_dir / 'internalised_and_annotated_text_phonetic.pickle'
@@ -298,6 +300,7 @@ class CLARAProjectInternal:
             self._copy_text_version_if_it_exists("segmented", new_project)
             self._copy_text_version_if_it_exists("phonetic", new_project)
             self._copy_text_version_if_it_exists("lemma", new_project)
+            self._copy_text_version_if_it_exists("mwe", new_project)
             self._copy_text_version_if_it_exists("pinyin", new_project)
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
@@ -785,6 +788,16 @@ class CLARAProjectInternal:
         new_lemma_tagged_text, api_calls = improve_tagged_version(lemma_tagged_text, self.l2_language,
                                                                   config_info=config_info, callback=callback)
         self.save_text_version("lemma", new_lemma_tagged_text, user=user, label=label, source='ai_revised')
+        return api_calls
+
+    # Call ChatGPT-4 to create a version of the text with MWE annotations
+    def create_mwe_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        segmented_text = self.load_text_version("segmented_with_images")
+        current_mwe_tagged_text = self.load_text_version("mwe") if self.text_versions['mwe'] else None 
+        mwe_tagged_text, api_calls = generate_mwe_tagged_version(segmented_text, self.l2_language,
+                                                                 current_mwe_tagged_text=current_mwe_tagged_text,
+                                                                 config_info=config_info, callback=callback)
+        self.save_text_version("mwe", mwe_tagged_text, user=user, label=label, source='ai_generated')
         return api_calls
 
      # Call pypinyin to create a version of the text with pinyin annotations

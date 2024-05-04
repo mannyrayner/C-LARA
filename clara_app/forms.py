@@ -394,6 +394,21 @@ class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
             choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
         ]
 
+class CreateMWETaggedTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Generate annotated text from segmented text using AI'),
+        #('correct', 'Try to fix errors in malformed annotated text using AI'), 
+        ('manual', 'Manually enter annotated text'),
+        ('load_archived', 'Load archived version')
+    ]
+
+    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', **kwargs):
+        super(CreateMWETaggedTextForm, self).__init__(*args, archived_versions=archived_versions, current_version=current_version, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES if tree_tagger_supported else [
+            choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
+        ]
+
+
 class CreatePinyinTaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Generate pinyin-tagged text from segmented text using AI'),
@@ -519,6 +534,7 @@ class PromptSelectionForm(forms.Form):
         ("segmented", "Segmented"),
         ("gloss", "Gloss"),
         ("lemma", "Lemma"),
+        ("mwe", "Multi Word Expressions"),
         ("pinyin", "Pinyin"),
     ]
 

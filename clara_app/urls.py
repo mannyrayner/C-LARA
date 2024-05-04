@@ -90,6 +90,7 @@ urlpatterns = [
     path('project/<int:project_id>/create_phonetic_text/', views.create_phonetic_text, name='create_phonetic_text'),
     path('project/<int:project_id>/create_glossed_text/', views.create_glossed_text, name='create_glossed_text'),
     path('project/<int:project_id>/create_lemma_tagged_text/', views.create_lemma_tagged_text, name='create_lemma_tagged_text'),
+    path('project/<int:project_id>/create_mwe_tagged_text/', views.create_mwe_tagged_text, name='create_mwe_tagged_text'),
     path('project/<int:project_id>/create_pinyin_tagged_text/', views.create_pinyin_tagged_text, name='create_pinyin_tagged_text'),
     path('project/<int:project_id>/create_lemma_and_gloss_tagged_text/', views.create_lemma_and_gloss_tagged_text, name='create_lemma_and_gloss_tagged_text'),
     path('project/<int:project_id>/history/', views.project_history, name='project_history'),

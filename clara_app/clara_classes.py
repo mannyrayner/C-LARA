@@ -54,7 +54,7 @@ class ContentElement:
                 lemma, pos = ( annotations['lemma'], annotations['pos'] )
                 escaped_lemma = escape_special_chars(lemma)
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
-            elif annotation_type == 'plain':
+            elif annotation_type in ( 'plain', 'segmented', 'mwe' ):
                 return self.content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])
@@ -93,6 +93,13 @@ class Segment:
                 if element.type in ( 'Word', 'NonWordText', 'Markup' ):
                     out_text += element.to_text(annotation_type)
             last_type = this_type
+        if annotation_type == 'mwe' and 'mwes' in self.annotations:
+            mwes = self.annotations['mwes']
+            #print(f'annotations["mwes"] = {mwes}')
+            if mwes:
+                mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+                out_text += f'#{mwes_text}#'
+            
         return out_text
 
     def add_annotation(self, annotation_type, annotation_value):
@@ -112,6 +119,9 @@ class Page:
     def __init__(self, segments, annotations=None):
         self.segments = segments
         self.annotations = annotations or {}  # This could contain 'img', 'page_number', and 'position'
+
+    def __repr__(self):
+        return f"Page(segments={self.segments}, annotations={self.annotations})"
 
     def content_elements(self):
         elements = []
@@ -171,6 +181,9 @@ class Text:
         self.annotations = annotations or {}
         self.voice = voice
 
+    def __repr__(self):
+        return f"Text(l2_language={self.l2_language}, l1_language={self.l1_language}, pages={self.pages}, annotations={self.annotations})"
+
     def content_elements(self):
         elements = []
         for page in self.pages:
@@ -221,7 +234,8 @@ class Text:
 
 class Image:
     def __init__(self, image_file_path, thumbnail_file_path, image_name,
-                 associated_text, associated_areas, page, position, page_object=None):
+                 associated_text, associated_areas,
+                 page, position, page_object=None):
         self.image_file_path = image_file_path
         self.thumbnail_file_path = thumbnail_file_path
         self.image_name = image_name

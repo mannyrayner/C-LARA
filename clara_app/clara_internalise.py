@@ -47,8 +47,12 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
         internalized_segments = []
 
         for segment_text in segments_text:
-            content_elements = parse_content_elements(segment_text, text_type)
-            internalized_segments.append(Segment(content_elements))
+            if text_type != 'mwe':
+                content_elements = parse_content_elements(segment_text, text_type)
+                internalized_segment = Segment(content_elements)
+            else:
+                internalized_segment = parse_segment_mwe(segment_text)
+            internalized_segments.append(internalized_segment) 
 
         # Create a Page object with the internalized_segments and page_attributes
         page = Page(internalized_segments)
@@ -93,6 +97,25 @@ def parse_content_elements_segmented(segment_text):
             content_elements.append(ContentElement("Word", content=item, annotations={}))
 
     return content_elements
+
+def parse_segment_mwe(segment_text):
+    try:
+        components = segment_text.split('#')
+        n_components = len(components)
+        if n_components == 0:
+            return Segment([], annotations={'mwes': []})
+        
+        if n_components == 1:
+            main_text, mwe_texts = segment_text, ''
+        else:
+            main_text, mwe_texts = components
+            
+        content_elements = parse_content_elements_segmented(main_text)
+        mwe_texts = all_mwe_text.split(',')
+        mwes = [ mwe_text.split() for mwe_text in mwe_texts ]
+        return Segment(content_elements, annotations={'mwes': mwes})
+    except:
+        raise InternalisationError(message = f"Unable to internalise '{segment_text}' as MWE segment. Needs to be of form '<text>?#<word> <word> ...,<word> <word> ...,...#")
 
 def parse_content_elements_glossed_or_tagged(segment_text, text_type):
     #pattern = r"((?:<img[^>]*>|<audio[^>]*>|<\/?\w+>|@[^@]+@#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|(?:[^\s|#]|(?<=\\)#)*(?:\|[^\s|#]|(?<=\\)#)*#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|[\s\p{P}--[@#'\\]]+))"
