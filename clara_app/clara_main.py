@@ -1246,8 +1246,9 @@ class CLARAProjectInternal:
         if self.text_versions['phonetic'] and human_voice_id_phonetic:
             audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,
                                                               human_voice_id=human_voice_id_phonetic,
-                                                              audio_type_for_words='human', audio_type_for_segments=audio_type_for_words,
-                                                              type='all', format='default',
+                                                              audio_type_for_words='human',
+                                                              audio_type_for_segments=audio_type_for_words,
+                                                              type='all', 
                                                               phonetic=True, callback=callback)
         else:
             audio_metadata_phonetic = None
