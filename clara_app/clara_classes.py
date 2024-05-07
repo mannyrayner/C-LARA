@@ -96,8 +96,8 @@ class Segment:
         if annotation_type == 'mwe' and 'mwes' in self.annotations:
             mwes = self.annotations['mwes']
             #print(f'annotations["mwes"] = {mwes}')
-            if mwes:
-                mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+            mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+            if mwes_text:
                 out_text += f'#{mwes_text}#'
             
         return out_text
@@ -196,6 +196,13 @@ class Text:
         for page in self.pages:
             for segment in page.segments:
                 segment_list.append(segment.content_elements)
+        return segment_list
+
+    # Return a list of segments
+    def segments(self):
+        segment_list = []
+        for page in self.pages:
+            segment_list += page.segments
         return segment_list
     
     def word_count(self, phonetic=False):

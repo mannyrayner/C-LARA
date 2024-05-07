@@ -157,8 +157,18 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
     mwes_for_segments = []
     all_api_calls = []
 
-    current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
-    current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
+    if internalised_current_annotated_text:
+        if gloss_or_lemma_or_pinyin != 'mwe':
+            current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
+            current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
+        else:
+            current_segments = internalised_current_annotated_text.segments()
+            current_segmented_elements_dict = segments_to_mwes_dict(current_segments)
+    else:
+        current_segmented_elements_dict = None
+
+    #print(f'current_segmented_elements_dict:')
+    #pprint.pprint(current_segmented_elements_dict)
     
     if few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, gloss_or_lemma_or_pinyin, config_info):
         # We're reusing the saved annotations and only redoing the new segments
@@ -166,21 +176,26 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
         for elements in segmented_elements:
             key = key_for_segment_elements(elements)
             if key in current_segmented_elements_dict:
-                #print(f'--- Found material for {key} in previous version')
-                annotated_elements += current_segmented_elements_dict[key]
+                if gloss_or_lemma_or_pinyin != 'mwe':
+                    #print(f'--- Found material for {key} in previous version')
+                    old_annotated_segment = current_segmented_elements_dict[key]
+                    annotated_elements += old_annotated_segment
+                else:
+                    old_mwes = current_segmented_elements_dict[key]
+                    mwes_for_segments.append(old_mwes)
             else:
                 # In the worst case, the segment is too long and needs to be split up
                 # Usually, chunks is the same as [ elements ]
                 #print(f'--- Annotating material for {key}')
                 chunks = split_elements_by_segments([ elements ], max_elements) if gloss_or_lemma_or_pinyin != 'mwe' else [ elements ]
                 for chunk in chunks:
-                    annotated_chunk, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
-                                                                                               l1_language, l2_language,
-                                                                                               config_info=config_info, callback=callback)
+                    annotated_chunk_or_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
+                                                                                                       l1_language, l2_language,
+                                                                                                       config_info=config_info, callback=callback)
                     if gloss_or_lemma_or_pinyin != 'mwe':
-                        annotated_elements += annotated_chunk
+                        annotated_elements += annotated_chunk_or_mwes
                     else:
-                        mwes_for_segments.append(annotated_chunk)
+                        mwes_for_segments.append(annotated_chunk_or_mwes)
                     all_api_calls += api_calls
 
     else:
@@ -193,13 +208,13 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
             chunks = split_elements_by_segments(segmented_elements, max_elements)
         
         for chunk in chunks:
-            annotated_chunk, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
-                                                                                       l1_language, l2_language,
-                                                                                       config_info=config_info, callback=callback)
+            annotated_chunk_or_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
+                                                                                               l1_language, l2_language,
+                                                                                               config_info=config_info, callback=callback)
             if gloss_or_lemma_or_pinyin != 'mwe':
-                        annotated_elements += annotated_chunk
+                annotated_elements += annotated_chunk_or_mwes
             else:
-                mwes_for_segments.append(annotated_chunk)
+                mwes_for_segments.append(annotated_chunk_or_mwes)
             all_api_calls += api_calls
 
     # Reassemble the annotated elements back into the segmented_text structure
@@ -215,7 +230,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
             else:
                 segment.annotations['mwes'] = mwes_for_segments[index]
                 index += 1
-    print(f'internalised_annotated_text: {internalised_annotated_text}')        
+    #print(f'internalised_annotated_text: {internalised_annotated_text}')        
     human_readable_text = internalised_annotated_text.to_text(gloss_or_lemma_or_pinyin)
     return ( human_readable_text, all_api_calls )
 
@@ -230,6 +245,14 @@ def segmented_elements_to_dict(segmented_elements):
         return None
     
     return { key_for_segment_elements(elements): elements for elements in segmented_elements }
+
+# Index MWEs for segmented elements on the key given above
+def segments_to_mwes_dict(segments):
+    if not segments:
+        return None
+    
+    return { key_for_segment_elements(segment.content_elements): ( segment.annotations['mwes'] if 'mwes' in segment.annotations else [] )
+             for segment in segments }
 
 # Find how many segments aren't in the previous version and compare with the limit
 def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, gloss_or_lemma_or_pinyin, config_info):

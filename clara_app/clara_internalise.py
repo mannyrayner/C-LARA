@@ -106,9 +106,9 @@ def parse_segment_mwe(segment_text):
             return Segment([], annotations={'mwes': []})
         
         if n_components == 1:
-            main_text, mwe_texts = segment_text, ''
-        else:
-            main_text, mwe_texts = components
+            main_text, all_mwe_text = segment_text, ''
+        elif n_components == 3 and not components[2]:
+            main_text, all_mwe_text = components[:2]
             
         content_elements = parse_content_elements_segmented(main_text)
         mwe_texts = all_mwe_text.split(',')
