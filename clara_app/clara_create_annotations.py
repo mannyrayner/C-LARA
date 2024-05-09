@@ -126,18 +126,18 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
     api_call = clara_chatgpt4.call_chat_gpt4(annotate_prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )
 
-def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or_pinyin, annotated_text, l1_language, l2_language,
+def generate_or_improve_annotated_version(annotate_or_improve, processing_phase, annotated_text, l1_language, l2_language,
                                           current_annotated_text=None, config_info={}, callback=None):
     
-    source_version = 'segmented' if annotate_or_improve == 'annotate' else gloss_or_lemma_or_pinyin
+    source_version = 'segmented' if annotate_or_improve == 'annotate' else processing_phase
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
     internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
-    if current_annotated_text and annotate_or_improve == 'annotate' and gloss_or_lemma_or_pinyin == 'gloss':
+    if current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'gloss':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'gloss')
-    elif current_annotated_text and annotate_or_improve == 'annotate' and gloss_or_lemma_or_pinyin == 'lemma':
+    elif current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'lemma':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'lemma')
-    elif current_annotated_text and annotate_or_improve == 'annotate' and gloss_or_lemma_or_pinyin == 'mwe':
+    elif current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'mwe':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'mwe')
     else:
         internalised_current_annotated_text = None
@@ -154,67 +154,67 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
     # Annotate each chunk separately and store the results in the annotated_elements list
     annotated_elements = []
     # If we are doing MWE tagging, we are returning MWEs for each segment
-    mwes_for_segments = []
+    analyses_and_mwes_for_segments = []
     all_api_calls = []
 
     if internalised_current_annotated_text:
-        if gloss_or_lemma_or_pinyin != 'mwe':
+        if processing_phase != 'mwe':
             current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
             current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
         else:
             current_segments = internalised_current_annotated_text.segments()
-            current_segmented_elements_dict = segments_to_mwes_dict(current_segments)
+            current_segmented_elements_dict = segments_to_annotations_dict(current_segments)
     else:
         current_segmented_elements_dict = None
 
     #print(f'current_segmented_elements_dict:')
     #pprint.pprint(current_segmented_elements_dict)
     
-    if few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, gloss_or_lemma_or_pinyin, config_info):
+    if few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, config_info):
         # We're reusing the saved annotations and only redoing the new segments
-        print(f'--- Redoing {gloss_or_lemma_or_pinyin}, trying to reuse material from previous version')
+        print(f'--- Redoing {processing_phase}, trying to reuse material from previous version')
         for elements in segmented_elements:
             key = key_for_segment_elements(elements)
             if key in current_segmented_elements_dict:
-                if gloss_or_lemma_or_pinyin != 'mwe':
+                if processing_phase != 'mwe':
                     #print(f'--- Found material for {key} in previous version')
                     old_annotated_segment = current_segmented_elements_dict[key]
                     annotated_elements += old_annotated_segment
                 else:
-                    old_mwes = current_segmented_elements_dict[key]
-                    mwes_for_segments.append(old_mwes)
+                    old_annotations_and_mwes = current_segmented_elements_dict[key]
+                    analyses_and_mwes_for_segments.append(old_annotations_and_mwes)
             else:
                 # In the worst case, the segment is too long and needs to be split up
                 # Usually, chunks is the same as [ elements ]
                 #print(f'--- Annotating material for {key}')
-                chunks = split_elements_by_segments([ elements ], max_elements) if gloss_or_lemma_or_pinyin != 'mwe' else [ elements ]
+                chunks = split_elements_by_segments([ elements ], max_elements) if processing_phase != 'mwe' else [ elements ]
                 for chunk in chunks:
-                    annotated_chunk_or_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
+                    annotated_chunk_or_analysis_and_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
                                                                                                        l1_language, l2_language,
                                                                                                        config_info=config_info, callback=callback)
-                    if gloss_or_lemma_or_pinyin != 'mwe':
-                        annotated_elements += annotated_chunk_or_mwes
+                    if processing_phase != 'mwe':
+                        annotated_elements += annotated_chunk_or_analysis_and_mwes
                     else:
-                        mwes_for_segments.append(annotated_chunk_or_mwes)
+                        analyses_and_mwes_for_segments.append(annotated_chunk_or_analysis_and_mwes)
                     all_api_calls += api_calls
 
     else:
         # We're doing everything from scratch
-        #print(f'--- Doing {gloss_or_lemma_or_pinyin} element by element')
-        if gloss_or_lemma_or_pinyin == 'mwe':
+        #print(f'--- Doing {processing_phase} element by element')
+        if processing_phase == 'mwe':
             # For now, do MWE tagging one segment at a time
             chunks = segmented_elements
         else:
             chunks = split_elements_by_segments(segmented_elements, max_elements)
         
         for chunk in chunks:
-            annotated_chunk_or_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, chunk,
-                                                                                               l1_language, l2_language,
-                                                                                               config_info=config_info, callback=callback)
-            if gloss_or_lemma_or_pinyin != 'mwe':
-                annotated_elements += annotated_chunk_or_mwes
+            annotated_chunk_or_analysis_and_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
+                                                                                                            l1_language, l2_language,
+                                                                                                            config_info=config_info, callback=callback)
+            if processing_phase != 'mwe':
+                annotated_elements += annotated_chunk_or_analysis_and_mwes
             else:
-                mwes_for_segments.append(annotated_chunk_or_mwes)
+                analyses_and_mwes_for_segments.append(annotated_chunk_or_analysis_and_mwes)
             all_api_calls += api_calls
 
     # Reassemble the annotated elements back into the segmented_text structure
@@ -222,16 +222,16 @@ def generate_or_improve_annotated_version(annotate_or_improve, gloss_or_lemma_or
     for page in internalised_annotated_text.pages:
         for segment in page.segments:
             # If we are not doing MWE, we replace elements with annotated elements
-            if gloss_or_lemma_or_pinyin != 'mwe':
+            if processing_phase != 'mwe':
                 n_elements_in_segment = len(segment.content_elements)
                 segment.content_elements = annotated_elements[index:index+n_elements_in_segment]
                 index += n_elements_in_segment
             # If we are doing MWE, we add the MWEs to the segment
             else:
-                segment.annotations['mwes'] = mwes_for_segments[index]
+                segment.annotations = analyses_and_mwes_for_segments[index]
                 index += 1
     #print(f'internalised_annotated_text: {internalised_annotated_text}')        
-    human_readable_text = internalised_annotated_text.to_text(gloss_or_lemma_or_pinyin)
+    human_readable_text = internalised_annotated_text.to_text(processing_phase)
     return ( human_readable_text, all_api_calls )
 
 # We index on tuples consisting of the content of each element.
@@ -246,21 +246,20 @@ def segmented_elements_to_dict(segmented_elements):
     
     return { key_for_segment_elements(elements): elements for elements in segmented_elements }
 
-# Index MWEs for segmented elements on the key given above
-def segments_to_mwes_dict(segments):
+# Index annotations for segmented elements on the key given above
+def segments_to_annotations_dict(segments):
     if not segments:
         return None
     
-    return { key_for_segment_elements(segment.content_elements): ( segment.annotations['mwes'] if 'mwes' in segment.annotations else [] )
-             for segment in segments }
+    return { key_for_segment_elements(segment.content_elements): segment.annotations for segment in segments }
 
 # Find how many segments aren't in the previous version and compare with the limit
-def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, gloss_or_lemma_or_pinyin, config_info):
+def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, config_info):
     if not current_segmented_elements_dict:
         return False
 
     # With MWE tagging, we do it one segment at a time, so always use this strategy if possible
-    if gloss_or_lemma_or_pinyin == 'mwe':
+    if processing_phase == 'mwe':
         return True
     
     limit = int(config.get('chatgpt4_annotation', 'max_segments_to_reannotate_separately'))
@@ -308,12 +307,12 @@ def split_elements_by_segments(segmented_elements, max_elements):
 
     return chunks
 
-def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_lemma_or_pinyin, elements,
+def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, elements,
                                                   l1_language, l2_language, config_info={}, callback=None):
     word_elements = word_items_in_element_list(elements)
     if len(word_elements) == 0:
         # If we're not doing MWE, return the elements unchanged
-        if gloss_or_lemma_or_pinyin != 'mwe':
+        if processing_phase != 'mwe':
             return ( elements, [] )
         # If we're doing MWE, return empty list of MWEs
         else:
@@ -325,25 +324,25 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
     if annotate_or_improve == 'annotate':
         simplified_elements0 = [ simplify_element_to_string(element) for element in word_and_non_word_text_elements ]
     else:
-        simplified_elements0 = [ simplify_element_to_list(element, gloss_or_lemma_or_pinyin) for element in word_and_non_word_text_elements ]
+        simplified_elements0 = [ simplify_element_to_list(element, processing_phase) for element in word_and_non_word_text_elements ]
     simplified_elements = [ element for element in simplified_elements0 if element != False ]
     text_to_annotate = simplified_element_list_to_text(simplified_elements) 
     simplified_elements_json = json.dumps(simplified_elements)
     n_words = len(simplified_elements)
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
-    if gloss_or_lemma_or_pinyin == 'gloss':
+    if processing_phase == 'gloss':
         annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language)
-    elif gloss_or_lemma_or_pinyin == 'lemma':
+    elif processing_phase == 'lemma':
         annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
-    elif gloss_or_lemma_or_pinyin == 'mwe':
+    elif processing_phase == 'mwe':
         annotation_prompt = mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
-    elif gloss_or_lemma_or_pinyin == 'pinyin':
+    elif processing_phase == 'pinyin':
         annotation_prompt = pinyin_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
-    elif gloss_or_lemma_or_pinyin == 'lemma_and_gloss' and annotate_or_improve == 'improve':
+    elif processing_phase == 'lemma_and_gloss' and annotate_or_improve == 'improve':
         annotation_prompt = joint_tagging_and_glossing_prompt(simplified_elements_json, l1_language, l2_language)
     else:
-        raise InternalCLARAError(message = f'Unsupported combination gloss_or_lemma_or_pinyin = {gloss_or_lemma_or_pinyin} and annotate_or_improve = {annotate_or_improve} in create_annotation' )
+        raise InternalCLARAError(message = f'Unsupported combination processing_phase = {processing_phase} and annotate_or_improve = {annotate_or_improve} in create_annotation' )
     api_calls = []
     n_attempts = 0
     limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
@@ -355,13 +354,13 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
         try:
             api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
-            if gloss_or_lemma_or_pinyin != 'mwe':
-                annotated_simplified_elements = parse_chatgpt_gloss_response(api_call.response, simplified_elements, gloss_or_lemma_or_pinyin, callback=callback)
-                nontrivial_annotated_elements = [ unsimplify_element(element, gloss_or_lemma_or_pinyin) for element in annotated_simplified_elements ]
-                annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, gloss_or_lemma_or_pinyin)
+            if processing_phase != 'mwe':
+                annotated_simplified_elements = parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase, callback=callback)
+                nontrivial_annotated_elements = [ unsimplify_element(element, processing_phase) for element in annotated_simplified_elements ]
+                annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, processing_phase)
                 return ( annotated_elements, api_calls )
             else:
-                mwes = parse_chatgpt_gloss_response(api_call.response, simplified_elements, 'mwe', callback=callback)
+                mwes = parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe', callback=callback)
                 return ( mwes, api_calls )
         except ChatGPTError as e:
             post_task_update(callback, f'*** Warning: unable to parse response from ChatGPT-4')
@@ -371,15 +370,15 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, gloss_or_
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
 
-def merge_elements_and_annotated_elements(elements, annotated_elements, gloss_or_lemma_or_pinyin):
+def merge_elements_and_annotated_elements(elements, annotated_elements, processing_phase):
     matcher = difflib.SequenceMatcher(None, 
         [element.content.strip() for element in elements], 
         [element.content.strip() for element in annotated_elements])
 
     # Add a placeholder annotation to all Word elements initially
     for element in elements:
-        if element.type == "Word" and gloss_or_lemma_or_pinyin not in element.annotations:
-            element.annotations[gloss_or_lemma_or_pinyin] = 'NO_ANNOTATION'
+        if element.type == "Word" and processing_phase not in element.annotations:
+            element.annotations[processing_phase] = 'NO_ANNOTATION'
 
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
         if tag == 'equal':
@@ -542,10 +541,12 @@ def mwe_tagging_example_to_example_text(mwe_example, l2_language, l1_language):
     #
     # example_text =  "She must have thrown it out on Boxing Day morning.",
     # mwes_text = "thrown out, Boxing Day"
-    example_text, mwes_text = mwe_example
+    # analysis = "- 'thrown out' is a form of a phrasal verb hence an MWE.
+    #             'Boxing Day' is a set expression whose meaning is not deducible from its component words, hence an MWE'"
+    example_text, mwes_text, analysis = mwe_example
     simplified_internalised_example_words = annotated_string_to_simplified_internalised_form(example_text, l2_language, l1_language, 'segmented')
     mwes = [ mwe.strip() for mwe in mwes_text.split(',') ]
-    return f'Input: {json.dumps(simplified_internalised_example_words)}\nOutput: {json.dumps(mwes)}'
+    return f'Input: {json.dumps(simplified_internalised_example_words)}\nAnalysis: {analysis}\nOutput: {json.dumps(mwes)}'
 
 def retagging_example_to_example_text(example, l2_language, l1_language):
     ( first, second ) = example
@@ -564,14 +565,14 @@ def pinyin_retagging_example_to_example_text(example, l2_language, l1_language):
     simplified_internalised_example2 = annotated_string_to_simplified_internalised_form(second, l2_language, l1_language, 'pinyin')
     return f'{json.dumps(simplified_internalised_example1)} to {json.dumps(simplified_internalised_example2)}'
 
-def annotated_string_to_simplified_internalised_form(example, l2_language, l1_language, gloss_or_lemma_or_pinyin):
-    internalised_example = clara_internalise.internalize_text(example, l2_language, l1_language, gloss_or_lemma_or_pinyin)
+def annotated_string_to_simplified_internalised_form(example, l2_language, l1_language, processing_phase):
+    internalised_example = clara_internalise.internalize_text(example, l2_language, l1_language, processing_phase)
     elements = internalised_example.content_elements()
-    if gloss_or_lemma_or_pinyin == 'segmented':
+    if processing_phase == 'segmented':
         return [ element.content.strip() for element in elements
                  if element.type in ( 'Word', 'NonWordText' ) and element.content.strip() ]
     else:
-        simplified_elements0 = [ simplify_element_to_list(element, gloss_or_lemma_or_pinyin) for element in elements ]
+        simplified_elements0 = [ simplify_element_to_list(element, processing_phase) for element in elements ]
         return [ element for element in simplified_elements0 if element != False ]
 
 def simplify_element_to_string(element):
@@ -586,20 +587,20 @@ def simplify_element_to_string(element):
     else:
         return False
 
-def simplify_element_to_list(element, gloss_or_lemma_or_pinyin):
+def simplify_element_to_list(element, processing_phase):
     content = element.content
-    annotation = element.annotations[gloss_or_lemma_or_pinyin] if gloss_or_lemma_or_pinyin in element.annotations else 'NO_ANNOTATION'
+    annotation = element.annotations[processing_phase] if processing_phase in element.annotations else 'NO_ANNOTATION'
     gloss = element.annotations['gloss'] if 'gloss' in element.annotations else 'NO_GLOSS'
     lemma = element.annotations['lemma'] if 'lemma' in element.annotations else 'NO_LEMMA'
     pos = element.annotations['pos'] if 'pos' in element.annotations else 'NO_POS'
     pinyin = element.annotations['pinyin'] if 'pinyin' in element.annotations else 'NO_PINYIN'
     # Return Words as they are
     if element.type == 'Word':
-        if gloss_or_lemma_or_pinyin == 'gloss':
+        if processing_phase == 'gloss':
             return [ content, gloss ]
-        elif gloss_or_lemma_or_pinyin == 'lemma':
+        elif processing_phase == 'lemma':
             return [ content, lemma, pos ]
-        elif gloss_or_lemma_or_pinyin == 'pinyin':
+        elif processing_phase == 'pinyin':
             return [ content, pinyin ]
         else:
             return [ content, lemma, pos, gloss ]
@@ -607,11 +608,11 @@ def simplify_element_to_list(element, gloss_or_lemma_or_pinyin):
     # Return NonWordText with the whitespace stripped off, if it's not all whitespace
     elif not content.isspace():
         content = content.strip()
-        if gloss_or_lemma_or_pinyin == 'gloss':
+        if processing_phase == 'gloss':
             return [ content, content ]
-        elif gloss_or_lemma_or_pinyin == 'pinyin':
+        elif processing_phase == 'pinyin':
             return [ content, content ]
-        elif gloss_or_lemma_or_pinyin == 'lemma':
+        elif processing_phase == 'lemma':
             return [ content, content, 'PUNC' ]
         else:
             return [ content, content, 'PUNC', content ]
@@ -624,8 +625,8 @@ def simplify_element_to_list(element, gloss_or_lemma_or_pinyin):
 #     a three-item list consisting of content, annotation and pos (lemma)
 #     a four-item list consisting of content, lemma, pos and gloss (lemma_and_gloss)
 # Return a ContentElement object with the content and annotation in the right places.
-def unsimplify_element(element, gloss_or_lemma_or_pinyin):
-    if gloss_or_lemma_or_pinyin in ( 'gloss', 'pinyin' ) and len(element) == 2:
+def unsimplify_element(element, processing_phase):
+    if processing_phase in ( 'gloss', 'pinyin' ) and len(element) == 2:
         content, annotation = element
         # String only consists of punctuation marks
         if all(regex.match(r"\p{P}", c) for c in content):
@@ -634,8 +635,8 @@ def unsimplify_element(element, gloss_or_lemma_or_pinyin):
         elif regex.match(r"<\/?\w+>", content):
             return ContentElement("Markup", content)
         else:
-            return ContentElement("Word", content, annotations={ gloss_or_lemma_or_pinyin: annotation })
-    elif gloss_or_lemma_or_pinyin == 'lemma' and len(element) == 3:
+            return ContentElement("Word", content, annotations={ processing_phase: annotation })
+    elif processing_phase == 'lemma' and len(element) == 3:
         content, lemma, pos = element
         # String only consists of punctuation marks
         if all(regex.match(r"\p{P}", c) for c in content):
@@ -645,7 +646,7 @@ def unsimplify_element(element, gloss_or_lemma_or_pinyin):
             return ContentElement("Markup", content)
         else:
             return ContentElement("Word", content, annotations={ 'lemma': lemma, 'pos': pos })
-    elif gloss_or_lemma_or_pinyin == 'lemma_and_gloss' and len(element) == 4:
+    elif processing_phase == 'lemma_and_gloss' and len(element) == 4:
         content, lemma, pos, gloss = element
         # String only consists of punctuation marks
         if all(regex.match(r"\p{P}", c) for c in content):
@@ -656,42 +657,94 @@ def unsimplify_element(element, gloss_or_lemma_or_pinyin):
         else:
             return ContentElement("Word", content, annotations={ 'lemma': lemma, 'pos': pos, 'gloss': gloss })
     else:
-        raise InternalCLARAError(message = f'Bad call: unsimplify_element({element}, {gloss_or_lemma_or_pinyin})')
+        raise InternalCLARAError(message = f'Bad call: unsimplify_element({element}, {processing_phase})')
 
-def parse_chatgpt_gloss_response(response, simplified_elements, gloss_or_lemma_or_pinyin, callback=None):
-    response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
-    if not isinstance(response_object, list):
-        raise ChatGPTError(message = f'Response is not a list: {response}')
-    
-    usable_response_object = []
-    for element in response_object:
-        if not well_formed_element_in_glossing_or_tagging_or_pinyin_response(element, gloss_or_lemma_or_pinyin):
-            print(f'*** Warning: bad element {element} in annotation response, discarding')
+##def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, callback=None):
+##    response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
+##    if not isinstance(response_object, list):
+##        raise ChatGPTError(message = f'Response is not a list: {response}')
+##    
+##    usable_response_object = []
+##    for element in response_object:
+##        if not well_formed_element_in_annotation_response(element, processing_phase):
+##            post_task_update(callback, f'*** Warning: bad element {element} in annotation response, discarding')
+##        else:
+##            usable_response_object += [ element ]
+##    if processing_phase != 'mwe':
+##        original_text = ' '.join([ element if isinstance(element, str) else element[0] for element in simplified_elements ])
+##        annotated_text = ' '.join([ element[0] for element in usable_response_object ])
+##        if not original_text == annotated_text:
+##            warning = f"""*** Warning: original text and annotated text are different.
+##     Original text: {original_text}
+##    Annotated text: {annotated_text}"""
+##            post_task_update(callback, warning)
+##        return usable_response_object
+##    else:
+##        return [ element.split() for element in usable_response_object ]
+
+def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, callback=None):
+    analysis = ""
+    mwes = []
+
+    if processing_phase == 'mwe':
+        # Extract the analysis text and the JSON list separately
+        analysis_marker = "Analysis:"
+        json_marker = "Output"
+
+        analysis_start = response.find(analysis_marker)
+        json_start = response.find(json_marker)
+
+        if analysis_start != -1 and json_start != -1:
+            analysis = response[analysis_start + len(analysis_marker):json_start].strip()
+            json_str = response[json_start + len(json_marker):].strip()
+
+            # Extract the JSON content
+            response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(json_str, object_type='list', callback=callback)
+            if isinstance(response_object, list):
+                mwes = [element.split() for element in response_object]
+            else:
+                raise ChatGPTError(message=f'Response is not a list: {response}')
         else:
-            usable_response_object += [ element ]
-    if gloss_or_lemma_or_pinyin != 'mwe':
-        original_text = ' '.join([ element if isinstance(element, str) else element[0] for element in simplified_elements ])
-        annotated_text = ' '.join([ element[0] for element in usable_response_object ])
-        if not original_text == annotated_text:
+            raise ChatGPTError(message="Could not find the markers for analysis and JSON output in the response.")
+        
+        # Return a structure containing both the analysis and the list of MWEs
+        return {'analysis': analysis, 'mwes': mwes}
+
+    else:
+        # Handle other processing phases (non-MWE)
+        response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
+        if not isinstance(response_object, list):
+            raise ChatGPTError(message=f'Response is not a list: {response}')
+
+        usable_response_object = []
+        for element in response_object:
+            if not well_formed_element_in_annotation_response(element, processing_phase):
+                post_task_update(callback, f'*** Warning: bad element {element} in annotation response, discarding')
+            else:
+                usable_response_object.append(element)
+
+        original_text = ' '.join([element if isinstance(element, str) else element[0] for element in simplified_elements])
+        annotated_text = ' '.join([element[0] for element in usable_response_object])
+        if original_text != annotated_text:
             warning = f"""*** Warning: original text and annotated text are different.
      Original text: {original_text}
     Annotated text: {annotated_text}"""
             post_task_update(callback, warning)
+
         return usable_response_object
-    else:
-        return [ element.split() for element in usable_response_object ]
+
 
 def simplified_element_list_to_text(simplified_elements):
     return ' '.join([ element if isinstance(element, str) else element[0]
                       for element in simplified_elements ])
 
-def well_formed_element_in_glossing_or_tagging_or_pinyin_response(element, gloss_or_lemma_or_pinyin):
-    if gloss_or_lemma_or_pinyin in ( 'gloss', 'pinyin' ):
+def well_formed_element_in_annotation_response(element, processing_phase):
+    if processing_phase in ( 'gloss', 'pinyin' ):
         return isinstance(element, list) and len(element) == 2
-    elif gloss_or_lemma_or_pinyin == 'lemma':
+    elif processing_phase == 'lemma':
         return isinstance(element, list) and len(element) == 3
-    elif gloss_or_lemma_or_pinyin == 'lemma_and_gloss':
+    elif processing_phase == 'lemma_and_gloss':
         return isinstance(element, list) and len(element) == 4
-    elif gloss_or_lemma_or_pinyin == 'mwe':
+    elif processing_phase == 'mwe':
         return isinstance(element, str) 
 

@@ -39,6 +39,7 @@ from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTag
 from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
+from .forms import MWEExampleForm, CustomMWEExampleFormSet
 from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
@@ -1119,6 +1120,8 @@ def edit_prompt(request):
                 PromptFormSet = forms.formset_factory(TemplateForm, formset=CustomTemplateFormSet, extra=0)
             elif template_or_examples == 'examples' and annotation_type != 'mwe' and (operation == 'annotate' or annotation_type == 'segmented'):
                 PromptFormSet = forms.formset_factory(StringForm, formset=CustomStringFormSet, extra=1)
+            elif annotation_type == 'mwe':
+                PromptFormSet = forms.formset_factory(MWEExampleForm, formset=CustomMWEExampleFormSet, extra=1)
             else:
                 PromptFormSet = forms.formset_factory(StringPairForm, formset=CustomStringPairFormSet, extra=1)
                 
@@ -1163,6 +1166,8 @@ def edit_prompt(request):
                     initial_data = [{'template': prompts}]
                 elif template_or_examples == 'examples' and annotation_type != 'mwe' and (operation == 'annotate' or annotation_type == 'segmented'):
                     initial_data = [{'string': example} for example in prompts]
+                elif annotation_type == 'mwe':
+                    initial_data = [{'string1': triple[0], 'string2': triple[1], 'string3': triple[2]} for triple in prompts]
                 else:
                     initial_data = [{'string1': pair[0], 'string2': pair[1]} for pair in prompts]
 
@@ -1179,9 +1184,15 @@ def edit_prompt(request):
                         if not new_prompts[-1]:
                             # We didn't use the extra last field
                             new_prompts = new_prompts[:-1]
+                    elif annotation_type == 'mwe':
+                        new_prompts = [[form.cleaned_data.get('string1'), form.cleaned_data.get('string2'), form.cleaned_data.get('string3')]
+                                       for form in prompt_formset]
+                        if not new_prompts[-1][0] or not new_prompts[-1][1]:
+                            # We didn't use the extra last field
+                            new_prompts = new_prompts[:-1]
                     else:
                         new_prompts = [[form.cleaned_data.get('string1'), form.cleaned_data.get('string2')] for form in prompt_formset]
-                        if not new_prompts[-1][0] or not new_prompts[-1][1]:
+                        if not new_prompts[-1][0] or not new_prompts[-1][1] or not new_prompts[-1][2]:
                             # We didn't use the extra last field
                             new_prompts = new_prompts[:-1]
                     print(f'new_prompts:')

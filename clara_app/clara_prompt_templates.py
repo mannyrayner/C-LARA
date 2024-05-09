@@ -66,6 +66,8 @@ class PromptTemplateRepository:
             return ' '
         elif template_or_examples == 'examples' and annotation_type != 'mwe' and (operation == 'annotate' or annotation_type == 'segmented'):
             return [ ' ' ]
+        elif annotation_type == 'mwe':
+            return [ ( ' ', ' ', ' ' ) ]
         else:
             return [ ( ' ', ' ' ) ]
 
@@ -150,8 +152,8 @@ def check_well_formed_for_loading(data, template_or_examples, annotation_type, o
         if not is_list_of_n_tuples_of_strings(data, 2):
             raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of pairs of strings')
     elif annotation_type == 'mwe':
-        if not is_list_of_n_tuples_of_strings(data, 2):
-            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of pairs of strings')
+        if not is_list_of_n_tuples_of_strings(data, 3):
+            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of triples of strings')
     else:
         if not is_list_of_strings(data):
             raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of strings')
@@ -198,9 +200,9 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
     elif annotation_type == 'mwe' and operation == 'annotate':
-        for pair in data:
+        for triple in data:
             try:
-                example_string, all_mwes_string = pair
+                example_string, all_mwes_string, analysis = triple
                 example_elements = string_to_list_of_content_elements(example_string, 'segmented')
                 example_words = [ e.content for e in example_elements if e.type == 'Word' ]
                 mwe_strings = all_mwes_string.split(',')
@@ -211,7 +213,7 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                         if not mwe_word in example_words:
                             raise TemplateError(message = f'"{mwe_word}" in the MWEs does not occur in "{example_string}"')
             except:
-                raise TemplateError(message = f'Cannot internalise "{example_string}", "{all_mwes_string}" as "MWEs" data')
+                raise TemplateError(message = f'Cannot internalise "{triple}" as "MWEs" data')
     elif annotation_type == 'gloss' and operation == 'improve':
         for pair in data:
             for string in pair:

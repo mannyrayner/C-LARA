@@ -93,12 +93,14 @@ class Segment:
                 if element.type in ( 'Word', 'NonWordText', 'Markup' ):
                     out_text += element.to_text(annotation_type)
             last_type = this_type
-        if annotation_type == 'mwe' and 'mwes' in self.annotations:
-            mwes = self.annotations['mwes']
-            #print(f'annotations["mwes"] = {mwes}')
-            mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
-            if mwes_text:
-                out_text += f'#{mwes_text}#'
+        if annotation_type == 'mwe':
+            annotations = self.annotations
+            if 'analysis' in annotations and 'mwes' in annotations:
+                analysis_text = annotations['analysis']
+                mwes = annotations['mwes']
+                #print(f'annotations["mwes"] = {mwes}')
+                mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+                out_text += f"\n_analysis: {analysis_text}\n_MWEs: {mwes_text}"
             
         return out_text
 

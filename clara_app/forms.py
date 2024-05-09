@@ -590,6 +590,37 @@ class CustomStringPairFormSet(forms.BaseFormSet):
             form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
             form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
 
+class MWEExampleForm(forms.Form):
+    # Input example text
+    string1 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="Input Text Example",
+        help_text="The original text example where the MWEs are found"
+    )
+
+    # List of MWEs identified in the input
+    string2 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="MWEs Identified",
+        help_text="Comma-separated list of MWEs identified in the input"
+    )
+
+    # Analysis or explanation of MWEs
+    string3 = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
+        label="Analysis or Explanation",
+        help_text="Provide a detailed analysis of the MWEs found, explaining why each phrase is or is not considered an MWE"
+    )
+
+class CustomMWEExampleFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(CustomMWEExampleFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string3'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+
 class AudioMetadataForm(forms.Form):
     metadata = forms.CharField(widget=forms.Textarea)
 
