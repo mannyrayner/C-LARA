@@ -137,7 +137,8 @@ def parse_segment_mwe(segment_text):
                 analysis_lines.append(line[len(analysis_prefix):].strip())
             elif line.startswith(mwes_prefix):
                 #current_section = "mwes"
-                mwes_texts = line[len(mwes_prefix):].strip().split(',')
+                all_mwes_text = line[len(mwes_prefix):].strip()
+                mwes_texts = [] if not all_mwes_text else all_mwes_text.split(',')
                 mwes = [mwe_text.split() for mwe_text in mwes_texts]
             else:
                 if current_section == "main_text":

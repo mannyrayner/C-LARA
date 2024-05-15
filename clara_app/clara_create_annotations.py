@@ -77,10 +77,11 @@ def improve_segmented_version(text, l2_language, config_info={}, callback=None):
     return generate_or_improve_segmented_version('improve', text, l2_language, config_info=config_info, callback=callback)
 
 # Annotate the text with glosses
-def generate_glossed_version(segmented_text, l1_language, l2_language,
+def generate_glossed_version(segmented_text, l1_language, l2_language, mwe=False,
                              current_glossed_text=None, config_info={}, callback=None):
     return generate_or_improve_annotated_version('annotate', 'gloss', segmented_text, l1_language, l2_language,
-                                                 current_annotated_text=current_glossed_text, config_info=config_info, callback=callback)
+                                                 mwe=mwe, current_annotated_text=current_glossed_text,
+                                                 config_info=config_info, callback=callback)
 
 # Improve annotation of the text with glosses
 def improve_glossed_version(glossed_text, l1_language, l2_language, config_info={}, callback=None):
@@ -97,11 +98,12 @@ def improve_pinyin_tagged_version(pinyin_tagged_text, l2_language, config_info={
     return generate_or_improve_annotated_version('improve', 'pinyin', tagged_text, l1_language, l2_language, config_info=config_info, callback=callback)
 
 # Annotate the text with lemmas
-def generate_tagged_version(segmented_text, l2_language,
+def generate_tagged_version(segmented_text, l2_language, mwe=False,
                             current_lemma_tagged_text=None, config_info={}, callback=None):
     l1_language = 'irrelevant'
     return generate_or_improve_annotated_version('annotate', 'lemma', segmented_text, l1_language, l2_language,
-                                                 current_annotated_text=current_lemma_tagged_text, config_info=config_info, callback=callback)
+                                                 mwe=mwe, current_annotated_text=current_lemma_tagged_text,
+                                                 config_info=config_info, callback=callback)
 
 # Improve annotation of the text with lemmas
 def improve_tagged_version(tagged_text, l2_language, config_info={}, callback=None):
@@ -127,9 +129,15 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
     return ( api_call.response, [ api_call ] )
 
 def generate_or_improve_annotated_version(annotate_or_improve, processing_phase, annotated_text, l1_language, l2_language,
-                                          current_annotated_text=None, config_info={}, callback=None):
-    
-    source_version = 'segmented' if annotate_or_improve == 'annotate' else processing_phase
+                                          mwe=False, current_annotated_text=None,
+                                          config_info={}, callback=None):
+
+    if mwe:
+        source_version = 'mwe'
+    elif annotate_or_improve == 'annotate':
+        source_version = 'segmented'
+    else:
+        source_version = processing_phase
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
     internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
@@ -157,20 +165,29 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     analyses_and_mwes_for_segments = []
     all_api_calls = []
 
+    if mwe:
+        segments = internalised_annotated_text.segments()
+        segmented_elements_mwe_dict = segments_to_segmented_elements_mwe_dict(segments)
+    else:
+        segmented_elements_mwe_dict = None
+
+    print(f'segmented_elements_mwe_dict: {segmented_elements_mwe_dict}')
+
     if internalised_current_annotated_text:
-        if processing_phase != 'mwe':
-            current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
-            current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
-        else:
+        if mwe or processing_phase == 'mwe':
             current_segments = internalised_current_annotated_text.segments()
             current_segmented_elements_dict = segments_to_annotations_dict(current_segments)
+        else:
+            current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
+            current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
+            
     else:
         current_segmented_elements_dict = None
 
     #print(f'current_segmented_elements_dict:')
     #pprint.pprint(current_segmented_elements_dict)
     
-    if few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, config_info):
+    if few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, mwe, config_info):
         # We're reusing the saved annotations and only redoing the new segments
         print(f'--- Redoing {processing_phase}, trying to reuse material from previous version')
         for elements in segmented_elements:
@@ -187,10 +204,13 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                 # In the worst case, the segment is too long and needs to be split up
                 # Usually, chunks is the same as [ elements ]
                 #print(f'--- Annotating material for {key}')
-                chunks = split_elements_by_segments([ elements ], max_elements) if processing_phase != 'mwe' else [ elements ]
+                chunks = split_elements_by_segments([ elements ], max_elements) if not mwe and processing_phase != 'mwe' else [ elements ]
                 for chunk in chunks:
+                    key = key_for_segment_elements(chunk)
+                    mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
+                    print(f'key: {key}, mwes_for_segment: {mwes_for_segment}')
                     annotated_chunk_or_analysis_and_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
-                                                                                                       l1_language, l2_language,
+                                                                                                       l1_language, l2_language, mwe=mwe, mwes=mwes_for_segment,
                                                                                                        config_info=config_info, callback=callback)
                     if processing_phase != 'mwe':
                         annotated_elements += annotated_chunk_or_analysis_and_mwes
@@ -201,15 +221,18 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     else:
         # We're doing everything from scratch
         #print(f'--- Doing {processing_phase} element by element')
-        if processing_phase == 'mwe':
-            # For now, do MWE tagging one segment at a time
+        if processing_phase == 'mwe' or mwe:
+            # Do tagging involving MWEs one segment at a time
             chunks = segmented_elements
         else:
             chunks = split_elements_by_segments(segmented_elements, max_elements)
         
         for chunk in chunks:
+            key = key_for_segment_elements(chunk)
+            mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
+            print(f'key: {key}, mwes_for_segment: {mwes_for_segment}')
             annotated_chunk_or_analysis_and_mwes, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
-                                                                                                            l1_language, l2_language,
+                                                                                                            l1_language, l2_language, mwe=mwe, mwes=mwes_for_segment,
                                                                                                             config_info=config_info, callback=callback)
             if processing_phase != 'mwe':
                 annotated_elements += annotated_chunk_or_analysis_and_mwes
@@ -239,6 +262,11 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
 def key_for_segment_elements(elements):
     return tuple([ element.content for element in elements ])
 
+# Index MWEs on the key given above
+def segments_to_segmented_elements_mwe_dict(segments):
+    return { key_for_segment_elements(segment.content_elements): ( segment.annotations['mwes'] if 'mwes' in segment.annotations else [] )
+             for segment in segments }
+
 # Index a list of segmented elements on the key given above
 def segmented_elements_to_dict(segmented_elements):
     if not segmented_elements:
@@ -254,12 +282,12 @@ def segments_to_annotations_dict(segments):
     return { key_for_segment_elements(segment.content_elements): segment.annotations for segment in segments }
 
 # Find how many segments aren't in the previous version and compare with the limit
-def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, config_info):
+def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, mwe, config_info):
     if not current_segmented_elements_dict:
         return False
 
-    # With MWE tagging, we do it one segment at a time, so always use this strategy if possible
-    if processing_phase == 'mwe':
+    # If MWE tagging is involved, we do it one segment at a time, so always reuse saved annotations if possible
+    if processing_phase == 'mwe' or mwe:
         return True
     
     limit = int(config.get('chatgpt4_annotation', 'max_segments_to_reannotate_separately'))
@@ -308,7 +336,7 @@ def split_elements_by_segments(segmented_elements, max_elements):
     return chunks
 
 def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, elements,
-                                                  l1_language, l2_language, config_info={}, callback=None):
+                                                  l1_language, l2_language, mwe=False, mwes=[], config_info={}, callback=None):
     word_elements = word_items_in_element_list(elements)
     if len(word_elements) == 0:
         # If we're not doing MWE, return the elements unchanged
@@ -332,9 +360,9 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
     if processing_phase == 'gloss':
-        annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language)
+        annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language, mwe=mwe, mwes=mwes)
     elif processing_phase == 'lemma':
-        annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
+        annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, mwe=mwe, mwes=mwes)
     elif processing_phase == 'mwe':
         annotation_prompt = mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
     elif processing_phase == 'pinyin':
@@ -403,12 +431,14 @@ def segmentation_prompt(annotate_or_improve, text, l2_language):
                             examples=examples,
                             text=text )
 
-def glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language):
-    template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, 'gloss', l2_language)
+def glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language, mwe=False, mwes=[]):
+    template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve,
+                                                                               ( 'gloss' if not mwe else 'gloss_with_mwe' ),
+                                                                               l2_language)
     if annotate_or_improve == 'annotate':
-        examples = glossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
+        examples = glossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language, mwe=mwe, mwes=mwes)
     else:
-        examples = reglossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
+        examples = reglossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language, mwe=mwe, mwes=mwe)
     return template.format( l1_language=l1_language,
                             l2_language=l2_language,
                             examples=examples,
@@ -425,13 +455,15 @@ def joint_tagging_and_glossing_prompt(simplified_elements_json, l1_language, l2_
                             simplified_elements_json=simplified_elements_json
                             )
 
-def tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language):
+def tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, mwe=False, mwes=[]):
     l1_language = 'irrelevant'
-    template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, 'lemma', l2_language)
+    template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve,
+                                                                               ( 'lemma' if not mwe else 'lemma_with_mwe' ),
+                                                                               l2_language)
     if annotate_or_improve == 'annotate':
-        examples = tagging_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
+        examples = tagging_examples_to_examples_text(annotated_example_list, l2_language, mwe=mwe, mwes=mwes)
     else:
-        examples = retagging_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
+        examples = retagging_examples_to_examples_text(annotated_example_list, l2_language, mwe=mwe, mwes=mwes)
     return template.format( l2_language=l2_language,
                             examples=examples,
                             simplified_elements_json=simplified_elements_json
@@ -443,7 +475,7 @@ def mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_languag
     if annotate_or_improve == 'annotate':
         examples = mwe_tagging_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
     else:
-        examples = retagging_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
+        examples = mwe_retagging_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
     return template.format( l2_language=l2_language,
                             examples=examples,
                             simplified_elements_json=simplified_elements_json
@@ -488,8 +520,58 @@ def segmentation_example_to_text(example):
     plain_example = ''.join([ element.content for element in elements ])
     return f'{plain_example} ->\n{example}'
 
-def glossing_examples_to_examples_text(examples_structure, l2_language, l1_language):
-    return '\nor\n'.join([ glossing_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
+def glossing_examples_to_examples_text(examples_structure, l2_language, l1_language, mwe=False, mwes=[]):
+    print(f'--- glossing_examples_to_examples_text({examples_structure}, {l2_language}, {l1_language}, mwe={mwe}, mwes={mwes})')
+    # We aren't using MWEs at all
+    if not mwe:
+        return '\n\n'.join([ glossing_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
+    # We are using MWEs, but this particular text doesn't have any, so we use only examples with no MWEs
+    elif not mwes:
+        examples_to_use = [ example for example in examples_structure
+                            if example[1].strip() == '' ]
+        intro = 'Here are some examples:'
+        examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
+        return f'{intro}\n\n{examples_text}'
+    # We are using MWEs, and this particular text has MWEs, so we use only examples with MWEs
+    else:
+        examples_to_use = [ example for example in examples_structure
+                            if example[1].strip() != '' ]
+        mwes_text = mwes_to_json_string(mwes)
+        if len(mwes) == 1:
+            intro1 = f'The following sequence of words should be treated as a single multi-word expression (MWE)'
+        else:
+            intro1 = f'The following sequences of words should be treated as single multi-word expressions (MWEs)'
+        intro2 = f'This means that each of the component words in the MWE should be glossed in the same way. Here are some examples of how to gloss:'
+        examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
+        return f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
+
+def tagging_examples_to_examples_text(examples_structure, l2_language, mwe=False, mwes=[]):
+    print(f'--- tagging_examples_to_examples_text({examples_structure}, {l2_language}, mwe={mwe}, mwes={mwes})')
+    # We aren't using MWEs at all
+    if not mwe:
+        return '\n\n'.join([ tagging_example_to_example_text(example, l2_language) for example in examples_structure ])
+    # We are using MWEs, but this particular text doesn't have any, so we use only examples with no MWEs
+    elif not mwes:
+        examples_to_use = [ example for example in examples_structure
+                            if example[1].strip() == '' ]
+        intro = 'Here are some examples:'
+        examples_text = '\n\n'.join([ tagging_example_with_mwes_to_example_text(example, l2_language) for example in examples_to_use ])
+        return f'{intro}\n\n{examples_text}'
+    # We are using MWEs, and this particular text has MWEs, so we use only examples with MWEs
+    else:
+        examples_to_use = [ example for example in examples_structure
+                            if example[1].strip() != '' ]
+        mwes_text = mwes_to_json_string(mwes)
+        if len(mwes) == 1:
+            intro1 = f'The following sequence of words should be treated as a single multi-word expression (MWE)'
+        else:
+            intro1 = f'The following sequences of words should be treated as single multi-word expressions (MWEs)'
+        intro2 = f'This means that each of the component words in the MWE should be tagged in the same way. Here are some examples of how to gloss:'
+        examples_text = '\n\n'.join([ tagging_example_with_mwes_to_example_text(example, l2_language) for example in examples_to_use ])
+        return f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
+
+##def tagging_examples_to_examples_text(examples_structure, l2_language, l1_language):
+##    return '\nor\n'.join([ tagging_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
 
 def reglossing_examples_to_examples_text(examples_structure, l2_language, l1_language):
     return '\nor\n'.join([ reglossing_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
@@ -500,7 +582,29 @@ def re_lemma_and_glossing_examples_to_examples_text(examples_structure, l1_langu
 def glossing_example_to_example_text(example, l2_language, l1_language):
     simplified_internalised_example = annotated_string_to_simplified_internalised_form(example, l2_language, l1_language, 'gloss')
     simplified_internalised_example_words = [ pair[0] for pair in simplified_internalised_example ]
-    return f'{json.dumps(simplified_internalised_example_words)} as {json.dumps(simplified_internalised_example)}'
+    return f'Input: {json.dumps(simplified_internalised_example_words)}\nOutput: {json.dumps(simplified_internalised_example)}'
+
+def glossing_example_with_mwes_to_example_text(example_pair, l2_language, l1_language):
+    example, mwes = example_pair
+    simplified_internalised_example = annotated_string_to_simplified_internalised_form(example, l2_language, l1_language, 'gloss')
+    simplified_internalised_example_words = [ pair[0] for pair in simplified_internalised_example ]
+    if not mwes.strip():
+        return f'Input: {json.dumps(simplified_internalised_example_words)}\nOutput: {json.dumps(simplified_internalised_example)}'
+    else:
+        return f'Input: {json.dumps(simplified_internalised_example_words)}\nMWES:{json.dumps(mwes)}\nOutput: {json.dumps(simplified_internalised_example)}'
+
+def tagging_example_with_mwes_to_example_text(example_pair, l2_language):
+    example, mwes = example_pair
+    l1_language = 'irrelevant'
+    simplified_internalised_example = annotated_string_to_simplified_internalised_form(example, l2_language, l1_language, 'lemma')
+    simplified_internalised_example_words = [ pair[0] for pair in simplified_internalised_example ]
+    if not mwes.strip():
+        return f'Input: {json.dumps(simplified_internalised_example_words)}\nOutput: {json.dumps(simplified_internalised_example)}'
+    else:
+        return f'Input: {json.dumps(simplified_internalised_example_words)}\nMWES:{json.dumps(mwes)}\nOutput: {json.dumps(simplified_internalised_example)}'
+
+def mwes_to_json_string(mwes):
+    return json.dumps(mwes)
 
 def reglossing_example_to_example_text(example, l2_language, l1_language):
     ( first, second ) = example
@@ -513,9 +617,6 @@ def re_lemma_and_glossing_example_to_example_text(example, l2_language, l1_langu
     simplified_internalised_example1 = annotated_string_to_simplified_internalised_form(first, l2_language, l1_language, 'lemma_and_gloss')
     simplified_internalised_example2 = annotated_string_to_simplified_internalised_form(second, l2_language, l1_language, 'lemma_and_gloss')
     return f'{json.dumps(simplified_internalised_example1)} to {json.dumps(simplified_internalised_example2)}'
-
-def tagging_examples_to_examples_text(examples_structure, l2_language, l1_language):
-    return '\nor\n'.join([ tagging_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
 
 def mwe_tagging_examples_to_examples_text(examples_structure, l2_language, l1_language):
     print(f'MWE examples: {examples_structure}')
@@ -530,7 +631,8 @@ def pinyin_tagging_examples_to_examples_text(examples_structure, l2_language, l1
 def pinyin_retagging_examples_to_examples_text(examples_structure, l2_language, l1_language):
     return '\nor\n'.join([ pinyin_retagging_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
 
-def tagging_example_to_example_text(example, l2_language, l1_language):
+def tagging_example_to_example_text(example, l2_language):
+    l1_language = 'irrelevant'
     simplified_internalised_example = annotated_string_to_simplified_internalised_form(example, l2_language, l1_language, 'lemma')
     simplified_internalised_example_words = [ pair[0] for pair in simplified_internalised_example ]
     return f'{json.dumps(simplified_internalised_example_words)} as {json.dumps(simplified_internalised_example)}'

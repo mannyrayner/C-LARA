@@ -64,10 +64,12 @@ class PromptTemplateRepository:
     def blank_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str):
         if template_or_examples == 'template':
             return ' '
-        elif template_or_examples == 'examples' and annotation_type != 'mwe' and (operation == 'annotate' or annotation_type == 'segmented'):
-            return [ ' ' ]
         elif annotation_type == 'mwe':
             return [ ( ' ', ' ', ' ' ) ]
+        elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
+            return [ ( ' ', ' ' ) ]
+        elif (operation == 'annotate' or annotation_type == 'segmented'):
+            return [ ' ' ]
         else:
             return [ ( ' ', ' ' ) ]
 
@@ -146,7 +148,7 @@ def check_well_formed_for_loading(data, template_or_examples, annotation_type, o
             raise TemplateError(message = f'Template is missing for language "{language}"')
         if not isinstance(data, str):
             raise TemplateError(message = f'Templatelanguage "{language}" is not a string')
-    elif operation == 'improve' and annotation_type != 'segmented':
+    elif ( operation == 'improve' and annotation_type != 'segmented' ) or annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
         if not data:
             raise TemplateError(message = f'Examples are missing language "{language}"')
         if not is_list_of_n_tuples_of_strings(data, 2):
@@ -179,6 +181,8 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                 for e in elements:
                     if e.type == 'Word' and not 'gloss' in e.annotations:
                         raise TemplateError(message = f'"{string}" is not good "gloss" "annotate" data')
+            except TemplateError as e:
+                raise e
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
     elif annotation_type == 'pinyin' and operation == 'annotate':
@@ -188,6 +192,8 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                 for e in elements:
                     if e.type == 'Word' and not 'pinyin' in e.annotations:
                         raise TemplateError(message = f'"{string}" is not good "pinyin" "annotate" data')
+            except TemplateError as e:
+                raise e
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
     elif annotation_type == 'lemma' and operation == 'annotate':
@@ -197,23 +203,29 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                 for e in elements:
                     if e.type == 'Word' and ( not 'lemma' in e.annotations or not 'pos' in e.annotations ):
                         raise TemplateError(message = f'"{string}" is not good "lemma" "annotated" data')
+            except TemplateError as e:
+                raise e
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
     elif annotation_type == 'mwe' and operation == 'annotate':
         for triple in data:
             try:
                 example_string, all_mwes_string, analysis = triple
-                example_elements = string_to_list_of_content_elements(example_string, 'segmented')
-                example_words = [ e.content for e in example_elements if e.type == 'Word' ]
-                mwe_strings = all_mwes_string.split(',')
-                for mwe_string in mwe_strings:
-                    mwe_elements = string_to_list_of_content_elements(mwe_string, 'segmented')
-                    mwe_words = [ e.content for e in mwe_elements if e.type == 'Word' ]
-                    for mwe_word in mwe_words:
-                        if not mwe_word in example_words:
-                            raise TemplateError(message = f'"{mwe_word}" in the MWEs does not occur in "{example_string}"')
+                check_mwes_string_against_example_string(example_string, all_mwes_string, 'segmented')
+            except TemplateError as e:
+                raise e
             except:
                 raise TemplateError(message = f'Cannot internalise "{triple}" as "MWEs" data')
+    elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ) and operation == 'annotate':
+        for pair in data:
+            try:
+                example_string, all_mwes_string = pair
+                plain_annotation_type = 'gloss' if annotation_type == 'gloss_with_mwe' else 'lemma'
+                check_mwes_string_against_example_string(example_string, all_mwes_string, plain_annotation_type)
+            except TemplateError as e:
+                raise e
+            except:
+                raise TemplateError(message = f'Cannot internalise "{pair}" as "{annotation_type}" data')
     elif annotation_type == 'gloss' and operation == 'improve':
         for pair in data:
             for string in pair:
@@ -222,8 +234,10 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                     for e in elements:
                         if e.type == 'Word' and not 'gloss' in e.annotations:
                             raise TemplateError(message = f'"{string}" is not good "gloss" "improve" data')
+                except TemplateError as e:
+                    raise e
                 except:
-                    raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
+                    raise TemplateError(message = f'Cannot internalise "{pair}" as "gloss" data')
     elif annotation_type == 'pinyin' and operation == 'improve':
         for pair in data:
             for string in pair:
@@ -232,8 +246,10 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                     for e in elements:
                         if e.type == 'Word' and not 'pinyin' in e.annotations:
                             raise TemplateError(message = f'"{string}" is not good "pinyin" "improve" data')
+                except TemplateError as e:
+                    raise e
                 except:
-                    raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
+                    raise TemplateError(message = f'Cannot internalise "{pair}" as "pinyin" data')
     elif annotation_type == 'lemma' and operation == 'improve':
         for pair in data:
             for string in pair:
@@ -242,8 +258,10 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                     for e in elements:
                         if e.type == 'Word' and ( not 'lemma' in e.annotations or not 'pos' in e.annotations ):
                             raise TemplateError(message = f'"{string}" is not good "lemma" "improve" data')
+                except TemplateError as e:
+                    raise e
                 except:
-                    raise TemplateError(message = f'Cannot internalise "{string}" as "lemma" data')
+                    raise TemplateError(message = f'Cannot internalise "{pair}" as "lemma" data')
     elif annotation_type == 'lemma_and_gloss' and operation == 'improve':
         for pair in data:
             for string in pair:
@@ -252,10 +270,23 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                     for e in elements:
                         if e.type == 'Word' and ( not 'lemma' in e.annotations or not 'pos' in e.annotations or not 'gloss' in e.annotations ):
                             raise TemplateError(message = f'"{string}" is not good "lemma_and_gloss" "improve" data')
+                except TemplateError as e:
+                    raise e
                 except:
-                    raise TemplateError(message = f'Cannot internalise "{string}" as "lemma_and_gloss" data')
+                    raise TemplateError(message = f'Cannot internalise "{pair}" as "lemma_and_gloss" data')
     else:
         raise TemplateError(message = f'Cannot check well-formedness of "{data}" as "{annotation_type}" "{operation}" data')
+
+def check_mwes_string_against_example_string(example_string, all_mwes_string, version):
+    example_elements = string_to_list_of_content_elements(example_string, version)
+    example_words = [ e.content for e in example_elements if e.type == 'Word' ]
+    mwe_strings = all_mwes_string.split(',')
+    for mwe_string in mwe_strings:
+        mwe_elements = string_to_list_of_content_elements(mwe_string, 'segmented')
+        mwe_words = [ e.content for e in mwe_elements if e.type == 'Word' ]
+        for mwe_word in mwe_words:
+            if not mwe_word in example_words:
+                raise TemplateError(message = f'"{mwe_word}" in the MWEs does not occur in "{example_string}"')
 
 # Check that the template and annotated example list were found,
 # and that the template does not have any inappropriate arguments.

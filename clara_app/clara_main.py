@@ -738,9 +738,15 @@ class CLARAProjectInternal:
 
     # Call ChatGPT-4 to create a version of the text with gloss annotations
     def create_glossed_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented_with_images") 
+        if self.text_versions['mwe']:
+            segmented_text = self.load_text_version("mwe")
+            mwe = True
+        else:
+            segmented_text = self.load_text_version("segmented_with_images")
+            mwe = False
         current_glossed_text = self.load_text_version("gloss") if self.text_versions['gloss'] else None 
         glossed_text, api_calls = generate_glossed_version(segmented_text, self.l1_language, self.l2_language,
+                                                           mwe=mwe,
                                                            current_glossed_text=current_glossed_text,
                                                            config_info=config_info, callback=callback)
         self.save_text_version("gloss", glossed_text, user=user, label=label, source='ai_generated')
@@ -774,9 +780,16 @@ class CLARAProjectInternal:
 
     # Call ChatGPT-4 to create a version of the text with lemma annotations
     def create_lemma_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented_with_images")
+        if self.text_versions['mwe']:
+            segmented_text = self.load_text_version("mwe")
+            mwe = True
+        else:
+            segmented_text = self.load_text_version("segmented_with_images")
+            mwe = False
+
         current_lemma_tagged_text = self.load_text_version("lemma") if self.text_versions['lemma'] else None 
         lemma_tagged_text, api_calls = generate_tagged_version(segmented_text, self.l2_language,
+                                                               mwe=mwe,
                                                                current_lemma_tagged_text=current_lemma_tagged_text,
                                                                config_info=config_info, callback=callback)
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='ai_generated')

@@ -55,7 +55,9 @@ class UserConfigForm(forms.ModelForm):
         widgets = {
             'clara_version': forms.Select(choices=[('simple_clara', 'Simple C-LARA'),
                                                    ('full_clara', 'Full C-LARA'),]),
-            'gpt_model': forms.Select(choices=[('gpt-4-1106-preview', 'GPT-4 Turbo'),
+            'gpt_model': forms.Select(choices=[('gpt-4o', 'GPT-4o'),
+                                               ('gpt-4-turbo', 'GPT-4 Turbo'),
+                                               ('gpt-4-1106-preview', 'GPT-4 Turbo 2023-11-06'),
                                                ('gpt-4', 'GPT-4')]),
             'max_annotation_words': forms.Select(choices=[(100, '100'),
                                                           (250, '250'),
@@ -532,9 +534,11 @@ class PromptSelectionForm(forms.Form):
     
     annotation_type_choices = [
         ("segmented", "Segmented"),
-        ("gloss", "Gloss"),
-        ("lemma", "Lemma"),
         ("mwe", "Multi Word Expressions"),
+        ("gloss", "Gloss"),
+        ("gloss_with_mwe", "Gloss using MWEs"),
+        ("lemma", "Lemma"),
+        ("lemma_with_mwe", "Lemma using MWEs"),
         ("pinyin", "Pinyin"),
     ]
 
@@ -589,6 +593,28 @@ class CustomStringPairFormSet(forms.BaseFormSet):
         for form in self:
             form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
             form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+
+class ExampleWithMWEForm(forms.Form):
+    string1 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="Annotated text",
+        help_text="Annotated text, where each word is followed by the annotation enclosed in hashes"
+        )
+    string2 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        required=False,
+        label="MWEs",
+        help_text="Multi-Word Expressions in the example, if any. Comma-separated list"
+        )
+    
+class ExampleWithMWEFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(ExampleWithMWEFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+
 
 class MWEExampleForm(forms.Form):
     # Input example text
