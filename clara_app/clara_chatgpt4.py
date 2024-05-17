@@ -245,7 +245,7 @@ async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, ca
     
     return api_call
 
-async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model='gpt-4-vision-preview', config_info={}, callback=None):
+async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model='gpt-4o', config_info={}, callback=None):
     max_tokens = int(config.get('chatgpt4v', 'max_tokens_to_produce'))
     
     start_time = time.time()
