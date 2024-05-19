@@ -69,6 +69,7 @@ SUPPORTED_LANGUAGES = [
     ('drehu', 'Drehu'),
     ('dutch', 'Dutch'),
     ('english', 'English'),
+    ('esperanto', 'Esperanto'),
     ('faroese', 'Faroese'),
     ('farsi', 'Farsi'),
     ('finnish', 'Finnish'),
