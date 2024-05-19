@@ -29,9 +29,12 @@ The workshop is supported by a grant from the France-Australia Science and Innov
 
 By “innovative approaches”, we mean not only technological advances, for example, in AI and corpus phonetics, but also emerging best practices to involve communities and to design resources that are both usable and used, intuitive for non-specialists, and respectful of the speaker communities and their cultures.
 
+<img src="logos_fasic_workshop_2024/logo_ambassade_france_australia.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_amu.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_cnrs.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_LPL.jpg" width="80">
+<img src="logos_fasic_workshop_2024/logo_MEAE.jpg" width="80">
+<img src="logos_fasic_workshop_2024/logo_MESR.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_flinders.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unc.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unisa.jpg" width="80">
