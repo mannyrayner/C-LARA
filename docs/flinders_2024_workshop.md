@@ -12,7 +12,7 @@
   <a href="flinders_2024_workshop.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Upcoming workshop</a>
 
 </div>
-##Innovative approaches to speech and language technologies for Oceania, the world's most linguistically diverse region
+## Innovative approaches to speech and language technologies for Oceania, the world's most linguistically diverse region
 
 **Flinders University,** 
 **Bedford Park campus**
