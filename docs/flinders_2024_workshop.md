@@ -37,8 +37,11 @@ By “innovative approaches”, we mean not only technological advances, for exa
 # Organising committee
 
 Belinda Chiera, University of South Australia (Adelaide, Australia)
+
 Christèle Maizonniaux, Flinders University (Adelaide, Australia)
+
 Manny Rayner, University of South Australia (Adelaide, Australia)
+
 Pauline Welby (Aix Marseille University, CNRS, Laboratoire Parole et Langage (France) and Université de la Nouvelle Calédonie
 
 The workshop is supported by a grant from the France-Australia Science and Innovation Cooperation (FASIC) program
