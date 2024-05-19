@@ -33,8 +33,8 @@ By “innovative approaches”, we mean not only technological advances, for exa
 <img src="logos_fasic_workshop_2024/logo_amu.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_cnrs.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_LPL.jpg" width="80">
-<img src="logos_fasic_workshop_2024/logo_MEAE.jpg" width="80">
-<img src="logos_fasic_workshop_2024/logo_MESR.jpg" width="80">
+<img src="logos_fasic_workshop_2024/logo_MEAE.png" width="80">
+<img src="logos_fasic_workshop_2024/logo_MESR.png" width="80">
 <img src="logos_fasic_workshop_2024/logo_flinders.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unc.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unisa.jpg" width="80">
