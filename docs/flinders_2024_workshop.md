@@ -34,6 +34,15 @@ The workshop is supported by a grant from the France-Australia Science and Innov
 
 By “innovative approaches”, we mean not only technological advances, for example, in AI and corpus phonetics, but also emerging best practices to involve communities and to design resources that are both usable and used, intuitive for non-specialists, and respectful of the speaker communities and their cultures.
 
+# Organising committee
+
+Belinda Chiera, University of South Australia (Adelaide, Australia)
+Christèle Maizonniaux, Flinders University (Adelaide, Australia)
+Manny Rayner, University of South Australia (Adelaide, Australia)
+Pauline Welby (Aix Marseille University, CNRS, Laboratoire Parole et Langage (France) and Université de la Nouvelle Calédonie
+
+The workshop is supported by a grant from the France-Australia Science and Innovation Cooperation (FASIC) program
+
 <img src="logos_fasic_workshop_2024/logo_flinders.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unisa.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_amu.jpg" width="80">
