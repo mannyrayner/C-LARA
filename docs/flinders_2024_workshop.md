@@ -12,7 +12,7 @@
   <a href="flinders_2024_workshop.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Upcoming workshop</a>
 
 </div>
-## Innovative approaches to speech and language technologies for Oceania, the world's most linguistically diverse region
+# Innovative approaches to speech and language technologies for Oceania, the world's most linguistically diverse region
 
 **Flinders University,** 
 **Bedford Park campus**
@@ -20,11 +20,11 @@
 
 **25-26 July 2024**
 
-# Form
+## Form
 
 We plan a hybrid workshop, with both in-person and virtual attendance. We will soon be posting further details.
 
-# Content
+## Content
 Long gone are the days of learning languages by memorizing stock phrases (My tailor is rich!) and lists of verb conjugations – at least for some languages. What has historically been called Computer-assisted language learning or CALL is now very much the norm rather than the exception. We routinely use online platforms and apps (e.g. Babbel and DuoLinguo), and learners of languages rich in resources like English and French have easy access to native speaker pronunciations. But the vast majority of the world’s approximately 7000 languages are “under-resourced” – lacking in speech and language technologies such as online dictionaries, courseware (didacticiels), text-to-speech synthesis, multimedia e-books, and smartphone apps. Nowhere is this truer than in Oceania (including the Pacific islands, Australia, and New Zealand), the most linguistically diverse region in the world, home to less than 1% of the world’s people, but 11% of its languages.
 
 Languages technologies can be important tools in promoting language use, in revitalizing endangered or vulnerable languages, and in lending social prestige, particularly among young people. They are also essential in the development of adaptive technology – for example, of screen readers and adaptive and augmented communication (AAC) devices that allow people who are blind or non-verbal to participate more fully in their communities.
@@ -34,7 +34,7 @@ The workshop is supported by a grant from the France-Australia Science and Innov
 
 By “innovative approaches”, we mean not only technological advances, for example, in AI and corpus phonetics, but also emerging best practices to involve communities and to design resources that are both usable and used, intuitive for non-specialists, and respectful of the speaker communities and their cultures.
 
-# Organising committee
+## Organising committee
 
 Belinda Chiera, University of South Australia (Adelaide, Australia)
 
