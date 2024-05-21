@@ -63,22 +63,23 @@ class ImageRepositoryORM:
             post_task_update(callback, error_message)
 
     def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='',
-                  page=1, position='bottom', callback=None):
+              page=1, position='bottom', style_description='', content_description='', user_prompt='', callback=None):
         try:
-            # Ensure project_id is a string and page is an integer
             project_id = str(project_id)
             page = int(page)
 
-            # Try to retrieve an existing entry
             obj, created = ImageMetadata.objects.update_or_create(
                 project_id=project_id, 
                 image_name=image_name,
                 defaults={
-                    'file_path': file_path, 
-                    'associated_text': associated_text, 
-                    'associated_areas': associated_areas, 
-                    'page': page, 
-                    'position': position
+                    'file_path': file_path,
+                    'associated_text': associated_text,
+                    'associated_areas': associated_areas,
+                    'page': page,
+                    'position': position,
+                    'style_description': style_description,
+                    'content_description': content_description,
+                    'user_prompt': user_prompt
                 }
             )
 
@@ -114,24 +115,24 @@ class ImageRepositoryORM:
         try:
             project_id = str(project_id)
             
-            # Try to fetch the entry from the database
             entry = ImageMetadata.objects.get(project_id=project_id, image_name=image_name)
-            
-            # Generate thumbnail name
             thumbnail = generate_thumbnail_name(entry.file_path)
             
-            # Construct and return an Image object with all necessary information
+            image = Image(
+                entry.file_path,
+                thumbnail,
+                entry.image_name,
+                entry.associated_text,
+                entry.associated_areas,
+                entry.page,
+                entry.position,
+                style_description=entry.style_description,
+                content_description=entry.content_description,
+                user_prompt=entry.user_prompt
+            )
 
-            image = Image(entry.file_path,
-                          thumbnail,
-                          entry.image_name,
-                          entry.associated_text,
-                          entry.associated_areas,
-                          entry.page,
-                          entry.position)
-            
             return image
-                
+                    
         except ObjectDoesNotExist:
             post_task_update(callback, f'*** No entry found for "{image_name}" in Image database.')
             return None
@@ -160,7 +161,10 @@ class ImageRepositoryORM:
                               entry.associated_text,
                               entry.associated_areas,
                               entry.page,
-                              entry.position)
+                              entry.position,
+                              style_description=entry.style_description,
+                              content_description=entry.content_description,
+                              user_prompt=entry.user_prompt)
                 images.append(image)
 
             post_task_update(callback, f'--- Retrieved {len(images)} images for project {project_id}')

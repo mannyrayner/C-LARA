@@ -244,7 +244,9 @@ class Text:
 class Image:
     def __init__(self, image_file_path, thumbnail_file_path, image_name,
                  associated_text, associated_areas,
-                 page, position, page_object=None):
+                 page, position, style_description=None,
+                 content_description=None, user_prompt=None,
+                 page_object=None):
         self.image_file_path = image_file_path
         self.thumbnail_file_path = thumbnail_file_path
         self.image_name = image_name
@@ -252,24 +254,32 @@ class Image:
         self.associated_areas = associated_areas
         self.page = page
         self.position = position
+        self.style_description = style_description
+        self.content_description = content_description
+        self.user_prompt = user_prompt
         self.page_object = page_object
 
     def to_json(self):
-        return { 'image_file_path': self.image_file_path,
-                 'thumbnail_file_path': self.thumbnail_file_path,
-                 'image_name': self.image_name,
-                 'associated_text': self.associated_text,
-                 'associated_areas': self.associated_areas,
-                 'page': self.page,
-                 'position':self.position,
-                 }
+        return {
+            'image_file_path': self.image_file_path,
+            'thumbnail_file_path': self.thumbnail_file_path,
+            'image_name': self.image_name,
+            'associated_text': self.associated_text,
+            'associated_areas': self.associated_areas,
+            'page': self.page,
+            'position': self.position,
+            'style_description': self.style_description,
+            'content_description': self.content_description,
+            'user_prompt': self.user_prompt
+        }
 
     def merge_page(self, page_object):
         self.page_object = page_object
 
     def __repr__(self):
-        return f"Image(image_file_path={self.image_file_path}, image_name={self.image_name})"
-
+        return (f"Image(image_file_path={self.image_file_path}, image_name={self.image_name}, "
+                f"style_description={self.style_description}, content_description={self.content_description}, "
+                f"user_prompt={self.user_prompt})")
 
 class APICall:
     def __init__(self, prompt, response, cost, duration, timestamp, retries):

@@ -72,6 +72,7 @@ class CLARAProject(models.Model):
     l2 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
+    uses_coherent_image_set = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set.")
 
 # Move this to utils.py to avoid circular import
 
@@ -637,6 +638,12 @@ class ImageMetadata(models.Model):
     associated_areas = models.TextField(blank=True, default='')
     page = models.IntegerField(default=1)
     position = models.CharField(max_length=10, choices=POSITION_CHOICES, default='top')
+    style_description = models.TextField(blank=True, default='',
+                                         help_text='AI-generated description of the image style.')
+    content_description = models.TextField(blank=True, default='',
+                                           help_text='AI-generated description of the image content.')
+    user_prompt = models.TextField(blank=True, default='',
+                                   help_text='Most recent user prompt for generating or modifying this image.')
 
     class Meta:
         db_table = 'orm_image_metadata'

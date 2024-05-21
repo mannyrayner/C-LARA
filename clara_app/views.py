@@ -1854,8 +1854,13 @@ def create_project(request):
             title = form.cleaned_data['title']
             l2_language = form.cleaned_data['l2']
             l1_language = form.cleaned_data['l1']
+            uses_coherent_image_set = form.cleaned_data['uses_coherent_image_set']
             # Create a new project in Django's database, associated with the current user
-            clara_project = CLARAProject(title=title, user=request.user, l2=l2_language, l1=l1_language)
+            clara_project = CLARAProject(title=title,
+                                         user=request.user,
+                                         l2=l2_language,
+                                         l1=l1_language,
+                                         uses_coherent_image_set=uses_coherent_image_set)
             clara_project.save()
             internal_id = create_internal_project_id(title, clara_project.id)
             # Update the Django project with the internal_id

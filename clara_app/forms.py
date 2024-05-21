@@ -113,11 +113,14 @@ class UnifiedSearchForm(forms.Form):
 
 class ProjectCreationForm(forms.ModelForm):
     #title = forms.CharField(widget=forms.TextInput(attrs={'style': 'width: 100%;'}))  # Uses full width of its container
-    title = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))  
+    title = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))
+    uses_coherent_image_set = forms.BooleanField(required=False, label='Use Coherent Image Set',
+                                                 help_text="Check this if the project should use a coherent style for all images.")
+
 
     class Meta:
         model = CLARAProject
-        fields = ['title', 'l2', 'l1']
+        fields = ['title', 'l2', 'l1', 'uses_coherent_image_set']
 
 class AcknowledgementsForm(forms.ModelForm):
     class Meta:
@@ -140,6 +143,9 @@ class SimpleClaraForm(forms.Form):
                                           widget=forms.RadioSelect,
                                           initial='create_text_and_image',
                                           required=False)
+    # Need to find a clean way to allow coherent image sets in Simple C-LARA
+    #uses_coherent_image_set = forms.BooleanField(required=False, label='Use Coherent Image Set',
+    #                                             help_text="Check this if the project should use an AI-generated coherent style for all images.")
     # Id of the CLARAProjectInternal
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
     # L2 title to appear on the first page of the text
