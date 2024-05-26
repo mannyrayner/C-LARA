@@ -40,7 +40,7 @@ from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import MWEExampleForm, CustomMWEExampleFormSet, ExampleWithMWEForm, ExampleWithMWEFormSet
-from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
+from .forms import ImageForm, ImageFormSet, StyleImageForm, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
 from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
@@ -2402,7 +2402,7 @@ def simple_clara_save_text_and_create_image_helper(username, project_id, simple_
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
-    create_and_add_dall_e_3_image(project_id, callback=None)
+    create_and_add_dall_e_3_image_for_whole_text(project_id, callback=None)
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
@@ -2615,7 +2615,7 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: regenerate DALL-E-3 image")
-    result = create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
+    result = create_and_add_dall_e_3_image_for_whole_text(project_id, advice_prompt=image_advice_prompt, callback=callback)
     post_task_update(callback, f"ENDED TASK: regenerate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text') and result:
@@ -4299,6 +4299,8 @@ def project_history(request, project_id):
 @login_required
 @user_has_a_project_role
 def edit_images(request, project_id, dall_e_3_image_status):
+    actions_requiring_openai = ( 'create_dalle_image_for_whole_text',
+                                 'create_dalle_style_image' ) 
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     # Retrieve existing images
@@ -4309,36 +4311,80 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'associated_text': img.associated_text,
                      'associated_areas': img.associated_areas,
                      'page': img.page,
-                     'position': img.position}
+                     'position': img.position,
+                     'style_description': img.style_description,
+                     'content_description': img.content_description,
+                     'user_prompt': img.user_prompt
+                     }
                     for img in images]
     initial_data = sorted(initial_data, key=lambda x: x['page'])
 
+    pprint.pprint(initial_data)
+    
+    if len(initial_data) != 0 and initial_data[0]['page'] == 0:
+        # We have a style image on the notional page 0, move that information to the style image template
+        style_image_record = initial_data[0]
+        initial_style_image_data = { 'image_base_name': style_image_record['image_base_name'],
+                                     'user_prompt': style_image_record['user_prompt']
+                                     }
+        style_description = style_image_record['style_description']
+        # The other data is normal images that will appear in the text
+        initial_data = initial_data[1:]
+    elif project.uses_coherent_image_set:
+        initial_style_image_data = { 'image_base_name': None,
+                                     'user_prompt': ''
+                                     }
+        style_description = None
+    else:
+        initial_style_image_data = None
+        style_description = None
+
     if request.method == 'POST':
-        if 'action' in request.POST and request.POST['action'] == 'create_dalle_image':
+        
+        if 'action' in request.POST and request.POST['action'] in actions_requiring_openai:
+            action = request.POST['action']
             if not user_has_open_ai_key_or_credit(request.user):
-                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
+                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                 return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
-            else:
-                task_type = f'create_dalle_e_3_image'
+            if action == 'create_dalle_image_for_whole_text':
+                task_type = f'create_dalle_e_3_images'
                 callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-                async_task(create_and_add_dall_e_3_image, project_id, callback=callback)
+                async_task(create_and_add_dall_e_3_image_for_whole_text, project_id, callback=callback)
+                print(f'--- Started DALL-E-3 image generation task')
+                #Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+            elif action == 'create_dalle_style_image':
+                style_image_form = StyleImageForm(request.POST)
+                if not style_image_form.is_valid():
+                    #print(f'--- Invalid form data (form #{i}): {form}')
+                    messages.error(request, "Invalid form data.")
+                    return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                if not style_image_form.cleaned_data.get('user_prompt'):
+                    messages.error(request, "No instructions given for creating style image.")
+                    return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                user_prompt = style_image_form.cleaned_data.get('user_prompt')
+                task_type = f'create_dalle_e_3_images'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                async_task(create_and_add_dall_e_3_image_for_style, project_id, user_prompt, callback=callback)
                 print(f'--- Started DALL-E-3 image generation task')
                 #Redirect to the monitor view, passing the task ID and report ID as parameters
                 return redirect('create_dall_e_3_image_monitor', project_id, report_id)
 
         else:
+            generation_requests = []
             formset = ImageFormSet(request.POST, request.FILES)
             for i in range(0, len(formset)):
                 form = formset[i]
                 previous_record = initial_data[i] if i < len(initial_data) else None
                 # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
                 #print(f"--- form #{i}: form.changed_data = {form.changed_data}")
-                if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data ):
+                if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data and not project.uses_coherent_image_set ):
                     if not form.is_valid():
                         #print(f'--- Invalid form data (form #{i}): {form}')
                         messages.error(request, "Invalid form data.")
-                        return redirect('edit_images', project_id=project_id)
+                        return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                     
                     image_name = form.cleaned_data.get('image_name')
                     # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
@@ -4356,14 +4402,20 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     associated_areas = form.cleaned_data.get('associated_areas')
                     page = form.cleaned_data.get('page', 1)
                     position = form.cleaned_data.get('position', 'bottom')
+                    user_prompt = form.cleaned_data.get('user_prompt')
+                    generate = form.cleaned_data.get('generate')
                     delete = form.cleaned_data.get('delete')
+                    
+                    if previous_record:
+                        content_description = previous_record['content_description']
                     #print(f'--- real_image_file_path = {real_image_file_path}, image_name = {image_name}, page = {page}, delete = {delete}')
 
                     if image_name and delete:
+                        # We are deleting an image
                         clara_project_internal.remove_project_image(image_name)
                         messages.success(request, f"Deleted image: {image_name}")
                     elif image_name and real_image_file_path:
-                       # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
+                       # We are uploading an image
                         if not associated_areas and associated_text and image_name:  
                             # Generate the uninstantiated annotated image structure
                             structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
@@ -4373,20 +4425,46 @@ def edit_images(request, project_id, dall_e_3_image_status):
                         clara_project_internal.add_project_image(image_name, real_image_file_path,
                                                                  associated_text=associated_text, associated_areas=associated_areas,
                                                                  page=page, position=position)
-            messages.success(request, "Image data updated")
-            return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                    elif generate and user_prompt:
+                        # We are generating an image. Put it on the queue for async processing at the end
+                        generation_request = { 'image_name': image_name,
+                                               'page': page,
+                                               'position': position,
+                                               'user_prompt': user_prompt,
+                                               'style_description': style_description,
+                                               'current_image': previous_record['image_file_path'] if previous_record else None
+                                               }
+                        generation_requests.append(generation_request)
+                                               
+            if len(generation_requests) != 0:
+                if not user_has_open_ai_key_or_credit(request.user):
+                    messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                task_type = f'create_dalle_e_3_images'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+                async_task(create_and_add_coherent_dall_e_3_images, project_id, generation_requests, callback=callback)
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+            else:            
+                messages.success(request, "Image data updated")
+                return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
     else:
         formset = ImageFormSet(initial=initial_data)
+        style_form = StyleImageForm(initial=initial_style_image_data)
+        
         if dall_e_3_image_status == 'finished':
-            messages.success(request, "DALL-E-3 image for whole text successfully generated")
+            messages.success(request, "DALL-E-3 image generation successfully completed")
         elif dall_e_3_image_status == 'error':
-            messages.success(request, "Something went wrong when generating DALL-E-3 image for whole text. Look at the 'Recent task updates' view for further information.")
+            messages.success(request, "Something went wrong when performing DALL-E-3 image generation. Look at the 'Recent task updates' view for further information.")
 
     clara_version = get_user_config(request.user)['clara_version']
 
-    return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project, 'clara_version': clara_version})
+    return render(request, 'clara_app/edit_images.html', {'formset': formset,
+                                                          'style_form': style_form,
+                                                          'project': project,
+                                                          'uses_coherent_image_set': project.uses_coherent_image_set,
+                                                          'clara_version': clara_version})
 
-def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None):
+def create_and_add_dall_e_3_image_for_whole_text(project_id, advice_prompt=None, callback=None):
     try:
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -4423,6 +4501,120 @@ When generating the image, keep the following advice in mind:
         post_task_update(callback, f"finished")
         api_calls = [ api_call ]
         store_api_calls(api_calls, project, project.user, 'image')
+        return True
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+        return False
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+ 
+# Create the image using DALL-E-3, interpret it using GPT-4o, then store on notional page 0
+def create_and_add_dall_e_3_image_for_style(project_id, prompt, callback=None):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        user = project.user
+        config_info = get_user_config(user)
+        temp_dir = tempfile.mkdtemp()
+        tmp_image_file = os.path.join(temp_dir, 'image_for_style_prompt.jpg')
+        
+        post_task_update(callback, f"--- Creating a new DALL-E-3 image to define the style")
+        api_call_generate = call_chat_gpt4_image(prompt, tmp_image_file, config_info=config_info, callback=callback)
+        post_task_update(callback, f"--- Image created: {tmp_image_file}")
+
+        style_interpretation_prompt = """Produce a detailed description of this image's style.
+The description you give will be used to create a set of thematically related images with a similar style,
+so it is important to focus on the style, not describing the content more than absolutely necessary.
+"""
+        post_task_update(callback, f"--- Creating a description of the style")
+        api_call_interpret = call_chat_gpt4_interpret_image(style_interpretation_prompt, tmp_image_file,
+                                                            config_info=config_info, callback=callback)
+        style_description = api_call_interpret.response
+        store_api_calls([ api_call_interpret ], project, project.user, 'image')
+        post_task_update(callback, f"--- Description created: {style_description}")
+
+        image_name = 'Style image'
+        clara_project_internal.add_project_image(image_name, tmp_image_file, 
+                                                 associated_text='', associated_areas='',
+                                                 page=0, position='top',
+                                                 style_description=style_description,
+                                                 user_prompt=prompt)
+        post_task_update(callback, f"--- Image stored")
+        post_task_update(callback, f"finished")
+        api_calls = [ api_call_generate ]
+        store_api_calls(api_calls, project, project.user, 'image')
+        return True
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+        return False
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir) 
+
+# Go through the generation requests, creating and storing the images.
+#
+# Generation requests have this format:
+# { 'image_name': image_name,
+#   'page': page,
+#   'position': position,
+#   'user_prompt': user_prompt,
+#   'style_description': style_description,
+#   'current_image': image_file_path
+#  }
+# current_image may be null
+
+def create_and_add_coherent_dall_e_3_images(project_id, generation_requests, callback=None):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        user = project.user
+        config_info = get_user_config(user)
+        temp_dir = tempfile.mkdtemp()
+        for generation_request in generation_requests:
+            image_name = generation_request['image_name']
+            page = generation_request['page']
+            position = generation_request['position']
+            user_prompt = generation_request['user_prompt']
+            style_description = generation_request['style_description']
+            current_image = generation_request['current_image']
+
+            if not current_image:
+                full_prompt = f"""Create an image based on the following request: {user_prompt}
+Make the style of the image consistent with style of the previously generated image described here: {style_description}
+"""
+            else:
+                interpretation_prompt = """Produce a detailed description of this image.
+The description you give will be used to create a modified version of the image, so include as many details as you can.
+"""
+                post_task_update(callback, f"--- Creating a description of the existing image")
+                api_call_interpret = call_chat_gpt4_interpret_image(interpretation_prompt, current_image,
+                                                                    config_info=config_info, callback=callback)
+                content_description = api_call_interpret.response
+                post_task_update(callback, f"--- Description created: {content_description}")
+                store_api_calls([ api_call_interpret ], project, project.user, 'image')
+                full_prompt = f"""Create a modified version of the image described as follows: {content_description}
+
+Change it according to this request: {user_prompt}.
+
+Make the style of the image consistent with the style of the previously generated image described here: {style_description}
+"""    
+            
+            tmp_image_file = os.path.join(temp_dir, f'{image_name}_{page}_{position}.jpg')
+            post_task_update(callback, f"--- Creating DALL-E-3 image: name {image_name}, page {page},{position}")
+            api_call_generate = call_chat_gpt4_image(full_prompt, tmp_image_file, config_info=config_info, callback=callback)
+            post_task_update(callback, f"--- Image created: {tmp_image_file}")
+
+            clara_project_internal.add_project_image(image_name, tmp_image_file, 
+                                                     associated_text='', associated_areas='',
+                                                     page=page, position=position,
+                                                     user_prompt=user_prompt)
+            api_calls = [ api_call_generate ]
+            store_api_calls(api_calls, project, project.user, 'image')
+            post_task_update(callback, f"--- Image stored")
+        post_task_update(callback, f"finished") 
         return True
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
@@ -4523,6 +4715,7 @@ def make_export_zipfile(request, project_id):
         clara_version = get_user_config(request.user)['clara_version']
         
         return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project, 'clara_version': clara_version})
+
 
 # This is the API endpoint that the JavaScript will poll
 @login_required

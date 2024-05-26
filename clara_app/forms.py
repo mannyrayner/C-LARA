@@ -665,11 +665,22 @@ class ImageForm(forms.Form):
     image_name = forms.CharField(label='Image Name', max_length=100, required=True)
     associated_text = forms.CharField(label='Associated Text', widget=forms.Textarea, required=False)
     associated_areas = forms.CharField(label='Associated Areas', widget=forms.Textarea, required=False)
-    page = forms.IntegerField(label='Page Number', min_value=1, required=True)
+    page = forms.IntegerField(label='Page Number', min_value=0, required=True)
     position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=True)
+    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    style_description = forms.CharField(label='AI-generated style description', widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    content_description = forms.CharField(label='AI-generated content description', widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    generate = forms.BooleanField(label='Generate Image', required=False)
     delete = forms.BooleanField(label='Delete Image', required=False)
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
+
+class StyleImageForm(forms.Form):
+    image_base_name = forms.CharField(label='Image File Base Name',
+                                      max_length=100,
+                                      widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+                                      required=False)
+    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 2}), required=False)
 
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:

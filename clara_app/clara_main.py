@@ -1047,7 +1047,8 @@ class CLARAProjectInternal:
             return False
 
     def add_project_image(self, image_name, image_file_path, associated_text='', associated_areas='',
-                          page=1, position='bottom', callback=None):
+                          page=1, position='bottom', style_description='', content_description='', user_prompt='',
+                          callback=None):
         try:
             project_id = self.id
             
@@ -1059,7 +1060,11 @@ class CLARAProjectInternal:
             # Logic to add the image entry to the repository
             self.image_repository.add_entry(project_id, image_name, stored_image_path,
                                             associated_text=associated_text, associated_areas=associated_areas,
-                                            page=page, position=position, callback=callback)
+                                            page=page, position=position,
+                                            style_description=style_description,
+                                            content_description=content_description,
+                                            user_prompt=user_prompt,
+                                            callback=callback)
             
             post_task_update(callback, f"--- Image {image_name} added successfully")
             return stored_image_path
