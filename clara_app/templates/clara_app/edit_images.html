@@ -4,11 +4,40 @@
 
 {% block content %}
   <h2>Edit Images ("{{ project.title }}")</h2>
-  <h3>Create a new DALL-E-3 image based on the whole text</h3>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <button type="submit" name="action" value="create_dalle_image">Create</button>
-  </form>
+  {% if style_form %}
+	  <h3>Style image</h3>
+	  <form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<table>
+           <thead>
+              <tr>
+			     <th>Image Preview</th><th>Prompt</th>
+			  </tr>
+		    </thead>
+			<tbody>
+			  <tr>
+			     <td>
+		            {% if style_form.image_base_name.value %}
+                        <img src="{% url 'serve_project_image' project.internal_id style_form.image_base_name.value %}" alt="Current Style Image" style="max-width: 300px; max-height: 300px;">
+				    {% else %}
+                       No image currently stored.
+                    {% endif %}
+                  </td>
+			      <td>
+				      {{ style_form.user_prompt }}
+			      </td>
+			  </tr>
+			</tbody>
+		</table>
+		<button type="submit" name="action" value="create_dalle_style_image">Create</button>
+	  </form>
+  {% else %}
+	  <h3>Create a new DALL-E-3 image based on the whole text</h3>
+	  <form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<button type="submit" name="action" value="create_dalle_image_for_whole_text">Create</button>
+	  </form>
+  {% endif %}
   <h3>Upload/edit/delete existing images</h3>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
@@ -16,34 +45,53 @@
     <table>
       <thead>
         <tr>
-          <th>Image Preview</th>
-		  <th>Image Upload</th>
-          <th>Image Name</th>
-          <th>Page</th>
-          <th>Position</th>
-          <th>Delete</th>
+		  {% if uses_coherent_image_set %}
+		    <th>Image Preview</th><th>Prompt</th><th>Image Name</th><th>Page</th><th>Position</th><th>Generate</th><th>Delete</th>
+		  {% else %}
+            <th>Image Preview</th><th>Image Upload</th><th>Image Name</th><th>Page</th><th>Position</th><th>Delete</th>
+		  {% endif %}
         </tr>
       </thead>
       <tbody>
         {% for form in formset %}
           <tr>
-            <td>
-              {% if form.image_base_name.value %}
-                <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;">
-              {% else %}
-                No image currently stored.
-              {% endif %}
-            </td>
-			<td>{{ form.image_file_path }}</td>
-            <td>{{ form.image_name }}</td>
-            <td>{{ form.page }}</td>
-            <td>{{ form.position }}</td>
-            <td>{{ form.delete }}</td>
+		    {% if uses_coherent_image_set %}
+			    <td>
+                {% if form.image_base_name.value %}
+                  <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;">
+                {% else %}
+                  No image currently stored.
+                {% endif %}
+               </td>
+			   <td>{{ form.user_prompt }}</td>
+               <td>{{ form.image_name }}</td>
+               <td>{{ form.page }}</td>
+               <td>{{ form.position }}</td>
+			   <td>{{ form.generate }}</td>
+               <td>{{ form.delete }}</td>
+			{% else %}
+               <td>
+                {% if form.image_base_name.value %}
+                  <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;">
+                {% else %}
+                  No image currently stored.
+               {% endif %}
+               </td>
+			   <td>{{ form.image_file_path }}</td>
+               <td>{{ form.image_name }}</td>
+               <td>{{ form.page }}</td>
+               <td>{{ form.position }}</td>
+               <td>{{ form.delete }}</td>
+			{% endif %}
           </tr>
         {% endfor %}
       </tbody>
     </table>
-    <button type="submit" name="action" value="save_changes">Save changes</button>
+	{% if uses_coherent_image_set %}
+       <button type="submit" name="action" value="generate">Process</button>
+	{% else %}
+	   <button type="submit" name="action" value="save_changes">Save changes</button>
+	{% endif %}
   </form>
   
   <p>
