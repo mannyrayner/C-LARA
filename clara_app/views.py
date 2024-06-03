@@ -40,7 +40,8 @@ from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import MWEExampleForm, CustomMWEExampleFormSet, ExampleWithMWEForm, ExampleWithMWEFormSet
-from .forms import ImageForm, ImageFormSet, StyleImageForm, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
+from .forms import ImageForm, ImageFormSet, StyleImageForm, ImageSequenceForm
+from .forms import PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
 from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
@@ -68,7 +69,7 @@ from .clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_chinese import is_chinese_language
 from .clara_annotated_images import make_uninstantiated_annotated_image_structure
 from .clara_tts_api import tts_engine_type_supports_language
-from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
+from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json, call_chat_gpt4_image, call_chat_gpt4_interpret_image
 from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
 #from .clara_utils import _use_orm_repositories
 from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, get_config, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
@@ -4300,7 +4301,8 @@ def project_history(request, project_id):
 @user_has_a_project_role
 def edit_images(request, project_id, dall_e_3_image_status):
     actions_requiring_openai = ( 'create_dalle_image_for_whole_text',
-                                 'create_dalle_style_image' ) 
+                                 'create_dalle_style_image',
+                                 'create_image_request_sequence') 
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     # Retrieve existing images
@@ -4318,8 +4320,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      }
                     for img in images]
     initial_data = sorted(initial_data, key=lambda x: x['page'])
-
-    pprint.pprint(initial_data)
+    image_request_sequence = clara_project_internal.load_text_version_or_null("image_request_sequence")
+    print(f'--- image_request_sequence = {image_request_sequence}')
     
     if len(initial_data) != 0 and initial_data[0]['page'] == 0:
         # We have a style image on the notional page 0, move that information to the style image template
@@ -4343,6 +4345,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
         
         if 'action' in request.POST and request.POST['action'] in actions_requiring_openai:
             action = request.POST['action']
+            print(f'--- action = {action}')
             if not user_has_open_ai_key_or_credit(request.user):
                 messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                 return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
@@ -4354,11 +4357,19 @@ def edit_images(request, project_id, dall_e_3_image_status):
                 print(f'--- Started DALL-E-3 image generation task')
                 #Redirect to the monitor view, passing the task ID and report ID as parameters
                 return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+            elif action == 'create_image_request_sequence':
+                task_type = f'create_image_request_sequence'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                async_task(create_image_request_sequence, project_id, callback=callback)
+                print(f'--- Started image request sequence generation task')
+                #Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
             elif action == 'create_dalle_style_image':
                 style_image_form = StyleImageForm(request.POST)
                 if not style_image_form.is_valid():
-                    #print(f'--- Invalid form data (form #{i}): {form}')
-                    messages.error(request, "Invalid form data.")
+##                    print(f'--- Invalid form data (form #{i}): {form}')
+                    messages.error(request, "Invalid form data (form #{i}): {form}")
                     return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                 if not style_image_form.cleaned_data.get('user_prompt'):
                     messages.error(request, "No instructions given for creating style image.")
@@ -4450,6 +4461,11 @@ def edit_images(request, project_id, dall_e_3_image_status):
     else:
         formset = ImageFormSet(initial=initial_data)
         style_form = StyleImageForm(initial=initial_style_image_data)
+        if project.uses_coherent_image_set:
+            image_request_sequence_form = ImageSequenceForm(initial={'image_request_sequence': image_request_sequence})
+        else:
+            image_request_sequence_form = None
+        print(f'--- image_request_sequence_form = {image_request_sequence_form}')
         
         if dall_e_3_image_status == 'finished':
             messages.success(request, "DALL-E-3 image generation successfully completed")
@@ -4460,6 +4476,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
 
     return render(request, 'clara_app/edit_images.html', {'formset': formset,
                                                           'style_form': style_form,
+                                                          'image_request_sequence_form': image_request_sequence_form,
                                                           'project': project,
                                                           'uses_coherent_image_set': project.uses_coherent_image_set,
                                                           'clara_version': clara_version})
@@ -4552,7 +4569,112 @@ so it is important to focus on the style, not describing the content more than a
         return False
     finally:
         if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir) 
+            shutil.rmtree(temp_dir)
+
+# Create the image request sequence for the text
+def create_image_request_sequence(project_id, callback=None):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        user = project.user
+        config_info = get_user_config(user)
+        
+        segmented_text = clara_project_internal.load_text_version("segmented_with_title")
+        segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
+        numbered_page_list = segmented_text_object.to_numbered_page_list()
+        numbered_page_list_text = json.dumps(numbered_page_list)
+        prompt = f"""
+        You are to write a set of requests, in JSON form, that will guide DALL-E-3 and GPT-4o in creating a set of
+        illustrations for a text, also provided in JSON form, which has been divided into numbered pages.
+
+        A DALL-E-3 image-generation request to create the image on page <page-number> of the text will be of the form:
+
+        {{
+          "request_type": "image-generation",
+          "page": <page-number>,
+          "prompt": "<parametrised-request-text>"
+        }}
+
+        where <parametrised-request-text> may include elements enclosed in braces, {{}}, which refer to "description-variables"
+        holding the results of previously executed GPT-4o image understanding requests.
+
+        A GPT-4o image-understanding request to extract visual information from the previously generated image on page <page-number>
+        of the text and store it in the "description-variable" <variable-name> will be of the form:
+
+        {{
+          "request_type": "image-understanding",
+          "page": <page-number>,
+          "prompt": "<request-text>",
+          "description-variable": "<variable-name>"
+        }}
+
+        When generating the image requests, ensure that the image descriptions from understanding requests are included in the prompts
+        for subsequent image-generation requests. This ensures visual consistency throughout the story.
+
+        Here is a simple example:
+
+        Input:
+
+        [
+          {{
+            "page": 1,
+            "text": "Once upon a time, in a faraway kingdom, there lived a brave princess named Elara."
+          }},
+          {{
+            "page": 2,
+            "text": "Elara loved exploring the lush forests and vibrant meadows that surrounded her castle."
+          }}
+        ]
+
+        Output:
+
+        [
+          {{
+            "request_type": "image-generation",
+            "page": 1,
+            "prompt": "An image of a brave princess named Elara standing in front of a grand castle, with the lush forest in the background. Elara is wearing a simple yet elegant dress, and she has a determined look on her face."
+          }},
+          {{
+            "request_type": "image-understanding",
+            "page": 1,
+            "prompt": "Look at this image, which depicts a princess standing in front of a castle, and provide a description of the princess. This description will be used when generating other images, so make it as detailed as possible.",
+            "description-variable": "Elara-description"
+          }},
+          {{
+            "request_type": "image-generation",
+            "page": 2,
+            "prompt": "An image of Princess Elara exploring the forest, surrounded by tall trees, colorful flowers, and playful animals like rabbits and birds. Princess Elara will be as described here: {{Elara-description}}."
+          }}
+        ]
+
+        Here is the JSON representation of the text:
+
+        {numbered_page_list_text}
+        """
+        api_call = call_chat_gpt4(prompt, config_info=config_info, callback=callback)
+        store_api_calls([ api_call ], project, user, 'image_request_sequence')
+        response = api_call.response
+
+        try:
+            response_object = interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
+            clara_project_internal.save_text_version("image_request_sequence", json.dumps(response_object))
+            if not isinstance(response_object, list):
+                post_task_update(callback, f'Error: response is not a JSON list')
+                post_task_update(callback, f"error")
+                return False
+            else: 
+                # Insert code to parse sequence and instantiate items in image repository here
+                post_task_update(callback, f"finished")
+                return True
+        except:
+            post_task_update(callback, f'Error: cannot interpret response as well-formed JSON')
+            post_task_update(callback, f"error")
+            clara_project_internal.save_text_version("image_request_sequence", response)
+            return False
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+        return False
 
 # Go through the generation requests, creating and storing the images.
 #
@@ -4583,7 +4705,8 @@ def create_and_add_coherent_dall_e_3_images(project_id, generation_requests, cal
 
             if not current_image:
                 full_prompt = f"""Create an image based on the following request: {user_prompt}
-Make the style of the image consistent with style of the previously generated image described here: {style_description}
+
+Make the style of the image consistent with the style of the previously generated image described here: {style_description}
 """
             else:
                 interpretation_prompt = """Produce a detailed description of this image.

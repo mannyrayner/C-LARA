@@ -132,7 +132,8 @@ class Page:
         return elements
 
     def to_text(self, annotation_type=None):
-        segment_texts = "||".join([segment.to_text(annotation_type) for segment in self.segments])
+        segment_separator = '' if annotation_type == 'plain' else '||'
+        segment_texts = segment_separator.join([segment.to_text(annotation_type) for segment in self.segments])
         if annotation_type == 'segmented_for_labelled':
             return segment_texts
         elif self.annotations:
@@ -191,6 +192,15 @@ class Text:
         for page in self.pages:
             elements.extend(page.content_elements())
         return elements
+
+    def to_numbered_page_list(self):
+        numbered_pages = []
+        number = 1
+        for page in self.pages:
+            page_text = page.to_text(annotation_type='plain').replace('<page>', '')
+            numbered_pages.append({'page': number, 'text': page_text})
+            number += 1
+        return numbered_pages                     
 
     # Returns a list of lists of content elements, one per segment
     def segmented_elements(self):

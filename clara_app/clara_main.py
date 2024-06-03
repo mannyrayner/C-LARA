@@ -204,6 +204,7 @@ class CLARAProjectInternal:
             "lemma_and_gloss": None,
             "pinyin": None,
             "mwe": None,
+            "image_request_sequence": None
         }
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
         self.internalised_and_annotated_text_path_phonetic = self.project_dir / 'internalised_and_annotated_text_phonetic.pickle'
@@ -302,6 +303,7 @@ class CLARAProjectInternal:
             self._copy_text_version_if_it_exists("lemma", new_project)
             self._copy_text_version_if_it_exists("mwe", new_project)
             self._copy_text_version_if_it_exists("pinyin", new_project)
+            self._copy_text_version_if_it_exists("image_request_sequence", new_project)
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
             self._copy_text_version_if_it_exists("gloss", new_project)
@@ -420,7 +422,8 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma", "pinyin"]
+        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma",
+                    "pinyin", "mwe", "image_request_sequence"]
 
         # Check if any metadata entries are missing for the existing files
         for version in versions:

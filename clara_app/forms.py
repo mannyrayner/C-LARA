@@ -682,6 +682,11 @@ class StyleImageForm(forms.Form):
                                       required=False)
     user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 2}), required=False)
 
+class ImageSequenceForm(forms.Form):
+    image_request_sequence = forms.CharField(widget=forms.Textarea(attrs={'rows': 10,
+                                                                          'readonly': 'readonly'}),
+                                             required=False)
+
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:
         model = HumanAudioInfo
