@@ -29,8 +29,15 @@
 			  </tr>
 			</tbody>
 		</table>
-		<button type="submit" name="action" value="create_dalle_style_image">Create</button>
+		<button type="submit" name="action" value="create_dalle_style_image">Create style image</button>
 	  </form>
+	  {% if image_request_sequence_form %}
+		  <h3>Image request sequence</h3>
+		  <form method="post" enctype="multipart/form-data">
+			{% csrf_token %}
+			{{ image_request_sequence_form.image_request_sequence }}
+			<button type="submit" name="action" value="create_image_request_sequence">Create image request sequence</button>
+	  {% endif %}
   {% else %}
 	  <h3>Create a new DALL-E-3 image based on the whole text</h3>
 	  <form method="post" enctype="multipart/form-data">
@@ -38,7 +45,7 @@
 		<button type="submit" name="action" value="create_dalle_image_for_whole_text">Create</button>
 	  </form>
   {% endif %}
-  <h3>Upload/edit/delete existing images</h3>
+  <h3>Upload/generate/delete existing images</h3>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ formset.management_form }}
