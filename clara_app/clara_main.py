@@ -1051,14 +1051,18 @@ class CLARAProjectInternal:
 
     def add_project_image(self, image_name, image_file_path, associated_text='', associated_areas='',
                           page=1, position='bottom', style_description='', content_description='', user_prompt='',
+                          request_type='image-generation', description_variable='',
                           callback=None):
         try:
             project_id = self.id
             
-            post_task_update(callback, f"--- Adding image {image_name} (file path = {image_file_path}) to project {project_id}")            
+            post_task_update(callback, f"--- Adding image {request_type} item {image_name} (file path = {image_file_path}) to project {project_id}")            
             
-            # Logic to store the image in the repository
-            stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
+            # Store the image in the repository
+            if image_file_path:
+                stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
+            else:
+                stored_image_path = ''
             
             # Logic to add the image entry to the repository
             self.image_repository.add_entry(project_id, image_name, stored_image_path,
@@ -1067,6 +1071,8 @@ class CLARAProjectInternal:
                                             style_description=style_description,
                                             content_description=content_description,
                                             user_prompt=user_prompt,
+                                            request_type=request_type,
+                                            description_variable=description_variable,
                                             callback=callback)
             
             post_task_update(callback, f"--- Image {image_name} added successfully")
@@ -1125,6 +1131,20 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when removing image: {str(e)}")
             # Handle the exception as needed
 
+    def remove_all_project_images_except_style_images(self, callback=None):
+        try:
+            project_id = self.id
+            
+            post_task_update(callback, f"--- Removing all images except style image from project {project_id}")
+
+            # Logic to remove the image entries from the repository
+            self.image_repository.remove_all_entries_except_style_images(project_id, callback=callback)
+
+            post_task_update(callback, f"--- Images for {project_id} removed successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when removing image: {str(e)}")
+            # Handle the exception as needed
+
     # Retrieves all images associated with the project
     def get_all_project_images(self, callback=None):
         try:
@@ -1155,6 +1175,11 @@ class CLARAProjectInternal:
                                        associated_areas=image.associated_areas,
                                        page=image.page,
                                        position=image.position,
+                                       style_description=image.style_description,
+                                       content_description=image.content_description,
+                                       user_prompt=image.user_prompt,
+                                       request_type=image.request_type,
+                                       description_variable=image.description_variable,
                                        callback=callback)
             
             post_task_update(callback, f"--- {len(images)} images added successfully")

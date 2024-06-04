@@ -667,9 +667,14 @@ class ImageForm(forms.Form):
     associated_areas = forms.CharField(label='Associated Areas', widget=forms.Textarea, required=False)
     page = forms.IntegerField(label='Page Number', min_value=0, required=True)
     position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=True)
-    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 2}), required=False)
-    style_description = forms.CharField(label='AI-generated style description', widget=forms.Textarea(attrs={'rows': 2}), required=False)
-    content_description = forms.CharField(label='AI-generated content description', widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 5}), required=False)
+    style_description = forms.CharField(label='AI-generated style description', widget=forms.Textarea(attrs={'rows': 5}), required=False)
+    content_description = forms.CharField(label='AI-generated content description', widget=forms.Textarea(attrs={'rows': 5}), required=False)
+    request_type = forms.ChoiceField(label='Request Type',
+                                     choices=[('image-generation', 'Generation'),
+                                              ('image-understanding', 'Understanding')],
+                                     required=True)
+    description_variable = forms.CharField(label='Description Variable', max_length=100, required=False)
     generate = forms.BooleanField(label='Generate Image', required=False)
     delete = forms.BooleanField(label='Delete Image', required=False)
 

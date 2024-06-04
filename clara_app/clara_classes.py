@@ -256,6 +256,8 @@ class Image:
                  associated_text, associated_areas,
                  page, position, style_description=None,
                  content_description=None, user_prompt=None,
+                 request_type='image-generation',
+                 description_variable=None,
                  page_object=None):
         self.image_file_path = image_file_path
         self.thumbnail_file_path = thumbnail_file_path
@@ -267,6 +269,8 @@ class Image:
         self.style_description = style_description
         self.content_description = content_description
         self.user_prompt = user_prompt
+        self.request_type = request_type
+        self.description_variable = description_variable
         self.page_object = page_object
 
     def to_json(self):
@@ -280,6 +284,8 @@ class Image:
             'position': self.position,
             'style_description': self.style_description,
             'content_description': self.content_description,
+            'request_type': self.request_type,
+            'description_variable': self.description_variable,
             'user_prompt': self.user_prompt
         }
 

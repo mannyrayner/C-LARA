@@ -63,7 +63,9 @@ class ImageRepositoryORM:
             post_task_update(callback, error_message)
 
     def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='',
-              page=1, position='bottom', style_description='', content_description='', user_prompt='', callback=None):
+                  page=1, position='bottom', style_description='', content_description='',
+                  user_prompt='', request_type='image-generation', description_variable='',
+                  callback=None):
         try:
             project_id = str(project_id)
             page = int(page)
@@ -79,6 +81,8 @@ class ImageRepositoryORM:
                     'position': position,
                     'style_description': style_description,
                     'content_description': content_description,
+                    'request_type': request_type,
+                    'description_variable': description_variable,
                     'user_prompt': user_prompt
                 }
             )
@@ -128,6 +132,8 @@ class ImageRepositoryORM:
                 entry.position,
                 style_description=entry.style_description,
                 content_description=entry.content_description,
+                request_type=entry.request_type,
+                description_variable=entry.description_variable,
                 user_prompt=entry.user_prompt
             )
 
@@ -164,6 +170,8 @@ class ImageRepositoryORM:
                               entry.position,
                               style_description=entry.style_description,
                               content_description=entry.content_description,
+                              request_type=entry.request_type,
+                              description_variable=entry.description_variable,
                               user_prompt=entry.user_prompt)
                 images.append(image)
 
@@ -203,6 +211,17 @@ class ImageRepositoryORM:
             return destination_path
         except Exception as e:
             error_message = f'*** Error when storing image "{source_file}" in image repository: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image repository error')
+
+    def remove_all_entries_except_style_images(self, project_id, callback=None):
+        try:
+            images = self.get_all_entries(project_id, callback=callback)
+            for image in images:
+                if image.page != 0:
+                    self.remove_entry(project_id, image.image_name, callback=callback)
+        except Exception as e:
+            error_message = f'*** Error when deleting all images for project "{project_id}" in image repository: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image repository error')
 

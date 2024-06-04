@@ -631,9 +631,14 @@ class ImageMetadata(models.Model):
         ('inline', 'Inline'),
     ]
 
+    REQUEST_TYPE_CHOICES = [
+        ('image-generation', 'Generation'),
+        ('image-understanding', 'Understanding'),
+    ]
+
     project_id = models.CharField(max_length=255)
     image_name = models.CharField(max_length=255)
-    file_path = models.TextField()
+    file_path = models.TextField(blank=True, default='')
     associated_text = models.TextField(blank=True, default='')
     associated_areas = models.TextField(blank=True, default='')
     page = models.IntegerField(default=1)
@@ -644,6 +649,9 @@ class ImageMetadata(models.Model):
                                            help_text='AI-generated description of the image content.')
     user_prompt = models.TextField(blank=True, default='',
                                    help_text='Most recent user prompt for generating or modifying this image.')
+    request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='image-generatio')
+    description_variable = models.CharField(max_length=255, blank=True, default='',
+                                            help_text='Variable name for storing image understanding result.')
 
     class Meta:
         db_table = 'orm_image_metadata'

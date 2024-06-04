@@ -4316,12 +4316,16 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'position': img.position,
                      'style_description': img.style_description,
                      'content_description': img.content_description,
+                     'request_type': img.request_type,
+                     'description_variable': img.description_variable,
                      'user_prompt': img.user_prompt
                      }
                     for img in images]
-    initial_data = sorted(initial_data, key=lambda x: x['page'])
-    image_request_sequence = clara_project_internal.load_text_version_or_null("image_request_sequence")
-    print(f'--- image_request_sequence = {image_request_sequence}')
+    # Sort by page number with generation requests first
+    initial_data = sorted(initial_data, key=lambda x: ( x['page'] + ( 0 if x['request_type'] == 'image-generation' else 0.1 ) ) )
+    #image_request_sequence = clara_project_internal.load_text_version_or_null("image_request_sequence")
+    image_request_sequence = ''
+    #print(f'--- image_request_sequence = {image_request_sequence}')
     
     if len(initial_data) != 0 and initial_data[0]['page'] == 0:
         # We have a style image on the notional page 0, move that information to the style image template
@@ -4416,6 +4420,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     user_prompt = form.cleaned_data.get('user_prompt')
                     generate = form.cleaned_data.get('generate')
                     delete = form.cleaned_data.get('delete')
+                    request_type = form.cleaned_data.get('request_type')
+                    description_variable = form.cleaned_data.get('description_variable')
                     
                     if previous_record:
                         content_description = previous_record['content_description']
@@ -4443,7 +4449,9 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                'position': position,
                                                'user_prompt': user_prompt,
                                                'style_description': style_description,
-                                               'current_image': previous_record['image_file_path'] if previous_record else None
+                                               'current_image': previous_record['image_file_path'] if previous_record else None,
+                                               'request_type': request_type,
+                                               'description_variable': description_variable
                                                }
                         generation_requests.append(generation_request)
                                                
@@ -4465,7 +4473,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
             image_request_sequence_form = ImageSequenceForm(initial={'image_request_sequence': image_request_sequence})
         else:
             image_request_sequence_form = None
-        print(f'--- image_request_sequence_form = {image_request_sequence_form}')
+        #print(f'--- image_request_sequence_form = {image_request_sequence_form}')
         
         if dall_e_3_image_status == 'finished':
             messages.success(request, "DALL-E-3 image generation successfully completed")
@@ -4650,6 +4658,8 @@ def create_image_request_sequence(project_id, callback=None):
         Here is the JSON representation of the text:
 
         {numbered_page_list_text}
+
+        Only write out the JSON representation of the sequence of image requests, since the result will be read by a Python script.
         """
         api_call = call_chat_gpt4(prompt, config_info=config_info, callback=callback)
         store_api_calls([ api_call ], project, user, 'image_request_sequence')
@@ -4657,13 +4667,39 @@ def create_image_request_sequence(project_id, callback=None):
 
         try:
             response_object = interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
-            clara_project_internal.save_text_version("image_request_sequence", json.dumps(response_object))
+            #clara_project_internal.save_text_version("image_request_sequence", json.dumps(response_object))
             if not isinstance(response_object, list):
                 post_task_update(callback, f'Error: response is not a JSON list')
                 post_task_update(callback, f"error")
                 return False
-            else: 
-                # Insert code to parse sequence and instantiate items in image repository here
+            else:
+                # Sample requests
+                # { "request_type": "image-generation",
+                #   "page": 2,
+                #   "prompt": "An image depicting a brave princess named Lily exploring a beautiful, lush forest.
+                #              Lily is wearing a royal yet practical dress for exploring, and she has an adventurous spirit.
+                #              The forest is dense with tall trees, colorful flowers, and beams of sunlight filtering through the leaves."},
+                # { "request_type": "image-understanding",
+                #   "page": 2,
+                #   "prompt": "Look at this image of Princess Lily exploring the forest and provide a detailed description of Princess Lily.
+                #              This description will be used for consistency in subsequent images.",
+                #   "description-variable": "Lily-description"},
+                clara_project_internal.remove_all_project_images_except_style_images(callback=callback)
+                print(f'--- Saving image request sequence with {len(response_object)} records')
+                for req in response_object:
+                    request_type = req['request_type']
+                    user_prompt = req['prompt']
+                    page = req['page']
+                    description_variable = req['description-variable'] if 'description-variable' in req else ''
+                    position = req['position'] if 'position' in req else 'bottom'
+                    image_name = f'image_{page}_{position}' if request_type == 'image-generation' else f'get_{description_variable}'
+                    image_file_path = None
+                    clara_project_internal.add_project_image(image_name, image_file_path,
+                                                             page=page, position=position,
+                                                             user_prompt=user_prompt,
+                                                             request_type=request_type,
+                                                             description_variable=description_variable,
+                                                             callback=callback)
                 post_task_update(callback, f"finished")
                 return True
         except:
