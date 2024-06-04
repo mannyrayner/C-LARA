@@ -35,7 +35,6 @@
 		  <h3>Image request sequence</h3>
 		  <form method="post" enctype="multipart/form-data">
 			{% csrf_token %}
-			{{ image_request_sequence_form.image_request_sequence }}
 			<button type="submit" name="action" value="create_image_request_sequence">Create image request sequence</button>
 	  {% endif %}
   {% else %}
@@ -53,7 +52,7 @@
       <thead>
         <tr>
 		  {% if uses_coherent_image_set %}
-		    <th>Image Preview</th><th>Prompt</th><th>Image Name</th><th>Page</th><th>Position</th><th>Generate</th><th>Delete</th>
+		    <th>Request type</th><th>Image/Description</th><th>Prompt</th><th>Name/Variable</th><th>Page</th><th>Position</th><th>Generate</th><th>Delete</th>
 		  {% else %}
             <th>Image Preview</th><th>Image Upload</th><th>Image Name</th><th>Page</th><th>Position</th><th>Delete</th>
 		  {% endif %}
@@ -63,15 +62,26 @@
         {% for form in formset %}
           <tr>
 		    {% if uses_coherent_image_set %}
-			    <td>
-                {% if form.image_base_name.value %}
-                  <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;">
-                {% else %}
-                  No image currently stored.
-                {% endif %}
+			   <td>{{ form.request_type }}</td>
+			   <td>
+			    {% if form.request_type.value == 'image-generation' %}
+					{% if form.image_base_name.value %}
+					  <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Current Project Image" style="max-width: 300px; max-height: 300px;">
+					{% else %}
+					  No image currently stored.
+					{% endif %}
+				{% else %}
+				    {{ form.content_description }}
+				{% endif %}
                </td>
 			   <td>{{ form.user_prompt }}</td>
-               <td>{{ form.image_name }}</td>
+               <td>
+			    {% if form.request_type.value == 'image-generation' %}
+				   {{ form.image_name }}
+				{% else %}
+				   {{ form.description_variable }}
+				{% endif %}
+			   </td>
                <td>{{ form.page }}</td>
                <td>{{ form.position }}</td>
 			   <td>{{ form.generate }}</td>
