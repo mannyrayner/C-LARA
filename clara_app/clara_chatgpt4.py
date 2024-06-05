@@ -72,13 +72,15 @@ __________
 
 Return only the shortened prompt, since the result will be read by a Python script.
 
-"""
+"""      
         post_task_update(callback, f'--- Shortening DALL-E-3 prompt')
         shortening_api_call = call_chat_gpt4(shortening_prompt, config_info=config_info, callback=callback)
         api_calls.append(shortening_api_call)
         shortened_prompt = shortening_api_call.response
         shortened_prompt_length = len(shortened_prompt)
         post_task_update(callback, f'--- Shortened DALL-E-3 prompt from {prompt_length} to {shortened_prompt_length} chars')
+    else:
+        shortened_prompt = prompt
         
     return ( api_calls, shortened_prompt )
 
