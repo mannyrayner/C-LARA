@@ -54,7 +54,7 @@ class ContentElement:
                 lemma, pos = ( annotations['lemma'], annotations['pos'] )
                 escaped_lemma = escape_special_chars(lemma)
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
-            elif annotation_type == 'plain':
+            elif annotation_type in ( 'plain', 'segmented', 'mwe' ):
                 return self.content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])
@@ -93,6 +93,15 @@ class Segment:
                 if element.type in ( 'Word', 'NonWordText', 'Markup' ):
                     out_text += element.to_text(annotation_type)
             last_type = this_type
+        if annotation_type == 'mwe':
+            annotations = self.annotations
+            if 'analysis' in annotations and 'mwes' in annotations:
+                analysis_text = annotations['analysis']
+                mwes = annotations['mwes']
+                #print(f'annotations["mwes"] = {mwes}')
+                mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+                out_text += f"\n_analysis: {analysis_text}\n_MWEs: {mwes_text}"
+            
         return out_text
 
     def add_annotation(self, annotation_type, annotation_value):
@@ -113,6 +122,9 @@ class Page:
         self.segments = segments
         self.annotations = annotations or {}  # This could contain 'img', 'page_number', and 'position'
 
+    def __repr__(self):
+        return f"Page(segments={self.segments}, annotations={self.annotations})"
+
     def content_elements(self):
         elements = []
         for segment in self.segments:
@@ -120,7 +132,8 @@ class Page:
         return elements
 
     def to_text(self, annotation_type=None):
-        segment_texts = "||".join([segment.to_text(annotation_type) for segment in self.segments])
+        segment_separator = '' if annotation_type == 'plain' else '||'
+        segment_texts = segment_separator.join([segment.to_text(annotation_type) for segment in self.segments])
         if annotation_type == 'segmented_for_labelled':
             return segment_texts
         elif self.annotations:
@@ -171,11 +184,38 @@ class Text:
         self.annotations = annotations or {}
         self.voice = voice
 
+    def __repr__(self):
+        return f"Text(l2_language={self.l2_language}, l1_language={self.l1_language}, pages={self.pages}, annotations={self.annotations})"
+
     def content_elements(self):
         elements = []
         for page in self.pages:
             elements.extend(page.content_elements())
         return elements
+
+    def to_numbered_page_list(self):
+        numbered_pages = []
+        number = 1
+        for page in self.pages:
+            page_text = page.to_text(annotation_type='plain').replace('<page>', '')
+            numbered_pages.append({'page': number, 'text': page_text})
+            number += 1
+        return numbered_pages                     
+
+    # Returns a list of lists of content elements, one per segment
+    def segmented_elements(self):
+        segment_list = []
+        for page in self.pages:
+            for segment in page.segments:
+                segment_list.append(segment.content_elements)
+        return segment_list
+
+    # Return a list of segments
+    def segments(self):
+        segment_list = []
+        for page in self.pages:
+            segment_list += page.segments
+        return segment_list
     
     def word_count(self, phonetic=False):
         return sum([ page.word_count(phonetic=phonetic) for page in self.pages ])
@@ -213,7 +253,12 @@ class Text:
 
 class Image:
     def __init__(self, image_file_path, thumbnail_file_path, image_name,
-                 associated_text, associated_areas, page, position, page_object=None):
+                 associated_text, associated_areas,
+                 page, position, style_description=None,
+                 content_description=None, user_prompt=None,
+                 request_type='image-generation',
+                 description_variable=None,
+                 page_object=None):
         self.image_file_path = image_file_path
         self.thumbnail_file_path = thumbnail_file_path
         self.image_name = image_name
@@ -221,24 +266,36 @@ class Image:
         self.associated_areas = associated_areas
         self.page = page
         self.position = position
+        self.style_description = style_description
+        self.content_description = content_description
+        self.user_prompt = user_prompt
+        self.request_type = request_type
+        self.description_variable = description_variable
         self.page_object = page_object
 
     def to_json(self):
-        return { 'image_file_path': self.image_file_path,
-                 'thumbnail_file_path': self.thumbnail_file_path,
-                 'image_name': self.image_name,
-                 'associated_text': self.associated_text,
-                 'associated_areas': self.associated_areas,
-                 'page': self.page,
-                 'position':self.position,
-                 }
+        return {
+            'image_file_path': self.image_file_path,
+            'thumbnail_file_path': self.thumbnail_file_path,
+            'image_name': self.image_name,
+            'associated_text': self.associated_text,
+            'associated_areas': self.associated_areas,
+            'page': self.page,
+            'position': self.position,
+            'style_description': self.style_description,
+            'content_description': self.content_description,
+            'request_type': self.request_type,
+            'description_variable': self.description_variable,
+            'user_prompt': self.user_prompt
+        }
 
     def merge_page(self, page_object):
         self.page_object = page_object
 
     def __repr__(self):
-        return f"Image(image_file_path={self.image_file_path}, image_name={self.image_name})"
-
+        return (f"Image(image_file_path={self.image_file_path}, image_name={self.image_name}, "
+                f"style_description={self.style_description}, content_description={self.content_description}, "
+                f"user_prompt={self.user_prompt})")
 
 class APICall:
     def __init__(self, prompt, response, cost, duration, timestamp, retries):

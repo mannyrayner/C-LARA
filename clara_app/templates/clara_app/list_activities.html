@@ -1,25 +1,37 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-<h2>Activities</h2>
+<h2>Project activities</h2>
+<br>
+  <p><b>Filter using any combination of the search boxes below</b></p>
 <form method="get" action="{% url 'list_activities' %}">
-    <div>
-        {{ search_form.id.label_tag }} {{ search_form.id }}
-    </div>
-	<div>
-        {{ search_form.category.label_tag }} {{ search_form.category }}
-    </div>
-    <div>
-        {{ search_form.status.label_tag }} {{ search_form.status }}
-    </div>
-    <div>
-        {{ search_form.resolution.label_tag }} {{ search_form.resolution }}
-    </div>
-	<div>
-        {{ search_form.time_period.label_tag }} {{ search_form.time_period }}
-    </div>
-    <button type="submit">Search</button>
-</form>
+  <table>
+    <tr>
+      <td>{{ search_form.id.label_tag }}</td>
+      <td>{{ search_form.id }}</td>
+    </tr>
+    <tr>
+      <td>{{ search_form.category.label_tag }}</td>
+      <td>{{ search_form.category }}</td>
+    </tr>
+    <tr>
+      <td>{{ search_form.status.label_tag }}</td>
+      <td>{{ search_form.status }}</td>
+    </tr>
+    <tr>
+      <td>{{ search_form.resolution.label_tag }}</td>
+      <td>{{ search_form.resolution }}</td>
+    </tr>
+    <tr>
+      <td>{{ search_form.time_period.label_tag }}</td>
+      <td>{{ search_form.time_period }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><button type="submit">Search</button></td>
+    </tr>
+  </table>
+<b>Activities found</b>
 <p>Scores refer to this week's voting on priorities: top priority = 10, second = 7, third = 5</p>
 <a href="{% url 'create_activity' %}">Create a new activity</a>
 <table border="2">

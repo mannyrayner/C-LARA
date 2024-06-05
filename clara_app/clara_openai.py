@@ -27,8 +27,11 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4'):
     """Returns the cost in dollars of an OpenAI API call, defined by a prompt in the form of a list of messages and a response string"""
     n_message_tokens = ( num_gpt4_tokens_for_messages(messages) / 1000.0 )
     n_response_tokens = ( num_gpt4_tokens_for_string(response_string) / 1000.0 )
-    
-    if gpt_model == 'gpt-4-1106-preview':
+
+    if gpt_model in ( 'gpt-4o' ):
+        message_rate = float(config.get('chatgpt4_o_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('chatgpt4_o_costs', 'response_per_thousand_tokens'))
+    elif gpt_model in ( 'gpt-4-1106-preview', 'gpt-4-turbo' ):
         message_rate = float(config.get('chatgpt4_turbo_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('chatgpt4_turbo_costs', 'response_per_thousand_tokens'))
     # Default is gpt-4

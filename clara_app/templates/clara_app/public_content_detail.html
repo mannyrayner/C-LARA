@@ -9,19 +9,48 @@
   {% else %}
     <p>No ratings yet.</p>
   {% endif %}
-
-  <p>Text language: {{ content.l2|titlecase }}</p>
-  <p>Annotation language: {{ content.l1|titlecase }}</p>
+  
+  <table>
+  <tr>
+    <td>Text language:</td>
+    <td>{{ content.l2|titlecase }}</td>
+  </tr>
+  <tr>
+    <td>Annotation language:</td>
+    <td>{{ content.l1|titlecase }}</td>
+  </tr>
   {% if content.project %}
-     <p>Created by: {{ content.project.user.username|slice:":3" }}***</p>  <!-- Anonymizing creator's name -->
+  <tr>
+    <td>Created by:</td>
+    <td>{{ content.project.user.username|slice:":3" }}***</td>
+  </tr>
   {% else %}
-     <p>Created by: {{ content.annotator|slice:":3" }}</p>
+  <tr>
+    <td>Created by:</td>
+    <td>{{ content.annotator|slice:":3" }}***</td>
+  </tr>
   {% endif %}
-  <p>Summary: {{ content.summary }}</p>
-  <p>Length in words: {{ content.length_in_words }}</p>
-  <p>Author: {{ content.author }}</p>
-  <p>Voice: {{ content.voice }}</p>
-  <p>Difficulty Level: {{ content.difficulty_level }}</p>
+  <tr>
+    <td>Summary:</td>
+    <td>{{ content.summary }}</td>
+  </tr>
+  <tr>
+    <td>Length in words:</td>
+    <td>{{ content.length_in_words }}</td>
+  </tr>
+  <tr>
+    <td>Author:</td>
+    <td>{{ content.author|slice:":3" }}***</td>
+  </tr>
+  <tr>
+    <td>Voice:</td>
+    <td>{{ content.voice }}</td>
+  </tr>
+  <tr>
+    <td>Difficulty Level:</td>
+    <td>{{ content.difficulty_level }}</td>
+  </tr>
+</table>
 
   <h3>Comments</h3>
   {% for comment in comments %}

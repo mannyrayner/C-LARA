@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, RECENT_TIME_PERIOD_CHOICES, DEFAULT_RECENT_TIME_PERIOD
+from .constants import TTS_CHOICES
 
 from .clara_utils import is_rtl_language, is_chinese_language
         
@@ -54,7 +55,9 @@ class UserConfigForm(forms.ModelForm):
         widgets = {
             'clara_version': forms.Select(choices=[('simple_clara', 'Simple C-LARA'),
                                                    ('full_clara', 'Full C-LARA'),]),
-            'gpt_model': forms.Select(choices=[('gpt-4-1106-preview', 'GPT-4 Turbo'),
+            'gpt_model': forms.Select(choices=[('gpt-4o', 'GPT-4o'),
+                                               ('gpt-4-turbo', 'GPT-4 Turbo'),
+                                               ('gpt-4-1106-preview', 'GPT-4 Turbo 2023-11-06'),
                                                ('gpt-4', 'GPT-4')]),
             'max_annotation_words': forms.Select(choices=[(100, '100'),
                                                           (250, '250'),
@@ -109,9 +112,15 @@ class UnifiedSearchForm(forms.Form):
     )
 
 class ProjectCreationForm(forms.ModelForm):
+    #title = forms.CharField(widget=forms.TextInput(attrs={'style': 'width: 100%;'}))  # Uses full width of its container
+    title = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))
+    uses_coherent_image_set = forms.BooleanField(required=False, label='Use Coherent Image Set',
+                                                 help_text="Check this if the project should use a coherent style for all images.")
+
+
     class Meta:
         model = CLARAProject
-        fields = ['title', 'l2', 'l1']
+        fields = ['title', 'l2', 'l1', 'uses_coherent_image_set']
 
 class AcknowledgementsForm(forms.ModelForm):
     class Meta:
@@ -127,17 +136,20 @@ class SimpleClaraForm(forms.Form):
     l2 = forms.ChoiceField(label='Text language', choices=SUPPORTED_LANGUAGES, required=False)
     l1 = forms.ChoiceField(label='Annotation language', choices=SUPPORTED_LANGUAGES, required=False)
     # Name of the Django-level project (CLARAProject)
-    title = forms.CharField(label='Title', max_length=200, required=False)
+    title = forms.CharField(label='Title', max_length=200, required=False,
+                            widget=forms.TextInput(attrs={'size': '60'}))
     # What we are going to do in this project
     simple_clara_type = forms.ChoiceField(choices=SIMPLE_CLARA_TYPES,
                                           widget=forms.RadioSelect,
                                           initial='create_text_and_image',
                                           required=False)
+    # Need to find a clean way to allow coherent image sets in Simple C-LARA
+    #uses_coherent_image_set = forms.BooleanField(required=False, label='Use Coherent Image Set',
+    #                                             help_text="Check this if the project should use an AI-generated coherent style for all images.")
     # Id of the CLARAProjectInternal
     internal_title = forms.CharField(label='Title', max_length=200, required=False)
     # L2 title to appear on the first page of the text
     text_title = forms.CharField(
-        #widget=forms.Textarea(attrs={'rows': 2, 'cols': 40}),
         widget=forms.Textarea(attrs={'rows': 2}),
         required=False,
         initial='' )
@@ -145,8 +157,13 @@ class SimpleClaraForm(forms.Form):
     image_file_path = forms.ImageField(label='Image File', required=False)
     image_advice_prompt = forms.CharField(label='Prompt', widget=forms.Textarea, required=False)
     plain_text = forms.CharField(label='Plain text', widget=forms.Textarea, required=False)
-    segmented_text = forms.CharField(label='Segmented text', widget=forms.Textarea, required=False) 
+    segmented_text = forms.CharField(label='Segmented text', widget=forms.Textarea, required=False)
+    segmented_title = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False,
+        initial='' )
     image_basename = forms.CharField(required=False)
+    preferred_tts_engine = forms.ChoiceField(label='Preferred TTS engine', choices=TTS_CHOICES, required=False)
     rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)
     content_id = forms.CharField(required=False)
 
@@ -385,6 +402,21 @@ class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
             choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
         ]
 
+class CreateMWETaggedTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Generate annotated text from segmented text using AI'),
+        #('correct', 'Try to fix errors in malformed annotated text using AI'), 
+        ('manual', 'Manually enter annotated text'),
+        ('load_archived', 'Load archived version')
+    ]
+
+    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', **kwargs):
+        super(CreateMWETaggedTextForm, self).__init__(*args, archived_versions=archived_versions, current_version=current_version, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES if tree_tagger_supported else [
+            choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
+        ]
+
+
 class CreatePinyinTaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Generate pinyin-tagged text from segmented text using AI'),
@@ -422,6 +454,11 @@ class RegisterAsContentForm(forms.Form):
     register_as_content = forms.BooleanField(required=False, initial=False)
 
 class RatingForm(forms.ModelForm):
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]  # Assuming 1-5 rating
+
+    rating = forms.ChoiceField(choices=reversed(RATING_CHOICES),
+                               widget=forms.RadioSelect)
+    
     class Meta:
         model = Rating
         fields = ['rating']
@@ -503,8 +540,11 @@ class PromptSelectionForm(forms.Form):
     
     annotation_type_choices = [
         ("segmented", "Segmented"),
+        ("mwe", "Multi Word Expressions"),
         ("gloss", "Gloss"),
+        ("gloss_with_mwe", "Gloss using MWEs"),
         ("lemma", "Lemma"),
+        ("lemma_with_mwe", "Lemma using MWEs"),
         ("pinyin", "Pinyin"),
     ]
 
@@ -560,6 +600,59 @@ class CustomStringPairFormSet(forms.BaseFormSet):
             form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
             form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
 
+class ExampleWithMWEForm(forms.Form):
+    string1 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="Annotated text",
+        help_text="Annotated text, where each word is followed by the annotation enclosed in hashes"
+        )
+    string2 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        required=False,
+        label="MWEs",
+        help_text="Multi-Word Expressions in the example, if any. Comma-separated list"
+        )
+    
+class ExampleWithMWEFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(ExampleWithMWEFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+
+
+class MWEExampleForm(forms.Form):
+    # Input example text
+    string1 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="Input Text Example",
+        help_text="The original text example where the MWEs are found"
+    )
+
+    # List of MWEs identified in the input
+    string2 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="MWEs Identified",
+        help_text="Comma-separated list of MWEs identified in the input"
+    )
+
+    # Analysis or explanation of MWEs
+    string3 = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
+        label="Analysis or Explanation",
+        help_text="Provide a detailed analysis of the MWEs found, explaining why each phrase is or is not considered an MWE"
+    )
+
+class CustomMWEExampleFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(CustomMWEExampleFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string3'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+
 class AudioMetadataForm(forms.Form):
     metadata = forms.CharField(widget=forms.Textarea)
 
@@ -572,11 +665,32 @@ class ImageForm(forms.Form):
     image_name = forms.CharField(label='Image Name', max_length=100, required=True)
     associated_text = forms.CharField(label='Associated Text', widget=forms.Textarea, required=False)
     associated_areas = forms.CharField(label='Associated Areas', widget=forms.Textarea, required=False)
-    page = forms.IntegerField(label='Page Number', min_value=1, required=True)
+    page = forms.IntegerField(label='Page Number', min_value=0, required=True)
     position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=True)
+    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 5}), required=False)
+    style_description = forms.CharField(label='AI-generated style description', widget=forms.Textarea(attrs={'rows': 5}), required=False)
+    content_description = forms.CharField(label='AI-generated content description', widget=forms.Textarea(attrs={'rows': 5}), required=False)
+    request_type = forms.ChoiceField(label='Request Type',
+                                     choices=[('image-generation', 'Generation'),
+                                              ('image-understanding', 'Understanding')],
+                                     required=True)
+    description_variable = forms.CharField(label='Description Variable', max_length=100, required=False)
+    generate = forms.BooleanField(label='Generate Image', required=False)
     delete = forms.BooleanField(label='Delete Image', required=False)
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
+
+class StyleImageForm(forms.Form):
+    image_base_name = forms.CharField(label='Image File Base Name',
+                                      max_length=100,
+                                      widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+                                      required=False)
+    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 2}), required=False)
+
+class ImageSequenceForm(forms.Form):
+    image_request_sequence = forms.CharField(widget=forms.Textarea(attrs={'rows': 10,
+                                                                          'readonly': 'readonly'}),
+                                             required=False)
 
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:

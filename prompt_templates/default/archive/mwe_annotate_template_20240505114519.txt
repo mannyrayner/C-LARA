@@ -1,0 +1,10 @@
+Read through the following short piece of {l2_language} text, represented as a JSON list of words and punctuation marks, and identify all the Multi-Word Expressions (MWEs). An MWE is defined here as any collection of two or more words in the input, not necessarily contiguous, that are naturally considered associated with a single lemma. 
+
+Here are some examples:
+
+{examples}
+
+Analyze the following text:
+{simplified_elements_json}
+
+Please return only the JSON list of MWEs, as it will be read by a Python script.

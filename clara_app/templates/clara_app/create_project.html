@@ -1,13 +1,31 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-  <h1>Create a new project</h1>
+  <h1>Create a new project using Advanced C-LARA</h1>
   <form method="POST">
     {% csrf_token %}
-	<p>Title: {{ form.title }}</p>
-	<p>Text language: {{ form.l2 }}</p>
-	<p>Annotation language: {{ form.l1 }}</p>
-    <button type="submit">Create Project</button>
+	<table>
+    <tr>
+      <td><label for="title">Title:</label></td>
+      <td>{{ form.title }}</td>
+    </tr>
+    <tr>
+      <td><label for="l2">Text language:</label></td>
+      <td>{{ form.l2 }}</td>
+    </tr>
+    <tr>
+      <td><label for="l1">Annotation language:</label></td>
+      <td>{{ form.l1 }}</td>
+    </tr>
+	<tr>
+      <td><label for="uses_coherent_image_set">Use coherent AI-generated image set:</label></td>
+      <td>{{ form.uses_coherent_image_set }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><button type="submit">Create Project</button></td>
+    </tr>
+  </table>
     {% if form.errors %}
         <ul>
         {% for field in form %}

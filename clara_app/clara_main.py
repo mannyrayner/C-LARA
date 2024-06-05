@@ -17,6 +17,7 @@ can be very large. We have seven types of text, as follows:
 "lemma". Text with segmentation annotations plus a lemma annotation for each word.
 "pinyin". Text with segmentation annotations plus a pinyin annotation for each word.
 "lemma_and_gloss". Text with segmentation annotations plus a lemma, gloss and POS annotation for each word.
+"mwe". Text with segmentation annotations plus a mwe annotation for each segment.
 
 The main methods are the following:
 
@@ -134,7 +135,7 @@ from .clara_create_annotations import invoke_templates_on_trivial_text
 from .clara_create_annotations import generate_glossed_version, generate_segmented_version, generate_tagged_version
 from .clara_create_annotations import improve_glossed_version, improve_segmented_version, improve_tagged_version
 from .clara_create_annotations import generate_pinyin_tagged_version, improve_pinyin_tagged_version
-from .clara_create_annotations import improve_lemma_and_gloss_tagged_version
+from .clara_create_annotations import improve_lemma_and_gloss_tagged_version, generate_mwe_tagged_version
 from .clara_conventional_tagging import generate_tagged_version_with_treetagger, generate_tagged_version_with_trivial_tags
 from .clara_create_story import generate_story, improve_story
 from .clara_cefr import estimate_cefr_reading_level
@@ -165,7 +166,7 @@ from .clara_utils import rename_file, remove_file, get_file_time, file_exists, l
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
 from .clara_utils import local_directory_exists, remove_local_directory
 from .clara_utils import get_config, make_line_breaks_canonical_n, make_line_breaks_canonical_linesep, format_timestamp, get_file_time
-from .clara_utils import unzip_file, post_task_update
+from .clara_utils import unzip_file, post_task_update, convert_to_timezone_aware
 
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Union
@@ -202,6 +203,8 @@ class CLARAProjectInternal:
             "lemma": None,
             "lemma_and_gloss": None,
             "pinyin": None,
+            "mwe": None,
+            "image_request_sequence": None
         }
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
         self.internalised_and_annotated_text_path_phonetic = self.project_dir / 'internalised_and_annotated_text_phonetic.pickle'
@@ -298,7 +301,9 @@ class CLARAProjectInternal:
             self._copy_text_version_if_it_exists("segmented", new_project)
             self._copy_text_version_if_it_exists("phonetic", new_project)
             self._copy_text_version_if_it_exists("lemma", new_project)
+            self._copy_text_version_if_it_exists("mwe", new_project)
             self._copy_text_version_if_it_exists("pinyin", new_project)
+            self._copy_text_version_if_it_exists("image_request_sequence", new_project)
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
             self._copy_text_version_if_it_exists("gloss", new_project)
@@ -417,7 +422,8 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma", "pinyin"]
+        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma",
+                    "pinyin", "mwe", "image_request_sequence"]
 
         # Check if any metadata entries are missing for the existing files
         for version in versions:
@@ -735,8 +741,16 @@ class CLARAProjectInternal:
 
     # Call ChatGPT-4 to create a version of the text with gloss annotations
     def create_glossed_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented_with_images")
+        if self.text_versions['mwe']:
+            segmented_text = self.load_text_version("mwe")
+            mwe = True
+        else:
+            segmented_text = self.load_text_version("segmented_with_images")
+            mwe = False
+        current_glossed_text = self.load_text_version("gloss") if self.text_versions['gloss'] else None 
         glossed_text, api_calls = generate_glossed_version(segmented_text, self.l1_language, self.l2_language,
+                                                           mwe=mwe,
+                                                           current_glossed_text=current_glossed_text,
                                                            config_info=config_info, callback=callback)
         self.save_text_version("gloss", glossed_text, user=user, label=label, source='ai_generated')
         return api_calls
@@ -769,8 +783,17 @@ class CLARAProjectInternal:
 
     # Call ChatGPT-4 to create a version of the text with lemma annotations
     def create_lemma_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented_with_images")
+        if self.text_versions['mwe']:
+            segmented_text = self.load_text_version("mwe")
+            mwe = True
+        else:
+            segmented_text = self.load_text_version("segmented_with_images")
+            mwe = False
+
+        current_lemma_tagged_text = self.load_text_version("lemma") if self.text_versions['lemma'] else None 
         lemma_tagged_text, api_calls = generate_tagged_version(segmented_text, self.l2_language,
+                                                               mwe=mwe,
+                                                               current_lemma_tagged_text=current_lemma_tagged_text,
                                                                config_info=config_info, callback=callback)
         self.save_text_version("lemma", lemma_tagged_text, user=user, label=label, source='ai_generated')
         return api_calls
@@ -781,6 +804,16 @@ class CLARAProjectInternal:
         new_lemma_tagged_text, api_calls = improve_tagged_version(lemma_tagged_text, self.l2_language,
                                                                   config_info=config_info, callback=callback)
         self.save_text_version("lemma", new_lemma_tagged_text, user=user, label=label, source='ai_revised')
+        return api_calls
+
+    # Call ChatGPT-4 to create a version of the text with MWE annotations
+    def create_mwe_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        segmented_text = self.load_text_version("segmented_with_images")
+        current_mwe_tagged_text = self.load_text_version("mwe") if self.text_versions['mwe'] else None 
+        mwe_tagged_text, api_calls = generate_mwe_tagged_version(segmented_text, self.l2_language,
+                                                                 current_mwe_tagged_text=current_mwe_tagged_text,
+                                                                 config_info=config_info, callback=callback)
+        self.save_text_version("mwe", mwe_tagged_text, user=user, label=label, source='ai_generated')
         return api_calls
 
      # Call pypinyin to create a version of the text with pinyin annotations
@@ -1017,19 +1050,30 @@ class CLARAProjectInternal:
             return False
 
     def add_project_image(self, image_name, image_file_path, associated_text='', associated_areas='',
-                          page=1, position='bottom', callback=None):
+                          page=1, position='bottom', style_description='', content_description='', user_prompt='',
+                          request_type='image-generation', description_variable='',
+                          callback=None):
         try:
             project_id = self.id
             
-            post_task_update(callback, f"--- Adding image {image_name} (file path = {image_file_path}) to project {project_id}")            
+            post_task_update(callback, f"--- Adding image {request_type} item {image_name} (file path = {image_file_path}) to project {project_id}")            
             
-            # Logic to store the image in the repository
-            stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
+            # Store the image in the repository
+            if image_file_path:
+                stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
+            else:
+                stored_image_path = ''
             
             # Logic to add the image entry to the repository
             self.image_repository.add_entry(project_id, image_name, stored_image_path,
                                             associated_text=associated_text, associated_areas=associated_areas,
-                                            page=page, position=position, callback=callback)
+                                            page=page, position=position,
+                                            style_description=style_description,
+                                            content_description=content_description,
+                                            user_prompt=user_prompt,
+                                            request_type=request_type,
+                                            description_variable=description_variable,
+                                            callback=callback)
             
             post_task_update(callback, f"--- Image {image_name} added successfully")
             return stored_image_path
@@ -1087,6 +1131,20 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when removing image: {str(e)}")
             # Handle the exception as needed
 
+    def remove_all_project_images_except_style_images(self, callback=None):
+        try:
+            project_id = self.id
+            
+            post_task_update(callback, f"--- Removing all images except style image from project {project_id}")
+
+            # Logic to remove the image entries from the repository
+            self.image_repository.remove_all_entries_except_style_images(project_id, callback=callback)
+
+            post_task_update(callback, f"--- Images for {project_id} removed successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when removing image: {str(e)}")
+            # Handle the exception as needed
+
     # Retrieves all images associated with the project
     def get_all_project_images(self, callback=None):
         try:
@@ -1117,6 +1175,11 @@ class CLARAProjectInternal:
                                        associated_areas=image.associated_areas,
                                        page=image.page,
                                        position=image.position,
+                                       style_description=image.style_description,
+                                       content_description=image.content_description,
+                                       user_prompt=image.user_prompt,
+                                       request_type=image.request_type,
+                                       description_variable=image.description_variable,
                                        callback=callback)
             
             post_task_update(callback, f"--- {len(images)} images added successfully")
@@ -1138,7 +1201,7 @@ class CLARAProjectInternal:
                     audio_type_for_words='tts', audio_type_for_segments='tts',
                     format_preferences_info=None, acknowledgements_info=None,
                     phonetic=False, callback=None) -> None:
-        post_task_update(callback, f"--- Start rendering text (phonetic={phonetic})")
+        post_task_update(callback, f"--- Start rendering text (phonetic={phonetic}, preferred_tts_voice={preferred_tts_voice})")
         l2 = self.l2_language
         title = self.load_text_version_or_null("title")
         text_object = self.get_internalised_and_annotated_text(title=title,
@@ -1171,9 +1234,12 @@ class CLARAProjectInternal:
     def rendered_html_exists(self, project_id):
         return file_exists(self.rendered_html_page_1_file(project_id))
 
-    def rendered_html_timestamp(self, project_id, time_format='float'):
+    def rendered_html_timestamp(self, project_id, time_format='float', debug=False):
         page1 = self.rendered_html_page_1_file(project_id)
-        return None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        result = None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        if debug:
+            print(f'rendered_html_timestamp: {result}')
+        return result
 
     def rendered_html_page_1_file(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'normal')
@@ -1184,9 +1250,12 @@ class CLARAProjectInternal:
     def rendered_phonetic_html_exists(self, project_id):
         return file_exists(self.rendered_phonetic_html_page_1_file(project_id))
 
-    def rendered_phonetic_html_timestamp(self, project_id, time_format='float'):
+    def rendered_phonetic_html_timestamp(self, project_id, time_format='float', debug=False):
         page1 = self.rendered_phonetic_html_page_1_file(project_id)
-        return None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        result = None if not file_exists(page1) else get_file_time(page1, time_format=time_format)
+        if debug:
+            print(f'rendered_phonetic_html_timestamp: {result}')
+        return result
 
     def rendered_phonetic_html_page_1_file(self, project_id):
         output_dir = output_dir_for_project_id(project_id, 'phonetic')
@@ -1223,8 +1292,9 @@ class CLARAProjectInternal:
         if self.text_versions['phonetic'] and human_voice_id_phonetic:
             audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,
                                                               human_voice_id=human_voice_id_phonetic,
-                                                              audio_type_for_words='human', audio_type_for_segments=audio_type_for_words,
-                                                              type='all', format='default',
+                                                              audio_type_for_words='human',
+                                                              audio_type_for_segments=audio_type_for_words,
+                                                              type='all', 
                                                               phonetic=True, callback=callback)
         else:
             audio_metadata_phonetic = None

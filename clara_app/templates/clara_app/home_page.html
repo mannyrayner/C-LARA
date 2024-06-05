@@ -2,12 +2,12 @@
 {% load clara_tags %}
 
 {% block content %}
-<h2>Welcome to C-LARA</h2>
+<h2>C-LARA updates</h2>
 <form method="get" action="{% url 'home_page' %}">
     {{ search_form.as_p }}
     <button type="submit" title="Update the list based on the selected time period">Update View</button>
 </form>
-<h3>Recent Content</h3>
+<h3>Recently published content</h3>
 <ul>
     {% for content in contents %}
     <li><a href="{% url 'content_detail' content.id %}">{{ content.title }}</a> ({{ content.l2|titlecase }})</li>
@@ -16,7 +16,7 @@
     {% endfor %}
 </ul>
 <p>For other search options, go to <a href="{% url 'content_list' %}">Social network > Posted content</a></p>
-<h3>Recent Activities</h3>
+<h3>Recent project activities</h3>
 <ul>
     {% for activity in activities %}
     <li><a href="{% url 'activity_detail' activity.id %}">{{ activity.title }}</a> ({{ activity.get_status_display }})</li>

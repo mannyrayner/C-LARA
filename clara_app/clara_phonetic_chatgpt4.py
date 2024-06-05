@@ -121,7 +121,7 @@ into
 
 For example, you might convert
 
-[ "beiden", "band" ]
+[ "beiden", "knobelen", "band" ]
 
 into
 

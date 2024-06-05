@@ -1,0 +1,12 @@
+[
+    [
+        "It looks like a thank you note from Simon.",
+        "looks like,thank you",
+        "- 'looks like' is an inflected form of the phrasal verb 'look like', hence an MWE.\r\n- 'thank you' is a set expression functioning as an interjection, hence an MWE."
+    ],
+    [
+        "She must have thrown it out on Boxing Day morning.",
+        "thrown out,Boxing Day",
+        "- 'must have' is a common phrase, but its meaning is deducible from its component words, hence it is not an MWE.\r\n- 'thrown out' is an inflected form of the phrasal verb 'throw out', hence an MWE.\r\n- 'Boxing Day' is a set expression functioning as a proper name, hence an MWE."
+    ]
+]

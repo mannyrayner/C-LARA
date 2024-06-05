@@ -40,6 +40,11 @@
 		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
 		  Create/Edit Segmented Title</a>
 		  {% if up_to_date_dict.segmented_title %}✓{% endif %}</p>
+	<p><a href="{% url 'create_mwe_tagged_text' project.id %}" 
+	      data-tooltip="Tell the AI to mark multi-word expressions in each segment."
+		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
+		  Create/Edit MWE-tagged Text</a>
+		  {% if up_to_date_dict.mwe %}✓{% endif %}</p>
 	<p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image'%}" 
 	      data-tooltip="Upload, replace or remove images to include in the text." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>

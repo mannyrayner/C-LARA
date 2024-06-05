@@ -1,0 +1,13 @@
+I am going to give you a short passage in {l2_language}, presented in a JSON format. I want you to add {l1_language} glosses in the following way.
+
+The JSON is a list of strings. Each string is either a {l2_language} word or a punctuation mark.
+
+Please replace each string with a two-element list in which the first element is the original string and the second is a gloss in {l1_language}. If there is no sensible way to gloss the string in {l1_language}, gloss it as '-'. 
+
+{examples}
+
+Here are the items to gloss:
+
+{simplified_elements_json}
+
+Write out just the annotated JSON with no introduction, since it will be processed by a Python script.

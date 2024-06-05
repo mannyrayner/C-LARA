@@ -1,0 +1,274 @@
+[
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_template_20240529070026.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529064631"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529070026"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529120156.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529070209"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_template_20240529071014.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529070958"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_template_20240529073215.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529071014"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_examples_20240529073045.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529073031"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_examples_20240529073100.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529073045"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_examples_20240530133943.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529073100"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\gloss_annotate_template.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529073215"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\lemma_annotate_template_20240529091928.txt",
+        "annotation_type": "lemma",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529073543"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\lemma_annotate_template.txt",
+        "annotation_type": "lemma",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529091928"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\lemma_annotate_examples_20240529110053.json",
+        "annotation_type": "lemma",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529110040"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\lemma_annotate_examples.json",
+        "annotation_type": "lemma",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529110053"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529120219.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529120156"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529120257.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529120219"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529120325.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529120257"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529120933.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529120325"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529120957.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529120933"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529121512.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529120957"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529121626.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529121512"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529122136.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529121626"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529122212.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529122136"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240529122232.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529122212"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240530143328.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240529122232"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_examples_20240530134018.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530133943"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_examples_20240530134054.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530134018"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\gloss_annotate_examples_20240530134131.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530134054"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\gloss_annotate_examples.json",
+        "annotation_type": "gloss",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530134131"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240530143350.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530143328"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240530143501.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530143350"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240530143519.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530143501"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240530154322.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530143519"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_examples_20240530154413.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530154322"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240530154413"
+    }
+]

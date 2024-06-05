@@ -34,56 +34,12 @@ import traceback
 config = get_config()
 
 class ImageRepositoryORM:
-    #def __init__(self, initialise_from_non_orm=False, callback=None):
     def __init__(self, callback=None):
         self.base_dir = absolute_file_name(config.get('image_repository', 'base_dir_orm'))
 
         if not directory_exists(self.base_dir):
             make_directory(self.base_dir, parents=True, exist_ok=True)
             post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
-##            if initialise_from_non_orm:
-##                self.initialise_from_non_orm_repository(callback=callback)
-##            else:
-##                make_directory(self.base_dir, parents=True, exist_ok=True)
-##                post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
-##        elif initialise_from_non_orm:
-##            post_task_update(callback, f'--- Image repository already initialised, {self.base_dir} exists')
-
-##    def initialise_from_non_orm_repository(self, callback=None):
-##        try:
-##            non_orm_repository = ImageRepository(callback=callback)
-##            exported_data = non_orm_repository.export_image_metadata()
-##
-##            if not exported_data:
-##                post_task_update(callback, f'--- No data found in non-ORM repository')
-##                make_directory(self.base_dir, parents=True, exist_ok=True)
-##                post_task_update(callback, f'--- Created base directory for image repository, {self.base_dir}')
-##                return
-##
-##            post_task_update(callback, f'--- Importing {len(exported_data)} items from non-ORM repository')
-##            
-##            base_dir_non_orm = absolute_file_name(config.get('image_repository', 'base_dir'))
-##            base_dir_orm = absolute_file_name(config.get('image_repository', 'base_dir_orm'))
-##            
-##            new_objects = []
-##            for data in exported_data:
-##                new_file_path = adjust_file_path_for_imported_data(data['file_path'], base_dir_non_orm, base_dir_orm, callback=callback)
-##                new_objects.append(ImageMetadata(
-##                    project_id=data['project_id'],
-##                    image_name=data['image_name'],
-##                    file_path=new_file_path,
-##                    associated_text=data['associated_text'],
-##                    associated_areas=data['associated_areas'],
-##                    page=data['page'],
-##                    position=data['position'],
-##                ))
-##
-##            ImageMetadata.objects.bulk_create(new_objects)
-##            copy_directory(base_dir_non_orm, base_dir_orm)
-##
-##        except Exception as e:
-##            post_task_update(callback, f'Error initialising from non-ORM repository: "{str(e)}"\n{traceback.format_exc()}')
-##            return []
 
     def delete_entries_for_project(self, project_id, callback=None):
         try:
@@ -106,22 +62,28 @@ class ImageRepositoryORM:
             error_message = f'*** Error when trying to delete image data for project ID {project_id}: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
 
-    def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='', page=1, position='bottom', callback=None):
+    def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='',
+                  page=1, position='bottom', style_description='', content_description='',
+                  user_prompt='', request_type='image-generation', description_variable='',
+                  callback=None):
         try:
-            # Ensure project_id is a string and page is an integer
             project_id = str(project_id)
             page = int(page)
 
-            # Try to retrieve an existing entry
             obj, created = ImageMetadata.objects.update_or_create(
                 project_id=project_id, 
                 image_name=image_name,
                 defaults={
-                    'file_path': file_path, 
-                    'associated_text': associated_text, 
-                    'associated_areas': associated_areas, 
-                    'page': page, 
-                    'position': position
+                    'file_path': file_path,
+                    'associated_text': associated_text,
+                    'associated_areas': associated_areas,
+                    'page': page,
+                    'position': position,
+                    'style_description': style_description,
+                    'content_description': content_description,
+                    'request_type': request_type,
+                    'description_variable': description_variable,
+                    'user_prompt': user_prompt
                 }
             )
 
@@ -157,24 +119,26 @@ class ImageRepositoryORM:
         try:
             project_id = str(project_id)
             
-            # Try to fetch the entry from the database
             entry = ImageMetadata.objects.get(project_id=project_id, image_name=image_name)
-            
-            # Generate thumbnail name
             thumbnail = generate_thumbnail_name(entry.file_path)
             
-            # Construct and return an Image object with all necessary information
+            image = Image(
+                entry.file_path,
+                thumbnail,
+                entry.image_name,
+                entry.associated_text,
+                entry.associated_areas,
+                entry.page,
+                entry.position,
+                style_description=entry.style_description,
+                content_description=entry.content_description,
+                request_type=entry.request_type,
+                description_variable=entry.description_variable,
+                user_prompt=entry.user_prompt
+            )
 
-            image = Image(entry.file_path,
-                          thumbnail,
-                          entry.image_name,
-                          entry.associated_text,
-                          entry.associated_areas,
-                          entry.page,
-                          entry.position)
-            
             return image
-                
+                    
         except ObjectDoesNotExist:
             post_task_update(callback, f'*** No entry found for "{image_name}" in Image database.')
             return None
@@ -203,7 +167,12 @@ class ImageRepositoryORM:
                               entry.associated_text,
                               entry.associated_areas,
                               entry.page,
-                              entry.position)
+                              entry.position,
+                              style_description=entry.style_description,
+                              content_description=entry.content_description,
+                              request_type=entry.request_type,
+                              description_variable=entry.description_variable,
+                              user_prompt=entry.user_prompt)
                 images.append(image)
 
             post_task_update(callback, f'--- Retrieved {len(images)} images for project {project_id}')
@@ -242,6 +211,17 @@ class ImageRepositoryORM:
             return destination_path
         except Exception as e:
             error_message = f'*** Error when storing image "{source_file}" in image repository: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image repository error')
+
+    def remove_all_entries_except_style_images(self, project_id, callback=None):
+        try:
+            images = self.get_all_entries(project_id, callback=callback)
+            for image in images:
+                if image.page != 0:
+                    self.remove_entry(project_id, image.image_name, callback=callback)
+        except Exception as e:
+            error_message = f'*** Error when deleting all images for project "{project_id}" in image repository: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image repository error')
 

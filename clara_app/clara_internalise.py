@@ -47,8 +47,12 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
         internalized_segments = []
 
         for segment_text in segments_text:
-            content_elements = parse_content_elements(segment_text, text_type)
-            internalized_segments.append(Segment(content_elements))
+            if text_type != 'mwe':
+                content_elements = parse_content_elements(segment_text, text_type)
+                internalized_segment = Segment(content_elements)
+            else:
+                internalized_segment = parse_segment_mwe(segment_text)
+            internalized_segments.append(internalized_segment) 
 
         # Create a Page object with the internalized_segments and page_attributes
         page = Page(internalized_segments)
@@ -93,6 +97,66 @@ def parse_content_elements_segmented(segment_text):
             content_elements.append(ContentElement("Word", content=item, annotations={}))
 
     return content_elements
+
+##def parse_segment_mwe(segment_text):
+##    try:
+##        components = segment_text.split('#')
+##        n_components = len(components)
+##        if n_components == 0:
+##            return Segment([], annotations={'mwes': []})
+##        
+##        if n_components == 1:
+##            main_text, all_mwe_text = segment_text, ''
+##        elif n_components == 3 and not components[2]:
+##            main_text, all_mwe_text = components[:2]
+##            
+##        content_elements = parse_content_elements_segmented(main_text)
+##        mwe_texts = all_mwe_text.split(',')
+##        mwes = [ mwe_text.split() for mwe_text in mwe_texts ]
+##        return Segment(content_elements, annotations={'mwes': mwes})
+##    except:
+##        raise InternalisationError(message = f"Unable to internalise '{segment_text}' as MWE segment. Needs to be of form '<text>?#<word> <word> ...,<word> <word> ...,...#")
+
+def parse_segment_mwe(segment_text):
+    try:
+        # Split the entire segment into lines
+        lines = segment_text.split('\n')
+        main_text_lines = []
+        analysis_lines = []
+        mwes = []
+
+        analysis_prefix = "_analysis:"
+        mwes_prefix = "_MWEs:"
+
+        # Tracking the current section being processed
+        current_section = "main_text"
+
+        for line in lines:
+            if line.startswith(analysis_prefix):
+                current_section = "analysis"
+                analysis_lines.append(line[len(analysis_prefix):].strip())
+            elif line.startswith(mwes_prefix):
+                #current_section = "mwes"
+                all_mwes_text = line[len(mwes_prefix):].strip()
+                mwes_texts = [] if not all_mwes_text else all_mwes_text.split(',')
+                mwes = [mwe_text.split() for mwe_text in mwes_texts]
+            else:
+                if current_section == "main_text":
+                    main_text_lines.append(line)
+                elif current_section == "analysis":
+                    analysis_lines.append(line.strip())
+
+        # Reconstruct main text and analysis
+        main_text = '\n'.join(main_text_lines)
+        analysis_text = '\n'.join(analysis_lines)
+        content_elements = parse_content_elements_segmented(main_text)
+
+        # Create and return the Segment object with the parsed annotations
+        return Segment(content_elements, annotations={'analysis': analysis_text, 'mwes': mwes})
+
+    except Exception as e:
+        raise InternalisationError(message=f"Unable to internalise '{segment_text}' as an MWE segment. Error: {str(e)}")
+
 
 def parse_content_elements_glossed_or_tagged(segment_text, text_type):
     #pattern = r"((?:<img[^>]*>|<audio[^>]*>|<\/?\w+>|@[^@]+@#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|(?:[^\s|#]|(?<=\\)#)*(?:\|[^\s|#]|(?<=\\)#)*#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|[\s\p{P}--[@#'\\]]+))"

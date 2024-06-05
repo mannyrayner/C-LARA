@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
+from .constants import TTS_CHOICES
 
 from django.contrib.auth.models import User, Group, Permission 
 from django.db import models
@@ -71,6 +72,7 @@ class CLARAProject(models.Model):
     l2 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
+    uses_coherent_image_set = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set.")
 
 # Move this to utils.py to avoid circular import
 
@@ -119,13 +121,6 @@ class HumanAudioInfo(models.Model):
         #('record', 'Record'),
         ('manual_align', 'Manual Align'),
         #('automatic_align', 'Automatic Align'),
-    ]
-
-    TTS_CHOICES = [
-        ( 'none', 'None' ),
-        ( 'google', 'Google TTS' ),
-        ( 'openai', 'OpenAI TTS' ),
-        ( 'abair', 'ABAIR' ),
     ]
 
     VOICE_CHOICES = [
@@ -349,6 +344,7 @@ class Rating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.ForeignKey(Content, on_delete=models.CASCADE)
     rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    
 
     class Meta:
         unique_together = (('user', 'content'),)
@@ -635,13 +631,27 @@ class ImageMetadata(models.Model):
         ('inline', 'Inline'),
     ]
 
+    REQUEST_TYPE_CHOICES = [
+        ('image-generation', 'Generation'),
+        ('image-understanding', 'Understanding'),
+    ]
+
     project_id = models.CharField(max_length=255)
     image_name = models.CharField(max_length=255)
-    file_path = models.TextField()
+    file_path = models.TextField(blank=True, default='')
     associated_text = models.TextField(blank=True, default='')
     associated_areas = models.TextField(blank=True, default='')
     page = models.IntegerField(default=1)
     position = models.CharField(max_length=10, choices=POSITION_CHOICES, default='top')
+    style_description = models.TextField(blank=True, default='',
+                                         help_text='AI-generated description of the image style.')
+    content_description = models.TextField(blank=True, default='',
+                                           help_text='AI-generated description of the image content.')
+    user_prompt = models.TextField(blank=True, default='',
+                                   help_text='Most recent user prompt for generating or modifying this image.')
+    request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='image-generatio')
+    description_variable = models.CharField(max_length=255, blank=True, default='',
+                                            help_text='Variable name for storing image understanding result.')
 
     class Meta:
         db_table = 'orm_image_metadata'

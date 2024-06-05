@@ -35,10 +35,13 @@ from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm,
 from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
-from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
+from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateMWETaggedTextForm
+from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
-from .forms import ImageForm, ImageFormSet, PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
+from .forms import MWEExampleForm, CustomMWEExampleFormSet, ExampleWithMWEForm, ExampleWithMWEFormSet
+from .forms import ImageForm, ImageFormSet, StyleImageForm, ImageSequenceForm
+from .forms import PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
 from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
@@ -65,7 +68,8 @@ from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_availab
 from .clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_chinese import is_chinese_language
 from .clara_annotated_images import make_uninstantiated_annotated_image_structure
-from .clara_chatgpt4 import call_chat_gpt4_image, call_chat_gpt4_interpret_image
+from .clara_tts_api import tts_engine_type_supports_language
+from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json, call_chat_gpt4_image, call_chat_gpt4_interpret_image
 from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
 #from .clara_utils import _use_orm_repositories
 from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, get_config, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
@@ -76,6 +80,7 @@ from .clara_utils import make_mp3_version_of_audio_file_if_necessary
 
 from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
 from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, DEFAULT_RECENT_TIME_PERIOD
+from .constants import TTS_CHOICES
 
 from pathlib import Path
 from decimal import Decimal
@@ -269,6 +274,16 @@ def external_profile(request, user_id):
         'form': form,
         'clara_version': clara_version
     })
+
+@login_required
+def list_users(request):
+    users = User.objects.all().order_by('-date_joined')  # Assuming you want the newest users first
+    paginator = Paginator(users, 10)  # Show 10 users per page
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'clara_app/list_users.html', {'page_obj': page_obj})
 
 @login_required
 def friends(request):
@@ -1104,7 +1119,11 @@ def edit_prompt(request):
             annotation_type = prompt_selection_form.cleaned_data['annotation_type']
             if template_or_examples == 'template':
                 PromptFormSet = forms.formset_factory(TemplateForm, formset=CustomTemplateFormSet, extra=0)
-            elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
+            elif annotation_type == 'mwe':
+                PromptFormSet = forms.formset_factory(MWEExampleForm, formset=CustomMWEExampleFormSet, extra=1)
+            elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
+                PromptFormSet = forms.formset_factory(ExampleWithMWEForm, formset=ExampleWithMWEFormSet, extra=1)
+            elif (operation == 'annotate' or annotation_type == 'segmented'):
                 PromptFormSet = forms.formset_factory(StringForm, formset=CustomStringFormSet, extra=1)
             else:
                 PromptFormSet = forms.formset_factory(StringPairForm, formset=CustomStringPairFormSet, extra=1)
@@ -1148,6 +1167,10 @@ def edit_prompt(request):
                 # Prepare data
                 if template_or_examples == 'template':
                     initial_data = [{'template': prompts}]
+                elif annotation_type == 'mwe':
+                    initial_data = [{'string1': triple[0], 'string2': triple[1], 'string3': triple[2]} for triple in prompts]
+                elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
+                    initial_data = [{'string1': pair[0], 'string2': pair[1]} for pair in prompts]
                 elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
                     initial_data = [{'string': example} for example in prompts]
                 else:
@@ -1161,6 +1184,17 @@ def edit_prompt(request):
                     # Prepare data for saving
                     if template_or_examples == 'template':
                         new_prompts = prompt_formset[0].cleaned_data.get('template')
+                    elif annotation_type == 'mwe':
+                        new_prompts = [[form.cleaned_data.get('string1'), form.cleaned_data.get('string2'), form.cleaned_data.get('string3')]
+                                       for form in prompt_formset]
+                        if not new_prompts[-1][0] or not new_prompts[-1][1]:
+                            # We didn't use the extra last field
+                            new_prompts = new_prompts[:-1]
+                    elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
+                        new_prompts = [[form.cleaned_data.get('string1'), form.cleaned_data.get('string2')] for form in prompt_formset]
+                        if not new_prompts[-1][0]:
+                            # We didn't use the extra last field
+                            new_prompts = new_prompts[:-1]
                     elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
                         new_prompts = [form.cleaned_data.get('string') for form in prompt_formset]
                         if not new_prompts[-1]:
@@ -1168,9 +1202,11 @@ def edit_prompt(request):
                             new_prompts = new_prompts[:-1]
                     else:
                         new_prompts = [[form.cleaned_data.get('string1'), form.cleaned_data.get('string2')] for form in prompt_formset]
-                        if not new_prompts[-1][0] or not new_prompts[-1][1]:
+                        if not new_prompts[-1][0] or not new_prompts[-1][1] or not new_prompts[-1][2]:
                             # We didn't use the extra last field
                             new_prompts = new_prompts[:-1]
+                    print(f'new_prompts:')
+                    pprint.pprint(new_prompts)
                     try:
                         prompt_repo.save_template_or_examples(template_or_examples, annotation_type, operation, new_prompts, request.user.username)
                         messages.success(request, "Data saved successfully")
@@ -1819,8 +1855,13 @@ def create_project(request):
             title = form.cleaned_data['title']
             l2_language = form.cleaned_data['l2']
             l1_language = form.cleaned_data['l1']
+            uses_coherent_image_set = form.cleaned_data['uses_coherent_image_set']
             # Create a new project in Django's database, associated with the current user
-            clara_project = CLARAProject(title=title, user=request.user, l2=l2_language, l1=l1_language)
+            clara_project = CLARAProject(title=title,
+                                         user=request.user,
+                                         l2=l2_language,
+                                         l1=l1_language,
+                                         uses_coherent_image_set=uses_coherent_image_set)
             clara_project.save()
             internal_id = create_internal_project_id(title, clara_project.id)
             # Update the Django project with the internal_id
@@ -1972,13 +2013,30 @@ def get_simple_clara_resources_helper(project_id, user):
             # For uploaded image, in case we want to use one
             resources_available['image_file_path'] = None
 
-        if clara_project_internal.text_versions['segmented']:
+        #if clara_project_internal.text_versions['segmented']:
+        if up_to_date_dict['segmented']:
             # We have segmented text
             resources_available['segmented_text'] = clara_project_internal.load_text_version('segmented')
 
-        if not clara_project_internal.rendered_html_exists(project_id):
+        #if clara_project_internal.text_versions['segmented_title']:
+        if up_to_date_dict['segmented_title']:
+            # We have segmented text
+            resources_available['segmented_title'] = clara_project_internal.load_text_version('segmented_title')
+
+        try:
+            human_audio_info, human_audio_info_created = HumanAudioInfo.objects.get_or_create(project=project)
+            resources_available['preferred_tts_engine'] = human_audio_info.preferred_tts_engine
+        except Exception as e:
+            resources_available['preferred_tts_engine'] = 'none'
+
+        #if not clara_project_internal.rendered_html_exists(project_id):
+        if not up_to_date_dict['render']:
             # We have plain text and image, but no rendered HTML
-            resources_available['status'] = 'No multimedia' if image else 'No image'
+            #if not clara_project_internal.text_versions['segmented'] or not clara_project_internal.text_versions['segmented_title']:
+            if not up_to_date_dict['segmented'] or not up_to_date_dict['segmented_title']:
+                resources_available['status'] = 'No segmented text'
+            else:
+                resources_available['status'] = 'No multimedia' if image else 'No image'
             return resources_available
         else:
             # We have the rendered HTML
@@ -2000,19 +2058,24 @@ def get_simple_clara_resources_helper(project_id, user):
     except Exception as e:
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
+_simple_clara_trace = False
+#_simple_clara_trace = True
+
 @login_required
 def simple_clara(request, project_id, last_operation_status):
     user = request.user
     username = request.user.username
     # Get resources available for display based on the current state
     resources = get_simple_clara_resources_helper(project_id, user)
-    #print(f'Resources:')
-    #pprint.pprint(resources)
+    if _simple_clara_trace:
+        print(f'Resources:')
+        pprint.pprint(resources)
     
     status = resources['status']
     simple_clara_type = resources['simple_clara_type'] if 'simple_clara_type' in resources else None
     rtl_language = resources['rtl_language'] if 'rtl_language' in resources else False
-    up_to_date_dict = resources['up_to_date_dict'] 
+    up_to_date_dict = resources['up_to_date_dict']
+    
     form = SimpleClaraForm(initial=resources, is_rtl_language=rtl_language)
     content = Content.objects.get(id=resources['content_id']) if 'content_id' in resources else None
 
@@ -2026,13 +2089,15 @@ def simple_clara(request, project_id, last_operation_status):
     elif request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
-        #print(f'Action = {action}')
+        if _simple_clara_trace:
+            print(f'Action = {action}')
         if action:
             form = SimpleClaraForm(request.POST, request.FILES, is_rtl_language=rtl_language)
             if form.is_valid():
-                #print(f'Status: {status}')
-                #print(f'form.cleaned_data')
-                #pprint.pprint(form.cleaned_data)
+                if _simple_clara_trace:
+                    print(f'Status: {status}')
+                    print(f'form.cleaned_data')
+                    pprint.pprint(form.cleaned_data)
                 if action == 'create_project':
                     l2 = form.cleaned_data['l2']
                     l1 = form.cleaned_data['l1']
@@ -2070,6 +2135,9 @@ def simple_clara(request, project_id, last_operation_status):
                 elif action == 'save_segmented_text':
                     segmented_text = form.cleaned_data['segmented_text']
                     simple_clara_action = { 'action': 'save_segmented_text', 'segmented_text': segmented_text }
+                elif action == 'save_segmented_title':
+                    segmented_title = form.cleaned_data['segmented_title']
+                    simple_clara_action = { 'action': 'save_segmented_title', 'segmented_title': segmented_title }
                 elif action == 'save_text_title':
                     text_title = form.cleaned_data['text_title']
                     simple_clara_action = { 'action': 'save_text_title', 'text_title': text_title }
@@ -2087,6 +2155,11 @@ def simple_clara(request, project_id, last_operation_status):
                 elif action == 'regenerate_image':
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
+                elif action == 'create_segmented_text':
+                    simple_clara_action = { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
+                elif action == 'save_preferred_tts_engine':
+                    preferred_tts_engine = form.cleaned_data['preferred_tts_engine']
+                    simple_clara_action = { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
                 elif action == 'create_rendered_text':
                     simple_clara_action = { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'post_rendered_text':
@@ -2095,11 +2168,13 @@ def simple_clara(request, project_id, last_operation_status):
                     messages.error(request, f"Error: unknown action '{action}'")
                     return redirect('simple_clara', project_id, 'error')
 
-                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text',
-                                                             'save_text_title', 'save_uploaded_image', 'post_rendered_text' )
+                _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text', 'save_segmented_title',
+                                                             'save_text_title', 'save_uploaded_image', 'save_preferred_tts_engine', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
                     result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
+                    if _simple_clara_trace:
+                        print(f'result = {result}')
                     new_project_id = result['project_id'] if 'project_id' in result else project_id
                     new_status = result['status']
                     if new_status == 'error':
@@ -2169,6 +2244,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'save_segmented_text':
             # simple_clara_action should be of form { 'action': 'save_segmented_text', 'segmented_text': segmented_text }
             result = simple_clara_save_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_segmented_title':
+            # simple_clara_action should be of form { 'action': 'save_segmented_title', 'segmented_title': segmented_title }
+            result = simple_clara_save_segmented_title_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'save_text_title':
             # simple_clara_action should be of form { 'action': 'save_text_title', 'text_title': text_title }
             result = simple_clara_save_text_title_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2181,6 +2259,12 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'regenerate_image':
             # simple_clara_action should be of form { 'action': 'regenerate_image', 'image_advice_prompt': image_advice_prompt }
             result = simple_clara_regenerate_image_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_segmented_text':
+            # simple_clara_action should be of form { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
+            result = simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'save_preferred_tts_engine':
+            # simple_clara_action should be of form { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
+            result = simple_clara_save_preferred_tts_engine_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_rendered_text':
             # simple_clara_action should be of form { 'action': 'create_rendered_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2319,7 +2403,7 @@ def simple_clara_save_text_and_create_image_helper(username, project_id, simple_
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
-    create_and_add_dall_e_3_image(project_id, callback=None)
+    create_and_add_dall_e_3_image_for_whole_text(project_id, callback=None)
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
@@ -2452,6 +2536,18 @@ def simple_clara_save_text_title_helper(username, project_id, simple_clara_actio
     return { 'status': 'finished',
              'message': 'Saved the text title.'}
 
+def simple_clara_save_segmented_title_helper(username, project_id, simple_clara_action, callback=None):
+    segmented_title = simple_clara_action['segmented_title']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Save the segmented title
+    clara_project_internal.save_text_version('segmented_title', segmented_title, source='human_revised', user=username)
+
+    return { 'status': 'finished',
+             'message': 'Saved the segmented title.'}
+
 # simple_clara_action should be of form 'action': 'save_uploaded_image', 'image_file_path': image_file_path }
 def simple_clara_save_uploaded_image_helper(username, project_id, simple_clara_action, callback=None):
     image_file_path = simple_clara_action['image_file_path']
@@ -2466,6 +2562,29 @@ def simple_clara_save_uploaded_image_helper(username, project_id, simple_clara_a
 
     return { 'status': 'finished',
              'message': 'Saved the image.'}
+
+# simple_clara_action should be of form { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
+def simple_clara_save_preferred_tts_engine_helper(username, project_id, simple_clara_action, callback=None):
+    preferred_tts_engine = simple_clara_action['preferred_tts_engine']
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    language = project.l2
+
+    human_audio_info, human_audio_info_created = HumanAudioInfo.objects.get_or_create(project=project)
+    human_audio_info.preferred_tts_engine = preferred_tts_engine
+    human_audio_info.save()
+
+    preferred_tts_engine_name = dict(TTS_CHOICES)[preferred_tts_engine]
+    if preferred_tts_engine == 'openai' and language != 'english':
+        warning = f' Warning: although {preferred_tts_engine_name} is supposed to be multilingual, it is optimised for English.'
+    elif preferred_tts_engine != 'none' and not tts_engine_type_supports_language(preferred_tts_engine, language):
+        warning = f' Warning: {preferred_tts_engine_name} does not currently support {language.capitalize()}.'
+    else:
+        warning = ''
+
+    message = f'Saved {preferred_tts_engine_name} as preferred TTS engine.' + warning
+
+    return { 'status': 'finished',
+             'message': message}
 
 def simple_clara_rewrite_text_helper(username, project_id, simple_clara_action, callback=None):
     prompt = simple_clara_action['prompt']
@@ -2497,7 +2616,7 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: regenerate DALL-E-3 image")
-    result = create_and_add_dall_e_3_image(project_id, advice_prompt=image_advice_prompt, callback=callback)
+    result = create_and_add_dall_e_3_image_for_whole_text(project_id, advice_prompt=image_advice_prompt, callback=callback)
     post_task_update(callback, f"ENDED TASK: regenerate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text') and result:
@@ -2507,6 +2626,32 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
         return { 'status': 'error',
                  'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
+def simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=None):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    up_to_date_dict = simple_clara_action['up_to_date_dict']
+
+    l2 = project.l2
+    title = project.title
+    user = project.user
+    config_info = get_user_config(user)
+
+    # Create segmented text
+    if not up_to_date_dict['segmented']:
+        post_task_update(callback, f"STARTED TASK: add segmentation information")
+        api_calls = clara_project_internal.create_segmented_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'segmented')
+        post_task_update(callback, f"ENDED TASK: add segmentation information")
+
+    # Create segmented title. This will just have been done as part of create_segmented_text if we ran that step
+    if up_to_date_dict['segmented'] and not up_to_date_dict['segmented_title']:
+        post_task_update(callback, f"STARTED TASK: add segmentation information to text title")
+        api_calls = clara_project_internal.create_segmented_title(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'segmented_title')
+        post_task_update(callback, f"ENDED TASK: add segmentation information to text title")
+
+    return { 'status': 'finished',
+             'message': 'Created the segmented text.'}
 
 def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_action, callback=None):
     project = get_object_or_404(CLARAProject, pk=project_id)
@@ -2517,6 +2662,10 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
     title = project.title
     user = project.user
     config_info = get_user_config(user)
+
+    audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    preferred_tts_engine = audio_info.preferred_tts_engine if audio_info else None
+    print(f'--- preferred_tts_engine = {preferred_tts_engine}')
 
     # Create summary
     if not up_to_date_dict['summary']:
@@ -2578,7 +2727,8 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
     # Render
     if not up_to_date_dict['render']:
         post_task_update(callback, f"STARTED TASK: create TTS audio and multimodal text")
-        clara_project_internal.render_text(project_id, phonetic=False, self_contained=True, callback=callback)
+        clara_project_internal.render_text(project_id, phonetic=False, preferred_tts_engine=preferred_tts_engine,
+                                           self_contained=True, callback=callback)
         post_task_update(callback, f"ENDED TASK: create TTS audio and multimodal text")
 
     if phonetic_resources_are_available(project.l2):
@@ -3619,7 +3769,7 @@ def compare_versions(request, project_id):
     return render(request, 'clara_app/diff_and_diff_result.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
 # Generic code for the operations which support creating, annotating, improving and editing text,
-# to produce and edit the "plain", "title", "summary", "cefr", "segmented", "gloss" and "lemma" versions.
+# to produce and edit the "plain", "title", "summary", "cefr", "segmented", "gloss", "lemma" and "mwe" versions.
 # It is also possible to retrieve archived versions of the files if they exist.
 #
 # The argument 'this_version' is the version we are currently creating/editing.
@@ -3908,6 +4058,8 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreateGlossedTextForm(*args, **kwargs)
     elif version == 'lemma':
         return CreateLemmaTaggedTextForm(*args, **kwargs)
+    elif version == 'mwe':
+        return CreateMWETaggedTextForm(*args, **kwargs)
     elif version == 'pinyin':
         return CreatePinyinTaggedTextForm(*args, **kwargs)
     elif version == 'lemma_and_gloss':
@@ -3964,6 +4116,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
         return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
         return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'mwe':
+        return ( 'generate', clara_project_internal.create_mwe_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'pinyin':
         return ( 'generate', clara_project_internal.create_pinyin_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     # There is no generate operation for lemma_and_gloss, since we make it by merging lemma and gloss
@@ -4021,6 +4175,8 @@ def previous_version_and_template_for_version(this_version):
         return ( 'segmented_with_images', 'clara_app/create_glossed_text.html' )
     elif this_version == 'lemma':
         return ( 'segmented_with_images', 'clara_app/create_lemma_tagged_text.html' )
+    elif this_version == 'mwe':
+        return ( 'segmented_with_images', 'clara_app/create_mwe_tagged_text.html' )
     elif this_version == 'pinyin':
         return ( 'segmented_with_images', 'clara_app/create_pinyin_tagged_text.html' )
     elif this_version == 'lemma_and_gloss':
@@ -4106,6 +4262,14 @@ def create_lemma_tagged_text(request, project_id):
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
+# Create or edit "mwe" version of the text 
+@login_required
+@user_has_a_project_role
+def create_mwe_tagged_text(request, project_id):
+    this_version = 'mwe'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
 # Create or edit "pinyin-tagged" version of the text 
 @login_required
 @user_has_a_project_role
@@ -4136,6 +4300,9 @@ def project_history(request, project_id):
 @login_required
 @user_has_a_project_role
 def edit_images(request, project_id, dall_e_3_image_status):
+    actions_requiring_openai = ( 'create_dalle_image_for_whole_text',
+                                 'create_dalle_style_image',
+                                 'create_image_request_sequence') 
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     # Retrieve existing images
@@ -4146,36 +4313,93 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'associated_text': img.associated_text,
                      'associated_areas': img.associated_areas,
                      'page': img.page,
-                     'position': img.position}
+                     'position': img.position,
+                     'style_description': img.style_description,
+                     'content_description': img.content_description,
+                     'request_type': img.request_type,
+                     'description_variable': img.description_variable,
+                     'user_prompt': img.user_prompt
+                     }
                     for img in images]
-    initial_data = sorted(initial_data, key=lambda x: x['page'])
+    # Sort by page number with generation requests first
+    initial_data = sorted(initial_data, key=lambda x: ( x['page'] + ( 0 if x['request_type'] == 'image-generation' else 0.1 ) ) )
+    #image_request_sequence = clara_project_internal.load_text_version_or_null("image_request_sequence")
+    image_request_sequence = ''
+    #print(f'--- image_request_sequence = {image_request_sequence}')
+    
+    if len(initial_data) != 0 and initial_data[0]['page'] == 0:
+        # We have a style image on the notional page 0, move that information to the style image template
+        style_image_record = initial_data[0]
+        initial_style_image_data = { 'image_base_name': style_image_record['image_base_name'],
+                                     'user_prompt': style_image_record['user_prompt']
+                                     }
+        style_description = style_image_record['style_description']
+        # The other data is normal images that will appear in the text
+        initial_data = initial_data[1:]
+    elif project.uses_coherent_image_set:
+        initial_style_image_data = { 'image_base_name': None,
+                                     'user_prompt': ''
+                                     }
+        style_description = None
+    else:
+        initial_style_image_data = None
+        style_description = None
 
     if request.method == 'POST':
-        if 'action' in request.POST and request.POST['action'] == 'create_dalle_image':
+        
+        if 'action' in request.POST and request.POST['action'] in actions_requiring_openai:
+            action = request.POST['action']
+            print(f'--- action = {action}')
             if not user_has_open_ai_key_or_credit(request.user):
-                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
+                messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                 return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
-            else:
-                task_type = f'create_dalle_e_3_image'
+            if action == 'create_dalle_image_for_whole_text':
+                task_type = f'create_dalle_e_3_images'
                 callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
-                async_task(create_and_add_dall_e_3_image, project_id, callback=callback)
+                async_task(create_and_add_dall_e_3_image_for_whole_text, project_id, callback=callback)
+                print(f'--- Started DALL-E-3 image generation task')
+                #Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+            elif action == 'create_image_request_sequence':
+                task_type = f'create_image_request_sequence'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                async_task(create_image_request_sequence, project_id, callback=callback)
+                print(f'--- Started image request sequence generation task')
+                #Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+            elif action == 'create_dalle_style_image':
+                style_image_form = StyleImageForm(request.POST)
+                if not style_image_form.is_valid():
+##                    print(f'--- Invalid form data (form #{i}): {form}')
+                    messages.error(request, "Invalid form data (form #{i}): {form}")
+                    return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                if not style_image_form.cleaned_data.get('user_prompt'):
+                    messages.error(request, "No instructions given for creating style image.")
+                    return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                user_prompt = style_image_form.cleaned_data.get('user_prompt')
+                task_type = f'create_dalle_e_3_images'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                async_task(create_and_add_dall_e_3_image_for_style, project_id, user_prompt, callback=callback)
                 print(f'--- Started DALL-E-3 image generation task')
                 #Redirect to the monitor view, passing the task ID and report ID as parameters
                 return redirect('create_dall_e_3_image_monitor', project_id, report_id)
 
         else:
+            generation_requests = []
             formset = ImageFormSet(request.POST, request.FILES)
             for i in range(0, len(formset)):
                 form = formset[i]
                 previous_record = initial_data[i] if i < len(initial_data) else None
                 # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
                 #print(f"--- form #{i}: form.changed_data = {form.changed_data}")
-                if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data ):
+                if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data and not project.uses_coherent_image_set ):
                     if not form.is_valid():
                         #print(f'--- Invalid form data (form #{i}): {form}')
                         messages.error(request, "Invalid form data.")
-                        return redirect('edit_images', project_id=project_id)
+                        return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                     
                     image_name = form.cleaned_data.get('image_name')
                     # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
@@ -4193,14 +4417,22 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     associated_areas = form.cleaned_data.get('associated_areas')
                     page = form.cleaned_data.get('page', 1)
                     position = form.cleaned_data.get('position', 'bottom')
+                    user_prompt = form.cleaned_data.get('user_prompt')
+                    generate = form.cleaned_data.get('generate')
                     delete = form.cleaned_data.get('delete')
+                    request_type = form.cleaned_data.get('request_type')
+                    description_variable = form.cleaned_data.get('description_variable')
+                    
+                    if previous_record:
+                        content_description = previous_record['content_description']
                     #print(f'--- real_image_file_path = {real_image_file_path}, image_name = {image_name}, page = {page}, delete = {delete}')
 
                     if image_name and delete:
+                        # We are deleting an image
                         clara_project_internal.remove_project_image(image_name)
                         messages.success(request, f"Deleted image: {image_name}")
                     elif image_name and real_image_file_path:
-                       # If we don't already have it, try to fill in 'associated_areas' using 'associated_text'
+                       # We are uploading an image
                         if not associated_areas and associated_text and image_name:  
                             # Generate the uninstantiated annotated image structure
                             structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
@@ -4210,20 +4442,54 @@ def edit_images(request, project_id, dall_e_3_image_status):
                         clara_project_internal.add_project_image(image_name, real_image_file_path,
                                                                  associated_text=associated_text, associated_areas=associated_areas,
                                                                  page=page, position=position)
-            messages.success(request, "Image data updated")
-            return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                    elif generate and user_prompt:
+                        # We are generating an image. Put it on the queue for async processing at the end
+                        generation_request = { 'image_name': image_name,
+                                               'page': page,
+                                               'position': position,
+                                               'user_prompt': user_prompt,
+                                               'style_description': style_description,
+                                               'current_image': previous_record['image_file_path'] if previous_record else None,
+                                               'request_type': request_type,
+                                               'description_variable': description_variable
+                                               }
+                        generation_requests.append(generation_request)
+                                               
+            if len(generation_requests) != 0:
+                if not user_has_open_ai_key_or_credit(request.user):
+                    messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                task_type = f'create_dalle_e_3_images'
+                callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+                async_task(create_and_add_coherent_dall_e_3_images, project_id, generation_requests, callback=callback)
+                return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+            else:            
+                messages.success(request, "Image data updated")
+                return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
     else:
         formset = ImageFormSet(initial=initial_data)
+        style_form = StyleImageForm(initial=initial_style_image_data)
+        if project.uses_coherent_image_set:
+            image_request_sequence_form = ImageSequenceForm(initial={'image_request_sequence': image_request_sequence})
+        else:
+            image_request_sequence_form = None
+        #print(f'--- image_request_sequence_form = {image_request_sequence_form}')
+        
         if dall_e_3_image_status == 'finished':
-            messages.success(request, "DALL-E-3 image for whole text successfully generated")
+            messages.success(request, "DALL-E-3 image generation successfully completed")
         elif dall_e_3_image_status == 'error':
-            messages.success(request, "Something went wrong when generating DALL-E-3 image for whole text. Look at the 'Recent task updates' view for further information.")
+            messages.success(request, "Something went wrong when performing DALL-E-3 image generation. Look at the 'Recent task updates' view for further information.")
 
     clara_version = get_user_config(request.user)['clara_version']
 
-    return render(request, 'clara_app/edit_images.html', {'formset': formset, 'project': project, 'clara_version': clara_version})
+    return render(request, 'clara_app/edit_images.html', {'formset': formset,
+                                                          'style_form': style_form,
+                                                          'image_request_sequence_form': image_request_sequence_form,
+                                                          'project': project,
+                                                          'uses_coherent_image_set': project.uses_coherent_image_set,
+                                                          'clara_version': clara_version})
 
-def create_and_add_dall_e_3_image(project_id, advice_prompt=None, callback=None):
+def create_and_add_dall_e_3_image_for_whole_text(project_id, advice_prompt=None, callback=None):
     try:
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -4260,6 +4526,254 @@ When generating the image, keep the following advice in mind:
         post_task_update(callback, f"finished")
         api_calls = [ api_call ]
         store_api_calls(api_calls, project, project.user, 'image')
+        return True
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+        return False
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+ 
+# Create the image using DALL-E-3, interpret it using GPT-4o, then store on notional page 0
+def create_and_add_dall_e_3_image_for_style(project_id, prompt, callback=None):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        user = project.user
+        config_info = get_user_config(user)
+        temp_dir = tempfile.mkdtemp()
+        tmp_image_file = os.path.join(temp_dir, 'image_for_style_prompt.jpg')
+        
+        post_task_update(callback, f"--- Creating a new DALL-E-3 image to define the style")
+        api_call_generate = call_chat_gpt4_image(prompt, tmp_image_file, config_info=config_info, callback=callback)
+        post_task_update(callback, f"--- Image created: {tmp_image_file}")
+
+        style_interpretation_prompt = """Produce a detailed description of this image's style.
+The description you give will be used to create a set of thematically related images with a similar style,
+so it is important to focus on the style, not describing the content more than absolutely necessary.
+"""
+        post_task_update(callback, f"--- Creating a description of the style")
+        api_call_interpret = call_chat_gpt4_interpret_image(style_interpretation_prompt, tmp_image_file,
+                                                            config_info=config_info, callback=callback)
+        style_description = api_call_interpret.response
+        store_api_calls([ api_call_interpret ], project, project.user, 'image')
+        post_task_update(callback, f"--- Description created: {style_description}")
+
+        image_name = 'Style image'
+        clara_project_internal.add_project_image(image_name, tmp_image_file, 
+                                                 associated_text='', associated_areas='',
+                                                 page=0, position='top',
+                                                 style_description=style_description,
+                                                 user_prompt=prompt)
+        post_task_update(callback, f"--- Image stored")
+        post_task_update(callback, f"finished")
+        api_calls = [ api_call_generate ]
+        store_api_calls(api_calls, project, project.user, 'image')
+        return True
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+        return False
+    finally:
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+
+# Create the image request sequence for the text
+def create_image_request_sequence(project_id, callback=None):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        user = project.user
+        config_info = get_user_config(user)
+        
+        segmented_text = clara_project_internal.load_text_version("segmented_with_title")
+        segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
+        numbered_page_list = segmented_text_object.to_numbered_page_list()
+        numbered_page_list_text = json.dumps(numbered_page_list)
+        prompt = f"""
+        You are to write a set of requests, in JSON form, that will guide DALL-E-3 and GPT-4o in creating a set of
+        illustrations for a text, also provided in JSON form, which has been divided into numbered pages.
+
+        A DALL-E-3 image-generation request to create the image on page <page-number> of the text will be of the form:
+
+        {{
+          "request_type": "image-generation",
+          "page": <page-number>,
+          "prompt": "<parametrised-request-text>"
+        }}
+
+        where <parametrised-request-text> may include elements enclosed in braces, {{}}, which refer to "description-variables"
+        holding the results of previously executed GPT-4o image understanding requests.
+
+        A GPT-4o image-understanding request to extract visual information from the previously generated image on page <page-number>
+        of the text and store it in the "description-variable" <variable-name> will be of the form:
+
+        {{
+          "request_type": "image-understanding",
+          "page": <page-number>,
+          "prompt": "<request-text>",
+          "description-variable": "<variable-name>"
+        }}
+
+        When generating the image requests, ensure that the image descriptions from understanding requests are included in the prompts
+        for subsequent image-generation requests. This ensures visual consistency throughout the story.
+
+        Here is a simple example:
+
+        Input:
+
+        [
+          {{
+            "page": 1,
+            "text": "Once upon a time, in a faraway kingdom, there lived a brave princess named Elara."
+          }},
+          {{
+            "page": 2,
+            "text": "Elara loved exploring the lush forests and vibrant meadows that surrounded her castle."
+          }}
+        ]
+
+        Output:
+
+        [
+          {{
+            "request_type": "image-generation",
+            "page": 1,
+            "prompt": "An image of a brave princess named Elara standing in front of a grand castle, with the lush forest in the background. Elara is wearing a simple yet elegant dress, and she has a determined look on her face."
+          }},
+          {{
+            "request_type": "image-understanding",
+            "page": 1,
+            "prompt": "Look at this image, which depicts a princess standing in front of a castle, and provide a description of the princess. This description will be used when generating other images, so make it as detailed as possible.",
+            "description-variable": "Elara-description"
+          }},
+          {{
+            "request_type": "image-generation",
+            "page": 2,
+            "prompt": "An image of Princess Elara exploring the forest, surrounded by tall trees, colorful flowers, and playful animals like rabbits and birds. Princess Elara will be as described here: {{Elara-description}}."
+          }}
+        ]
+
+        Here is the JSON representation of the text:
+
+        {numbered_page_list_text}
+
+        Only write out the JSON representation of the sequence of image requests, since the result will be read by a Python script.
+        """
+        api_call = call_chat_gpt4(prompt, config_info=config_info, callback=callback)
+        store_api_calls([ api_call ], project, user, 'image_request_sequence')
+        response = api_call.response
+
+        try:
+            response_object = interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
+            #clara_project_internal.save_text_version("image_request_sequence", json.dumps(response_object))
+            if not isinstance(response_object, list):
+                post_task_update(callback, f'Error: response is not a JSON list')
+                post_task_update(callback, f"error")
+                return False
+            else:
+                # Sample requests
+                # { "request_type": "image-generation",
+                #   "page": 2,
+                #   "prompt": "An image depicting a brave princess named Lily exploring a beautiful, lush forest.
+                #              Lily is wearing a royal yet practical dress for exploring, and she has an adventurous spirit.
+                #              The forest is dense with tall trees, colorful flowers, and beams of sunlight filtering through the leaves."},
+                # { "request_type": "image-understanding",
+                #   "page": 2,
+                #   "prompt": "Look at this image of Princess Lily exploring the forest and provide a detailed description of Princess Lily.
+                #              This description will be used for consistency in subsequent images.",
+                #   "description-variable": "Lily-description"},
+                clara_project_internal.remove_all_project_images_except_style_images(callback=callback)
+                print(f'--- Saving image request sequence with {len(response_object)} records')
+                for req in response_object:
+                    request_type = req['request_type']
+                    user_prompt = req['prompt']
+                    page = req['page']
+                    description_variable = req['description-variable'] if 'description-variable' in req else ''
+                    position = req['position'] if 'position' in req else 'bottom'
+                    image_name = f'image_{page}_{position}' if request_type == 'image-generation' else f'get_{description_variable}'
+                    image_file_path = None
+                    clara_project_internal.add_project_image(image_name, image_file_path,
+                                                             page=page, position=position,
+                                                             user_prompt=user_prompt,
+                                                             request_type=request_type,
+                                                             description_variable=description_variable,
+                                                             callback=callback)
+                post_task_update(callback, f"finished")
+                return True
+        except:
+            post_task_update(callback, f'Error: cannot interpret response as well-formed JSON')
+            post_task_update(callback, f"error")
+            clara_project_internal.save_text_version("image_request_sequence", response)
+            return False
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+        return False
+
+# Go through the generation requests, creating and storing the images.
+#
+# Generation requests have this format:
+# { 'image_name': image_name,
+#   'page': page,
+#   'position': position,
+#   'user_prompt': user_prompt,
+#   'style_description': style_description,
+#   'current_image': image_file_path
+#  }
+# current_image may be null
+
+def create_and_add_coherent_dall_e_3_images(project_id, generation_requests, callback=None):
+    try:
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        user = project.user
+        config_info = get_user_config(user)
+        temp_dir = tempfile.mkdtemp()
+        for generation_request in generation_requests:
+            image_name = generation_request['image_name']
+            page = generation_request['page']
+            position = generation_request['position']
+            user_prompt = generation_request['user_prompt']
+            style_description = generation_request['style_description']
+            current_image = generation_request['current_image']
+
+            if not current_image:
+                full_prompt = f"""Create an image based on the following request: {user_prompt}
+
+Make the style of the image consistent with the style of the previously generated image described here: {style_description}
+"""
+            else:
+                interpretation_prompt = """Produce a detailed description of this image.
+The description you give will be used to create a modified version of the image, so include as many details as you can.
+"""
+                post_task_update(callback, f"--- Creating a description of the existing image")
+                api_call_interpret = call_chat_gpt4_interpret_image(interpretation_prompt, current_image,
+                                                                    config_info=config_info, callback=callback)
+                content_description = api_call_interpret.response
+                post_task_update(callback, f"--- Description created: {content_description}")
+                store_api_calls([ api_call_interpret ], project, project.user, 'image')
+                full_prompt = f"""Create a modified version of the image described as follows: {content_description}
+
+Change it according to this request: {user_prompt}.
+
+Make the style of the image consistent with the style of the previously generated image described here: {style_description}
+"""    
+            
+            tmp_image_file = os.path.join(temp_dir, f'{image_name}_{page}_{position}.jpg')
+            post_task_update(callback, f"--- Creating DALL-E-3 image: name {image_name}, page {page},{position}")
+            api_call_generate = call_chat_gpt4_image(full_prompt, tmp_image_file, config_info=config_info, callback=callback)
+            post_task_update(callback, f"--- Image created: {tmp_image_file}")
+
+            clara_project_internal.add_project_image(image_name, tmp_image_file, 
+                                                     associated_text='', associated_areas='',
+                                                     page=page, position=position,
+                                                     user_prompt=user_prompt)
+            api_calls = [ api_call_generate ]
+            store_api_calls(api_calls, project, project.user, 'image')
+            post_task_update(callback, f"--- Image stored")
+        post_task_update(callback, f"finished") 
         return True
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
@@ -4360,6 +4874,7 @@ def make_export_zipfile(request, project_id):
         clara_version = get_user_config(request.user)['clara_version']
         
         return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project, 'clara_version': clara_version})
+
 
 # This is the API endpoint that the JavaScript will poll
 @login_required

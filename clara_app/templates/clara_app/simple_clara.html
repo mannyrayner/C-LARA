@@ -12,8 +12,16 @@
     {% endif %}</p>
     {% if status == 'No project' %}
 	  <h3>Languages</h3>
-	  <p>Text language: {{ form.l2 }}</p>
-	  <p>Annotation language: {{ form.l1 }}</p>
+	  <table>
+		<tr>
+		  <td><label for="l2">Text language:</label></td>
+		  <td>{{ form.l2 }}</td>
+		</tr>
+		<tr>
+		  <td><label for="l1">Annotation language:</label></td>
+		  <td>{{ form.l1 }}</td>
+		</tr>
+	  </table>
 	  <h3>What do you want to do?</h3>
 	  {{ form.simple_clara_type }}
       <button type="submit" name="action" value="create_project">Create Project</button>
@@ -65,7 +73,7 @@
     {% endif %}
 	
 	{% if simple_clara_type != 'create_text_from_image' %}
-		{% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' %}
+		{% if status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Posted' %}
 		  <h3>Image</h3>
 		  <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;"></p>
 		  <p>You can try adding advice in the box below if you regenerate the image.</p>
@@ -73,29 +81,39 @@
 		{% elif status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
 		   <h3>Image</h3>
 		   <p>Image generation failed, probably due to constraints on appropriate content. Sometimes adding advice in the box below and regenerating will fix this.</p>
-		   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button><p>
+		   <p>{{ form.image_advice_prompt }} <button type="submit" name="action" value="regenerate_image">Regenerate Image</button></p>
 		{% endif %}
-		{% if status == 'No multimedia' or status == 'Everything available' or status == 'Posted' or status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
+		{% if status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Posted' or status == 'No image' or status == 'Everything available except image' or status == 'Posted without image' %}
 		   <h3>Uploaded image (alternative to AI-generated image)</h3>
 		   <p>{{ form.image_file_path }} <button type="submit" name="action" value="save_uploaded_image">Save Uploaded Image</button><p>
 		{% endif %}
 	{% endif %}
   
-    {% if status == 'No image' or status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
-	  {% if status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+    {% if status == 'No image' or status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+	  {% if status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+	    <h3>Segmented title</h3>
+		<p>{{ form.segmented_title }}
+	    <button type="submit" name="action" value="save_segmented_title">Save Edited Segmented Title</button></p>
+		<br>
 	    <h3>Segmented text</h3>
 		<p>{{ form.segmented_text }}
-	    <button type="submit" name="action" value="save_segmented_text">Save Edited Segmented Text</button>
+	    <button type="submit" name="action" value="save_segmented_text">Save Edited Segmented Text</button></p>
 		<br>
 	  {% endif %}
 	  <h3>Multimedia text</h3>
-	  {% if status != 'No image' and status != 'No multimedia' %}
-	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Rendered Content</a></p>
+	  {% if status != 'No image' and status != 'No multimedia' and status != 'No segmented text' %}
+	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Multimedia Text</a></p>
 	  {% endif %}
-	  {% if status == 'No image' or status == 'No multimedia' %}
-        <button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button>
+	  {% if status == 'No segmented text' %}
+        <button type="submit" name="action" value="create_segmented_text">Generate Segmented Text</button>
+	  {% elif status == 'No image' or status == 'No multimedia' %}
+	    <p>{{ form.preferred_tts_engine }}
+		<button type="submit" name="action" value="save_preferred_tts_engine">Save preferred TTS engine</button></p>
+        <p><button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button></p>
 	  {% else %}
-      <p><button type="submit" name="action" value="create_rendered_text">Regenerate Multimedia Text</button><p>
+	    <p>{{ form.preferred_tts_engine }}
+		<button type="submit" name="action" value="save_preferred_tts_engine">Save preferred TTS engine</button></p>
+        <p><button type="submit" name="action" value="create_rendered_text">Regenerate Multimedia Text</button><p>
 	  {% endif %}
     {% endif %}
 	
@@ -106,9 +124,9 @@
 	  {% else %}
 	    <p><a href="{{ content.get_absolute_url }}" target="_blank">View Social Network Page</a></p>
 	  {% endif %}
+	  <br>
 	  <h3>Satisfaction questionnaire</h3>
-	  <p><a href="{% url 'satisfaction_questionnaire' project_id %}" target="_blank">
-		  Go to Questionnaire</a></p>
+	  <p><a href="{% url 'satisfaction_questionnaire' project_id %}" target="_blank">Go to Questionnaire</a></p>
     {% endif %}
   </form>
   {% if status != 'No project' %}
