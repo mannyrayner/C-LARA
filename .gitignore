@@ -1,3 +1,15 @@
 .env
 clara_project/__pycache__/
 requirements.txt
+
+
+# Ignore Python bytecode files
+__pycache__/
+*.pyc
+
+# Ignore virtual environment directory
+clara_env/
+
+# Ignore other directories or files you don't want to track
+node_modules/
+.env
