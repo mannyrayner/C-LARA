@@ -119,22 +119,23 @@ def copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=None):
     make_local_directory(tmp_image_dir)
     file = f'{tmp_image_dir}/metadata.json'
     
-    image_metadata_as_json = [ image.to_json() for image in image_metadata ]
+    image_metadata_as_json = [ image.to_json() for image in image_metadata  ]
 
     if len(image_metadata_as_json) != 0:
         count = 0
         post_task_update(callback, f'--- Copying {len(image_metadata_as_json)} image files')
         
         for item in image_metadata_as_json:
-            for key in ( 'image_file_path', 'thumbnail_file_path' ):
-                if key in item:
-                    pathname = item[key]
-                    zipfile_pathname = os.path.join(tmp_image_dir, basename(pathname))
-                    copy_to_local_file(pathname, zipfile_pathname)
-                    item[key] = basename(pathname)
-                    count += 1
-                    if count % 10 == 0:
-                        post_task_update(callback, f'--- Copied {count}/{len(image_metadata_as_json)} image files')
+            if item['request_type'] == 'image-generation':
+                for key in ( 'image_file_path', 'thumbnail_file_path' ):
+                    if key in item:
+                        pathname = item[key]
+                        zipfile_pathname = os.path.join(tmp_image_dir, basename(pathname))
+                        copy_to_local_file(pathname, zipfile_pathname)
+                        item[key] = basename(pathname)
+                        count += 1
+                        if count % 10 == 0:
+                            post_task_update(callback, f'--- Copied {count}/{len(image_metadata_as_json)} image files')
     
     write_json_to_local_file(image_metadata_as_json, file)
     post_task_update(callback, f'--- Copied all image files')

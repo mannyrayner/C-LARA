@@ -171,6 +171,7 @@ from .clara_utils import unzip_file, post_task_update, convert_to_timezone_aware
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Union
 
+import re
 import datetime
 import logging
 import pprint
@@ -920,14 +921,15 @@ class CLARAProjectInternal:
         images = self.get_all_project_images()
         post_task_update(callback, f"--- Found {len(images)} images")
         for image in images:
-            # Find the corresponding Page object, if there is one.
-            page_object = text_object.find_page_by_image(image)
-            if page_object:
-                # Merge the Page object into the Image object
-                image.merge_page(page_object)
-                # Remove the Page object from the Text object
-                text_object.remove_page(page_object)
-            add_image_to_text(text_object, image, project_id_internal=self.id, callback=callback)
+            if image.request_type == 'image-generation':
+                # Find the corresponding Page object, if there is one.
+                page_object = text_object.find_page_by_image(image)
+                if page_object:
+                    # Merge the Page object into the Image object
+                    image.merge_page(page_object)
+                    # Remove the Page object from the Text object
+                    text_object.remove_page(page_object)
+                add_image_to_text(text_object, image, project_id_internal=self.id, callback=callback)
         
         post_task_update(callback, f"--- Adding concordance annotations")
         concordance_annotator = ConcordanceAnnotator(concordance_id=self.id)
@@ -1101,6 +1103,18 @@ class CLARAProjectInternal:
             # Handle the exception as needed
             return None
 
+    def get_generated_project_image_by_position(self, page, position, callback=None):
+        try:
+            project_id = self.id
+            
+            image =  self.image_repository.get_generated_entry_by_position(project_id, page, position, callback=None)
+
+            return image
+        except Exception as e:
+            post_task_update(callback, f"*** Error when retrieving image by position: {str(e)}")
+            # Handle the exception as needed
+            return None
+
     # Removes an image from the ImageRepository associated with the project
     def remove_project_image(self, image_name, callback=None):
         try:
@@ -1161,6 +1175,48 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when retrieving images: {str(e)}")
             # Handle the exception as needed
             return None
+
+    def store_image_understanding_result(self, description_variable, result, callback=None):
+        try:
+            project_id = self.id
+            
+            post_task_update(callback, f"--- Storing understanding result for {description_variable}")
+            self.image_repository.store_understanding_result(project_id, description_variable, result, callback=callback)
+            post_task_update(callback, f"--- Understanding result stored")
+        except Exception as e:
+            post_task_update(callback, f"*** Error storing understanding result for {description_variable}")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+
+    def get_image_understanding_result(self, description_variable, callback=None):
+        try:
+            project_id = self.id
+            
+            post_task_update(callback, f"--- Retrieving understanding result for {description_variable}")
+            result = self.image_repository.get_understanding_result(project_id, description_variable, callback=callback)
+            post_task_update(callback, f"--- Understanding result retrieved")
+            return result
+        except Exception as e:
+            post_task_update(callback, f"*** Error retrieving understanding result for {description_variable}")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            return None
+
+    def instantiate_image_description_variables_in_prompt(self, prompt, callback=None):
+        description_variables = self.description_variables_in_prompt(prompt, callback=callback)
+        instantiated_prompt = prompt
+        for description_variable in description_variables:
+            description = self.get_image_understanding_result(description_variable, callback=callback)
+            if not description:
+                error_message = f"*** Error: description variable '{description_variable}' uninstantiated in prompt '{prompt}'"
+                post_task_update(callback, error_message)
+                raise ImageGenerationError(message=error_message)
+            else:
+                instantiated_prompt = instantiated_prompt.replace(f'{{{description_variable}}}', description)
+        return instantiated_prompt
+
+    def description_variables_in_prompt(self, prompt, callback=None):
+        return re.findall(r'\{(.*?)\}', prompt)
 
     def copy_image_objects_to_project(self, images, callback=None):
         project_id = self.id

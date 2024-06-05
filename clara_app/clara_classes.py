@@ -332,6 +332,10 @@ class TreeTaggerError(Exception):
     def __init__(self, message = 'TreeTagger error'):
         self.message = message
 
+class ImageGenerationError(Exception):
+    def __init__(self, message = 'Image generation error'):
+        self.message = message
+
 class ReadingHistoryError(Exception):
     def __init__(self, message = 'ReadingHistory error'):
         self.message = message

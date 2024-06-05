@@ -115,6 +115,34 @@ class ImageRepositoryORM:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 
+    def store_understanding_result(self, project_id, description_variable, result, callback=None):
+        try:
+            post_task_update(callback, f"--- Storing understanding result in database for {description_variable}")
+            image_metadata = ImageMetadata.objects.get(project_id=project_id, description_variable=description_variable)
+            image_metadata.content_description = result
+            image_metadata.save()
+            post_task_update(callback, f"--- Understanding result stored in database")
+        except ImageMetadata.DoesNotExist:
+            post_task_update(callback, f"*** Error: ImageMetadata not found for {description_variable}")
+        except Exception as e:
+            post_task_update(callback, f"*** Error storing understanding result in database for {description_variable}")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+
+    def get_understanding_result(self, project_id, description_variable, callback=None):
+        try:
+            post_task_update(callback, f"--- Retrieving understanding result from database for {description_variable}")
+            image_metadata = ImageMetadata.objects.get(project_id=project_id, description_variable=description_variable)
+            post_task_update(callback, f"--- Understanding result retrieved from database")
+            return image_metadata.content_description
+        except ImageMetadata.DoesNotExist:
+            return None
+        except Exception as e:
+            post_task_update(callback, f"*** Error retrieving understanding result from database for {description_variable}")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            return None
+
     def get_entry(self, project_id, image_name, callback=None):
         try:
             project_id = str(project_id)
@@ -138,12 +166,47 @@ class ImageRepositoryORM:
             )
 
             return image
-                    
+
         except ObjectDoesNotExist:
             post_task_update(callback, f'*** No entry found for "{image_name}" in Image database.')
             return None
         except Exception as e:
             error_message = f'*** Error when looking for "{image_name}" in Image database: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def get_generated_entry_by_position(self, project_id, page, position, callback=None):
+        try:
+            project_id = str(project_id)
+            
+            entry = ImageMetadata.objects.get(project_id=project_id,
+                                              page=page,
+                                              position=position,
+                                              request_type='image-generation')
+            thumbnail = generate_thumbnail_name(entry.file_path)
+            
+            image = Image(
+                entry.file_path,
+                thumbnail,
+                entry.image_name,
+                entry.associated_text,
+                entry.associated_areas,
+                entry.page,
+                entry.position,
+                style_description=entry.style_description,
+                content_description=entry.content_description,
+                request_type=entry.request_type,
+                description_variable=entry.description_variable,
+                user_prompt=entry.user_prompt
+            )
+
+            return image
+                    
+        except ObjectDoesNotExist:
+            post_task_update(callback, f'*** No entry found for page={page}, position={position}, request_type=image-generation in Image database.')
+            return None
+        except Exception as e:
+            error_message = f'*** Error when looking for page={page}, position={position}, request_type=image-generation in Image database: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 

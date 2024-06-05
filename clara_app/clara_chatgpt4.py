@@ -50,7 +50,37 @@ def call_chat_gpt4(prompt, config_info={}, callback=None):
     return asyncio.run(get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback))
 
 def call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None):
-    return asyncio.run(get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback))
+    shortening_api_calls, prompt = shorten_dall_e_3_prompt_if_necessary(prompt, config_info=config_info, callback=callback)
+    image_api_call = asyncio.run(get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback))
+    return shortening_api_calls + [ image_api_call ]
+
+def shorten_dall_e_3_prompt_if_necessary(prompt, config_info={}, callback=None):
+    prompt_length = len(prompt)
+    max_prompt_length = int(config.get('dall_e_3', 'max_prompt_length'))
+    api_calls = []
+    if prompt_length > max_prompt_length:
+        shortening_prompt = f"""The following DALL-E-3 prompt, currently {prompt_length} characters long, exceeds the maximum
+permitted DALL-E-3 prompt length of {max_prompt_length} characters. Please shorten it to under {max_prompt_length} characters
+while retaining the essential details. Ensure the prompt is still clear and provides enough information for an artist to
+create a detailed image.
+
+Here is the prompt:
+__________
+
+{prompt}
+__________
+
+Return only the shortened prompt, since the result will be read by a Python script.
+
+"""
+        post_task_update(callback, f'--- Shortening DALL-E-3 prompt')
+        shortening_api_call = call_chat_gpt4(shortening_prompt, config_info=config_info, callback=callback)
+        api_calls.append(shortening_api_call)
+        shortened_prompt = shortening_api_call.response
+        shortened_prompt_length = len(shortened_prompt)
+        post_task_update(callback, f'--- Shortened DALL-E-3 prompt from {prompt_length} to {shortened_prompt_length} chars')
+        
+    return ( api_calls, shortened_prompt )
 
 def call_chat_gpt4_interpret_image(prompt, image_file, config_info={}, callback=None):
     return asyncio.run(get_api_chatgpt4_interpret_image_response(prompt, image_file, config_info=config_info, callback=callback))
