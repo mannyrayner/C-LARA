@@ -2371,7 +2371,7 @@ def simple_clara_create_text_and_image_helper(username, project_id, simple_clara
 
     # Create the image
     post_task_update(callback, f"STARTED TASK: generate DALL-E-3 image")
-    create_and_add_dall_e_3_image(project_id, callback=None)
+    create_and_add_dall_e_3_image_for_whole_text(project_id, callback=None)
     post_task_update(callback, f"ENDED TASK: generate DALL-E-3 image")
 
     if clara_project_internal.get_project_image('DALLE-E-3-Image-For-Whole-Text'):
