@@ -921,7 +921,7 @@ class CLARAProjectInternal:
         images = self.get_all_project_images()
         post_task_update(callback, f"--- Found {len(images)} images")
         for image in images:
-            if image.request_type == 'image-generation':
+            if image.request_type == 'image-generation' and image.page != 0:
                 # Find the corresponding Page object, if there is one.
                 page_object = text_object.find_page_by_image(image)
                 if page_object:
