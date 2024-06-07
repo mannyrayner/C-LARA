@@ -55,4 +55,6 @@ The workshop is supported by a grant from the France-Australia Science and Innov
 <img src="logos_fasic_workshop_2024/logo_MEAE.png" width="80">
 <img src="logos_fasic_workshop_2024/logo_MESR.png" width="80">
 <img src="logos_fasic_workshop_2024/logo_ambassade_france_australia.jpg" width="80">
+<img src="logos_fasic_workshop_2024/logo_afcp.png" width="80">
+<img src="logos_fasic_workshop_2024/logo-isca.jpg" width="80">
 
