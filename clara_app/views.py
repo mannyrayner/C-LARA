@@ -4440,8 +4440,12 @@ def edit_images(request, project_id, dall_e_3_image_status):
                             associated_areas = json.dumps(structure)
 
                         clara_project_internal.add_project_image(image_name, real_image_file_path,
-                                                                 associated_text=associated_text, associated_areas=associated_areas,
-                                                                 page=page, position=position)
+                                                                 associated_text=associated_text,
+                                                                 associated_areas=associated_areas,
+                                                                 page=page, position=position,
+                                                                 request_type=request_type,
+                                                                 user_prompt=user_prompt,
+                                                                 description_variable=description_variable)
                     elif generate and user_prompt:
                         # We are generating or understanding an image. Put it on the queue for async processing at the end
                         image_request = { 'image_name': image_name,
