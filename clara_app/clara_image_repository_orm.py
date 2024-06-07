@@ -115,15 +115,29 @@ class ImageRepositoryORM:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 
+##    def store_understanding_result(self, project_id, description_variable, result, callback=None):
+##        try:
+##            post_task_update(callback, f"--- Storing understanding result in database for {description_variable}")
+##            image_metadata = ImageMetadata.objects.get(project_id=project_id, description_variable=description_variable)
+##            image_metadata.content_description = result
+##            image_metadata.save()
+##            post_task_update(callback, f"--- Understanding result stored in database")
+##        except ImageMetadata.DoesNotExist:
+##            post_task_update(callback, f"*** Error: ImageMetadata not found for {description_variable}")
+##        except Exception as e:
+##            post_task_update(callback, f"*** Error storing understanding result in database for {description_variable}")
+##            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+##            post_task_update(callback, error_message)
+
     def store_understanding_result(self, project_id, description_variable, result, callback=None):
         try:
-            post_task_update(callback, f"--- Storing understanding result in database for {description_variable}")
-            image_metadata = ImageMetadata.objects.get(project_id=project_id, description_variable=description_variable)
-            image_metadata.content_description = result
-            image_metadata.save()
-            post_task_update(callback, f"--- Understanding result stored in database")
-        except ImageMetadata.DoesNotExist:
-            post_task_update(callback, f"*** Error: ImageMetadata not found for {description_variable}")
+            # Try to update the existing entry with the new associated_areas
+            updated_count = ImageMetadata.objects.filter(project_id=project_id, description_variable=description_variable).update(content_description=result)
+
+            if updated_count > 0:
+                post_task_update(callback, f'--- Updated value for project_id={project_id} and description_variable={description_variable}')
+            else:
+                post_task_update(callback, f'*** No entry found to update result for project_id={project_id} and description_variable={description_variable}')
         except Exception as e:
             post_task_update(callback, f"*** Error storing understanding result in database for {description_variable}")
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
