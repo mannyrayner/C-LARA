@@ -552,7 +552,7 @@
         "timestamp": "20240102235332"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\segmented_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\segmented_annotate_template_20240606122140.txt",
         "annotation_type": "segmented",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -742,5 +742,21 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20240513211046"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\segmented_annotate_template_20240606123116.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240606122140"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240606123116"
     }
 ]

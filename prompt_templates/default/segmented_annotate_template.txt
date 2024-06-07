@@ -12,8 +12,6 @@ Here are some French examples:
 
 {examples}
 
-Here is the text to annotate:
+The output will be read by a Python script, so produce just the text without any comments or introduction. Here is the text to annotate:
 
 {text}
-
-The output will be read by a Python script, so produce just the text without any comments or introduction.
