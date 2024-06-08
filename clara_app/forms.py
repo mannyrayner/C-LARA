@@ -685,7 +685,8 @@ class StyleImageForm(forms.Form):
                                       max_length=100,
                                       widget=forms.TextInput(attrs={'readonly': 'readonly'}),
                                       required=False)
-    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 2}), required=False)
+    user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 5}), required=False)
+    style_description = forms.CharField(label='AI-generated style description', widget=forms.Textarea(attrs={'rows': 5}), required=False)
 
 class ImageSequenceForm(forms.Form):
     image_request_sequence = forms.CharField(widget=forms.Textarea(attrs={'rows': 10,

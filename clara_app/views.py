@@ -4336,7 +4336,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
         # We have a style image on the notional page 0, move that information to the style image template
         style_image_record = initial_data[0]
         initial_style_image_data = { 'image_base_name': style_image_record['image_base_name'],
-                                     'user_prompt': style_image_record['user_prompt']
+                                     'user_prompt': style_image_record['user_prompt'],
+                                     'style_description': style_image_record['style_description']
                                      }
         style_description = style_image_record['style_description']
         # The other data is normal images that will appear in the text
