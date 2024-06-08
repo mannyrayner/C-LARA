@@ -11,11 +11,14 @@
 		<table>
            <thead>
               <tr>
-			     <th>Image Preview</th><th>Prompt</th>
+			     <th>Prompt</th><th>Image Preview</th><th>Description</th>
 			  </tr>
 		    </thead>
 			<tbody>
 			  <tr>
+			     <td>
+				      {{ style_form.user_prompt }}
+			     </td>
 			     <td>
 		            {% if style_form.image_base_name.value %}
                         <img src="{% url 'serve_project_image' project.internal_id style_form.image_base_name.value %}" alt="Current Style Image" style="max-width: 300px; max-height: 300px;">
@@ -23,8 +26,8 @@
                        No image currently stored.
                     {% endif %}
                   </td>
-			      <td>
-				      {{ style_form.user_prompt }}
+				  <td>
+				      {{ style_form.style_description }}
 			      </td>
 			  </tr>
 			</tbody>
@@ -52,7 +55,7 @@
       <thead>
         <tr>
 		  {% if uses_coherent_image_set %}
-		    <th>Request type</th><th>Image</th><th>Description</th><th>Prompt</th><th>Name/Variable</th><th>Page</th><th>Position</th><th>Generate</th><th>Delete</th>
+		    <th>Request type</th><th>Image/Description</th><th>Prompt</th><th>Name/Variable</th><th>Page</th><th>Position</th><th>Generate</th><th>Delete</th>
 		  {% else %}
             <th>Image Preview</th><th>Image Upload</th><th>Image Name</th><th>Page</th><th>Position</th><th>Delete</th>
 		  {% endif %}
