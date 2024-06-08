@@ -14,6 +14,7 @@
 </div>
 ## Contributors
 - **BRANISLAV BEDI**: Pedagogical aspects, user studies, Icelandic evaluation
+- **FRANCIS BOND**: Linguistic annotation
 - **CHATGPT-4**: Software implementation and design
 - **BELINDA CHIERA**: Project coordination, statistical analysis
 - **CATHY CHUA**: Project coordination, ethical aspects
