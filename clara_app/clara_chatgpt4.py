@@ -35,7 +35,7 @@ from io import BytesIO
 config = get_config()
 
 def get_open_ai_api_key(config_info):
-    if 'open_ai_api_key' in config_info and config_info['open_ai_api_key']:
+    if 'open_ai_api_key' in config_info and config_info['open_ai_api_key'] and config_info['open_ai_api_key'] != 'None':
         key = config_info['open_ai_api_key']
         source = 'C-LARA config'
     else:

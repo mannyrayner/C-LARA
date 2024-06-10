@@ -3069,6 +3069,7 @@ def project_detail(request, project_id):
     can_create_segmented_title = clara_project_internal.text_versions["title"]
     can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
     can_create_glossed_and_lemma_text = clara_project_internal.text_versions["segmented"]
+    can_create_glossed_text_from_lemma = clara_project_internal.text_versions["lemma"]
     can_create_pinyin_text = clara_project_internal.text_versions["segmented"] and is_chinese_language(project.l2) 
     can_render_normal = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
     can_render_phonetic = clara_project_internal.text_versions["phonetic"] 
@@ -3086,6 +3087,9 @@ def project_detail(request, project_id):
         form = UpdateProjectTitleForm()
 
     clara_version = get_user_config(request.user)['clara_version']
+
+    print(f'--- clara_project_internal.text_versions["gloss"] = {clara_project_internal.text_versions["gloss"]}')
+    print(f'--- clara_project_internal.text_versions["lemma"] = {clara_project_internal.text_versions["lemma"]}')
     
     return render(request, 'clara_app/project_detail.html', 
                   { 'project': project, 'form': form, 'api_cost': api_cost,
@@ -3096,6 +3100,7 @@ def project_detail(request, project_id):
                     'can_create_segmented_title': can_create_segmented_title,
                     'can_create_phonetic_text': can_create_phonetic_text,
                     'can_create_glossed_and_lemma_text': can_create_glossed_and_lemma_text,
+                    'can_create_glossed_text_from_lemma': can_create_glossed_text_from_lemma,
                     'can_create_pinyin_text': can_create_pinyin_text,
                     'can_render_normal': can_render_normal,
                     'can_render_phonetic': can_render_phonetic,
@@ -3783,6 +3788,7 @@ def compare_versions(request, project_id):
 # - When creating the initial "plain" version, we pass an optional prompt.
 # - In the "lemma" version, we may have the additional option of using TreeTagger.
 def create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template, text_choices_info=None):
+    print(f'create_annotated_text_of_right_type({request}, {project_id}, {this_version}, {previous_version}, {template})')
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     tree_tagger_supported = fully_supported_treetagger_language(project.l2)
@@ -3802,13 +3808,25 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                                                    tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
         if form.is_valid():
             text_choice = form.cleaned_data['text_choice']
+            if text_choice == 'generate_gloss_from_lemma':
+                text_choice = 'generate'
+                previous_version = 'lemma'
+            
             label = form.cleaned_data['label']
             gold_standard = form.cleaned_data['gold_standard']
             username = request.user.username
             # We have an optional prompt when creating or improving the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
-            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin' ):
+            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin', 'delete' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
+            # We're deleting the current version         
+            elif text_choice == 'delete':
+                annotated_text = ''
+                clara_project_internal.save_text_version(this_version, annotated_text, user=username)
+                messages.success(request, "File deleted")
+
+                action = 'edit'                                         
+                current_version = clara_project_internal.get_file_description(this_version, 'current')
             # We're saving an edited version of a file
             elif text_choice == 'manual':
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER', 'ANNOTATOR']):
@@ -3870,7 +3888,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('annotate', this_version)
                         async_task(perform_generate_operation_and_store_api_calls, this_version, project, clara_project_internal,
-                                   request.user, label, prompt=prompt, callback=callback)
+                                   request.user, label, previous_version=previous_version, prompt=prompt, callback=callback)
                         print(f'--- Started generation task')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
@@ -3879,7 +3897,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('improve', this_version)
                         async_task(perform_improve_operation_and_store_api_calls, this_version, project, clara_project_internal,
-                                   request.user, label, prompt=prompt, callback=callback)
+                                   request.user, label, previous_version=previous_version, prompt=prompt, callback=callback)
                         print(f'--- Started improvement task')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
@@ -3962,7 +3980,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
     metadata = clara_project_internal.get_metadata()
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == this_version]
     form = CreateAnnotationTextFormOfRightType(this_version, initial={'text': annotated_text, 'text_choice': text_choice},
-                                               prompt=prompt, archived_versions=archived_versions, current_version=current_version,
+                                               prompt=prompt, archived_versions=archived_versions,
+                                               current_version=current_version, previous_version=previous_version,
                                                tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
 
     #print(f'text_choices_info: {text_choices_info}')
@@ -4034,7 +4053,8 @@ def generate_text_complete(request, project_id, version, status):
     archived_versions = [(data['file'], data['description']) for data in metadata if data['version'] == version]
     rtl_language=is_rtl_language(project.l2)
     form = CreateAnnotationTextFormOfRightType(version, initial={'text': annotated_text, 'text_choice': text_choice},
-                                               prompt=prompt, archived_versions=archived_versions, current_version=current_version,
+                                               prompt=prompt, archived_versions=archived_versions,
+                                               current_version=current_version, previous_version=previous_version,
                                                tree_tagger_supported=tree_tagger_supported, jieba_supported=jieba_supported, is_rtl_language=rtl_language)
 
     clara_version = get_user_config(request.user)['clara_version']
@@ -4088,10 +4108,11 @@ def perform_correct_operation(annotated_text, version, clara_project_internal, u
                                                                        config_info=config_info, callback=callback) )
 
 def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
-                                                   user_object, label, prompt=None, callback=None):
+                                                   user_object, label, previous_version='default', prompt=None, callback=None):
     try:
         config_info = get_user_config(user_object)
-        operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label, prompt=prompt,
+        operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label,
+                                                          previous_version=previous_version, prompt=prompt,
                                                           config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
@@ -4099,7 +4120,7 @@ def perform_generate_operation_and_store_api_calls(version, project, clara_proje
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
     
-def perform_generate_operation(version, clara_project_internal, user, label, prompt=None, config_info={}, callback=None):
+def perform_generate_operation(version, clara_project_internal, user, label, previous_version=None, prompt=None, config_info={}, callback=None):
     if version == 'plain':
         return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'title':
@@ -4115,7 +4136,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pro
     elif version == 'phonetic':
         return ( 'generate', clara_project_internal.create_phonetic_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'gloss':
-        return ( 'generate', clara_project_internal.create_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
+        return ( 'generate', clara_project_internal.create_glossed_text(previous_version=previous_version,
+                                                                        user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
         return ( 'generate', clara_project_internal.create_lemma_tagged_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'mwe':
@@ -4158,7 +4180,7 @@ def perform_improve_operation(version, clara_project_internal, user, label, prom
     else:
         raise InternalCLARAError(message = f'Unknown first argument in perform_improve_operation: {version}')
 
-def previous_version_and_template_for_version(this_version):
+def previous_version_and_template_for_version(this_version, previous_version=None):
     if this_version == 'plain':
         return ( 'plain', 'clara_app/create_plain_text.html' )
     elif this_version == 'title':
@@ -4174,7 +4196,10 @@ def previous_version_and_template_for_version(this_version):
     elif this_version == 'phonetic':
         return ( 'segmented_with_images', 'clara_app/create_phonetic_text.html' )
     elif this_version == 'gloss':
-        return ( 'segmented_with_images', 'clara_app/create_glossed_text.html' )
+        if previous_version == 'lemma':
+            return ( 'lemma', 'clara_app/create_glossed_text_from_lemma.html' )
+        else:
+            return ( 'segmented_with_images', 'clara_app/create_glossed_text.html' )
     elif this_version == 'lemma':
         return ( 'segmented_with_images', 'clara_app/create_lemma_tagged_text.html' )
     elif this_version == 'mwe':
@@ -4248,12 +4273,21 @@ def create_phonetic_text(request, project_id):
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
-# Create or edit "glossed" version of the text     
+# Create or edit "glossed" version of the text, using the segmented_with_images version as input     
 @login_required
 @user_has_a_project_role
 def create_glossed_text(request, project_id):
     this_version = 'gloss'
     previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
+# Create or edit "glossed" version of the text, using the lemma version as input      
+@login_required
+@user_has_a_project_role
+def create_glossed_text_from_lemma(request, project_id):
+    this_version = 'gloss'
+    previous_version = 'lemma'
+    previous_version, template = previous_version_and_template_for_version(this_version, previous_version=previous_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
 # Create or edit "lemma-tagged" version of the text 
@@ -4778,27 +4812,27 @@ def create_and_add_coherent_dall_e_3_images(project_id, requests, callback=None)
                         post_task_update(callback, f"error")
                         return False
                     elif request_type == 'image-generation':
-                        if not current_image:
-                            full_prompt = f"""Create an image based on the following request: {instantiated_user_prompt}
+                        #if not current_image:
+                        full_prompt = f"""Create an image based on the following request: {instantiated_user_prompt}
 
         Make the style of the image consistent with the style of the previously generated image described here: {style_description}
         """
-                        else:
-                            interpretation_prompt = """Produce a detailed description of this image.
-        The description you give will be used to create a modified version of the image, so include as many details as you can.
-        """
-                            post_task_update(callback, f"--- Creating a description of the existing image")
-                            api_call_interpret = call_chat_gpt4_interpret_image(interpretation_prompt, current_image,
-                                                                                config_info=config_info, callback=callback)
-                            content_description = api_call_interpret.response
-                            post_task_update(callback, f"--- Description created: {content_description}")
-                            store_api_calls([ api_call_interpret ], project, project.user, 'image')
-                            full_prompt = f"""Create a modified version of the image described as follows: {content_description}
-
-        Change it according to this request: {instantiated_user_prompt}.
-
-        Make the style of the image consistent with the style of the previously generated image described here: {style_description}
-        """    
+##                        else:
+##                            interpretation_prompt = """Produce a detailed description of this image.
+##        The description you give will be used to create a modified version of the image, so include as many details as you can.
+##        """
+##                            post_task_update(callback, f"--- Creating a description of the existing image")
+##                            api_call_interpret = call_chat_gpt4_interpret_image(interpretation_prompt, current_image,
+##                                                                                config_info=config_info, callback=callback)
+##                            content_description = api_call_interpret.response
+##                            post_task_update(callback, f"--- Description created: {content_description}")
+##                            store_api_calls([ api_call_interpret ], project, project.user, 'image')
+##                            full_prompt = f"""Create a modified version of the image described as follows: {content_description}
+##
+##        Change it according to this request: {instantiated_user_prompt}.
+##
+##        Make the style of the image consistent with the style of the previously generated image described here: {style_description}
+##        """    
                         
                         tmp_image_file = os.path.join(temp_dir, f'{image_name}_{page}_{position}.jpg')
                         post_task_update(callback, f"--- Creating DALL-E-3 image: name {image_name}, page {page},{position}")

@@ -41,7 +41,7 @@ class PromptTemplateRepository:
 
     # Return the contents of file version, or None.
     # template_or_examples is one of ( "template", "examples" )
-    # annotation_type is one of ( "segmented", "gloss", "lemma", "mwe", "pinyin", "lemma_and_gloss" )
+    # annotation_type is one of ( "segmented", "gloss", "gloss_with_mwe", "gloss_with_lemma", "lemma", "lemma_with_mwe", "mwe", "pinyin", "lemma_with_gloss" )
     # operation is one of ( "annotate", "improve" )
     # Optionally load from a specified archive path probably extracted from the metadata
     def load_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str, archive_path=None):
@@ -75,7 +75,7 @@ class PromptTemplateRepository:
 
     # Write a file version, archive the old one if necessary, and update the metadata.
     # template_or_examples is one of ( "template", "examples" )
-    # annotation_type is one of ( "segmented", "gloss", "lemma", "pinyin", "lemma_and_gloss" )
+    # annotation_type is one of ( "segmented", "gloss", "lemma", "pinyin", "lemma_with_gloss" )
     # operation is one of ( "annotate", "improve" )
     # data is the data to store
     # user is the userid to put in the metadata
@@ -185,6 +185,17 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                 raise e
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
+    elif annotation_type == 'gloss_with_mwe' and operation == 'annotate':
+        for string in data:
+            try:
+                elements = string_to_list_of_content_elements(string, 'gloss_with_mwe')
+                for e in elements:
+                    if e.type == 'Word' and ( not 'gloss' in e.annotations or not 'lemma' in e.annotations ):
+                        raise TemplateError(message = f'"{string}" is not good "gloss_with_mwe" "annotate" data')
+            except TemplateError as e:
+                raise e
+            except:
+                raise TemplateError(message = f'Cannot internalise "{string}" as "gloss" data')
     elif annotation_type == 'pinyin' and operation == 'annotate':
         for string in data:
             try:
@@ -262,18 +273,19 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                     raise e
                 except:
                     raise TemplateError(message = f'Cannot internalise "{pair}" as "lemma" data')
-    elif annotation_type == 'lemma_and_gloss' and operation == 'improve':
-        for pair in data:
-            for string in pair:
-                try:
-                    elements = string_to_list_of_content_elements(string, 'lemma_and_gloss')
-                    for e in elements:
-                        if e.type == 'Word' and ( not 'lemma' in e.annotations or not 'pos' in e.annotations or not 'gloss' in e.annotations ):
-                            raise TemplateError(message = f'"{string}" is not good "lemma_and_gloss" "improve" data')
-                except TemplateError as e:
-                    raise e
-                except:
-                    raise TemplateError(message = f'Cannot internalise "{pair}" as "lemma_and_gloss" data')
+    elif annotation_type == 'gloss_with_lemma' and operation == 'annotate':
+        for string in data:
+            try:
+                print(f"--- string_to_list_of_content_elements({string}, 'lemma_and_gloss_for_gloss')")
+                elements = string_to_list_of_content_elements(string, 'lemma_and_gloss_for_gloss')
+                print(f'--- {elements}')
+                for e in elements:
+                    if e.type == 'Word' and ( not 'lemma' in e.annotations or not 'gloss' in e.annotations ):
+                        raise TemplateError(message = f'"{string}" is not good "lemma_with_gloss" "annotate" data')
+            except TemplateError as e:
+                raise e
+            except:
+                raise TemplateError(message = f'Cannot internalise "{string}" as "lemma_with_gloss" data')
     else:
         raise TemplateError(message = f'Cannot check well-formedness of "{data}" as "{annotation_type}" "{operation}" data')
 

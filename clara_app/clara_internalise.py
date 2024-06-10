@@ -239,6 +239,11 @@ def word_with_annotation_to_content_element(word_with_annotation, annotation_key
     elif len(annotation_components) == 3 and annotation_key == 'lemma_and_gloss':
         lemma, pos, gloss = annotation_components
         return ContentElement("Word", content, {'lemma': lemma, 'pos': pos, 'gloss': gloss})
+    elif len(annotation_components) != 2 and annotation_key == 'lemma_and_gloss_for_gloss':
+        raise InternalisationError(message = f'Unable to internalise "{word_with_annotation}" as "lemma_and_gloss_for_gloss" not of form "Word#Lemma/Gloss#')
+    elif len(annotation_components) == 2 and annotation_key == 'lemma_and_gloss_for_gloss':
+        lemma, gloss = annotation_components
+        return ContentElement("Word", content, {'lemma': lemma, 'gloss': gloss})
     else:
         return ContentElement("Word", content, {annotation_key: annotation})
 

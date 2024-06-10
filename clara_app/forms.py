@@ -266,6 +266,7 @@ class CreateAnnotatedTextForm(forms.Form):
     gold_standard = forms.BooleanField(required=False)
     
     def __init__(self, *args,
+                 previous_version='default',
                  tree_tagger_supported=False, jieba_supported=False,
                  is_rtl_language=False, prompt=None,
                  archived_versions=None, current_version='',
@@ -291,7 +292,7 @@ class CreatePlainTextForm(CreateAnnotatedTextForm):
     ]
     prompt = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 3, 'cols': 100}))
     
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
         if prompt:
@@ -309,7 +310,7 @@ class CreateSegmentedTextForm(CreateAnnotatedTextForm):
             ('load_archived', 'Load archived version')
         ]
 
-    def __init__(self, *args, prompt=None, jieba_supported=False, **kwargs):
+    def __init__(self, *args, prompt=None, jieba_supported=False, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES if jieba_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'jieba'
@@ -322,7 +323,7 @@ class CreateSegmentedTitleTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
     
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
 
@@ -334,7 +335,7 @@ class CreateTitleTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
     
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
 
@@ -346,7 +347,7 @@ class CreateSummaryTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
     
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
 
@@ -357,7 +358,7 @@ class CreateCEFRTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
     
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
 
@@ -368,20 +369,45 @@ class CreatePhoneticTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
 
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
     
+##class CreateGlossedTextForm(CreateAnnotatedTextForm):
+##    TEXT_CHOICES = [
+##        ('generate', 'Generate annotated text from segmented text using AI'),
+##        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
+##        ('improve', 'Improve existing annotated text using AI'),
+##        ('manual', 'Manually enter annotated text'),
+##        ('load_archived', 'Load archived version'),
+##        ('delete', 'Delete current glossed text')
+##    ]
+##
+##    TEXT_CHOICES_FROM_LEMMA = [
+##        ('generate', 'Generate annotated text from lemma-tagged text using AI'),
+##        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
+##        ('improve', 'Improve existing annotated text using AI'),
+##        ('manual', 'Manually enter annotated text'),
+##        ('load_archived', 'Load archived version'),
+##        ('delete', 'Delete current glossed text')
+##    ]
+##
+##    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
+##        super().__init__(*args, **kwargs)
+##        self.fields['text_choice'].choices = self.TEXT_CHOICES_FROM_LEMMA if previous_version == 'lemma' else self.TEXT_CHOICES
+
 class CreateGlossedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
-        ('generate', 'Generate annotated text from segmented text using AI'),
+        ('generate', 'Generate annotated text from SEGMENTED text using AI'),
+        ('generate_gloss_from_lemma', 'Generate annotated text from LEMMA-TAGGED text using AI'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
         ('manual', 'Manually enter annotated text'),
-        ('load_archived', 'Load archived version')
+        ('load_archived', 'Load archived version'),
+        ('delete', 'Delete current glossed text')
     ]
 
-    def __init__(self, *args, prompt=None, **kwargs):
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
 
@@ -396,7 +422,7 @@ class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
 
-    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', **kwargs):
+    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', previous_version='default', **kwargs):
         super(CreateLemmaTaggedTextForm, self).__init__(*args, archived_versions=archived_versions, current_version=current_version, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES if tree_tagger_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
@@ -410,7 +436,7 @@ class CreateMWETaggedTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
 
-    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', **kwargs):
+    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', previous_version='default', **kwargs):
         super(CreateMWETaggedTextForm, self).__init__(*args, archived_versions=archived_versions, current_version=current_version, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES if tree_tagger_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
@@ -427,7 +453,7 @@ class CreatePinyinTaggedTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
 
-    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', **kwargs):
+    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', previous_version='default', **kwargs):
         super(CreatePinyinTaggedTextForm, self).__init__(*args, archived_versions=archived_versions, current_version=current_version, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
         
@@ -438,7 +464,7 @@ class CreateLemmaAndGlossTaggedTextForm(CreateAnnotatedTextForm):
         ('load_archived', 'Load archived version')
     ]
 
-    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', **kwargs):
+    def __init__(self, *args, tree_tagger_supported=False, archived_versions=None, current_version='', previous_version='default', **kwargs):
         super(CreateLemmaAndGlossTaggedTextForm, self).__init__(*args, archived_versions=archived_versions, current_version=current_version, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES if tree_tagger_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'tree_tagger'
@@ -541,10 +567,11 @@ class PromptSelectionForm(forms.Form):
     annotation_type_choices = [
         ("segmented", "Segmented"),
         ("mwe", "Multi Word Expressions"),
-        ("gloss", "Gloss"),
-        ("gloss_with_mwe", "Gloss using MWEs"),
         ("lemma", "Lemma"),
         ("lemma_with_mwe", "Lemma using MWEs"),
+        ("gloss", "Gloss"),
+        ("gloss_with_mwe", "Gloss using MWEs"),
+        ("gloss_with_lemma", "Gloss using lemmas"),
         ("pinyin", "Pinyin"),
     ]
 
