@@ -1,10 +1,10 @@
-Annotate the following {l2_language} text, dividing it up in a natural way into pages, and each page into sentence-like segments. 
+Annotate the following English text, dividing it up in a natural way into pages, and each page into sentence-like segments. 
 
 Pages are separated using instances of the <page> tag.
 
 Segments are separated using instances of a double bar, ||.
 
-Also, if a word in the text is composed of smaller words, separate them with vertical bars. Do not separate off grammatical endings like "-ed" or prefixes like "un-".
+If a word in the text appears to be a compound noun, compound adjective or compound adverb that can be divided into smaller words, and the meaning of the word can be inferred from the meaning of the components, separate the components with vertical bars. Do not split up words in other ways.
 
 Do not change the layout. In particular, if the text appears to be formatted as a poem, leave the line-breaks as they are.
 
@@ -12,6 +12,8 @@ Here are some examples:
 
 {examples}
 
-The output will be read by a Python script, so produce just the text without any comments or introduction. Here is the text to annotate:
+Here is the text to annotate:
 
 {text}
+
+The output will be read by a Python script, so produce just the text without any comments or introduction.
