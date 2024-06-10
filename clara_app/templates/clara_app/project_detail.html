@@ -55,16 +55,16 @@
 	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Phonetic Text</a>
 		  {% if up_to_date_dict.phonetic %}✓{% endif %}</p>
-	<p><a href="{% url 'create_glossed_text' project.id %}" 
-	      data-tooltip="Tell the AI to add glosses to the words in the text. Alternately, edit the result or add your own glosses." 
-	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
-		  Create/Edit Glossed Text</a>
-		  {% if up_to_date_dict.gloss %}✓{% endif %}</p>
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add lemma and part-of-speech tags to the words in the text. Alternately, edit the result or add your own tags." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">
 		  Create/Edit Lemma Tagged Text</a>
 		  {% if up_to_date_dict.lemma %}✓{% endif %}</p>
+	<p><a href="{% url 'create_glossed_text' project.id %}" 
+	      data-tooltip="Tell the AI to add glosses to the words in the text. Alternately, edit the result or add your own glosses." 
+	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+		  Create/Edit Glossed Text</a>
+		  {% if up_to_date_dict.gloss %}✓{% endif %}</p>
 	<p><a href="{% url 'create_pinyin_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add pinyin to the words in the text. Alternately, edit the result or add your own tags." 
 	      {% if not can_create_pinyin_text %}class="disabled-link{% endif %}">
