@@ -1,0 +1,17 @@
+I am going to give you a short passage in {l2_language}, presented in a JSON format. I want you to add {l1_language} glosses in the following way.
+
+The JSON is a list of pairs of strings. In each pair, the first element is an {l2_language} word or punctuation mark, and the second element is the lemma associated with that string.
+
+Please add a third element to each pair representing an {l1_language} gloss, making it a three-element list in which the first element is the {l2_language} word or punctuation mark, the second is the {l2_language} lemma, and the third is a gloss in {l1_language}. If there is no sensible way to gloss the string in {l1_language}, gloss it as '-'. 
+
+Note that some words may be part of multi-word expressions (MWEs). In this case, the lemma for all the words in the MWE will be the lemma associated with the MWE. When words are part of an MWE, gloss all of them in the same way, using the lemma as a guide.
+
+For example, if you are glossing English in French, you might annotate
+
+{examples}
+
+Here are the items to gloss:
+
+{simplified_elements_json}
+
+Write out just the annotated JSON with no introduction, since it will be processed by a Python script.

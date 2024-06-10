@@ -758,5 +758,45 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20240606123116"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_lemma_annotate_template_20240608125844.txt",
+        "annotation_type": "gloss_with_lemma",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240608125825"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_lemma_annotate_template_20240609133539.txt",
+        "annotation_type": "gloss_with_lemma",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240608125844"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_lemma_annotate_examples_20240609133918.json",
+        "annotation_type": "gloss_with_lemma",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240608133749"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_with_lemma_annotate_template.txt",
+        "annotation_type": "gloss_with_lemma",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240609133539"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_with_lemma_annotate_examples.json",
+        "annotation_type": "gloss_with_lemma",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240609133918"
     }
 ]
