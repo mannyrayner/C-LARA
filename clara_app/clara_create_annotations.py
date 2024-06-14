@@ -832,7 +832,7 @@ def parse_chatgpt_annotation_response(response, simplified_elements, processing_
 
     if processing_phase == 'mwe':
         # Extract the analysis text and the JSON list separately
-        analysis_marker = "Analysis:"
+        analysis_marker = "Analysis"
         json_marker = "Output"
 
         analysis_start = response.find(analysis_marker)

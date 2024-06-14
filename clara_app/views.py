@@ -31,7 +31,8 @@ from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingReques
 from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, UnifiedSearchForm
 from .forms import ActivityForm, ActivitySearchForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm, ActivityStatusForm, ActivityResolutionForm
 from .forms import AIActivitiesUpdateForm, DeleteContentForm
-from .forms import ProjectCreationForm, UpdateProjectTitleForm, SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
+from .forms import ProjectCreationForm, UpdateProjectTitleForm, UpdateCoherentImageSetForm
+from .forms import SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCreditForm, ConfirmTransferForm
 from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
@@ -3079,20 +3080,26 @@ def project_detail(request, project_id):
     images_exist = len(images) != 0
     api_cost = get_project_api_cost(request.user, project)
     if request.method == 'POST':
-        form = UpdateProjectTitleForm(request.POST)
-        if form.is_valid():
-            project.title = form.cleaned_data['new_title']
+        title_form = UpdateProjectTitleForm(request.POST, prefix="title")
+        image_set_form = UpdateCoherentImageSetForm(request.POST, prefix="image_set")
+        if title_form.is_valid() and title_form.cleaned_data['new_title']:
+            project.title = title_form.cleaned_data['new_title']
+            project.save()
+        if image_set_form.is_valid():
+            project.uses_coherent_image_set = image_set_form.cleaned_data['uses_coherent_image_set']
             project.save()
     else:
-        form = UpdateProjectTitleForm()
+        title_form = UpdateProjectTitleForm(prefix="title")
+        image_set_form = UpdateCoherentImageSetForm(prefix="image_set",
+                                                    initial={'uses_coherent_image_set': project.uses_coherent_image_set})
 
     clara_version = get_user_config(request.user)['clara_version']
-
-    print(f'--- clara_project_internal.text_versions["gloss"] = {clara_project_internal.text_versions["gloss"]}')
-    print(f'--- clara_project_internal.text_versions["lemma"] = {clara_project_internal.text_versions["lemma"]}')
     
     return render(request, 'clara_app/project_detail.html', 
-                  { 'project': project, 'form': form, 'api_cost': api_cost,
+                  { 'project': project,
+                    'title_form': title_form,
+                    'image_set_form': image_set_form,
+                    'api_cost': api_cost,
                     'text_versions': text_versions,
                     'images_exist': images_exist,
                     'up_to_date_dict': up_to_date_dict,
@@ -4694,18 +4701,23 @@ def create_image_request_sequence(project_id, callback=None):
           {{
             "request_type": "image-generation",
             "page": 1,
-            "prompt": "An image of a brave princess named Elara standing in front of a grand castle, with the lush forest in the background. Elara is wearing a simple yet elegant dress, and she has a determined look on her face."
+            "prompt": "An image of a brave princess named Elara standing in front of a grand castle, with the lush forest in the background.
+            Elara is wearing a simple yet elegant dress, and she has a determined look on her face."
           }},
           {{
             "request_type": "image-understanding",
             "page": 1,
-            "prompt": "Look at this image, which depicts a princess standing in front of a castle, and provide a description of the princess. This description will be used when generating other images, so make it as detailed as possible.",
+            "prompt": "Analyze this image depicting Princess Elara. Provide a comprehensive description that focuses on her appearance and attire.
+            Detail her apparent age, ethnicity, facial features, hairstyle, body build, clothing style, and overall demeanor.
+            This detailed description is crucial for ensuring consistency in her portrayal across all subsequent images in the series.
+            Use precise, descriptive language to capture her essence, as this information will directly influence the generation of future images."
             "description-variable": "Elara-description"
           }},
           {{
             "request_type": "image-generation",
             "page": 2,
-            "prompt": "An image of Princess Elara exploring the forest, surrounded by tall trees, colorful flowers, and playful animals like rabbits and birds. Princess Elara will be as described here: {{Elara-description}}."
+            "prompt": "An image of Princess Elara exploring the forest, surrounded by tall trees, colorful flowers, and playful animals like rabbits and birds.
+            Princess Elara will be as described here: {{Elara-description}}."
           }}
         ]
 

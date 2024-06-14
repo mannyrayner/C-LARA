@@ -230,7 +230,10 @@ class AddProjectMemberForm(forms.Form):
     role = forms.ChoiceField(choices=ROLE_CHOICES)
        
 class UpdateProjectTitleForm(forms.Form):
-    new_title = forms.CharField(max_length=200)
+    new_title = forms.CharField(max_length=200, required=False)
+
+class UpdateCoherentImageSetForm(forms.Form):
+    uses_coherent_image_set = forms.BooleanField(required=False)
 
 class AddCreditForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
