@@ -52,6 +52,10 @@ Students and early stage researchers can apply for grants to support participati
 
 The workshop is supported by a grant from the France-Australia Science and Innovation program; Flinders University; the University of South Australia; Aix Marseille Université, CNRS, Laboratoire Parole et Langage; and Université de la Nouvelle Calédonie. It is endorsed by the International Speech Communication Association and the Association Francophone de la Communication Parlée. 
 
+## Contact information
+
+Please address enquiries about the workshop to langtech2024@protonmail.com.
+
 <img src="logos_fasic_workshop_2024/logo_flinders.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unisa.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_amu.jpg" width="80">
