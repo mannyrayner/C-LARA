@@ -3,11 +3,36 @@
 
 {% block content %}
 	<h1>{{ project.title }}</h1>
-	<form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Update Title</button>
-    </form>
+	<table>
+    <tr>
+        <td>
+            <form method="post" prefix="title">
+                {% csrf_token %}
+                <table>
+                    <tr>
+                        <td>Title:</td>
+                        <td>{{ title_form.new_title }}</td>
+                        <td><button type="submit">Update Title</button></td>
+                    </tr>
+                </table>
+            </form>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <form method="post" prefix="image_set">
+                {% csrf_token %}
+                <table>
+                    <tr>
+                        <td>Use coherent AI-generated image set:</td>
+                        <td>{{ image_set_form.uses_coherent_image_set }}</td>
+                        <td><button type="submit">Update Coherent Image Set</button></td>
+                    </tr>
+                </table>
+            </form>
+        </td>
+    </tr>
+    </table>
 	<p>Text Language: {{ project.l2|titlecase }}</p>
 	<p>Annotation Language: {{ project.l1|titlecase }}</p>
 	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
@@ -100,6 +125,11 @@
       	  {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
 		  Render Phonetic Text</a>
 		  {% if up_to_date_dict.render_phonetic %}✓{% endif %}</p>
+	<p><a href="{% url 'serve_rendered_text' project.id 'normal' 'page_1.html' %}" target="_blank"}" 
+	      data-tooltip="Display the multimedia version of the text in a new tab." 
+	      {% if not rendered_html_exists %}class="disabled-link"{% endif %}>
+		  Display Rendered Text</a>
+		  {% if up_to_date_dict.render %}✓{% endif %}</p>
 	<p><a href="{% url 'offer_to_register_content_normal' project.id %}" 
 	      data-tooltip="Make the multimedia version of the text available through the C-LARA social network." 
 	      {% if not rendered_html_exists %}class="disabled-link"{% endif %}>
