@@ -14,15 +14,17 @@
 </div>
 # Innovative approaches to speech and language technologies for Oceania, the world's most linguistically diverse region
 
-**Flinders University,** 
-**Bedford Park campus**
-**Adelaide, Australia**
+[**Flinders University, Bedford Park campus, Adelaide, Australia**](https://www.flinders.edu.au/campus/bedford-park)
+
+and
+
+online (details to follow)
 
 **25-26 July 2024**
 
-## Form
+## Program
 
-We plan a hybrid workshop, with both in-person and virtual attendance. We will soon be posting further details.
+A detailed program will follow shortly. Confirmed presenters include Steven Bird (Charles Darwin University), Manny Rayner (University of South Australia), Jocelyn Aznar (University of Bern), and Fabrice Wacalie (University of New Caledonia).
 
 ## Content
 Long gone are the days of learning languages by memorizing stock phrases (My tailor is rich!) and lists of verb conjugations – at least for some languages. What has historically been called Computer-assisted language learning or CALL is now very much the norm rather than the exception. We routinely use online platforms and apps (e.g. Babbel and DuoLinguo), and learners of languages rich in resources like English and French have easy access to native speaker pronunciations. But the vast majority of the world’s approximately 7000 languages are “under-resourced” – lacking in speech and language technologies such as online dictionaries, courseware (didacticiels), text-to-speech synthesis, multimedia e-books, and smartphone apps. Nowhere is this truer than in Oceania (including the Pacific islands, Australia, and New Zealand), the most linguistically diverse region in the world, home to less than 1% of the world’s people, but 11% of its languages.
@@ -44,7 +46,11 @@ Manny Rayner, University of South Australia (Adelaide, Australia)
 
 Pauline Welby, Aix Marseille University, CNRS, Laboratoire Parole et Langage (France) and Université de la Nouvelle Calédonie
 
-The workshop is supported by a grant from the France-Australia Science and Innovation Cooperation (FASIC) program.
+## Grants
+
+Students and early stage researchers can apply for grants to support participation through the [International Speech Communication Association](https://www.isca-speech.org/grants) and the [Association Francophone de la Communication Parlée](https://www.afcp-parole.org/informations-sur-les-bourses-de-lafcp/).
+
+The workshop is supported by a grant from the France-Australia Science and Innovation program; Flinders University; the University of South Australia; Aix Marseille Université, CNRS, Laboratoire Parole et Langage; and Université de la Nouvelle Calédonie. **It is endorsed by the International Speech Communication Association and the Association Francophone de la Communication Parlée.** 
 
 <img src="logos_fasic_workshop_2024/logo_flinders.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unisa.jpg" width="80">
