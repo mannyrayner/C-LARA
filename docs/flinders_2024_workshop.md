@@ -50,7 +50,7 @@ Pauline Welby, Aix Marseille University, CNRS, Laboratoire Parole et Langage (Fr
 
 Students and early stage researchers can apply for grants to support participation through the [International Speech Communication Association](https://www.isca-speech.org/grants) and the [Association Francophone de la Communication Parlée](https://www.afcp-parole.org/informations-sur-les-bourses-de-lafcp/).
 
-The workshop is supported by a grant from the France-Australia Science and Innovation program; Flinders University; the University of South Australia; Aix Marseille Université, CNRS, Laboratoire Parole et Langage; and Université de la Nouvelle Calédonie. **It is endorsed by the International Speech Communication Association and the Association Francophone de la Communication Parlée.** 
+The workshop is supported by a grant from the France-Australia Science and Innovation program; Flinders University; the University of South Australia; Aix Marseille Université, CNRS, Laboratoire Parole et Langage; and Université de la Nouvelle Calédonie. It is endorsed by the International Speech Communication Association and the Association Francophone de la Communication Parlée. 
 
 <img src="logos_fasic_workshop_2024/logo_flinders.jpg" width="80">
 <img src="logos_fasic_workshop_2024/logo_unisa.jpg" width="80">
