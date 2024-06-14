@@ -72,9 +72,20 @@
 			  <!-- </div> -->
 			{%- elif element.type == "Word" -%}
 				{%- if not phonetic -%}
-					<span class="word" data-gloss="{%- if element.annotations.pinyin -%}{{ element.annotations.pinyin }}; {%- endif -%}{{ element.annotations.gloss }}" 
-						data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
-						data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
+					{%- if element.annotations.pinyin -%}
+						<ruby class="word" data-gloss="{{ element.annotations.gloss }}" 
+							  data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
+							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">
+							{{ element.content }}
+							<rt>{{ element.annotations.pinyin }}</rt>
+						</ruby>
+					{%- else -%}
+						<span class="word" data-gloss="{{ element.annotations.gloss }}" 
+							  data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
+							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">
+							{{ element.content }}
+						</span>
+					{%- endif -%}
 				{%- elif phonetic and element.annotations.phonetic -%}
 					<span class="word" data-gloss="{{ element.annotations.phonetic }}" 
 						data-lemma="{{ element.annotations.phonetic|replace_punctuation }}" 
