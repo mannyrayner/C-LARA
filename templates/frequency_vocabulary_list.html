@@ -12,7 +12,7 @@
   <ul>
     {% for lemma, lemma_data in vocabulary_list %}
     <li>
-	  <a href="concordance_{{ lemma }}.html">{{ lemma }} ({{ lemma_data.frequency }})</a>
+	  <a href="concordance_{{ lemma|replace_punctuation }}.html">{{ lemma }} ({{ lemma_data.frequency }})</a>
     </li>
 	{% endfor %}
   </ul>

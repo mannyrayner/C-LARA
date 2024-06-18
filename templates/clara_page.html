@@ -82,9 +82,7 @@
 					{%- else -%}
 						<span class="word" data-gloss="{{ element.annotations.gloss }}" 
 							  data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
-							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">
-							{{ element.content }}
-						</span>
+							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
 					{%- endif -%}
 				{%- elif phonetic and element.annotations.phonetic -%}
 					<span class="word" data-gloss="{{ element.annotations.phonetic }}" 
@@ -96,6 +94,9 @@
 		  {%- endfor -%}
 		  {%- if segment.annotations.tts -%}
 			<span class="speaker-icon">&#128266;</span>
+		  {%- endif -%}
+		  {%- if 'translated' in segment.annotations -%}
+			<span class="translation-icon" data-translation="{{ segment.annotations.translated }}">&#9998;</span>
 		  {%- endif -%}
 		</span>
 		{%- endfor -%}
