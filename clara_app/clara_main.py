@@ -135,7 +135,7 @@ from .clara_create_annotations import invoke_templates_on_trivial_text
 from .clara_create_annotations import generate_glossed_version, generate_segmented_version, generate_tagged_version
 from .clara_create_annotations import improve_glossed_version, improve_segmented_version, improve_tagged_version
 from .clara_create_annotations import generate_pinyin_tagged_version, improve_pinyin_tagged_version
-from .clara_create_annotations import improve_lemma_and_gloss_tagged_version, generate_mwe_tagged_version
+from .clara_create_annotations import improve_lemma_and_gloss_tagged_version, generate_mwe_tagged_version, generate_translated_version
 from .clara_conventional_tagging import generate_tagged_version_with_treetagger, generate_tagged_version_with_trivial_tags
 from .clara_create_story import generate_story, improve_story
 from .clara_cefr import estimate_cefr_reading_level
@@ -146,7 +146,7 @@ from .clara_internalise import internalize_text
 from .clara_correct_syntax import correct_syntax_in_string
 from .clara_chinese import segment_text_using_jieba, pinyin_tag_text_using_pypinyin
 from .clara_diff import diff_text_objects
-from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glossed_and_tagged_with_pinyin
+from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glossed_and_tagged_with_pinyin, merge_with_translation_annotations
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 #from .clara_image_repository import ImageRepository
@@ -199,6 +199,7 @@ class CLARAProjectInternal:
             "cefr_level": None,
             "segmented": None,
             "segmented_with_images": None,
+            "translated": None,
             "phonetic": None,
             "gloss": None,
             "lemma": None,
@@ -300,6 +301,7 @@ class CLARAProjectInternal:
             self._copy_text_version_if_it_exists("cefr_level", new_project)
             self._copy_text_version_if_it_exists("summary", new_project)
             self._copy_text_version_if_it_exists("segmented", new_project)
+            self._copy_text_version_if_it_exists("translated", new_project)
             self._copy_text_version_if_it_exists("phonetic", new_project)
             self._copy_text_version_if_it_exists("lemma", new_project)
             self._copy_text_version_if_it_exists("mwe", new_project)
@@ -423,7 +425,7 @@ class CLARAProjectInternal:
         metadata_file = self._get_metadata_file()
         metadata = self.get_metadata()
 
-        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "phonetic", "gloss", "lemma",
+        versions = ["prompt", "plain", "title", "segmented_title", "summary", "cefr_level", "segmented", "translated", "phonetic", "gloss", "lemma",
                     "pinyin", "mwe", "image_request_sequence"]
 
         # Check if any metadata entries are missing for the existing files
@@ -722,6 +724,15 @@ class CLARAProjectInternal:
         self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')
         return api_calls
 
+    # Call ChatGPT-4 to create version of the text with translation annotations
+    def create_translated_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        segmented_text = self.load_text_version("segmented_with_images")
+        translated_text, api_calls = generate_translated_version(segmented_text, self.l2_language, self.l1_language,
+                                                                 config_info=config_info, callback=callback)
+        self.save_text_version("translated", translated_text, user=user, label=label, source='ai_generated')
+            
+        return api_calls
+
     # Create a "phonetic" version of the text 
     def create_phonetic_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented_with_images")
@@ -887,9 +898,14 @@ class CLARAProjectInternal:
                 pinyin_tagged_text = self.load_text_version("pinyin")
                 internalised_pinyin_text = internalize_text(pinyin_tagged_text, self.l2_language, self.l1_language, 'pinyin')
                 merged_text_with_pinyin = merge_glossed_and_tagged_with_pinyin(merged_text, internalised_pinyin_text)
-                return merged_text_with_pinyin
-            else:
-                return merged_text
+                merged_text = merged_text_with_pinyin
+            if self.text_versions["translated"]:
+                translated_tagged_text = self.load_text_version("translated")
+                internalised_translated_text = internalize_text(translated_tagged_text, self.l2_language, self.l1_language, 'translated')
+                merged_text_with_translations = merge_with_translation_annotations(merged_text, internalised_translated_text)
+                merged_text = merged_text_with_translations
+            
+            return merged_text
 
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
@@ -1274,6 +1290,7 @@ class CLARAProjectInternal:
                                                                phonetic=phonetic, callback=callback)
  
         post_task_update(callback, f"--- Created internalised and annotated text")
+        text_object.prettyprint()
         # Pass both Django-level and internal IDs
         normal_html_exists = self.rendered_html_exists(project_id)
         post_task_update(callback, f"--- normal_html_exists: {normal_html_exists}")

@@ -47,11 +47,13 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
         internalized_segments = []
 
         for segment_text in segments_text:
-            if text_type != 'mwe':
+            if not text_type in ( 'mwe', 'translated' ):
                 content_elements = parse_content_elements(segment_text, text_type)
                 internalized_segment = Segment(content_elements)
-            else:
+            elif text_type == 'mwe':
                 internalized_segment = parse_segment_mwe(segment_text)
+            else:
+                internalized_segment = parse_segment_translated(segment_text)
             internalized_segments.append(internalized_segment) 
 
         # Create a Page object with the internalized_segments and page_attributes
@@ -98,25 +100,6 @@ def parse_content_elements_segmented(segment_text):
 
     return content_elements
 
-##def parse_segment_mwe(segment_text):
-##    try:
-##        components = segment_text.split('#')
-##        n_components = len(components)
-##        if n_components == 0:
-##            return Segment([], annotations={'mwes': []})
-##        
-##        if n_components == 1:
-##            main_text, all_mwe_text = segment_text, ''
-##        elif n_components == 3 and not components[2]:
-##            main_text, all_mwe_text = components[:2]
-##            
-##        content_elements = parse_content_elements_segmented(main_text)
-##        mwe_texts = all_mwe_text.split(',')
-##        mwes = [ mwe_text.split() for mwe_text in mwe_texts ]
-##        return Segment(content_elements, annotations={'mwes': mwes})
-##    except:
-##        raise InternalisationError(message = f"Unable to internalise '{segment_text}' as MWE segment. Needs to be of form '<text>?#<word> <word> ...,<word> <word> ...,...#")
-
 def parse_segment_mwe(segment_text):
     try:
         # Split the entire segment into lines
@@ -157,6 +140,30 @@ def parse_segment_mwe(segment_text):
     except Exception as e:
         raise InternalisationError(message=f"Unable to internalise '{segment_text}' as an MWE segment. Error: {str(e)}")
 
+def parse_segment_translated(segment_text):
+    try:
+        components = segment_text.split('#')
+        n_components = len(components)
+        if n_components == 3 and components[2].strip() == '':
+            main_text = components[0]
+            translated = components[1]
+        elif n_components == 1:
+            main_text = segment_text
+            translated = ''
+        else:
+            raise InternalisationError(message=f"Unable to internalise '{segment_text}' as a translated segment.")
+
+        content_elements = parse_content_elements_segmented(main_text)
+
+        # Create and return the Segment object with the parsed annotations
+        if translated in ( '', '-' ):
+            # Don't add null translations
+            return Segment(content_elements)
+        else:
+            return Segment(content_elements, annotations={'translated': translated})
+
+    except Exception as e:
+        raise InternalisationError(message=f"Unable to internalise '{segment_text}' as a translated segment. Error: {str(e)}")
 
 def parse_content_elements_glossed_or_tagged(segment_text, text_type):
     #pattern = r"((?:<img[^>]*>|<audio[^>]*>|<\/?\w+>|@[^@]+@#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|(?:[^\s|#]|(?<=\\)#)*(?:\|[^\s|#]|(?<=\\)#)*#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|[\s\p{P}--[@#'\\]]+))"

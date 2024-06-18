@@ -375,7 +375,18 @@ class CreatePhoneticTextForm(CreateAnnotatedTextForm):
     def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES
-    
+
+class CreateTranslatedTextForm(CreateAnnotatedTextForm):
+    TEXT_CHOICES = [
+        ('generate', 'Use AI to translate text from segmented text'),
+        ('manual', 'Manually edit/enter translations'),
+        ('load_archived', 'Load archived version')
+    ]
+
+    def __init__(self, *args, prompt=None, previous_version='default', **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_choice'].choices = self.TEXT_CHOICES
+      
 ##class CreateGlossedTextForm(CreateAnnotatedTextForm):
 ##    TEXT_CHOICES = [
 ##        ('generate', 'Generate annotated text from segmented text using AI'),
@@ -569,6 +580,7 @@ class PromptSelectionForm(forms.Form):
     
     annotation_type_choices = [
         ("segmented", "Segmented"),
+        ("translated", "Translated"),
         ("mwe", "Multi Word Expressions"),
         ("lemma", "Lemma"),
         ("lemma_with_mwe", "Lemma using MWEs"),
@@ -595,7 +607,7 @@ class PromptSelectionForm(forms.Form):
 
             chinese_language_included = any([ is_chinese_language(lang) for lang in languages ])
             if not chinese_language_included:
-                self.fields['annotation_type'].choices = [ ( choice, label ) for ( choice, label ) in annotation_type_choices
+                self.fields['annotation_type'].choices = [ ( choice, label ) for ( choice, label ) in self.annotation_type_choices
                                                            if choice != 'pinyin' ]
 
 class TemplateForm(forms.Form):

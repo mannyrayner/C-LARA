@@ -36,7 +36,7 @@ from .forms import SimpleClaraForm, ProjectImportForm, ProjectSearchForm, AddCre
 from .forms import DeleteTTSDataForm, AudioMetadataForm, InitialiseORMRepositoriesForm
 from .forms import HumanAudioInfoForm, LabelledSegmentedTextForm, AudioItemFormSet, PhoneticHumanAudioInfoForm
 from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitleTextForm, CreateSummaryTextForm, CreateCEFRTextForm, CreateSegmentedTextForm
-from .forms import CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateMWETaggedTextForm
+from .forms import CreateTranslatedTextForm, CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateMWETaggedTextForm
 from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
@@ -3904,7 +3904,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('improve', this_version)
                         async_task(perform_improve_operation_and_store_api_calls, this_version, project, clara_project_internal,
-                                   request.user, label, previous_version=previous_version, prompt=prompt, callback=callback)
+                                   request.user, label, prompt=prompt, callback=callback)
                         print(f'--- Started improvement task')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
@@ -4081,6 +4081,8 @@ def CreateAnnotationTextFormOfRightType(version, *args, **kwargs):
         return CreateCEFRTextForm(*args, **kwargs)
     elif version == 'segmented':
         return CreateSegmentedTextForm(*args, **kwargs)
+    elif version == 'translated':
+        return CreateTranslatedTextForm(*args, **kwargs)
     elif version == 'phonetic':
         return CreatePhoneticTextForm(*args, **kwargs)
     elif version == 'gloss':
@@ -4140,6 +4142,8 @@ def perform_generate_operation(version, clara_project_internal, user, label, pre
         return ( 'generate', clara_project_internal.get_cefr_level(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
         return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label, config_info=config_info, callback=callback) )
+    elif version == 'translated':
+        return ( 'generate', clara_project_internal.create_translated_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'phonetic':
         return ( 'generate', clara_project_internal.create_phonetic_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'gloss':
@@ -4200,6 +4204,8 @@ def previous_version_and_template_for_version(this_version, previous_version=Non
         return ( 'plain', 'clara_app/get_cefr_level.html' )
     elif this_version == 'segmented':
         return ( 'plain', 'clara_app/create_segmented_text.html' )
+    elif this_version == 'translated':
+        return ( 'segmented_with_images', 'clara_app/create_translated_text.html' )
     elif this_version == 'phonetic':
         return ( 'segmented_with_images', 'clara_app/create_phonetic_text.html' )
     elif this_version == 'gloss':
@@ -4269,6 +4275,14 @@ def create_cefr_level(request, project_id):
 @user_has_a_project_role
 def create_segmented_text(request, project_id):
     this_version = 'segmented'
+    previous_version, template = previous_version_and_template_for_version(this_version)
+    return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
+
+# Create or edit "translated" version of the text     
+@login_required
+@user_has_a_project_role
+def create_translated_text(request, project_id):
+    this_version = 'translated'
     previous_version, template = previous_version_and_template_for_version(this_version)
     return create_annotated_text_of_right_type(request, project_id, this_version, previous_version, template)
 
@@ -4708,8 +4722,9 @@ def create_image_request_sequence(project_id, callback=None):
             "request_type": "image-understanding",
             "page": 1,
             "prompt": "Analyze this image depicting Princess Elara. Provide a comprehensive description that focuses on her appearance and attire.
-            Detail her apparent age, ethnicity, facial features, hairstyle, body build, clothing style, and overall demeanor.
-            This detailed description is crucial for ensuring consistency in her portrayal across all subsequent images in the series.
+            Detail her apparent age, ethnicity, facial features, hair style and colour, body build, clothing style, and overall demeanor. If it
+            is not easy to extract this information from the image, e.g. regarding ethnicity, make a plausible decision.
+            A detailed description is crucial for ensuring consistency in her portrayal across all subsequent images in the series.
             Use precise, descriptive language to capture her essence, as this information will directly influence the generation of future images."
             "description-variable": "Elara-description"
           }},

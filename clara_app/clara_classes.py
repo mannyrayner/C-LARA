@@ -32,7 +32,7 @@ class ContentElement:
 
         # If a Word element contains spaces, we need to add @ signs around it for the annotated text to be well-formed
         def put_at_signs_around_text_if_necessary(text, annotation_type):
-            if ' ' in text and annotation_type in ( 'segmented', 'gloss', 'lemma' ):
+            if ' ' in text and annotation_type in ( 'segmented', 'mwe', 'translated', 'gloss', 'lemma' ):
                 return f'@{text}@'
             else:
                 return text
@@ -54,7 +54,7 @@ class ContentElement:
                 lemma, pos = ( annotations['lemma'], annotations['pos'] )
                 escaped_lemma = escape_special_chars(lemma)
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
-            elif annotation_type in ( 'plain', 'segmented', 'mwe' ):
+            elif annotation_type in ( 'plain', 'segmented', 'mwe', 'translated' ):
                 return self.content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])
@@ -83,7 +83,7 @@ class Segment:
         for element in self.content_elements:
             this_type = element.type
             # When producing 'segmented' or 'phonetic' text, we need to add | markers between continuous Words.
-            if annotation_type in ( 'segmented', 'phonetic' ) and this_type == 'Word' and last_type == 'Word':
+            if annotation_type in ( 'segmented', 'mwe', 'translated', 'phonetic' ) and this_type == 'Word' and last_type == 'Word':
                 out_text += '|'
             if annotation_type == 'segmented_for_labelled':
                 if element.type in ( 'Word', 'NonWordText' ):
@@ -101,6 +101,11 @@ class Segment:
                 #print(f'annotations["mwes"] = {mwes}')
                 mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
                 out_text += f"\n_analysis: {analysis_text}\n_MWEs: {mwes_text}"
+        if annotation_type == 'translated':
+            annotations = self.annotations
+            if 'translated' in annotations:
+                translated = annotations['translated']
+                out_text += f"#{translated}#"
             
         return out_text
 
@@ -230,6 +235,19 @@ class Text:
     def to_text(self, annotation_type=None):
         return "\n".join([page.to_text(annotation_type) for page in self.pages])
 
+    def prettyprint(self):
+        print(f"Text Language (L2): {self.l2_language}, Annotation Language (L1): {self.l1_language}\n")
+        
+        for page_number, page in enumerate(self.pages, start=1):
+            print(f"  Page {page_number}: Annotations: {page.annotations}")
+            
+            for segment_number, segment in enumerate(page.segments, start=1):
+                print(f"    Segment {segment_number}: Annotations: {segment.annotations}")
+
+                for element_number, element in enumerate(segment.content_elements, start=1):
+                    content_to_print = f"'{element.content}'" if isinstance(element.content, (str)) else f"{element.content}"
+                    print(f"      Element {element_number}: Type: '{element.type}', Content: {content_to_print}, Annotations: {element.annotations}")
+            
     def to_json(self):
         json_list = [json.loads(page.to_json()) for page in self.pages]
         return json.dumps({

@@ -87,6 +87,7 @@ urlpatterns = [
     path('project/<int:project_id>/create_summary/', views.create_summary, name='create_summary'),
     path('project/<int:project_id>/create_cefr_level/', views.create_cefr_level, name='create_cefr_level'),
     path('project/<int:project_id>/create_segmented_text/', views.create_segmented_text, name='create_segmented_text'),
+    path('project/<int:project_id>/create_translated_text/', views.create_translated_text, name='create_translated_text'),
     path('project/<int:project_id>/create_phonetic_text/', views.create_phonetic_text, name='create_phonetic_text'),
     path('project/<int:project_id>/create_glossed_text/', views.create_glossed_text, name='create_glossed_text'),
     path('project/<int:project_id>/create_glossed_text_from_lemma/', views.create_glossed_text_from_lemma, name='create_glossed_text_from_lemma'),

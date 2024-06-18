@@ -41,7 +41,7 @@ class PromptTemplateRepository:
 
     # Return the contents of file version, or None.
     # template_or_examples is one of ( "template", "examples" )
-    # annotation_type is one of ( "segmented", "gloss", "gloss_with_mwe", "gloss_with_lemma", "lemma", "lemma_with_mwe", "mwe", "pinyin", "lemma_with_gloss" )
+    # annotation_type is one of ( "segmented", "translation", "gloss", "gloss_with_mwe", "gloss_with_lemma", "lemma", "lemma_with_mwe", "mwe", "pinyin", "lemma_with_gloss" )
     # operation is one of ( "annotate", "improve" )
     # Optionally load from a specified archive path probably extracted from the metadata
     def load_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str, archive_path=None):
@@ -174,6 +174,12 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
                 elements = string_to_list_of_content_elements(string, 'segmented')
             except:
                 raise TemplateError(message = f'Cannot internalise "{string}" as "segmented" data')
+    elif annotation_type == 'translated':
+        for string in data:
+            try:
+                elements = string_to_list_of_content_elements(string, 'translated')
+            except:
+                raise TemplateError(message = f'Cannot internalise "{string}" as "translated" data')
     elif annotation_type == 'gloss' and operation == 'annotate':
         for string in data:
             try:
@@ -333,6 +339,18 @@ Template must contain the substitution elements {l2_language}, {examples} and {s
         except Exception:
             raise TemplateError(message = """Error in template.
 Template may not contain any substitution elements except {l2_language}, {examples} and {simplified_elements_json}""")
+    elif annotation_type == 'translated':
+        try:
+            result = template.format( l1_language='***l1_language***',
+                                      l2_language='***l2_language***',
+                                      examples='***examples***',
+                                      simplified_elements_json='***simplified_elements_json***' )
+            if not '***examples***' in result or not '***simplified_elements_json***' in result or not '***l1_language***' in result or not '***l2_language***' in result:
+                raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {l1_language}, {l2_language}, {examples} and {simplified_elements_json}""")
+        except:
+            raise TemplateError(message = """Error in template.
+Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples} and {simplified_elements_json}""")  
     else:
         try:
             result = template.format( l1_language='***l1_language***',
