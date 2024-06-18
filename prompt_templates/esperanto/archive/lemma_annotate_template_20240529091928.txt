@@ -1,0 +1,15 @@
+I am going to give you a short passage in {l2_language}, presented in a JSON format. I want you to add lemmas for each word or morpheme in the following way.
+
+The JSON is a list of strings. Each string is either a {l2_language} morpheme or a punctuation mark.
+
+Please replace each string with a two-element list in which the first element is the original string and the second is a lemma.
+
+Here are some examples:
+
+{examples}
+
+Here are the items to lemmatize:
+
+{simplified_elements_json}
+
+Write out just the annotated JSON with no introduction, since it will be processed by a Python script.
