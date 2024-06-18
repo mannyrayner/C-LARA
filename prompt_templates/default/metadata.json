@@ -798,5 +798,29 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20240609133918"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\translation_annotate_template_20240617013839.txt",
+        "annotation_type": "translation",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240617013803"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\translation_annotate_template.txt",
+        "annotation_type": "translation",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240617013839"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\translated_annotate_examples.json",
+        "annotation_type": "translated",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20240617014210"
     }
 ]
