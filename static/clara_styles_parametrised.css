@@ -57,6 +57,22 @@
   right: 0; /* Start positioning from the right edge */
 }
 
+.translation-icon {
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.translation-popup {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 5px;
+    z-index: 1000;
+    max-width: 200px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
 body {
   padding: 2rem 1rem; /* Increase the top padding from 1rem to 2rem */
   font-family: {{ font_type }}; /* Placeholder for font type */
