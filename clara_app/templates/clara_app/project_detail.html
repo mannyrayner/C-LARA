@@ -65,6 +65,11 @@
 		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
 		  Create/Edit Segmented Title</a>
 		  {% if up_to_date_dict.segmented_title %}✓{% endif %}</p>
+	<p><a href="{% url 'create_translated_text' project.id %}" 
+	      data-tooltip="Tell the AI to add a translation annotation to each segment."
+		  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+		  Create/Edit Translated Text</a>
+		  {% if up_to_date_dict.translated %}✓{% endif %}</p>
 	<p><a href="{% url 'create_mwe_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to mark multi-word expressions in each segment."
 		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
