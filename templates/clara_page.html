@@ -10,20 +10,21 @@
   <header>
     {% if page.annotations.title %} <p>"{{ page.annotations.title }}" p. {{ page_number }}/{{ total_pages }}</p> {% endif %}
 	<nav class="nav-bar">
-	  <a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">First</a>
-	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
-	  <a href="{{ 'page_' ~ (page_number + 1) ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Next</a>
-	  <a href="{{ 'page_' ~ total_pages ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Last</a>
-	  <button id="vocab-frequency-btn">Frequency</button>
-	  <button id="vocab-alphabetical-btn">Alphabetical</button>
-	  
-	  <!-- Conditional link to the other version -->
-	  {% if phonetic and normal_html_exists %}
-		<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'normal' + '/' + 'page_' + page_number_str + '.html' }}">Words</a>
-	  {% elif not phonetic and phonetic_html_exists %}
-		<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'phonetic' + '/' + 'page_' + page_number_str + '.html' }}">Sounds</a>
-	  {% endif %}
+		<a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">&#x21E4;</a> <!-- First: Leftwards Arrow To Bar -->
+		<a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">&#x2190;</a> <!-- Previous: Leftwards Arrow -->
+		<a href="{{ 'page_' ~ (page_number + 1) ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">&#x2192;</a> <!-- Next: Rightwards Arrow -->
+		<a href="{{ 'page_' ~ total_pages ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">&#x21E5;</a> <!-- Last: Rightwards Arrow To Bar -->
+		<button id="vocab-frequency-btn">Frequency</button>
+		<button id="vocab-alphabetical-btn">Alphabetical</button>
+		
+		<!-- Conditional link to the other version -->
+		{% if phonetic and normal_html_exists %}
+			<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'normal' + '/' + 'page_' + page_number_str + '.html' }}">Words</a>
+		{% elif not phonetic and phonetic_html_exists %}
+			<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'phonetic' + '/' + 'page_' + page_number_str + '.html' }}">Sounds</a>
+		{% endif %}
 	</nav>
+
   </header>
   <!-- Wrap the main text pane and concordance pane in a container div -->
   <div class="page-container {{ 'dir="rtl"' if is_rtl else '' }}">
@@ -37,7 +38,7 @@
 		    {%- if element.type == "Image" -%}
 			  <!-- <div class="image-container" style="width: {{ element.content.width }}px; height: {{ element.content.height }}px;"> -->
 			  <!-- <div class="image-container" style="width: 500px; height: 500px;"> -->
-				<img src="{{ '/accounts/projects/serve_project_image/' + element.content.project_id_internal + '/' + element.content.src }}" alt="Project Image" style="width: 35vw; max-width: 500px; max-height: 500px;">
+				<img src="{{ '/accounts/projects/serve_project_image/' + element.content.project_id_internal + '/' + element.content.src }}" alt="Project Image" style="width: 25vw; max-width: 350px; max-height: 350px;">
 				{%- if not phonetic and element.content.transformed_segments -%}
 				  <svg viewBox="0 0 {{ element.content.width }} {{ element.content.height }}">
 				  {%- for segment in element.content.transformed_segments -%}
@@ -108,19 +109,19 @@
   </div>
   <footer>
 	<nav class="nav-bar">
-	  <a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">First</a>
-	  <a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">Previous</a>
-	  <a href="{{ 'page_' ~ (page_number + 1) ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Next</a>
-	  <a href="{{ 'page_' ~ total_pages ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">Last</a>
-	  <button id="vocab-frequency-btn">Frequency</button>
-	  <button id="vocab-alphabetical-btn">Alphabetical</button>
-	  
-	  <!-- Conditional link to the other version -->
-	  {% if phonetic and normal_html_exists %}
-		<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'normal' + '/' + 'page_' + page_number_str + '.html' }}">Words</a>
-	  {% elif not phonetic and phonetic_html_exists %}
-		<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'phonetic' + '/' + 'page_' + page_number_str + '.html' }}">Sounds</a>
-	  {% endif %}
+		<a href="{{ 'page_1.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">&#x21E4;</a> <!-- First: Leftwards Arrow To Bar -->
+		<a href="{{ 'page_' ~ (page_number - 1) ~ '.html' if page_number > 1 else '' }}" class="{{ 'disabled' if page_number <= 1 else '' }}">&#x2190;</a> <!-- Previous: Leftwards Arrow -->
+		<a href="{{ 'page_' ~ (page_number + 1) ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">&#x2192;</a> <!-- Next: Rightwards Arrow -->
+		<a href="{{ 'page_' ~ total_pages ~ '.html' if page_number < total_pages else '' }}" class="{{ 'disabled' if page_number >= total_pages else '' }}">&#x21E5;</a> <!-- Last: Rightwards Arrow To Bar -->
+		<button id="vocab-frequency-btn">Frequency</button>
+		<button id="vocab-alphabetical-btn">Alphabetical</button>
+		
+		<!-- Conditional link to the other version -->
+		{% if phonetic and normal_html_exists %}
+			<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'normal' + '/' + 'page_' + page_number_str + '.html' }}">Words</a>
+		{% elif not phonetic and phonetic_html_exists %}
+			<a href="{{ '/accounts/rendered_texts' + '/' + project_id + '/' + 'phonetic' + '/' + 'page_' + page_number_str + '.html' }}">Sounds</a>
+		{% endif %}
 	</nav>
 	{% if page.annotations.acknowledgements %} <p>{{ page.annotations.acknowledgements }} </p> {% endif %}
   </footer>
