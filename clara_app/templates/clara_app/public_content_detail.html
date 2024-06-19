@@ -3,7 +3,7 @@
 
 {% block content %}
   <h2>{{ content.title }}</h2>
-  <p>URL: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
   {% if average_rating %}
     <p>Average Rating: {{ average_rating }}</p>
   {% else %}
