@@ -40,7 +40,7 @@ from .forms import CreateTranslatedTextForm, CreatePhoneticTextForm, CreateGloss
 from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import MakeExportZipForm, RenderTextForm, RegisterAsContentForm, RatingForm, CommentForm, DiffSelectionForm
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
-from .forms import MWEExampleForm, CustomMWEExampleFormSet, ExampleWithMWEForm, ExampleWithMWEFormSet
+from .forms import MorphologyExampleForm, CustomMorphologyExampleFormSet, MWEExampleForm, CustomMWEExampleFormSet, ExampleWithMWEForm, ExampleWithMWEFormSet
 from .forms import ImageForm, ImageFormSet, StyleImageForm, ImageSequenceForm
 from .forms import PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
@@ -1120,6 +1120,8 @@ def edit_prompt(request):
             annotation_type = prompt_selection_form.cleaned_data['annotation_type']
             if template_or_examples == 'template':
                 PromptFormSet = forms.formset_factory(TemplateForm, formset=CustomTemplateFormSet, extra=0)
+            elif annotation_type == 'morphology':
+                PromptFormSet = forms.formset_factory(MorphologyExampleForm, formset=CustomMorphologyExampleFormSet, extra=1)
             elif annotation_type == 'mwe':
                 PromptFormSet = forms.formset_factory(MWEExampleForm, formset=CustomMWEExampleFormSet, extra=1)
             elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
@@ -1168,7 +1170,7 @@ def edit_prompt(request):
                 # Prepare data
                 if template_or_examples == 'template':
                     initial_data = [{'template': prompts}]
-                elif annotation_type == 'mwe':
+                elif annotation_type in ( 'morphology', 'mwe' ):
                     initial_data = [{'string1': triple[0], 'string2': triple[1], 'string3': triple[2]} for triple in prompts]
                 elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
                     initial_data = [{'string1': pair[0], 'string2': pair[1]} for pair in prompts]
@@ -1185,7 +1187,7 @@ def edit_prompt(request):
                     # Prepare data for saving
                     if template_or_examples == 'template':
                         new_prompts = prompt_formset[0].cleaned_data.get('template')
-                    elif annotation_type == 'mwe':
+                    elif annotation_type in ( 'morphology', 'mwe' ):
                         new_prompts = [[form.cleaned_data.get('string1'), form.cleaned_data.get('string2'), form.cleaned_data.get('string3')]
                                        for form in prompt_formset]
                         if not new_prompts[-1][0] or not new_prompts[-1][1]:
@@ -4463,12 +4465,6 @@ def edit_images(request, project_id, dall_e_3_image_status):
                         messages.error(request, "Invalid form data.")
                         return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
 
-                    if form.cleaned_data.get('image_name'):
-                        image_name = form.cleaned_data.get('image_name')
-                    elif previous_record:
-                        image_name = previous_record['image_name']
-                    else:
-                        image_name = None
                     # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
                     # If there is no file upload, the value is null
                     if form.cleaned_data.get('image_file_path'):
@@ -4490,6 +4486,13 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     request_type = form.cleaned_data.get('request_type')
                     content_description = form.cleaned_data.get('content_description')
                     description_variable = form.cleaned_data.get('description_variable')
+                    if form.cleaned_data.get('image_name'):
+                        image_name = form.cleaned_data.get('image_name')
+                    elif previous_record and previous_record['image_name']:
+                        image_name = previous_record['image_name']
+                    else:
+                        # If we're adding a new description, there will be no image name
+                        image_name = f'get_{description_variable}'
                     
                     if previous_record and not content_description:
                         content_description = previous_record['content_description']
@@ -4884,7 +4887,10 @@ def create_and_add_coherent_dall_e_3_images(project_id, requests, callback=None)
                         api_call_interpret = call_chat_gpt4_interpret_image(instantiated_user_prompt, generated_image_file_path,
                                                                             config_info=config_info, callback=callback)
                         description = api_call_interpret.response
-                        clara_project_internal.store_image_understanding_result(description_variable, description, callback=None)
+                        # Include image_name, page and position in case this is a new description variable
+                        clara_project_internal.store_image_understanding_result(description_variable, description,
+                                                                                image_name=image_name, page=page, position=position, user_prompt=user_prompt,
+                                                                                callback=callback)
                         post_task_update(callback, f"--- Description created for '{description_variable}': '{description}'")
                         request_succeeded = True
                 except Exception as e:

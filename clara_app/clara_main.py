@@ -718,9 +718,15 @@ class CLARAProjectInternal:
         return add_indices_to_segmented_text(segmented_text)
 
     # Call ChatGPT-4 to improve existing segmentation annotations
+##    def improve_segmented_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+##        segmented_text = self.load_text_version("segmented")
+##        new_segmented_text, api_calls = improve_segmented_version(segmented_text, self.l2_language, config_info=config_info, callback=callback)
+##        self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')
+##        return api_calls
+
     def improve_segmented_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented")
-        new_segmented_text, api_calls = improve_segmented_version(segmented_text, self.l2_language, config_info=config_info, callback=callback)
+        new_segmented_text, api_calls = improve_morphology_in_segmented_version(segmented_text, self.l2_language, config_info=config_info, callback=callback)
         self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')
         return api_calls
 
@@ -1197,12 +1203,18 @@ class CLARAProjectInternal:
             # Handle the exception as needed
             return None
 
-    def store_image_understanding_result(self, description_variable, result, callback=None):
+    def store_image_understanding_result(self, description_variable, result,
+                                         image_name=None, page=None, position=None, user_prompt=None,
+                                         callback=None):
         try:
             project_id = self.id
             
             post_task_update(callback, f"--- Storing understanding result for {description_variable}")
-            self.image_repository.store_understanding_result(project_id, description_variable, result, callback=callback)
+            self.image_repository.store_understanding_result(project_id, description_variable, result,
+                                                             image_name=image_name,
+                                                             page=page, position=position,
+                                                             user_prompt=user_prompt,
+                                                             callback=callback)
             post_task_update(callback, f"--- Understanding result stored")
         except Exception as e:
             post_task_update(callback, f"*** Error storing understanding result for {description_variable}")

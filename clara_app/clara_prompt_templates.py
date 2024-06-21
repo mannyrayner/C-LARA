@@ -64,7 +64,7 @@ class PromptTemplateRepository:
     def blank_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str):
         if template_or_examples == 'template':
             return ' '
-        elif annotation_type == 'mwe':
+        elif annotation_type in ( 'mwe', 'morphology' ):
             return [ ( ' ', ' ', ' ' ) ]
         elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
             return [ ( ' ', ' ' ) ]
@@ -153,12 +153,12 @@ def check_well_formed_for_loading(data, template_or_examples, annotation_type, o
             raise TemplateError(message = f'Examples are missing language "{language}"')
         if not is_list_of_n_tuples_of_strings(data, 2):
             raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of pairs of strings')
-    elif annotation_type == 'mwe':
+    elif annotation_type in ( 'mwe', 'morphology' ):
         if not is_list_of_n_tuples_of_strings(data, 3):
-            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of triples of strings')
+            raise TemplateError(message = f'Examples data "{data}" for {annotation_type} and {operation} and language "{language}" is not a list of triples of strings')
     else:
         if not is_list_of_strings(data):
-            raise TemplateError(message = f'Template data {data} for {annotation_type} and {operation} and language "{language}" is not a list of strings')
+            raise TemplateError(message = f'Examples data "{data}" for {annotation_type} and {operation} and language "{language}" is not a list of strings')
     return True
 
 # When we're saving the data, we carry out a more fine-grained check to try and make sure
@@ -229,6 +229,15 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
             try:
                 example_string, all_mwes_string, analysis = triple
                 check_mwes_string_against_example_string(example_string, all_mwes_string, 'segmented')
+            except TemplateError as e:
+                raise e
+            except:
+                raise TemplateError(message = f'Cannot internalise "{triple}" as "MWEs" data')
+    elif annotation_type == 'morphology' and operation == 'annotate':
+        for triple in data:
+            try:
+                example_string, improved_example_string, analysis = triple
+                check_improved_morphology_string_against_morphology_string(example_string, improved_example_string)
             except TemplateError as e:
                 raise e
             except:
@@ -306,6 +315,19 @@ def check_mwes_string_against_example_string(example_string, all_mwes_string, ve
             if not mwe_word in example_words:
                 raise TemplateError(message = f'"{mwe_word}" in the MWEs does not occur in "{example_string}"')
 
+def check_improved_morphology_string_against_morphology_string(example_string, improved_example_string):
+    example_elements = string_to_list_of_content_elements(example_string, 'segmented')
+    example_words = [ e.content for e in example_elements if e.type == 'Word' ]
+    improved_example_elements = string_to_list_of_content_elements(improved_example_string, 'segmented')
+    improved_example_words = [ e.content for e in improved_example_elements if e.type == 'Word' ]
+    if len(example_words) != len(improved_example_words):
+        raise TemplateError(message = f'Different numbers of words in "{example_string}" and "{improved_example_string}"')
+    pairs = zip(example_words, improved_example_words)
+    for example, improved_example in pairs:
+        if example.replace('|', '') != improved_example_words.replace('|', ''):
+            raise TemplateError(message = f'"{example}" and "{improved_example}" are not differently segmented versions of the same word')
+    
+
 # Check that the template and annotated example list were found,
 # and that the template does not have any inappropriate arguments.
 # If not, raise a TemplateError exception
@@ -328,7 +350,7 @@ Template must contain the substitution elements {examples} and {text}""")
         except:
             raise TemplateError(message = """Error in template.
 Template may not contain any substitution elements except {l2_language}, {examples} and {text}""")
-    elif annotation_type in ('lemma', 'mwe' ) :
+    elif annotation_type in ('morphology', 'lemma', 'mwe' ) :
         try:
             result = template.format( l2_language='***l2_language***',
                                       examples='***examples***',

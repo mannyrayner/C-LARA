@@ -67,13 +67,13 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
     internalized_text = Text(internalized_pages, l2_language=l2_language, l1_language=l1_language)
     return internalized_text
 
-def parse_content_elements(segment_text, type):
-    if type in ( 'plain', 'summary', 'title', 'cefr_level', 'segmented', 'segmented_title'):
-        return parse_content_elements_segmented(segment_text)
+def parse_content_elements(segment_text, text_type):
+    if text_type in ( 'plain', 'summary', 'title', 'cefr_level', 'segmented', 'segmented_title'):
+        return parse_content_elements_segmented(segment_text, text_type=text_type)
     else:
         return parse_content_elements_glossed_or_tagged(segment_text, type)
 
-def parse_content_elements_segmented(segment_text):
+def parse_content_elements_segmented(segment_text, text_type='segmented'):
     content_elements = []
     pattern = r"(?:@[^@]+@|<\/?\w+>|(?:[^\s\p{P}<]|[#'@])+|\|(?:[^\s\p{P}|[#'@]])+|[\s\p{P}--[@#']]+)"
     words_and_elements = regex.findall(pattern, segment_text, regex.V1)
@@ -88,7 +88,8 @@ def parse_content_elements_segmented(segment_text):
         elif item.startswith("<") and item.endswith(">"):
             # HTML markup
             content_elements.append(ContentElement("Markup", item))
-        elif "|" in item:
+        # For text_type == 'plain', we leave words with vertical bars as they are
+        elif "|" in item and text_type != 'plain':
             # Word with smaller pieces
             pieces = item.split("|")
             for piece in pieces:

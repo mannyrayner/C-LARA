@@ -76,6 +76,12 @@ def generate_segmented_version(text, l2_language, config_info={}, callback=None)
 def improve_segmented_version(text, l2_language, config_info={}, callback=None):
     return generate_or_improve_segmented_version('improve', text, l2_language, config_info=config_info, callback=callback)
 
+# Improve annotation of the text with pages and segments
+def improve_morphology_in_segmented_version(text, l2_language, config_info={}, callback=None):
+    return generate_or_improve_annotated_version('annotate', 'segmented', segmented_text, l1_language, l2_language,
+                                                 previous_version='segmented', 
+                                                 config_info=config_info, callback=callback)
+
 # Annotate the text with glosses
 def generate_glossed_version(segmented_text, l1_language, l2_language, previous_version='segmented_with_images', mwe=False,
                              current_glossed_text=None, config_info={}, callback=None):
@@ -146,7 +152,10 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         source_version = processing_phase
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
-    internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
+    if processing_phase == 'segmented' and previous_version == 'segmented':
+        internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, 'plain')
+    else:
+        internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
     if current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'gloss':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'gloss')
     elif current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'lemma':
@@ -155,6 +164,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'mwe')
     elif current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'translated':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'translated')
+    elif processing_phase == 'segmented' and previous_version == 'segmented':
+        internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'plain')
     else:
         internalised_current_annotated_text = None
 
@@ -188,6 +199,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         if mwe or processing_phase in ( 'mwe', 'translated' ):
             current_segments = internalised_current_annotated_text.segments()
             current_segmented_elements_dict = segments_to_annotations_dict(current_segments)
+        elif processing_phase == 'segmented' and previous_version == 'segmented':
+            current_segmented_elements_dict = None
         else:
             current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
             current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
@@ -238,8 +251,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     else:
         # We're doing everything from scratch
         #print(f'--- Doing {processing_phase} element by element')
-        if processing_phase == 'mwe' or mwe or ( processing_phase == 'gloss' and previous_version == 'lemma' ):
-            # Do tagging involving MWEs one segment at a time
+        if processing_phase == 'mwe' or mwe or ( processing_phase == 'gloss' and previous_version == 'lemma' ) or processing_phase == 'segmented' and previous_version == 'segmented':
+            # Do tagging involving MWEs, gloss-from-lemma and morphology improvement one segment at a time
             chunks = segmented_elements
         else:
             chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
@@ -419,6 +432,8 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
     l2_language = l2_language.capitalize()
     if processing_phase == 'translated':
         annotation_prompt = translation_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language)
+    elif processing_phase == 'segmented':
+        annotation_prompt = morphology_prompt(simplified_elements_json, l2_language)
     elif processing_phase == 'gloss':
         annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language,
                                             previous_version=previous_version, mwe=mwe, mwes=mwes)
@@ -501,6 +516,16 @@ def segmentation_prompt(annotate_or_improve, text, l2_language):
     return template.format( l2_language=l2_language,
                             examples=examples,
                             text=text )
+
+def morphology_prompt(simplified_elements_json, l2_language):
+    template, annotated_example_list = get_template_and_example_list(annotate_or_improve, 'morphology', l2_language)
+    if annotate_or_improve == 'annotate':
+        examples = morphology_examples_to_examples_text(example_list, l2_language)
+    return template.format( l1_language=l1_language,
+                            l2_language=l2_language,
+                            examples=examples,
+                            simplified_elements_json=simplified_elements_json
+                            )
 
 def translation_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language):
     template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, 'translated', l2_language)
@@ -727,6 +752,9 @@ def re_lemma_and_glossing_example_to_example_text(example, l2_language, l1_langu
     simplified_internalised_example2 = annotated_string_to_simplified_internalised_form(second, l2_language, l1_language, 'lemma_and_gloss')
     return f'{json.dumps(simplified_internalised_example1)} to {json.dumps(simplified_internalised_example2)}'
 
+def morphology_examples_to_examples_text(examples_structure, l2_language):
+    return '\n\n'.join([ morphology_example_to_example_text(example, l2_language) for example in examples_structure ])
+
 def mwe_tagging_examples_to_examples_text(examples_structure, l2_language, l1_language):
     #print(f'MWE examples: {examples_structure}')
     return '\n\n'.join([ mwe_tagging_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
@@ -759,6 +787,16 @@ def mwe_tagging_example_to_example_text(mwe_example, l2_language, l1_language):
     mwes = [ mwe.strip() for mwe in mwes_text.split(',') ]
     return f'Input: {json.dumps(simplified_internalised_example_words)}\nAnalysis: {analysis}\nOutput: {json.dumps(mwes)}'
 
+def morphology_example_to_example_text(morphology_example, l2_language):
+    l1_language = 'irrelevant'     
+    example_text, improved_example_text, analysis = morphology_example
+    # Final arg is 'plain' because we don't want to split up words including vertical bars
+    simplified_internalised_example_words = annotated_string_to_simplified_internalised_form(example_text, l2_language, l1_language, 'plain')
+    simplified_internalised_improved_example_words = annotated_string_to_simplified_internalised_form(improved_example_text, l2_language, l1_language, 'plain')
+    simplified_internalised_example_pairs = [ [ segmented_word.replace('|', ''), segmented_word ] for segmented_word in simplified_internalised_example_words ]
+    simplified_internalised_improved_example_pairs = [ [ segmented_word.replace('|', ''), segmented_word ] for segmented_word in simplified_internalised_improved_example_words ]
+    return f'Input: {json.dumps(simplified_internalised_example_pairs)}\nAnalysis: {analysis}\nOutput: {json.dumps(simplified_internalised_improved_example_pairs)}'
+                                       
 def retagging_example_to_example_text(example, l2_language, l1_language):
     ( first, second ) = example
     simplified_internalised_example1 = annotated_string_to_simplified_internalised_form(first, l2_language, l1_language, 'lemma')
@@ -861,6 +899,16 @@ def unsimplify_element(element, processing_phase, previous_version='default'):
             return ContentElement("Markup", content)
         else:
             return ContentElement("Word", content, annotations={ 'gloss': gloss })
+    elif processing_phase == 'segmented' and previous_version == 'segmented' and len(element) == 3:
+        word, segmented_word = element
+        # String only consists of punctuation marks
+        if all(regex.match(r"\p{P}", c) for c in content):
+            return ContentElement("NonWordText", content)
+        # String is an HTML tag
+        elif regex.match(r"<\/?\w+>", content):
+            return ContentElement("Markup", content)
+        else:
+            return ContentElement("Word", segmented_word)
     elif processing_phase == 'lemma' and len(element) == 3:
         content, lemma, pos = element
         # String only consists of punctuation marks

@@ -308,7 +308,7 @@ class CreateSegmentedTextForm(CreateAnnotatedTextForm):
             ('jieba', 'Segment text using Jieba'),
             ('generate', 'Segment text using AI'),
             ('correct', 'Try to fix errors in malformed segmented text using AI'), 
-            ('improve', 'Improve existing segmented text using AI'),
+            #('improve', 'Improve segmentation of words using AI'),
             ('manual', 'Manually enter/edit segmented text'),
             ('load_archived', 'Load archived version')
         ]
@@ -580,6 +580,7 @@ class PromptSelectionForm(forms.Form):
     
     annotation_type_choices = [
         ("segmented", "Segmented"),
+        ("morphology", "Morphology"),
         ("translated", "Translated"),
         ("mwe", "Multi Word Expressions"),
         ("lemma", "Lemma"),
@@ -662,6 +663,37 @@ class ExampleWithMWEFormSet(forms.BaseFormSet):
         for form in self:
             form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
             form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+
+class MorphologyExampleForm(forms.Form):
+    # Input example text
+    string1 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="Input Text Example",
+        help_text="Text with segmented words"
+    )
+
+    # Text with improved segmentation
+    string2 = forms.CharField(
+        widget=forms.TextInput(attrs={'size': '60'}),
+        label="Improved Text",
+        help_text="Words with improved segmentation"
+    )
+
+    # Analysis or explanation of MWEs
+    string3 = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
+        label="Analysis or Explanation",
+        help_text="Provide a detailed analysis, word by word, of changes to the segmentation of the words"
+    )
+
+class CustomMorphologyExampleFormSet(forms.BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        self.rtl_language = kwargs.pop('rtl_language', None)
+        super(CustomMorphologyExampleFormSet, self).__init__(*args, **kwargs)
+        for form in self:
+            form.fields['string1'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string2'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
+            form.fields['string3'].widget.attrs['dir'] = 'rtl' if self.rtl_language else 'ltr'
 
 
 class MWEExampleForm(forms.Form):

@@ -129,17 +129,28 @@ class ImageRepositoryORM:
 ##            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
 ##            post_task_update(callback, error_message)
 
-    def store_understanding_result(self, project_id, description_variable, result, callback=None):
+    def store_understanding_result(self, project_id, description_variable, result,
+                                   image_name=None, page=None, position=None, user_prompt=None, callback=None):
         try:
+            print(f"store_understanding_result({project_id}, {description_variable}, {result}, image_name={image_name}, page={page}, position={position}, user_prompt={user_prompt})")
             # Try to update the existing entry with the new associated_areas
             updated_count = ImageMetadata.objects.filter(project_id=project_id, description_variable=description_variable).update(content_description=result)
 
             if updated_count > 0:
                 post_task_update(callback, f'--- Updated value for project_id={project_id} and description_variable={description_variable}')
+            elif image_name and page and position:
+                # If it's a new description variable that hasn't previously been entered, we need to fill all the fields
+                file_path = ''
+                self.add_entry(project_id, image_name, file_path,
+                               page=page, position=position, request_type='image-understanding',
+                               user_prompt=user_prompt,
+                               description_variable=description_variable, content_description=result,
+                               callback=None)
+                post_task_update(callback, f'--- Added new description for project_id={project_id} and description_variable={description_variable}, page={page}')
             else:
-                post_task_update(callback, f'*** No entry found to update result for project_id={project_id} and description_variable={description_variable}')
+                post_task_update(callback, f'*** No entry found to update result for project_id={project_id}, description_variable={description_variable}, image_name={image_name}')
         except Exception as e:
-            post_task_update(callback, f"*** Error storing understanding result in database for {description_variable}")
+            post_task_update(callback, f"*** Error storing understanding result in database for description_variable={description_variable}, image_name={image_name}")
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
 
