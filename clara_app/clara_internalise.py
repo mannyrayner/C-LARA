@@ -71,7 +71,7 @@ def parse_content_elements(segment_text, text_type):
     if text_type in ( 'plain', 'summary', 'title', 'cefr_level', 'segmented', 'segmented_title'):
         return parse_content_elements_segmented(segment_text, text_type=text_type)
     else:
-        return parse_content_elements_glossed_or_tagged(segment_text, type)
+        return parse_content_elements_glossed_or_tagged(segment_text, text_type)
 
 def parse_content_elements_segmented(segment_text, text_type='segmented'):
     content_elements = []
