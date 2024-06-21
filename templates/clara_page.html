@@ -74,20 +74,20 @@
 			{%- elif element.type == "Word" -%}
 				{%- if not phonetic -%}
 					{%- if element.annotations.pinyin -%}
-						<ruby class="word" data-gloss="{{ element.annotations.gloss }}" 
-							  data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
+						<ruby class="word" data-gloss="{{ element.annotations.gloss if element.annotations.gloss else '' }}" 
+							  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
 							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">
 							{{ element.content }}
 							<rt>{{ element.annotations.pinyin }}</rt>
 						</ruby>
 					{%- else -%}
-						<span class="word" data-gloss="{{ element.annotations.gloss }}" 
-							  data-lemma="{{ element.annotations.lemma|replace_punctuation }}" 
+						<span class="word" data-gloss="{{ element.annotations.gloss if element.annotations.gloss else '' }}" 
+							  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
 							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
 					{%- endif -%}
 				{%- elif phonetic and element.annotations.phonetic -%}
-					<span class="word" data-gloss="{{ element.annotations.phonetic }}" 
-						data-lemma="{{ element.annotations.phonetic|replace_punctuation }}" 
+					<span class="word" data-gloss="{{ element.annotations.phonetic if element.annotations.phonetic else '' }}" 
+						data-lemma="{{ element.annotations.phonetic|replace_punctuation if element.annotations.phonetic else '' }}" 
 						data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
 				{%- endif -%}
 			{%- else -%}{{ element.content|replace('\n', '<br>')|safe }}
