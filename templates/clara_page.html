@@ -81,7 +81,7 @@
 							<rt>{{ element.annotations.pinyin }}</rt>
 						</ruby>
 					{%- else -%}
-						<span class="word" data-gloss="{{ element.annotations.gloss if element.annotations.gloss else '' }}" 
+						<span class="word" data-gloss="{{ element.annotations.gloss|e if element.annotations.gloss else '' }}" 
 							  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
 							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
 					{%- endif -%}
@@ -97,7 +97,7 @@
 			<span class="speaker-icon">&#128266;</span>
 		  {%- endif -%}
 		  {%- if 'translated' in segment.annotations -%}
-			<span class="translation-icon" data-translation="{{ segment.annotations.translated }}">&#9998;</span>
+			<span class="translation-icon" data-translation="{{ segment.annotations.translated|e }}">&#9998;</span>
 		  {%- endif -%}
 		</span>
 		{%- endfor -%}
