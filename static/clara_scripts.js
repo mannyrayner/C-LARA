@@ -81,37 +81,6 @@ function setUpEventListeners(contextDocument) {
     });
   };
   
-  /* function setUpTranslationIconEventListener(icon) {
-    icon.addEventListener('click', (event) => {
-      event.stopPropagation();  // Prevent the click from being handled by other listeners
-      const translationText = icon.getAttribute('data-translation');
-      console.log("Creating translation popup for: " + translationText);
-      
-      let popup = document.createElement('div');
-      popup.classList.add('translation-popup');
-      popup.innerText = translationText;
-
-      // Calculate position
-      let rect = icon.getBoundingClientRect();
-      console.log(`Popup position: top=${rect.top + window.scrollY + 20}, left=${rect.left + window.scrollX}`);
-      popup.style.top = rect.top + window.scrollY + 20 + 'px';
-      popup.style.left = rect.left + window.scrollX + 'px';
-	  popup.style.display = 'block'; // Ensure the popup is visible
-
-      // Add the popup to the document
-      document.body.appendChild(popup);
-
-      // Remove the popup when clicking outside
-      document.addEventListener('click', function removePopup(event) {
-        if (!popup.contains(event.target) && event.target !== icon) {
-          console.log("Removing translation popup");
-          popup.remove();
-          document.removeEventListener('click', removePopup);
-        }
-      });
-    });
-  } */
-  
   function setUpTranslationIconEventListener(icon) {
     icon.addEventListener('click', () => {
         const translationText = icon.getAttribute('data-translation');
