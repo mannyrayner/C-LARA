@@ -22,9 +22,14 @@ online (details to follow)
 
 **25-26 July 2024**
 
+## Registration
+
+Attendance at the workshop is free, but people wishing to participate are required to [register](https://url.au.m.mimecastprotect.com/s/zc74Cp81QXtnxVNqBfP5UFU?domain=trybooking.com) not later than July 18.
+
+
 ## Program
 
-A detailed program will follow shortly. Confirmed presenters include Steven Bird (Charles Darwin University), Manny Rayner (University of South Australia), Jocelyn Aznar (University of Bern), and Fabrice Wacalie (University of New Caledonia).
+A detailed program will follow shortly. Confirmed presenters include Steven Bird (Charles Darwin University), Manny Rayner (University of South Australia), Jocelyn Aznar (University of Bern), Jacques Vernaudon (Université de la Polynésie Française), and Diane Bae, Anne-Laure Dotte, Stéphanie Geneix-Rabault, Fabrice Wacalie, Guillaume Wattelez and Pauline Welby (all University of New Caledonia).
 
 ## Content
 Long gone are the days of learning languages by memorizing stock phrases (My tailor is rich!) and lists of verb conjugations – at least for some languages. What has historically been called Computer-assisted language learning or CALL is now very much the norm rather than the exception. We routinely use online platforms and apps (e.g. Babbel and DuoLinguo), and learners of languages rich in resources like English and French have easy access to native speaker pronunciations. But the vast majority of the world’s approximately 7000 languages are “under-resourced” – lacking in speech and language technologies such as online dictionaries, courseware (didacticiels), text-to-speech synthesis, multimedia e-books, and smartphone apps. Nowhere is this truer than in Oceania (including the Pacific islands, Australia, and New Zealand), the most linguistically diverse region in the world, home to less than 1% of the world’s people, but 11% of its languages.

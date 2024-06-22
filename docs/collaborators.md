@@ -21,8 +21,10 @@
 - **CATIA CUCCHIARINI**: User studies, Italian and Dutch evaluation
 - **ANNE-LAURE DOTTE**: Kanak languages
 - **STEPHANIE GENEIX-RABAULT**: Kanak languages
+- **SÖLVI HALLDÓRSSON**: Icelandic content
 - **CHRISTELE MAIZONNIAUX**: French evaluation
 - **JEREMIAH MCPADDEN**: Latin, Discord server
+- **YIXUAN LU**: Mandarin content
 - **LOUIS MILLS**: Python coding, constructing multimodal texts
 - **MARTA MYKHATS**: Pedagogical aspects, Ukrainian evaluation
 - **NEASA NÍ CHIARÁIN**: User studies, Irish evaluation
@@ -34,4 +36,5 @@
 - **ALEX XIANG**: Supervision of student projects, Mandarin evaluation
 - **YAO CHUNLIN**: Pedagogical aspects, Mandarin evaluation
 - **RINA ZVIEL-GIRSHIN**: Russian evaluation
+- **HRAFNHILDUR MING ÞÓRUNNARDÓTTIR**: Icelandic content
 
