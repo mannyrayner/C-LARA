@@ -284,10 +284,16 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     #print(f'annotations_for_segments = {annotations_for_segments}')
     for page in internalised_annotated_text.pages:
         for segment in page.segments:
-            # If we are doing MWE or translation, add the annotations to the segment
-            if processing_phase in ( 'mwe', 'translated' ):
+            # If we are doing MWE, add the annotations to the segment
+            if processing_phase == 'mwe':
                 segment.annotations = annotations_for_segments[index]
                 index += 1
+            # If we are doing segment translation, add the annotations to the segment
+            # but only if the translation input was non-null, since we are discarding the null inputs
+            elif processing_phase == 'translated':
+                if segment_elements_to_segment_translation_input(segment.content_elements):
+                    segment.annotations = annotations_for_segments[index]
+                    index += 1
             # Otherwise, we replace elements with annotated elements
             else:
                 n_elements_in_segment = len(segment.content_elements)
@@ -297,6 +303,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     #print(f'internalised_annotated_text: {internalised_annotated_text}')        
     human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase)
     return ( human_readable_text, all_api_calls )
+
+
 
 # We index on tuples consisting of the content of each element.
 # Typically we have not more than a hundred segments in a text and a few dozen content elements in a segment, so this is acceptably efficient
@@ -411,10 +419,10 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
     if processing_phase == 'translated':
         simplified_elements0 = []
         for segment_elements in elements:
-            word_and_non_word_text_elements_in_segment = word_and_non_word_text_items_in_element_list(segment_elements)
-            segment_text = ''.join([ element.content for element in word_and_non_word_text_elements_in_segment if element.type in ( 'Word', 'NonWordText' ) ])
-            segment_text = segment_text.replace('\n', '').strip()
-            simplified_elements0.append(segment_text)
+            segment_text = segment_elements_to_segment_translation_input(segment_elements)
+            # Don't include null segments, as they can confuse gpt-4
+            if segment_text:
+                simplified_elements0.append(segment_text)
     else:
         word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(elements)
         
@@ -483,6 +491,11 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
             post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
+
+def segment_elements_to_segment_translation_input(segment_elements):
+    word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(segment_elements)
+    segment_text = ''.join([ element.content for element in word_and_non_word_text_elements if element.type in ( 'Word', 'NonWordText' ) ])
+    return segment_text.replace('\n', ' ').strip()
 
 def merge_elements_and_annotated_elements(elements, annotated_elements, processing_phase):
     matcher = difflib.SequenceMatcher(None, 
