@@ -34,6 +34,29 @@
 		</table>
 		<button type="submit" name="action" value="create_dalle_style_image">Create style image</button>
 	  </form>
+	  {% if description_formset %}
+		 <h3>Image Description Variables</h3>
+		 <form method="post" prefix="descriptions" enctype="multipart/form-data">
+          {% csrf_token %}
+		  {{ description_formset.management_form }}
+		  <button type="submit" name="action" value="generate_image_descriptions">Generate image description variables</button>
+          <table>
+		       <tr>
+			      <th>Description variable</th>
+				  <th>Explanation</th>
+				  <th>Delete</th>
+			   </tr>
+            {% for form in description_formset %}
+               <tr>
+                  <td>{{ form.description_variable }}</td>
+                  <td>{{ form.explanation }}</td>
+				  <td>{{ form.delete }}</td>
+               </tr>
+            {% endfor %}
+          </table>
+		  <button type="submit" name="action" value="save_image_descriptions">Save image description variables</button>
+         </form>
+      {% endif %}
 	  {% if image_request_sequence_form %}
 		  <h3>Image request sequence</h3>
 		  <form method="post" enctype="multipart/form-data">
@@ -48,7 +71,7 @@
 	  </form>
   {% endif %}
   <h3>Upload/generate/delete existing images</h3>
-  <form method="post" enctype="multipart/form-data">
+  <form method="post" prefix="images" enctype="multipart/form-data">
     {% csrf_token %}
     {{ formset.management_form }}
     <table>
