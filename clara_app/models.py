@@ -663,6 +663,22 @@ class ImageMetadata(models.Model):
     def __str__(self):
         return f"{self.project_id} | {self.image_name} | {self.position} | Page {self.page}"
 
+class ImageDescription(models.Model):
+    project_id = models.CharField(max_length=255)
+    description_variable = models.CharField(max_length=255)
+    explanation = models.TextField(help_text='Explanation of the image element.')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'orm_image_description'
+        verbose_name = 'Image Description'
+        verbose_name_plural = 'Image Descriptions'
+        unique_together = ('project_id', 'description_variable')
+
+    def __str__(self):
+        return f"{self.project_id} | {self.description_variable}"
+
 class PhoneticEncoding(models.Model):
     language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES, primary_key=True)
     encoding = models.CharField(max_length=255, choices=(('ipa', 'IPA'), ('arpabet_like', 'Arpabet-like')))

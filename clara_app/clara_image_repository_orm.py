@@ -13,7 +13,7 @@ getting the image directory, and storing image files.
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import ImageMetadata
+from .models import ImageMetadata, ImageDescription
 
 #from .clara_image_repository import ImageRepository
 
@@ -22,7 +22,7 @@ from .clara_utils import make_directory, remove_directory, directory_exists, loc
 from .clara_utils import list_files_in_directory, post_task_update, generate_unique_file_name
 from .clara_utils import adjust_file_path_for_imported_data, generate_thumbnail_name
 
-from .clara_classes import Image, InternalCLARAError
+from .clara_classes import Image, ImageDescriptionObject, InternalCLARAError
 
 from pathlib import Path
 
@@ -354,6 +354,111 @@ class ImageRepositoryORM:
             error_message = f'*** Error when retrieving annotated image text for project {project_id}: {str(e)}\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
+
+    # Get a single image description
+    def get_description(self, project_id, description_variable, formatting='objects', callback=None):
+        try:
+            project_id = str(project_id)
+            description_variable = str(description_variable)
+            
+            entry = ImageDescription.objects.get(project_id=project_id, description_variable=description_variable)
+            if formatting == 'plain_lists':
+                description = { 'description_variable': entry.description_variable,
+                                'explanation': entry.explanation }
+            else:
+                description = ImageDescriptionObject(
+                    entry.project_id,
+                    entry.description_variable,
+                    entry.explanation
+                )
+
+            return description
+
+        except ObjectDoesNotExist:
+            post_task_update(callback, f'*** No description found for "{description_variable}" in project {project_id}.')
+            return None
+        except Exception as e:
+            error_message = f'*** Error when looking for "{description_variable}" in project {project_id}: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image description database inconsistency')
+
+    # Get all descriptions for a project
+    def get_all_descriptions(self, project_id, formatting='objects', callback=None):
+        try:
+            project_id = str(project_id)
+            post_task_update(callback, f'--- Retrieving all descriptions for project {project_id}')
+
+            entries = ImageDescription.objects.filter(project_id=project_id)
+            if formatting == 'plain_lists':
+                descriptions = [ { 'description_variable': entry.description_variable,
+                                   'explanation': entry.explanation }
+                                 for entry in entries ]
+            else:
+                descriptions = [ ImageDescriptionObject(entry.project_id, entry.description_variable, entry.explanation)
+                                 for entry in entries ]
+
+            post_task_update(callback, f'--- Retrieved {len(descriptions)} descriptions for project {project_id}')
+            return descriptions
+
+        except Exception as e:
+            error_message = f'*** Error when retrieving descriptions for project {project_id}: {str(e)}\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image description database inconsistency')
+
+    # Add or update an image description
+    def add_description(self, project_id, description_variable, explanation, callback=None):
+        try:
+            project_id = str(project_id)
+            description_variable = str(description_variable)
+
+            obj, created = ImageDescription.objects.update_or_create(
+                project_id=project_id, 
+                description_variable=description_variable,
+                defaults={'explanation': explanation}
+            )
+
+            if created:
+                post_task_update(callback, f'--- Created new description for project_id={project_id} and description_variable={description_variable}')
+            else:
+                post_task_update(callback, f'--- Updated existing description for project_id={project_id} and description_variable={description_variable}')
+
+        except Exception as e:
+            error_message = f'*** Error when adding/updating description "{project_id}/{description_variable}" in the database: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image description database inconsistency')
+
+    # Remove a single description
+    def remove_description(self, project_id, description_variable, callback=None):
+        try:
+            project_id = str(project_id)
+            description_variable = str(description_variable)
+            post_task_update(callback, f'--- Attempting to remove description {description_variable} in project {project_id}')
+            
+            entry = ImageDescription.objects.get(project_id=project_id, description_variable=description_variable)
+            entry.delete()
+            
+            post_task_update(callback, f'--- Description {description_variable} in project {project_id} removed successfully')
+        except ObjectDoesNotExist:
+            post_task_update(callback, f'*** No description found for {description_variable} in project {project_id}')
+        except Exception as e:
+            error_message = f'*** Error when removing description {description_variable} in project {project_id}: {str(e)}\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image description database inconsistency')
+
+    # Remove all descriptions for a project
+    def delete_descriptions_for_project(self, project_id, callback=None):
+        try:
+            project_id = str(project_id)
+            post_task_update(callback, f'--- Deleting image description DB entries for {project_id}')
+            
+            entries_deleted = ImageDescription.objects.filter(project_id=project_id).delete()
+            post_task_update(callback, f'--- Deleted {entries_deleted[0]} DB entries for project ID {project_id}')
+
+            post_task_update(callback, 'Finished deletion process successfully.')
+
+        except Exception as e:
+            error_message = f'*** Error when trying to delete image description data for project ID {project_id}: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
 
     def get_project_directory(self, project_id):
         # Returns the directory path where images for a specific project are stored

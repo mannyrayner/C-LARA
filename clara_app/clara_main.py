@@ -1203,6 +1203,72 @@ class CLARAProjectInternal:
             # Handle the exception as needed
             return None
 
+    def add_project_image_description(self, description_variable, explanation, callback=None):
+        try:
+            project_id = self.id
+
+            post_task_update(callback, f"--- Adding image description {description_variable} to project {project_id}")
+            
+            self.image_repository.add_description(project_id, description_variable, explanation, callback=callback)
+
+            post_task_update(callback, f"--- Image description {description_variable} added successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when adding/updating image description {description_variable}")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+
+    def get_project_image_description(self, description_variable, formatting='objects', callback=None):
+        try:
+            project_id = self.id
+
+            post_task_update(callback, f"--- Retrieving image description {description_variable} for project {project_id}")
+
+            description = self.image_repository.get_description(project_id, description_variable, formatting=formatting, callback=callback)
+
+            post_task_update(callback, f"--- Image description retrieved successfully")
+            return description
+        except Exception as e:
+            post_task_update(callback, f"*** Error when retrieving image description: {str(e)}")
+            return None
+
+    def remove_project_image_description(self, description_variable, callback=None):
+        try:
+            project_id = self.id
+
+            post_task_update(callback, f"--- Removing image description {description_variable} from project {project_id}")
+
+            self.image_repository.remove_description(project_id, description_variable, callback=callback)
+
+            post_task_update(callback, f"--- Image description {description_variable} removed successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when removing image description: {str(e)}")
+
+    def remove_all_project_image_descriptions(self, callback=None):
+        try:
+            project_id = self.id
+
+            post_task_update(callback, f"--- Removing all image descriptions from project {project_id}")
+
+            self.image_repository.delete_descriptions_for_project(project_id, callback=callback)
+
+            post_task_update(callback, f"--- Image descriptions for {project_id} removed successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when removing image descriptions: {str(e)}")
+
+    def get_all_project_image_descriptions(self, formatting='objects', callback=None):
+        try:
+            project_id = self.id
+
+            post_task_update(callback, f"--- Retrieving all image descriptions for project {project_id}")
+
+            all_descriptions = self.image_repository.get_all_descriptions(project_id, formatting=formatting, callback=callback)
+
+            post_task_update(callback, f"--- All image descriptions retrieved successfully, total: {len(all_descriptions)}")
+            return all_descriptions
+        except Exception as e:
+            post_task_update(callback, f"*** Error when retrieving image descriptions: {str(e)}")
+            return None
+
     def store_image_understanding_result(self, description_variable, result,
                                          image_name=None, page=None, position=None, user_prompt=None,
                                          callback=None):

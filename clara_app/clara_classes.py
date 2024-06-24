@@ -315,6 +315,15 @@ class Image:
                 f"style_description={self.style_description}, content_description={self.content_description}, "
                 f"user_prompt={self.user_prompt})")
 
+class ImageDescriptionObject:
+    def __init__(self, project_id, description_variable, explanation):
+        self.project_id = project_id
+        self.description_variable = description_variable
+        self.explanation = explanation
+
+    def __str__(self):
+        return f"{self.project_id} | {self.description_variable} | {self.explanation}"
+
 class APICall:
     def __init__(self, prompt, response, cost, duration, timestamp, retries):
         self.prompt = prompt

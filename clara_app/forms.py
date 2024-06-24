@@ -754,6 +754,13 @@ class ImageForm(forms.Form):
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
 
+class ImageDescriptionForm(forms.Form):
+    description_variable = forms.CharField(label='Description Variable', max_length=255, required=False)
+    explanation = forms.CharField(label='Explanation', widget=forms.Textarea(attrs={'rows': 4}), required=False)
+    delete = forms.BooleanField(label='Delete Image', required=False)
+
+ImageDescriptionFormSet = formset_factory(ImageDescriptionForm, extra=1)
+
 class StyleImageForm(forms.Form):
     image_base_name = forms.CharField(label='Image File Base Name',
                                       max_length=100,
@@ -763,9 +770,7 @@ class StyleImageForm(forms.Form):
     style_description = forms.CharField(label='AI-generated style description', widget=forms.Textarea(attrs={'rows': 12}), required=False)
 
 class ImageSequenceForm(forms.Form):
-    image_request_sequence = forms.CharField(widget=forms.Textarea(attrs={'rows': 10,
-                                                                          'readonly': 'readonly'}),
-                                             required=False)
+    pass
 
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:
