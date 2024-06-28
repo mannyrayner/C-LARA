@@ -948,7 +948,7 @@ class CLARAProjectInternal:
         images = self.get_all_project_images()
         post_task_update(callback, f"--- Found {len(images)} images")
         for image in images:
-            if image.request_type == 'image-generation' and image.page != 0:
+            if image.request_type != 'image-understanding' and image.page != 0:
                 # Find the corresponding Page object, if there is one.
                 page_object = text_object.find_page_by_image(image)
                 if page_object:
@@ -1081,7 +1081,7 @@ class CLARAProjectInternal:
     def add_project_image(self, image_name, image_file_path, associated_text='', associated_areas='',
                           page=1, position='bottom', style_description='', content_description='', user_prompt='',
                           request_type='image-generation', description_variable='',
-                          callback=None):
+                          description_variables=[], callback=None):  # New field
         try:
             project_id = self.id
             
@@ -1102,6 +1102,7 @@ class CLARAProjectInternal:
                                             user_prompt=user_prompt,
                                             request_type=request_type,
                                             description_variable=description_variable,
+                                            description_variables=description_variables,  # New field
                                             callback=callback)
             
             post_task_update(callback, f"--- Image {image_name} added successfully")
@@ -1112,7 +1113,7 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             # Handle the exception as needed
             return None
-
+    
     # Retrieves the image associated with the project
     def get_project_image(self, image_name, callback=None):
         try:
@@ -1302,7 +1303,7 @@ class CLARAProjectInternal:
             return None
 
     def instantiate_image_description_variables_in_prompt(self, prompt, callback=None):
-        description_variables = self.description_variables_in_prompt(prompt, callback=callback)
+        description_variables = description_variables_in_prompt(prompt)
         instantiated_prompt = prompt
         for description_variable in description_variables:
             description = self.get_image_understanding_result(description_variable, callback=callback)
@@ -1313,9 +1314,6 @@ class CLARAProjectInternal:
             else:
                 instantiated_prompt = instantiated_prompt.replace(f'{{{description_variable}}}', description)
         return instantiated_prompt
-
-    def description_variables_in_prompt(self, prompt, callback=None):
-        return re.findall(r'\{(.*?)\}', prompt)
 
     def copy_image_objects_to_project(self, images, callback=None):
         project_id = self.id
@@ -1335,6 +1333,7 @@ class CLARAProjectInternal:
                                        user_prompt=image.user_prompt,
                                        request_type=image.request_type,
                                        description_variable=image.description_variable,
+                                       description_variables=image.description_variables,
                                        callback=callback)
             
             post_task_update(callback, f"--- {len(images)} images added successfully")
@@ -1430,10 +1429,11 @@ class CLARAProjectInternal:
         return None if not audio_annotator else audio_annotator.printname_for_voice()
 
     # Make a zipfile for exporting the project and other metadata
-    def create_export_zipfile(self, simple_clara_type='create_text_and_image',
+    def create_export_zipfile(self, simple_clara_type='create_text_and_image', uses_coherent_image_set=False,
                               human_voice_id=None, human_voice_id_phonetic=None,
                               audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
         global_metadata = { 'simple_clara_type': simple_clara_type,
+                            'uses_coherent_image_set': uses_coherent_image_set,
                             'human_voice_id': human_voice_id,
                             'human_voice_id_phonetic': human_voice_id_phonetic,
                             'audio_type_for_words': audio_type_for_words,
@@ -1455,9 +1455,11 @@ class CLARAProjectInternal:
         else:
             audio_metadata_phonetic = None
         image_metadata = self.get_all_project_images(callback=callback)
+        image_description_metadata = self.get_all_project_image_descriptions(callback=callback)
         zipfile = self.export_zipfile_pathname()
         result = create_export_zipfile(global_metadata, project_directory, audio_metadata, audio_metadata_phonetic,
-                                       image_metadata, zipfile, callback=callback)
+                                       image_metadata, image_description_metadata,
+                                       zipfile, callback=callback)
         if result:
             return zipfile
         else:

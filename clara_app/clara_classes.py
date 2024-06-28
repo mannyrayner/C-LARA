@@ -276,6 +276,7 @@ class Image:
                  content_description=None, user_prompt=None,
                  request_type='image-generation',
                  description_variable=None,
+                 description_variables=None,  # New field
                  page_object=None):
         self.image_file_path = image_file_path
         self.thumbnail_file_path = thumbnail_file_path
@@ -289,6 +290,7 @@ class Image:
         self.user_prompt = user_prompt
         self.request_type = request_type
         self.description_variable = description_variable
+        self.description_variables = description_variables or []  # New field
         self.page_object = page_object
 
     def to_json(self):
@@ -304,6 +306,7 @@ class Image:
             'content_description': self.content_description,
             'request_type': self.request_type,
             'description_variable': self.description_variable,
+            'description_variables': self.description_variables,  # New field
             'user_prompt': self.user_prompt
         }
 
@@ -313,13 +316,20 @@ class Image:
     def __repr__(self):
         return (f"Image(image_file_path={self.image_file_path}, image_name={self.image_name}, "
                 f"style_description={self.style_description}, content_description={self.content_description}, "
-                f"user_prompt={self.user_prompt})")
+                f"user_prompt={self.user_prompt}, description_variables={self.description_variables})")
+
 
 class ImageDescriptionObject:
     def __init__(self, project_id, description_variable, explanation):
         self.project_id = project_id
         self.description_variable = description_variable
         self.explanation = explanation
+
+    def to_json(self):
+        return {
+            'description_variable': self.description_variable,
+            'explanation': self.explanation
+            }
 
     def __str__(self):
         return f"{self.project_id} | {self.description_variable} | {self.explanation}"

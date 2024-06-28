@@ -4378,6 +4378,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'content_description': img.content_description,
                      'request_type': img.request_type,
                      'description_variable': img.description_variable,
+                     'description_variables': ', '.join(img.description_variables) if img.description_variables else '',
                      'user_prompt': img.user_prompt
                      }
                     for img in images]
@@ -4411,6 +4412,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                  'explanation': desc.explanation
                                  }
                                 for desc in descriptions ]
+
+    valid_description_variables = [desc['description_variable'] for desc in initial_description_data]
 
     if request.method == 'POST':
         if 'action' in request.POST: 
@@ -4487,7 +4490,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                 return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
             else:
                 image_requests = []
-                formset = ImageFormSet(request.POST, request.FILES, prefix='images')
+                formset = ImageFormSet(request.POST, request.FILES, prefix='images', form_kwargs={'valid_description_variables': valid_description_variables})
                 for i in range(0, len(formset)):
                     form = formset[i]
                     previous_record = initial_data[i] if i < len(initial_data) else None
@@ -4521,6 +4524,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                         request_type = form.cleaned_data.get('request_type')
                         content_description = form.cleaned_data.get('content_description')
                         description_variable = form.cleaned_data.get('description_variable')
+                        description_variables = form.cleaned_data.get('description_variables')
                         if form.cleaned_data.get('image_name'):
                             image_name = form.cleaned_data.get('image_name')
                         elif previous_record and previous_record['image_name']:
@@ -4535,6 +4539,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
 
                         #print(f'image_name = "{image_name}", real_image_file_path = "{real_image_file_path}"')
                         #print(f'user_prompt = "{user_prompt}", content_description = "{content_description}"')
+                        print(f'description_variables = "{description_variables}"')
 
                         if image_name and delete:
                             # We are deleting an image
@@ -4550,9 +4555,20 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                               'style_description': style_description,
                                               'current_image': previous_record['image_file_path'] if previous_record else None,
                                               'request_type': request_type,
-                                              'description_variable': description_variable
+                                              'description_variable': description_variable,
+                                              'description_variables': description_variables
                                               }
                             image_requests.append(image_request)
+                            clara_project_internal.add_project_image(image_name, real_image_file_path,
+                                                                     associated_text=associated_text,
+                                                                     associated_areas=associated_areas,
+                                                                     page=page, position=position,
+                                                                     request_type=request_type,
+                                                                     user_prompt=user_prompt,
+                                                                     content_description=content_description,
+                                                                     description_variable=description_variable,
+                                                                     description_variables=description_variables
+                                                                     )
                         elif ( image_name and real_image_file_path ) or user_prompt:
                            # We are uploading an image or changing a generation/understanding line
     ##                        if not associated_areas and associated_text and image_name:  
@@ -4568,7 +4584,9 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                      request_type=request_type,
                                                                      user_prompt=user_prompt,
                                                                      content_description=content_description,
-                                                                     description_variable=description_variable)
+                                                                     description_variable=description_variable,
+                                                                     description_variables=description_variables
+                                                                     )
                                                    
                 if len(image_requests) != 0:
                     if not user_has_open_ai_key_or_credit(request.user):
@@ -4582,7 +4600,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     messages.success(request, "Image data updated")
                     return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
     else:
-        formset = ImageFormSet(initial=initial_data, prefix='images')
+        formset = ImageFormSet(initial=initial_data, prefix='images', form_kwargs={'valid_description_variables': valid_description_variables})
         description_formset = ImageDescriptionFormSet(initial=initial_description_data, prefix='descriptions')
         style_form = StyleImageForm(initial=initial_style_image_data)
         if project.uses_coherent_image_set:
@@ -4717,12 +4735,16 @@ def generate_image_descriptions(project_id, callback=None):
         to DALL-E-3.
 
         Each item will be represented as a pair consisting of an identifier (a "description variable") and a
-        brief explanation of what the variable refers to, in the format
+        phrase saying what the variable refers to (an "explanation"), in the format
 
         {{
             "description_variable": <variable>,
             "explanation": <explanation>
         }},
+
+        The "explanations" will later be used to create instructions of the form
+
+        "Depict <explanation> according to this description: <value of description_variable>"
 
         Write out the list of pairs in JSON form.
 
@@ -4754,15 +4776,15 @@ def generate_image_descriptions(project_id, callback=None):
         [
           {{
             "description_variable": "Elara-description",
-            "explanation": "Description of Princess Elara"
+            "explanation": "Princess Elara"
           }},
           {{
             "description_variable": "forest-description",
-            "explanation": "Description of the forest where Elara loves to explore"
+            "explanation": "the forest"
           }},
           {{
             "description_variable": "Ember-description",
-            "explanation": "Description of Ember the dragon"
+            "explanation": "Ember the dragon"
           }},
           
         ]
@@ -4787,17 +4809,16 @@ def generate_image_descriptions(project_id, callback=None):
                     raise ValueError('Response is not a JSON list')
                 if not is_well_formed_description_list(response_object, callback=callback):
                     raise ValueError(f'Error: response {response_object} is not a well-formed description list')
-                else:
-                    clara_project_internal.remove_all_project_image_descriptions(callback=callback)
-                    for description in response_object:
-                        description_variable = description['description_variable']
-                        explanation = description['explanation']
-                        clara_project_internal.add_project_image_description(description_variable, explanation, callback=callback)
-                    post_task_update(callback, "finished")
-                    return True
+                clara_project_internal.remove_all_project_image_descriptions(callback=callback)
+                for description in response_object:
+                    description_variable = description['description_variable']
+                    explanation = description['explanation']
+                    clara_project_internal.add_project_image_description(description_variable, explanation, callback=callback)
+                post_task_update(callback, "finished")
+                return True
             except Exception as e:
                 post_task_update(callback, f'Error: {str(e)}')
-        post_task_update(callback, f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
+        post_task_update(callback, f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times')
         post_task_update(callback, "error")
         return False
     except Exception as e:
@@ -4837,29 +4858,8 @@ def create_image_request_sequence(project_id, callback=None):
         You are to write a set of requests, in JSON form, that will guide DALL-E-3 and GPT-4o in creating a set of
         illustrations for a text, also provided in JSON form, which has been divided into numbered pages.
 
-        A DALL-E-3 image-generation request to create the image on page <page-number> of the text will be of the form:
-
-        {{
-          "request_type": "image-generation",
-          "page": <page-number>,
-          "prompt": "<parametrised-request-text>"
-        }}
-
-        where <parametrised-request-text> may include elements enclosed in braces, {{}}, which refer to "description-variables"
-        holding the results of previously executed GPT-4o image understanding requests.
-
-        A GPT-4o image-understanding request to extract visual information from the previously generated image on page <page-number>
-        of the text and store it in the "description-variable" <variable-name> will be of the form:
-
-        {{
-          "request_type": "image-understanding",
-          "page": <page-number>,
-          "prompt": "<request-text>",
-          "description-variable": "<variable-name>"
-        }}
-
-        When generating the image requests, ensure that the image descriptions from understanding requests are included in the prompts
-        for subsequent image-generation requests. This ensures visual consistency throughout the story.
+        To maintain visual consistency, a previous processing step has extracted a set of "description_variables"
+        which refer to items (characters, objects, locations etc), which may occur in more than one image.
 
         Take all description variables from the list provided. Each description variable is paired with a brief
         explanation of its purpose, in the format
@@ -4867,7 +4867,36 @@ def create_image_request_sequence(project_id, callback=None):
         {{
             "description_variable": <variable>,
             "explanation": <explanation>
-        }},        
+        }},
+
+        Each description variable will add a piece of text to a  DALL-E-3 prompt of the form
+
+        "Depict <explanation> according to this description: <value of description_variable>"
+        
+        A DALL-E-3 image-generation request to create the image on page <page-number> of the text will be of the form:
+
+        {{
+          "request_type": "image-generation",
+          "page": <page-number>,
+          "prompt": "<main-request-text>",
+          "description_variables": <list-of-description-variables>
+        }}
+
+        where <list-of-description-variables> is a list of "description_variables" 
+        holding relevant descriptions created by previously executed GPT-4o image understanding requests.
+
+        A GPT-4o image-understanding request to extract visual information from the previously generated image on page <page-number>
+        of the text and store it in the "description_variable" <variable-name> will be of the form:
+
+        {{
+          "request_type": "image-understanding",
+          "page": <page-number>,
+          "prompt": "<request-text>",
+          "description_variable": "<variable-name>"
+        }}
+
+        When generating the image requests, ensure that the description_variables from relevant image-understanding requests are included in the prompts
+        for subsequent image-generation requests. This ensures visual consistency throughout the story.
 
         Here is a simple example:
 
@@ -4884,7 +4913,7 @@ def create_image_request_sequence(project_id, callback=None):
           }},
           {{
             "page": 3,
-            "text": "One day, when she was out in the forest, Elana met a lost dragon called Ember."
+            "text": "One day, when she was out in the forest, Elara met a lost dragon called Ember."
           }}
         ]
 
@@ -4893,11 +4922,11 @@ def create_image_request_sequence(project_id, callback=None):
         [
           {{
             "description_variable": "Elara-description",
-            "explanation": "Description of Princess Elara"
+            "explanation": "Princess Elara"
           }},
           {{
             "description_variable": "forest-description",
-            "explanation": "Description of the forest where Elara loves to explore"
+            "explanation": "the forest"
           }}
 
         ]
@@ -4918,14 +4947,14 @@ def create_image_request_sequence(project_id, callback=None):
             Detail her apparent age, ethnicity, facial features, hair style and colour, body build, clothing style, and overall demeanor. If it
             is not easy to extract this information from the image, e.g. regarding ethnicity, make a plausible decision.
             A detailed description is crucial for ensuring consistency in her portrayal across all subsequent images in the series.
-            Use precise, descriptive language to capture her essence, as this information will directly influence the generation of future images."
-            "description-variable": "Elara-description"
+            Use precise, descriptive language to capture her essence, as this information will directly influence the generation of future images.",
+            "description_variable": "Elara-description"
           }},
           {{
             "request_type": "image-generation",
             "page": 2,
-            "prompt": "An image of Princess Elara exploring the forest, surrounded by tall trees, colorful flowers, and playful animals like rabbits and birds.
-            Princess Elara will be as described here: {{Elara-description}}."
+            "prompt": "An image of Princess Elara exploring the forest, surrounded by tall trees, colorful flowers, and playful animals like rabbits and birds.",
+            "description_variables": [ "Elara-description" ]
           }},
           {{
             "request_type": "image-understanding",
@@ -4934,14 +4963,15 @@ def create_image_request_sequence(project_id, callback=None):
             Detail the types, sizes and general appearance of trees and other vegetation, the quality of the lighting, and
             kinds of wildlife (animals, birds). If it is not easy to extract this information from the image, make a plausible decision.
             A detailed description is crucial for ensuring consistency across all subsequent images in the series.
-            Use precise, descriptive language to capture the essence of the forest, as this information will directly influence the generation of future images."
-            "description-variable": "forest-description"
+            Use precise, descriptive language to capture the essence of the forest, as this information will directly influence the generation of future images.",
+            "description_variable": "forest-description"
           }},
           {{
             "request_type": "image-generation",
             "page": 3,
             "prompt": "An image of Princess Elara and the dragon Ember in the forest. They have just met. Ember looks sad and lost, Elara looks kind
-            and sympathetic. Princess Elara will be as described here: {{Elara-description}}. The forest will be as described here: {{forest-description}}"
+            and sympathetic.",
+            "description_variables": [ "Elara-description", "forest-description" ]
           }}
         ]
 
@@ -4965,37 +4995,76 @@ def create_image_request_sequence(project_id, callback=None):
                 store_api_calls([api_call], project, user, 'image_request_sequence')
                 response = api_call.response
 
-                response_object = interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
-                if not isinstance(response_object, list):
-                    raise ValueError('Response is not a JSON list')
-                else:
-                    clara_project_internal.remove_all_project_images_except_style_images(callback=callback)
-                    print(f'--- Saving image request sequence with {len(response_object)} records')
-                    for req in response_object:
-                        request_type = req['request_type']
-                        user_prompt = req['prompt']
-                        page = req['page']
-                        description_variable = req['description-variable'] if 'description-variable' in req else ''
-                        position = req['position'] if 'position' in req else 'bottom'
-                        image_name = f'image_{page}_{position}' if request_type == 'image-generation' else f'get_{description_variable}'
-                        image_file_path = None
-                        clara_project_internal.add_project_image(image_name, image_file_path,
-                                                                 page=page, position=position,
-                                                                 user_prompt=user_prompt,
-                                                                 request_type=request_type,
-                                                                 description_variable=description_variable,
-                                                                 callback=callback)
-                    post_task_update(callback, "finished")
-                    return True
+                sequence = interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
+                check_well_formed_image_request_sequence(sequence, callback=callback)
+                corrected_sequence = check_and_correct_initialization_in_image_request_sequence(sequence, project_id, user, config_info, callback=callback)
+                
+                clara_project_internal.remove_all_project_images_except_style_images(callback=callback)
+                print(f'--- Saving image request sequence with {len(corrected_sequence)} records')
+                for req in corrected_sequence:
+                    request_type = req['request_type']
+                    user_prompt = req['prompt']
+                    page = req['page']
+                    description_variable = req.get('description_variable', '')
+                    position = req.get('position', 'bottom')
+                    description_variables = req.get('description_variables', [])
+                    image_name = f'image_{page}_{position}' if request_type == 'image-generation' else f'get_{description_variable}'
+                    image_file_path = None
+                    clara_project_internal.add_project_image(image_name, image_file_path,
+                                                             page=page, position=position,
+                                                             user_prompt=user_prompt,
+                                                             request_type=request_type,
+                                                             description_variable=description_variable,
+                                                             description_variables=description_variables,
+                                                             callback=callback)
+                post_task_update(callback, "finished")
+                return True
             except Exception as e:
                 post_task_update(callback, f'Error: {str(e)}')
-        post_task_update(callback, f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
+        post_task_update(callback, f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times')
         post_task_update(callback, "error")
         return False
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, "error")
         return False
+
+def check_well_formed_image_request_sequence(requests, callback=None):
+    if not isinstance(requests, list):
+        post_task_update(callback, f'Image request sequence is not a list: {requests}')
+        raise ValueError('Bad image request sequence')
+    
+    for req in requests:
+        if not (isinstance(req, dict) and 'request_type' in req and req['request_type'] in ('image-generation', 'image-understanding')):
+            post_task_update(callback, f'Image request sequence item is not a dict containing a valid "request_type" field: {req}')
+            raise ValueError('Bad image request sequence')
+        
+        if req['request_type'] == 'image-generation':
+            if not ('prompt' in req and 'page' in req and 'description_variables' in req):
+                post_task_update(callback, f'Image request sequence item of type "image-generation" does not contain "prompt", "page", and "description_variables" fields: {req}')
+                raise ValueError('Bad image request sequence')
+        
+        if req['request_type'] == 'image-understanding':
+            if not ('prompt' in req and 'page' in req and 'description_variable' in req):
+                post_task_update(callback, f'Image request sequence item of type "image-understanding" does not contain "prompt", "page", and "description_variable" fields: {req}')
+                raise ValueError('Bad image request sequence')
+    
+    return True
+
+def check_and_correct_initialization_in_image_request_sequence(sequence, project_id, user, config_info, callback=None):
+    initialized_vars = set()
+    corrected_sequence = []
+
+    for i, req in enumerate(sequence):
+        if req["request_type"] == "image-understanding":
+            initialized_vars.add(req["description_variable"])
+        elif req["request_type"] == "image-generation":
+            # Only keep description variables from previous image-understanding steps
+            req["description_variables"] = [var for var in req["description_variables"] if var in initialized_vars]
+
+        corrected_sequence.append(req)
+
+    return corrected_sequence
 
 # Go through the generation requests, creating and storing the images.
 #
@@ -5011,19 +5080,17 @@ def create_image_request_sequence(project_id, callback=None):
 
 def create_and_add_coherent_dall_e_3_images(project_id, requests, callback=None):
     try:
-        # Temporary debugging trace
-        #print(f'---Executing coherent image requests')
-        #pprint.pprint(requests)
-        
         project = get_object_or_404(CLARAProject, pk=project_id)
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         user = project.user
         config_info = get_user_config(user)
         temp_dir = tempfile.mkdtemp()
+        
         for request in requests:
             n_tries = 0
             retry_limit = int(config.get('dall_e_3', 'retry_limit'))
             request_succeeded = False
+            
             while not request_succeeded and n_tries <= retry_limit:
                 try:
                     request_type = request['request_type']
@@ -5035,38 +5102,27 @@ def create_and_add_coherent_dall_e_3_images(project_id, requests, callback=None)
                     style_description = request['style_description']
                     current_image = request['current_image']
                     description_variable = request['description_variable']
+                    description_variables = request['description_variables']
 
-                    instantiated_user_prompt = clara_project_internal.instantiate_image_description_variables_in_prompt(user_prompt, callback=callback)
-
-                    if not request_type in ( 'image-generation', 'image-understanding' ):
+                    if request_type not in ('image-generation', 'image-understanding'):
                         post_task_update(callback, f"*** Error: unknown request type in image generation sequence: {request_type}")
-                        post_task_update(callback, f"error")
+                        post_task_update(callback, "error")
                         return False
-                    elif request_type == 'image-generation':
-                        #if not current_image:
-                        full_prompt = f"""Create an image based on the following request: {instantiated_user_prompt}
 
-        Make the style of the image consistent with the style of the previously generated image described here: {style_description}
+                    if request_type == 'image-generation':
+                        full_prompt = f"""Create an image based on the following request: {user_prompt}
+
+Make the style of the image consistent with the style of the previously generated image described here: {style_description}
         """
-##                        else:
-##                            interpretation_prompt = """Produce a detailed description of this image.
-##        The description you give will be used to create a modified version of the image, so include as many details as you can.
-##        """
-##                            post_task_update(callback, f"--- Creating a description of the existing image")
-##                            api_call_interpret = call_chat_gpt4_interpret_image(interpretation_prompt, current_image,
-##                                                                                config_info=config_info, callback=callback)
-##                            content_description = api_call_interpret.response
-##                            post_task_update(callback, f"--- Description created: {content_description}")
-##                            store_api_calls([ api_call_interpret ], project, project.user, 'image')
-##                            full_prompt = f"""Create a modified version of the image described as follows: {content_description}
-##
-##        Change it according to this request: {instantiated_user_prompt}.
-##
-##        Make the style of the image consistent with the style of the previously generated image described here: {style_description}
-##        """    
-                        
+                        for description_variable in description_variables:
+                            image_description = clara_project_internal.get_project_image_description(description_variable, callback=callback)
+                            description_text = clara_project_internal.get_image_understanding_result(description_variable, callback=callback)
+                            if image_description and description_text:
+                                explanation_text = image_description.explanation
+                                full_prompt += f"\n\nDepict {explanation_text} according to this description: {description_text}"
+
                         tmp_image_file = os.path.join(temp_dir, f'{image_name}_{page}_{position}.jpg')
-                        post_task_update(callback, f"--- Creating DALL-E-3 image: name {image_name}, page {page},{position}")
+                        post_task_update(callback, f"--- Creating DALL-E-3 image: name {image_name}, page {page}, position {position}")
                         api_calls_generate = call_chat_gpt4_image(full_prompt, tmp_image_file, config_info=config_info, callback=callback)
                         store_api_calls(api_calls_generate, project, project.user, 'image')
                         post_task_update(callback, f"--- Image created: {tmp_image_file}")
@@ -5074,40 +5130,47 @@ def create_and_add_coherent_dall_e_3_images(project_id, requests, callback=None)
                         clara_project_internal.add_project_image(image_name, tmp_image_file, 
                                                                  associated_text='', associated_areas='',
                                                                  page=page, position=position,
-                                                                 user_prompt=user_prompt)
+                                                                 user_prompt=user_prompt,
+                                                                 description_variables=description_variables,
+                                                                 request_type=request_type)
                         post_task_update(callback, f"--- Image stored")
                         request_succeeded = True
+
                     elif request_type == 'image-understanding':
                         post_task_update(callback, f"--- Creating a description of part of image")
-                        # Get the generated image for this page and position
                         generated_image_object = clara_project_internal.get_generated_project_image_by_position(page, position, callback=callback)
                         if not generated_image_object:
-                            post_task_update(callback, f"error")
+                            post_task_update(callback, "error")
                             return False
+
                         generated_image_file_path = generated_image_object.image_file_path
-                        api_call_interpret = call_chat_gpt4_interpret_image(instantiated_user_prompt, generated_image_file_path,
+                        api_call_interpret = call_chat_gpt4_interpret_image(user_prompt, generated_image_file_path,
                                                                             config_info=config_info, callback=callback)
                         description = api_call_interpret.response
-                        # Include image_name, page and position in case this is a new description variable
                         clara_project_internal.store_image_understanding_result(description_variable, description,
                                                                                 image_name=image_name, page=page, position=position, user_prompt=user_prompt,
                                                                                 callback=callback)
                         post_task_update(callback, f"--- Description created for '{description_variable}': '{description}'")
                         request_succeeded = True
+
                 except Exception as e:
                     post_task_update(callback, f"{request_type} task failed for page = {page}, position = {position}")
                     post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     n_tries += 1
+            
             if not request_succeeded:
                 post_task_update(callback, f"*** Error: giving up on {request_type} task after {retry_limit} unsuccessful attempts")
-                post_task_update(callback, f"error")
+                post_task_update(callback, "error")
                 return False
-        post_task_update(callback, f"finished")
+        
+        post_task_update(callback, "finished")
         return True
+    
     except Exception as e:
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
-        post_task_update(callback, f"error")
+        post_task_update(callback, "error")
         return False
+    
     finally:
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)

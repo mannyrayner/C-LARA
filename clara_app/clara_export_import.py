@@ -16,7 +16,8 @@ import tempfile
 import traceback
 
 def create_export_zipfile(global_metadata, project_directory, audio_metadata, audio_metadata_phonetic,
-                          image_metadata, zipfile, callback=None):
+                          image_metadata, image_description_metadata,
+                          zipfile, callback=None):
     try:
         tmp_dir = tempfile.mkdtemp()
         tmp_zipfile = make_tmp_file('project_zip', 'zip')
@@ -26,6 +27,7 @@ def create_export_zipfile(global_metadata, project_directory, audio_metadata, au
         copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False, callback=callback)
         copy_audio_data_to_tmp_dir(audio_metadata_phonetic, tmp_dir, phonetic=True, callback=callback)
         copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=callback)
+        copy_image_description_data_to_tmp_dir(image_description_metadata, tmp_dir, callback=callback)
         
         make_zipfile(tmp_dir, tmp_zipfile, callback=callback)
         copy_local_file(tmp_zipfile, zipfile)
@@ -140,6 +142,17 @@ def copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=None):
     write_json_to_local_file(image_metadata_as_json, file)
     post_task_update(callback, f'--- Copied all image files')
 
+def copy_image_description_data_to_tmp_dir(image_description_metadata, tmp_dir, callback=None):
+    tmp_image_dir = os.path.join(tmp_dir, 'image_descriptions')
+    make_local_directory(tmp_image_dir)
+    file = f'{tmp_image_dir}/metadata.json'
+    
+    image_description_metadata_as_json = [ image.to_json() for image in image_description_metadata  ]
+
+    if len(image_description_metadata_as_json) != 0:
+        write_json_to_local_file(image_description_metadata_as_json, file)
+    post_task_update(callback, f'--- Copied all image description data')
+
 # ===========================================
 
 def change_project_id_in_imported_directory(tmp_dir, new_id):
@@ -209,6 +222,7 @@ def update_metadata_file_paths(clara_project_internal, project_dir, callback=Non
 
 def update_multimedia_from_imported_directory(project, temp_dir, callback=None):
     update_images_from_imported_directory(project, temp_dir, callback=callback)
+    update_image_descriptions_from_imported_directory(project, temp_dir, callback=callback)
     update_regular_audio_from_imported_directory(project, temp_dir, callback=callback)
     update_phonetic_audio_from_imported_directory(project, temp_dir, callback=callback)
 
@@ -223,9 +237,32 @@ def update_multimedia_from_imported_directory(project, temp_dir, callback=None):
 ##        "page": 1,
 ##        "position": "bottom"
 ##    },
-    
+
 def update_images_from_imported_directory(project, tmp_dir, callback=None):
     image_dir = absolute_local_file_name(os.path.join(tmp_dir, 'images'))
+    metadata_file = os.path.join(image_dir, 'metadata.json')
+    if not local_file_exists(metadata_file):
+        # There are no image_descriptions in this zipfile
+        return
+    metadata = read_json_local_file(metadata_file)
+    for item in metadata:
+        project.add_project_image(item['image_name'],
+                                  os.path.join(image_dir, item['image_file_path']) if item['image_file_path'] else '',
+                                  associated_text=item['associated_text'],
+                                  associated_areas=item['associated_areas'],
+                                  page=item['page'],
+                                  position=item['position'],
+                                  style_description=item['style_description'],
+                                  content_description=item['content_description'],
+                                  user_prompt=item['user_prompt'],
+                                  request_type=item['request_type'],
+                                  description_variable=item['description_variable'],
+                                  description_variables=item['description_variables'],
+                                  callback=callback)
+
+    
+def update_image_descriptions_from_imported_directory(project, tmp_dir, callback=None):
+    image_dir = absolute_local_file_name(os.path.join(tmp_dir, 'image_descriptions'))
     metadata_file = os.path.join(image_dir, 'metadata.json')
     if not local_file_exists(metadata_file):
         # There are no images in this zipfile
@@ -233,13 +270,10 @@ def update_images_from_imported_directory(project, tmp_dir, callback=None):
     metadata = read_json_local_file(metadata_file)
     for item in metadata:
         # Note that we don't use "thumbnail_file_path", add_project_image generates the thumbnail on the fly.
-        project.add_project_image(item['image_name'],
-                                  os.path.join(image_dir, item['image_file_path']),
-                                  associated_text=item['associated_text'],
-                                  associated_areas=item['associated_areas'],
-                                  page=item['page'],
-                                  position=item['position'],
-                                  callback=callback)
+        project.add_project_image_description(item['description_variable'],
+                                              item['explanation'],
+                                              callback=callback)
+
 
 ## Global meta data looks like this:
 ##

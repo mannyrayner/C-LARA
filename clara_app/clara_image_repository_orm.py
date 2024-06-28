@@ -30,6 +30,7 @@ from PIL import Image as PILImage
 
 import os
 import traceback
+#import json
 
 config = get_config()
 
@@ -65,7 +66,7 @@ class ImageRepositoryORM:
     def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='',
                   page=1, position='bottom', style_description='', content_description='',
                   user_prompt='', request_type='image-generation', description_variable='',
-                  callback=None):
+                  description_variables=[], callback=None):  
         try:
             project_id = str(project_id)
             page = int(page)
@@ -83,6 +84,7 @@ class ImageRepositoryORM:
                     'content_description': content_description,
                     'request_type': request_type,
                     'description_variable': description_variable,
+                    'description_variables': description_variables,  
                     'user_prompt': user_prompt
                 }
             )
@@ -187,6 +189,7 @@ class ImageRepositoryORM:
                 content_description=entry.content_description,
                 request_type=entry.request_type,
                 description_variable=entry.description_variable,
+                description_variables=entry.description_variables,
                 user_prompt=entry.user_prompt
             )
 
@@ -222,6 +225,7 @@ class ImageRepositoryORM:
                 content_description=entry.content_description,
                 request_type=entry.request_type,
                 description_variable=entry.description_variable,
+                description_variables=entry.description_variables, 
                 user_prompt=entry.user_prompt
             )
 
@@ -260,6 +264,7 @@ class ImageRepositoryORM:
                               content_description=entry.content_description,
                               request_type=entry.request_type,
                               description_variable=entry.description_variable,
+                              description_variables=entry.description_variables,
                               user_prompt=entry.user_prompt)
                 images.append(image)
 

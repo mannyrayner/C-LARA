@@ -747,10 +747,25 @@ class ImageForm(forms.Form):
     request_type = forms.ChoiceField(label='Request Type',
                                      choices=[('image-generation', 'Generation'),
                                               ('image-understanding', 'Understanding')],
-                                     required=True)
+                                     required=False)
     description_variable = forms.CharField(label='Description Variable', max_length=100, required=False)
+    description_variables = forms.CharField(label='Description Variables', widget=forms.Textarea(attrs={'rows': 4}), required=False)
     generate = forms.BooleanField(label='Generate Image', required=False)
     delete = forms.BooleanField(label='Delete Image', required=False)
+
+    def __init__(self, *args, **kwargs):
+        self.valid_description_variables = kwargs.pop('valid_description_variables', [])
+        super().__init__(*args, **kwargs)
+
+    def clean_description_variables(self):
+        data = self.cleaned_data['description_variables']
+        if data:
+            variables = [var.strip() for var in data.split(',')]
+            invalid_vars = [var for var in variables if var not in self.valid_description_variables]
+            if invalid_vars:
+                raise forms.ValidationError(f"Invalid description variables: {', '.join(invalid_vars)}")
+            return variables
+        return []
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
 

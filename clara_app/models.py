@@ -652,6 +652,7 @@ class ImageMetadata(models.Model):
     request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='image-generatio')
     description_variable = models.CharField(max_length=255, blank=True, default='',
                                             help_text='Variable name for storing image understanding result.')
+    description_variables = models.JSONField(blank=True, default=list, help_text='List of description variables for this image generation request.')
 
     class Meta:
         db_table = 'orm_image_metadata'
