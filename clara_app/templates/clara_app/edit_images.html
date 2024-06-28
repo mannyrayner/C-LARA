@@ -88,6 +88,13 @@
       </thead>
       <tbody>
         {% for form in formset %}
+		  <tr>
+		    {% if uses_coherent_image_set %}
+		       <td colspan="8">{{ form.page_text }}</td>
+			{% else %}
+			   <td colspan="6">{{ form.page_text }}</td>
+			{% endif %}   
+		  </tr>
           <tr>
 		    {% if uses_coherent_image_set %}
 			   <td>{{ form.request_type }}</td>
