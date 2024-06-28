@@ -4,36 +4,38 @@
 
 {% block content %}
   <h2>Edit Images ("{{ project.title }}")</h2>
-  {% if style_form %}
-	  <h3>Style image</h3>
-	  <form method="post" enctype="multipart/form-data">
-		{% csrf_token %}
-		<table>
-           <thead>
-              <tr>
-			     <th>Prompt</th><th>Image Preview</th><th>Description</th>
-			  </tr>
-		    </thead>
-			<tbody>
-			  <tr>
-			     <td>
-				      {{ style_form.user_prompt }}
-			     </td>
-			     <td>
-		            {% if style_form.image_base_name.value %}
-                        <img src="{% url 'serve_project_image' project.internal_id style_form.image_base_name.value %}" alt="Current Style Image" style="max-width: 300px; max-height: 300px;">
-				    {% else %}
-                       No image currently stored.
-                    {% endif %}
-                  </td>
-				  <td>
-				      {{ style_form.style_description }}
-			      </td>
-			  </tr>
-			</tbody>
-		</table>
-		<button type="submit" name="action" value="create_dalle_style_image">Create style image</button>
-	  </form>
+  {% if uses_coherent_image_set %}
+      {% if style_form  %}
+		  <h3>Style image</h3>
+		  <form method="post" enctype="multipart/form-data">
+			{% csrf_token %}
+			<table>
+			   <thead>
+				  <tr>
+					 <th>Prompt</th><th>Image Preview</th><th>Description</th>
+				  </tr>
+				</thead>
+				<tbody>
+				  <tr>
+					 <td>
+						  {{ style_form.user_prompt }}
+					 </td>
+					 <td>
+						{% if style_form.image_base_name.value %}
+							<img src="{% url 'serve_project_image' project.internal_id style_form.image_base_name.value %}" alt="Current Style Image" style="max-width: 300px; max-height: 300px;">
+						{% else %}
+						   No image currently stored.
+						{% endif %}
+					  </td>
+					  <td>
+						  {{ style_form.style_description }}
+					  </td>
+				  </tr>
+				</tbody>
+			</table>
+			<button type="submit" name="action" value="create_dalle_style_image">Create style image</button>
+		  </form>
+	  {% endif %}
 	  {% if description_formset %}
 		 <h3>Image Description Variables</h3>
 		 <form method="post" prefix="descriptions" enctype="multipart/form-data">
@@ -77,11 +79,11 @@
     <table>
       <thead>
         <tr>
-		  {% if uses_coherent_image_set %}
-		    <th>Request type</th><th>Image/Description</th><th>Prompt</th><th>Name/Variable</th><th>Page</th><th>Position</th><th>Generate</th><th>Delete</th>
-		  {% else %}
-            <th>Image Preview</th><th>Image Upload</th><th>Image Name</th><th>Page</th><th>Position</th><th>Delete</th>
-		  {% endif %}
+          {% if uses_coherent_image_set %}
+            <th>Request type</th><th>Image/Description</th><th>Prompt</th><th>Variables</th><th style="width: 50px;">Page</th><th>Position</th><th style="width: 100px;">Generate</th><th>Delete</th>
+          {% else %}
+            <th>Image Preview</th><th>Image Upload</th><th>Image Name</th><th style="width: 50px;">Page</th><th>Position</th><th>Delete</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -103,7 +105,7 @@
 			   <td>{{ form.user_prompt }}</td>
                <td>
 			    {% if form.request_type.value == 'image-generation' %}
-				   {{ form.image_name }}
+				   {{ form.description_variables }}
 				{% else %}
 				   {{ form.description_variable }}
 				{% endif %}
