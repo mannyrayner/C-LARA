@@ -4365,6 +4365,13 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                  'create_image_request_sequence') 
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Assuming segmented_text and internalised_segmented_text have already been loaded
+    segmented_text = clara_project_internal.load_text_version("segmented_with_images")
+    internalised_segmented_text = internalize_text(segmented_text, project.l2, project.l1, "segmented")
+    page_objects = internalised_segmented_text.pages
+    page_texts = [ page_object.to_text(annotation_type="plain") for page_object in page_objects ]
+
     # Retrieve existing images
     images = clara_project_internal.get_all_project_images()
     initial_data = [{'image_file_path': img.image_file_path,
@@ -4373,6 +4380,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'associated_text': img.associated_text,
                      'associated_areas': img.associated_areas,
                      'page': img.page,
+                     'page_text': page_texts[img.page - 1] if img.page <= len(page_texts) else '',
                      'position': img.position,
                      'style_description': img.style_description,
                      'content_description': img.content_description,

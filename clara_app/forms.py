@@ -739,6 +739,9 @@ class ImageForm(forms.Form):
     image_name = forms.CharField(label='Image Name', max_length=100, required=False)
     associated_text = forms.CharField(label='Associated Text', widget=forms.Textarea, required=False)
     associated_areas = forms.CharField(label='Associated Areas', widget=forms.Textarea, required=False)
+    page_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100, 'readonly': 'readonly'}),
+                                required=False)
     page = forms.IntegerField(label='Page Number', min_value=0, required=False)
     position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=False)
     user_prompt = forms.CharField(label='Instructions for creating image', widget=forms.Textarea(attrs={'rows': 12}), required=False)
