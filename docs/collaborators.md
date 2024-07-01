@@ -31,6 +31,7 @@
 - **MANNY RAYNER**: Software implementation and design, project coordination, English evaluation
 - **CHADI RAHEB**: Farsi evaluation
 - **ANNIKA SIMONSEN**: Linguistic annotation, user studies, Faroese, Danish and Icelandic evaluation
+- **VLADYSLAV SUKHYI**: Ukrainian evaluation
 - **FABRICE WACALIE**: Phonetic texts, Kanak languages
 - **PAULINE WELBY**: Phonetic texts, Kanak languages
 - **ALEX XIANG**: Supervision of student projects, Mandarin evaluation
