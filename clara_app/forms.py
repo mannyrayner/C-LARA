@@ -412,8 +412,8 @@ class CreateTranslatedTextForm(CreateAnnotatedTextForm):
 
 class CreateGlossedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
-        ('generate', 'Generate annotated text from SEGMENTED text using AI'),
-        ('generate_gloss_from_lemma', 'Generate annotated text from LEMMA-TAGGED text using AI'),
+        ('generate', 'Generate annotated text from segmented text using AI'),
+        #('generate_gloss_from_lemma', 'Generate annotated text from LEMMA-TAGGED text using AI'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
         ('manual', 'Manually enter annotated text'),

@@ -84,9 +84,11 @@ def improve_morphology_in_segmented_version(text, l2_language, config_info={}, c
 
 # Annotate the text with glosses
 def generate_glossed_version(segmented_text, l1_language, l2_language, previous_version='segmented_with_images', mwe=False,
-                             current_glossed_text=None, config_info={}, callback=None):
+                             current_glossed_text=None, current_translated_text=None, config_info={}, callback=None):
     return generate_or_improve_annotated_version('annotate', 'gloss', segmented_text, l1_language, l2_language,
-                                                 previous_version=previous_version, mwe=mwe, current_annotated_text=current_glossed_text,
+                                                 previous_version=previous_version, mwe=mwe,
+                                                 current_annotated_text=current_glossed_text,
+                                                 current_translated_text=current_translated_text,
                                                  config_info=config_info, callback=callback)
 
 # Annotate the text with translations
@@ -139,8 +141,15 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
     return ( api_call.response, [ api_call ] )
 
 def generate_or_improve_annotated_version(annotate_or_improve, processing_phase, annotated_text, l1_language, l2_language,
-                                          previous_version='default', mwe=False, current_annotated_text=None,
+                                          previous_version='default', mwe=False,
+                                          current_annotated_text=None, current_translated_text=None,
                                           config_info={}, callback=None):
+
+    print(f"""generate_or_improve_annotated_version({annotate_or_improve}, {processing_phase}, (annotated_text), {l1_language}, {l2_language},
+                                          previous_version={previous_version}, mwe={mwe},
+                                          current_annotated_text={current_annotated_text}, current_translated_text={current_translated_text},
+                                          config_info={config_info}, callback=callback)
+""")
 
     if previous_version == 'lemma':
         source_version = 'lemma'
@@ -152,10 +161,12 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         source_version = processing_phase
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
+    
     if processing_phase == 'segmented' and previous_version == 'segmented':
         internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, 'plain')
     else:
         internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
+        
     if current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'gloss':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'gloss')
     elif current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'lemma':
@@ -190,10 +201,15 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     
     if mwe:
         segmented_elements_mwe_dict = segments_to_segmented_elements_mwe_dict(segments)
-    elif processing_phase == 'translated':
-        segmented_elements_translations_dict = segments_to_translations_dict(segments)
 
-    #print(f'segmented_elements_translations_dict: {segmented_elements_translations_dict}')
+    if processing_phase == 'translated':
+        segmented_elements_translations_dict = segments_to_translations_dict(segments)
+    elif processing_phase == 'gloss' and mwe and current_translated_text:
+        internalised_translated_text = clara_internalise.internalize_text(current_translated_text, l2_language, l1_language, 'translated')
+        translated_segments = internalised_translated_text.segments()
+        segmented_elements_translations_dict = segments_to_translations_dict(translated_segments)
+
+    print(f'segmented_elements_translations_dict: {segmented_elements_translations_dict}')
 
     if internalised_current_annotated_text:
         if mwe or processing_phase in ( 'mwe', 'translated' ):
@@ -230,17 +246,14 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                 #print(f'--- Annotating material for {key}')
                 chunks = split_elements_by_segments([ elements ], max_elements, processing_phase) if not mwe and not processing_phase in ( 'mwe', 'translated' ) else [ elements ]
                 for chunk in chunks:
-                    if segmented_elements_mwe_dict:
-                        key = key_for_segment_elements(chunk)
-                        if key in segmented_elements_mwe_dict:
-                            mwes_for_segment = segmented_elements_mwe_dict[key]
-                        #print(f'key: {key}, mwes_for_segment: {mwes_for_segment}')
-                    else:
-                        mwes_for_segment = []
+                    key = key_for_segment_elements(chunk)
+                    mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
+                    translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
                     annotated_chunk_or_segment_annotation, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
                                                                                                                      l1_language, l2_language,
                                                                                                                      previous_version=previous_version,
                                                                                                                      mwe=mwe, mwes=mwes_for_segment,
+                                                                                                                     translation=translation_for_segment,
                                                                                                                      config_info=config_info, callback=callback)
                     if processing_phase in ( 'mwe', 'translated' ):
                         annotations_for_segments.append(annotated_chunk_or_segment_annotation)
@@ -251,25 +264,30 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     else:
         # We're doing everything from scratch
         #print(f'--- Doing {processing_phase} element by element')
-        if processing_phase == 'mwe' or mwe or ( processing_phase == 'gloss' and previous_version == 'lemma' ) or processing_phase == 'segmented' and previous_version == 'segmented':
+        if processing_phase == 'mwe' or mwe or ( processing_phase == 'gloss' and previous_version == 'lemma' ) or \
+           processing_phase == 'segmented' and previous_version == 'segmented':
             # Do tagging involving MWEs, gloss-from-lemma and morphology improvement one segment at a time
             chunks = segmented_elements
+            process_segments_singly = True
         else:
             chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
+            process_segments_singly = False
         
         for chunk in chunks:
-            #print(f'chunk = {chunk}')
-            if segmented_elements_mwe_dict:
+            print(f'chunk = {chunk}')
+            if process_segments_singly:
                 key = key_for_segment_elements(chunk)
-                if key in segmented_elements_mwe_dict:
-                    mwes_for_segment = segmented_elements_mwe_dict[key]
-                #print(f'key: {key}, mwes_for_segment: {mwes_for_segment}')
+                mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
+                translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
             else:
                 mwes_for_segment = []
+                translation_for_segment = None
             annotated_chunk_or_segment_annotation, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
                                                                                                              l1_language, l2_language,
                                                                                                              previous_version=previous_version,
-                                                                                                             mwe=mwe, mwes=mwes_for_segment,
+                                                                                                             mwe=mwe,
+                                                                                                             mwes=mwes_for_segment,
+                                                                                                             translation=translation_for_segment,
                                                                                                              config_info=config_info, callback=callback)
             if processing_phase == 'mwe':
                 annotations_for_segments.append(annotated_chunk_or_segment_annotation)
@@ -402,7 +420,8 @@ def split_elements_by_segments(segmented_elements, max_elements, processing_phas
 def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, elements,
                                                   l1_language, l2_language,
                                                   previous_version='default',
-                                                  mwe=False, mwes=[], config_info={}, callback=None):
+                                                  mwe=False, mwes=[], translation=None,
+                                                  config_info={}, callback=None):
     word_elements = word_items_in_element_list(elements)
     if len(word_elements) == 0:
         # If we're doing MWE, return empty list
@@ -444,7 +463,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
         annotation_prompt = morphology_prompt(simplified_elements_json, l2_language)
     elif processing_phase == 'gloss':
         annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language,
-                                            previous_version=previous_version, mwe=mwe, mwes=mwes)
+                                            previous_version=previous_version, mwe=mwe, mwes=mwes, translation=translation)
     elif processing_phase == 'lemma':
         annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, mwe=mwe, mwes=mwes)
     elif processing_phase == 'mwe':
@@ -554,7 +573,7 @@ def translation_prompt(annotate_or_improve, simplified_elements_json, l1_languag
 
 
 def glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language,
-                    previous_version='segmented_with_images', mwe=False, mwes=[]):
+                    previous_version='segmented_with_images', mwe=False, mwes=[], translation=None):
     if previous_version == 'lemma':
         template_and_examples_version = 'gloss_with_lemma'
     elif mwe:
@@ -563,7 +582,8 @@ def glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, 
         template_and_examples_version = 'gloss'
     template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, template_and_examples_version, l2_language)
     if annotate_or_improve == 'annotate':
-        examples = glossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language, previous_version=previous_version, mwe=mwe, mwes=mwes)
+        examples = glossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language, previous_version=previous_version,
+                                                      mwe=mwe, mwes=mwes, translation=translation)
     else:
         examples = reglossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
     return template.format( l1_language=l1_language,
@@ -659,22 +679,23 @@ def translation_example_to_text(example, l1_language, l2_language):
                                 for segment in segments ]
     return f'Input: {source_texts}\nOutput: {source_and_target_texts}'
 
-def glossing_examples_to_examples_text(examples_structure, l2_language, l1_language, previous_version='segmented_with_images', mwe=False, mwes=[]):
-    print(f'--- glossing_examples_to_examples_text({examples_structure}, {l2_language}, {l1_language}, mwe={mwe}, mwes={mwes})')
-    # We're using the lemma-tagged version as the input
+def glossing_examples_to_examples_text(examples_structure, l2_language, l1_language, previous_version='segmented_with_images', mwe=False, mwes=[], translation=None):
+    print(f'--- glossing_examples_to_examples_text({examples_structure}, {l2_language}, {l1_language}, mwe={mwe}, mwes={mwes}, translation={translation}')
+    # 1) We're using the lemma-tagged version as the input
     if previous_version == 'lemma':
         return '\n\n'.join([ glossing_example_to_example_text(example, l2_language, l1_language, previous_version='lemma') for example in examples_structure ])
-    # We aren't using MWEs at all
+    # 2) We aren't using MWEs at all
     elif not mwe:
         return '\n\n'.join([ glossing_example_to_example_text(example, l2_language, l1_language) for example in examples_structure ])
-    # We are using MWEs, but this particular text doesn't have any, so we use only examples with no MWEs
+    # 3) We are using MWEs, and we might add a translation to the end. Two subcases:
+    # 3a) This particular text doesn't have any MWEs, so we use only examples with no MWEs
     elif not mwes:
         examples_to_use = [ example for example in examples_structure
                             if example[1].strip() == '' ]
         intro = 'Here are some examples:'
         examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
-        return f'{intro}\n\n{examples_text}'
-    # We are using MWEs, and this particular text has MWEs, so we use only examples with MWEs
+        intro_and_examples_text = f'{intro}\n\n{examples_text}'
+    # W3b)e are using MWEs, and this particular text has MWEs, so we use only examples with MWEs
     else:
         examples_to_use = [ example for example in examples_structure
                             if example[1].strip() != '' ]
@@ -685,7 +706,13 @@ def glossing_examples_to_examples_text(examples_structure, l2_language, l1_langu
             intro1 = f'The following sequences of words should be treated as single multi-word expressions (MWEs)'
         intro2 = f'This means that each of the component words in the MWE should be glossed in the same way. Here are some examples of how to gloss:'
         examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
-        return f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
+        intro_and_examples_text = f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
+
+    if not translation:
+        return intro_and_examples_text
+    else:
+        translations_text = f'\n\nHere is a translation of the whole passage:\n\n"{translation}"\n\nIt may be useful to include words from it when glossing.'
+        return intro_and_examples_text + translations_text
 
 def tagging_examples_to_examples_text(examples_structure, l2_language, mwe=False, mwes=[]):
     print(f'--- tagging_examples_to_examples_text({examples_structure}, {l2_language}, mwe={mwe}, mwes={mwes})')

@@ -770,10 +770,12 @@ class CLARAProjectInternal:
         else:
             segmented_text = self.load_text_version("segmented_with_images")
             mwe = False
-        current_glossed_text = self.load_text_version("gloss") if self.text_versions['gloss'] else None 
+        current_glossed_text = self.load_text_version("gloss") if self.text_versions['gloss'] else None
+        current_translated_text = self.load_text_version("translated") if self.text_versions['translated'] else None 
         glossed_text, api_calls = generate_glossed_version(segmented_text, self.l1_language, self.l2_language,
                                                            previous_version=previous_version, mwe=mwe,
                                                            current_glossed_text=current_glossed_text,
+                                                           current_translated_text=current_translated_text,
                                                            config_info=config_info, callback=callback)
         self.save_text_version("gloss", glossed_text, user=user, label=label, source='ai_generated')
         return api_calls
