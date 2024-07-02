@@ -22,7 +22,7 @@
 - **ANNE-LAURE DOTTE**: Kanak languages
 - **STEPHANIE GENEIX-RABAULT**: Kanak languages
 - **SÖLVI HALLDÓRSSON**: Icelandic content
-- **IVANA HORVÁTHOVÁ**: pedagogical aspects, picture books for Ukrainian learners
+- **IVANA HORVÁTHOVÁ**: Pedagogical aspects, picture books for Ukrainian learners
 - **YIXUAN LU**: Mandarin content
 - **CHRISTELE MAIZONNIAUX**: French evaluation
 - **JEREMIAH MCPADDEN**: Latin, Discord server
