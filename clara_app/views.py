@@ -4505,10 +4505,10 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     #print(f'previous_record#{i} = {previous_record}')
                     # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
                     #print(f"--- form #{i}: form.changed_data = {form.changed_data}")
-                    if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data and not project.uses_coherent_image_set ):
+                    if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data and not 'user_prompt' in form.changed_data ):
                         if not form.is_valid():
                             print(f'--- Invalid form data (form #{i}): {form}')
-                            messages.error(request, "Invalid form data.")
+                            messages.error(request, "Invalid form data (form #{i}).")
                             return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
 
                         # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
