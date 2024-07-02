@@ -132,12 +132,13 @@ def copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=None):
                 for key in ( 'image_file_path', 'thumbnail_file_path' ):
                     if key in item:
                         pathname = item[key]
-                        zipfile_pathname = os.path.join(tmp_image_dir, basename(pathname))
-                        copy_to_local_file(pathname, zipfile_pathname)
-                        item[key] = basename(pathname)
-                        count += 1
-                        if count % 10 == 0:
-                            post_task_update(callback, f'--- Copied {count}/{len(image_metadata_as_json)} image files')
+                        if pathname and file_exists(pathname):
+                            zipfile_pathname = os.path.join(tmp_image_dir, basename(pathname))
+                            copy_to_local_file(pathname, zipfile_pathname)
+                            item[key] = basename(pathname)
+                            count += 1
+                            if count % 10 == 0:
+                                post_task_update(callback, f'--- Copied {count}/{len(image_metadata_as_json)} image files')
     
     write_json_to_local_file(image_metadata_as_json, file)
     post_task_update(callback, f'--- Copied all image files')
