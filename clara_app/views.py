@@ -5004,7 +5004,7 @@ def create_image_request_sequence(project_id, callback=None):
                 response = api_call.response
 
                 sequence = interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
-                check_well_formed_image_request_sequence(sequence, callback=callback)
+                check_well_formed_image_request_sequence(sequence, numbered_page_list, callback=callback)
                 corrected_sequence = check_and_correct_initialization_in_image_request_sequence(sequence, project_id, user, config_info, callback=callback)
                 
                 clara_project_internal.remove_all_project_images_except_style_images(callback=callback)
@@ -5037,7 +5037,15 @@ def create_image_request_sequence(project_id, callback=None):
         post_task_update(callback, "error")
         return False
 
-def check_well_formed_image_request_sequence(requests, callback=None):
+##          {
+##            "request_type": "image-generation",
+##            "page": 3,
+##            "prompt": "An image of Princess Elara and the dragon Ember in the forest. They have just met. Ember looks sad and lost, Elara looks kind
+##            and sympathetic.",
+##            "description_variables": [ "Elara-description", "forest-description" ]
+##          }
+
+def check_well_formed_image_request_sequence(requests, numbered_page_list, callback=None):
     if not isinstance(requests, list):
         post_task_update(callback, f'Image request sequence is not a list: {requests}')
         raise ValueError('Bad image request sequence')
@@ -5056,7 +5064,21 @@ def check_well_formed_image_request_sequence(requests, callback=None):
             if not ('prompt' in req and 'page' in req and 'description_variable' in req):
                 post_task_update(callback, f'Image request sequence item of type "image-understanding" does not contain "prompt", "page", and "description_variable" fields: {req}')
                 raise ValueError('Bad image request sequence')
-    
+
+    page_numbers = [ item['page'] for item in numbered_page_list ]
+    page_numbers_in_generation_requests = [ req['page'] for req in requests if req['request_type'] == 'image-generation' ]
+
+    no_generation_page_numbers = [ page_number for page_number in page_numbers
+                                   if not page_number in page_numbers_in_generation_requests ]
+
+    if no_generation_page_numbers:
+        missing_pages_text = ', '.join([ str(page_number) for page_number in no_generation_page_numbers ])
+        post_task_update(callback, f'Error: no image generation requests for page(s): {missing_pages_text}')
+        raise ValueError('Bad image request sequence')
+    else:
+        page_numbers_text = ', '.join([ str(page_number) for page_number in page_numbers ])
+        post_task_update(callback, f'--- Image generation requests found for pages: {page_numbers_text}')
+
     return True
 
 def check_and_correct_initialization_in_image_request_sequence(sequence, project_id, user, config_info, callback=None):
