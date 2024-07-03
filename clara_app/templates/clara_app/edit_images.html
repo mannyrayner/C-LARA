@@ -3,6 +3,19 @@
 {% block title %}Edit Images{% endblock %}
 
 {% block content %}
+  {% if errors %}
+    <div class="error-messages alert alert-danger">
+      <p>Errors found in form:</p>
+      <ul>
+        {% for form_errors in errors %}
+          {% for field, field_errors in form_errors.items %}
+            <li>{{ field }}: {{ field_errors|join:", " }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+    </div>
+  {% endif %}
   <h2>Edit Images ("{{ project.title }}")</h2>
   {% if uses_coherent_image_set %}
       {% if style_form  %}
