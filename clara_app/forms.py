@@ -766,7 +766,7 @@ class ImageForm(forms.Form):
             variables = [var.strip() for var in data.split(',')]
             invalid_vars = [var for var in variables if var not in self.valid_description_variables]
             if invalid_vars:
-                raise forms.ValidationError(f"Invalid description variables: {', '.join(invalid_vars)}")
+                raise forms.ValidationError(f"Undeclared description variables: {', '.join(invalid_vars)}")
             return variables
         return []
 

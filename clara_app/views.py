@@ -4423,6 +4423,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
 
     valid_description_variables = [desc['description_variable'] for desc in initial_description_data]
 
+    clara_version = get_user_config(request.user)['clara_version']
+
     if request.method == 'POST':
         if 'action' in request.POST: 
             action = request.POST['action']
@@ -4499,6 +4501,29 @@ def edit_images(request, project_id, dall_e_3_image_status):
             else:
                 image_requests = []
                 formset = ImageFormSet(request.POST, request.FILES, prefix='images', form_kwargs={'valid_description_variables': valid_description_variables})
+                errors = None
+                if not formset.is_valid():
+                    errors = formset.errors
+                    print(f'errors = "{errors}"')
+                    # Pass errors to the template
+                    if project.uses_coherent_image_set:
+                        style_form = StyleImageForm(initial=initial_style_image_data)
+                        description_formset = ImageDescriptionFormSet(initial=initial_description_data, prefix='descriptions')
+                        image_request_sequence_form = ImageSequenceForm()
+                    else:
+                        style_form = None
+                        description_formset = None
+                        image_request_sequence_form = None
+                    return render(request, 'clara_app/edit_images.html', {
+                        'formset': formset,
+                        'description_formset': description_formset,
+                        'style_form': style_form,
+                        'image_request_sequence_form': image_request_sequence_form,
+                        'project': project,
+                        'uses_coherent_image_set': project.uses_coherent_image_set,
+                        'clara_version': clara_version,
+                        'errors': errors,
+                    })
                 for i in range(0, len(formset)):
                     form = formset[i]
                     previous_record = initial_data[i] if i < len(initial_data) else None
@@ -4506,10 +4531,10 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
                     #print(f"--- form #{i}: form.changed_data = {form.changed_data}")
                     if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data and not 'user_prompt' in form.changed_data ):
-                        if not form.is_valid():
-                            print(f'--- Invalid form data (form #{i}): {form}')
-                            messages.error(request, f"Invalid form data (form #{i}).")
-                            return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+##                        if not form.is_valid():
+##                            print(f'--- Invalid form data (form #{i}): {form}')
+##                            errors.append(f"Invalid form data (form #{i}): {form.errors}")
+##                            messages.error(request, f"Invalid form data (form #{i}).")
 
                         # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
                         # If there is no file upload, the value is null
@@ -4549,11 +4574,11 @@ def edit_images(request, project_id, dall_e_3_image_status):
                         #print(f'user_prompt = "{user_prompt}", content_description = "{content_description}"')
                         print(f'description_variables = "{description_variables}"')
 
-                        if image_name and delete:
+                        if image_name and delete and not errors:
                             # We are deleting an image
                             clara_project_internal.remove_project_image(image_name)
                             messages.success(request, f"Deleted image: {image_name}")
-                        elif generate and user_prompt:
+                        elif generate and user_prompt and not errors:
                             # We are generating or understanding an image. Put it on the queue for async processing at the end
                             image_request = { 'image_name': image_name,
                                               'page': page,
@@ -4577,7 +4602,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                      description_variable=description_variable,
                                                                      description_variables=description_variables
                                                                      )
-                        elif ( image_name and real_image_file_path ) or user_prompt:
+                        elif ( ( image_name and real_image_file_path ) or user_prompt ) and not errors:
                            # We are uploading an image or changing a generation/understanding line
     ##                        if not associated_areas and associated_text and image_name:  
     ##                            # Generate the uninstantiated annotated image structure
@@ -4622,15 +4647,14 @@ def edit_images(request, project_id, dall_e_3_image_status):
         elif dall_e_3_image_status == 'error':
             messages.success(request, "Something went wrong when performing image task. Look at the 'Recent task updates' view for further information.")
 
-    clara_version = get_user_config(request.user)['clara_version']
-
     return render(request, 'clara_app/edit_images.html', {'formset': formset,
                                                           'description_formset': description_formset,
                                                           'style_form': style_form,
                                                           'image_request_sequence_form': image_request_sequence_form,
                                                           'project': project,
                                                           'uses_coherent_image_set': project.uses_coherent_image_set,
-                                                          'clara_version': clara_version})
+                                                          'clara_version': clara_version,
+                                                          'errors': []})
 
 def create_and_add_dall_e_3_image_for_whole_text(project_id, advice_prompt=None, callback=None):
     try:
