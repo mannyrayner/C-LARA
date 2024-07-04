@@ -147,6 +147,12 @@ class Page:
         else:
             return f"<page>{segment_texts}"
 
+    def to_translated_text(self):
+        segment_separator = ' ' 
+        segment_texts = segment_separator.join([segment.annotations['translated'] for segment in self.segments
+                                                if 'translated' in segment.annotations])
+        return segment_texts
+
     def word_count(self, phonetic=False):
         return sum([ segment.word_count(phonetic=phonetic) for segment in self.segments ])
 
@@ -198,14 +204,17 @@ class Text:
             elements.extend(page.content_elements())
         return elements
 
-    def to_numbered_page_list(self):
+    def to_numbered_page_list(self, translated=False):
         numbered_pages = []
         number = 1
         for page in self.pages:
-            page_text = page.to_text(annotation_type='plain').replace('<page>', '')
+            if translated:
+                page_text = page.to_translated_text()
+            else:
+                page_text = page.to_text(annotation_type='plain').replace('<page>', '')
             numbered_pages.append({'page': number, 'text': page_text})
             number += 1
-        return numbered_pages                     
+        return numbered_pages
 
     # Returns a list of lists of content elements, one per segment
     def segmented_elements(self):

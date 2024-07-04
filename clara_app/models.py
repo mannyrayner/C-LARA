@@ -73,6 +73,7 @@ class CLARAProject(models.Model):
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
     uses_coherent_image_set = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set.")
+    use_translation_for_images = models.BooleanField(default=False, help_text="Use translations for generating coherent image sets.")
 
 # Move this to utils.py to avoid circular import
 

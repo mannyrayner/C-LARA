@@ -1859,12 +1859,14 @@ def create_project(request):
             l2_language = form.cleaned_data['l2']
             l1_language = form.cleaned_data['l1']
             uses_coherent_image_set = form.cleaned_data['uses_coherent_image_set']
+            use_translation_for_images = form.cleaned_data['use_translation_for_images']
             # Create a new project in Django's database, associated with the current user
             clara_project = CLARAProject(title=title,
                                          user=request.user,
                                          l2=l2_language,
                                          l1=l1_language,
-                                         uses_coherent_image_set=uses_coherent_image_set)
+                                         uses_coherent_image_set=uses_coherent_image_set,
+                                         use_translation_for_images=use_translation_for_images)
             clara_project.save()
             internal_id = create_internal_project_id(title, clara_project.id)
             # Update the Django project with the internal_id
@@ -2923,7 +2925,8 @@ def clone_project(request, project_id):
                 # Created the cloned project with the new language selections and a new internal ID
                 new_project = CLARAProject(title=new_title, user=request.user, l2=new_l2, l1=new_l1,
                                            simple_clara_type=project.simple_clara_type,
-                                           uses_coherent_image_set=project.uses_coherent_image_set)
+                                           uses_coherent_image_set=project.uses_coherent_image_set,
+                                           use_translation_for_images=project.use_translation_for_images)
                 new_internal_id = create_internal_project_id(new_title, new_project.id)
                 new_project.internal_id = new_internal_id
                 new_project.save()
@@ -3089,11 +3092,13 @@ def project_detail(request, project_id):
             project.save()
         if image_set_form.is_valid():
             project.uses_coherent_image_set = image_set_form.cleaned_data['uses_coherent_image_set']
+            project.use_translation_for_images = image_set_form.cleaned_data['use_translation_for_images']
             project.save()
     else:
         title_form = UpdateProjectTitleForm(prefix="title")
         image_set_form = UpdateCoherentImageSetForm(prefix="image_set",
-                                                    initial={'uses_coherent_image_set': project.uses_coherent_image_set})
+                                                    initial={'uses_coherent_image_set': project.uses_coherent_image_set,
+                                                             'use_translation_for_images': project.use_translation_for_images})
 
     clara_version = get_user_config(request.user)['clara_version']
     
@@ -4362,9 +4367,23 @@ def edit_images(request, project_id, dall_e_3_image_status):
     actions_requiring_openai = ( 'create_dalle_image_for_whole_text',
                                  'create_dalle_style_image',
                                  'generate_image_descriptions',
-                                 'create_image_request_sequence') 
+                                 'create_image_request_sequence')
+    clara_version = get_user_config(request.user)['clara_version']
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    if project.uses_coherent_image_set and project.use_translation_for_images and not clara_project_internal.load_text_version("translated"):
+        messages.error(request, f"Project is marked as using translations to create images, but there are no translations yet")
+        return render(request, 'clara_app/edit_images.html', {
+                            'formset': ImageFormSet(initial=[], prefix='images'),
+                            'description_formset': None,
+                            'style_form': None,
+                            'image_request_sequence_form': None,
+                            'project': project,
+                            'uses_coherent_image_set': False,
+                            'clara_version': clara_version,
+                            'errors': None,
+                        })
 
     # Assuming segmented_text and internalised_segmented_text have already been loaded
     segmented_text = clara_project_internal.load_text_version("segmented_with_images")
@@ -4422,8 +4441,6 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                 for desc in descriptions ]
 
     valid_description_variables = [desc['description_variable'] for desc in initial_description_data]
-
-    clara_version = get_user_config(request.user)['clara_version']
 
     if request.method == 'POST':
         if 'action' in request.POST: 
@@ -4744,6 +4761,17 @@ so it is important to focus on the style, not describing the content more than a
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
 
+def numbered_page_list_for_coherent_images(project, clara_project_internal):
+    if project.use_translation_for_images:
+        translated_text = clara_project_internal.load_text_version("translated")
+        translated_text_object = internalize_text(translated_text, project.l2, project.l1, "translated")
+        numbered_page_list = translated_text_object.to_numbered_page_list(translated=True)
+    else:
+        segmented_text = clara_project_internal.load_text_version("segmented_with_title")
+        segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
+        numbered_page_list = segmented_text_object.to_numbered_page_list()
+    return numbered_page_list
+
 # Create the description variables for the text
 def generate_image_descriptions(project_id, callback=None):
     try:
@@ -4751,10 +4779,8 @@ def generate_image_descriptions(project_id, callback=None):
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         user = project.user
         config_info = get_user_config(user)
-        
-        segmented_text = clara_project_internal.load_text_version("segmented_with_title")
-        segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
-        numbered_page_list = segmented_text_object.to_numbered_page_list()
+
+        numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
         numbered_page_list_text = json.dumps(numbered_page_list)
         prompt = f"""
         You are to perform the first step in a process that will guide DALL-E-3 and GPT-4o in creating a set of
@@ -4878,10 +4904,11 @@ def create_image_request_sequence(project_id, callback=None):
         user = project.user
         config_info = get_user_config(user)
         
-        segmented_text = clara_project_internal.load_text_version("segmented_with_title")
-        segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
-        numbered_page_list = segmented_text_object.to_numbered_page_list()
+        numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
         numbered_page_list_text = json.dumps(numbered_page_list)
+
+        print(f'numbered_page_list')
+        pprint.pprint(numbered_page_list)
 
         descriptions = clara_project_internal.get_all_project_image_descriptions(formatting='plain_lists', callback=callback)
         descriptions_text = json.dumps(descriptions)
@@ -5198,6 +5225,10 @@ Make the style of the image consistent with the style of the previously generate
                             return False
 
                         generated_image_file_path = generated_image_object.image_file_path
+                        if not file_exists(generated_image_file_path):
+                            post_task_update(callback, f"Error: unable to find generated image for page={page}, position={position}")
+                            post_task_update(callback, "error")
+                            return False
                         api_call_interpret = call_chat_gpt4_interpret_image(user_prompt, generated_image_file_path,
                                                                             config_info=config_info, callback=callback)
                         description = api_call_interpret.response

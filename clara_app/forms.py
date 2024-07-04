@@ -116,11 +116,12 @@ class ProjectCreationForm(forms.ModelForm):
     title = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))
     uses_coherent_image_set = forms.BooleanField(required=False, label='Use Coherent Image Set',
                                                  help_text="Check this if the project should use a coherent style for all images.")
-
+    use_translation_for_images = forms.BooleanField(required=False, label='Use Translations for Images',
+                                                    help_text="Check this if the project should use translations for generating coherent image sets.")
 
     class Meta:
         model = CLARAProject
-        fields = ['title', 'l2', 'l1', 'uses_coherent_image_set']
+        fields = ['title', 'l2', 'l1', 'uses_coherent_image_set', 'use_translation_for_images']
 
 class AcknowledgementsForm(forms.ModelForm):
     class Meta:
@@ -226,7 +227,7 @@ class AddProjectMemberForm(forms.Form):
         # Add more roles as needed...
     ]
     
-    user = forms.ModelChoiceField(queryset=User.objects.all())
+    user = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'))
     role = forms.ChoiceField(choices=ROLE_CHOICES)
        
 class UpdateProjectTitleForm(forms.Form):
@@ -234,6 +235,7 @@ class UpdateProjectTitleForm(forms.Form):
 
 class UpdateCoherentImageSetForm(forms.Form):
     uses_coherent_image_set = forms.BooleanField(required=False)
+    use_translation_for_images = forms.BooleanField(required=False)
 
 class AddCreditForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all())
