@@ -111,15 +111,35 @@ def is_game_over(board):
     else:
         return 'ongoing', None
 
+def get_threatened_moves(board, player):
+    threatened_moves = []
+    available_moves = get_available_moves(board)
+    for move in available_moves:
+        board[move] = player
+        if check_win(board, player):
+            threatened_moves.append(move)
+        board[move] = ' '
+    return threatened_moves
+
 def get_threat_moves(board, player):
     threat_moves = []
     available_moves = get_available_moves(board)
     for move in available_moves:
         board[move] = player
-        if check_win(board, player):
+        if len(get_threatened_moves(board, player)) > 0:
             threat_moves.append(move)
         board[move] = ' '
     return threat_moves
+
+def get_double_threat_moves(board, player):
+    double_threat_moves = []
+    available_moves = get_available_moves(board)
+    for move in available_moves:
+        board[move] = player
+        if len(get_threatened_moves(board, player)) > 1:
+            double_threat_moves.append(move)
+        board[move] = ' '
+    return double_threat_moves
 
 def immediate_threats_and_opportunities(board, player):
     opponent = 'O' if player == 'X' else 'X'
@@ -146,25 +166,26 @@ def immediate_threats_and_opportunities(board, player):
     # Check for double threats and single threats
     for move in available_moves:
         board[move] = player
-        threat_moves = get_threat_moves(board, player)
+        threatened_moves = get_threatened_moves(board, player)
         board[move] = ' '
-        if len(threat_moves) > 1:
+        if len(threatened_moves) > 1:
             move_summaries['double_threat'].append(index_to_algebraic(move))
-        elif len(threat_moves) == 1:
+        elif len(threatened_moves) == 1:
             move_summaries['single_threat'].append(index_to_algebraic(move))
 
     # Check for follow-up double threat
     for threat_move in move_summaries['single_threat']:
         move_index = algebraic_to_index(threat_move)
         board[move_index] = player
-        opponent_threat_moves = get_threat_moves(board, player)
+        opponent_threat_moves = get_threatened_moves(board, player)
         if opponent_threat_moves:
             forced_move = opponent_threat_moves[0]  # Opponent's forced move
             board[forced_move] = opponent
-            follow_up_threat_moves = get_threat_moves(board, player)
+            if not get_threatened_moves(board, opponent):  # Check that forced move is not itself a threat
+                follow_up_double_threat_moves = get_double_threat_moves(board, player)
+                if len(follow_up_double_threat_moves) > 0:
+                    move_summaries['double_threat_follow_up_to_single_threat'] = threat_move
             board[forced_move] = ' '
-            if len(follow_up_threat_moves) > 1:
-                move_summaries['double_threat_follow_up_to_single_threat'] = threat_move
         board[move_index] = ' '
 
     return move_summaries
