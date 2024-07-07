@@ -49,7 +49,8 @@ Manny Rayner + ??
 **TBA**
 
 ### 11:00 – 11:25
-**Guillaume Wattelez, Université de la Nouvelle Calédonie, New Caledonia**  
+**Guillaume Wattelez, Université de la Nouvelle Calédonie, LIRE, New Caledonia**  
+**Fabrice Wacalie, Université de la Nouvelle Calédonie, LIRE, New Caledonia**
 **Pauline Welby, Aix Marseille Université, CNRS, Laboratoire Parole et Langage, France and Université de la Nouvelle Calédonie, LIRE**  
 *LaPasserelle.nc: a gateway to the pronunciation of the Kanak languages of New Caledonia*
 
