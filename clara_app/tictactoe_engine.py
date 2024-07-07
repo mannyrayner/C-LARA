@@ -1,3 +1,5 @@
+import pprint
+
 def check_win(board, player):
     win_conditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],  # horizontal
@@ -96,3 +98,97 @@ def draw_board(board):
 ##player_to_move = 'X'
 ##result, best_move = minimax_tic_tac_toe(x_positions_algebraic, o_positions_algebraic, player_to_move)
 ##print(f"Result: {result}, Best Move: {best_move}")
+
+# -----------------------------------------
+
+def is_game_over(board):
+    if check_win(board, 'X'):
+        return 'win', 'X'
+    elif check_win(board, 'O'):
+        return 'win', 'O'
+    elif check_draw(board):
+        return 'draw', None
+    else:
+        return 'ongoing', None
+
+def get_threat_moves(board, player):
+    threat_moves = []
+    available_moves = get_available_moves(board)
+    for move in available_moves:
+        board[move] = player
+        if check_win(board, player):
+            threat_moves.append(move)
+        board[move] = ' '
+    return threat_moves
+
+def immediate_threats_and_opportunities(board, player):
+    opponent = 'O' if player == 'X' else 'X'
+    move_summaries = {
+        'winning_move': None,
+        'opponent_threat': None,
+        'double_threat': [],
+        'single_threat': [],
+        'double_threat_follow_up_to_single_threat': None
+    }
+    
+    available_moves = get_available_moves(board)
+    for move in available_moves:
+        board[move] = player
+        if check_win(board, player):
+            move_summaries['winning_move'] = index_to_algebraic(move)
+        board[move] = ' '
+        
+        board[move] = opponent
+        if check_win(board, opponent):
+            move_summaries['opponent_threat'] = index_to_algebraic(move)
+        board[move] = ' '
+    
+    # Check for double threats and single threats
+    for move in available_moves:
+        board[move] = player
+        threat_moves = get_threat_moves(board, player)
+        board[move] = ' '
+        if len(threat_moves) > 1:
+            move_summaries['double_threat'].append(index_to_algebraic(move))
+        elif len(threat_moves) == 1:
+            move_summaries['single_threat'].append(index_to_algebraic(move))
+
+    # Check for follow-up double threat
+    for threat_move in move_summaries['single_threat']:
+        move_index = algebraic_to_index(threat_move)
+        board[move_index] = player
+        opponent_threat_moves = get_threat_moves(board, player)
+        if opponent_threat_moves:
+            forced_move = opponent_threat_moves[0]  # Opponent's forced move
+            board[forced_move] = opponent
+            follow_up_threat_moves = get_threat_moves(board, player)
+            board[forced_move] = ' '
+            if len(follow_up_threat_moves) > 1:
+                move_summaries['double_threat_follow_up_to_single_threat'] = threat_move
+        board[move_index] = ' '
+
+    return move_summaries
+
+def generate_position_summary(board, player):
+    game_status, winner = is_game_over(board)
+    summary = {
+        'game_status': game_status,
+        'winner': winner
+    }
+    if game_status == 'ongoing':
+        threats_opportunities = immediate_threats_and_opportunities(board, player)
+        summary.update(threats_opportunities)
+    
+    return summary
+
+def test_generate_position_summary(x_positions_algebraic, o_positions_algebraic, player_to_move):
+    x_positions = [algebraic_to_index(pos) for pos in x_positions_algebraic]
+    o_positions = [algebraic_to_index(pos) for pos in o_positions_algebraic]
+    
+    board = get_board_from_positions(x_positions, o_positions)
+    draw_board(board)
+
+    summary = generate_position_summary(board, player_to_move)
+    pprint.pprint(summary)
+    
+ 
