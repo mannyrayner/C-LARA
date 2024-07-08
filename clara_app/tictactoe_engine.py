@@ -1,5 +1,8 @@
 import pprint
 
+def get_opponent(player):
+    return 'O' if player == 'X' else 'X'
+
 def check_win(board, player):
     win_conditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],  # horizontal
@@ -18,7 +21,7 @@ def get_available_moves(board):
     return [i for i, s in enumerate(board) if s == ' ']
 
 def minimax(board, player, depth):
-    opponent = 'O' if player == 'X' else 'X'
+    opponent = get_opponent(player)
     
     if check_win(board, 'X'):
         return 1, None
@@ -142,7 +145,7 @@ def get_double_threat_moves(board, player):
     return double_threat_moves
 
 def immediate_threats_and_opportunities(board, player):
-    opponent = 'O' if player == 'X' else 'X'
+    opponent = get_opponent(player)
     move_summaries = {
         'winning_move': None,
         'opponent_threat': None,
