@@ -51,7 +51,6 @@ Manny Rayner + ??
 ### 11:00 – 11:25
 **Guillaume Wattelez, Université de la Nouvelle Calédonie, LIRE, New Caledonia**  
 **Fabrice Wacalie, Université de la Nouvelle Calédonie, LIRE, New Caledonia**
-
 **Pauline Welby, Aix Marseille Université, CNRS, Laboratoire Parole et Langage, France and Université de la Nouvelle Calédonie, LIRE**  
 *LaPasserelle.nc: a gateway to the pronunciation of the Kanak languages of New Caledonia*
 
@@ -75,9 +74,10 @@ Manny Rayner + ??
 **Coffee break**
 
 ### 16:00 – 16:25
-**Carmel O’Shanessy, Australian National University** 
+**Carmel O’Shanessy, Australian National University**
 **Vanessa Davis, Tangentyere Research Hub, Australian National University**
 **Jessie Bartlett, Alice Nelson, Yuendumu Bilingual Development Resource Unit** 
+
 *The Little Kids' Word List: A fair vocabulary assessment tool for young Indigenous multilingual children's home languages*
 
 ### 16:25 – 16:50
