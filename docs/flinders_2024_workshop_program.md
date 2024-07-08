@@ -77,7 +77,6 @@ Manny Rayner + ??
 **Carmel O’Shanessy, Australian National University**
 **Vanessa Davis, Tangentyere Research Hub, Australian National University**
 **Jessie Bartlett, Alice Nelson, Yuendumu Bilingual Development Resource Unit** 
-
 *The Little Kids' Word List: A fair vocabulary assessment tool for young Indigenous multilingual children's home languages*
 
 ### 16:25 – 16:50
