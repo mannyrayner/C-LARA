@@ -10,19 +10,18 @@ max_number_of_gpt4_tries = 5
 
 def request_cot_analysis_and_move(board, player, few_shot_examples, callback=None):
     formatted_request = format_cot_request(board, player, few_shot_examples)
+    gpt_model = 'gpt-4o'
     api_calls = []
     n_attempts = 0
-    selected_move = None
-    response = None
     limit = max_number_of_gpt4_tries
     while True:
         if n_attempts >= limit:
             post_task_update(callback, f'*** Giving up, have tried sending this to GPT-4o {limit} times')
             { 'cot_record': None, 'selected_move': None, 'api_calls': api_calls }
         n_attempts += 1
-        post_task_update(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to perform CoT analysis')
+        post_task_update(callback, f'--- Calling {gpt_model} (attempt #{n_attempts}) to perform CoT analysis')
         try:
-            api_call = call_chat_gpt4(formatted_request, config_info={'gpt_model': 'gpt-4o'})
+            api_call = call_chat_gpt4(formatted_request, config_info={'gpt_model': gpt_model})
             api_calls.append(api_call)
             response_string = api_call.response
             # Parse the response to extract the CoT analysis and the selected move
