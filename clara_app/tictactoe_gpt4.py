@@ -1,20 +1,40 @@
-from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json
 from .tictactoe_engine import algebraic_to_index, index_to_algebraic
 
-def request_cot_analysis_and_move(board, player, few_shot_examples):
+from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json
+from .clara_utils import post_task_update
+from .clara_classes import ChatGPTError
 
+import traceback
+
+max_number_of_gpt4_tries = 5
+
+def request_cot_analysis_and_move(board, player, few_shot_examples, callback=None):
     formatted_request = format_cot_request(board, player, few_shot_examples)
-    response = call_chat_gpt4(formatted_request, config_info={gpt_model: 'gpt-4o'})
+    api_calls = []
+    n_attempts = 0
+    selected_move = None
+    response = None
+    limit = max_number_of_gpt4_tries
+    while True:
+        if n_attempts >= limit:
+            post_task_update(callback, f'*** Giving up, have tried sending this to GPT-4o {limit} times')
+            { 'cot_record': None, 'selected_move': None, 'api_calls': api_calls }
+        n_attempts += 1
+        post_task_update(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to perform CoT analysis')
+        try:
+            api_call = call_chat_gpt4(formatted_request, config_info={'gpt_model': 'gpt-4o'})
+            api_calls.append(api_call)
+            response_string = api_call.response
+            # Parse the response to extract the CoT analysis and the selected move
+            move_info = interpret_chat_gpt4_response_as_json(api_call.response, object_type='dict')
+            selected_move = move_info.get('selected_move')
+            return { 'cot_record': response_string, 'selected_move': selected_move, 'api_calls': api_calls }
+        except ChatGPTError as e:
+            post_task_update(callback, f"Error parsing GPT-4o response: {e}")
+        except Exception as e:
+            post_task_update(callback, f'*** Warning: error when sending request to GPT-4o')
+            post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
     
-    # Parse the response to extract the CoT analysis and the selected move
-    try:
-        move_info = interpret_chat_gpt4_response_as_json(response, object_type='dict')
-        selected_move = move_info.get('selected_move')
-    except ChatGPTError as e:
-        print(f"Error parsing GPT-4o response: {e}")
-        selected_move = None
-    
-    return response, selected_move
 
 cot_template = """
 Given the current Tic-Tac-Toe board state, provide a detailed Chain of Thought analysis to determine the best move for the player {player}.
@@ -42,7 +62,7 @@ Provide your analysis and the best move. At the end, return the selected move in
 possible_lines = """Vertical:
 a1, a2, a3
 b1, b2, b3
-c1, b2, c3
+c1, c2, c3
 
 Horizontal:
 a1, b1, c1
