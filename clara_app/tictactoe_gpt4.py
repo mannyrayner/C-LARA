@@ -1,25 +1,29 @@
-from .tictactoe_engine import algebraic_to_index, index_to_algebraic
+from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic
 
 from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json
 from .clara_utils import post_task_update
 from .clara_classes import ChatGPTError
 
-import traceback
-
 max_number_of_gpt4_tries = 5
+
+def request_minimal_gpt4_move(board, player, callback=None):
+    formatted_request = format_minimal_gpt4_request(board, player)
+    return call_gpt4_with_retry(formatted_request, callback=callback)
 
 def request_cot_analysis_and_move(board, player, few_shot_examples, callback=None):
     formatted_request = format_cot_request(board, player, few_shot_examples)
-    gpt_model = 'gpt-4o'
+    return call_gpt4_with_retry(formatted_request, callback=callback)
+
+def call_gpt4_with_retry(formatted_request, gpt_model='gpt-4o', callback=None):
     api_calls = []
     n_attempts = 0
     limit = max_number_of_gpt4_tries
     while True:
         if n_attempts >= limit:
             post_task_update(callback, f'*** Giving up, have tried sending this to GPT-4o {limit} times')
-            { 'cot_record': None, 'selected_move': None, 'api_calls': api_calls }
+            return {'cot_record': None, 'selected_move': None, 'api_calls': api_calls}
         n_attempts += 1
-        post_task_update(callback, f'--- Calling {gpt_model} (attempt #{n_attempts}) to perform CoT analysis')
+        post_task_update(callback, f'--- Calling {gpt_model} (attempt #{n_attempts})')
         try:
             api_call = call_chat_gpt4(formatted_request, config_info={'gpt_model': gpt_model})
             api_calls.append(api_call)
@@ -27,13 +31,31 @@ def request_cot_analysis_and_move(board, player, few_shot_examples, callback=Non
             # Parse the response to extract the CoT analysis and the selected move
             move_info = interpret_chat_gpt4_response_as_json(api_call.response, object_type='dict')
             selected_move = move_info.get('selected_move')
-            return { 'cot_record': response_string, 'selected_move': selected_move, 'api_calls': api_calls }
+            return {'cot_record': response_string, 'selected_move': selected_move, 'api_calls': api_calls}
         except ChatGPTError as e:
             post_task_update(callback, f"Error parsing GPT-4o response: {e}")
         except Exception as e:
             post_task_update(callback, f'*** Warning: error when sending request to GPT-4o')
             post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
-    
+
+minimal_template = """
+Given the current Tic-Tac-Toe board state, find the best move for the player {player}.
+
+Here is the board state, where the squares occupied by X and O, and the unoccupied squares, are given using chess algebraic notation:
+
+{board}
+
+A player wins if they can occupy all three squares on one of the following eight lines:
+
+{possible_lines}
+
+Return the selected move in JSON format as follows, where <move> is given in chess algebraic notation:
+```json
+{{
+    "selected_move": "<move>"
+}}
+```
+"""
 
 cot_template = """
 Given the current Tic-Tac-Toe board state, provide a detailed Chain of Thought analysis to determine the best move for the player {player}.
@@ -72,13 +94,17 @@ Diagonal:
 a1, b2, c3
 a3, b2, c1"""
 
+def format_minimal_gpt4_request(board, player):
+    board_str = format_board_for_gpt4(board)
+    return minimal_template.format(player=player, board=board_str, possible_lines=possible_lines)
+
 def format_cot_request(board, player, few_shot_examples):
-    opponent = 'O' if player == 'X' else 'X'
-    board_str = format_board_for_cot(board)
+    opponent = get_opponent(player)
+    board_str = format_board_for_gpt4(board)
     cot_str = format_examples_for_cot(few_shot_examples)
     return cot_template.format(player=player, opponent=opponent, board=board_str, possible_lines=possible_lines, cot_examples=cot_str)
 
-def format_board_for_cot(board):
+def format_board_for_gpt4(board):
     x_line_content = ', '.join([index_to_algebraic(i) for i, s in enumerate(board) if s == "X"])
     o_line_content = ', '.join([index_to_algebraic(i) for i, s in enumerate(board) if s == "O"])
     unoccupied_line_content = ', '.join([index_to_algebraic(i) for i, s in enumerate(board) if s == " "])
