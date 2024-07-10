@@ -20,6 +20,11 @@ def check_draw(board):
 def get_available_moves(board):
     return [i for i, s in enumerate(board) if s == ' ']
 
+def apply_move(board, move, player):
+    new_board = board.copy()
+    new_board[move] = player
+    return new_board
+
 def minimax(board, player, depth):
     opponent = get_opponent(player)
     
