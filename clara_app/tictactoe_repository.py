@@ -6,6 +6,7 @@ import os
 import json
 from datetime import datetime
 import random
+from collections import defaultdict
 
 def create_experiment_dir(experiment_name, base_dir='$CLARA/tictactoe_experiments'):
     experiment_dir = get_experiment_dir(experiment_name, base_dir=base_dir)
@@ -185,3 +186,22 @@ def cache_few_shot_examples(experiment_name, cycle_number, entries):
     with open(cache_path, 'w') as f:
         json.dump(entries, f, indent=4)
 
+def generate_cycle_summary(experiment_name, cycle_number):
+    cycle_dir = get_cycle_dir(experiment_name, cycle_number)
+    log_files = [f for f in os.listdir(cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
+    
+    summary_scores = defaultdict(float)
+    
+    for log_file in log_files:
+        with open(os.path.join(cycle_dir, log_file), 'r') as f:
+            game_log = json.load(f)
+            if 'score' in game_log[-1]:
+                for player, score in game_log[-1]['score'].items():
+                    summary_scores[player] += score
+    
+    summary = {player: score for player, score in summary_scores.items()}
+    print(f"Cycle {cycle_number} Summary for {experiment_name}:")
+    for player, score in summary.items():
+        print(f"{player}: {score}")
+    
+    return summary
