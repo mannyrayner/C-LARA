@@ -96,16 +96,13 @@ def minimax_tic_tac_toe(x_positions_algebraic, o_positions_algebraic, player_to_
     return result, best_move_algebraic
 
 def draw_board(board):
-    print("  a b c")
-    for row in range(2, -1, -1):
-        print(row + 1, ' '.join(board[row * 3: (row + 1) * 3]))
+    print(drawn_board_str(board))
 
-# Example usage:
-##x_positions_algebraic = ['a1', 'b2']
-##o_positions_algebraic = ['b1', 'b3']
-##player_to_move = 'X'
-##result, best_move = minimax_tic_tac_toe(x_positions_algebraic, o_positions_algebraic, player_to_move)
-##print(f"Result: {result}, Best Move: {best_move}")
+def drawn_board_str(board):
+    out_str = "  a b c\n"
+    for row in range(2, -1, -1):
+        out_str += f"{row + 1} {' '.join(board[row * 3: (row + 1) * 3])}\n"
+    return out_str
 
 # -----------------------------------------
 

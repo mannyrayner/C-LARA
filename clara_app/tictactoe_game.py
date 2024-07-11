@@ -83,26 +83,33 @@ def play_game(player1, player2, experiment_name, cycle_number, callback=None):
     while True:
         current_player = players[turn % 2]
         x_or_o = player_symbols[turn % 2]
+        board_before_move = board.copy()
         move, cot_record = invoke_player(current_player, board, x_or_o, experiment_name, cycle_number, callback=callback)
-        board[move] = x_or_o
 
         log.append({
             'turn': turn + 1,
             'player': x_or_o,
             'move': index_to_algebraic(move),
             'cot_record': cot_record,
-            'board': board.copy()
+            'board': board_before_move
         })
 
+        board[move] = x_or_o
         draw_board(board)
         
         if check_win(board, x_or_o):
             post_task_update(callback, f"Player {x_or_o} wins!")
-            log.append({'result': f"Player {x_or_o} wins"})
+            if x_or_o == 'X':
+                log.append({'game_over': True,
+                            'score': { player1: 1, player2: 0 }})
+            else:
+                log.append({'game_over': True,
+                            'score': { player1: 0, player2: 1 }})
             break
         elif check_draw(board):
             post_task_update(callback, "The game is a draw!")
-            log.append({'result': "Draw"})
+            log.append({'game_over': True,
+                        'score': { player1: 0.5, player2: 0.5 }})
             break
 
         turn += 1

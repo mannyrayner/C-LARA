@@ -1,4 +1,5 @@
 from .tictactoe_engine import minimax, get_available_moves, apply_move, get_opponent
+from .tictactoe_engine import index_to_algebraic, algebraic_to_index, drawn_board_str
 from .clara_utils import absolute_file_name, file_exists, directory_exists
 
 import os
@@ -19,7 +20,7 @@ def create_experiment_dir(experiment_name, base_dir='$CLARA/tictactoe_experiment
 def get_experiment_dir(experiment_name, base_dir='$CLARA/tictactoe_experiments'):
     abs_base_dir = absolute_file_name(base_dir)
     if not directory_exists(abs_base_dir):
-        raise ValueError(f'Baset dir {abs_base_dir} not found')
+        raise ValueError(f'Base dir {abs_base_dir} not found')
     experiment_dir = os.path.join(abs_base_dir, experiment_name)
     return experiment_dir
 
@@ -51,12 +52,24 @@ def get_cycle_dir(experiment_name, cycle_number):
     return cycle_dir
 
 def save_game_log(experiment_name, cycle_number, opponent_player, color, game_log):
+    metadata_entry = { 'experiment': experiment_name,
+                       'cycle_number': cycle_number,
+                       'X': 'cot_player_with_few_shot' if color == 'X' else opponent_player,
+                       'O': 'cot_player_with_few_shot' if color == 'O' else opponent_player }
+    game_log = [ metadata_entry ] + game_log
+        
     annotate_game_log(game_log)
     cycle_dir = get_cycle_dir(experiment_name, cycle_number)
     log_path = os.path.join(cycle_dir, f'game_log_{opponent_player}_{color}.json')
+    
     with open(log_path, 'w') as f:
         json.dump(game_log, f, indent=4)
 
+    human_readable_log = game_log_to_human_readable_str(game_log)
+    human_readable_log_path = os.path.join(cycle_dir, f'game_log_{opponent_player}_{color}.txt')
+    with open(human_readable_log_path, 'w', encoding='utf-8') as f:
+        f.write(human_readable_log)
+                                                        
 def annotate_game_log(game_log):
     annotated_log = []
     for entry in game_log:
@@ -65,8 +78,13 @@ def annotate_game_log(game_log):
             player = entry['player']
             evaluation, _ = minimax(board, player, 0)
             relative_evaluation = evaluation if player == 'X' else -evaluation
-            legal_moves = get_available_moves(board)
-            correct_moves = [move for move in legal_moves if minimax(apply_move(board, move, player), get_opponent(player), 0)[0] == evaluation]
+            legal_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
+            if relative_evaluation == -1:
+                # In a lost position, there are no "correct" moves
+                correct_moves = []
+            else:
+                correct_moves = [index_to_algebraic(move) for move in get_available_moves(board)
+                                 if minimax(apply_move(board, move, player), get_opponent(player), 0)[0] == evaluation]
             entry.update({
                 'evaluation': evaluation,
                 'player_relative_evaluation': relative_evaluation,
@@ -75,6 +93,24 @@ def annotate_game_log(game_log):
             })
         annotated_log.append(entry)
     return annotated_log
+
+def game_log_to_human_readable_str(game_log):
+    out_str = ''
+    for entry in game_log:
+        out_str += '-----------------------------------\n'
+        if 'board' in entry:
+            out_str += 'Position before move:\n' 
+            out_str += drawn_board_str(entry['board'])
+            out_str += '\n'
+        for key in entry:
+            value = entry[key]
+            if not key in ( 'board', 'cot_record' ):
+                out_str += f'{key}: {value}'
+                out_str += '\n\n'
+        if 'cot_record' in entry and entry['cot_record']:
+            out_str += f"cot_record: {entry['cot_record']}"
+            out_str += '\n'
+    return out_str
 
 def get_best_few_shot_examples(experiment_name, cycle_number):
     if cycle_number == 0:
