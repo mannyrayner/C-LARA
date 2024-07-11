@@ -23,5 +23,8 @@ def create_experiment0_cycle1():
     print(few_shot_examples)  # for debugging
 
 def play_game_and_log(experiment_name, cycle_number, opponent_player, color):
-    game_log = play_game('cot_player_with_few_shot', opponent_player, experiment_name, cycle_number)
+    if color == 'X':
+        game_log = play_game('cot_player_with_few_shot', opponent_player, experiment_name, cycle_number)
+    else:
+        game_log = play_game(opponent_player, 'cot_player_with_few_shot', experiment_name, cycle_number)
     save_game_log(experiment_name, cycle_number, opponent_player, color, game_log)

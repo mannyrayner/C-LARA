@@ -98,17 +98,17 @@ def play_game(player1, player2, experiment_name, cycle_number, callback=None):
         draw_board(board)
         
         if check_win(board, x_or_o):
-            post_task_update(callback, f"Player {x_or_o} wins!")
+            post_task_update(callback, f"Player {x_or_o} wins")
             if x_or_o == 'X':
-                log.append({'game_over': True,
+                log.append({'game_over': f"Player {x_or_o} wins",
                             'score': { player1: 1, player2: 0 }})
             else:
                 log.append({'game_over': True,
                             'score': { player1: 0, player2: 1 }})
             break
         elif check_draw(board):
-            post_task_update(callback, "The game is a draw!")
-            log.append({'game_over': True,
+            post_task_update(callback, "The game is a draw")
+            log.append({'game_over': "The game is a draw",
                         'score': { player1: 0.5, player2: 0.5 }})
             break
 

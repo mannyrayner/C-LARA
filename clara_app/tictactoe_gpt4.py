@@ -1,20 +1,24 @@
-from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic
+from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic, get_available_moves
 
 from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json
 from .clara_utils import post_task_update
 from .clara_classes import ChatGPTError
 
+import traceback
+
 max_number_of_gpt4_tries = 5
 
 def request_minimal_gpt4_move(board, player, callback=None):
     formatted_request = format_minimal_gpt4_request(board, player)
-    return call_gpt4_with_retry(formatted_request, callback=callback)
+    available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
+    return call_gpt4_with_retry(formatted_request, available_moves, callback=callback)
 
 def request_cot_analysis_and_move(board, player, few_shot_examples, callback=None):
     formatted_request = format_cot_request(board, player, few_shot_examples)
-    return call_gpt4_with_retry(formatted_request, callback=callback)
+    available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
+    return call_gpt4_with_retry(formatted_request, available_moves, callback=callback)
 
-def call_gpt4_with_retry(formatted_request, gpt_model='gpt-4o', callback=None):
+def call_gpt4_with_retry(formatted_request, available_moves, gpt_model='gpt-4o', callback=None):
     api_calls = []
     n_attempts = 0
     limit = max_number_of_gpt4_tries
@@ -31,6 +35,8 @@ def call_gpt4_with_retry(formatted_request, gpt_model='gpt-4o', callback=None):
             # Parse the response to extract the CoT analysis and the selected move
             move_info = interpret_chat_gpt4_response_as_json(api_call.response, object_type='dict')
             selected_move = move_info.get('selected_move')
+            if not selected_move in available_moves:
+                raise ValueError(f'Illegal move: {selected_move}')
             return {'cot_record': response_string, 'selected_move': selected_move, 'api_calls': api_calls}
         except ChatGPTError as e:
             post_task_update(callback, f"Error parsing GPT-4o response: {e}")
