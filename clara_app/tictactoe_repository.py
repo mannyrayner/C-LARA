@@ -117,13 +117,13 @@ def get_best_few_shot_examples(experiment_name, cycle_number):
         return []
     # Add code to extract cot protocols from previous cycle dir
 
-def select_best_cot_protocols_from_log(annotated_log):
-    best_protocols = []
+def select_usable_cot_protocols_from_log(annotated_log):
+    usable_protocols = []
     for entry in annotated_log:
-        if (entry['cot_record'] is not None and 
-            entry['player_relative_evaluation'] >= 0 and 
-            len(entry['correct_moves']) < len(entry['legal_moves']) and 
-            entry['move'] in entry['correct_moves']):
+        if (entry['cot_record'] is not None and                            # There is a CoT record
+            entry['player_relative_evaluation'] >= 0 and                   # Player is not already lost
+            len(entry['correct_moves']) < len(entry['legal_moves']) and    # There are both correct and incorrect moves
+            entry['move'] in entry['correct_moves']):                      # Player chose a correct move
             best_protocols.append(entry['cot_record'])
-    return best_protocols
+    return usable_protocols
 
