@@ -119,9 +119,23 @@ def format_examples_for_cot(few_shot_examples):
     elif len(few_shot_examples) == 1:
         return f"""Here is an example of a CoT analysis:
 
-{few_shot_examples[0]}""" + separator
+{format_cot_example(few_shot_examples[0])}""" + separator
     else:
         
         return f"""Here are examples of CoT analyses:
 
-{separator.join(few_shot_examples)}""" + separator
+{separator.join([format_cot_example(example) for example in few_shot_examples])}""" + separator
+
+def format_cot_example(example):
+    board = example['board']
+    player = example['player']
+    cot_record = example['cot_record']
+
+    return f"""Example with {player} to play:
+
+{format_board_for_gpt4(board)}
+
+Output:
+
+{cot_record}"""
+
