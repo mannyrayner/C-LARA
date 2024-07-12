@@ -1,4 +1,4 @@
-from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic, drawn_board_str, generate_position_summary
+from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic, drawn_board_str, immediate_threats_and_opportunities
 from .tictactoe_gpt4 import call_gpt4_with_retry_for_cot_evaluation, format_board_for_gpt4
 
 cot_evaluation_template = """I am going to give you a position in a Tic-Tac-Toe game, a reliable ground-truth evaluation of the position,
@@ -45,7 +45,7 @@ def evaluate_cot_record(record):
     position_summary = threats_and_opportunities_to_english(threats_and_opportunities, player)
     formatted_request = cot_evaluation_template.format(player=player, algebraic_board=algebraic_board, formatted_board=formatted_board,
                                                        position_summary=position_summary, cot_record=cot_record)
-    evaluation = call_gpt4_with_retry_for_cot_evaluation(formatted_request)
+    evaluation = call_gpt4_with_retry_for_cot_evaluation(formatted_request)['evaluation']
     record.update(evaluation)
         
 def threats_and_opportunities_to_english(threats_and_opportunities, player):
@@ -57,17 +57,17 @@ def threats_and_opportunities_to_english(threats_and_opportunities, player):
         descriptions.append(f"{player} does not have an immediately winning move")
         
     if threats_and_opportunities['opponent_threat']:
-        descriptions.append(f"{opponent} is threatening an immediate win with {'or '.join(threats_and_opportunities['opponent_threat'])}")
+        descriptions.append(f"{opponent} is threatening an immediate win with {threats_and_opportunities['opponent_threat']}")
     else:
         descriptions.append(f"{opponent} does not have any threat to make a line on the next move")
         
     if threats_and_opportunities['double_threat']:
-        descriptions.append(f"{player} can threaten to make two lines with {'or '.join(threats_and_opportunities['double_threat'])}")
+        descriptions.append(f"{player} can threaten to make two lines with {' or '.join(threats_and_opportunities['double_threat'])}")
     else:
         descriptions.append(f"{player} has no way to make an immediate double threat")
         
     if threats_and_opportunities['single_threat']:
-        descriptions.append(f"{player} can threaten to make a line with {'or '.join(threats_and_opportunities['single_threat'])}")
+        descriptions.append(f"{player} can threaten to make a line with {' or '.join(threats_and_opportunities['single_threat'])}")
     else:
         descriptions.append(f"{player} has no way to make an immediate threat")
         
