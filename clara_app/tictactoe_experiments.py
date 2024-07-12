@@ -39,12 +39,16 @@ def run_experiment_cycles(experiment_name, num_cycles):
     for cycle_number in range(num_cycles):
         create_cycle_dir(experiment_name, cycle_number)
         few_shot_examples = get_best_few_shot_examples(experiment_name, cycle_number)
-        print(f"Cycle {cycle_number} few-shot examples: {few_shot_examples}")
+        #print(f"Cycle {cycle_number} few-shot examples: {few_shot_examples}")
         for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot', 'minimax_player']:
             play_game_and_log(experiment_name, cycle_number, opponent, 'X')
             play_game_and_log(experiment_name, cycle_number, opponent, 'O')
         summary = generate_cycle_summary(experiment_name, cycle_number)
-        print(summary)
+        #print(summary)
+
+def generate_cycle_summaries(experiment_name, num_cycles):
+    for cycle_number in range(num_cycles):
+        generate_cycle_summary(experiment_name, cycle_number)
 
 def play_game_and_log(experiment_name, cycle_number, opponent_player, color):
     if color == 'X':

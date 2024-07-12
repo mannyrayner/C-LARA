@@ -44,6 +44,31 @@ def call_gpt4_with_retry(formatted_request, available_moves, gpt_model='gpt-4o',
             post_task_update(callback, f'*** Warning: error when sending request to GPT-4o')
             post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
 
+def call_gpt4_with_retry_for_cot_evaluation(formatted_request, gpt_model='gpt-4o', callback=None):
+    api_calls = []
+    n_attempts = 0
+    limit = max_number_of_gpt4_tries
+    while True:
+        if n_attempts >= limit:
+            post_task_update(callback, f'*** Giving up, have tried sending this to GPT-4o {limit} times')
+            return {'evaluation': None, 'api_calls': api_calls}
+        n_attempts += 1
+        post_task_update(callback, f'--- Calling {gpt_model} (attempt #{n_attempts})')
+        try:
+            api_call = call_chat_gpt4(formatted_request, config_info={'gpt_model': gpt_model})
+            api_calls.append(api_call)
+            response_string = api_call.response
+            # Parse the response to extract the evaluation
+            evaluation = interpret_chat_gpt4_response_as_json(api_call.response, object_type='dict')
+            if not 'logically_consistent' in evaluation or not 'correct_threats_and_opportunities':
+                raise ValueError(f'Evaluation not in requested format: {evaluation}')
+            return {'evaluation': evaluation, 'api_calls': api_calls}
+        except ChatGPTError as e:
+            post_task_update(callback, f"Error parsing GPT-4o response: {e}")
+        except Exception as e:
+            post_task_update(callback, f'*** Warning: error when sending request to GPT-4o')
+            post_task_update(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+
 minimal_template = """
 Given the current Tic-Tac-Toe board state, find the best move for the player {player}.
 
