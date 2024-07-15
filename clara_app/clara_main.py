@@ -314,6 +314,9 @@ class CLARAProjectInternal:
         images = self.get_all_project_images()
         if images:
             new_project.copy_image_objects_to_project(images)
+        image_descriptions = self.get_all_project_image_descriptions()
+        if image_descriptions:
+            new_project.copy_image_description_objects_to_project(image_descriptions)
 
     # Copy a text version to another project if it exists
     def _copy_text_version_if_it_exists(self, version: str, other_project: 'CLARAProjectInternal') -> None:
@@ -1272,6 +1275,26 @@ class CLARAProjectInternal:
             post_task_update(callback, f"*** Error when retrieving image descriptions: {str(e)}")
             return None
 
+    def copy_image_description_objects_to_project(self, image_descriptions, callback=None):
+        try:
+            project_id = self.id
+            
+            post_task_update(callback, f"--- Adding {len(image_descriptions)} image descriptions to project {project_id}")            
+            
+            for image_description in image_descriptions:
+                self.add_project_image_description(image_description.description_variable,
+                                                   image_description.explanation,
+                                                   callback=callback)
+            
+            post_task_update(callback, f"--- {len(image_description)} image descriptions added successfully")
+            return True
+        except Exception as e:
+            post_task_update(callback, f"*** CLARAProjectInternal: error when copying image descriptions to project")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            # Handle the exception as needed
+            return None
+        
     def store_image_understanding_result(self, description_variable, result,
                                          image_name=None, page=None, position=None, user_prompt=None,
                                          callback=None):
