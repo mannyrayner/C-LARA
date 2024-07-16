@@ -5120,7 +5120,10 @@ def check_well_formed_image_request_sequence(requests, numbered_page_list, callb
     page_numbers_in_generation_requests = [ req['page'] for req in requests if req['request_type'] == 'image-generation' ]
 
     no_generation_page_numbers = [ page_number for page_number in page_numbers
-                                   if not page_number in page_numbers_in_generation_requests ]
+                                   if not page_number in page_numbers_in_generation_requests and
+                                   # We expect nothing to be generated for an empty page
+                                   'text' in numbered_page_list[page_number - 1] and
+                                   numbered_page_list[page_number - 1]['text'].strip() ]
 
     if no_generation_page_numbers:
         missing_pages_text = ', '.join([ str(page_number) for page_number in no_generation_page_numbers ])
