@@ -19,7 +19,6 @@ def create_experiment0_cycle0_games():
 
 def create_experiment0_cycle1():
     create_cycle_dir('experiment0', 1)
-    few_shot_examples = get_best_few_shot_examples('experiment0', 1)
 
 def create_experiment0_cycle1_games():
     play_game_and_log('experiment0', 1, 'random_player', 'X')
@@ -33,18 +32,39 @@ def create_experiment0_cycle1_games():
 
     generate_cycle_summary('experiment0', 1)
 
+def create_experiment_close():
+    create_experiment_dir('experiment_close', strategy='closest_few_shot_example')
+
+def create_experiment_close_cycle0():
+    run_experiment_cycle('experiment_close', 0)
+
+def create_experiment_close_cycle1():
+    run_experiment_cycle('experiment_close', 1)
+
+def create_experiment_close_cycle0_games():
+    play_game_and_log('experiment0', 0, 'random_player', 'X')
+    play_game_and_log('experiment0', 0, 'random_player', 'O')
+    play_game_and_log('experiment0', 0, 'minimal_gpt4_player', 'X')
+    play_game_and_log('experiment0', 0, 'minimal_gpt4_player', 'O')
+    play_game_and_log('experiment0', 1, 'cot_player_without_few_shot', 'X')
+    play_game_and_log('experiment0', 1, 'cot_player_without_few_shot', 'O')
+    play_game_and_log('experiment0', 1, 'minimax_player', 'X')
+    play_game_and_log('experiment0', 1, 'minimax_player', 'O')
+
+    generate_cycle_summary('experiment0', 1)
+
 # Automate multiple cycles
-def run_experiment_cycles(experiment_name, num_cycles):
-    create_experiment_dir(experiment_name)
+def run_experiment_cycles(experiment_name, num_cycles, strategy='default'):
+    create_experiment_dir(experiment_name, strategy=strategy)
     for cycle_number in range(num_cycles):
-        create_cycle_dir(experiment_name, cycle_number)
-        few_shot_examples = get_best_few_shot_examples(experiment_name, cycle_number)
-        #print(f"Cycle {cycle_number} few-shot examples: {few_shot_examples}")
-        for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot', 'minimax_player']:
-            play_game_and_log(experiment_name, cycle_number, opponent, 'X')
-            play_game_and_log(experiment_name, cycle_number, opponent, 'O')
-        summary = generate_cycle_summary(experiment_name, cycle_number)
-        #print(summary)
+        run_experiment_cycle(experiment_name, cycle_number)
+
+def run_experiment_cycle(experiment_name, cycle_number):
+    create_cycle_dir(experiment_name, cycle_number)
+    for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot', 'minimax_player']:
+        play_game_and_log(experiment_name, cycle_number, opponent, 'X')
+        play_game_and_log(experiment_name, cycle_number, opponent, 'O')
+    summary = generate_cycle_summary(experiment_name, cycle_number)
 
 def generate_cycle_summaries(experiment_name, num_cycles):
     for cycle_number in range(num_cycles):

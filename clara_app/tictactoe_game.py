@@ -15,30 +15,30 @@ known_players = ( 'random_player', 'human_player', 'minimax_player', 'minimal_gp
 
 def random_player(board, player, callback=None):
     moves = get_available_moves(board)
-    return random.choice(moves), None
+    return random.choice(moves), None, None
 
 def human_player(board, player, callback=None):
     draw_board(board)
     move = input(f"Player {player}, enter your move (e.g., a1, b2): ")
-    return algebraic_to_index(move), None
+    return algebraic_to_index(move), None, None
 
 def minimax_player(board, player, callback=None):
     _, best_move = minimax(board, player, 0)
-    return best_move, None
+    return best_move, None, None
 
 def minimal_gpt4_player(board, player, callback=None):
     response = request_minimal_gpt4_move(board, player, callback=callback)
-    return algebraic_to_index(response['selected_move']), None
+    return algebraic_to_index(response['selected_move']), None, response['prompt']
 
 def cot_player_without_few_shot(board, player, callback=None):
     few_shot_examples = []
     response = request_cot_analysis_and_move(board, player, few_shot_examples, callback=callback)
-    return algebraic_to_index(response['selected_move']), response['cot_record']
+    return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt']
 
 def cot_player_with_few_shot(board, player, experiment_name, cycle_number, callback=None):
-    few_shot_examples = get_best_few_shot_examples(experiment_name, cycle_number)
+    few_shot_examples = get_best_few_shot_examples(experiment_name, cycle_number, board, player)
     response = request_cot_analysis_and_move(board, player, few_shot_examples, callback=callback)
-    return algebraic_to_index(response['selected_move']), response['cot_record']
+    return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt']
 
 def invoke_player(player_name, board, x_or_o, experiment_name, cycle_number, callback=None):
     complain_if_unknown_player(player_name, callback=callback)
@@ -84,12 +84,13 @@ def play_game(player1, player2, experiment_name, cycle_number, callback=None):
         current_player = players[turn % 2]
         x_or_o = player_symbols[turn % 2]
         board_before_move = board.copy()
-        move, cot_record = invoke_player(current_player, board, x_or_o, experiment_name, cycle_number, callback=callback)
+        move, cot_record, prompt = invoke_player(current_player, board, x_or_o, experiment_name, cycle_number, callback=callback)
 
         log.append({
             'turn': turn + 1,
             'player': x_or_o,
             'move': index_to_algebraic(move),
+            'prompt': prompt,
             'cot_record': cot_record,
             'board': board_before_move
         })

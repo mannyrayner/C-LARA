@@ -25,7 +25,10 @@ def call_gpt4_with_retry(formatted_request, available_moves, gpt_model='gpt-4o',
     while True:
         if n_attempts >= limit:
             post_task_update(callback, f'*** Giving up, have tried sending this to GPT-4o {limit} times')
-            return {'cot_record': None, 'selected_move': None, 'api_calls': api_calls}
+            return {'cot_record': None,
+                    'prompt': formatted_request,
+                    'selected_move': None,
+                    'api_calls': api_calls}
         n_attempts += 1
         post_task_update(callback, f'--- Calling {gpt_model} (attempt #{n_attempts})')
         try:
@@ -37,7 +40,10 @@ def call_gpt4_with_retry(formatted_request, available_moves, gpt_model='gpt-4o',
             selected_move = move_info.get('selected_move')
             if not selected_move in available_moves:
                 raise ValueError(f'Illegal move: {selected_move}')
-            return {'cot_record': response_string, 'selected_move': selected_move, 'api_calls': api_calls}
+            return {'cot_record': response_string,
+                    'prompt': formatted_request,
+                    'selected_move': selected_move,
+                    'api_calls': api_calls}
         except ChatGPTError as e:
             post_task_update(callback, f"Error parsing GPT-4o response: {e}")
         except Exception as e:

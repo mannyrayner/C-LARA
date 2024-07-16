@@ -1,7 +1,29 @@
 import pprint
 
+def algebraic_to_index(algebraic):
+    conversion = {
+        'a1': 0, 'a2': 3, 'a3': 6,
+        'b1': 1, 'b2': 4, 'b3': 7,
+        'c1': 2, 'c2': 5, 'c3': 8
+    }
+    return conversion[algebraic]
+
+def index_to_algebraic(index):
+    conversion = {
+        0: 'a1', 3: 'a2', 6: 'a3',
+        1: 'b1', 4: 'b2', 7: 'b3',
+        2: 'c1', 5: 'c2', 8: 'c3'
+    }
+    return conversion[index]
+
 def get_opponent(player):
     return 'O' if player == 'X' else 'X'
+
+def get_center_square_value(board):
+    return board[algebraic_to_index('b2')]
+
+def get_turn_value(board):
+    return 1 + 9 - len(get_available_moves(board))
 
 def check_win(board, player):
     win_conditions = [
@@ -64,22 +86,6 @@ def get_board_from_positions(x_positions, o_positions):
     for pos in o_positions:
         board[pos] = 'O'
     return board
-
-def algebraic_to_index(algebraic):
-    conversion = {
-        'a1': 0, 'a2': 3, 'a3': 6,
-        'b1': 1, 'b2': 4, 'b3': 7,
-        'c1': 2, 'c2': 5, 'c3': 8
-    }
-    return conversion[algebraic]
-
-def index_to_algebraic(index):
-    conversion = {
-        0: 'a1', 3: 'a2', 6: 'a3',
-        1: 'b1', 4: 'b2', 7: 'b3',
-        2: 'c1', 5: 'c2', 8: 'c3'
-    }
-    return conversion[index]
 
 def minimax_tic_tac_toe(x_positions_algebraic, o_positions_algebraic, player_to_move):
     x_positions = [algebraic_to_index(pos) for pos in x_positions_algebraic]

@@ -1,4 +1,5 @@
-from .tictactoe_engine import minimax, get_available_moves, apply_move, get_opponent
+from .tictactoe_evaluate_cot import evaluate_cot_record
+from .tictactoe_engine import minimax, get_available_moves, apply_move, get_opponent, get_turn_value, get_center_square_value
 from .tictactoe_engine import index_to_algebraic, algebraic_to_index, drawn_board_str
 from .clara_utils import absolute_file_name, file_exists, directory_exists
 
@@ -8,12 +9,17 @@ from datetime import datetime
 import random
 from collections import defaultdict
 
-def create_experiment_dir(experiment_name, base_dir='$CLARA/tictactoe_experiments'):
+supported_strategies = ( 'default', 'closest_few_shot_example' )
+
+def create_experiment_dir(experiment_name, strategy='default', base_dir='$CLARA/tictactoe_experiments'):
+    if not strategy in supported_strategies:
+        raise ValueError(f'Unknown strategy {strategy}. Needs to be one of: {supported_strategies}')
     experiment_dir = get_experiment_dir(experiment_name, base_dir=base_dir)
     os.makedirs(experiment_dir, exist_ok=True)
     metadata = {
         'experiment_name': experiment_name,
         'start_date': datetime.now().isoformat(),
+        'strategy': strategy,
         'cycles': []
     }
     with open(os.path.join(experiment_dir, 'metadata.json'), 'w') as f:
@@ -25,6 +31,13 @@ def get_experiment_dir(experiment_name, base_dir='$CLARA/tictactoe_experiments')
         raise ValueError(f'Base dir {abs_base_dir} not found')
     experiment_dir = os.path.join(abs_base_dir, experiment_name)
     return experiment_dir
+
+def get_experiment_strategy(experiment_name):
+    experiment_dir = get_experiment_dir(experiment_name)
+    experiment_metadata_path = os.path.join(experiment_dir, 'metadata.json')
+    with open(experiment_metadata_path, 'r') as f:
+        experiment_metadata = json.load(f)
+    return experiment_metadata['strategy'] if 'strategy' in experiment_metadata else 'default'
 
 def create_cycle_dir(experiment_name, cycle_number):
     experiment_dir = get_experiment_dir(experiment_name)
@@ -114,33 +127,57 @@ def game_log_to_human_readable_str(game_log):
             out_str += '\n'
     return out_str
 
-def get_best_few_shot_examples(experiment_name, cycle_number, N=5):
+strategies_not_using_position = ( 'default' )
+
+def get_best_few_shot_examples(experiment_name, cycle_number, board, player, N=5):
+    strategy = get_experiment_strategy(experiment_name)
     cycle_dir = get_cycle_dir(experiment_name, cycle_number)
     cache_path = os.path.join(cycle_dir, 'few_shot_examples.json')
-    
-    if file_exists(cache_path):
-        with open(cache_path, 'r') as f:
-            return json.load(f)
+    consistent_cot_records = None
 
     if cycle_number == 0:
+        # We have nothing to extract few-shot example from
         return []
 
-    previous_cycle_number = cycle_number - 1
-    previous_cycle_dir = get_cycle_dir(experiment_name, previous_cycle_number)
-    log_files = [f for f in os.listdir(previous_cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
+    if file_exists(cache_path):
+        # We have examples cached
+        with open(cache_path, 'r') as f:
+            selected_entries = json.load(f)
+    else:
+        previous_cycle_number = cycle_number - 1
+        previous_cycle_dir = get_cycle_dir(experiment_name, previous_cycle_number)
+        log_files = [f for f in os.listdir(previous_cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
 
-    candidates = []
-    for log_file in log_files:
-        with open(os.path.join(previous_cycle_dir, log_file), 'r') as f:
-            game_log = json.load(f)
-            candidates.extend(select_usable_cot_protocol_entries_from_log(game_log))
+        candidates = []
+        for log_file in log_files:
+            with open(os.path.join(previous_cycle_dir, log_file), 'r') as f:
+                game_log = json.load(f)
+                candidates.extend(select_usable_cot_protocol_entries_from_log(game_log))
 
-    print(f'Found {len(candidates)} candidate CoT records to use. Selecting a diverse set')
+        print(f'Found {len(candidates)} candidate CoT records to use.')
 
-    selected_entries = select_diverse_entries(candidates, N)
-    cache_few_shot_examples(experiment_name, cycle_number, selected_entries)
+        for candidate in candidates:
+            evaluate_cot_record(candidate)
+
+        consistent_cot_records = [ candidate for candidate in candidates
+                                   if not ( 'logically_consistent' in candidate and not candidate['logically_consistent'] ) and
+                                   not ( 'correct_threats_and_opportunities' in candidate and not candidate['correct_threats_and_opportunities'] ) ]
+
+        inconsistent_cot_records = [ candidate for candidate in candidates if not candidate in consistent_cot_records ]
+
+        print(f'Evaluated {len(consistent_cot_records)} candidate CoT records as consistent with ground truth from minimax engine.')
+        
+        if strategy == 'default':
+            selected_entries = select_diverse_entries(consistent_cot_records, N)
+        elif strategy == 'closest_few_shot_example':
+            selected_entries = consistent_cot_records
+        cache_few_shot_examples(experiment_name, cycle_number, selected_entries)
+        cache_inconsistent_few_shot_examples(experiment_name, cycle_number, inconsistent_cot_records)
     
-    return selected_entries
+    if strategy == 'default':
+        return selected_entries
+    elif strategy == 'closest_few_shot_example':
+        return most_relevant_cot_entries_for_position(selected_entries, board, player)
 
 def select_usable_cot_protocol_entries_from_log(annotated_log):
     usable_entries = []
@@ -162,15 +199,22 @@ def select_diverse_entries(candidates, N):
         remaining_candidates = [entry for entry in candidates if entry not in selected]
         if not remaining_candidates:
             break
-        best_candidate = max(remaining_candidates, key=lambda entry: combined_difference_score(entry, selected))
+        best_candidate = max(remaining_candidates, key=lambda entry: combined_difference_score_for_diverse(entry, selected))
         selected.append(best_candidate)
 
     return selected
 
-def combined_difference_score(entry, selected):
-    return sum(difference_metric(entry, sel) for sel in selected)
+def most_relevant_cot_entries_for_position(cot_records, board, player):
+    if not cot_records:
+        return []
+    else:
+        best_candidate = min(cot_records, key=lambda entry: relevance_score(entry, board, player))
+        return [ best_candidate ]
 
-def difference_metric(entry1, entry2):
+def combined_difference_score_for_diverse(entry, selected):
+    return sum(difference_metric_for_diverse(entry, sel) for sel in selected)
+
+def difference_metric_for_diverse(entry1, entry2):
     turn_diff = abs(entry1['turn'] - entry2['turn'])
     player_diff = 0 if entry1['player'] == entry2['player'] else 1
     evaluation_diff = abs(entry1['player_relative_evaluation'] - entry2['player_relative_evaluation'])
@@ -180,31 +224,24 @@ def difference_metric(entry1, entry2):
     )
     return turn_diff + player_diff + evaluation_diff + correct_move_proportion_diff
 
+def relevance_score(entry, board, player):
+    player_diff = 0 if entry['player'] == player else 1
+    turn_diff = abs(get_turn_value(entry['board']) - get_turn_value(board))
+    center_square_value_diff = 0 if get_center_square_value(entry['board']) == get_center_square_value(board) else 1
+
+    return player_diff + turn_diff + center_square_value_diff
+
 def cache_few_shot_examples(experiment_name, cycle_number, entries):
     cycle_dir = get_cycle_dir(experiment_name, cycle_number)
     cache_path = os.path.join(cycle_dir, 'few_shot_examples.json')
     with open(cache_path, 'w') as f:
         json.dump(entries, f, indent=4)
 
-##def generate_cycle_summary(experiment_name, cycle_number):
-##    cycle_dir = get_cycle_dir(experiment_name, cycle_number)
-##    log_files = [f for f in os.listdir(cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
-##    
-##    summary_scores = defaultdict(float)
-##    
-##    for log_file in log_files:
-##        with open(os.path.join(cycle_dir, log_file), 'r') as f:
-##            game_log = json.load(f)
-##            if 'score' in game_log[-1]:
-##                for player, score in game_log[-1]['score'].items():
-##                    summary_scores[player] += score
-##    
-##    summary = {player: score for player, score in summary_scores.items()}
-##    print(f"Cycle {cycle_number} Summary for {experiment_name}:")
-##    for player, score in summary.items():
-##        print(f"{player}: {score}")
-##    
-##    return summary
+def cache_inconsistent_few_shot_examples(experiment_name, cycle_number, entries):
+    cycle_dir = get_cycle_dir(experiment_name, cycle_number)
+    cache_path = os.path.join(cycle_dir, 'inconsistent_few_shot_examples.json')
+    with open(cache_path, 'w') as f:
+        json.dump(entries, f, indent=4)
 
 def generate_cycle_summary(experiment_name, cycle_number):
     cycle_dir = get_cycle_dir(experiment_name, cycle_number)
