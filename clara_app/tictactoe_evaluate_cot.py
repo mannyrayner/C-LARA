@@ -1,5 +1,5 @@
 from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic, drawn_board_str, immediate_threats_and_opportunities
-from .tictactoe_gpt4 import call_gpt4_with_retry_for_cot_evaluation, format_board_for_gpt4
+from .tictactoe_gpt4 import call_gpt4_with_retry_for_cot_evaluation_async, format_board_for_gpt4
 
 cot_evaluation_template = """I am going to give you a position in a Tic-Tac-Toe game, a reliable ground-truth evaluation of the position,
 and a second analysis. Your task is to determine whether the second analysis is consistent with the ground-truth evaluation.
@@ -35,7 +35,7 @@ Provide your evaluation in JSON format as follows:
 ```
 """
 
-def evaluate_cot_record(record):
+async def evaluate_cot_record_async(record):
     board = record['board']
     player = record['player']
     cot_record = record['cot_record']
@@ -45,7 +45,7 @@ def evaluate_cot_record(record):
     position_summary = threats_and_opportunities_to_english(threats_and_opportunities, player)
     formatted_request = cot_evaluation_template.format(player=player, algebraic_board=algebraic_board, formatted_board=formatted_board,
                                                        position_summary=position_summary, cot_record=cot_record)
-    evaluation = call_gpt4_with_retry_for_cot_evaluation(formatted_request)['evaluation']
+    evaluation = (await call_gpt4_with_retry_for_cot_evaluation_async(formatted_request))['evaluation']
     record.update(evaluation)
         
 def threats_and_opportunities_to_english(threats_and_opportunities, player):

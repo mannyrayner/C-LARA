@@ -1,5 +1,6 @@
-from .tictactoe_repository import create_experiment_dir, create_cycle_dir, save_game_log, get_best_few_shot_examples, generate_cycle_summary
-from .tictactoe_game import play_game
+import asyncio
+from .tictactoe_repository import create_experiment_dir, create_cycle_dir, save_game_log, generate_cycle_summary
+from .tictactoe_game import play_game_async
 
 def create_experiment0():
     create_experiment_dir('experiment0')
@@ -53,26 +54,48 @@ def create_experiment_close_cycle0_games():
 
     generate_cycle_summary('experiment0', 1)
 
-# Automate multiple cycles
-def run_experiment_cycles(experiment_name, num_cycles, strategy='default'):
+# Test async functionality
+def create_experiment_test_async():
+    create_experiment_dir('experiment_test_async', strategy='closest_few_shot_example')
+
+async def create_test_async_cycle(cycle_number):
+    experiment_name = 'experiment_test_async'
+    opponent = 'random_player'
+    create_cycle_dir(experiment_name, cycle_number)
+    
+    tasks = []
+    tasks.append(asyncio.create_task(play_game_and_log_async(experiment_name, cycle_number, opponent, 'X')))
+    tasks.append(asyncio.create_task(play_game_and_log_async(experiment_name, cycle_number, opponent, 'O')))
+
+    await asyncio.gather(*tasks)
+    generate_cycle_summary(experiment_name, cycle_number)
+
+def run_test_async_cycle(cycle_number):
+    experiment_name = 'experiment_test_async'
+    asyncio.run(create_test_async_cycle(cycle_number))
+# End test async functionality
+
+async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='default'):
     create_experiment_dir(experiment_name, strategy=strategy)
     for cycle_number in range(num_cycles):
-        run_experiment_cycle(experiment_name, cycle_number)
+        await run_experiment_cycle_async(experiment_name, cycle_number)
 
-def run_experiment_cycle(experiment_name, cycle_number):
+async def run_experiment_cycle_async(experiment_name, cycle_number):
     create_cycle_dir(experiment_name, cycle_number)
+    tasks = []
     for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot', 'minimax_player']:
-        play_game_and_log(experiment_name, cycle_number, opponent, 'X')
-        play_game_and_log(experiment_name, cycle_number, opponent, 'O')
+        tasks.append(asyncio.create_task(play_game_and_log_async(experiment_name, cycle_number, opponent, 'X')))
+        tasks.append(asyncio.create_task(play_game_and_log_async(experiment_name, cycle_number, opponent, 'O')))
+    await asyncio.gather(*tasks)
     summary = generate_cycle_summary(experiment_name, cycle_number)
+
+async def play_game_and_log_async(experiment_name, cycle_number, opponent_player, color):
+    if color == 'X':
+        game_log = await play_game_async('cot_player_with_few_shot', opponent_player, experiment_name, cycle_number)
+    else:
+        game_log = await play_game_async(opponent_player, 'cot_player_with_few_shot', experiment_name, cycle_number)
+    save_game_log(experiment_name, cycle_number, opponent_player, color, game_log)
 
 def generate_cycle_summaries(experiment_name, num_cycles):
     for cycle_number in range(num_cycles):
         generate_cycle_summary(experiment_name, cycle_number)
-
-def play_game_and_log(experiment_name, cycle_number, opponent_player, color):
-    if color == 'X':
-        game_log = play_game('cot_player_with_few_shot', opponent_player, experiment_name, cycle_number)
-    else:
-        game_log = play_game(opponent_player, 'cot_player_with_few_shot', experiment_name, cycle_number)
-    save_game_log(experiment_name, cycle_number, opponent_player, color, game_log)

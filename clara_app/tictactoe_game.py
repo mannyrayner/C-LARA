@@ -1,8 +1,8 @@
 
 from .tictactoe_engine import minimax, get_board_from_positions, draw_board, get_available_moves, check_win, check_draw
 from .tictactoe_engine import index_to_algebraic, algebraic_to_index
-from .tictactoe_gpt4 import request_minimal_gpt4_move, request_cot_analysis_and_move
-from .tictactoe_repository import get_best_few_shot_examples
+from .tictactoe_gpt4 import request_minimal_gpt4_move_async, request_cot_analysis_and_move_async
+from .tictactoe_repository import get_best_few_shot_examples_async
 
 from .clara_utils import post_task_update
 
@@ -26,36 +26,36 @@ def minimax_player(board, player, callback=None):
     _, best_move = minimax(board, player, 0)
     return best_move, None, None
 
-def minimal_gpt4_player(board, player, callback=None):
-    response = request_minimal_gpt4_move(board, player, callback=callback)
+async def minimal_gpt4_player_async(board, player):
+    response = await request_minimal_gpt4_move_async(board, player)
     return algebraic_to_index(response['selected_move']), None, response['prompt']
 
-def cot_player_without_few_shot(board, player, callback=None):
+async def cot_player_without_few_shot_async(board, player):
     few_shot_examples = []
-    response = request_cot_analysis_and_move(board, player, few_shot_examples, callback=callback)
+    response = await request_cot_analysis_and_move_async(board, player, few_shot_examples)
     return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt']
 
-def cot_player_with_few_shot(board, player, experiment_name, cycle_number, callback=None):
-    few_shot_examples = get_best_few_shot_examples(experiment_name, cycle_number, board, player)
-    response = request_cot_analysis_and_move(board, player, few_shot_examples, callback=callback)
+async def cot_player_with_few_shot_async(board, player, experiment_name, cycle_number):
+    few_shot_examples = await get_best_few_shot_examples_async(experiment_name, cycle_number, board, player)
+    response = await request_cot_analysis_and_move_async(board, player, few_shot_examples)
     return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt']
 
-def invoke_player(player_name, board, x_or_o, experiment_name, cycle_number, callback=None):
-    complain_if_unknown_player(player_name, callback=callback)
-    complain_if_unknown_x_or_o(x_or_o, callback=callback)
+async def invoke_player_async(player_name, board, x_or_o, experiment_name, cycle_number):
+    complain_if_unknown_player(player_name)
+    complain_if_unknown_x_or_o(x_or_o)
     
     if player_name == 'random_player':
-        return random_player(board, x_or_o, callback=callback)
+        return random_player(board, x_or_o)
     elif player_name == 'human_player':
-        return human_player(board, x_or_o, callback=callback)
+        return human_player(board, x_or_o)
     elif player_name == 'minimax_player':
-        return minimax_player(board, x_or_o, callback=callback)
+        return minimax_player(board, x_or_o)
     elif player_name == 'minimal_gpt4_player':
-        return minimal_gpt4_player(board, x_or_o, callback=callback)
+        return await minimal_gpt4_player_async(board, x_or_o)
     elif player_name == 'cot_player_without_few_shot':
-        return cot_player_without_few_shot(board, x_or_o, callback=callback)
+        return await cot_player_without_few_shot_async(board, x_or_o)
     elif player_name == 'cot_player_with_few_shot':
-        return cot_player_with_few_shot(board, x_or_o, experiment_name, cycle_number, callback=callback)
+        return await cot_player_with_few_shot_async(board, x_or_o, experiment_name, cycle_number)
 
 def complain_if_unknown_player(player_name, callback=None):
     if not player_name in known_players:
@@ -69,9 +69,9 @@ def complain_if_unknown_x_or_o(x_or_o, callback=None):
         post_task_update(callback, error_message)
         raise ValueError(error_message)
 
-def play_game(player1, player2, experiment_name, cycle_number, callback=None):
-    complain_if_unknown_player(player1, callback=callback)
-    complain_if_unknown_player(player2, callback=callback)
+async def play_game_async(player1, player2, experiment_name, cycle_number):
+    complain_if_unknown_player(player1)
+    complain_if_unknown_player(player2)
     
     board = [' '] * 9
     players = [player1, player2]
@@ -84,32 +84,26 @@ def play_game(player1, player2, experiment_name, cycle_number, callback=None):
         current_player = players[turn % 2]
         x_or_o = player_symbols[turn % 2]
         board_before_move = board.copy()
-        move, cot_record, prompt = invoke_player(current_player, board, x_or_o, experiment_name, cycle_number, callback=callback)
+        move, cot_record, prompt = await invoke_player_async(current_player, board, x_or_o, experiment_name, cycle_number)
 
         log.append({
             'turn': turn + 1,
             'player': x_or_o,
-            'move': index_to_algebraic(move),
+            'board': board_before_move,
             'prompt': prompt,
-            'cot_record': cot_record,
-            'board': board_before_move
+            'move': index_to_algebraic(move),
+            'cot_record': cot_record
         })
 
         board[move] = x_or_o
         draw_board(board)
         
         if check_win(board, x_or_o):
-            post_task_update(callback, f"Player {x_or_o} wins")
-            if x_or_o == 'X':
-                log.append({'game_over': f"Player {x_or_o} wins",
-                            'score': { player1: 1, player2: 0 }})
-            else:
-                log.append({'game_over': True,
-                            'score': { player1: 0, player2: 1 }})
+            log.append({'game_over': True,
+                        'score': { player1: 1, player2: 0 }})
             break
         elif check_draw(board):
-            post_task_update(callback, "The game is a draw")
-            log.append({'game_over': "The game is a draw",
+            log.append({'game_over': True,
                         'score': { player1: 0.5, player2: 0.5 }})
             break
 

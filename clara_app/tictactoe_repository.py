@@ -1,4 +1,4 @@
-from .tictactoe_evaluate_cot import evaluate_cot_record
+from .tictactoe_evaluate_cot import evaluate_cot_record_async
 from .tictactoe_engine import minimax, get_available_moves, apply_move, get_opponent, get_turn_value, get_center_square_value
 from .tictactoe_engine import index_to_algebraic, algebraic_to_index, drawn_board_str
 from .clara_utils import absolute_file_name, file_exists, directory_exists
@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 import random
 from collections import defaultdict
+import asyncio
 
 supported_strategies = ( 'default', 'closest_few_shot_example' )
 
@@ -129,7 +130,7 @@ def game_log_to_human_readable_str(game_log):
 
 strategies_not_using_position = ( 'default' )
 
-def get_best_few_shot_examples(experiment_name, cycle_number, board, player, N=5):
+async def get_best_few_shot_examples_async(experiment_name, cycle_number, board, player, N=5):
     strategy = get_experiment_strategy(experiment_name)
     cycle_dir = get_cycle_dir(experiment_name, cycle_number)
     cache_path = os.path.join(cycle_dir, 'few_shot_examples.json')
@@ -156,8 +157,7 @@ def get_best_few_shot_examples(experiment_name, cycle_number, board, player, N=5
 
         print(f'Found {len(candidates)} candidate CoT records to use.')
 
-        for candidate in candidates:
-            evaluate_cot_record(candidate)
+        await asyncio.gather(*(evaluate_cot_record_async(candidate) for candidate in candidates))
 
         consistent_cot_records = [ candidate for candidate in candidates
                                    if not ( 'logically_consistent' in candidate and not candidate['logically_consistent'] ) and
