@@ -15,30 +15,33 @@ known_players = ( 'random_player', 'human_player', 'minimax_player', 'minimal_gp
 
 def random_player(board, player, callback=None):
     moves = get_available_moves(board)
-    return random.choice(moves), None, None
+    return random.choice(moves), None, None, 0
 
 def human_player(board, player, callback=None):
     draw_board(board)
     move = input(f"Player {player}, enter your move (e.g., a1, b2): ")
-    return algebraic_to_index(move), None, None
+    return algebraic_to_index(move), None, None, 0
 
 def minimax_player(board, player, callback=None):
     _, best_move = minimax(board, player, 0)
-    return best_move, None, None
+    return best_move, None, None, 0
 
 async def minimal_gpt4_player_async(board, player):
     response = await request_minimal_gpt4_move_async(board, player)
-    return algebraic_to_index(response['selected_move']), None, response['prompt']
+    total_cost = sum(call.cost for call in response['api_calls'])
+    return algebraic_to_index(response['selected_move']), None, response['prompt'], total_cost
 
 async def cot_player_without_few_shot_async(board, player):
     few_shot_examples = []
     response = await request_cot_analysis_and_move_async(board, player, few_shot_examples)
-    return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt']
+    total_cost = sum(call.cost for call in response['api_calls'])
+    return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt'], total_cost
 
 async def cot_player_with_few_shot_async(board, player, experiment_name, cycle_number):
-    few_shot_examples = await get_best_few_shot_examples_async(experiment_name, cycle_number, board, player)
+    few_shot_examples, evaluation_cost = await get_best_few_shot_examples_async(experiment_name, cycle_number, board, player)
     response = await request_cot_analysis_and_move_async(board, player, few_shot_examples)
-    return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt']
+    total_cost = sum(call.cost for call in response['api_calls']) + evaluation_cost
+    return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt'], total_cost
 
 async def invoke_player_async(player_name, board, x_or_o, experiment_name, cycle_number):
     complain_if_unknown_player(player_name)
@@ -79,12 +82,14 @@ async def play_game_async(player1, player2, experiment_name, cycle_number):
     turn = 0
 
     log = []
+    total_cost = 0
 
     while True:
         current_player = players[turn % 2]
         x_or_o = player_symbols[turn % 2]
         board_before_move = board.copy()
-        move, cot_record, prompt = await invoke_player_async(current_player, board, x_or_o, experiment_name, cycle_number)
+        move, cot_record, prompt, cost = await invoke_player_async(current_player, board, x_or_o, experiment_name, cycle_number)
+        total_cost += cost
 
         log.append({
             'turn': turn + 1,
@@ -92,7 +97,8 @@ async def play_game_async(player1, player2, experiment_name, cycle_number):
             'board': board_before_move,
             'prompt': prompt,
             'move': index_to_algebraic(move),
-            'cot_record': cot_record
+            'cot_record': cot_record,
+            'cost': cost
         })
 
         board[move] = x_or_o
@@ -100,11 +106,13 @@ async def play_game_async(player1, player2, experiment_name, cycle_number):
         
         if check_win(board, x_or_o):
             log.append({'game_over': True,
-                        'score': { player1: 1, player2: 0 }})
+                        'score': { player1: 1, player2: 0 },
+                        'total_cost': total_cost})
             break
         elif check_draw(board):
             log.append({'game_over': True,
-                        'score': { player1: 0.5, player2: 0.5 }})
+                        'score': { player1: 0.5, player2: 0.5 },
+                        'total_cost': total_cost})
             break
 
         turn += 1

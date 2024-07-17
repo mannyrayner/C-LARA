@@ -128,17 +128,16 @@ def game_log_to_human_readable_str(game_log):
             out_str += '\n'
     return out_str
 
-strategies_not_using_position = ( 'default' )
-
 async def get_best_few_shot_examples_async(experiment_name, cycle_number, board, player, N=5):
     strategy = get_experiment_strategy(experiment_name)
     cycle_dir = get_cycle_dir(experiment_name, cycle_number)
     cache_path = os.path.join(cycle_dir, 'few_shot_examples.json')
     consistent_cot_records = None
+    total_evaluation_cost = 0
 
     if cycle_number == 0:
         # We have nothing to extract few-shot example from
-        return []
+        return [], 0
 
     if file_exists(cache_path):
         # We have examples cached
@@ -157,7 +156,8 @@ async def get_best_few_shot_examples_async(experiment_name, cycle_number, board,
 
         print(f'Found {len(candidates)} candidate CoT records to use.')
 
-        await asyncio.gather(*(evaluate_cot_record_async(candidate) for candidate in candidates))
+        evaluation_results = await asyncio.gather(*(evaluate_cot_record_async(candidate) for candidate in candidates))
+        total_evaluation_cost = sum(result['api_calls'][0].cost for result in evaluation_results)
 
         consistent_cot_records = [ candidate for candidate in candidates
                                    if not ( 'logically_consistent' in candidate and not candidate['logically_consistent'] ) and
@@ -175,9 +175,9 @@ async def get_best_few_shot_examples_async(experiment_name, cycle_number, board,
         cache_inconsistent_few_shot_examples(experiment_name, cycle_number, inconsistent_cot_records)
     
     if strategy == 'default':
-        return selected_entries
+        return selected_entries, total_evaluation_cost
     elif strategy == 'closest_few_shot_example':
-        return most_relevant_cot_entries_for_position(selected_entries, board, player)
+        return most_relevant_cot_entries_for_position(selected_entries, board, player), total_evaluation_cost
 
 def select_usable_cot_protocol_entries_from_log(annotated_log):
     usable_entries = []
@@ -248,7 +248,8 @@ def generate_cycle_summary(experiment_name, cycle_number):
     log_files = [f for f in os.listdir(cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
     
     summary_scores = defaultdict(lambda: {'X': 0.0, 'O': 0.0, 'total': 0.0})
-    
+    total_cycle_cost = 0
+
     for log_file in log_files:
         with open(os.path.join(cycle_dir, log_file), 'r') as f:
             game_log = json.load(f)
@@ -259,11 +260,14 @@ def generate_cycle_summary(experiment_name, cycle_number):
                     if game_log[0]['O'] == player:
                         summary_scores[player]['O'] += score
                     summary_scores[player]['total'] += score
-    
+                total_cycle_cost += game_log[-1]['total_cost']
+
     summary = {player: score for player, score in summary_scores.items()}
     print(f"Cycle {cycle_number} Summary for {experiment_name}:")
     for player, score in summary.items():
         print(f"{player}: X: {score['X']} | O: {score['O']} | Total: {score['total']}")
+    print(f"Total cost for cycle {cycle_number}: ${total_cycle_cost:.2f}")
     
-    return summary
+    return summary, total_cycle_cost
+
 

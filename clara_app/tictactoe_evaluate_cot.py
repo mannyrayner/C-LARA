@@ -45,8 +45,9 @@ async def evaluate_cot_record_async(record):
     position_summary = threats_and_opportunities_to_english(threats_and_opportunities, player)
     formatted_request = cot_evaluation_template.format(player=player, algebraic_board=algebraic_board, formatted_board=formatted_board,
                                                        position_summary=position_summary, cot_record=cot_record)
-    evaluation = (await call_gpt4_with_retry_for_cot_evaluation_async(formatted_request))['evaluation']
-    record.update(evaluation)
+    evaluation = await call_gpt4_with_retry_for_cot_evaluation_async(formatted_request)
+    record.update(evaluation['evaluation'])
+    return evaluation
         
 def threats_and_opportunities_to_english(threats_and_opportunities, player):
     opponent = get_opponent(player)
