@@ -1,5 +1,5 @@
 import asyncio
-from .tictactoe_repository import create_experiment_dir, create_cycle_dir, save_game_log, generate_cycle_summary
+from .tictactoe_repository import create_experiment_dir, create_cycle_dir, save_game_log, correct_game_log_file, generate_cycle_summary
 from .tictactoe_game import play_game_async
 
 def create_experiment0():
@@ -75,9 +75,13 @@ def run_test_async_cycle(cycle_number):
     asyncio.run(create_test_async_cycle(cycle_number))
 # End test async functionality
 
-async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='default'):
+def run_experiment_async(num_cycles, starts_from_cycle=0):
+    asyncio.run(run_experiment_cycles_async(f'experiment_async_{num_cycles}', num_cycles,
+                                            strategy='closest_few_shot_example', starts_from_cycle=starts_from_cycle))
+
+async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='default', starts_from_cycle=0):
     create_experiment_dir(experiment_name, strategy=strategy)
-    for cycle_number in range(num_cycles):
+    for cycle_number in range(starts_from_cycle, num_cycles):
         await run_experiment_cycle_async(experiment_name, cycle_number)
 
 async def run_experiment_cycle_async(experiment_name, cycle_number):
@@ -99,3 +103,12 @@ async def play_game_and_log_async(experiment_name, cycle_number, opponent_player
 def generate_cycle_summaries(experiment_name, num_cycles):
     for cycle_number in range(num_cycles):
         generate_cycle_summary(experiment_name, cycle_number)
+
+# ----------------
+
+def correct_all_game_logs(experiment_name, num_cycles):
+    for cycle_number in range(num_cycles):
+        for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot', 'minimax_player']:
+            correct_game_log_file(experiment_name, cycle_number, opponent, 'X')
+            correct_game_log_file(experiment_name, cycle_number, opponent, 'O')
+

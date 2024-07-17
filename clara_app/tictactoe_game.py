@@ -47,18 +47,22 @@ async def invoke_player_async(player_name, board, x_or_o, experiment_name, cycle
     complain_if_unknown_player(player_name)
     complain_if_unknown_x_or_o(x_or_o)
     
-    if player_name == 'random_player':
+    try:
+        if player_name == 'random_player':
+            return random_player(board, x_or_o)
+        elif player_name == 'human_player':
+            return human_player(board, x_or_o)
+        elif player_name == 'minimax_player':
+            return minimax_player(board, x_or_o)
+        elif player_name == 'minimal_gpt4_player':
+            return await minimal_gpt4_player_async(board, x_or_o)
+        elif player_name == 'cot_player_without_few_shot':
+            return await cot_player_without_few_shot_async(board, x_or_o)
+        elif player_name == 'cot_player_with_few_shot':
+            return await cot_player_with_few_shot_async(board, x_or_o, experiment_name, cycle_number)
+    except Exception as e:
+        # Fall back to random player if there's an exception
         return random_player(board, x_or_o)
-    elif player_name == 'human_player':
-        return human_player(board, x_or_o)
-    elif player_name == 'minimax_player':
-        return minimax_player(board, x_or_o)
-    elif player_name == 'minimal_gpt4_player':
-        return await minimal_gpt4_player_async(board, x_or_o)
-    elif player_name == 'cot_player_without_few_shot':
-        return await cot_player_without_few_shot_async(board, x_or_o)
-    elif player_name == 'cot_player_with_few_shot':
-        return await cot_player_with_few_shot_async(board, x_or_o, experiment_name, cycle_number)
 
 def complain_if_unknown_player(player_name, callback=None):
     if not player_name in known_players:
@@ -104,9 +108,14 @@ async def play_game_async(player1, player2, experiment_name, cycle_number):
         board[move] = x_or_o
         draw_board(board)
         
-        if check_win(board, x_or_o):
+        if check_win(board, 'X'):
             log.append({'game_over': True,
                         'score': { player1: 1, player2: 0 },
+                        'total_cost': total_cost})
+            break
+        elif check_win(board, 'O'):
+            log.append({'game_over': True,
+                        'score': { player1: 0, player2: 1 },
                         'total_cost': total_cost})
             break
         elif check_draw(board):

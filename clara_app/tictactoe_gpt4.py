@@ -98,14 +98,14 @@ A player wins if they can occupy all three squares on one of the following eight
 
 {possible_lines}
 
-{cot_examples}
-
 Provide your analysis and the best move. At the end, return the selected move in JSON format as follows:
 ```json
 {{
     "selected_move": "<move>"
 }}
 ```
+
+{cot_examples}
 """
 
 possible_lines = """Vertical:

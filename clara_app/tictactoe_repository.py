@@ -1,6 +1,6 @@
 from .tictactoe_evaluate_cot import evaluate_cot_record_async
 from .tictactoe_engine import minimax, get_available_moves, apply_move, get_opponent, get_turn_value, get_center_square_value
-from .tictactoe_engine import index_to_algebraic, algebraic_to_index, drawn_board_str
+from .tictactoe_engine import index_to_algebraic, algebraic_to_index, drawn_board_str, check_win, check_draw
 from .clara_utils import absolute_file_name, file_exists, directory_exists
 
 import os
@@ -85,6 +85,54 @@ def save_game_log(experiment_name, cycle_number, opponent_player, color, game_lo
     human_readable_log_path = os.path.join(cycle_dir, f'game_log_{opponent_player}_{color}.txt')
     with open(human_readable_log_path, 'w', encoding='utf-8') as f:
         f.write(human_readable_log)
+
+def correct_game_log_file(experiment_name, cycle_number, opponent_player, color):
+    cycle_dir = get_cycle_dir(experiment_name, cycle_number)
+    log_path = os.path.join(cycle_dir, f'game_log_{opponent_player}_{color}.json')
+    
+    if not os.path.exists(log_path):
+        raise ValueError(f"Log file {log_path} does not exist")
+    
+    with open(log_path, 'r') as f:
+        game_log = json.load(f)
+
+    correct_game_log(game_log)
+    
+    with open(log_path, 'w') as f:
+        json.dump(game_log, f, indent=4)
+    
+    human_readable_log = game_log_to_human_readable_str(game_log)
+    human_readable_log_path = os.path.join(cycle_dir, f'game_log_{opponent_player}_{color}.txt')
+    with open(human_readable_log_path, 'w', encoding='utf-8') as f:
+        f.write(human_readable_log)
+
+def correct_game_log(game_log):
+    # Get the initial metadata entry and game moves
+    metadata_entry = game_log[0]
+    player1 = metadata_entry['X']
+    player2 = metadata_entry['O']
+        
+    last_move_record = game_log[-2]
+    move = algebraic_to_index(last_move_record['move'])
+    player = last_move_record['player']
+    board = last_move_record['board']
+    final_board = board.copy()
+    final_board[move] = player
+
+    total_cost = sum([ record['cost'] for record in game_log if 'cost' in record ])
+    
+    # Check the final state of the game
+    if check_win(final_board, 'X'):
+        final_record = {'game_over': True, 'score': { player1: 1, player2: 0 }, 'total_cost': total_cost}
+    elif check_win(final_board, 'O'):
+        final_record = {'game_over': True, 'score': { player1: 0, player2: 1 }, 'total_cost': total_cost}
+    elif check_draw(final_board):
+        final_record = {'game_over': True, 'score': { player1: 0.5, player2: 0.5 }, 'total_cost': total_cost}
+    else:
+        raise ValueError(f"Unexpected state at end of game log {log_path}")
+    
+    # Replace the final record with the corrected one
+    game_log[-1] = final_record
                                                         
 def annotate_game_log(game_log):
     annotated_log = []

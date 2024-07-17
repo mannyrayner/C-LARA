@@ -33,6 +33,7 @@ Provide your evaluation in JSON format as follows:
     "comments": "<detailed comments>"
 }}
 ```
+Only provide the JSON, since the reply will be read by a Python script.
 """
 
 async def evaluate_cot_record_async(record):
@@ -45,8 +46,15 @@ async def evaluate_cot_record_async(record):
     position_summary = threats_and_opportunities_to_english(threats_and_opportunities, player)
     formatted_request = cot_evaluation_template.format(player=player, algebraic_board=algebraic_board, formatted_board=formatted_board,
                                                        position_summary=position_summary, cot_record=cot_record)
-    evaluation = await call_gpt4_with_retry_for_cot_evaluation_async(formatted_request)
-    record.update(evaluation['evaluation'])
+    try:
+        evaluation = await call_gpt4_with_retry_for_cot_evaluation_async(formatted_request)
+        record.update(evaluation['evaluation'])
+    except Exception as e:
+        record.update({
+            'logically_consistent': False,
+            'correct_threats_and_opportunities': False,
+            'comments': f'Exception in call_gpt4_with_retry_for_cot_evaluation_async: {str(e)}'
+        })
     return evaluation
         
 def threats_and_opportunities_to_english(threats_and_opportunities, player):
