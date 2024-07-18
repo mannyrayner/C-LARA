@@ -62,6 +62,7 @@ async def invoke_player_async(player_name, board, x_or_o, experiment_name, cycle
             return await cot_player_with_few_shot_async(board, x_or_o, experiment_name, cycle_number)
     except Exception as e:
         # Fall back to random player if there's an exception
+        #raise e
         return random_player(board, x_or_o)
 
 def complain_if_unknown_player(player_name, callback=None):

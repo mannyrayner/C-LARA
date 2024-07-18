@@ -10,9 +10,9 @@ import random
 from collections import defaultdict
 import asyncio
 
-supported_strategies = ( 'default', 'closest_few_shot_example' )
+supported_strategies = ( 'n_maximally_different', 'closest_few_shot_example', 'closest_few_shot_example_incremental' )
 
-def create_experiment_dir(experiment_name, strategy='default', base_dir='$CLARA/tictactoe_experiments'):
+def create_experiment_dir(experiment_name, strategy='n_maximally_different', base_dir='$CLARA/tictactoe_experiments'):
     if not strategy in supported_strategies:
         raise ValueError(f'Unknown strategy {strategy}. Needs to be one of: {supported_strategies}')
     experiment_dir = get_experiment_dir(experiment_name, base_dir=base_dir)
@@ -38,7 +38,7 @@ def get_experiment_strategy(experiment_name):
     experiment_metadata_path = os.path.join(experiment_dir, 'metadata.json')
     with open(experiment_metadata_path, 'r') as f:
         experiment_metadata = json.load(f)
-    return experiment_metadata['strategy'] if 'strategy' in experiment_metadata else 'default'
+    return experiment_metadata['strategy'] if 'strategy' in experiment_metadata else 'n_maximally_different'
 
 def create_cycle_dir(experiment_name, cycle_number):
     experiment_dir = get_experiment_dir(experiment_name)
@@ -194,6 +194,7 @@ async def get_best_few_shot_examples_async(experiment_name, cycle_number, board,
     else:
         previous_cycle_number = cycle_number - 1
         previous_cycle_dir = get_cycle_dir(experiment_name, previous_cycle_number)
+        previous_cache_path = os.path.join(previous_cycle_dir, 'few_shot_examples.json')
         log_files = [f for f in os.listdir(previous_cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
 
         candidates = []
@@ -215,16 +216,25 @@ async def get_best_few_shot_examples_async(experiment_name, cycle_number, board,
 
         print(f'Evaluated {len(consistent_cot_records)} candidate CoT records as consistent with ground truth from minimax engine.')
         
-        if strategy == 'default':
+        if strategy == 'n_maximally_different':
             selected_entries = select_diverse_entries(consistent_cot_records, N)
         elif strategy == 'closest_few_shot_example':
             selected_entries = consistent_cot_records
+        elif strategy == 'closest_few_shot_example_incremental':
+            if file_exists(previous_cache_path):
+                with open(previous_cache_path, 'r') as f:
+                    previous_entries = json.load(f)
+            else:
+                previous_entries = []
+            selected_entries = previous_entries + consistent_cot_records
+        else:
+            raise ValueError(f"Unknown strategy {strategy} in get_best_few_shot_examples_async. Must be one of {supported_strategies}")
         cache_few_shot_examples(experiment_name, cycle_number, selected_entries)
         cache_inconsistent_few_shot_examples(experiment_name, cycle_number, inconsistent_cot_records)
     
-    if strategy == 'default':
+    if strategy == 'n_maximally_different':
         return selected_entries, total_evaluation_cost
-    elif strategy == 'closest_few_shot_example':
+    elif strategy in ( 'closest_few_shot_example', 'closest_few_shot_example_incremental' ):
         return most_relevant_cot_entries_for_position(selected_entries, board, player), total_evaluation_cost
 
 def select_usable_cot_protocol_entries_from_log(annotated_log):

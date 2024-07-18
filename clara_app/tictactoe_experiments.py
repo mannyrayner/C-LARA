@@ -79,7 +79,12 @@ def run_experiment_async(num_cycles, starts_from_cycle=0):
     asyncio.run(run_experiment_cycles_async(f'experiment_async_{num_cycles}', num_cycles,
                                             strategy='closest_few_shot_example', starts_from_cycle=starts_from_cycle))
 
-async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='default', starts_from_cycle=0):
+def run_experiment_async_incremental(num_cycles, starts_from_cycle=0):
+    asyncio.run(run_experiment_cycles_async(f'experiment_async_incremental_{num_cycles}', num_cycles,
+                                            strategy='closest_few_shot_example_incremental',
+                                            starts_from_cycle=starts_from_cycle))
+
+async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='n_maximally_different', starts_from_cycle=0):
     create_experiment_dir(experiment_name, strategy=strategy)
     for cycle_number in range(starts_from_cycle, num_cycles):
         await run_experiment_cycle_async(experiment_name, cycle_number)
