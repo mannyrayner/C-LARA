@@ -22,9 +22,15 @@ online (details to follow)
 
 **25-26 July 2024**
 
-## Registration
+## Participation and Registration
 
-Attendance at the workshop is free, but people wishing to participate are required to [register](https://url.au.m.mimecastprotect.com/s/zc74Cp81QXtnxVNqBfP5UFU?domain=trybooking.com) not later than July 18.
+Everyone is welcome: people interested in languages and technology, educators, students, community members...
+
+Attendance at the workshop is **free**.
+
+People wishing to participate **in person** (in Adelaide) are asked to **[register](https://url.au.m.mimecastprotect.com/s/zc74Cp81QXtnxVNqBfP5UFU?domain=trybooking.com) no later than July 18** to help us to plan catering.
+
+Connection information for people wishing to participate **online** will be posted shortly. Please check back soon. 
 
 ## Program
 
