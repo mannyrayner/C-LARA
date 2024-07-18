@@ -39,7 +39,7 @@ Christèle Maizonniaux, Flinders University, Adelaide, Australia
 
 ### 15:15 – 17:00
 **Hands-on session**  
-**Manny Rayner, University of South Australia**
+**Manny Rayner, University of South Australia**   
 *C-LARA 1: AI-powered construction of pedagogical multimodal texts*
 
 ### 17:00 – 17:25
