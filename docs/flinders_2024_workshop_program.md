@@ -77,7 +77,7 @@ Université de la Nouvelle-Calédonie, Eralo, New Caledonia
 
 ### 14:00 – 15:30
 **Hands-on session**  
-**Manny Rayner, University of South Australia**  
+**Manny Rayner, University of South Australia**    
 *C-LARA 2: Making illustrated multimodal texts for small languages*
 
 ### 15:30 – 16:00
