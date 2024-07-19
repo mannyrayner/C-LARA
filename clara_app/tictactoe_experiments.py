@@ -1,6 +1,13 @@
-import asyncio
-from .tictactoe_repository import create_experiment_dir, create_cycle_dir, save_game_log, correct_game_log_file, generate_cycle_summary
+
+from .tictactoe_repository import create_experiment_dir, get_experiment_dir, create_cycle_dir
+from .tictactoe_repository import save_game_log, correct_game_log_file, generate_cycle_summary
+from .tictactoe_engine import immediate_threats_and_opportunities
 from .tictactoe_game import play_game_async
+
+import asyncio
+from collections import defaultdict
+import os
+import json
 
 def create_experiment0():
     create_experiment_dir('experiment0')
@@ -108,6 +115,56 @@ async def play_game_and_log_async(experiment_name, cycle_number, opponent_player
 def generate_cycle_summaries(experiment_name, num_cycles):
     for cycle_number in range(num_cycles):
         generate_cycle_summary(experiment_name, cycle_number)
+
+def analyze_experiment_results(experiment_name):
+    experiment_dir = get_experiment_dir(experiment_name)
+    cycle_dirs = [os.path.join(experiment_dir, d) for d in os.listdir(experiment_dir) if d.startswith('cycle_')]
+
+    error_counts = defaultdict(lambda: {'correct': 0, 'incorrect': 0})
+
+    for cycle_dir in cycle_dirs:
+        log_files = [os.path.join(cycle_dir, f) for f in os.listdir(cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
+        for log_file in log_files:
+            with open(log_file, 'r') as f:
+                game_log = json.load(f)
+                for entry in game_log:
+                    if 'board' in entry and 'move' in entry and 'player' in entry:
+                        board = entry['board']
+                        move = entry['move']
+                        player = entry['player']
+                        threats_and_opportunities = immediate_threats_and_opportunities(board, player)
+
+                        # Check for errors
+                        if threats_and_opportunities['winning_moves']:
+                            if move in threats_and_opportunities['winning_moves']:
+                                error_counts['own_winning_move']['correct'] += 1
+                            else:
+                                error_counts['own_winning_move']['incorrect'] += 1
+                        elif len(threats_and_opportunities['opponent_threats']) == 1:
+                            if move == threats_and_opportunities['opponent_threats'][0]:
+                                error_counts['opponent_threat']['correct'] += 1
+                            else:
+                                error_counts['opponent_threat']['incorrect'] += 1
+                        elif threats_and_opportunities['double_threat']:
+                            if move in threats_and_opportunities['double_threat']:
+                                error_counts['double_threat']['correct'] += 1
+                            else:
+                                error_counts['double_threat']['incorrect'] += 1
+                        elif threats_and_opportunities['double_threat_follow_up_to_single_threat']:
+                            if move == threats_and_opportunities['double_threat_follow_up_to_single_threat']:
+                                error_counts['double_threat_follow_up']['correct'] += 1
+                            else:
+                                error_counts['double_threat_follow_up']['incorrect'] += 1
+
+    for error_type, counts in error_counts.items():
+        correct = counts['correct']
+        incorrect = counts['incorrect']
+        total = correct + incorrect
+        recall = correct / total if total > 0 else 0
+        print(f"Error type: {error_type}")
+        print(f"  Correct: {correct}")
+        print(f"  Incorrect: {incorrect}")
+        print(f"  Recall: {recall:.2f}")
 
 # ----------------
 

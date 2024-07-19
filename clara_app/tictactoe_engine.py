@@ -155,8 +155,8 @@ def get_double_threat_moves(board, player):
 def immediate_threats_and_opportunities(board, player):
     opponent = get_opponent(player)
     move_summaries = {
-        'winning_move': None,
-        'opponent_threat': None,
+        'winning_moves': [],
+        'opponent_threats': [],
         'double_threat': [],
         'single_threat': [],
         'double_threat_follow_up_to_single_threat': None
@@ -166,12 +166,12 @@ def immediate_threats_and_opportunities(board, player):
     for move in available_moves:
         board[move] = player
         if check_win(board, player):
-            move_summaries['winning_move'] = index_to_algebraic(move)
+            move_summaries['winning_moves'].append(index_to_algebraic(move))
         board[move] = ' '
         
         board[move] = opponent
         if check_win(board, opponent):
-            move_summaries['opponent_threat'] = index_to_algebraic(move)
+            move_summaries['opponent_threats'].append(index_to_algebraic(move))
         board[move] = ' '
     
     # Check for double threats and single threats

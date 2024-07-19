@@ -61,12 +61,12 @@ def threats_and_opportunities_to_english(threats_and_opportunities, player):
     opponent = get_opponent(player)
     descriptions = []
     if threats_and_opportunities['winning_move']:
-        descriptions.append(f"Winning move for {player}: {threats_and_opportunities['winning_move']}")
+        descriptions.append(f"Winning move for {player}: {' or '.join(threats_and_opportunities['winning_move'])}")
     else:
         descriptions.append(f"{player} does not have an immediately winning move")
         
     if threats_and_opportunities['opponent_threat']:
-        descriptions.append(f"{opponent} is threatening an immediate win with {threats_and_opportunities['opponent_threat']}")
+        descriptions.append(f"{opponent} is threatening an immediate win with {' or '.join(threats_and_opportunities['opponent_threat'])}")
     else:
         descriptions.append(f"{opponent} does not have any threat to make a line on the next move")
         
