@@ -36,6 +36,8 @@ Connection information for people wishing to participate **online** will be post
 
 The preliminary program is posted <a href="flinders_2024_workshop_program.html">here</a>.
 
+Abstracts are posted <a href="workshop-abstracts.pdf">here</a>.
+
 ## Content
 Long gone are the days of learning languages by memorizing stock phrases (My tailor is rich!) and lists of verb conjugations – at least for some languages. What has historically been called Computer-assisted language learning or CALL is now very much the norm rather than the exception. We routinely use online platforms and apps (e.g. Babbel and DuoLinguo), and learners of languages rich in resources like English and French have easy access to native speaker pronunciations. But the vast majority of the world’s approximately 7000 languages are “under-resourced” – lacking in speech and language technologies such as online dictionaries, courseware (didacticiels), text-to-speech synthesis, multimedia e-books, and smartphone apps. Nowhere is this truer than in Oceania (including the Pacific islands, Australia, and New Zealand), the most linguistically diverse region in the world, home to less than 1% of the world’s people, but 11% of its languages.
 

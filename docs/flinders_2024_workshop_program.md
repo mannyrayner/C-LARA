@@ -16,7 +16,7 @@ Christèle Maizonniaux, Flinders University, Adelaide, Australia
 *Title TBA*
 
 ### 11:15 – 11:40
-**Nick Thieberger, University of Melbourne and PARADISEC, Australia**
+**Nick Thieberger, University of Melbourne and PARADISEC, Australia**      
 *Documenting Pacific languages, methods for longterm access to language records*
 
 ### 11:40 – 12:05
@@ -52,7 +52,10 @@ Christèle Maizonniaux, Flinders University, Adelaide, Australia
 **Registration + Welcome coffee**
 
 ### 9:30 – 10:30
-**TBA**
+
+**Keynote**   
+**Catherine I. Watson, Justine C.T. Hui, Brooke Ross, Isabella Shields, and Peter J. Keegan, University of Auckland, Aotearoa/New Zealand**   
+*The development of MPAi: a tool to learn the pronunciation of Māori vowels*
 
 ### 10:30 – 10:55
 **Fabrice Wacalie, University of New Caledonia, Laboratoire Interdisciplinaire de Recherche en Éducation, LIRE (EA 7418)**  
