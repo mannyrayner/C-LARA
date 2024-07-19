@@ -34,7 +34,7 @@ Connection information for people wishing to participate **online** will be post
 
 ## Program
 
-The preliminary program is posted <a href="flinders_2024_workshop_program.html">here</a>.
+The program is posted <a href="flinders_2024_workshop_program.html">here</a>.
 
 Abstracts are posted <a href="workshop-abstracts.pdf">here</a>.
 

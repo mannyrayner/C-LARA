@@ -2,6 +2,8 @@
 
 # Program
 
+Abstracts are posted <a href="workshop-abstracts.pdf">here</a>.
+
 ## Thursday, July 25 (all times, time in Adelaide (UTC +9:30))
 
 ### 9:30 – 10:00
@@ -12,8 +14,10 @@
 Christèle Maizonniaux, Flinders University, Adelaide, Australia
 
 ### 10:15 – 11:15
-**Steven Bird, Charles Darwin University, Darwin, Australia**  
-*Title TBA*
+
+**Keynote**   
+**Steven Bird, Charles Darwin University, Australia**   
+*Designing language technologies with indigenous speech communities*
 
 ### 11:15 – 11:40
 **Nick Thieberger, University of Melbourne and PARADISEC, Australia**      
