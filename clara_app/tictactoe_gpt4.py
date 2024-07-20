@@ -2,7 +2,9 @@ from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebra
 from .clara_chatgpt4 import get_api_chatgpt4_response, interpret_chat_gpt4_response_as_json
 from .clara_utils import post_task_update, post_task_update_async
 from .clara_classes import ChatGPTError
+
 import asyncio
+from collections import defaultdict
 import traceback
 
 max_number_of_gpt4_tries = 5
@@ -16,6 +18,38 @@ async def request_cot_analysis_and_move_async(board, player, cot_template_name, 
     formatted_request = format_cot_request(board, player, cot_template_name, few_shot_examples)
     available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
     return await call_gpt4_with_retry_async(formatted_request, available_moves, callback=callback)
+
+async def request_cot_analysis_and_move_with_voting_async(board, player, cot_template_name, few_shot_examples, callback=None):
+    formatted_request = format_cot_request(board, player, cot_template_name, few_shot_examples)
+    available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
+
+    move_counts = defaultdict(int)
+    cot_records = {}
+    api_calls = []
+
+    # Run the first two invocations in parallel
+    tasks = [asyncio.create_task(call_gpt4_with_retry_async(formatted_request, available_moves, callback=callback)) for _ in range(2)]
+    results = await asyncio.gather(*tasks)
+
+    for response in results:
+        move = response['selected_move']
+        move_counts[move] += 1
+        cot_records[move] = response['cot_record']
+        api_calls.extend(response['api_calls'])
+
+        if move_counts[move] == 2:
+            return {'selected_move': move, 'cot_record': cot_records[move], 'prompt': formatted_request, 'api_calls': api_calls}
+
+    # Continue submitting requests until we get two responses selecting the same move
+    while True:
+        response = await call_gpt4_with_retry_async(formatted_request, available_moves, callback=callback)
+        move = response['selected_move']
+        move_counts[move] += 1
+        cot_records[move] = response['cot_record']
+        api_calls.extend(response['api_calls'])
+
+        if move_counts[move] == 2:
+            return {'selected_move': move, 'cot_record': cot_records[move], 'prompt': formatted_request, 'api_calls': api_calls}
 
 async def call_gpt4_with_retry_async(formatted_request, available_moves, gpt_model='gpt-4o', callback=None):
     api_calls = []

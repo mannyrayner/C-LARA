@@ -10,7 +10,9 @@ import random
 from collections import defaultdict
 import asyncio
 
-supported_strategies = ( 'n_maximally_different', 'closest_few_shot_example', 'closest_few_shot_example_explicit', 'closest_few_shot_example_incremental' )
+supported_strategies = ( 'n_maximally_different', 'closest_few_shot_example',
+                         'closest_few_shot_example_explicit', 'closest_few_shot_example_explicit_with_voting',
+                         'closest_few_shot_example_incremental' )
 
 def create_experiment_dir(experiment_name, strategy='n_maximally_different', base_dir='$CLARA/tictactoe_experiments'):
     if not strategy in supported_strategies:
@@ -42,7 +44,7 @@ def get_experiment_strategy(experiment_name):
 
 def cot_template_name_for_experiment_name(experiment_name):
     strategy = get_experiment_strategy(experiment_name)
-    return 'explicit' if strategy == 'closest_few_shot_example_explicit' else 'minimal'
+    return 'explicit' if strategy in ( 'closest_few_shot_example_explicit', 'closest_few_shot_example_explicit_with_voting' ) else 'minimal'
 
 def create_cycle_dir(experiment_name, cycle_number):
     experiment_dir = get_experiment_dir(experiment_name)
@@ -222,7 +224,7 @@ async def get_best_few_shot_examples_async(experiment_name, cycle_number, board,
         
         if strategy == 'n_maximally_different':
             selected_entries = select_diverse_entries(consistent_cot_records, N)
-        elif strategy == 'closest_few_shot_example':
+        elif strategy in ( 'closest_few_shot_example', 'closest_few_shot_example_explicit', 'closest_few_shot_example_explicit_with_voting' ):
             selected_entries = consistent_cot_records
         elif strategy == 'closest_few_shot_example_incremental':
             if file_exists(previous_cache_path):
@@ -238,7 +240,7 @@ async def get_best_few_shot_examples_async(experiment_name, cycle_number, board,
     
     if strategy == 'n_maximally_different':
         return selected_entries, total_evaluation_cost
-    elif strategy in ( 'closest_few_shot_example', 'closest_few_shot_example_incremental' ):
+    elif strategy in ( 'closest_few_shot_example', 'closest_few_shot_example_explicit', 'closest_few_shot_example_incremental', 'closest_few_shot_example_explicit_with_voting' ):
         return most_relevant_cot_entries_for_position(selected_entries, board, player), total_evaluation_cost
 
 def select_usable_cot_protocol_entries_from_log(annotated_log):

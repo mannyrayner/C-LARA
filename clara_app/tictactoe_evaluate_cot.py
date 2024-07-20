@@ -37,19 +37,20 @@ Only provide the JSON, since the reply will be read by a Python script.
 """
 
 async def evaluate_cot_record_async(record):
-    board = record['board']
-    player = record['player']
-    cot_record = record['cot_record']
-    algebraic_board = format_board_for_gpt4(board)
-    formatted_board = drawn_board_str(board)
-    threats_and_opportunities = immediate_threats_and_opportunities(board, player)
-    position_summary = threats_and_opportunities_to_english(threats_and_opportunities, player)
-    formatted_request = cot_evaluation_template.format(player=player, algebraic_board=algebraic_board, formatted_board=formatted_board,
-                                                       position_summary=position_summary, cot_record=cot_record)
     try:
+        board = record['board']
+        player = record['player']
+        cot_record = record['cot_record']
+        algebraic_board = format_board_for_gpt4(board)
+        formatted_board = drawn_board_str(board)
+        threats_and_opportunities = immediate_threats_and_opportunities(board, player)
+        position_summary = threats_and_opportunities_to_english(threats_and_opportunities, player)
+        formatted_request = cot_evaluation_template.format(player=player, algebraic_board=algebraic_board, formatted_board=formatted_board,
+                                                           position_summary=position_summary, cot_record=cot_record)
         evaluation = await call_gpt4_with_retry_for_cot_evaluation_async(formatted_request)
         record.update(evaluation['evaluation'])
     except Exception as e:
+        #raise e
         record.update({
             'logically_consistent': False,
             'correct_threats_and_opportunities': False,
@@ -60,13 +61,13 @@ async def evaluate_cot_record_async(record):
 def threats_and_opportunities_to_english(threats_and_opportunities, player):
     opponent = get_opponent(player)
     descriptions = []
-    if threats_and_opportunities['winning_move']:
-        descriptions.append(f"Winning move for {player}: {' or '.join(threats_and_opportunities['winning_move'])}")
+    if threats_and_opportunities['winning_moves']:
+        descriptions.append(f"Winning move for {player}: {' or '.join(threats_and_opportunities['winning_moves'])}")
     else:
         descriptions.append(f"{player} does not have an immediately winning move")
         
-    if threats_and_opportunities['opponent_threat']:
-        descriptions.append(f"{opponent} is threatening an immediate win with {' or '.join(threats_and_opportunities['opponent_threat'])}")
+    if threats_and_opportunities['opponent_threats']:
+        descriptions.append(f"{opponent} is threatening an immediate win with {' or '.join(threats_and_opportunities['opponent_threats'])}")
     else:
         descriptions.append(f"{opponent} does not have any threat to make a line on the next move")
         
