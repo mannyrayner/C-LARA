@@ -2,7 +2,7 @@
 from .tictactoe_engine import minimax, get_board_from_positions, draw_board, get_available_moves, check_win, check_draw
 from .tictactoe_engine import index_to_algebraic, algebraic_to_index
 from .tictactoe_gpt4 import request_minimal_gpt4_move_async, request_cot_analysis_and_move_async
-from .tictactoe_repository import get_best_few_shot_examples_async
+from .tictactoe_repository import get_best_few_shot_examples_async, cot_template_name_for_experiment_name
 
 from .clara_utils import post_task_update
 
@@ -33,13 +33,22 @@ async def minimal_gpt4_player_async(board, player):
 
 async def cot_player_without_few_shot_async(board, player):
     few_shot_examples = []
-    response = await request_cot_analysis_and_move_async(board, player, few_shot_examples)
+    cot_template_name = 'minimal'
+    response = await request_cot_analysis_and_move_async(board, player, cot_template_name, few_shot_examples)
+    total_cost = sum(call.cost for call in response['api_calls'])
+    return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt'], total_cost
+
+async def cot_player_without_few_shot_explicit_async(board, player):
+    few_shot_examples = []
+    cot_template_name = 'explicit'
+    response = await request_cot_analysis_and_move_async(board, player, cot_template_name, few_shot_examples)
     total_cost = sum(call.cost for call in response['api_calls'])
     return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt'], total_cost
 
 async def cot_player_with_few_shot_async(board, player, experiment_name, cycle_number):
     few_shot_examples, evaluation_cost = await get_best_few_shot_examples_async(experiment_name, cycle_number, board, player)
-    response = await request_cot_analysis_and_move_async(board, player, few_shot_examples)
+    cot_template_name = cot_template_name_for_experiment_name(experiment_name)
+    response = await request_cot_analysis_and_move_async(board, player, cot_template_name, few_shot_examples)
     total_cost = sum(call.cost for call in response['api_calls']) + evaluation_cost
     return algebraic_to_index(response['selected_move']), response['cot_record'], response['prompt'], total_cost
 
@@ -58,6 +67,8 @@ async def invoke_player_async(player_name, board, x_or_o, experiment_name, cycle
             return await minimal_gpt4_player_async(board, x_or_o)
         elif player_name == 'cot_player_without_few_shot':
             return await cot_player_without_few_shot_async(board, x_or_o)
+        elif player_name == 'cot_player_without_few_shot_explicit':
+            return await cot_player_without_few_shot_explicit_explicit_async(board, x_or_o)
         elif player_name == 'cot_player_with_few_shot':
             return await cot_player_with_few_shot_async(board, x_or_o, experiment_name, cycle_number)
     except Exception as e:

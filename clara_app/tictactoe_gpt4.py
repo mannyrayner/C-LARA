@@ -12,8 +12,8 @@ async def request_minimal_gpt4_move_async(board, player, callback=None):
     available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
     return await call_gpt4_with_retry_async(formatted_request, available_moves, callback=callback)
 
-async def request_cot_analysis_and_move_async(board, player, few_shot_examples, callback=None):
-    formatted_request = format_cot_request(board, player, few_shot_examples)
+async def request_cot_analysis_and_move_async(board, player, cot_template_name, few_shot_examples, callback=None):
+    formatted_request = format_cot_request(board, player, cot_template_name, few_shot_examples)
     available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
     return await call_gpt4_with_retry_async(formatted_request, available_moves, callback=callback)
 
@@ -108,6 +108,38 @@ Provide your analysis and the best move. At the end, return the selected move in
 {cot_examples}
 """
 
+cot_template_explicit = """
+Given the current Tic-Tac-Toe board state, provide a detailed Chain of Thought analysis to determine the best move for the player {player}.
+
+Here is the board state, where the squares occupied by X and O, and the unoccupied squares, are given using chess algebraic notation:
+
+{board}
+
+A player wins if they can occupy all three squares on one of the following eight lines:
+
+{possible_lines}
+
+Reason as follows:
+1. If {player} can play on an empty square and make a line of three {player}s, play on that square and win now.
+
+2. Otherwise, if {opponent} could play on an empty square and make a line of three {opponent}s, play on that square to stop them winning next move.
+
+3. Otherwise, if {player} can play on an empty square and create a position where they have more than one immediate threat,
+   i.e. more than one line containing two {player}s and an empty square, play the move which creates the multiple threats and win.
+
+4. Otherwise, if {player} can play on an empty square and make an immediate threat,
+   consider whether there is a strong followup after {opponent}'s forced reply.
+
+Provide your analysis and the best move. At the end, return the selected move in JSON format as follows:
+```json
+{{
+    "selected_move": "<move>"
+}}
+```
+
+{cot_examples}
+"""
+
 possible_lines = """Vertical:
 a1, a2, a3
 b1, b2, b3
@@ -126,11 +158,12 @@ def format_minimal_gpt4_request(board, player):
     board_str = format_board_for_gpt4(board)
     return minimal_template.format(player=player, board=board_str, possible_lines=possible_lines)
 
-def format_cot_request(board, player, few_shot_examples):
+def format_cot_request(board, player, cot_template_name, few_shot_examples):
     opponent = get_opponent(player)
     board_str = format_board_for_gpt4(board)
     cot_str = format_examples_for_cot(few_shot_examples)
-    return cot_template.format(player=player, opponent=opponent, board=board_str, possible_lines=possible_lines, cot_examples=cot_str)
+    template = cot_template_explicit if cot_template_name == 'explicit' else cot_template
+    return template.format(player=player, opponent=opponent, board=board_str, possible_lines=possible_lines, cot_examples=cot_str)
 
 def format_board_for_gpt4(board):
     x_line_content = ', '.join([index_to_algebraic(i) for i, s in enumerate(board) if s == "X"])

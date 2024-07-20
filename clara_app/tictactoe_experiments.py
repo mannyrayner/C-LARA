@@ -84,14 +84,21 @@ def run_test_async_cycle(cycle_number):
 
 def run_experiment_async(num_cycles, starts_from_cycle=0):
     asyncio.run(run_experiment_cycles_async(f'experiment_async_{num_cycles}', num_cycles,
-                                            strategy='closest_few_shot_example', starts_from_cycle=starts_from_cycle))
+                                            strategy='closest_few_shot_example',
+                                            starts_from_cycle=starts_from_cycle))
+
+def run_experiment_explicit_async(num_cycles, starts_from_cycle=0):
+    asyncio.run(run_experiment_cycles_async(f'experiment_async_explicit_{num_cycles}', num_cycles,
+                                            strategy='closest_few_shot_example_explicit',
+                                            starts_from_cycle=starts_from_cycle))
 
 def run_experiment_async_incremental(num_cycles, starts_from_cycle=0):
     asyncio.run(run_experiment_cycles_async(f'experiment_async_incremental_{num_cycles}', num_cycles,
-                                            strategy='closest_few_shot_example_incremental',
+                                            strategy='closest_few_shot_example_incremental', 
                                             starts_from_cycle=starts_from_cycle))
 
-async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='n_maximally_different', starts_from_cycle=0):
+async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='n_maximally_different',
+                                      player='cot_player_with_few_shot', starts_from_cycle=0):
     create_experiment_dir(experiment_name, strategy=strategy)
     for cycle_number in range(starts_from_cycle, num_cycles):
         await run_experiment_cycle_async(experiment_name, cycle_number)
@@ -99,7 +106,8 @@ async def run_experiment_cycles_async(experiment_name, num_cycles, strategy='n_m
 async def run_experiment_cycle_async(experiment_name, cycle_number):
     create_cycle_dir(experiment_name, cycle_number)
     tasks = []
-    for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot', 'minimax_player']:
+    for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot',
+                     'cot_player_without_few_shot_explicit', 'minimax_player']:
         tasks.append(asyncio.create_task(play_game_and_log_async(experiment_name, cycle_number, opponent, 'X')))
         tasks.append(asyncio.create_task(play_game_and_log_async(experiment_name, cycle_number, opponent, 'O')))
     await asyncio.gather(*tasks)
@@ -120,57 +128,65 @@ def analyze_experiment_results(experiment_name):
     experiment_dir = get_experiment_dir(experiment_name)
     cycle_dirs = [os.path.join(experiment_dir, d) for d in os.listdir(experiment_dir) if d.startswith('cycle_')]
 
-    error_counts = defaultdict(lambda: {'correct': 0, 'incorrect': 0})
+    error_counts = defaultdict(lambda: defaultdict(lambda: {'correct': 0, 'incorrect': 0}))
 
     for cycle_dir in cycle_dirs:
         log_files = [os.path.join(cycle_dir, f) for f in os.listdir(cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
         for log_file in log_files:
             with open(log_file, 'r') as f:
                 game_log = json.load(f)
-                for entry in game_log:
+                metadata = game_log[0]
+                player_x = metadata['X']
+                player_o = metadata['O']
+                
+                for entry in game_log[1:]:
                     if 'board' in entry and 'move' in entry and 'player' in entry:
                         board = entry['board']
                         move = entry['move']
                         player = entry['player']
+                        current_player = player_x if player == 'X' else player_o
                         threats_and_opportunities = immediate_threats_and_opportunities(board, player)
 
                         # Check for errors
                         if threats_and_opportunities['winning_moves']:
                             if move in threats_and_opportunities['winning_moves']:
-                                error_counts['own_winning_move']['correct'] += 1
+                                error_counts[current_player]['own_winning_move']['correct'] += 1
                             else:
-                                error_counts['own_winning_move']['incorrect'] += 1
+                                error_counts[current_player]['own_winning_move']['incorrect'] += 1
                         elif len(threats_and_opportunities['opponent_threats']) == 1:
                             if move == threats_and_opportunities['opponent_threats'][0]:
-                                error_counts['opponent_threat']['correct'] += 1
+                                error_counts[current_player]['opponent_threat']['correct'] += 1
                             else:
-                                error_counts['opponent_threat']['incorrect'] += 1
+                                error_counts[current_player]['opponent_threat']['incorrect'] += 1
                         elif threats_and_opportunities['double_threat']:
                             if move in threats_and_opportunities['double_threat']:
-                                error_counts['double_threat']['correct'] += 1
+                                error_counts[current_player]['double_threat']['correct'] += 1
                             else:
-                                error_counts['double_threat']['incorrect'] += 1
+                                error_counts[current_player]['double_threat']['incorrect'] += 1
                         elif threats_and_opportunities['double_threat_follow_up_to_single_threat']:
                             if move == threats_and_opportunities['double_threat_follow_up_to_single_threat']:
-                                error_counts['double_threat_follow_up']['correct'] += 1
+                                error_counts[current_player]['double_threat_follow_up']['correct'] += 1
                             else:
-                                error_counts['double_threat_follow_up']['incorrect'] += 1
+                                error_counts[current_player]['double_threat_follow_up']['incorrect'] += 1
 
-    for error_type, counts in error_counts.items():
-        correct = counts['correct']
-        incorrect = counts['incorrect']
-        total = correct + incorrect
-        recall = correct / total if total > 0 else 0
-        print(f"Error type: {error_type}")
-        print(f"  Correct: {correct}")
-        print(f"  Incorrect: {incorrect}")
-        print(f"  Recall: {recall:.2f}")
+    for player, error_types in error_counts.items():
+        print(f"Results for player: {player}")
+        for error_type, counts in error_types.items():
+            correct = counts['correct']
+            incorrect = counts['incorrect']
+            total = correct + incorrect
+            recall = correct / total if total > 0 else 0
+            print(f"  Error type: {error_type}")
+            print(f"    Correct: {correct}")
+            print(f"    Incorrect: {incorrect}")
+            print(f"    Recall: {recall:.2f}")
 
 # ----------------
 
 def correct_all_game_logs(experiment_name, num_cycles):
     for cycle_number in range(num_cycles):
-        for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot', 'minimax_player']:
+        for opponent in ['random_player', 'minimal_gpt4_player', 'cot_player_without_few_shot',
+                         'cot_player_without_few_shot_explicit', 'minimax_player']:
             correct_game_log_file(experiment_name, cycle_number, opponent, 'X')
             correct_game_log_file(experiment_name, cycle_number, opponent, 'O')
 

@@ -10,7 +10,7 @@ import random
 from collections import defaultdict
 import asyncio
 
-supported_strategies = ( 'n_maximally_different', 'closest_few_shot_example', 'closest_few_shot_example_incremental' )
+supported_strategies = ( 'n_maximally_different', 'closest_few_shot_example', 'closest_few_shot_example_explicit', 'closest_few_shot_example_incremental' )
 
 def create_experiment_dir(experiment_name, strategy='n_maximally_different', base_dir='$CLARA/tictactoe_experiments'):
     if not strategy in supported_strategies:
@@ -39,6 +39,10 @@ def get_experiment_strategy(experiment_name):
     with open(experiment_metadata_path, 'r') as f:
         experiment_metadata = json.load(f)
     return experiment_metadata['strategy'] if 'strategy' in experiment_metadata else 'n_maximally_different'
+
+def cot_template_name_for_experiment_name(experiment_name):
+    strategy = get_experiment_strategy(experiment_name)
+    return 'explicit' if strategy == 'closest_few_shot_example_explicit' else 'minimal'
 
 def create_cycle_dir(experiment_name, cycle_number):
     experiment_dir = get_experiment_dir(experiment_name)
