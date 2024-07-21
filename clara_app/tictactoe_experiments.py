@@ -8,6 +8,9 @@ import asyncio
 from collections import defaultdict
 import os
 import json
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.stats import ttest_ind
 
 def create_experiment0():
     create_experiment_dir('experiment0')
@@ -130,13 +133,70 @@ def generate_cycle_summaries(experiment_name, num_cycles):
     for cycle_number in range(num_cycles):
         generate_cycle_summary(experiment_name, cycle_number)
 
-def analyze_experiment_results(experiment_name):
+##def analyze_experiment_results(experiment_name):
+##    experiment_dir = get_experiment_dir(experiment_name)
+##    cycle_dirs = [os.path.join(experiment_dir, d) for d in os.listdir(experiment_dir) if d.startswith('cycle_')]
+##
+##    error_counts = defaultdict(lambda: defaultdict(lambda: {'correct': 0, 'incorrect': 0}))
+##
+##    for cycle_dir in cycle_dirs:
+##        log_files = [os.path.join(cycle_dir, f) for f in os.listdir(cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
+##        for log_file in log_files:
+##            with open(log_file, 'r') as f:
+##                game_log = json.load(f)
+##                metadata = game_log[0]
+##                player_x = metadata['X']
+##                player_o = metadata['O']
+##                
+##                for entry in game_log[1:]:
+##                    if 'board' in entry and 'move' in entry and 'player' in entry:
+##                        board = entry['board']
+##                        move = entry['move']
+##                        player = entry['player']
+##                        current_player = player_x if player == 'X' else player_o
+##                        threats_and_opportunities = immediate_threats_and_opportunities(board, player)
+##
+##                        # Check for errors
+##                        if threats_and_opportunities['winning_moves']:
+##                            if move in threats_and_opportunities['winning_moves']:
+##                                error_counts[current_player]['own_winning_move']['correct'] += 1
+##                            else:
+##                                error_counts[current_player]['own_winning_move']['incorrect'] += 1
+##                        elif len(threats_and_opportunities['opponent_threats']) == 1:
+##                            if move == threats_and_opportunities['opponent_threats'][0]:
+##                                error_counts[current_player]['opponent_threat']['correct'] += 1
+##                            else:
+##                                error_counts[current_player]['opponent_threat']['incorrect'] += 1
+##                        elif threats_and_opportunities['double_threat']:
+##                            if move in threats_and_opportunities['double_threat']:
+##                                error_counts[current_player]['double_threat']['correct'] += 1
+##                            else:
+##                                error_counts[current_player]['double_threat']['incorrect'] += 1
+##                        elif threats_and_opportunities['double_threat_follow_up_to_single_threat']:
+##                            if move == threats_and_opportunities['double_threat_follow_up_to_single_threat']:
+##                                error_counts[current_player]['double_threat_follow_up']['correct'] += 1
+##                            else:
+##                                error_counts[current_player]['double_threat_follow_up']['incorrect'] += 1
+##
+##    for player, error_types in error_counts.items():
+##        print(f"Results for player: {player}")
+##        for error_type, counts in error_types.items():
+##            correct = counts['correct']
+##            incorrect = counts['incorrect']
+##            total = correct + incorrect
+##            recall = correct / total if total > 0 else 0
+##            print(f"  Error type: {error_type}")
+##            print(f"    Correct: {correct}")
+##            print(f"    Incorrect: {incorrect}")
+##            print(f"    Recall: {recall:.2f}")
+
+def analyze_experiment_results(experiment_name, num_cycles):
     experiment_dir = get_experiment_dir(experiment_name)
-    cycle_dirs = [os.path.join(experiment_dir, d) for d in os.listdir(experiment_dir) if d.startswith('cycle_')]
+        
+    error_counts = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: {'correct': 0, 'incorrect': 0})))
 
-    error_counts = defaultdict(lambda: defaultdict(lambda: {'correct': 0, 'incorrect': 0}))
-
-    for cycle_dir in cycle_dirs:
+    for cycle_number in range(num_cycles):
+        cycle_dir = os.path.join(experiment_dir, f'cycle_{cycle_number}')
         log_files = [os.path.join(cycle_dir, f) for f in os.listdir(cycle_dir) if f.startswith('game_log') and f.endswith('.json')]
         for log_file in log_files:
             with open(log_file, 'r') as f:
@@ -146,46 +206,102 @@ def analyze_experiment_results(experiment_name):
                 player_o = metadata['O']
                 
                 for entry in game_log[1:]:
-                    if 'board' in entry and 'move' in entry and 'player' in entry:
+                    if 'board' in entry and 'move' in entry and 'player' in entry and 'correct_moves' in entry:
                         board = entry['board']
                         move = entry['move']
+                        correct_moves = entry['correct_moves']
                         player = entry['player']
                         current_player = player_x if player == 'X' else player_o
                         threats_and_opportunities = immediate_threats_and_opportunities(board, player)
 
-                        # Check for errors
-                        if threats_and_opportunities['winning_moves']:
-                            if move in threats_and_opportunities['winning_moves']:
-                                error_counts[current_player]['own_winning_move']['correct'] += 1
-                            else:
-                                error_counts[current_player]['own_winning_move']['incorrect'] += 1
-                        elif len(threats_and_opportunities['opponent_threats']) == 1:
-                            if move == threats_and_opportunities['opponent_threats'][0]:
-                                error_counts[current_player]['opponent_threat']['correct'] += 1
-                            else:
-                                error_counts[current_player]['opponent_threat']['incorrect'] += 1
-                        elif threats_and_opportunities['double_threat']:
-                            if move in threats_and_opportunities['double_threat']:
-                                error_counts[current_player]['double_threat']['correct'] += 1
-                            else:
-                                error_counts[current_player]['double_threat']['incorrect'] += 1
-                        elif threats_and_opportunities['double_threat_follow_up_to_single_threat']:
-                            if move == threats_and_opportunities['double_threat_follow_up_to_single_threat']:
-                                error_counts[current_player]['double_threat_follow_up']['correct'] += 1
-                            else:
-                                error_counts[current_player]['double_threat_follow_up']['incorrect'] += 1
+                        if move in correct_moves:
+                            # If one of the conditions below are fulfilled, and we made a generally correct move,
+                            # count it as a success even if it wasn't specifically one of the moved given for the condition.
+                            # E.g. we could have an own_winning_move but play a threat before taking the win.
+                            error_counts[cycle_number][current_player]['overall_correctness']['correct'] += 1
+                            if threats_and_opportunities['winning_moves']:
+                                error_counts[cycle_number][current_player]['own_winning_move']['correct'] += 1
+                            # If there is more than one opponent threat we have a lost position, so there are no correct moves.
+                            if len(threats_and_opportunities['opponent_threats']) == 1:
+                                error_counts[cycle_number][current_player]['opponent_threat']['correct'] += 1
+                            if threats_and_opportunities['double_threat']:
+                                error_counts[cycle_number][current_player]['double_threat']['correct'] += 1
+                            if threats_and_opportunities['double_threat_follow_up_to_single_threat']:
+                                error_counts[cycle_number][current_player]['double_threat_follow_up']['correct'] += 1
+                        else:
+                            error_counts[cycle_number][current_player]['overall_correctness']['incorrect'] += 1
+                            if threats_and_opportunities['winning_moves']:
+                                error_counts[cycle_number][current_player]['own_winning_move']['incorrect'] += 1
+                            # If there is more than one opponent threat we have a lost position, so there are no correct moves.
+                            if len(threats_and_opportunities['opponent_threats']) == 1:
+                                error_counts[cycle_number][current_player]['opponent_threat']['incorrect'] += 1
+                            if threats_and_opportunities['double_threat']:
+                                error_counts[cycle_number][current_player]['double_threat']['incorrect'] += 1
+                            if threats_and_opportunities['double_threat_follow_up_to_single_threat']:
+                                error_counts[cycle_number][current_player]['double_threat_follow_up']['incorrect'] += 1
 
-    for player, error_types in error_counts.items():
-        print(f"Results for player: {player}")
-        for error_type, counts in error_types.items():
-            correct = counts['correct']
-            incorrect = counts['incorrect']
-            total = correct + incorrect
-            recall = correct / total if total > 0 else 0
-            print(f"  Error type: {error_type}")
-            print(f"    Correct: {correct}")
-            print(f"    Incorrect: {incorrect}")
-            print(f"    Recall: {recall:.2f}")
+    return error_counts
+
+##def plot_cycle_summaries(cycle_summaries, player_name):
+##    cycles = []
+##    overall_correct = []
+##    overall_incorrect = []
+##    
+##    for cycle_number, summary in cycle_summaries.items():
+##        cycles.append(cycle_number)
+##        if player_name in summary:
+##            overall_correct.append(summary[player_name]['overall_correctness']['correct'])
+##            overall_incorrect.append(summary[player_name]['overall_correctness']['incorrect'])
+##        else:
+##            overall_correct.append(0)
+##            overall_incorrect.append(0)
+##    
+##    total_moves = [c + i for c, i in zip(overall_correct, overall_incorrect)]
+##    accuracy = [c / t if t > 0 else 0 for c, t in zip(overall_correct, total_moves)]
+##    
+##    plt.plot(cycles, accuracy, label=f"{player_name} Accuracy")
+##    plt.xlabel('Cycle Number')
+##    plt.ylabel('Accuracy')
+##    plt.title(f'Accuracy for {player_name} Over Cycles')
+##    plt.legend()
+##    plt.show()
+
+def plot_cycle_summaries(cycle_summaries, player_name, window_size=5):
+    cycles = []
+    overall_correct = []
+    overall_incorrect = []
+    
+    for cycle_number, summary in cycle_summaries.items():
+        if player_name in summary:
+            cycles.append(cycle_number)
+            overall_correct.append(summary[player_name]['overall_correctness']['correct'])
+            overall_incorrect.append(summary[player_name]['overall_correctness']['incorrect'])
+        else:
+            overall_correct.append(0)
+            overall_incorrect.append(0)
+    
+    total_moves = [c + i for c, i in zip(overall_correct, overall_incorrect)]
+    accuracy = [c / t if t > 0 else 0 for c, t in zip(overall_correct, total_moves)]
+    
+    # Compute moving average
+    accuracy_smoothed = np.convolve(accuracy, np.ones(window_size)/window_size, mode='valid')
+    cycles_smoothed = cycles[:len(accuracy_smoothed)]
+    
+    plt.plot(cycles_smoothed, accuracy_smoothed, label=f"{player_name} Accuracy (Smoothed)")
+    plt.xlabel('Cycle Number')
+    plt.ylabel('Accuracy')
+    plt.title(f'Accuracy for {player_name} Over Cycles (Smoothed)')
+    plt.legend()
+    plt.show()
+
+def compare_performance(cycle_summaries, player_name, start1, end1, start2, end2):
+    scores1 = [summary[player_name]['overall_correctness']['correct'] / (summary[player_name]['overall_correctness']['correct'] + summary[player_name]['overall_correctness']['incorrect'])
+               for cycle_number, summary in cycle_summaries.items() if start1 <= cycle_number <= end1]
+    scores2 = [summary[player_name]['overall_correctness']['correct'] / (summary[player_name]['overall_correctness']['correct'] + summary[player_name]['overall_correctness']['incorrect'])
+               for cycle_number, summary in cycle_summaries.items() if start2 <= cycle_number <= end2]
+    
+    t_stat, p_value = ttest_ind(scores1, scores2)
+    return t_stat, p_value
 
 # ----------------
 
