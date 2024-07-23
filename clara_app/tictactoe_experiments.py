@@ -196,7 +196,10 @@ def analyze_experiment_results(experiment_name, num_cycles):
 
     return error_counts, summary_scores, experiment_cost
 
-def plot_cycle_summaries(cycle_summaries, player_name, window_size=10):
+def plot_cycle_summaries(cycle_summaries, player_name, metric='overall_correctness', window_size=10):
+    if not metric in ( 'overall_correctness', 'own_winning_move', 'opponent_threat', 'double_threat', 'double_threat_follow_up'):
+        raise ValueError(f'Unknown metric {metric}')
+    
     cycles = []
     overall_correct = []
     overall_incorrect = []
@@ -204,8 +207,8 @@ def plot_cycle_summaries(cycle_summaries, player_name, window_size=10):
     for cycle_number, summary in cycle_summaries.items():
         if player_name in summary:
             cycles.append(cycle_number)
-            overall_correct.append(summary[player_name]['overall_correctness']['correct'])
-            overall_incorrect.append(summary[player_name]['overall_correctness']['incorrect'])
+            overall_correct.append(summary[player_name][metric]['correct'] if metric in summary[player_name] else 0)
+            overall_incorrect.append(summary[player_name][metric]['incorrect'] if metric in summary[player_name] else 0)
         else:
             overall_correct.append(0)
             overall_incorrect.append(0)
@@ -217,17 +220,20 @@ def plot_cycle_summaries(cycle_summaries, player_name, window_size=10):
     accuracy_smoothed = np.convolve(accuracy, np.ones(window_size)/window_size, mode='valid')
     cycles_smoothed = cycles[:len(accuracy_smoothed)]
     
-    plt.plot(cycles_smoothed, accuracy_smoothed, label=f"{player_name} Accuracy (Smoothed)")
+    plt.plot(cycles_smoothed, accuracy_smoothed, label=f"{metric} accuracy (smoothed)")
     plt.xlabel('Cycle Number')
     plt.ylabel('Accuracy')
-    plt.title(f'Accuracy for {player_name} Over Cycles (Smoothed)')
+    plt.title(f'Accuracy for {metric} over cycles (smoothed)')
     plt.legend()
     plt.show()
 
-def compare_performance(cycle_summaries, player_name, start1, end1, start2, end2):
-    scores1 = [summary[player_name]['overall_correctness']['correct'] / (summary[player_name]['overall_correctness']['correct'] + summary[player_name]['overall_correctness']['incorrect'])
+def compare_performance(cycle_summaries, player_name, start1, end1, start2, end2, metric='overall_correctness'):
+    if not metric in ( 'overall_correctness', 'own_winning_move', 'opponent_threat', 'double_threat', 'double_threat_follow_up'):
+        raise ValueError(f'Unknown metric {metric}')
+    
+    scores1 = [summary[player_name][metric]['correct'] / (summary[player_name][metric]['correct'] + summary[player_name][metric]['incorrect'])
                for cycle_number, summary in cycle_summaries.items() if start1 <= cycle_number <= end1]
-    scores2 = [summary[player_name]['overall_correctness']['correct'] / (summary[player_name]['overall_correctness']['correct'] + summary[player_name]['overall_correctness']['incorrect'])
+    scores2 = [summary[player_name][metric]['correct'] / (summary[player_name][metric]['correct'] + summary[player_name][metric]['incorrect'])
                for cycle_number, summary in cycle_summaries.items() if start2 <= cycle_number <= end2]
     
     t_stat, p_value = ttest_ind(scores1, scores2)
