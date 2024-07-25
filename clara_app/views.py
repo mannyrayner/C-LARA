@@ -5107,8 +5107,8 @@ def check_well_formed_image_request_sequence(requests, numbered_page_list, callb
             raise ValueError('Bad image request sequence')
         
         if req['request_type'] == 'image-generation':
-            if not ('prompt' in req and 'page' in req and 'description_variables' in req):
-                post_task_update(callback, f'Image request sequence item of type "image-generation" does not contain "prompt", "page", and "description_variables" fields: {req}')
+            if not ('prompt' in req and 'page' in req):
+                post_task_update(callback, f'Image request sequence item of type "image-generation" does not contain "prompt" and "page" fields: {req}')
                 raise ValueError('Bad image request sequence')
         
         if req['request_type'] == 'image-understanding':
@@ -5143,6 +5143,9 @@ def check_and_correct_initialization_in_image_request_sequence(sequence, project
         if req["request_type"] == "image-understanding":
             initialized_vars.add(req["description_variable"])
         elif req["request_type"] == "image-generation":
+            # Fill in description_variables field if missing
+            if not "description_variables" in req:
+                req["description_variables"] = []
             # Only keep description variables from previous image-understanding steps
             req["description_variables"] = [var for var in req["description_variables"] if var in initialized_vars]
 

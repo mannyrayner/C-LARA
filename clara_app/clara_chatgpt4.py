@@ -46,7 +46,6 @@ def get_open_ai_api_key(config_info):
     return key
 
 def call_chat_gpt4(prompt, config_info={}, callback=None):
-    #gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
     return asyncio.run(get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback))
 
 def call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None):
