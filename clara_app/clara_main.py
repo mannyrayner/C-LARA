@@ -699,11 +699,29 @@ class CLARAProjectInternal:
     def create_segmented_title(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         title_text = self.load_text_version_or_null("title")
         if title_text:
-            segmented_title_text, api_calls = generate_segmented_version(title_text, self.l2_language, config_info=config_info, callback=callback)
-            # We want the title to be a single segment
-            segmented_title_text_cleaned = segmented_title_text.replace('<page>', '').replace('||', '').strip()
-            self.save_text_version("segmented_title", segmented_title_text_cleaned, user=user, label=label, source='ai_generated')
-            return api_calls
+            all_api_calls = []
+            n_tries = 0
+            max_tries = 5
+            while n_tries < max_tries:
+                try:
+                    segmented_title_text, api_calls = generate_segmented_version(title_text, self.l2_language,
+                                                                                 config_info=config_info, callback=callback)
+                    all_api_calls += api_calls
+                    # We want the title to be a single segment
+                    segmented_title_text_cleaned = segmented_title_text.replace('<page>', '').replace('||', '').strip()
+                    # Check for gross differences in length between segmented and original title text.
+                    # Sometimes the AI adds a lot of material for no obvious reason
+                    segmented_title_text_cleaned_plain = segmented_title_text_cleaned.replace('|', '')
+                    if abs(len(segmented_title_text_cleaned_plain) - len(title_text)) > 10:
+                        print(f'Error: segmented title length: {len(segmented_title_text_cleaned_plain)} chars; original title length: {len(title_text)} chars')
+                        raise ValueError("Bad segmented title")
+                    self.save_text_version("segmented_title", segmented_title_text_cleaned, user=user,
+                                           label=label, source='ai_generated')
+                    return all_api_calls
+                except Exception as e:
+                    n_tries += 1
+            # We tried several times, but nothing worked
+            return []
         else:
             return []
 
