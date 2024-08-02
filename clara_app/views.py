@@ -87,6 +87,7 @@ from pathlib import Path
 from decimal import Decimal
 from urllib.parse import unquote
 from datetime import timedelta
+from ipware import get_client_ip
 
 import os
 import re
@@ -1349,7 +1350,12 @@ def content_detail(request, content_id):
     can_delete = ( content.project and request.user == content.project.user ) or request.user.userprofile.is_admin
 
     # Get the client's IP address
-    client_ip = get_client_ip(request)
+    #client_ip = get_client_ip(request)
+
+    client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
+    
+    if client_ip is None:
+        client_ip = '0.0.0.0'  # Fallback IP if detection fails
     
     # Check if this IP has accessed this content before
     if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
@@ -1426,8 +1432,11 @@ def public_content_detail(request, content_id):
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
 
     # Get the client's IP address
-    client_ip = get_client_ip(request)
-    #print(f'Accessed content from IP = {client_ip}')
+    client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
+    
+    if client_ip is None:
+        client_ip = '0.0.0.0'  # Fallback IP if detection fails
+        
     messages.success(request, f'Accessed content from IP = {client_ip}')
     
     # Check if this IP has accessed this content before
@@ -1445,13 +1454,14 @@ def public_content_detail(request, content_id):
         'average_rating': average_rating['rating__avg']
     })
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+# Use ipware function instead
+##def get_client_ip(request):
+##    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+##    if x_forwarded_for:
+##        ip = x_forwarded_for.split(',')[0]
+##    else:
+##        ip = request.META.get('REMOTE_ADDR')
+##    return ip
 
 @login_required
 def create_activity(request):
