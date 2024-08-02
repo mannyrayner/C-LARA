@@ -1431,10 +1431,15 @@ def public_content_detail(request, content_id):
     comments = Comment.objects.filter(content=content).order_by('timestamp')  
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
 
+    # Print out all request headers for debugging
+    headers = request.META
+    for header, value in headers.items():
+       print(f'{header}: {value}')
+
     # Get the client's IP address
     #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
-    #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'])
-    client_ip, is_routable = get_client_ip(request, proxy_count=1)
+    client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'])
+    #client_ip, is_routable = get_client_ip(request, proxy_count=1)
     
     if client_ip is None:
         client_ip = '0.0.0.0'  # Fallback IP if detection fails
