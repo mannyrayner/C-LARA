@@ -1427,6 +1427,8 @@ def public_content_detail(request, content_id):
 
     # Get the client's IP address
     client_ip = get_client_ip(request)
+    #print(f'Accessed content from IP = {client_ip}')
+    messages.success(request, f'Accessed content from IP = {client_ip}')
     
     # Check if this IP has accessed this content before
     if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
