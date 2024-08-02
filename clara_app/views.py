@@ -18,7 +18,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, TaskUpdate, Update, ReadingHistory
+from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, ContentAccess, TaskUpdate, Update, ReadingHistory
 from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements, Activity, ActivityRegistration, ActivityComment, ActivityVote, CurrentActivityVote
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
 from django.contrib.auth.models import User
@@ -1347,6 +1347,18 @@ def content_detail(request, content_id):
     rating_form = RatingForm()  # initialize empty rating form
     delete_form = DeleteContentForm()
     can_delete = ( content.project and request.user == content.project.user ) or request.user.userprofile.is_admin
+
+    # Get the client's IP address
+    client_ip = get_client_ip(request)
+    
+    # Check if this IP has accessed this content before
+    if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
+        # Increment the unique access count
+        content.unique_access_count = F('unique_access_count') + 1
+        content.save(update_fields=['unique_access_count'])
+        content.refresh_from_db()  # Refresh the instance to get the updated count
+        # Log the access
+        ContentAccess.objects.create(content=content, ip_address=client_ip)
     
     if request.method == 'POST':
         if 'delete' in request.POST:
@@ -1411,13 +1423,33 @@ def content_detail(request, content_id):
 def public_content_detail(request, content_id):
     content = get_object_or_404(Content, id=content_id)
     comments = Comment.objects.filter(content=content).order_by('timestamp')  
-    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))  
+    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
+
+    # Get the client's IP address
+    client_ip = get_client_ip(request)
+    
+    # Check if this IP has accessed this content before
+    if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
+        # Increment the unique access count
+        content.unique_access_count = F('unique_access_count') + 1
+        content.save(update_fields=['unique_access_count'])
+        content.refresh_from_db()  # Refresh the instance to get the updated count
+        # Log the access
+        ContentAccess.objects.create(content=content, ip_address=client_ip)
 
     return render(request, 'clara_app/public_content_detail.html', {
         'content': content,
         'comments': comments,
         'average_rating': average_rating['rating__avg']
     })
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 @login_required
 def create_activity(request):

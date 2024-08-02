@@ -276,6 +276,7 @@ class Content(models.Model):
     # Timestamps for dependency tracking
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
+    unique_access_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.title
@@ -291,6 +292,14 @@ class Content(models.Model):
             return reverse('serve_rendered_text', args=[self.project.id, self.text_type, 'page_1.html'])
         else:
             return self.external_url
+
+class ContentAccess(models.Model):
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, related_name='accesses')
+    ip_address = models.GenericIPAddressField()
+    access_time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('content', 'ip_address')  # Ensure unique accesses per content and IP
             
 class APICall(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
