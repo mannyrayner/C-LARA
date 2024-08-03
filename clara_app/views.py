@@ -1353,19 +1353,20 @@ def content_detail(request, content_id):
     # Get the client's IP address
     #client_ip = get_client_ip(request)
 
-    client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
+    client_ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'])
     
     if client_ip is None:
         client_ip = '0.0.0.0'  # Fallback IP if detection fails
     
     # Check if this IP has accessed this content before
-    if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
+    #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
+    if True:
         # Increment the unique access count
         content.unique_access_count = F('unique_access_count') + 1
         content.save(update_fields=['unique_access_count'])
         content.refresh_from_db()  # Refresh the instance to get the updated count
         # Log the access
-        ContentAccess.objects.create(content=content, ip_address=client_ip)
+        #ContentAccess.objects.create(content=content, ip_address=client_ip)
     
     if request.method == 'POST':
         if 'delete' in request.POST:
@@ -1444,7 +1445,7 @@ def public_content_detail(request, content_id):
 
     # Get the client's IP address
     #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
-    client_ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'], proxy_count=1)
+    client_ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'])
     
     #client_ip, is_routable = get_client_ip(request, proxy_count=1)
     
@@ -1454,13 +1455,14 @@ def public_content_detail(request, content_id):
 ##    messages.success(request, f'Accessed content from IP = {client_ip}')
     
     # Check if this IP has accessed this content before
-    if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
+    #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
+    if True:
         # Increment the unique access count
         content.unique_access_count = F('unique_access_count') + 1
         content.save(update_fields=['unique_access_count'])
         content.refresh_from_db()  # Refresh the instance to get the updated count
         # Log the access
-        ContentAccess.objects.create(content=content, ip_address=client_ip)
+        #ContentAccess.objects.create(content=content, ip_address=client_ip)
 
     return render(request, 'clara_app/public_content_detail.html', {
         'content': content,
