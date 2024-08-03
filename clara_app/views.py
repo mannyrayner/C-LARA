@@ -1439,8 +1439,8 @@ def public_content_detail(request, content_id):
 ##    for header in ['HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR', 'HTTP_X_REAL_IP']:
 ##        value = headers.get(header, 'NOT FOUND')
 ##        messages.success(request, f'Header {header}: "{value}"')
-    for header, value in headers.items():
-        messages.success(request, f'Header {header}: "{value}"')
+##    for header, value in headers.items():
+##        messages.success(request, f'Header {header}: "{value}"')
 
     # Get the client's IP address
     #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
@@ -1451,7 +1451,7 @@ def public_content_detail(request, content_id):
     if client_ip is None:
         client_ip = '0.0.0.0'  # Fallback IP if detection fails
         
-    messages.success(request, f'Accessed content from IP = {client_ip}')
+##    messages.success(request, f'Accessed content from IP = {client_ip}')
     
     # Check if this IP has accessed this content before
     if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
