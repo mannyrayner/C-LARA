@@ -4,7 +4,7 @@
 {% block content %}
   <h2>{{ content.title }}</h2>
   <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
-  <p>Unique access count: {{ content.unique_access_count }}</p>
+  <p>Access count: {{ content.unique_access_count }}</p>
   {% if average_rating %}
     <p>Average Rating: {{ average_rating }}</p>
   {% else %}
