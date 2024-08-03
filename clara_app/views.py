@@ -103,6 +103,7 @@ import tempfile
 import pandas as pd
 
 config = get_config()
+logger = logging.getLogger(__name__)
 
 def redirect_login(request):
     return redirect('login')
@@ -1433,8 +1434,11 @@ def public_content_detail(request, content_id):
 
     # Print out all request headers for debugging
     headers = request.META
-    for header, value in headers.items():
-       print(f'{header}: {value}')
+##    for header, value in headers.items():
+##       logger.debug(f'header {header}: {value}')
+    for header in ['X_FORWARDED_FOR', 'REMOTE_ADDR']:
+        value = headers[header] if header in headers else 'NOT FOUND'
+        messages.success(request, f'Header {header}: {value}')
 
     # Get the client's IP address
     #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
