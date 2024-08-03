@@ -1436,8 +1436,8 @@ def public_content_detail(request, content_id):
     headers = request.META
 ##    for header, value in headers.items():
 ##       logger.debug(f'header {header}: {value}')
-    for header in ['X_FORWARDED_FOR', 'REMOTE_ADDR']:
-        value = headers[header] if header in headers else 'NOT FOUND'
+    for header in ['HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR', 'HTTP_X_REAL_IP']:
+        value = headers.get(header, 'NOT FOUND')
         messages.success(request, f'Header {header}: "{value}"')
 
     # Get the client's IP address
