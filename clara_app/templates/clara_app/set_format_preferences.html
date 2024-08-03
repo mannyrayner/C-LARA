@@ -7,5 +7,8 @@
     {{ form.as_p }}
     <button type="submit">Save Preferences</button>
   </form>
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+ 
+  <div class="sticky-footer">
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  </div>
 {% endblock %}

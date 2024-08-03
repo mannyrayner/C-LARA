@@ -11,7 +11,10 @@
     {{ form.as_p }}
     <button type="submit" id="submit-button">Create</button>
   </form>
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  
+  <div class="sticky-footer">
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  </div>
 
   <script type="text/javascript">
     document.getElementById('create-title-form').onsubmit = function() {

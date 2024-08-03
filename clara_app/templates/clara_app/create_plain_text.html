@@ -29,7 +29,10 @@
 	<p>{{ form.gold_standard.label_tag }} {{ form.gold_standard }}</p>
     <button type="submit" id="submit-button">Create</button>
   </form>
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  
+  <div class="sticky-footer">
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  </div>
 
   <script type="text/javascript">
     document.getElementById('create-plain-text-form').onsubmit = function() {

@@ -8,8 +8,10 @@
     {% csrf_token %}
     <button type="submit" id="submit-button">Make zipfile</button>
   </form>
-
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  
+  <div class="sticky-footer">
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  </div>
 
   <script type="text/javascript">
     document.getElementById('make_export-zipfile-form').onsubmit = function() {

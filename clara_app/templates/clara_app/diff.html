@@ -10,7 +10,10 @@
     {{ form.as_p }}
     <button type="submit">Compare</button>
   </form>
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  
+  <div class="sticky-footer">
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  </div>
 
   <!-- JavaScript for dynamically populating the file menus -->
   <script type="text/javascript">

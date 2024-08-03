@@ -23,8 +23,11 @@
       <button type="submit" id="register-button">Register as Content</button>
     </form>
   {% endif %}
-  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
-
+  
+  <div class="sticky-footer">
+    <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+  </div>
+  
   <script type="text/javascript">
     document.getElementById('render-text-form').onsubmit = function() {
       document.getElementById('submit-button').textContent = "Processing...";
