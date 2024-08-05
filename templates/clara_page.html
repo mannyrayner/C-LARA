@@ -30,6 +30,12 @@
   <div class="page-container {{ 'dir="rtl"' if is_rtl else '' }}">
     <div class="main-text-pane-wrapper">
 	  <div class="page" id="main-text-pane">
+		{% if page.annotations.tts %}
+			<p><audio controls>
+				<source src="{{ '/accounts/serve_audio_file/' + page.annotations.tts.engine_id + '/' + page.annotations.tts.language_id + '/' + page.annotations.tts.voice_id + '/' + page.annotations.tts.file_path }}" type="audio/mpeg">
+				Your browser does not support the audio element.
+			</audio></p>
+		{% endif %}
 		{%- for segment in page.segments -%}
 		<span class="segment" 
 			  data-segment-uid="{{ segment.annotations.segment_uid }}" 
