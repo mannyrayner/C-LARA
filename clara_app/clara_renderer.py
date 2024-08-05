@@ -10,6 +10,8 @@ The StaticHTMLRenderer class provides methods for rendering pages, concordance p
 The renderer also supports self-contained rendering, which means that all multimedia assets are copied to the output directory.
 """
 
+from .clara_inflection_tables import get_inflection_table_url
+
 from .clara_utils import _s3_storage, absolute_file_name
 from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists
 from .clara_utils import copy_file, basename, read_txt_file, write_txt_file, output_dir_for_project_id
@@ -135,13 +137,15 @@ class StaticHTMLRenderer:
         return rendered_page 
 
     def render_concordance_page(self, lemma, concordance_segments, l2_language):
+        inflection_table_url = get_inflection_table_url(lemma, l2_language)
         template = self.template_env.get_template('concordance_page.html')
-        project_id_internal = self.project_id_internal
-        rendered_page = template.render(lemma=lemma,
-                                        concordance_segments=concordance_segments,
-                                        #project_id_internal=project_id_internal,
-                                        l2_language=l2_language,
-                                        phonetic=self.phonetic)
+        rendered_page = template.render(
+            lemma=lemma,
+            concordance_segments=concordance_segments,
+            l2_language=l2_language,
+            phonetic=self.phonetic,
+            inflection_table_url=inflection_table_url
+        )
         return rendered_page
 
     def render_alphabetical_vocabulary_list(self, vocabulary_list, l2_language):
