@@ -256,11 +256,16 @@ if os.getenv('CLARA_ENVIRONMENT') != 'heroku':
                 'class': 'logging.FileHandler',
                 'filename': BASE_DIR / 'logs/django.log',
             },
+            'debug_file': {  # New handler for debug logs
+                'level': 'DEBUG',
+                'class': 'logging.FileHandler',
+                'filename': BASE_DIR / 'logs/django_debug.log',
+            },
         },
         'loggers': {
             'django': {
-                'handlers': ['file'],
-                'level': 'ERROR',
+                'handlers': ['file', 'debug_file'],  # Add the new handler here
+                'level': 'DEBUG',  # Set to DEBUG to capture all log levels
                 'propagate': True,
             },
         },
