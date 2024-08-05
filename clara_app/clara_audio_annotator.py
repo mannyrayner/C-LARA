@@ -17,7 +17,7 @@ It uses the audio repository to store and retrieve audio files.
 from .clara_classes import Text, InternalCLARAError
 #from .clara_utils import _use_orm_repositories
 from .clara_utils import get_config, absolute_local_file_name, basename, make_tmp_file, file_exists, remove_file, read_json_local_file, unzip_file, post_task_update
-from .clara_utils import canonical_word_for_audio, canonical_text_for_audio, remove_duplicates_general
+from .clara_utils import canonical_word_for_audio, canonical_text_for_audio, remove_duplicates_general, absolute_file_name
 from .clara_tts_api import get_tts_engine, get_default_voice, get_language_id, create_tts_engine
 #from .clara_audio_repository import AudioRepository
 from .clara_audio_repository_orm import AudioRepositoryORM
@@ -33,6 +33,7 @@ import json
 import traceback
 import regex
 import pprint
+import subprocess
 
 config = get_config()
 
@@ -156,8 +157,14 @@ class AudioAnnotator:
         updated_words_data = words_data + new_words_data
         updated_segments_data = segments_data + new_segments_data
 
+        if not phonetic: 
+            page_data = self._get_page_audio_data(text_obj, updated_segments_data, phonetic=False, callback=callback)
+            updated_page_data = self._generate_missing_page_audio(page_data, callback=None)
+        else:
+            updated_page_data = []
+
         post_task_update(callback, f"--- All TTS files should be there")
-        self._add_audio_annotations(text_obj, updated_words_data, updated_segments_data, phonetic=phonetic, callback=callback)
+        self._add_audio_annotations(text_obj, updated_words_data, updated_segments_data, updated_page_data, phonetic=phonetic, callback=callback)
 
     def _get_all_audio_data(self, text_obj, phonetic=False, callback=None):
         post_task_update(callback, f"--- Getting all audio data")
@@ -210,6 +217,44 @@ class AudioAnnotator:
         #print(f'--- _get_all_audio_data output: segments_data = {segments_data}')
         
         return words_data, segments_data
+
+    def _get_page_audio_data(self, text_obj, segments_data, phonetic=False, callback=None):
+        post_task_update(callback, f"--- Getting page audio data")
+        segment_cache = { ( item['text'], item['context'] ): item['file_path'] for item in segments_data }
+        
+        page_data = []
+        previous_canonical_text = ''
+        previous_canonical_texts = []
+        
+        for page in text_obj.pages:
+            segment_audio_files = []
+            start_of_context = -1 * self.max_context_length
+            page_context = '' if not self.use_context else previous_canonical_text[start_of_context:]
+            for segment in page.segments:
+                segment_text_plain = segment.to_text()
+                segment_text_canonical = canonical_text_for_audio(segment_text_plain, phonetic=phonetic)
+                context = '' if not self.use_context else previous_canonical_text[(-1 * self.max_context_length):]
+                segment_file_path = segment_cache.get((segment_text_plain, context), None)
+                if segment_file_path and not string_has_no_audio_content(segment_text_plain):
+                    segment_audio_files.append(segment_file_path)
+                    previous_canonical_texts.append(segment_text_canonical)
+                    previous_canonical_text = ' '.join(previous_canonical_texts) 
+            
+            page_text = page.to_text()
+            page_text_canonical = canonical_text_for_audio(page_text, phonetic=phonetic)
+            page_audio_file = self.audio_repository.get_entry(self.segment_engine_id, self.segment_language_id, self.segment_voice_id,
+                                                              page_text_canonical, context=page_context, callback=callback)
+            
+            page_data.append({
+                'text': page_text,
+                'canonical_text': page_text_canonical,
+                'context': page_context,
+                'segment_audio_files': segment_audio_files,
+                'file_path': page_audio_file
+            })
+        
+        return page_data
+
 
     def _get_missing_audio(self, words_data, segments_data, phonetic=False, callback=None):
 
@@ -280,6 +325,36 @@ class AudioAnnotator:
                 
         shutil.rmtree(temp_dir)
         return text_file_paths
+
+    def _generate_missing_page_audio(self, page_audio_data, callback=None):
+        engine_id = self.segment_engine_id
+        language_id = self.segment_language_id
+        voice_id = self.segment_voice_id
+
+        temp_dir = tempfile.mkdtemp()
+            
+        for page_data in page_audio_data:
+            try:
+                if not page_data['file_path'] and page_data['segment_audio_files']:
+                    canonical_text = page_data['canonical_text']
+                    context = page_data['context']
+                    segment_audio_files = page_data['segment_audio_files']
+                    
+                    unique_mp3_filename = f"{uuid.uuid4()}.mp3"
+                    unique_txt_filename = f"{uuid.uuid4()}.txt"
+                    temp_page_mp3 = os.path.join(temp_dir, unique_mp3_filename)
+                    temp_page_txt = os.path.join(temp_dir, unique_txt_filename)
+                    concatenate_audio_files(segment_audio_files, temp_page_txt, temp_page_mp3)
+                    
+                    file_path = self.audio_repository.store_mp3(engine_id, language_id, voice_id, temp_page_mp3, callback=callback)
+                    self.audio_repository.add_or_update_entry(engine_id, language_id, voice_id, canonical_text, file_path, context=context)
+                    page_data['file_path'] = file_path      
+            except Exception as e:
+                post_task_update(callback, f"*** Error creating page file: '{str(e)}'\n{traceback.format_exc()}")
+
+        shutil.rmtree(temp_dir)
+        return page_audio_data
+
 
     # Process a zipfile received from LiteDevTools. This should contain .wav files and metadata
     def process_lite_dev_tools_zipfile(self, zipfile, callback=None):
@@ -358,7 +433,7 @@ class AudioAnnotator:
             except Exception as e:
                 post_task_update(callback, f"*** Error trying to process metadata item {metadata_item}: {str(e)}")
 
-    def _add_audio_annotations(self, text_obj, words_data, segments_data, phonetic=False, callback=None):
+    def _add_audio_annotations(self, text_obj, words_data, segments_data, page_data, phonetic=False, callback=None):
         post_task_update(callback, f"--- Adding audio annotations to internalised text")
         text_obj.voice = self.printname_for_voice()
 
@@ -367,8 +442,30 @@ class AudioAnnotator:
         
         word_cache = { item['text']: item['file_path'] for item in words_data }
         segment_cache = { ( item['text'], item['context'] ): item['file_path'] for item in segments_data }
+        page_cache = { ( item['text'], item['context'] ): item['file_path'] for item in page_data }
         
         for page in text_obj.pages:
+            if not phonetic:
+                page_text_plain = page.to_text()
+                page_text_canonical = canonical_text_for_audio(page_text_plain, phonetic=False)
+                start_of_context = -1 * self.max_context_length
+                page_context = '' if not self.use_context else previous_canonical_text[start_of_context:]
+
+                if ( page_text_plain, page_context ) in page_cache and page_cache[( page_text_plain, page_context )]:
+                    absolute_page_file_path = absolute_file_name(page_cache[( page_text_plain, page_context )])
+                    #google\en-GB\en-GB-News-J\en-GB-News-J_20240805_033226_a5c481e3-7641-408a-8541-c29e32467e28.mp3"
+                    absolute_page_file_path_components = absolute_page_file_path.split('/')
+                    base_name = absolute_page_file_path_components[-1]
+                    voice_id = absolute_page_file_path_components[-2]
+                    language_id = absolute_page_file_path_components[-3]
+                    engine_id = absolute_page_file_path_components[-4]
+                    page.annotations['tts'] = {
+                        "engine_id": engine_id,
+                        "language_id": language_id,
+                        "voice_id": voice_id,
+                        "file_path": base_name,
+                        }
+            
             for segment in page.segments:
                 segment_text_plain = segment.to_text()
                 segment_text_canonical = canonical_text_for_audio(segment_text_plain, phonetic=phonetic)
@@ -438,31 +535,24 @@ class AudioAnnotator:
         else:
             return 'No audio voice'
 
-##def format_audio_metadata_item(item, format, words_or_segments):
-##    try:
-##        if format == 'text_and_full_file':
-##            file = item['file'] if isinstance(item['file'], ( str )) else ''
-##            context = item['context']
-##            text = item['word'] if words_or_segments == 'words' else item['segment']
-##            return { 'text': text, 'context': context, 'full_file': file }
-##        elif format == 'lite_dev_tools':
-##            file = basename(item['file']) if isinstance(item['file'], ( str )) else ''
-##            text = item['word'] if words_or_segments == 'words' else item['segment']
-##            return { 'text': text, 'file': file }
-##        else:
-##            raise InternalCLARAError(message = f'Bad call: unknown format {format} in call to clara_audio.annotator.format_audio_metadata_item')
-##        
-##    except:
-##        raise InternalCLARAError(message = f'Bad call: clara_audio_annotator.format_audio_metadata_item({item}, {format}, {words_or_segments})')
-
 # String has no audio content if it's just HTML tags, punctuation marks and separators
 def string_has_no_audio_content(s):
     s1 = regex.sub(r"<\/?\w+>", '', s)
     return not s1 or all(regex.match(r"[\p{P} \n|]", c) for c in s1)
 
-# Segment has no audio content if it has no Word content-elements
-##def segment_has_no_audio_content(segment):
-##    for content_element in segment.content_elements:
-##        if content_element.type == 'Word':
-##            return False
-##    return True
+def concatenate_audio_files(segment_audio_files, tmp_text_file, output_file):
+    # Create a temporary text file with the list of segment audio files
+    with open(tmp_text_file, 'w') as f:
+        for audio_file in segment_audio_files:
+            f.write(f"file '{audio_file}'\n")
+    
+    # Use ffmpeg to concatenate the audio files
+    command = [
+        'ffmpeg',
+        '-f', 'concat',
+        '-safe', '0',
+        '-i', tmp_text_file,
+        '-c', 'copy',
+        output_file
+    ]
+    subprocess.run(command)
