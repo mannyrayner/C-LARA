@@ -9,6 +9,9 @@
 <body>
   <div class="concordance" id="concordance_{{ lemma }}">
   	<h1>{{ lemma }}</h1>
+	{% if inflection_table_url %}
+      <p><a href="{{ inflection_table_url }}" target="_blank">Online word information</a></p>
+    {% endif %}
     {%- for segment in concordance_segments -%}
     <span class="segment" 
 			data-segment-uid="{{ segment.annotations.segment_uid }}" 
