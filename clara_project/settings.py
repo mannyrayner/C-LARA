@@ -31,8 +31,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-default-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # In particular, never run in debug mode on UniSA
-DEBUG = bool(os.getenv('DJANGO_DEBUG', False)) and not os.getenv('CLARA_ENVIRONMENT') == 'unisa'
-#DEBUG = True
+#DEBUG = bool(os.getenv('DJANGO_DEBUG', False)) and not os.getenv('CLARA_ENVIRONMENT') == 'unisa'
+DEBUG = True
 
 # Local machine, Heroku, UniSA server
 ALLOWED_HOSTS = [
@@ -264,8 +264,9 @@ if os.getenv('CLARA_ENVIRONMENT') != 'heroku':
         },
         'loggers': {
             'django': {
-                'handlers': ['file', 'debug_file'],  # Add the new handler here
-                'level': 'DEBUG',  # Set to DEBUG to capture all log levels
+                #'handlers': ['file', 'debug_file'],  # Add the new handler here
+                'handlers': ['file'],  # Add the new handler here
+                #'level': 'DEBUG',  # Set to DEBUG to capture all log levels
                 'propagate': True,
             },
         },
