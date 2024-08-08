@@ -1,0 +1,36 @@
+{% extends 'clara_app/base.html' %}
+{% load clara_tags %}
+
+{% block content %}
+  <h2>Archived Versions for "{{ image_name }}" in "{{ project.title }}"</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>Image</th>
+        <th>Prompt</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for archive in archived_images %}
+        <tr>
+          <td>{{ archive.timestamp }}</td>
+          <td>{% if archive.file_path %}
+				<img src="{% url 'serve_project_image' project.internal_id archive.file_path|base_name %}" alt="Image" style="max-width: 300px; max-height: 300px;"></td>
+			  {% else %}
+				No image currently stored.
+			  {% endif %}
+          <td>{{ archive.user_prompt }}</td>
+          <td>
+            <form method="post" action="{% url 'restore_image' project.id archive.id %}">
+              {% csrf_token %}
+              <button type="submit">Restore</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'edit_images' project.id %}">Back to Edit Images</a>
+{% endblock %}
