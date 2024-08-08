@@ -219,7 +219,7 @@ class CLARADependencies:
                 return None
             human_voice_id = self.phonetic_human_audio_info.voice_talent_id
             metadata = []
-            if self.human_audio_info.use_for_words:
+            if self.phonetic_human_audio_info.use_for_words:
                 metadata += self.clara_project_internal.get_audio_metadata(phonetic=True, human_voice_id=human_voice_id,
                                                                            audio_type_for_words='human', type='words')
             objects_and_timestamps = [ [ item['file_path'], get_file_time(item['file_path'], time_format='timestamp') ]
