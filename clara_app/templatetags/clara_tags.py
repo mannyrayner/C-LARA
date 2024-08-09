@@ -1,6 +1,7 @@
 from django import template
 
 from clara_app.models import SatisfactionQuestionnaire
+from clara_app.clara_utils import absolute_file_name
 
 register = template.Library()
 
@@ -10,7 +11,15 @@ def zip_lists(a, b):
 
 @register.filter(name='titlecase')
 def titlecase(value):
-    return value.title()  # Converts to title case
+    return value.title()  
+
+@register.filter(name='base_name')
+def base_name(file_path):
+    if not file_path:
+        return None
+    else:
+        abs_file_path = absolute_file_name(file_path)
+        return abs_file_path.split('/')[-1]
 
 @register.filter
 def ai_generated_display(value):
