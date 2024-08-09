@@ -156,6 +156,7 @@ from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
+from .clara_mwe import simplify_mwe_tagged_text
 from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
@@ -860,6 +861,13 @@ class CLARAProjectInternal:
                                                                  current_mwe_tagged_text=current_mwe_tagged_text,
                                                                  config_info=config_info, callback=callback)
         self.save_text_version("mwe", mwe_tagged_text, user=user, label=label, source='ai_generated')
+        return api_calls
+
+    def remove_analyses_from_mwe_tagged_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+        mwe_tagged_text = self.load_text_version("mwe")
+        simplified_mwe_tagged_text = simplify_mwe_tagged_text(mwe_tagged_text)
+        self.save_text_version("mwe", simplified_mwe_tagged_text, user=user, label=label, source='ai_generated')
+        api_calls = []
         return api_calls
 
      # Call pypinyin to create a version of the text with pinyin annotations

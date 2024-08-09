@@ -3891,7 +3891,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             username = request.user.username
             # We have an optional prompt when creating or improving the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
-            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin', 'delete' ):
+            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'mwe_simplify',
+                                    'tree_tagger', 'jieba', 'pypinyin', 'delete' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
             # We're deleting the current version         
             elif text_choice == 'delete':
@@ -3941,9 +3942,9 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                 messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
-            elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'jieba', 'pypinyin' ):
+            elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'mwe_simplify', 'jieba', 'pypinyin' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
-                    raise PermissionDenied("You don't have permission to create text by calling the AI.")
+                    raise PermissionDenied("You don't have permission to change the text.")
                 try:
                     # Create a unique ID to tag messages posted by this task, and a callback
                     task_type = f'{text_choice}_{this_version}'
@@ -3989,11 +3990,20 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     # We are creating the text using TreeTagger. This operation is only possible with lemma tagging
                     elif text_choice == 'tree_tagger':
                         action, api_calls = ( 'generate', clara_project_internal.create_lemma_tagged_text_with_treetagger(user=username, label=label) )
-                        # These operations are handled elsewhere for generation and improvement, due to asynchrony
                         store_api_calls(api_calls, project, request.user, this_version)
                         annotated_text = clara_project_internal.load_text_version(this_version)
                         text_choice = 'manual'
                         success_message = f'Created {this_version} text using TreeTagger'
+                        print(f'--- {success_message}')
+                        messages.success(request, success_message)
+                        current_version = clara_project_internal.get_file_description(this_version, 'current')
+                    # We are removing MWE analyses. This operation is only possible with MWE tagging
+                    elif text_choice == 'mwe_simplify':
+                        action, api_calls = ( 'generate', clara_project_internal.remove_analyses_from_mwe_tagged_text(user=username, label=label) )
+                        store_api_calls(api_calls, project, request.user, this_version)
+                        annotated_text = clara_project_internal.load_text_version(this_version)
+                        text_choice = 'manual'
+                        success_message = f'Removed CoT traces from {this_version} text'
                         print(f'--- {success_message}')
                         messages.success(request, success_message)
                         current_version = clara_project_internal.get_file_description(this_version, 'current')
