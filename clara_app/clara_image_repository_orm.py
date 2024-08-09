@@ -13,7 +13,7 @@ getting the image directory, and storing image files.
 
 from django.core.exceptions import ObjectDoesNotExist
 
-from .models import ImageMetadata, ImageDescription
+from .models import ImageMetadata, ArchivedImageMetadata, ImageDescription
 
 #from .clara_image_repository import ImageRepository
 
@@ -117,20 +117,6 @@ class ImageRepositoryORM:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 
-##    def store_understanding_result(self, project_id, description_variable, result, callback=None):
-##        try:
-##            post_task_update(callback, f"--- Storing understanding result in database for {description_variable}")
-##            image_metadata = ImageMetadata.objects.get(project_id=project_id, description_variable=description_variable)
-##            image_metadata.content_description = result
-##            image_metadata.save()
-##            post_task_update(callback, f"--- Understanding result stored in database")
-##        except ImageMetadata.DoesNotExist:
-##            post_task_update(callback, f"*** Error: ImageMetadata not found for {description_variable}")
-##        except Exception as e:
-##            post_task_update(callback, f"*** Error storing understanding result in database for {description_variable}")
-##            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-##            post_task_update(callback, error_message)
-
     def store_understanding_result(self, project_id, description_variable, result,
                                    image_name=None, page=None, position=None, user_prompt=None, callback=None):
         try:
@@ -196,7 +182,7 @@ class ImageRepositoryORM:
             return image
 
         except ObjectDoesNotExist:
-            post_task_update(callback, f'*** No entry found for "{image_name}" in Image database.')
+            post_task_update(callback, f'**g* No entry found for "{image_name}" in Image database.')
             return None
         except Exception as e:
             error_message = f'*** Error when looking for "{image_name}" in Image database: "{str(e)}"\n{traceback.format_exc()}'
@@ -464,6 +450,78 @@ class ImageRepositoryORM:
         except Exception as e:
             error_message = f'*** Error when trying to delete image description data for project ID {project_id}: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
+
+    def get_archived_images(self, project_id, image_name):
+        project_id = str(project_id)
+        print(f'--- Searching image archive with project_id={project_id}, image_name={image_name}')
+        return ArchivedImageMetadata.objects.filter(project_id=project_id, image_name=image_name).order_by('-timestamp')
+
+    def restore_image(self, project_id, archived_image_id):
+        try:
+            project_id = str(project_id)
+            archived_image = ArchivedImageMetadata.objects.get(id=archived_image_id)
+            
+            # Archive current image data
+            current_image = ImageMetadata.objects.get(project_id=project_id, image_name=archived_image.image_name)
+            self.archive_image(current_image)
+
+            # Update current image with archived image data
+            current_image.file_path = archived_image.file_path
+            current_image.user_prompt = archived_image.user_prompt
+            current_image.save()
+
+            # Delete the old archived image entry
+            archived_image.delete()
+            
+        except Exception as e:
+            error_message = f'*** Error when restoring image entry "{project_id}/{archived_image_id}" in the database: "{str(e)}"\n{traceback.format_exc()}'
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def archive_image_by_name(self, project_id, image_name, callback=None):
+        try:
+            project_id = str(project_id)
+            
+            # Archive image if it exists
+            current_image = ImageMetadata.objects.get(project_id=project_id, image_name=image_name)
+            if current_image and file_exists(current_image.file_path):
+                archived_file_path = self.store_image(project_id, current_image.file_path, keep_file_name=False, callback=callback)
+                self.archive_image(current_image, file_path=archived_file_path)
+                
+        except ObjectDoesNotExist:
+            print(f'*** No entry found for project_id = {project_id}, image_name = {image_name} in Image database.')
+            
+        except Exception as e:
+            error_message = f'*** Error when archiving entry "{project_id}/{image_name}" in the database: "{str(e)}"\n{traceback.format_exc()}'
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def archive_image(self, image_metadata, file_path=None):
+        try:
+            ArchivedImageMetadata.objects.create(
+                project_id=image_metadata.project_id,
+                image_name=image_metadata.image_name,
+                file_path=image_metadata.file_path if not file_path else file_path,
+                associated_text=image_metadata.associated_text,
+                associated_areas=image_metadata.associated_areas,
+                page=image_metadata.page,
+                position=image_metadata.position,
+                style_description=image_metadata.style_description,
+                content_description=image_metadata.content_description,
+                user_prompt=image_metadata.user_prompt,
+                request_type=image_metadata.request_type,
+                description_variable=image_metadata.description_variable,
+                description_variables=image_metadata.description_variables
+            )
+        except Exception as e:
+            error_message = f'*** Error when archiving image entry "{image_metadata.project_id}/{image_metadata.image_name}" in the database: "{str(e)}"\n{traceback.format_exc()}'
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def delete_archived_image(self, project_id, archived_image_id):
+        try:
+            archived_image = ArchivedImageMetadata.objects.get(project_id=project_id, id=archived_image_id)
+            archived_image.delete()
+            return True
+        except ArchivedImageMetadata.DoesNotExist:
+            raise InternalCLARAError(message=f"Archived image with id {archived_image_id} not found.")
 
     def get_project_directory(self, project_id):
         # Returns the directory path where images for a specific project are stored

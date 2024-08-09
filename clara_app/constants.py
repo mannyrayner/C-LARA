@@ -85,6 +85,7 @@ SUPPORTED_LANGUAGES = [
     ('irish', 'Irish'),
     ('italian', 'Italian'),
     ('japanese', 'Japanese'),
+    ('kok kaper', 'Kok Kaper'),
     ('korean', 'Korean'),
     ('latin', 'Latin'),
     ('malay', 'Malay'),

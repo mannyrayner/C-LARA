@@ -674,6 +674,22 @@ class ImageMetadata(models.Model):
     def __str__(self):
         return f"{self.project_id} | {self.image_name} | {self.position} | Page {self.page}"
 
+class ArchivedImageMetadata(models.Model):
+    project_id = models.CharField(max_length=200)
+    image_name = models.CharField(max_length=200)
+    file_path = models.CharField(max_length=200)
+    associated_text = models.TextField(blank=True)
+    associated_areas = models.TextField(blank=True)
+    page = models.IntegerField(default=1)
+    position = models.CharField(max_length=200, default='bottom')
+    style_description = models.TextField(blank=True)
+    content_description = models.TextField(blank=True)
+    user_prompt = models.TextField(blank=True)
+    request_type = models.CharField(max_length=200, default='image-generation')
+    description_variable = models.CharField(max_length=200, blank=True)
+    description_variables = models.JSONField(default=list, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
 class ImageDescription(models.Model):
     project_id = models.CharField(max_length=255)
     description_variable = models.CharField(max_length=255)

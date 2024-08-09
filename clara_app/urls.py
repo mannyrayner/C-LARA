@@ -108,6 +108,10 @@ urlpatterns = [
     path('project/<int:project_id>/process_manual_alignment_complete/<str:status>/', views.process_manual_alignment_complete, name='process_manual_alignment_complete'),
     path('project/<int:project_id>/generate_annotated_segmented_file/', views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
+    
+    path('project/<int:project_id>/access_archived_images/<str:image_name>', views.access_archived_images, name='access_archived_images'),
+    path('project/<int:project_id>/restore_image/<str:archived_image_id>', views.restore_image, name='restore_image'),
+    path('project/<int:project_id>/delete_archive_image/<str:archived_image_id>', views.delete_archive_image, name='delete_archive_image'),
     path('project/<int:project_id>/create_dall_e_3_image_status/<str:report_id>/', views.create_dall_e_3_image_status, name='create_dall_e_3_image_status'),
     path('project/<int:project_id>/create_dall_e_3_image_monitor/<str:report_id>/', views.create_dall_e_3_image_monitor, name='create_dall_e_3_image_monitor'),
     path('project/<int:project_id>/set_format_preferences/', views.set_format_preferences, name='set_format_preferences'),

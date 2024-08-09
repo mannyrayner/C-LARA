@@ -4618,12 +4618,15 @@ def edit_images(request, project_id, dall_e_3_image_status):
                         if form.cleaned_data.get('image_file_path'):
                             uploaded_image_file_path = form.cleaned_data.get('image_file_path')
                             real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
+                            uploaded_file = True
                             #print(f'--- real_image_file_path for {image_name} (from upload) = {real_image_file_path}')
                         elif previous_record:
                             real_image_file_path = previous_record['image_file_path']
                             #print(f'--- real_image_file_path for {image_name} (previously stored) = {real_image_file_path}')
+                            uploaded_file = False
                         else:
                             real_image_file_path = None
+                            uploaded_file = False
                         associated_text = form.cleaned_data.get('associated_text')
                         associated_areas = form.cleaned_data.get('associated_areas')
                         page = form.cleaned_data.get('page', 1)
@@ -4677,7 +4680,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                      user_prompt=user_prompt,
                                                                      content_description=content_description,
                                                                      description_variable=description_variable,
-                                                                     description_variables=description_variables
+                                                                     description_variables=description_variables,
+                                                                     archive=False
                                                                      )
                         elif ( ( image_name and real_image_file_path ) or user_prompt ) and not errors:
                            # We are uploading an image or changing a generation/understanding line
@@ -4695,7 +4699,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                      user_prompt=user_prompt,
                                                                      content_description=content_description,
                                                                      description_variable=description_variable,
-                                                                     description_variables=description_variables
+                                                                     description_variables=description_variables,
+                                                                     archive=uploaded_file # Unless it's an uploaded file, we don't want to archive
                                                                      )
                                                    
                 if len(image_requests) != 0:
@@ -4732,6 +4737,35 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                           'uses_coherent_image_set': project.uses_coherent_image_set,
                                                           'clara_version': clara_version,
                                                           'errors': []})
+
+def access_archived_images(request, project_id, image_name):
+    project = get_object_or_404(CLARAProject, id=project_id)
+    image_repo = ImageRepositoryORM()
+    archived_images = image_repo.get_archived_images(project.internal_id, image_name)
+    
+    return render(request, 'clara_app/access_archived_images.html', {
+        'project': project,
+        'image_name': image_name,
+        'archived_images': archived_images,
+    })
+
+def restore_image(request, project_id, archived_image_id):
+    if request.method == "POST":
+        project = get_object_or_404(CLARAProject, id=project_id)
+        image_repo = ImageRepositoryORM()
+        image_repo.restore_image(project.internal_id, archived_image_id)
+        return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+    else:
+        return HttpResponseNotAllowed(['POST'])
+
+def delete_archive_image(request, project_id, archived_image_id):
+    if request.method == "POST":
+        project = get_object_or_404(CLARAProject, id=project_id)
+        image_repo = ImageRepositoryORM()
+        image_repo.delete_archived_image(project.internal_id, archived_image_id)
+        return redirect('access_archived_images', project_id=project_id, image_name=request.POST.get('image_name'))
+    else:
+        return HttpResponseNotAllowed(['POST'])
 
 def create_and_add_dall_e_3_image_for_whole_text(project_id, advice_prompt=None, callback=None):
     try:

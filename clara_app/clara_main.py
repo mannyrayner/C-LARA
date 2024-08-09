@@ -1104,14 +1104,18 @@ class CLARAProjectInternal:
     def add_project_image(self, image_name, image_file_path, associated_text='', associated_areas='',
                           page=1, position='bottom', style_description='', content_description='', user_prompt='',
                           request_type='image-generation', description_variable='',
-                          description_variables=[], callback=None):  # New field
+                          description_variables=[], archive=True, callback=None):  
         try:
             project_id = self.id
             
-            post_task_update(callback, f"--- Adding image {request_type} item {image_name} (file path = {image_file_path}) to project {project_id}")            
+            post_task_update(callback, f"--- Adding image {request_type} item {image_name} (file path = {image_file_path}) to project {project_id}")
+
+            # First archive the current image if there is one, to make sure it doesn't get overwritten
+            if archive and image_file_path and file_exists(image_file_path):
+                self.image_repository.archive_image_by_name(project_id, image_name, callback=callback)
             
-            # Store the image in the repository
-            if image_file_path:
+            # Store the new image file 
+            if image_file_path and file_exists(image_file_path):
                 stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
             else:
                 stored_image_path = ''
