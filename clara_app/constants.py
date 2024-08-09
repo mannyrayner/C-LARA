@@ -87,6 +87,7 @@ SUPPORTED_LANGUAGES = [
     ('japanese', 'Japanese'),
     ('kok kaper', 'Kok Kaper'),
     ('korean', 'Korean'),
+    ('kunjen', 'Kunjen'),
     ('latin', 'Latin'),
     ('malay', 'Malay'),
     ('mandarin', 'Mandarin'),
@@ -110,6 +111,7 @@ SUPPORTED_LANGUAGES = [
     ('vietnamese', 'Vietnamese'),
     ('welsh', 'Welsh'),
     ('west greenlandic', 'West Greenlandic'),
+    ('yirr yorront', 'Yirr Yorront'),
 ]
 
 SUPPORTED_LANGUAGES_AND_DEFAULT = [ ('default', 'Default') ] + SUPPORTED_LANGUAGES
