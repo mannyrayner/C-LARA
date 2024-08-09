@@ -5,22 +5,17 @@
 {% block title %}Create Text Title{% endblock %}
 
 {% block content %}
+  <div class="main-content">
   <h2>Create Text Title ("{{ project.title }}")</h2>
   <form method="post" id="create-title-form">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" id="submit-button">Create</button>
   </form>
-  
-  <!-- <div class="sticky-footer"> -->
+  </div>
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
-
-  <script type="text/javascript">
-    document.getElementById('create-title-form').onsubmit = function() {
-      document.getElementById('submit-button').textContent = "Processing...";
-    };
-  </script>
   
   <script src="{% static 'clara_app/scripts/form-button-text.js' %}"></script>
   

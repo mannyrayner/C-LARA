@@ -3,6 +3,7 @@
 {% block title %}Edit Images{% endblock %}
 
 {% block content %}
+  <div class="main-content">
   {% if errors %}
     <div class="error-messages alert alert-danger">
       <p>Errors found in form:</p>
@@ -93,9 +94,9 @@
       <thead>
         <tr>
           {% if uses_coherent_image_set %}
-            <th>Request type</th><th>Image/Description</th><th>Prompt</th><th>Variables</th><th style="width: 50px;">Page</th><th>Position</th><th style="width: 100px;">Generate</th><th>Archive</t<th>Delete</th>
+            <th>Request type</th><th>Image/Description</th><th>Prompt</th><th>Variables</th><th style="width: 50px;">Page</th><th>Position</th><th style="width: 100px;">Generate</th><th>Archive</th><th>Delete</th>
           {% else %}
-            <th>Image Preview</th><th>Image Upload</th><th>Image Name</th><th style="width: 50px;">Page</th><th>Position</th><th>Archive</t<th>Delete</th>
+            <th>Image Preview</th><th>Image Upload</th><th>Image Name</th><th style="width: 50px;">Page</th><th>Position</th><th>Archive</th><th>Delete</th>
           {% endif %}
         </tr>
       </thead>
@@ -133,7 +134,11 @@
                <td>{{ form.page }}</td>
                <td>{{ form.position }}</td>
 			   <td>{{ form.generate }}</td>
-			   <td><a href="{% url 'access_archived_images' project.id form.image_name.value %}">Archive</a></td>
+			   <td>
+			      {% if form.image_name.value %}
+					 <a href="{% url 'access_archived_images' project.id form.image_name.value %}">Archive</a>
+				  {% endif %}
+			   </td>
                <td>{{ form.delete }}</td>
 			{% else %}
                <td>
@@ -147,7 +152,11 @@
                <td>{{ form.image_name }}</td>
                <td>{{ form.page }}</td>
                <td>{{ form.position }}</td>
-			   <td><a href="{% url 'access_archived_images' project.id form.image_name.value %}">Archive</a></td>
+			   <td>
+			      {% if form.image_name.value %}
+					 <a href="{% url 'access_archived_images' project.id form.image_name.value %}">Archive</a>
+				  {% endif %}
+			   </td>
                <td>{{ form.delete }}</td>
 			{% endif %}
           </tr>
@@ -160,9 +169,9 @@
 	   <button type="submit" name="action" value="save_changes">Save changes</button>
 	{% endif %}
   </form>
+  </div>
   
-  
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 {% endblock %}

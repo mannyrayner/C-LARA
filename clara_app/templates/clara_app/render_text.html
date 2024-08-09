@@ -3,6 +3,7 @@
 {% block title %}Render Text{% endblock %}
 
 {% block content %}
+  <div class="main-content">
   <h2>Render Text ("{{ project.title }}")</h2>
   <form method="post" id="render-text-form">
     {% csrf_token %}
@@ -23,8 +24,9 @@
       <button type="submit" id="register-button">Register as Content</button>
     </form>
   {% endif %}
+  </div>
   
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
   

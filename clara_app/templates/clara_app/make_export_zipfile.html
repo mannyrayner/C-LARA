@@ -3,13 +3,15 @@
 {% block title %}Make export zipfile{% endblock %}
 
 {% block content %}
+  <div class="main-content">
   <h2>Make Export Zipfile ("{{ project.title }}")</h2>
   <form method="post" id="make_export-zipfile-form">
     {% csrf_token %}
     <button type="submit" id="submit-button">Make zipfile</button>
   </form>
+  </div>
   
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 

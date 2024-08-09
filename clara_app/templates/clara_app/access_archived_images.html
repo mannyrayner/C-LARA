@@ -2,35 +2,50 @@
 {% load clara_tags %}
 
 {% block content %}
+  <div class="main-content">
   <h2>Archived Versions for "{{ image_name }}" in "{{ project.title }}"</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Timestamp</th>
-        <th>Image</th>
-        <th>Prompt</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for archive in archived_images %}
-        <tr>
-          <td>{{ archive.timestamp }}</td>
-          <td>{% if archive.file_path %}
-				<img src="{% url 'serve_project_image' project.internal_id archive.file_path|base_name %}" alt="Image" style="max-width: 300px; max-height: 300px;"></td>
-			  {% else %}
-				No image currently stored.
-			  {% endif %}
-          <td>{{ archive.user_prompt }}</td>
-          <td>
-            <form method="post" action="{% url 'restore_image' project.id archive.id %}">
-              {% csrf_token %}
-              <button type="submit">Restore</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <a href="{% url 'edit_images' project.id %}">Back to Edit Images</a>
+  {% if archived_images %}
+	  <table>
+		<thead>
+		  <tr>
+			<th>Timestamp</th>
+			<th>Image</th>
+			<th>Prompt</th>
+			<th>Action</th>
+		  </tr>
+		</thead>
+		<tbody>
+		  {% for archive in archived_images %}
+			<tr>
+			  <td>{{ archive.timestamp }}</td>
+			  <td>{% if archive.file_path %}
+					<img src="{% url 'serve_project_image' project.internal_id archive.file_path|base_name %}" alt="Image" style="max-width: 300px; max-height: 300px;"></td>
+				  {% else %}
+					No image currently stored.
+				  {% endif %}
+			  <td>{{ archive.user_prompt }}</td>
+			  <td>
+				<form method="post" action="{% url 'restore_image' project.id archive.id %}">
+				  {% csrf_token %}
+				  <button type="submit">Restore</button>
+				</form>
+				<form method="post" action="{% url 'delete_archive_image' project.id archive.id %}">
+				  {% csrf_token %}
+				  <input type="hidden" name="image_name" value="{{ image_name }}">
+				  <button type="submit">Delete</button>
+				</form>
+			  </td>
+			</tr>
+		  {% endfor %}
+		</tbody>
+	  </table>
+  {% else %}
+      <p>There are no archived images</p>
+  {% endif %}
+  </div>
+  
+  <div class="sticky-footer">
+    <a href="{% url 'edit_images' project.id 'no_image' %}">Back to Edit Images</a>
+  </div>
+  
 {% endblock %}

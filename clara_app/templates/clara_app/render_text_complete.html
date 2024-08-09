@@ -3,6 +3,7 @@
 {% block title %}Show Rendered Text{% endblock %}
 
 {% block content %}
+  <div class="main-content">
 
   {% if content_url %}
     <h3>Rendered Text ("{{ project.title }}")</h3>
@@ -17,8 +18,9 @@
       <button type="submit" id="register-button">Register as Content</button>
     </form>
   {% endif %}
+  </div>
   
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 

@@ -3,6 +3,7 @@
 {% block title %}Download export zipfile{% endblock %}
 
 {% block content %}
+  <div class="main-content">
 
   <h3>Download Export Zipfile ("{{ project.title }}")</h3>
 
@@ -13,8 +14,9 @@
 		<p><a href="{% url 'serve_export_zipfile' project.id %}" download="{{ project.id }}.zip">Download Zip</a></p>
 	 {% endif %}
   {% endif %}
+  </div>
   
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 

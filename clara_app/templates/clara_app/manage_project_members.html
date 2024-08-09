@@ -2,6 +2,7 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
+    <div class="main-content">
     <h1>Manage Project Members ("{{ project.title }}")</h1>
     <form method="POST" action="{% url 'manage_project_members' project.id %}">
         {% csrf_token %}
@@ -36,9 +37,9 @@
     {% else %}
         <p>No project members found.</p>
     {% endif %}
-
+	</div>
     
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 {% endblock %}

@@ -1,6 +1,7 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
+  <div class="main-content">
   <h1>Create a cloned project ("{{ project.title }}")</h1>
   <form method="POST">
     {% csrf_token %}
@@ -17,9 +18,10 @@
         {% endfor %}
         </ul>
     {% endif %}
-</form>
-
-  <!-- <div class="sticky-footer"> -->
+  </form>
+  </div>
+  
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 {% endblock %}

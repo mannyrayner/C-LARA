@@ -5,14 +5,16 @@
 {% block title %}Create Phonetic Text{% endblock %}
 
 {% block content %}
+  <div class="main-content">
   <h2>Create Phonetic Text ("{{ project.title }}")</h2>
   <form method="post" id="create-phonetic-text-form">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" id="submit-button">Create</button>
   </form>
+  </div>
   
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 

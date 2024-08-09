@@ -5,6 +5,7 @@
 {% block title %}Create Plain Text{% endblock %}
 
 {% block content %}
+  <div class="main-content">
   <h2>Create Plain Text ("{{ project.title }}")</h2>
   <form method="post" id="create-plain-text-form">
     {% csrf_token %}
@@ -29,8 +30,9 @@
 	<p>{{ form.gold_standard.label_tag }} {{ form.gold_standard }}</p>
     <button type="submit" id="submit-button">Create</button>
   </form>
+  </div>
   
-  <!-- <div class="sticky-footer"> -->
+  <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
 
