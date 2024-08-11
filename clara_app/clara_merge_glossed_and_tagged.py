@@ -30,6 +30,10 @@ def merge_with_translation_annotations(original_text, translated_text):
     return merge_annotations1_and_annotations2(original_text, translated_text,
                                                'merge_with_translation_annotations', {"gloss": "null", "lemma": "null", "pos": "null"})
 
+def merge_with_mwe_annotations(original_text, mwe_tagged_text):
+    return merge_annotations1_and_annotations2(original_text, mwe_tagged_text,
+                                               'merge_with_mwe_annotations', {"gloss": "null", "lemma": "null", "pos": "null"})
+
 def merge_annotations1_and_annotations2(annotations1_text, annotations2_text, operation, dummy_annotations1):
     merged_pages = []
 
@@ -62,9 +66,9 @@ def merge_annotations1_and_annotations2(annotations1_text, annotations2_text, op
             merged_annotations.update(annotations2_segment.annotations)
             
             merged_segments.append(Segment(merged_elements, annotations=merged_annotations))
-            print(f'annotations1_segment.annotations = {annotations1_segment.annotations}')
-            print(f'annotations2_segment.annotations = {annotations2_segment.annotations}')
-            print(f'merged_annotations = {merged_annotations}')
+##            print(f'annotations1_segment.annotations = {annotations1_segment.annotations}')
+##            print(f'annotations2_segment.annotations = {annotations2_segment.annotations}')
+##            print(f'merged_annotations = {merged_annotations}')
 
         # Assume that annotations1_page and annotations2_page have the same annotations
         merged_pages.append(Page(merged_segments, annotations=annotations1_page.annotations))

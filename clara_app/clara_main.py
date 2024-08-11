@@ -146,7 +146,8 @@ from .clara_internalise import internalize_text
 from .clara_correct_syntax import correct_syntax_in_string
 from .clara_chinese import segment_text_using_jieba, pinyin_tag_text_using_pypinyin
 from .clara_diff import diff_text_objects
-from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glossed_and_tagged_with_pinyin, merge_with_translation_annotations
+from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glossed_and_tagged_with_pinyin
+from .clara_merge_glossed_and_tagged import merge_with_translation_annotations, merge_with_mwe_annotations
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 #from .clara_image_repository import ImageRepository
@@ -156,7 +157,7 @@ from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
-from .clara_mwe import simplify_mwe_tagged_text
+from .clara_mwe import simplify_mwe_tagged_text, annotate_mwes_in_text
 from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
@@ -941,6 +942,12 @@ class CLARAProjectInternal:
                 internalised_translated_text = internalize_text(translated_tagged_text, self.l2_language, self.l1_language, 'translated')
                 merged_text_with_translations = merge_with_translation_annotations(merged_text, internalised_translated_text)
                 merged_text = merged_text_with_translations
+            if self.text_versions["mwe"]:
+                mwe_tagged_text = self.load_text_version("mwe")
+                internalised_mwe_tagged_text = internalize_text(mwe_tagged_text, self.l2_language, self.l1_language, 'mwe')
+                merged_text_with_mwes = merge_with_mwe_annotations(merged_text, internalised_mwe_tagged_text)
+                annotate_mwes_in_text(merged_text_with_mwes)
+                merged_text = merged_text_with_mwes
             
             return merged_text
 

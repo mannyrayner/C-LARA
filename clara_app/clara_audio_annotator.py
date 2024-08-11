@@ -190,7 +190,10 @@ class AudioAnnotator:
                         if phonetic and 'phonetic' in content_element.annotations:
                             audio_word_plain = content_element.annotations['phonetic']
                         elif not phonetic:
-                            audio_word_plain = content_element.content
+                            if 'mwe_text' in content_element.annotations:
+                                audio_word_plain = content_element.annotations['mwe_text']
+                            else:
+                                audio_word_plain = content_element.content
                         else:
                             audio_word_plain = None
                             
@@ -488,7 +491,10 @@ class AudioAnnotator:
                         if phonetic and 'phonetic' in content_element.annotations:
                             audio_word = content_element.annotations['phonetic']
                         elif not phonetic:
-                            audio_word = content_element.content
+                            if 'mwe_text' in content_element.annotations:
+                                audio_word = content_element.annotations['mwe_text']
+                            else:
+                                audio_word = content_element.content
                         else:
                             audio_word = None
 
