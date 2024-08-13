@@ -67,6 +67,28 @@ function setUpEventListeners(contextDocument) {
       if (lemma) {
         postMessageToParent('loadConcordance', { lemma });
       }
+	  
+      const mweId = word.getAttribute('data-mwe-id');
+      if (mweId) {
+        highlightMwe(mweId, contextDocument);
+      }
+	});
+	  
+	// Hover event for highlighting MWEs
+    word.addEventListener('mouseover', () => {
+        const mweId = word.getAttribute('data-mwe-id');
+        if (mweId) {
+            const allWordsInMwe = document.querySelectorAll(`[data-mwe-id="${mweId}"]`);
+            allWordsInMwe.forEach(wordInMwe => wordInMwe.classList.add('mwe-group-hover'));
+        }
+    });
+
+    word.addEventListener('mouseout', () => {
+        const mweId = word.getAttribute('data-mwe-id');
+        if (mweId) {
+            const allWordsInMwe = document.querySelectorAll(`[data-mwe-id="${mweId}"]`);
+            allWordsInMwe.forEach(wordInMwe => wordInMwe.classList.remove('mwe-group-hover'));
+        }
     });
   }
 
@@ -121,6 +143,19 @@ function setUpEventListeners(contextDocument) {
   }
 
   
+}
+
+function highlightMwe(mweId, contextDocument) {
+    // First, remove any existing highlights
+    contextDocument.querySelectorAll('.mwe-highlight').forEach(element => {
+        element.classList.remove('mwe-highlight');
+    });
+
+    // Add highlight to all words with the same mwe_id
+    const mweElements = contextDocument.querySelectorAll(`[data-mwe-id="${mweId}"]`);
+    mweElements.forEach(element => {
+        element.classList.add('mwe-highlight');
+    });
 }
 
 function setUpBackArrowEventListeners(contextDocument) {

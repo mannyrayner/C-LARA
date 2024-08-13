@@ -5,13 +5,18 @@
   line-height: 1.6; /* Add a bit more space between lines */
 }
 
-.word:hover {
+.word:hover, .mwe-group-hover {
   background-color: rgba(255, 255, 0, 0.5); /* Yellow with 50% opacity */
 }
 
 .svg-word:hover {
   fill: rgba(255, 255, 0, 0.5); /* Yellow with 50% opacity */
 }
+
+.mwe-highlight {
+   background-color: rgba(255, 255, 0, 0.5); /* Yellow with 50% opacity */
+}
+
 
 .word:hover::after {
   content: attr(data-gloss);
