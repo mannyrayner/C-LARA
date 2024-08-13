@@ -366,6 +366,10 @@ class InternalisationError(Exception):
     def __init__(self, message = 'Internalisation error'):
         self.message = message
 
+class MWEError(Exception):
+    def __init__(self, message = 'MWE error'):
+        self.message = message
+        
 class TemplateError(Exception):
     def __init__(self, message = 'Template error'):
         self.message = message

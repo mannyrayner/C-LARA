@@ -68,11 +68,11 @@ from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
 from .clara_conventional_tagging import fully_supported_treetagger_language
 from .clara_chinese import is_chinese_language
+from .clara_mwe import annotate_mwes_in_text
 from .clara_annotated_images import make_uninstantiated_annotated_image_structure
 from .clara_tts_api import tts_engine_type_supports_language
 from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json, call_chat_gpt4_image, call_chat_gpt4_interpret_image
-from .clara_classes import TemplateError, InternalCLARAError, InternalisationError
-#from .clara_utils import _use_orm_repositories
+from .clara_classes import TemplateError, InternalCLARAError, InternalisationError, MWEError
 from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, get_config, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
 from .clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
@@ -3909,11 +3909,16 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                 annotated_text = form.cleaned_data['text']
                 # Check that text is well-formed before trying to save it. If it's not well-formed, we get an InternalisationError
                 try:
-                    internalize_text(annotated_text, clara_project_internal.l2_language, clara_project_internal.l1_language, this_version)
+                    text_object = internalize_text(annotated_text, clara_project_internal.l2_language, clara_project_internal.l1_language, this_version)
+                    # Do this so that we get an exception if the MWEs don't match the text
+                    if this_version == 'mwe':
+                        annotate_mwes_in_text(text_object)
                     clara_project_internal.save_text_version(this_version, annotated_text, 
                                                              user=username, label=label, gold_standard=gold_standard)
                     messages.success(request, "File saved")
                 except InternalisationError as e:
+                    messages.error(request, e.message)
+                except MWEError as e:
                     messages.error(request, e.message)
                 
                 action = 'edit'                                         
@@ -5628,6 +5633,10 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
 
                 # Redirect to the monitor view, passing the task ID and report ID as parameters
                 return redirect('render_text_monitor', project_id, phonetic_or_normal, report_id)
+            except MWEError as e:
+                messages.error(request, f'{e.message}')
+                form = RenderTextForm()
+                return render(request, 'clara_app/render_text_start.html', {'form': form, 'project': project, 'clara_version': clara_version})
             except InternalisationError as e:
                 messages.error(request, f'{e.message}')
                 form = RenderTextForm()

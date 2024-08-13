@@ -34,8 +34,9 @@ class ConcordanceAnnotator:
                     if element.type == "Word":
                         key = element.annotations.get('phonetic') if phonetic else element.annotations.get('lemma')
                         if key:
+                            mwe_length = element.annotations.get('mwe_length', 1)
                             concordance[key]["segments"].add(segment.annotations['segment_uid'])
-                            concordance[key]["frequency"] += 1
+                            concordance[key]["frequency"] += 1 / mwe_length
                     elif not phonetic and element.type == "Image" and 'transformed_segments' in element.content and element.content['transformed_segments']:
                         image_segments = element.content['transformed_segments']
                         for image_segment in image_segments:
@@ -43,12 +44,14 @@ class ConcordanceAnnotator:
                                 if image_element.type == "Word":
                                     image_key = image_element.annotations.get('lemma')
                                     if image_key:
+                                        mwe_length = image_element.annotations.get('mwe_length', 1)
                                         concordance[image_key]["segments"].add(segment.annotations['segment_uid'])
-                                        concordance[image_key]["frequency"] += 1
+                                        concordance[image_key]["frequency"] += 1 / mwe_length
 
             page_number += 1
 
         for lemma, lemma_data in concordance.items():
+            concordance[lemma]["frequency"] = round(concordance[lemma]["frequency"])
             unique_segments = [segment_id_mapping[seg_uid] for seg_uid in lemma_data["segments"]]
             concordance[lemma]["segments"] = unique_segments
 

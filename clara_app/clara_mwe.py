@@ -1,5 +1,7 @@
 
 from .clara_internalise import internalize_text
+from .clara_utils import post_task_update
+from .clara_classes import MWEError
 
 from itertools import product
 
@@ -15,26 +17,7 @@ def simplify_mwe_tagged_text_object(text_object):
             if 'analysis' in segment.annotations:
                 segment.annotations['analysis'] = '(removed)'
 
-##def annotate_mwes_in_text(text):
-##    mwe_counter = 1
-##    
-##    for page in text.pages:
-##        for segment in page.segments:
-##            mwes = segment.annotations.get('mwes', [])
-##            
-##            for mwe in mwes:
-##                mwe_id = f'mwe_{mwe_counter}'
-##                mwe_counter += 1
-##                mwe_text = ' '.join(mwe)
-##                
-##                match_positions = find_mwe_positions(segment.content_elements, mwe)
-##                
-##                for i, position in enumerate(match_positions):
-##                    content_element = segment.content_elements[position]
-##                    content_element.annotations['mwe_id'] = mwe_id
-##                    content_element.annotations['mwe_text'] = mwe_text
-
-def annotate_mwes_in_text(text_obj):
+def annotate_mwes_in_text(text_obj, callback=None):
     mwe_counter = 1
     for page in text_obj.pages:
         for segment in page.segments:
@@ -43,8 +26,9 @@ def annotate_mwes_in_text(text_obj):
                 mwe_id = f'mwe_{mwe_counter}'
                 mwe_counter += 1
                 mwe_text = ""
+                mwe_length = len(mwe)
                 
-                positions = find_mwe_positions(segment, mwe)
+                positions = find_mwe_positions_for_segment(segment, mwe, callback=callback)
                 
                 last_pos = None
                 for i, pos in enumerate(positions):
@@ -57,18 +41,25 @@ def annotate_mwes_in_text(text_obj):
                 for pos in positions:
                     segment.content_elements[pos].annotations['mwe_id'] = mwe_id
                     segment.content_elements[pos].annotations['mwe_text'] = mwe_text
+                    segment.content_elements[pos].annotations['mwe_length'] = mwe_length
 
 
-def find_mwe_positions(segment, mwe):
+def find_mwe_positions_for_segment(segment, mwe, callback=None):
     content_elements = segment.content_elements
-    segment_text = segment.to_text(annotation_type='segmented')
+    return find_mwe_positions_for_content_elements(content_elements, mwe)
+
+def find_mwe_positions_for_content_elements(content_elements, mwe, callback=None):
+    mwe_text = ' '.join(mwe)
+    segment_text = ' '.join([ element.to_text(annotation_type='plain') for element in content_elements if element.type == 'Word' ])
     # Find all positions of each word in the MWE
     all_positions = []
     
     for word in mwe:
         positions = [i for i, element in enumerate(content_elements) if element.type == 'Word' and element.content == word]
         if not positions:
-            raise ValueError(f"Unable to find word '{word}' in segment '{segment_text}'.")
+            message = f"MWE error: the word '{word}' in the MWE '{mwe_text}' is not one of the words in '{segment_text}'."
+            post_task_update(callback, message)
+            raise MWEError(message = message)
         all_positions.append(positions)
     
     # Generate all possible combinations of positions and filter out invalid ones
@@ -83,7 +74,9 @@ def find_mwe_positions(segment, mwe):
                 best_combination = combination
                 
     if best_combination is None:
-        raise ValueError(f"Unable to find valid combination for MWE '{mwe}' in segment '{segment_text}'.")
+        message = f"MWE error: unable to find valid combination for MWE '{mwe}' in segment '{segment_text}'."
+        post_task_update(callback, message)
+        raise MWEError(message = message)
     
     return list(best_combination)
 

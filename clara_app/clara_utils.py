@@ -867,21 +867,10 @@ def unzip_file(pathname, dir, callback=None):
 def post_task_update_async(callback, message):
     post_task_update(callback, message)
 
-##def post_task_update(callback, message):
-##    if callback and isinstance(callback, ( list, tuple )) and len(callback) == 2:
-##        callback_function, report_id = callback
-##        callback_function(report_id, message)
-##        print(f"Posted task update: '{message}'")
-##    elif callback:
-##        print(f"Error: bad callback: {callback}. Must be a two element list.")
-##    else:
-##        print(f"Could not post task update '{message}'. Callback = {callback}")
-
 def post_task_update(callback, message):
     if callback and isinstance(callback, ( list, tuple )) and len(callback) == 4:
         callback_function, report_id, user_id, task_type = callback
         callback_function(report_id, user_id, task_type, message)
-        #print(f"Posted task update: '{message}'")
         print(f"Posted task update: '{message}' (user_id={user_id}, task_type={task_type})")
     elif callback:
         print(f"Error: bad callback: {callback}. Must be a four element list.")

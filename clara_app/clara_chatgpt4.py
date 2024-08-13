@@ -338,20 +338,27 @@ def save_openai_response_image(url, image_file):
 #
 #   json```<CorrectJSON>```
 #
-# Try stripping off the wrapper, assuming there is a JSON string of the right type, and try again
+# Try stripping off the wrapper, assuming there is a JSON string of the right type.
+# Also, when we're doing Chain of Thought, we typically ask for a piece of "think aloud" analysis, followed by some JSON.
+# In both cases, we want the JSON, and in the second one also the text intro.
 def interpret_chat_gpt4_response_as_json(response, object_type='list', callback=None):
+    ( intro, json ) = extract_intro_and_json_list_from_response_string(response, object_type=object_type, callback=callback)
+    return json
+
+def interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list', callback=None):
     try:
-        return json.loads(response)
+        return ( '', json.loads(response) )
     except:
         try:
-            return extract_json_list_from_response_string_ignoring_wrappers(response, object_type=object_type, callback=callback)
+            return extract_intro_and_json_list_from_response_string(response, object_type=object_type, callback=callback)
         except:
             raise ChatGPTError(message = f'Response is not correctly formatted JSON: {response}')
 
-def extract_json_list_from_response_string_ignoring_wrappers(response, object_type='list', callback=None):
+
+def extract_intro_and_json_list_from_response_string(response, object_type='list', callback=None):
     _valid_object_types = ( 'list', 'dict' )
     if not object_type in _valid_object_types:
-        raise ChatGPTError(message = f'object_type argument {object_type} in call to extract_json_list_from_response_string_ignoring_wrappers not one of {_valid_object_types}')
+        raise ChatGPTError(message = f'object_type argument {object_type} in call to extract_json_list_from_response_string not one of {_valid_object_types}')
     start_char = '[' if object_type == 'list' else '{'
     end_char = ']' if object_type == 'list' else '}'
     # Attempt to find the start and end of the JSON object
@@ -362,8 +369,9 @@ def extract_json_list_from_response_string_ignoring_wrappers(response, object_ty
         # Extract the JSON string
         json_str = response[start_index:end_index]
         # Parse the JSON string into a Python object
+        intro = response[:start_index]
         result = json.loads(json_str)
-        post_task_update(callback, f'--- Removed "{response[:start_index]}" from start of response and "{response[end_index:]}" from end')
-        return result
+        post_task_update(callback, f'--- Intro = "{response[:start_index]}", removed "{response[end_index:]}" from end')
+        return ( intro, result )
     else:
         raise ValueError("Valid JSON list not found in response")

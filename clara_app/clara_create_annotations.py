@@ -31,8 +31,8 @@ There are also several utility functions to help with the annotation process.
 from . import clara_prompt_templates
 from . import clara_chatgpt4
 from . import clara_internalise
-#from . import clara_test
 
+from .clara_mwe import find_mwe_positions_for_content_elements
 from .clara_utils import get_config, post_task_update
 from .clara_classes import *
 
@@ -488,12 +488,16 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
             api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
             if processing_phase == 'mwe':
-                mwes = parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe', callback=callback)
-                return ( mwes, api_calls )
+                mwes_and_analysis = parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe', callback=callback)
+                # Call find_mwe_positions_for_content_elements because we'll get an exception of the mwe can't be found in the segment.
+                # If so, we need to retry.
+                mwes = mwes_and_analysis['mwes']
+                for mwe in mwes:
+                    find_mwe_positions_for_content_elements(elements, mwe)
+                return ( mwes_and_analysis, api_calls )
             elif processing_phase == 'translated':
                 translation_annotations = parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
                                                                             previous_version=previous_version, callback=callback)
-                print(f'translation_annotations = {translation_annotations}')
                 return ( translation_annotations, api_calls )
             else:
                 annotated_simplified_elements = parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
@@ -503,6 +507,8 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
                 annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, processing_phase)
                 return ( annotated_elements, api_calls )
                 
+        except MWEError as e:
+            post_task_update(callback, f'*** Warning: {e.message}')
         except ChatGPTError as e:
             post_task_update(callback, f'*** Warning: unable to parse response from ChatGPT-4')
             post_task_update(callback, e.message)
@@ -977,57 +983,43 @@ def unsimplify_element(element, processing_phase, previous_version='default'):
         print(message)
         raise InternalCLARAError(message = message)
 
-##def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, callback=None):
-##    response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
-##    if not isinstance(response_object, list):
-##        raise ChatGPTError(message = f'Response is not a list: {response}')
-##    
-##    usable_response_object = []
-##    for element in response_object:
-##        if not well_formed_element_in_annotation_response(element, processing_phase):
-##            post_task_update(callback, f'*** Warning: bad element {element} in annotation response, discarding')
-##        else:
-##            usable_response_object += [ element ]
-##    if processing_phase != 'mwe':
-##        original_text = ' '.join([ element if isinstance(element, str) else element[0] for element in simplified_elements ])
-##        annotated_text = ' '.join([ element[0] for element in usable_response_object ])
-##        if not original_text == annotated_text:
-##            warning = f"""*** Warning: original text and annotated text are different.
-##     Original text: {original_text}
-##    Annotated text: {annotated_text}"""
-##            post_task_update(callback, warning)
-##        return usable_response_object
-##    else:
-##        return [ element.split() for element in usable_response_object ]
-
 def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, previous_version='default', callback=None):
-    analysis = ""
-    mwes = []
-
+##    analysis = ""
+##    mwes = []
+##
+##    if processing_phase == 'mwe':
+##        # Extract the analysis text and the JSON list separately
+##        analysis_marker = "Analysis"
+##        json_marker = "Output"
+##
+##        analysis_start = response.find(analysis_marker)
+##        json_start = response.find(json_marker)
+##
+##        if analysis_start != -1 and json_start != -1:
+##            analysis = response[analysis_start + len(analysis_marker):json_start].strip()
+##            json_str = response[json_start + len(json_marker):].strip()
+##
+##            # Extract the JSON content
+##            response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(json_str, object_type='list', callback=callback)
+##            if isinstance(response_object, list):
+##                mwes = [element.split() for element in response_object]
+##            else:
+##                raise ChatGPTError(message=f'Response is not a list: {response}')
+##        else:
+##            raise ChatGPTError(message="Could not find the markers for analysis and JSON output in the response.")
+##        
+##        # Return a structure containing both the analysis and the list of MWEs
+##        return {'analysis': analysis, 'mwes': mwes}
     if processing_phase == 'mwe':
-        # Extract the analysis text and the JSON list separately
-        analysis_marker = "Analysis"
-        json_marker = "Output"
-
-        analysis_start = response.find(analysis_marker)
-        json_start = response.find(json_marker)
-
-        if analysis_start != -1 and json_start != -1:
-            analysis = response[analysis_start + len(analysis_marker):json_start].strip()
-            json_str = response[json_start + len(json_marker):].strip()
-
-            # Extract the JSON content
-            response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(json_str, object_type='list', callback=callback)
-            if isinstance(response_object, list):
-                mwes = [element.split() for element in response_object]
-            else:
-                raise ChatGPTError(message=f'Response is not a list: {response}')
+        # Extract the initial analysis text and the JSON list
+        intro, response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list', callback=callback)
+        if isinstance(response_object, list):
+            mwes = [element.split() for element in response_object]
+            # Return a structure containing both the analysis and the list of MWEs
+            return {'analysis': intro, 'mwes': mwes}
         else:
-            raise ChatGPTError(message="Could not find the markers for analysis and JSON output in the response.")
+            raise ChatGPTError(message=f'Response is not a list: {response}')
         
-        # Return a structure containing both the analysis and the list of MWEs
-        return {'analysis': analysis, 'mwes': mwes}
-
     if processing_phase == 'translated':
         response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
         #print(f'response_object for translation: {response_object}')

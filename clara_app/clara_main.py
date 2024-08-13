@@ -1429,7 +1429,7 @@ class CLARAProjectInternal:
                                                                phonetic=phonetic, callback=callback)
  
         post_task_update(callback, f"--- Created internalised and annotated text")
-        text_object.prettyprint()
+        #text_object.prettyprint()
         # Pass both Django-level and internal IDs
         normal_html_exists = self.rendered_html_exists(project_id)
         post_task_update(callback, f"--- normal_html_exists: {normal_html_exists}")
