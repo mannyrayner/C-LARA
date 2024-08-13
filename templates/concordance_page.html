@@ -26,14 +26,15 @@
 				<ruby class="word {% if element.annotations.lemma == lemma %}concordance-highlight{% endif %}"
 					  data-gloss="{{ element.annotations.gloss if element.annotations.gloss else '' }}"
 					  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
-					  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">
-				  {{ element.content }}<rt>{{ element.annotations.pinyin }}</rt>
+					  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}"
+					  data-mwe-id="{{ element.annotations.mwe_id if element.annotations.mwe_id else '' }}">{{ element.content }}<rt>{{ element.annotations.pinyin }}</rt>
 				</ruby>
 			  {%- else -%}
 				<span class="word {% if element.annotations.lemma == lemma %}concordance-highlight{% endif %}"
 					  data-gloss="{{ element.annotations.gloss if element.annotations.gloss|e else '' }}"
 					  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
-					  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}">{{ element.content }}</span>
+					  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}"
+					  data-mwe-id="{{ element.annotations.mwe_id if element.annotations.mwe_id else '' }}">{{ element.content }}</span>
 			  {%- endif -%}
 			{%- elif phonetic and element.annotations.phonetic -%}
 			  <span class="word {% if element.annotations.phonetic == lemma %}concordance-highlight{% endif %}"
