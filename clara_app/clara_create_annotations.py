@@ -33,9 +33,10 @@ from . import clara_chatgpt4
 from . import clara_internalise
 
 from .clara_mwe import find_mwe_positions_for_content_elements
-from .clara_utils import get_config, post_task_update
+from .clara_utils import get_config, post_task_update, post_task_update_async
 from .clara_classes import *
 
+import asyncio
 import json
 import regex
 import difflib
@@ -44,6 +45,8 @@ import copy
 import pprint
 
 config = get_config()
+
+ASYNC = True
 
 # Try invoking the template-based prompt generation with trivial text to see if we get an error
 def invoke_templates_on_trivial_text(annotate_or_improve, version, l1_language, l2_language):
@@ -145,11 +148,11 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                                           current_annotated_text=None, current_translated_text=None,
                                           config_info={}, callback=None):
 
-    print(f"""generate_or_improve_annotated_version({annotate_or_improve}, {processing_phase}, (annotated_text), {l1_language}, {l2_language},
-                                          previous_version={previous_version}, mwe={mwe},
-                                          current_annotated_text={current_annotated_text}, current_translated_text={current_translated_text},
-                                          config_info={config_info}, callback=callback)
-""")
+##    print(f"""generate_or_improve_annotated_version({annotate_or_improve}, {processing_phase}, (annotated_text), {l1_language}, {l2_language},
+##                                          previous_version={previous_version}, mwe={mwe},
+##                                          current_annotated_text={current_annotated_text}, current_translated_text={current_translated_text},
+##                                          config_info={config_info}, callback=callback)
+##""")
 
     if previous_version == 'lemma':
         source_version = 'lemma'
@@ -227,7 +230,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     #print(f'current_segmented_elements_dict:')
     #pprint.pprint(current_segmented_elements_dict)
     
-    if few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, mwe, config_info):
+    if not ASYNC and few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, mwe, config_info):
         # We're reusing the saved annotations and only redoing the new segments
         print(f'--- Redoing {processing_phase}, trying to reuse material from previous version')
         for elements in segmented_elements:
@@ -272,31 +275,37 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         else:
             chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
             process_segments_singly = False
-        
-        for chunk in chunks:
-            print(f'chunk = {chunk}')
-            if process_segments_singly:
-                key = key_for_segment_elements(chunk)
-                mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
-                translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
-            else:
-                mwes_for_segment = []
-                translation_for_segment = None
-            annotated_chunk_or_segment_annotation, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
-                                                                                                             l1_language, l2_language,
-                                                                                                             previous_version=previous_version,
-                                                                                                             mwe=mwe,
-                                                                                                             mwes=mwes_for_segment,
-                                                                                                             translation=translation_for_segment,
-                                                                                                             config_info=config_info, callback=callback)
-            if processing_phase == 'mwe':
-                annotations_for_segments.append(annotated_chunk_or_segment_annotation)
-            elif processing_phase == 'translated':
-                annotations_for_segments += annotated_chunk_or_segment_annotation
-            else:
-                annotated_elements += annotated_chunk_or_segment_annotation
-            all_api_calls += api_calls
 
+        if ASYNC:
+            annotations_for_segments, annotated_elements, all_api_calls = call_process_annotations_async(chunks, process_segments_singly,
+                                                                                                         segmented_elements_mwe_dict, segmented_elements_translations_dict,
+                                                                                                         annotate_or_improve, processing_phase, l1_language, l2_language,
+                                                                                                         previous_version, mwe, config_info, callback)
+        else:
+            for chunk in chunks:
+                #print(f'chunk = {chunk}')
+                if process_segments_singly:
+                    key = key_for_segment_elements(chunk)
+                    mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
+                    translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
+                else:
+                    mwes_for_segment = []
+                    translation_for_segment = None
+                annotated_chunk_or_segment_annotation, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
+                                                                                                                 l1_language, l2_language,
+                                                                                                                 previous_version=previous_version,
+                                                                                                                 mwe=mwe,
+                                                                                                                 mwes=mwes_for_segment,
+                                                                                                                 translation=translation_for_segment,
+                                                                                                                 config_info=config_info, callback=callback)
+                if processing_phase == 'mwe':
+                    annotations_for_segments.append(annotated_chunk_or_segment_annotation)
+                elif processing_phase == 'translated':
+                    annotations_for_segments += annotated_chunk_or_segment_annotation
+                else:
+                    annotated_elements += annotated_chunk_or_segment_annotation
+                all_api_calls += api_calls
+            
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
     #print(f'annotations_for_segments = {annotations_for_segments}')
@@ -322,7 +331,64 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase)
     return ( human_readable_text, all_api_calls )
 
+def call_process_annotations_async(chunks, process_segments_singly,
+                                   segmented_elements_mwe_dict, segmented_elements_translations_dict,
+                                   annotate_or_improve, processing_phase, l1_language, l2_language,
+                                   previous_version, mwe, config_info, callback):
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:  # No event loop running
+        loop = None
 
+    if loop and loop.is_running():
+        # If we're already in an event loop, we should use `await` directly
+        return asyncio.ensure_future(process_annotations_async(chunks, process_segments_singly,
+                                                               segmented_elements_mwe_dict, segmented_elements_translations_dict,
+                                                               annotate_or_improve, processing_phase, l1_language, l2_language,
+                                                               previous_version, mwe, config_info, callback))
+    else:
+        # If not in an event loop, we can use asyncio.run
+        return asyncio.run(process_annotations_async(chunks, process_segments_singly,
+                                                     segmented_elements_mwe_dict, segmented_elements_translations_dict,
+                                                     annotate_or_improve, processing_phase, l1_language, l2_language,
+                                                     previous_version, mwe, config_info, callback))
+    
+async def process_annotations_async(chunks, process_segments_singly, segmented_elements_mwe_dict,
+                                    segmented_elements_translations_dict, annotate_or_improve, processing_phase,
+                                    l1_language, l2_language, previous_version, mwe, config_info, callback):
+    tasks = []
+    for chunk in chunks:
+        if process_segments_singly:
+            key = key_for_segment_elements(chunk)
+            mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
+            translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
+        else:
+            mwes_for_segment = []
+            translation_for_segment = None
+        
+        tasks.append(asyncio.create_task(
+            call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase, chunk,
+                                                                l1_language, l2_language, previous_version,
+                                                                mwe, mwes_for_segment, translation_for_segment, config_info, callback)
+        ))
+
+    post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
+    results = await asyncio.gather(*tasks)
+    all_api_calls = []
+    annotations_for_segments = []
+    annotated_elements = []
+
+    for result in results:
+        annotated_chunk_or_segment_annotation, api_calls = result
+        if processing_phase == 'mwe':
+            annotations_for_segments.append(annotated_chunk_or_segment_annotation)
+        elif processing_phase == 'translated':
+            annotations_for_segments += annotated_chunk_or_segment_annotation
+        else:
+            annotated_elements += annotated_chunk_or_segment_annotation
+        all_api_calls += api_calls
+
+    return annotations_for_segments, annotated_elements, all_api_calls
 
 # We index on tuples consisting of the content of each element.
 # Typically we have not more than a hundred segments in a text and a few dozen content elements in a segment, so this is acceptably efficient
@@ -422,6 +488,34 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
                                                   previous_version='default',
                                                   mwe=False, mwes=[], translation=None,
                                                   config_info={}, callback=None):
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:  # No event loop running
+        loop = None
+
+    if loop and loop.is_running():
+        # If we're already in an event loop, we should use `await` directly
+        return asyncio.ensure_future(call_chatgpt4_to_annotate_or_improve_elements_async(
+            annotate_or_improve, processing_phase, elements,
+            l1_language, l2_language,
+            previous_version, mwe, mwes, translation,
+            config_info, callback
+        ))
+    else:
+        # If not in an event loop, we can use asyncio.run
+        return asyncio.run(call_chatgpt4_to_annotate_or_improve_elements_async(
+            annotate_or_improve, processing_phase, elements,
+            l1_language, l2_language,
+            previous_version, mwe, mwes, translation,
+            config_info, callback
+        ))
+
+
+async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase, elements,
+                                                              l1_language, l2_language,
+                                                              previous_version='default',
+                                                              mwe=False, mwes=[], translation=None,
+                                                              config_info={}, callback=None):
     word_elements = word_items_in_element_list(elements)
     if len(word_elements) == 0:
         # If we're doing MWE, return empty list
@@ -483,9 +577,12 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
         if n_attempts >= limit:
             raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
         n_attempts += 1
-        post_task_update(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
+        post_task_update_async(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
         try:
-            api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
+            # Original sync call
+            #api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
+            # Async call
+            api_call = await clara_chatgpt4.get_api_chatgpt4_response(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
             if processing_phase == 'mwe':
                 mwes_and_analysis = parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe', callback=callback)
@@ -508,14 +605,14 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
                 return ( annotated_elements, api_calls )
                 
         except MWEError as e:
-            post_task_update(callback, f'*** Warning: {e.message}')
+            post_task_update_async(callback, f'*** Warning: {e.message}')
         except ChatGPTError as e:
-            post_task_update(callback, f'*** Warning: unable to parse response from ChatGPT-4')
-            post_task_update(callback, e.message)
+            post_task_update_async(callback, f'*** Warning: unable to parse response from ChatGPT-4')
+            post_task_update_async(callback, e.message)
         except Exception as e:
-            post_task_update(callback, f'*** Warning: error when sending request to ChatGPT-4')
+            post_task_update_async(callback, f'*** Warning: error when sending request to ChatGPT-4')
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-            post_task_update(callback, error_message)
+            post_task_update_async(callback, error_message)
 
 def segment_elements_to_segment_translation_input(segment_elements):
     word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(segment_elements)
@@ -984,32 +1081,7 @@ def unsimplify_element(element, processing_phase, previous_version='default'):
         raise InternalCLARAError(message = message)
 
 def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, previous_version='default', callback=None):
-##    analysis = ""
-##    mwes = []
-##
-##    if processing_phase == 'mwe':
-##        # Extract the analysis text and the JSON list separately
-##        analysis_marker = "Analysis"
-##        json_marker = "Output"
-##
-##        analysis_start = response.find(analysis_marker)
-##        json_start = response.find(json_marker)
-##
-##        if analysis_start != -1 and json_start != -1:
-##            analysis = response[analysis_start + len(analysis_marker):json_start].strip()
-##            json_str = response[json_start + len(json_marker):].strip()
-##
-##            # Extract the JSON content
-##            response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(json_str, object_type='list', callback=callback)
-##            if isinstance(response_object, list):
-##                mwes = [element.split() for element in response_object]
-##            else:
-##                raise ChatGPTError(message=f'Response is not a list: {response}')
-##        else:
-##            raise ChatGPTError(message="Could not find the markers for analysis and JSON output in the response.")
-##        
-##        # Return a structure containing both the analysis and the list of MWEs
-##        return {'analysis': analysis, 'mwes': mwes}
+    print(f'parse_chatgpt_annotation_response({response}, ...')
     if processing_phase == 'mwe':
         # Extract the initial analysis text and the JSON list
         intro, response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list', callback=callback)

@@ -371,7 +371,7 @@ def extract_intro_and_json_list_from_response_string(response, object_type='list
         # Parse the JSON string into a Python object
         intro = response[:start_index]
         result = json.loads(json_str)
-        post_task_update(callback, f'--- Intro = "{response[:start_index]}", removed "{response[end_index:]}" from end')
+        #post_task_update(callback, f'--- Intro = "{response[:start_index]}", removed "{response[end_index:]}" from end')
         return ( intro, result )
     else:
         raise ValueError("Valid JSON list not found in response")
