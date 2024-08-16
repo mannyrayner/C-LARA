@@ -4205,6 +4205,7 @@ def perform_generate_operation_and_store_api_calls(version, project, clara_proje
         operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label,
                                                           previous_version=previous_version, prompt=prompt,
                                                           config_info=config_info, callback=callback)
+        #print(f'perform_generate_operation_and_store_api_calls: total cost = {sum([ api_call.cost for api_call in api_calls ])}')
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:

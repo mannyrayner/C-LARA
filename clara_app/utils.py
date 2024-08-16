@@ -1,4 +1,5 @@
 
+from django.db import transaction
 from django.db.models import Sum
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
@@ -99,47 +100,33 @@ def get_task_updates(report_id):
 def create_internal_project_id(title, project_id):
     return re.sub(r'\W+', '_', title) + '_' + str(project_id)
 
-# Old version: incorrect, since people can get back credit by deleting projects
-
-##def store_api_calls(api_calls, project, user, operation):
-##    for api_call in api_calls:
-##        timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
-##        APICall.objects.create(
-##            user=user,
-##            project=project,
-##            operation=operation,
-##            cost=api_call.cost,
-##            duration=api_call.duration,
-##            retries=api_call.retries,
-##            prompt=api_call.prompt,
-##            response=api_call.response,
-##            timestamp=timestamp,
-##        )
-
-# New version: charge calls at once
-
+# Aggregate the values for the calls to lessen the impact of rounding errors.
+# Really we should have had more decimal places in the 'cost' field.
 def store_api_calls(api_calls, project, user, operation):
     user_profile = user.userprofile
-    for api_call in api_calls:
-        # Now do import datetime from datetime
-        # instead of import datetime
-        #timestamp = datetime.datetime.fromtimestamp(api_call.timestamp)
-        timestamp = datetime.fromtimestamp(api_call.timestamp)
+    total_cost = sum(Decimal(api_call.cost) for api_call in api_calls)
+    total_duration = sum(Decimal(api_call.duration) for api_call in api_calls)
+    total_retries = sum(api_call.retries for api_call in api_calls)
+    
+    #print(f'store_api_calls: project = {project}, user = {user}, operation = {operation}, total cost = {total_cost}')
+    #print(f'get_project_operation_costs before: {get_project_operation_costs(user, project)}')
+
+    with transaction.atomic():
+        timestamp = timezone.now()  # Use current time for the aggregated entry
         APICall.objects.create(
             user=user,
             project=project,
             operation=operation,
-            cost=api_call.cost,
-            duration=api_call.duration,
-            retries=api_call.retries,
-            prompt=api_call.prompt,
-            response=api_call.response,
+            cost=total_cost,
+            duration=total_duration,
+            retries=total_retries,
             timestamp=timestamp,
         )
-        # Deduct the cost from the user's credit balance
-        user_profile.credit -= Decimal(api_call.cost)
+        # Deduct the total cost from the user's credit balance
+        user_profile.credit -= total_cost
         user_profile.save()
-
+        
+    #print(f'get_project_operation_costs after: {get_project_operation_costs(user, project)}')
 
 def get_user_api_cost(user):
     total_cost = APICall.objects.filter(user=user).aggregate(Sum('cost'))

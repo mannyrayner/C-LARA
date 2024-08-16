@@ -329,6 +329,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
             
     #print(f'internalised_annotated_text: {internalised_annotated_text}')        
     human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase)
+    #print(f'generate_or_improve_annotated_version: total cost = {sum([ api_call.cost for api_call in all_api_calls ])}')
     return ( human_readable_text, all_api_calls )
 
 def call_process_annotations_async(chunks, process_segments_singly,
@@ -388,6 +389,7 @@ async def process_annotations_async(chunks, process_segments_singly, segmented_e
             annotated_elements += annotated_chunk_or_segment_annotation
         all_api_calls += api_calls
 
+    #print(f'process_annotations_async: total cost = {sum([ api_call.cost for api_call in all_api_calls ])}')
     return annotations_for_segments, annotated_elements, all_api_calls
 
 # We index on tuples consisting of the content of each element.
@@ -602,6 +604,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 nontrivial_annotated_elements = [ unsimplify_element(element, processing_phase, previous_version=previous_version)
                                                   for element in annotated_simplified_elements ]
                 annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, processing_phase)
+                #print(f'call_chatgpt4_to_annotate_or_improve_elements_async: total cost = {sum([ api_call.cost for api_call in api_calls ])}')
                 return ( annotated_elements, api_calls )
                 
         except MWEError as e:
