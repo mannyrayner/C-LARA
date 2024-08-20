@@ -103,43 +103,103 @@ def parse_content_elements_segmented(segment_text, text_type='segmented'):
 
 def parse_segment_mwe(segment_text):
     try:
-        # Split the entire segment into lines
-        lines = segment_text.split('\n')
-        main_text_lines = []
-        analysis_lines = []
-        mwes = []
+        full_result = parse_segment_mwe_full(segment_text)
+        if full_result:
+            return full_result
+        
+        minimal_result = parse_segment_mwe_minimal(segment_text)
+        if minimal_result:
+            return minimal_result
 
-        analysis_prefix = "_analysis:"
-        mwes_prefix = "_MWEs:"
-
-        # Tracking the current section being processed
-        current_section = "main_text"
-
-        for line in lines:
-            if line.startswith(analysis_prefix):
-                current_section = "analysis"
-                analysis_lines.append(line[len(analysis_prefix):].strip())
-            elif line.startswith(mwes_prefix):
-                #current_section = "mwes"
-                all_mwes_text = line[len(mwes_prefix):].strip()
-                mwes_texts = [] if not all_mwes_text else all_mwes_text.split(',')
-                mwes = [mwe_text.split() for mwe_text in mwes_texts]
-            else:
-                if current_section == "main_text":
-                    main_text_lines.append(line)
-                elif current_section == "analysis":
-                    analysis_lines.append(line.strip())
-
-        # Reconstruct main text and analysis
-        main_text = '\n'.join(main_text_lines)
-        analysis_text = '\n'.join(analysis_lines)
-        content_elements = parse_content_elements_segmented(main_text)
-
-        # Create and return the Segment object with the parsed annotations
-        return Segment(content_elements, annotations={'analysis': analysis_text, 'mwes': mwes})
-
+        trivial_result = parse_segment_mwe_trivial(segment_text)
+        if trivial_result:
+            return trivial_result
+        
     except Exception as e:
-        raise InternalisationError(message=f"Unable to internalise '{segment_text}' as an MWE segment. Error: {str(e)}")
+        message = f"Unable to internalise '{segment_text}' as an MWE segment. Error: {str(e)}"
+        print(message)
+        raise InternalisationError(message=message)
+
+def parse_segment_mwe_trivial(segment_text):
+    analysis_prefix = "_analysis:"
+    mwes_prefix = "_MWEs:"
+
+    if not analysis_prefix in segment_text and not mwes_prefix in segment_text:
+        no_full_analysis = True
+
+    components = segment_text.strip().split('#')
+    n_components = len(components)
+    if n_components != 3 or components[2].strip() != '':
+        no_minimal_analysis = True
+
+    if no_full_analysis and no_minimal_analysis:
+        content_elements = parse_content_elements_segmented(segment_text)
+        return Segment(content_elements, annotations={'analysis': '', 'mwes': []})
+    else:
+        return False
+    
+def parse_segment_mwe_full(segment_text):
+    # Split the entire segment into lines
+    lines = segment_text.split('\n')
+    main_text_lines = []
+    analysis_lines = []
+    mwes = []
+    analysis_found = False
+    mwes_found = False
+
+    analysis_prefix = "_analysis:"
+    mwes_prefix = "_MWEs:"
+
+    # Tracking the current section being processed
+    current_section = "main_text"
+
+    for line in lines:
+        if line.startswith(analysis_prefix):
+            current_section = "analysis"
+            analysis_found = True
+            analysis_lines.append(line[len(analysis_prefix):].strip())
+        elif line.startswith(mwes_prefix):
+            #current_section = "mwes"
+            mwes_found = True
+            all_mwes_text = line[len(mwes_prefix):].strip()
+            mwes_texts = [] if not all_mwes_text else all_mwes_text.split(',')
+            mwes = [mwe_text.split() for mwe_text in mwes_texts]
+        else:
+            if current_section == "main_text":
+                main_text_lines.append(line)
+            elif current_section == "analysis":
+                analysis_lines.append(line.strip())
+
+    if not analysis_found or not mwes_found:
+        return False
+
+    # Reconstruct main text and analysis
+    main_text = '\n'.join(main_text_lines)
+    analysis_text = '\n'.join(analysis_lines)
+    content_elements = parse_content_elements_segmented(main_text)
+
+    # Create and return the Segment object with the parsed annotations
+    return Segment(content_elements, annotations={'analysis': analysis_text, 'mwes': mwes})
+
+def parse_segment_mwe_minimal(segment_text):
+    components = segment_text.split('#')
+    n_components = len(components)
+    if n_components == 3 and components[2].strip() == '':
+        main_text = components[0]
+        all_mwes_text = components[1].strip()
+    else:
+        return False
+
+    content_elements = parse_content_elements_segmented(main_text)
+
+    # Create and return the Segment object with the parsed annotations
+    if all_mwes_text in ( '', '-' ):
+        # Don't add null translations
+        return Segment(content_elements, annotations={'analysis': '(removed)', 'mwes': []})
+    else:
+        mwes_texts = [] if not all_mwes_text else all_mwes_text.split(',')
+        mwes = [mwe_text.split() for mwe_text in mwes_texts]
+        return Segment(content_elements, annotations={'analysis': '(removed)', 'mwes': mwes})
 
 def parse_segment_translated(segment_text):
     try:

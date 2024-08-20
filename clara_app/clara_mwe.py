@@ -8,8 +8,8 @@ from itertools import product
 def simplify_mwe_tagged_text(mwe_tagged_text):
     ( l2_language, l1_language ) = ( 'irrelevant', 'irrelevant' )
     text_object = internalize_text(mwe_tagged_text, l2_language, l1_language, 'mwe')
-    simplify_mwe_tagged_text_object(text_object)
-    return text_object.to_text(annotation_type='mwe')
+    #simplify_mwe_tagged_text_object(text_object)
+    return text_object.to_text(annotation_type='mwe_minimal')
 
 def simplify_mwe_tagged_text_object(text_object):
     for page in text_object.pages:

@@ -4006,12 +4006,12 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     elif text_choice == 'mwe_simplify':
                         action, api_calls = ( 'generate', clara_project_internal.remove_analyses_from_mwe_tagged_text(user=username, label=label) )
                         store_api_calls(api_calls, project, request.user, this_version)
-                        annotated_text = clara_project_internal.load_text_version(this_version)
+                        annotated_text = clara_project_internal.load_text_version('mwe')
                         text_choice = 'manual'
                         success_message = f'Removed CoT traces from {this_version} text'
                         print(f'--- {success_message}')
                         messages.success(request, success_message)
-                        current_version = clara_project_internal.get_file_description(this_version, 'current')
+                        current_version = clara_project_internal.get_file_description('mwe', 'current')
                     # We are creating the text using Jieba. This operation is only possible with segmentation
                     elif text_choice == 'jieba':
                         action, api_calls = ( 'generate', clara_project_internal.create_segmented_text_using_jieba(user=username, label=label) )
@@ -4445,6 +4445,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                  'generate_image_descriptions',
                                  'create_image_request_sequence')
     clara_version = get_user_config(request.user)['clara_version']
+    username = request.user.username
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
@@ -4461,11 +4462,14 @@ def edit_images(request, project_id, dall_e_3_image_status):
                             'errors': None,
                         })
 
-    # Assuming segmented_text and internalised_segmented_text have already been loaded
-    segmented_text = clara_project_internal.load_text_version("segmented_with_images")
-    internalised_segmented_text = internalize_text(segmented_text, project.l2, project.l1, "segmented")
-    page_objects = internalised_segmented_text.pages
-    page_texts = [ page_object.to_text(annotation_type="plain") for page_object in page_objects ]
+    all_page_texts = clara_project_internal.get_page_texts()
+    #pprint.pprint(all_page_texts)
+    page_texts = all_page_texts['plain']
+    segmented_texts = all_page_texts['segmented']
+    translated_texts = all_page_texts['translated']
+    mwe_texts = all_page_texts['mwe']
+    lemma_texts = all_page_texts['lemma']
+    gloss_texts = all_page_texts['gloss']
 
     # Retrieve existing images
     images = clara_project_internal.get_all_project_images()
@@ -4476,17 +4480,63 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'associated_areas': img.associated_areas,
                      'page': img.page,
                      'page_text': page_texts[img.page - 1] if img.page <= len(page_texts) else '',
+                     'segmented_text': segmented_texts[img.page - 1] if img.page <= len(segmented_texts) else '',
+                     'translated_text': translated_texts[img.page - 1] if img.page <= len(translated_texts) else '',
+                     'mwe_text': mwe_texts[img.page - 1] if img.page <= len(mwe_texts) else '',
+                     'lemma_text': lemma_texts[img.page - 1] if img.page <= len(lemma_texts) else '',
+                     'gloss_text': gloss_texts[img.page - 1] if img.page <= len(gloss_texts) else '',
                      'position': img.position,
                      'style_description': img.style_description,
                      'content_description': img.content_description,
                      'request_type': img.request_type,
                      'description_variable': img.description_variable,
                      'description_variables': ', '.join(img.description_variables) if img.description_variables else '',
-                     'user_prompt': img.user_prompt
+                     'user_prompt': img.user_prompt,
+                     'display_text_fields': ( img.request_type == 'image-generation' ),
+                     'display_text_fields_label': 'Text versions' if ( img.request_type == 'image-generation' ) else 'none',
                      }
-                    for img in images]
+                    for img in images ]
+    #pprint.pprint(initial_data)
+
+    # Create placeholder image lines for pages that don't have an image, so that we can display the text versions for those pages.
+    used_page_numbers = [ item['page'] for item in initial_data ]
+    for page_number in range(1, len(page_texts) + 1):
+        if not page_number in used_page_numbers:
+            placeholder_data = {'image_file_path': None,
+                                'image_base_name': None,
+                                'image_name': f'image_{page_number}_top',
+                                'associated_text': '',
+                                'associated_areas': '',
+                                'page': page_number,
+                                'page_text': page_texts[page_number - 1] if page_number <= len(page_texts) else '',
+                                'segmented_text': segmented_texts[page_number - 1] if page_number <= len(segmented_texts) else '',
+                                'translated_text': translated_texts[page_number - 1] if page_number <= len(translated_texts) else '',
+                                'mwe_text': mwe_texts[page_number - 1] if page_number <= len(mwe_texts) else '',
+                                'lemma_text': lemma_texts[page_number - 1] if page_number <= len(lemma_texts) else '',
+                                'gloss_text': gloss_texts[page_number - 1] if page_number <= len(gloss_texts) else '',
+                                'position': 'top',
+                                'style_description': '',
+                                'content_description': '',
+                                'request_type': 'image-generation',
+                                'description_variable': None,
+                                'description_variables': '',
+                                'user_prompt': '',
+                                'display_text_fields': True,
+                                'display_text_fields_label': 'Text versions'
+                                }
+            initial_data.append(placeholder_data)
     # Sort by page number with generation requests first
     initial_data = sorted(initial_data, key=lambda x: ( x['page'] + ( 0 if x['request_type'] == 'image-generation' else 0.1 ) ) )
+
+    # Make sure that we only display text fields for the first image line with a given page number.
+    page_numbers_already_mentioned = []
+    for data in initial_data:
+        page_number = data['page']
+        if page_number in page_numbers_already_mentioned:
+            data['display_text_fields'] = False
+            data['display_text_fields_label'] = 'none'
+        else:
+            page_numbers_already_mentioned.append(page_number)
 
     #print(f'initial_data')
     #pprint.pprint(initial_data)
@@ -4568,9 +4618,47 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     #Redirect to the monitor view, passing the task ID and report ID as parameters
                     return redirect('create_dall_e_3_image_monitor', project_id, report_id)
 
+##            elif action == 'save_text':
+##                # Collect the edited text from the POST data
+##                new_plain_texts = []
+##                new_segmented_texts = []
+##                new_translated_texts = []
+##                new_mwe_texts = []
+##                new_lemma_texts = []
+##                new_gloss_texts = []
+##                formset = ImageFormSet(request.POST, prefix='images', form_kwargs={'valid_description_variables': valid_description_variables})
+##                #print(formset) 
+##                for i in range(0, len(formset) - 1):
+##                    form = formset[i]
+##                    #print(f"i = {i}")
+##                    #pprint.pprint(form)
+##                    if not form.is_valid():
+##                        print(f'--- Invalid description form data (form #{i}): {form}')
+##                        messages.error(request, "Invalid description form data.")
+##                        return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+##                    print(f"i = {i}. form.cleaned_data['display_text_fields_label'] = {form.cleaned_data['display_text_fields_label']}")
+##                    if form.cleaned_data['display_text_fields_label'] != 'none':
+##                        new_plain_texts.append(form.cleaned_data['page_text'])
+##                        new_segmented_texts.append(form.cleaned_data['segmented_text'])
+##                        new_translated_texts.append(form.cleaned_data['translated_text'])
+##                        new_mwe_texts.append(form.cleaned_data['mwe_text'])
+##                        new_lemma_texts.append(form.cleaned_data['lemma_text'])
+##                        new_gloss_texts.append(form.cleaned_data['gloss_text'])
+##
+##                # Save the concatenated texts back to the project
+##                clara_project_internal.save_page_texts('plain', new_plain_texts, user=username)
+##                clara_project_internal.save_page_texts('segmented', new_segmented_texts, user=username)
+##                clara_project_internal.save_page_texts('translated', new_translated_texts, user=username)
+##                clara_project_internal.save_page_texts('mwe', new_mwe_texts, user=username)
+##                clara_project_internal.save_page_texts('lemma', new_lemma_texts, user=username)
+##                clara_project_internal.save_page_texts('gloss', new_gloss_texts, user=username)
+##
+##                messages.success(request, "Texts saved successfully.")
+##                return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                
             elif action == 'save_image_descriptions':
                 description_formset = ImageDescriptionFormSet(request.POST, prefix='descriptions')
-                print(description_formset)
+                #print(description_formset)
                 for i in range(0, len(description_formset)):
                     form = description_formset[i]
                     # Only use the last row if a new description variable has been filled in
@@ -4593,7 +4681,35 @@ def edit_images(request, project_id, dall_e_3_image_status):
                 return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
             else:
                 image_requests = []
+                new_plain_texts = []
+                new_segmented_texts = []
+                new_translated_texts = []
+                new_mwe_texts = []
+                new_lemma_texts = []
+                new_gloss_texts = []
                 formset = ImageFormSet(request.POST, request.FILES, prefix='images', form_kwargs={'valid_description_variables': valid_description_variables})
+##                for i in range(0, len(formset) - 1):
+##                    form = formset[i]
+##                    if not form.is_valid():
+##                        print(f'--- Invalid description form data (form #{i}): {form}')
+##                        messages.error(request, "Invalid description form data.")
+##                        return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+##                    if form.cleaned_data['display_text_fields_label'] != 'none':
+##                        new_plain_texts.append(form.cleaned_data['page_text'])
+##                        new_segmented_texts.append(form.cleaned_data['segmented_text'])
+##                        new_translated_texts.append(form.cleaned_data['translated_text'])
+##                        new_mwe_texts.append(form.cleaned_data['mwe_text'])
+##                        new_lemma_texts.append(form.cleaned_data['lemma_text'])
+##                        new_gloss_texts.append(form.cleaned_data['gloss_text'])
+##
+##                # Save the concatenated texts back to the project
+##                clara_project_internal.save_page_texts('plain', new_plain_texts, user=username)
+##                clara_project_internal.save_page_texts('segmented', new_segmented_texts, user=username)
+##                clara_project_internal.save_page_texts('translated', new_translated_texts, user=username)
+##                clara_project_internal.save_page_texts('mwe', new_mwe_texts, user=username)
+##                clara_project_internal.save_page_texts('lemma', new_lemma_texts, user=username)
+##                clara_project_internal.save_page_texts('gloss', new_gloss_texts, user=username)
+                
                 errors = None
                 if not formset.is_valid():
                     errors = formset.errors
@@ -4619,6 +4735,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     })
                 for i in range(0, len(formset)):
                     form = formset[i]
+                    print(f"i = {i}. form.cleaned_data['display_text_fields'] = {form.cleaned_data['display_text_fields']}")
                     previous_record = initial_data[i] if i < len(initial_data) else None
                     #print(f'previous_record#{i} = {previous_record}')
                     # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
@@ -4643,6 +4760,15 @@ def edit_images(request, project_id, dall_e_3_image_status):
                         else:
                             real_image_file_path = None
                             uploaded_file = False
+
+                        if 'display_text_fields_label' in form.cleaned_data and form.cleaned_data['display_text_fields_label'] == 'Text versions':
+                            new_plain_texts.append(form.cleaned_data['page_text'])
+                            new_segmented_texts.append(form.cleaned_data['segmented_text'])
+                            new_translated_texts.append(form.cleaned_data['translated_text'])
+                            new_mwe_texts.append(form.cleaned_data['mwe_text'])
+                            new_lemma_texts.append(form.cleaned_data['lemma_text'])
+                            new_gloss_texts.append(form.cleaned_data['gloss_text'])
+                            
                         associated_text = form.cleaned_data.get('associated_text')
                         associated_areas = form.cleaned_data.get('associated_areas')
                         page = form.cleaned_data.get('page', 1)
@@ -4718,6 +4844,14 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                      description_variables=description_variables,
                                                                      archive=uploaded_file # Unless it's an uploaded file, we don't want to archive
                                                                      )
+                            
+                # Save the concatenated texts back to the project
+                clara_project_internal.save_page_texts('plain', new_plain_texts, user=username)
+                clara_project_internal.save_page_texts('segmented', new_segmented_texts, user=username)
+                clara_project_internal.save_page_texts('translated', new_translated_texts, user=username)
+                clara_project_internal.save_page_texts('mwe', new_mwe_texts, user=username)
+                clara_project_internal.save_page_texts('lemma', new_lemma_texts, user=username)
+                clara_project_internal.save_page_texts('gloss', new_gloss_texts, user=username)
                                                    
                 if len(image_requests) != 0:
                     if not user_has_open_ai_key_or_credit(request.user):

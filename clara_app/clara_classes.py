@@ -54,7 +54,7 @@ class ContentElement:
                 lemma, pos = ( annotations['lemma'], annotations['pos'] )
                 escaped_lemma = escape_special_chars(lemma)
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
-            elif annotation_type in ( 'plain', 'segmented', 'mwe', 'translated' ):
+            elif annotation_type in ( 'plain', 'segmented', 'mwe', 'mwe_minimal', 'translated' ):
                 return self.content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])
@@ -83,7 +83,7 @@ class Segment:
         for element in self.content_elements:
             this_type = element.type
             # When producing 'segmented' or 'phonetic' text, we need to add | markers between continuous Words.
-            if annotation_type in ( 'segmented', 'mwe', 'translated', 'phonetic' ) and this_type == 'Word' and last_type == 'Word':
+            if annotation_type in ( 'segmented', 'mwe', 'mwe_minimal', 'translated', 'phonetic' ) and this_type == 'Word' and last_type == 'Word':
                 out_text += '|'
             if annotation_type == 'segmented_for_labelled':
                 if element.type in ( 'Word', 'NonWordText' ):
@@ -101,6 +101,13 @@ class Segment:
                 #print(f'annotations["mwes"] = {mwes}')
                 mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
                 out_text += f"\n_analysis: {analysis_text}\n_MWEs: {mwes_text}"
+        if annotation_type == 'mwe_minimal':
+            annotations = self.annotations
+            if 'mwes' in annotations:
+                mwes = annotations['mwes']
+                if mwes:
+                    mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+                    out_text += f"#{mwes_text}#"
         if annotation_type == 'translated':
             annotations = self.annotations
             if 'translated' in annotations:

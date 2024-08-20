@@ -740,7 +740,22 @@ class ImageForm(forms.Form):
     associated_text = forms.CharField(label='Associated Text', widget=forms.Textarea, required=False)
     associated_areas = forms.CharField(label='Associated Areas', widget=forms.Textarea, required=False)
     page_text = forms.CharField(label='Page Text',
-                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100, 'readonly': 'readonly'}),
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    segmented_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    translated_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    mwe_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    lemma_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    gloss_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
                                 required=False)
     page = forms.IntegerField(label='Page Number', min_value=0, required=False)
     position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=False)
@@ -755,6 +770,10 @@ class ImageForm(forms.Form):
     description_variables = forms.CharField(label='Description Variables', widget=forms.Textarea(attrs={'rows': 4}), required=False)
     generate = forms.BooleanField(label='Generate Image', required=False)
     delete = forms.BooleanField(label='Delete Image', required=False)
+    display_text_fields = forms.BooleanField(label='Display Text Fields', required=False)
+    display_text_fields_label = forms.CharField(label='Display Text Fields Text',
+                                widget=forms.Textarea(attrs={'rows': 1, 'cols': 100, 'readonly': 'readonly'}),
+                                required=False)
 
     def __init__(self, *args, **kwargs):
         self.valid_description_variables = kwargs.pop('valid_description_variables', [])

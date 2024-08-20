@@ -601,6 +601,93 @@ class CLARAProjectInternal:
 
         return diff_text_objects(internalised_text1, internalised_text2, version, required)
 
+    # Get different versions of the text cut up into pages. If a version doesn't exist, make a dummy version.
+    def get_page_texts(self):
+        if not self.text_versions["segmented"]:
+            raise InternalCLARAError(message = 'No segmented text, unable to produce page texts')
+
+        page_texts = {}
+
+        segmented_text = self.load_text_version("segmented_with_images")
+        internalised_segmented_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+        segmented_page_objects = internalised_segmented_text.pages
+        page_texts['plain'] = [ page_object.to_text(annotation_type="plain").replace('<page>', '')
+                                for page_object in segmented_page_objects ]
+        page_texts['segmented'] = [ page_object.to_text(annotation_type="segmented").replace('<page>', '')
+                                    for page_object in segmented_page_objects ]
+
+        if self.text_versions["mwe"]:
+            mwe_text = self.load_text_version("mwe")
+            internalised_mwe_text = internalize_text(mwe_text, self.l2_language, self.l1_language, "mwe")
+        else:
+            internalised_mwe_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            for page in internalised_mwe_text.pages:
+                for segment in page.segments:
+                    segment.annotations = { "mwes": [], "analysis": '' }
+        mwe_page_objects = internalised_mwe_text.pages
+        page_texts['mwe'] = [ page_object.to_text(annotation_type="mwe_minimal").replace('<page>', '')
+                              for page_object in mwe_page_objects ]
+
+        if self.text_versions["translated"]:
+            translation_text = self.load_text_version("translated")
+            internalised_translation_text = internalize_text(translation_text, self.l2_language, self.l1_language, "translated")
+        else:
+            internalised_translation_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            for page in internalised_translation_text.pages:
+                for segment in page.segments:
+                    segment.annotations = { "translated": '' }
+        translation_page_objects = internalised_translation_text.pages
+        page_texts['translated'] = [ page_object.to_text(annotation_type="translated").replace('<page>', '')
+                                     for page_object in translation_page_objects ]
+
+        if self.text_versions["lemma"]:
+            lemma_text = self.load_text_version("lemma")
+            internalised_lemma_text = internalize_text(lemma_text, self.l2_language, self.l1_language, "lemma")
+        else:
+            internalised_lemma_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            for page in internalised_lemma_text.pages:
+                for segment in page.segments:
+                    for element in segment.content_elements:
+                        element.annotations = { "lemma": element.context, "pos": 'X' }
+        lemma_page_objects = internalised_lemma_text.pages
+        page_texts['lemma'] = [ page_object.to_text(annotation_type="lemma").replace('<page>', '')
+                                for page_object in lemma_page_objects ]
+
+        if self.text_versions["gloss"]:
+            gloss_text = self.load_text_version("gloss")
+            internalised_gloss_text = internalize_text(gloss_text, self.l2_language, self.l1_language, "gloss")
+        else:
+            internalised_lemma_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            for page in internalised_lemma_text.pages:
+                for segment in page.segments:
+                    for element in segment.content_elements:
+                        element.annotations = { "gloss": '-' }
+        gloss_page_objects = internalised_gloss_text.pages
+        page_texts['gloss'] = [ page_object.to_text(annotation_type="gloss").replace('<page>', '')
+                                for page_object in gloss_page_objects ]
+
+        # Remove texts for the pages we only use for annotated images
+        for key in page_texts:
+            page_texts[key] = [ text for text in page_texts[key] if not '<page img=' in text ]
+
+        return page_texts
+
+    def save_page_texts(self, text_type, page_texts, user=''):
+        #print(f'save_page_texts(self, {text_type}, {page_texts}, user={user})')
+        if not page_texts:
+            return
+        elif text_type == 'segmented' and '<h1>' in page_texts[0]:
+            # The first element is the segmented title
+            segmented_title_text = page_texts[0].replace('<h1>', '').replace('</h1>', '').replace('||', '')
+            segmented_text = "\n<page>".join(page_texts[1:])
+            self.save_text_version('segmented_title', segmented_title_text, user=user, source='human_revised')
+            self.save_text_version('segmented', segmented_text, user=user, source='human_revised')
+        else:
+            # Concatenate the page texts into a single string, putting <page> tags in between.
+            full_text = "\n<page>".join(page_texts)
+            # Save the text back to the project
+            self.save_text_version(text_type, full_text, user=user, source='human_revised')
+
     # Create a prompt using null text to see if there is a template error
     def try_to_use_templates(self, generate_or_improve, version):
         return invoke_templates_on_trivial_text(generate_or_improve, version, self.l1_language, self.l2_language)
