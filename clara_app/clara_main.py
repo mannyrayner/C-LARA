@@ -648,7 +648,7 @@ class CLARAProjectInternal:
             for page in internalised_lemma_text.pages:
                 for segment in page.segments:
                     for element in segment.content_elements:
-                        element.annotations = { "lemma": element.context, "pos": 'X' }
+                        element.annotations = { "lemma": element.content, "pos": 'X' }
         lemma_page_objects = internalised_lemma_text.pages
         page_texts['lemma'] = [ page_object.to_text(annotation_type="lemma").replace('<page>', '')
                                 for page_object in lemma_page_objects ]
@@ -657,7 +657,7 @@ class CLARAProjectInternal:
             gloss_text = self.load_text_version("gloss")
             internalised_gloss_text = internalize_text(gloss_text, self.l2_language, self.l1_language, "gloss")
         else:
-            internalised_lemma_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            internalised_gloss_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
             for page in internalised_lemma_text.pages:
                 for segment in page.segments:
                     for element in segment.content_elements:
