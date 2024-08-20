@@ -87,6 +87,13 @@
 	  </form>
   {% endif %}
   <h3>Upload/generate/delete existing images</h3>
+  <form id="display-options-form">
+    <label><input type="checkbox" id="show-segmented" checked> Display Segmented Text</label>
+    <label><input type="checkbox" id="show-translated" checked> Display Translated Text</label>
+    <label><input type="checkbox" id="show-mwe" checked> Display MWE Text</label>
+    <label><input type="checkbox" id="show-lemma" checked> Display Lemma Text</label>
+    <label><input type="checkbox" id="show-gloss" checked> Display Gloss Text</label>
+   </form>
   <form method="post" prefix="images" enctype="multipart/form-data">
     {% csrf_token %}
     {{ formset.management_form }}
@@ -102,13 +109,6 @@
       </thead>
       <tbody>
         {% for form in formset %}
-		  <tr>
-		    {% if uses_coherent_image_set %}
-		       <td colspan="8">{{ form.page_text }}</td>
-			{% else %}
-			   <td colspan="6">{{ form.page_text }}</td>
-			{% endif %}   
-		  </tr>
           <tr>
 		    {% if uses_coherent_image_set %}
 			   <td>{{ form.request_type }}</td>
@@ -160,18 +160,97 @@
                <td>{{ form.delete }}</td>
 			{% endif %}
           </tr>
+		  <input type="hidden" name="{{ form.display_text_fields.name }}" value="{{ form.display_text_fields.value }}">
+		  {% if form.display_text_fields.value %}
+			  <tr>
+				{% if uses_coherent_image_set %}
+				   <td></td><td colspan="8">{{ form.display_text_fields_label }}</td>
+				{% else %}
+				   <td></td><td colspan="6">{{ form.display_text_fields_label }}</td>
+				{% endif %}   
+			  </tr>
+			  <tr>
+				{% if uses_coherent_image_set %}
+				   <td>Plain text</td><td colspan="8">{{ form.page_text }}</td>
+				{% else %}
+				   <td>Plain text</td><td colspan="6">{{ form.page_text }}</td>
+				{% endif %}   
+			  </tr>
+			  <tr class="segmented-text-row">
+				{% if uses_coherent_image_set %}
+				   <td>Segmented text</td><td colspan="8">{{ form.segmented_text }}</td>
+				{% else %}
+				   <td>Segmented text</td><td colspan="6">{{ form.segmented_text }}</td>
+				{% endif %}   
+			  </tr>
+			  <tr class="translated-text-row">
+				{% if uses_coherent_image_set %}
+				   <td>Translated text</td><td colspan="8">{{ form.translated_text }}</td>
+				{% else %}
+				   <td>Translated text</td><td colspan="6">{{ form.translated_text }}</td>
+				{% endif %}   
+			  </tr>
+			  <tr class="mwe-text-row">
+				{% if uses_coherent_image_set %}
+				   <td>MWE-tagged text</td><td colspan="8">{{ form.mwe_text }}</td>
+				{% else %}
+				   <td>MWE-tagged text</td><td colspan="6">{{ form.mwe_text }}</td>
+				{% endif %}   
+			  </tr>
+			  <tr class="gloss-text-row">
+				{% if uses_coherent_image_set %}
+				   <td>Glossed text</td><td colspan="8">{{ form.gloss_text }}</td> 
+				{% else %}
+				   <td>Glossed text</td><td colspan="6">{{ form.gloss_text }}</td>
+				{% endif %}   
+			  </tr>
+			  <tr class="lemma-text-row">
+				{% if uses_coherent_image_set %}
+				   <td>Lemma-tagged text</td><td colspan="8">{{ form.lemma_text }}</td>
+				{% else %}
+				   <td>Lemma-tagged text</td><td colspan="6">{{ form.lemma_text }}</td>
+				{% endif %}   
+			  </tr>
+		  {% endif %}
         {% endfor %}
       </tbody>
     </table>
 	{% if uses_coherent_image_set %}
-       <button type="submit" name="action" value="generate">Process</button>
+       <button type="submit" name="action" value="generate">Save/process</button>
 	{% else %}
-	   <button type="submit" name="action" value="save_changes">Save changes</button>
+	   <button type="submit" name="action" value="save_changes">Save</button>
 	{% endif %}
+	
   </form>
   </div>
   
   <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
   </div>
+  
+  <script>
+  document.getElementById('show-segmented').addEventListener('change', function() {
+    toggleDisplay('segmented-text-row', this.checked);
+  });
+  document.getElementById('show-translated').addEventListener('change', function() {
+    toggleDisplay('translated-text-row', this.checked);
+  });
+  document.getElementById('show-mwe').addEventListener('change', function() {
+    toggleDisplay('mwe-text-row', this.checked);
+  });
+  document.getElementById('show-gloss').addEventListener('change', function() {
+    toggleDisplay('gloss-text-row', this.checked);
+  });
+  document.getElementById('show-lemma').addEventListener('change', function() {
+    toggleDisplay('lemma-text-row', this.checked);
+  });
+
+  function toggleDisplay(className, show) {
+    const elements = document.getElementsByClassName(className);
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].style.display = show ? '' : 'none';
+    }
+  }
+  </script>
+
 {% endblock %}
