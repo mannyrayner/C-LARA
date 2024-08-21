@@ -1,3 +1,15 @@
+"""
+Perform GPT-4 related operations
+
+The actual GPT-4 calls are made using the function get_api_chatgpt4_response, defined in clara_chatgpt4
+If you want to use another LLM, you need to provide a similar function
+
+Functions are async to allow multiple simultaneos calls
+
+We pass the list of available moves so that we can catch responses which suggest an illegal move.
+If this happens, we retry.
+"""
+
 from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic, get_available_moves
 from .clara_chatgpt4 import get_api_chatgpt4_response, interpret_chat_gpt4_response_as_json
 from .clara_utils import post_task_update, post_task_update_async
@@ -9,16 +21,22 @@ import traceback
 
 max_number_of_gpt4_tries = 5
 
+# Get a move using a plain GPT-4 prompt
 async def request_minimal_gpt4_move_async(board, player, callback=None):
     formatted_request = format_minimal_gpt4_request(board, player)
     available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
     return await call_gpt4_with_retry_async(formatted_request, available_moves, callback=callback)
 
+# Get a move using a Chain of Thought GPT-4 prompt with few-shot examples.
+# The list of few-shot examples can be empty
 async def request_cot_analysis_and_move_async(board, player, cot_template_name, few_shot_examples, callback=None):
     formatted_request = format_cot_request(board, player, cot_template_name, few_shot_examples)
     available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
     return await call_gpt4_with_retry_async(formatted_request, available_moves, callback=callback)
 
+# Get a move using a Chain of Thought GPT-4 prompt with few-shot examples.
+# The list of few-shot examples can be empty
+# Make the request multiple times until the same move has been returned twice.
 async def request_cot_analysis_and_move_with_voting_async(board, player, cot_template_name, few_shot_examples, callback=None):
     formatted_request = format_cot_request(board, player, cot_template_name, few_shot_examples)
     available_moves = [index_to_algebraic(move) for move in get_available_moves(board)]
@@ -51,6 +69,13 @@ async def request_cot_analysis_and_move_with_voting_async(board, player, cot_tem
         if move_counts[move] == 2:
             return {'selected_move': move, 'cot_record': cot_records[move], 'prompt': formatted_request, 'api_calls': api_calls}
 
+# Submit a request to GPT-4, interpret it as JSON, extract the move, and check that it is a legal one.
+# If it isn't, retry.
+# Return a dict of the form
+#
+# {'cot_record': response_string, 'prompt': formatted_request, 'selected_move': selected_move, 'api_calls': api_calls}
+#
+# We use the api_call objects to get costs.
 async def call_gpt4_with_retry_async(formatted_request, available_moves, gpt_model='gpt-4o', callback=None):
     api_calls = []
     n_attempts = 0
@@ -76,6 +101,7 @@ async def call_gpt4_with_retry_async(formatted_request, available_moves, gpt_mod
             await post_task_update_async(callback, f'*** Warning: error when sending request to GPT-4o')
             await post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
 
+# Call GPT-4 to try to determine if a CoT response gave the right answer using consistent reasons.
 async def call_gpt4_with_retry_for_cot_evaluation_async(formatted_request, gpt_model='gpt-4o', callback=None):
     api_calls = []
     n_attempts = 0

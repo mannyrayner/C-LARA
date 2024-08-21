@@ -1,3 +1,9 @@
+"""
+Call GPT-4 to try and evaluate whether a CoT analysis which gave a correct answer did it for plausible reasons.
+
+This uses the output from immediate_threats_and_opportunities in tictactoe_engine to get ground truth information about the position.
+"""
+
 from .tictactoe_engine import get_opponent, algebraic_to_index, index_to_algebraic, drawn_board_str, immediate_threats_and_opportunities
 from .tictactoe_gpt4 import call_gpt4_with_retry_for_cot_evaluation_async, format_board_for_gpt4
 

@@ -1,3 +1,7 @@
+"""
+Create and manage the directories which hold the results of experiments
+"""
+
 from .tictactoe_evaluate_cot import evaluate_cot_record_async
 from .tictactoe_engine import minimax, get_available_moves, apply_move, get_opponent, get_turn_value, get_center_square_value
 from .tictactoe_engine import index_to_algebraic, algebraic_to_index, drawn_board_str, check_win, check_draw
@@ -10,8 +14,12 @@ import random
 from collections import defaultdict
 import asyncio
 
-supported_strategies = ( 'n_maximally_different', 'closest_few_shot_example',
-                         'closest_few_shot_example_explicit', 'closest_few_shot_example_explicit_with_voting',
+supported_strategies = ( 'closest_few_shot_example_explicit_with_voting', # This looks like the best strategy
+                                                                          # The others were earlier tries
+
+                         'n_maximally_different',
+                         'closest_few_shot_example',
+                         'closest_few_shot_example_explicit',
                          'closest_few_shot_example_incremental' )
 
 def create_experiment_dir(experiment_name, strategy='n_maximally_different', base_dir='$CLARA/tictactoe_experiments'):
@@ -91,6 +99,8 @@ def save_game_log(experiment_name, cycle_number, opponent_player, color, game_lo
     human_readable_log_path = os.path.join(cycle_dir, f'game_log_{opponent_player}_{color}.txt')
     with open(human_readable_log_path, 'w', encoding='utf-8') as f:
         f.write(human_readable_log)
+
+# These functions were used to clean up an accident and are not needed anymore.
 
 def correct_game_log_file(experiment_name, cycle_number, opponent_player, color):
     cycle_dir = get_cycle_dir(experiment_name, cycle_number)

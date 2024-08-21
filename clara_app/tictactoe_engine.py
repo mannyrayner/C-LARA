@@ -1,5 +1,22 @@
+"""
+Code for the perfect minimax Tic-Tac-Toe engine, and using it to detect key tactical motifs.
+
+A Tic-Tac-Toe position is represented as a list of 9 elements giving the state of each square on the board:
+
+0 1 2
+3 4 5
+6 7 8
+
+The value must be ' ', 'X' or 'O'
+
+Squares are represented either as indices (number from 0 to 8) or in chess-style algebraic notation
+(a1 to c3). The internal representation is the index, but for external use, i.e. humans and AIs, it's
+more convenient to use the algebraic notation.
+"""
+
 import pprint
 
+# Convert an algebraic square location to an index.
 def algebraic_to_index(algebraic):
     conversion = {
         'a1': 0, 'a2': 3, 'a3': 6,
@@ -8,6 +25,7 @@ def algebraic_to_index(algebraic):
     }
     return conversion[algebraic]
 
+# Convert an index square location to algebraic.
 def index_to_algebraic(index):
     conversion = {
         0: 'a1', 3: 'a2', 6: 'a3',
@@ -16,15 +34,19 @@ def index_to_algebraic(index):
     }
     return conversion[index]
 
+# Get the name of the opposing player.
 def get_opponent(player):
     return 'O' if player == 'X' else 'X'
 
+# Get the value of the critical central square.
 def get_center_square_value(board):
     return board[algebraic_to_index('b2')]
 
+# Get the turn number by seeing how many empty squares there are and subtracting.
 def get_turn_value(board):
     return 1 + 9 - len(get_available_moves(board))
 
+# Check whether a given player has won.
 def check_win(board, player):
     win_conditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],  # horizontal
@@ -36,17 +58,28 @@ def check_win(board, player):
             return True
     return False
 
+# Check whether the board is full
 def check_draw(board):
     return all(s != ' ' for s in board)
 
+# Return the empty squares.
 def get_available_moves(board):
     return [i for i, s in enumerate(board) if s == ' ']
 
+# Return the board state resulting from making a move
 def apply_move(board, move, player):
     new_board = board.copy()
     new_board[move] = player
     return new_board
 
+# Perfect player.
+# board is the board position
+# player is the player to move
+# depth is the depth searched (for the initial call this should be 0)
+#
+# Returns a pair ( value, best_move ) where
+# value is the result with correct play ( 1 = X wins, 0 = draw, -1 = O wins)
+# best_move is a move which will produce the best result with continued best play on each side
 def minimax(board, player, depth):
     opponent = get_opponent(player)
     
@@ -79,6 +112,7 @@ def minimax(board, player, depth):
     
     return best_value, best_move
 
+# Create a board state from a list of positions for X and O.
 def get_board_from_positions(x_positions, o_positions):
     board = [' ' for _ in range(9)]
     for pos in x_positions:
@@ -87,6 +121,7 @@ def get_board_from_positions(x_positions, o_positions):
         board[pos] = 'O'
     return board
 
+# Use the perfect player to get the position evaluation
 def minimax_tic_tac_toe(x_positions_algebraic, o_positions_algebraic, player_to_move):
     x_positions = [algebraic_to_index(pos) for pos in x_positions_algebraic]
     o_positions = [algebraic_to_index(pos) for pos in o_positions_algebraic]
@@ -101,9 +136,11 @@ def minimax_tic_tac_toe(x_positions_algebraic, o_positions_algebraic, player_to_
     
     return result, best_move_algebraic
 
+# Print the board position in a graphical human-friendly way
 def draw_board(board):
     print(drawn_board_str(board))
 
+# String with graphical human-friendly board position
 def drawn_board_str(board):
     out_str = "  a b c\n"
     for row in range(2, -1, -1):
@@ -112,6 +149,11 @@ def drawn_board_str(board):
 
 # -----------------------------------------
 
+# Returns current status of game as one of the following:
+# ( 'win', 'X') Game is over and X won
+# ( 'win', 'O' ) Game is over and O wom
+# ( 'draw', None ) Game is over and it was a draw
+# ('ongoing', None ) Game is still in progress
 def is_game_over(board):
     if check_win(board, 'X'):
         return 'win', 'X'
@@ -122,6 +164,8 @@ def is_game_over(board):
     else:
         return 'ongoing', None
 
+# board is a position and player is to play.
+# Return the moves, in index form, which would let player win on the next move.
 def get_threatened_moves(board, player):
     threatened_moves = []
     available_moves = get_available_moves(board)
@@ -132,6 +176,8 @@ def get_threatened_moves(board, player):
         board[move] = ' '
     return threatened_moves
 
+# board is a position and player is to play.
+# Return the moves, in index form, which would let player threaten to win on the next move.
 def get_threat_moves(board, player):
     threat_moves = []
     available_moves = get_available_moves(board)
@@ -142,6 +188,8 @@ def get_threat_moves(board, player):
         board[move] = ' '
     return threat_moves
 
+# board is a position and player is to play.
+# Return the moves, in index form, which would let player threaten to win on the next move in two or more ways
 def get_double_threat_moves(board, player):
     double_threat_moves = []
     available_moves = get_available_moves(board)
@@ -152,14 +200,16 @@ def get_double_threat_moves(board, player):
         board[move] = ' '
     return double_threat_moves
 
+# board is a position and player is to play.
+# Return the moves, in algebraic form, for the common tactical motifs
 def immediate_threats_and_opportunities(board, player):
     opponent = get_opponent(player)
     move_summaries = {
-        'winning_moves': [],
-        'opponent_threats': [],
-        'double_threat': [],
-        'single_threat': [],
-        'double_threat_follow_up_to_single_threat': None
+        'winning_moves': [],        # Immediate wins by player
+        'opponent_threats': [],     # Moves that would let the opponent make a line if they were to move
+        'double_threat': [],        # Moves that let player make a double threat to win
+        'single_threat': [],        # Moves that let player make a single threat to win
+        'double_threat_follow_up_to_single_threat': None      # A threat that can be followed up by a winning double threat
     }
     
     available_moves = get_available_moves(board)
@@ -201,6 +251,7 @@ def immediate_threats_and_opportunities(board, player):
 
     return move_summaries
 
+# Return the result of immediate_threats_and_opportunities + the game status
 def generate_position_summary(board, player):
     game_status, winner = is_game_over(board)
     summary = {
@@ -213,6 +264,7 @@ def generate_position_summary(board, player):
     
     return summary
 
+# Test above function
 def test_generate_position_summary(x_positions_algebraic, o_positions_algebraic, player_to_move):
     x_positions = [algebraic_to_index(pos) for pos in x_positions_algebraic]
     o_positions = [algebraic_to_index(pos) for pos in o_positions_algebraic]
