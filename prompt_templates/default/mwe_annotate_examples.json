@@ -12,6 +12,11 @@
     [
         "Il s' évade.",
         "s' évade",
-        "Analysis: \"Il\", \"s'\", \"évade\" is a very short passage with a clear meaning, which translates to \"He escapes\" in English.\r\n\r\n- \"Il\" is just the subject pronoun \"He\", so it does not form part of any MWE.\r\n- \"s'\" is a reflexive pronoun. In this case, it is part of the reflexive verb \"s'évader\".\r\n- \"évade\" is an inflected form of the verb \"évader\". When combined with \"s'\", it becomes the reflexive verb \"s'évader\", meaning \"escapes\", which functions as a single verb and can be expected to be found in a comprehensive lexicon.\r\n\r\nSo, by satisfying the definition of an MWE provided above, \"s'évade\" can be considered a Multi-Word Expression. Following the instructions, we write this out as a string of components from the original JSON list separated by spaces, i.e. \"s' évade\""
+        "\"Il\", \"s'\", \"évade\" is a very short passage with a clear meaning, which translates to \"He escapes\" in English.\r\n\r\n- \"Il\" is just the subject pronoun \"He\", so it does not form part of any MWE.\r\n- \"s'\" is a reflexive pronoun. In this case, it is part of the reflexive verb \"s'évader\".\r\n- \"évade\" is an inflected form of the verb \"évader\". When combined with \"s'\", it becomes the reflexive verb \"s'évader\", meaning \"escapes\", which functions as a single verb and can be expected to be found in a comprehensive lexicon.\r\n\r\nSo, by satisfying the definition of an MWE provided above, \"s'évade\" can be considered a Multi-Word Expression. Following the instructions, we write this out as a string of components from the original JSON list separated by spaces, i.e. \"s' évade\""
+    ],
+    [
+        "He has a broken-down old station wagon.",
+        "broken - down, station wagon",
+        "- \"broken-down\" is a participle form of the phrasal verb \"break down\", hence an MWE.\r\n- \"station wagon\" is a nominal compound whose meaning is not deducible from its component words, hence an MWE."
     ]
 ]
