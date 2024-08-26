@@ -33,7 +33,7 @@ from . import clara_chatgpt4
 from . import clara_internalise
 
 from .clara_mwe import find_mwe_positions_for_content_elements
-from .clara_utils import get_config, post_task_update, post_task_update_async
+from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings
 from .clara_classes import *
 
 import asyncio
@@ -930,7 +930,8 @@ def mwe_tagging_example_to_example_text(mwe_example, l2_language, l1_language):
     #             'Boxing Day' is a set expression whose meaning is not deducible from its component words, hence an MWE'"
     example_text, mwes_text, analysis = mwe_example
     simplified_internalised_example_words = annotated_string_to_simplified_internalised_form(example_text, l2_language, l1_language, 'segmented')
-    mwes = [ mwe.strip() for mwe in mwes_text.split(',') ]
+    #mwes = [ mwe.strip() for mwe in mwes_text.split(',') ]
+    mwes = [ mwe.strip().split() for mwe in mwes_text.split(',') ]
     return f'Input: {json.dumps(simplified_internalised_example_words)}\nAnalysis: {analysis}\nOutput: {json.dumps(mwes)}'
 
 def morphology_example_to_example_text(morphology_example, l2_language):
@@ -1088,12 +1089,19 @@ def parse_chatgpt_annotation_response(response, simplified_elements, processing_
     if processing_phase == 'mwe':
         # Extract the initial analysis text and the JSON list
         intro, response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list', callback=callback)
-        if isinstance(response_object, list):
-            mwes = [element.split() for element in response_object]
+##        if isinstance(response_object, list):
+##            mwes = [element.split() for element in response_object]
+        #print(f'intro = "{intro}", response_object = {response_object}')
+        if is_list_of_lists_of_strings(response_object):
+            print(f'Well-formed MWE response: {response_object}')
+            mwes = response_object
             # Return a structure containing both the analysis and the list of MWEs
             return {'analysis': intro, 'mwes': mwes}
         else:
-            raise ChatGPTError(message=f'Response is not a list: {response}')
+            message = f'Response is not a list of lists of strings: {response_object}'
+            print(message)
+            post_task_update_async(callback, message)
+            raise ChatGPTError(message=message)
         
     if processing_phase == 'translated':
         response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)

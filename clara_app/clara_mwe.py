@@ -55,7 +55,7 @@ def find_mwe_positions_for_content_elements(content_elements, mwe, callback=None
     all_positions = []
     
     for word in mwe:
-        positions = [i for i, element in enumerate(content_elements) if element.type == 'Word' and element.content == word]
+        positions = [i for i, element in enumerate(content_elements) if element.content == word]
         if not positions:
             message = f"MWE error: the word '{word}' in the MWE '{mwe_text}' is not one of the words in '{segment_text}'."
             post_task_update(callback, message)

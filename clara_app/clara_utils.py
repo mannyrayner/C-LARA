@@ -766,7 +766,18 @@ def os_environ_or_none(environment_variable):
 
 ## Merge two dictionaries
 def merge_dicts(X, Y):
-    return { **X, **Y } 
+    return { **X, **Y }
+
+def is_list_of_lists_of_strings(X):
+    if not isinstance(X, ( list, tuple )):
+        return False
+    for X1 in X:
+        if not isinstance(X1, ( list, tuple )):
+            return False
+        for X2 in X1:
+            if not isinstance(X2, ( str )):
+                return False
+    return True
 
 def get_config():
     file = '$CLARA/clara_app/config.ini'
