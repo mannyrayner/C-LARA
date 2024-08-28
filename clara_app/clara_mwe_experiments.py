@@ -1,10 +1,11 @@
 from .clara_internalise import internalize_text
 from .clara_create_annotations import call_chatgpt4_to_annotate_or_improve_elements_async
-from .clara_utils import absolute_file_name
+from .clara_utils import absolute_file_name, read_json_file, post_task_update_async
 
 import re
 import json
 import asyncio
+import pprint
 from collections import defaultdict
 
 def convert_speckled_band():
@@ -83,22 +84,47 @@ def write_mwes_json_output(json_data, output_file):
 
 # ----------------------------------------
 
+def test_mwe_annotate_segments_using_few_shot_examples():
+    segment1 = "I think he just made it up."
+    segment2 = "It|'s not a big deal."
+    l2_language = 'english'
+    config_info = config_info={'gpt_model': 'gpt-4o'}
+    few_shot_examples_from_repo = read_json_file('$CLARA/prompt_templates/default/mwe_annotate_examples.json')
+    segments_and_few_shot_examples = [ ( segment1, few_shot_examples_from_repo ),
+                                       ( segment2, few_shot_examples_from_repo ) ]
+    result = mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples,
+                                                           l2_language, config_info=config_info)
+
+    print(f"result:")
+    pprint.pprint(result)
+
 def mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples,
                                                   l2_language, config_info={}, callback=None):
-    segmented_elements_and_few_shot_examples = []
+
+    print(f'segments_and_few_shot_examples:')
+    pprint.pprint(segments_and_few_shot_examples)
+    
+    content_elements_and_few_shot_examples = []
+    l1_language = 'irrelevant'
     for pair in segments_and_few_shot_examples:
         segment_text, few_shot_examples = pair
         
         internalised_annotated_text = internalize_text(segment_text, l2_language, l1_language, 'segmented')
-        segmented_elements = internalised_annotated_text.segmented_elements()
-        segmented_elements_and_few_shot_examples.append( ( segmented_elements, few_shot_examples ) )
+        content_elements = internalised_annotated_text.content_elements()
+        content_elements_and_few_shot_examples.append( ( content_elements, few_shot_examples ) )
 
-    annotations, api_calls = asyncio.run(mwe_annotate_segments_using_few_shot_examples_async(segmented_elements_and_few_shot_examples,
+    print(f'segmented_elements_and_few_shot_examples:')
+    pprint.pprint(content_elements_and_few_shot_examples)
+    
+    annotations, api_calls = asyncio.run(mwe_annotate_segments_using_few_shot_examples_async(content_elements_and_few_shot_examples,
                                                                                              l2_language, config_info=config_info, callback=callback))
 
-    n_segments = len(segmented_elements_and_few_shot_examples)
+    print(f'annotations:')
+    pprint.pprint(annotations)
+
+    n_segments = len(content_elements_and_few_shot_examples)
     n_annotations = len(annotations)
-    if n_annotations != n_segmented_elements:
+    if n_segments != n_annotations:
         raise ValueError(f'Mismatch: there are {n_segments} texts but {n_annotations} MWE annotations')
     
     segments_and_few_shot_examples_and_annotations = zip(segments_and_few_shot_examples, annotations)
@@ -108,14 +134,14 @@ def mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples
     return ( segments_and_annotations, total_cost )
     
 
-async def mwe_annotate_segments_using_few_shot_examples_async(segmented_elements_and_few_shot_examples,
+async def mwe_annotate_segments_using_few_shot_examples_async(content_elements_and_few_shot_examples,
                                                               l2_language, config_info={}, callback=None):
     tasks = []
-    for pair in segmented_elements_and_few_shot_examples:
-        segmented_elements, few_shot_examples = pair
+    for pair in content_elements_and_few_shot_examples:
+        content_elements, few_shot_examples = pair
     
         tasks.append(asyncio.create_task(
-            call_chatgpt4_to_mwe_annotate_async(segmented_elements, l2_language, few_shot_examples=few_shot_examples,
+            call_chatgpt4_to_mwe_annotate_async(content_elements, l2_language, few_shot_examples=few_shot_examples,
                                                 config_info=config_info, callback=callback)
         ))
 
@@ -128,18 +154,18 @@ async def mwe_annotate_segments_using_few_shot_examples_async(segmented_elements
     for result in results:
         annotations_for_segments, api_calls = result
         all_annotations_for_segments.append(annotations_for_segments)
-        all_api_calls.append(api_calls)
+        all_api_calls.extend(api_calls)
 
     return all_annotations_for_segments, all_api_calls
 
-async def call_chatgpt4_to_mwe_annotate_async(segmented_elements, l2_language, few_shot_examples=[],
+async def call_chatgpt4_to_mwe_annotate_async(content_elements, l2_language, few_shot_examples=[],
                                               config_info={}, callback=None):
 
     annotate_or_improve = 'annotate'
     processing_phase = 'mwe'
     l1_language = 'irrelevant'
     return await call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase,
-                                                                     segmented_elements,
+                                                                     content_elements,
                                                                      l1_language, l2_language,
                                                                      few_shot_examples=few_shot_examples,
                                                                      config_info=config_info, callback=callback)

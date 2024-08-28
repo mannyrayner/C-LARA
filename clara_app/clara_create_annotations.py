@@ -517,6 +517,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                                                               l1_language, l2_language,
                                                               previous_version='default',
                                                               mwe=False, mwes=[], translation=None,
+                                                              few_shot_examples=[],
                                                               config_info={}, callback=None):
     word_elements = word_items_in_element_list(elements)
     if len(word_elements) == 0:
@@ -563,7 +564,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
     elif processing_phase == 'lemma':
         annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, mwe=mwe, mwes=mwes)
     elif processing_phase == 'mwe':
-        annotation_prompt = mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
+        annotation_prompt = mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, few_shot_examples=few_shot_examples)
     elif processing_phase == 'pinyin':
         annotation_prompt = pinyin_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
     elif processing_phase == 'lemma_and_gloss' and annotate_or_improve == 'improve':
@@ -722,9 +723,10 @@ def tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, m
                             simplified_elements_json=simplified_elements_json
                             )
 
-def mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language):
+def mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, few_shot_examples=[]):
     l1_language = 'irrelevant'
-    template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, 'mwe', l2_language)
+    template, annotated_example_list_from_repo = get_template_and_annotated_example_list(annotate_or_improve, 'mwe', l2_language)
+    annotated_example_list = few_shot_examples if few_shot_examples else annotated_example_list_from_repo
     if annotate_or_improve == 'annotate':
         examples = mwe_tagging_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
     else:
