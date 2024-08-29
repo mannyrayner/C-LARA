@@ -1,3 +1,4 @@
+from .clara_embeddings import get_embedding, cosine_similarity
 from .clara_internalise import internalize_text
 from .clara_create_annotations import call_chatgpt4_to_annotate_or_improve_elements_async
 from .clara_utils import absolute_file_name, read_json_file, post_task_update_async
@@ -131,7 +132,9 @@ def mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples
     segments_and_annotations = [ ( item[0][0], item[1] ) for item in segments_and_few_shot_examples_and_annotations ]
     total_cost = sum([ api_call.cost for api_call in api_calls ])
 
-    return ( segments_and_annotations, total_cost )
+    reformatted_segments_and_annotations = convert_annotation_results_to_few_shot_format(segments_and_annotations)
+
+    return ( reformatted_segments_and_annotations, total_cost )
     
 
 async def mwe_annotate_segments_using_few_shot_examples_async(content_elements_and_few_shot_examples,
@@ -169,4 +172,24 @@ async def call_chatgpt4_to_mwe_annotate_async(content_elements, l2_language, few
                                                                      l1_language, l2_language,
                                                                      few_shot_examples=few_shot_examples,
                                                                      config_info=config_info, callback=callback)
+
+def convert_annotation_results_to_few_shot_format(annotation_results):
+    few_shot_examples = []
+    
+    for segment, annotation in annotation_results:
+        # Extract the text segment
+        text_segment = segment.replace('|', '')
+        
+        # Extract the list of MWEs as a comma-separated string
+        mwes = annotation['mwes']
+        mwes_str = ','.join([' '.join(mwe) for mwe in mwes])
+        
+        # Extract the analysis text
+        analysis = annotation['analysis']
+        
+        # Format for few-shot examples
+        few_shot_example = [text_segment, mwes_str, analysis]
+        few_shot_examples.append(few_shot_example)
+    
+    return few_shot_examples
 
