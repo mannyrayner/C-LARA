@@ -101,8 +101,8 @@ def test_mwe_annotate_segments_using_few_shot_examples():
 def mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples,
                                                   l2_language, config_info={}, callback=None):
 
-    print(f'segments_and_few_shot_examples:')
-    pprint.pprint(segments_and_few_shot_examples)
+    #print(f'segments_and_few_shot_examples:')
+    #pprint.pprint(segments_and_few_shot_examples)
     
     content_elements_and_few_shot_examples = []
     l1_language = 'irrelevant'
@@ -113,14 +113,14 @@ def mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples
         content_elements = internalised_annotated_text.content_elements()
         content_elements_and_few_shot_examples.append( ( content_elements, few_shot_examples ) )
 
-    print(f'segmented_elements_and_few_shot_examples:')
-    pprint.pprint(content_elements_and_few_shot_examples)
+    #print(f'segmented_elements_and_few_shot_examples:')
+    #pprint.pprint(content_elements_and_few_shot_examples)
     
     annotations, api_calls = asyncio.run(mwe_annotate_segments_using_few_shot_examples_async(content_elements_and_few_shot_examples,
                                                                                              l2_language, config_info=config_info, callback=callback))
 
-    print(f'annotations:')
-    pprint.pprint(annotations)
+    #print(f'annotations:')
+    #pprint.pprint(annotations)
 
     n_segments = len(content_elements_and_few_shot_examples)
     n_annotations = len(annotations)
