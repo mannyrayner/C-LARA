@@ -1,7 +1,12 @@
+from .clara_utils import file_exists, read_json_file, write_json_to_file
+
 from openai import OpenAI
 import numpy as np
+from functools import lru_cache
 
 client = OpenAI()
+
+cache_file = '$CLARA/tmp/embeddings_cache.json'
 
 def test_closest_n_embedding_matches():
     target = "It's not a big deal."
@@ -15,10 +20,32 @@ def test_closest_n_embedding_matches():
     top_n_matches = closest_n_embedding_matches(target, candidates, n=3)
     print(f"Top 3 closest matches: {top_n_matches}")
 
-def get_embedding(text, model="text-embedding-3-small"):
-    text = text.replace("\n", " ")
-    response = client.embeddings.create(input=[text], model=model)
-    return response.data[0].embedding
+if file_exists(cache_file):
+    embedding_cache = read_json_file(cache_file)
+else:
+    embedding_cache = {}
+
+def save_cache_to_file():
+    """Save the current cache to a file."""
+    write_json_to_file(embedding_cache, cache_file)
+
+def get_embedding(text, model="text-embedding-3-large"):
+    # Normalize text to ensure consistency in cache lookups
+    normalized_text = text.replace("\n", " ")
+
+    # Check if embedding is already cached
+    if normalized_text in embedding_cache:
+        return embedding_cache[normalized_text]
+
+    # If not cached, fetch from API and cache it
+    response = client.embeddings.create(input=[normalized_text], model=model)
+    embedding = response.data[0].embedding
+    
+    # Save to cache and persist cache to file
+    embedding_cache[normalized_text] = embedding
+    save_cache_to_file()
+
+    return embedding
 
 def cosine_similarity(embedding1, embedding2):
     """
