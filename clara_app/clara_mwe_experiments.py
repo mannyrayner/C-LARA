@@ -99,6 +99,68 @@ def test_mwe_annotate_segments_using_few_shot_examples():
     print(f"result:")
     pprint.pprint(result)
 
+def annotate_texts_using_closest_few_shot_examples(texts, few_shot_examples_pool, l2_language='english', n=3, config_info={}):
+    """
+    Annotates a list of text strings using the closest few-shot examples from a pool based on embeddings similarity.
+
+    Parameters:
+    - texts: list of str, the text strings to be annotated.
+    - few_shot_examples_pool: list of lists, the pool of few-shot examples in the format [text_string, mwes_string, analysis].
+    - l2_language: str, the language of the texts being annotated.
+    - n: int, the number of closest few-shot examples to use for each annotation.
+    - config_info: dict, configuration information for the annotation process.
+
+    Returns:
+    - A tuple (annotations, total_cost) where:
+      - annotations: list of tuples, each containing (text, annotation_result).
+      - total_cost: float, the total cost of API calls for annotations.
+    """
+
+    segments_and_few_shot_examples = []
+
+    # For each text, find the top n closest few-shot examples
+    for text in texts:
+        closest_examples = get_top_n_similar_few_shot_examples(text, few_shot_examples_pool, n=n)
+        segments_and_few_shot_examples.append((text, closest_examples))
+
+    # Annotate the texts using the selected few-shot examples
+    annotations, total_cost = mwe_annotate_segments_using_few_shot_examples(
+        segments_and_few_shot_examples, l2_language, config_info=config_info
+    )
+
+    return annotations, total_cost
+
+
+def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3):
+    """
+    Returns the top n most similar few-shot examples for a given text based on embeddings cosine similarity.
+    
+    Parameters:
+    - text: str, the input text string for which we want to find similar few-shot examples.
+    - few_shot_examples: list of lists, where each sublist contains [text_string, mwes_string, analysis].
+    - n: int, the number of most similar few-shot examples to return.
+
+    Returns:
+    - list of the top n few-shot examples most similar to the input text.
+    """
+
+    # Get the embedding for the input text
+    target_embedding = get_embedding(text)
+
+    # Calculate embeddings for all few-shot examples (using only the text_string part)
+    example_embeddings = [(example, get_embedding(example[0])) for example in few_shot_examples]
+
+    # Compute cosine similarities
+    similarities = [(example, cosine_similarity(target_embedding, embedding)) 
+                    for example, embedding in example_embeddings]
+
+    # Sort by similarity in descending order and select the top n examples
+    top_n_similar_examples = sorted(similarities, key=lambda x: x[1], reverse=True)[:n]
+
+    # Return just the examples, not the similarity scores
+    return [example[0] for example in top_n_similar_examples]
+
+
 def mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples,
                                                   l2_language, config_info={}, callback=None):
 
