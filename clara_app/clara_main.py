@@ -674,17 +674,23 @@ class CLARAProjectInternal:
 
     def save_page_texts(self, text_type, page_texts, user=''):
         #print(f'save_page_texts(self, {text_type}, {page_texts}, user={user})')
+        l2_language = 'irrelevant'
+        l1_language = 'irrelevant'
         if not page_texts:
             return
         elif text_type == 'segmented' and '<h1>' in page_texts[0]:
             # The first element is the segmented title
             segmented_title_text = page_texts[0].replace('<h1>', '').replace('</h1>', '').replace('||', '')
             segmented_text = "\n<page>".join(page_texts[1:])
+            # Interalise the text before saving to see if we get an exception
+            internalize_text(segmented_title_text, l2_language, l1_language, text_type)
+            internalize_text(segmented_text, l2_language, l1_language, text_type)
             self.save_text_version('segmented_title', segmented_title_text, user=user, source='human_revised')
             self.save_text_version('segmented', segmented_text, user=user, source='human_revised')
         else:
             # Concatenate the page texts into a single string, putting <page> tags in between.
             full_text = "\n<page>".join(page_texts)
+            internalize_text(full_text, l2_language, l1_language, text_type)
             # Save the text back to the project
             self.save_text_version(text_type, full_text, user=user, source='human_revised')
 
