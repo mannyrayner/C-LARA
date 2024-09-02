@@ -1,3 +1,5 @@
+from .clara_utils import file_exists, read_json_file, write_json_to_file
+
 import nltk
 from nltk import pos_tag, word_tokenize
 from nltk.util import ngrams
@@ -8,6 +10,17 @@ import numpy as np
 # Ensure NLTK data is downloaded
 nltk.download('averaged_perceptron_tagger_eng')
 nltk.download('punkt')
+
+cache_file = '$CLARA/tmp/pos_ngram_cache.json'
+
+if file_exists(cache_file):
+    pos_ngram_cache = read_json_file(cache_file)
+else:
+    pos_ngram_cache = {}
+
+def save_pos_ngram_cache_to_file():
+    """Save the current cache to a file."""
+    write_json_to_file(pos_ngram_cache, cache_file)
 
 def get_pos_tags(text):
     """
@@ -63,7 +76,15 @@ def get_weighted_pos_ngram_vector(text, ngram_ranges=[2, 3, 4], weights=[1, 4, 9
     Returns:
     - A weighted sparse vector for the input text.
     """
-    pos_tags = get_pos_tags(text)
+
+    # Normalize text to ensure consistency in cache lookups
+    normalized_text = text.replace("\n", " ")
+
+    # Check if POS n-gram vector is already cached
+    if normalized_text in pos_ngram_cache:
+        return np.array(pos_ngram_cache[normalized_text])
+    
+    pos_tags = get_pos_tags(normalized_text)
     weighted_vector = np.zeros((1,))
 
     for n, weight in zip(ngram_ranges, weights):
@@ -81,6 +102,10 @@ def get_weighted_pos_ngram_vector(text, ngram_ranges=[2, 3, 4], weights=[1, 4, 9
 
             # Weight and add to the existing vector
             weighted_vector[:, :sparse_vector.shape[1]] += weight * sparse_vector
+
+    # Convert to list for JSON serialization and cache it
+    pos_ngram_cache[normalized_text] = weighted_vector.tolist()
+    save_pos_ngram_cache_to_file()
 
     return weighted_vector
 
