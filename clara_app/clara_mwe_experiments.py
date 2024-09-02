@@ -1,48 +1,85 @@
 from .clara_embeddings import get_embedding, cosine_similarity
 from .clara_internalise import internalize_text
 from .clara_create_annotations import call_chatgpt4_to_annotate_or_improve_elements_async
-from .clara_utils import absolute_file_name, read_json_file, post_task_update_async
+from .clara_utils import absolute_file_name, make_directory, read_json_file, post_task_update_async
 
+import toml
 import re
 import json
 import asyncio
 import pprint
 from collections import defaultdict
+from pathlib import Path
 
 def convert_speckled_band():
     input_file = '$CLARA/linguistic_data/english/MWEsExperiment/spec-mwe.html'
-    output_file = '$CLARA/linguistic_data/english/MWEsExperiment/spec-mwe.json'
-    convert_mwe_gold_standard_data(input_file, output_file)
+    toml_file = '$CLARA/linguistic_data/english/MWEsExperiment/spec-split.toml'
+    output_dir = '$CLARA/linguistic_data/english/MWEsExperiment/spec'
+    convert_mwe_gold_standard_data(input_file, toml_file, output_dir)
 
 def convert_dancing_men():
     input_file = '$CLARA/linguistic_data/english/MWEsExperiment/danc-mwe.html'
-    output_file = '$CLARA/linguistic_data/english/MWEsExperiment/danc-mwe.json'
-    convert_mwe_gold_standard_data(input_file, output_file)
+    toml_file = '$CLARA/linguistic_data/english/MWEsExperiment/danc-split.toml'
+    output_dir = '$CLARA/linguistic_data/english/MWEsExperiment/danc'
+    convert_mwe_gold_standard_data(input_file, toml_file, output_dir)
 
-def convert_mwe_gold_standard_data(input_file, output_file):
-    sentences = parse_gold_standard_mwes(absolute_file_name(input_file))
-    print(f"Read {input_file} ({len(sentences)} items).")
+def convert_mwe_gold_standard_data(input_file, toml_file, output_dir):
+    # Read split indices from the TOML file
+    train_indices, dev_indices, test_indices = read_split_indices(absolute_file_name(toml_file))
     
-    json_data = convert_mws_to_json(sentences)
-    write_mwes_json_output(json_data, absolute_file_name(output_file))
+    # Parse sentences and assign them to train, dev, and test sets
+    train_sentences, dev_sentences, test_sentences = parse_gold_standard_mwes(absolute_file_name(input_file),
+                                                                              train_indices, dev_indices, test_indices)
     
-    print(f"Conversion complete. Output saved to {output_file} ({len(json_data)} items).")
+    # Convert each set of sentences to JSON format
+    train_json = convert_mws_to_json(train_sentences)
+    dev_json = convert_mws_to_json(dev_sentences)
+    test_json = convert_mws_to_json(test_sentences)
 
-def parse_gold_standard_mwes(input_file):
-    sentences = []
+    # Write output files
+    abs_output_dir = absolute_file_name(output_dir)
+    make_directory(abs_output_dir, parents=True, exist_ok=True)
+    
+    write_mwes_json_output(train_json, Path(abs_output_dir) / 'train.json')
+    write_mwes_json_output(dev_json, Path(abs_output_dir) / 'dev.json')
+    write_mwes_json_output(test_json, Path(abs_output_dir) / 'test.json')
+
+    print(f"Conversion complete. Train set: {len(train_json)} items, Dev set: {len(dev_json)} items, Test set: {len(test_json)} items.")
+
+def read_split_indices(toml_file):
+    """Read the train, dev, and test split indices from the .toml file."""
+    with open(toml_file, 'r') as file:
+        data = toml.load(file)
+    
+    train_indices = (data['train']['first'], data['train']['last'])
+    dev_indices = (data['dev']['first'], data['dev']['last'])
+    test_indices = (data['test']['first'], data['test']['last'])
+    
+    return train_indices, dev_indices, test_indices
+
+def parse_gold_standard_mwes(input_file, train_indices, dev_indices, test_indices):
+    train_sentences = []
+    dev_sentences = []
+    test_sentences = []
+
     with open(input_file, 'r', encoding='utf-8') as file:
-        sentence = None
+        sentence_id = None
         words = []
         mwes = defaultdict(list)
 
         for line in file:
             # Start of a new sentence
             if line.startswith("<span class='sent' id="):
-                if sentence is not None:
-                    # Save the previous sentence
-                    sentences.append((sentence, words, mwes))
-                # Initialize new sentence
-                sentence = re.search(r"id='([^']+)'", line).group(1)
+                if sentence_id is not None:
+                    # Determine the split based on the previous sentence ID
+                    if train_indices[0] <= sentence_id <= train_indices[1]:
+                        train_sentences.append((sentence_id, words, mwes))
+                    elif dev_indices[0] <= sentence_id <= dev_indices[1]:
+                        dev_sentences.append((sentence_id, words, mwes))
+                    elif test_indices[0] <= sentence_id <= test_indices[1]:
+                        test_sentences.append((sentence_id, words, mwes))
+                # Get the new sentence ID and initialize new sentence
+                sentence_id = int(re.search(r'\d+', line).group())
                 words = []
                 mwes = defaultdict(list)
             elif line.startswith("<span id='w"):
@@ -59,10 +96,16 @@ def parse_gold_standard_mwes(input_file):
                     mwes[cid].append(word)
 
         # Save the last sentence
-        if sentence is not None:
-            sentences.append((sentence, words, mwes))
+        if sentence_id is not None:
+            if train_indices[0] <= sentence_id <= train_indices[1]:
+                train_sentences.append((sentence_id, words, mwes))
+            elif dev_indices[0] <= sentence_id <= dev_indices[1]:
+                dev_sentences.append((sentence_id, words, mwes))
+            elif test_indices[0] <= sentence_id <= test_indices[1]:
+                test_sentences.append((sentence_id, words, mwes))
 
-    return sentences
+    return train_sentences, dev_sentences, test_sentences
+
 
 def convert_mws_to_json(sentences):
     json_data = []
