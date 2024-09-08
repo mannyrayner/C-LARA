@@ -1,7 +1,7 @@
 # clara_align_with_segmented.py
 
 from .clara_internalise import internalize_text
-from .clara_classes import Text, DiffElement
+from .clara_classes import Text, Page, Segment, ContentElement, DiffElement
 
 from typing import List
 import difflib
@@ -87,29 +87,6 @@ def get_placeholder_annotations(content: str, version: str) -> dict:
     else:
         return placeholders.get(version, {})
 
-def diff_elements_to_text(diff_elements: List[DiffElement], l2_language: str, l1_language: str, text_type: str, version: str) -> str:
-    """
-    Converts a list of DiffElements back to a text string.
-
-    Parameters:
-    - diff_elements: List[DiffElement], the list of DiffElements to convert.
-    - l2_language: str, the target language (L2).
-    - l1_language: str, the annotation language (L1).
-    - text_type: str, the type of text.
-    - version: str, the version type.
-
-    Returns:
-    - str: The reconstructed text string.
-    """
-    # This function needs to rebuild the Text object from DiffElements
-    # and then convert it back to a text string using the to_text method.
-    # Implementation depends on the existing internalization and Text class methods.
-
-    # Placeholder implementation:
-    # You will need to implement this based on your existing codebase.
-    pass
-
-
 def text_to_diff_elements_full(text: str, l2_language: str, l1_language: str, text_type: str) -> List[DiffElement]:
     """
     Converts a text string into a list of DiffElements, preserving all annotations and structural information.
@@ -131,28 +108,78 @@ def text_to_diff_elements_full(text: str, l2_language: str, l1_language: str, te
     for page in internal_text.pages:
 
         #Add page boundary
-        diff_elements.append(DiffElement('ContentElement', '<page>', {}))
+        diff_elements.append(DiffElement('Tag', '<page>', {}))
         
         for segment in page.segments:
 
             # Add segment boundary
-            diff_elements.append(DiffElement('ContentElement', '<segment>', {}))
+            diff_elements.append(DiffElement('Tag', '<segment>', {}))
             
             for element in segment.content_elements:
                 
                 # Create the DiffElement
-                diff_element = DiffElement(
-                    element_type='ContentElement',
-                    content=element.content,
-                    annotations=element.annotations
-                )
+                diff_element = DiffElement(element.type, element.content, element.annotations)
                 diff_elements.append(diff_element)
             
             # Add segment boundary
-            diff_elements.append(DiffElement('ContentElement', '</segment>', segment.annotations))
+            diff_elements.append(DiffElement('Tag', '</segment>', segment.annotations))
         
         # Add page boundary
-        diff_elements.append(DiffElement('ContentElement', '</page>', {}))
+        diff_elements.append(DiffElement('Tag', '</page>', {}))
     
     return diff_elements
+
+def diff_elements_to_text(diff_elements: List[DiffElement], l2_language: str, l1_language: str, text_type: str) -> str:
+    """
+    Converts a list of DiffElements back into a text string by first building a Text object.
+
+    Parameters:
+    - diff_elements: List[DiffElement], the list of DiffElements representing the text structure and content.
+    - l2_language: str, the target language (L2).
+    - l1_language: str, the annotation language (L1).
+    - text_type: str, the type of text (e.g., 'segmented', 'mwe', 'translated', 'gloss', 'lemma').
+
+    Returns:
+    - str: The reconstructed text string.
+    """
+    # Stage 1: Build the Text object
+    text_object = diff_elements_to_text_object(diff_elements, l2_language, l1_language)
+    
+    # Stage 2: Convert the Text object to a string using the to_text method
+    return text_object.to_text(annotation_type=text_type)
+
+def diff_elements_to_text_object(diff_elements: List[DiffElement], l2_language: str, l1_language: str) -> Text:
+    """
+    Convert a list of DiffElements back into a Text object, preserving all annotations and structural information.
+
+    Parameters:
+    - diff_elements: List[DiffElement], the list of DiffElements representing the text structure and content.
+    - l2_language: str, the target language (L2).
+    - l1_language: str, the annotation language (L1).
+
+    Returns:
+    - Text: The reconstructed Text object.
+    """
+    pages = []
+    current_page = []
+    current_segment = []
+    
+    for element in diff_elements:
+        if element.content == '<page>':
+            current_page = []
+        elif element.content == '</page>':
+            # Add the current page to the list of pages
+            pages.append(Page(current_page))
+        elif element.content == '<segment>':
+            current_segment = []
+        elif element.content == '</segment>':
+            # Create a Segment object with content elements
+            segment_annotations = element.annotations
+            current_page.append(Segment(current_segment, annotations=segment_annotations))
+        else:
+            # Add ContentElement to the current segment
+            current_segment.append(ContentElement(element.type, element.content, annotations=element.annotations))
+    
+    # Create and return the Text object
+    return Text(pages=pages, l2_language=l2_language, l1_language=l1_language)
 
