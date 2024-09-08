@@ -5,9 +5,8 @@ from .clara_classes import Text, Page, Segment, ContentElement, DiffElement
 
 from typing import List
 import difflib
-import json
 
-def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: str, version: str, l2_language: str, l1_language: str, text_type: str) -> str:
+def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: str, l2_language: str, l1_language: str, text_type: str) -> str:
     """
     Aligns the segmented text with a non-segmented version, ensuring structural consistency.
 
@@ -42,28 +41,28 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
             pass  # Do nothing
         elif tag == 'delete':
             # B2: Add placeholders for deletes in segmented text
-            for index in range(i2 - i1):
-                content = segmented_content[index].content
+            for index in range(i1, i2):
+                content = segmented_diff[index].content
                 placeholder_annotations = get_placeholder_annotations(content, text_type)
                 aligned_non_segmented.append(DiffElement('ContentElement', content, placeholder_annotations))
         elif tag == 'replace':
             # Handle replacements as delete + insert
-            for index in range(i2 - i1):
-                content = segmented_content[index].content
-                placeholder_annotations = get_placeholder_annotations(content, version)
+            for index in range(i1, i2):
+                content = segmented_diff[index].content
+                placeholder_annotations = get_placeholder_annotations(content, text_type)
                 aligned_non_segmented.append(DiffElement('ContentElement', content, placeholder_annotations))
 
     # Step 4: Convert aligned DiffElements back to Text object
-    aligned_text = diff_elements_to_text(aligned_non_segmented, l2_language, l1_language, text_type, version)
+    aligned_text = diff_elements_to_text(aligned_non_segmented, l2_language, l1_language, text_type)
 
     return aligned_text
 
-def get_placeholder_annotations(content: str, version: str) -> dict:
+def get_placeholder_annotations(content: str, text_type: str) -> dict:
     """
     Generates placeholder annotations based on the content and version type.
 
     Parameters:
-    - version: str, the type of non-segmented text.
+    - text_type: str, the type of non-segmented text.
 
     Returns:
     - dict: A dictionary of placeholder annotations.
@@ -76,18 +75,19 @@ def get_placeholder_annotations(content: str, version: str) -> dict:
     }
 
     # mwe and translated have annotations on the closing segment boundary but not on content elements
-    if version in ( 'mwe', 'translated' ):
+    if text_type in ( 'mwe', 'translated' ):
         if content == '</segment>':
-            return placeholders.get(version, {})
+            return placeholders.get(text_type, {})
         else:
             return {}
     # Otherwise we don't have annotations on segment boundaries
     elif content in ( '<segment>', '</segment>', '<page>', '</page>' ):
         return {}
     else:
-        return placeholders.get(version, {})
+        return placeholders.get(text_type, {})
 
 def text_to_diff_elements_full(text: str, l2_language: str, l1_language: str, text_type: str) -> List[DiffElement]:
+ 
     """
     Converts a text string into a list of DiffElements, preserving all annotations and structural information.
 

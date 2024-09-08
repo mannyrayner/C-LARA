@@ -365,6 +365,9 @@ class DiffElement:
         self.content = content
         self.annotations = annotations
 
+    def __repr__(self):
+        return f"DiffElement(type={self.type}, content={self.content}, annotations={self.annotations})"
+
 class InternalCLARAError(Exception):
     def __init__(self, message = 'Internal CLARA error'):
         self.message = message
