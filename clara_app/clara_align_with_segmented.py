@@ -12,11 +12,10 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
 
     Parameters:
     - segmented: str, the segmented text string.
-    - non_segmented: str, the non-segmented text string to be aligned.
-    - version: str, the type of non-segmented text ('mwe', 'translated', 'lemma', 'gloss').
+    - non_segmented: str, the non-segmented text string to be aligned..
     - l2_language: str, the target language (L2).
     - l1_language: str, the annotation language (L1).
-    - text_type: str, the type of text for internalization.
+    - text_type: str, the type of non-segmented text ('mwe', 'translated', 'lemma', 'gloss').
 
     Returns:
     - str: The realigned non-segmented text string.
