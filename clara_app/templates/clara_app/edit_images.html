@@ -50,7 +50,7 @@
 			<button type="submit" name="action" value="create_dalle_style_image">Create style image</button>
 		  </form>
 	  {% endif %}
-	  {% if description_formset %}
+	  {% if description_formset and style_form and style_form.image_base_name.value %}
 		 <h3>Image Description Variables</h3>
 		 <form method="post" prefix="descriptions" enctype="multipart/form-data">
           {% csrf_token %}
@@ -73,7 +73,7 @@
 		  <button type="submit" name="action" value="save_image_descriptions">Save image description variables</button>
          </form>
       {% endif %}
-	  {% if image_request_sequence_form %}
+	  {% if image_request_sequence_form and description_formset and description_formset.0.description_variable.value and style_form.image_base_name.value %}
 		  <h3>Image request sequence</h3>
 		  <form method="post" enctype="multipart/form-data">
 			{% csrf_token %}
@@ -86,6 +86,7 @@
 		<button type="submit" name="action" value="create_dalle_image_for_whole_text">Create</button>
 	  </form>
   {% endif %}
+  {% if not uses_coherent_image_set or formset.0.user_prompt.value %}
   <h3>Upload/generate/delete existing images</h3>
   <form id="display-options-form">
     <label><input type="checkbox" id="show-segmented" checked> Display Segmented Text</label>
@@ -213,12 +214,13 @@
 			  </tr>
 		  {% endif %}
         {% endfor %}
+		{% endif %}
       </tbody>
     </table>
-	{% if uses_coherent_image_set %}
-       <button type="submit" name="action" value="generate">Save/process</button>
-	{% else %}
+	{% if not uses_coherent_image_set %}
 	   <button type="submit" name="action" value="save_changes">Save</button>
+	{% elif formset.0.user_prompt.value %}
+       <button type="submit" name="action" value="generate">Save/process</button>
 	{% endif %}
 	
   </form>
