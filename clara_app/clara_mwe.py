@@ -1,4 +1,3 @@
-
 from .clara_internalise import internalize_text
 from .clara_utils import post_task_update
 from .clara_classes import MWEError

@@ -29,6 +29,27 @@ def save_cache_to_file():
     """Save the current cache to a file."""
     write_json_to_file(embedding_cache, cache_file)
 
+def embeddings_based_similarity(text1, text2, model="text-embedding-3-large"):
+    """
+    Computes cosine similarity between two texts based on their embeddings.
+    
+    Parameters:
+    - text1: str, the first text string.
+    - text2: str, the second text string.
+    - model: str, the model used for generating embeddings. Default is "text-embedding-3-small".
+    
+    Returns:
+    - float: cosine similarity score between the embeddings of the two texts.
+    """
+    # Get embeddings for both texts
+    embedding1 = get_embedding(text1, model=model)
+    embedding2 = get_embedding(text2, model=model)
+
+    # Calculate cosine similarity
+    similarity = cosine_similarity(embedding1, embedding2)
+    
+    return similarity
+
 def get_embedding(text, model="text-embedding-3-large"):
     # Normalize text to ensure consistency in cache lookups
     normalized_text = text.replace("\n", " ")

@@ -358,7 +358,8 @@ class CLARAProjectInternal:
             archive_dir = self._get_archive_dir()
             make_directory(archive_dir, parents=True, exist_ok=True)
             archive_path = archive_dir / f'{version}_{timestamp}.txt'
-            rename_file(file_path, archive_path)
+            if not file_exists(archive_path):
+                rename_file(file_path, archive_path)
         else:
             archive_path = None
 
@@ -602,6 +603,7 @@ class CLARAProjectInternal:
         return diff_text_objects(internalised_text1, internalised_text2, version, required)
 
     # Get different versions of the text cut up into pages. If a version doesn't exist, make a dummy version.
+    # Raise an exception if there are syntax errors
     def get_page_texts(self):
         if not self.text_versions["segmented"]:
             raise InternalCLARAError(message = 'No segmented text, unable to produce page texts')
@@ -609,7 +611,8 @@ class CLARAProjectInternal:
         page_texts = {}
 
         segmented_text = self.load_text_version("segmented_with_images")
-        internalised_segmented_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+        internalised_segmented_text = self.internalize_text(segmented_text, "segmented")
+        
         segmented_page_objects = internalised_segmented_text.pages
         page_texts['plain'] = [ page_object.to_text(annotation_type="plain").replace('<page>', '')
                                 for page_object in segmented_page_objects ]
@@ -618,9 +621,11 @@ class CLARAProjectInternal:
 
         if self.text_versions["mwe"]:
             mwe_text = self.load_text_version("mwe")
-            internalised_mwe_text = internalize_text(mwe_text, self.l2_language, self.l1_language, "mwe")
+            internalised_mwe_text = self.internalize_text(mwe_text, "mwe")
+            # Do this so that we get an exception we can report if the MWEs don't match the text
+            #annotate_mwes_in_text(internalised_mwe_text)
         else:
-            internalised_mwe_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            internalised_mwe_text = self.internalize_text(segmented_text, "segmented")
             for page in internalised_mwe_text.pages:
                 for segment in page.segments:
                     segment.annotations = { "mwes": [], "analysis": '' }
@@ -630,9 +635,9 @@ class CLARAProjectInternal:
 
         if self.text_versions["translated"]:
             translation_text = self.load_text_version("translated")
-            internalised_translation_text = internalize_text(translation_text, self.l2_language, self.l1_language, "translated")
+            internalised_translation_text = self.internalize_text(translation_text, "translated")
         else:
-            internalised_translation_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            internalised_translation_text = self.internalize_text(segmented_text, "segmented")
             for page in internalised_translation_text.pages:
                 for segment in page.segments:
                     segment.annotations = { "translated": '' }
@@ -642,7 +647,7 @@ class CLARAProjectInternal:
 
         if self.text_versions["lemma"]:
             lemma_text = self.load_text_version("lemma")
-            internalised_lemma_text = internalize_text(lemma_text, self.l2_language, self.l1_language, "lemma")
+            internalised_lemma_text = self.internalize_text(lemma_text, "lemma")
         else:
             internalised_lemma_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
             for page in internalised_lemma_text.pages:
@@ -655,9 +660,9 @@ class CLARAProjectInternal:
 
         if self.text_versions["gloss"]:
             gloss_text = self.load_text_version("gloss")
-            internalised_gloss_text = internalize_text(gloss_text, self.l2_language, self.l1_language, "gloss")
+            internalised_gloss_text = self.internalize_text(gloss_text, "gloss")
         else:
-            internalised_gloss_text = internalize_text(segmented_text, self.l2_language, self.l1_language, "segmented")
+            internalised_gloss_text = self.internalize_text(segmented_text, "segmented")
             for page in internalised_lemma_text.pages:
                 for segment in page.segments:
                     for element in segment.content_elements:
@@ -670,12 +675,23 @@ class CLARAProjectInternal:
         for key in page_texts:
             page_texts[key] = [ text for text in page_texts[key] if not '<page img=' in text ]
 
+        pprint.pprint(page_texts)
         return page_texts
 
-    def save_page_texts(self, text_type, page_texts, user=''):
+    def save_page_texts_multiple(self, types_and_texts, user='', can_use_ai=False, config_info={}, callback=None):
+        print(f'save_page_texts_multiple (clara_main): can_use_ai = {can_use_ai}')
+        all_api_calls = []
+        for text_type in types_and_texts:
+            page_texts = types_and_texts[text_type]
+            all_api_calls += self.save_page_texts(text_type, page_texts, user=user, can_use_ai=can_use_ai, config_info=config_info, callback=callback)
+        return all_api_calls
+
+    def save_page_texts(self, text_type, page_texts, user='', can_use_ai=False, config_info={}, callback=None):
         #print(f'save_page_texts(self, {text_type}, {page_texts}, user={user})')
+        print(f'save_page_texts (clara_main): can_use_ai = {can_use_ai}')
         l2_language = 'irrelevant'
         l1_language = 'irrelevant'
+        all_api_calls = []
         if not page_texts:
             return
         elif text_type == 'segmented' and '<h1>' in page_texts[0]:
@@ -683,20 +699,54 @@ class CLARAProjectInternal:
             segmented_title_text = page_texts[0].replace('<h1>', '').replace('</h1>', '').replace('||', '')
             segmented_text = "\n<page>".join(page_texts[1:])
             # Interalise the text before saving to see if we get an exception
-            internalize_text(segmented_title_text, l2_language, l1_language, text_type)
-            internalize_text(segmented_text, l2_language, l1_language, text_type)
-            self.save_text_version('segmented_title', segmented_title_text, user=user, source='human_revised')
-            self.save_text_version('segmented', segmented_text, user=user, source='human_revised')
+            internalised_title, api_calls = self.internalize_text_maybe_correct_and_save(segmented_title_text, 'segmented_title', can_use_ai=can_use_ai,
+                                                                                    config_info=config_info, callback=callback)
+            all_api_calls += api_calls
+            internalised_segmented, api_calls = self.internalize_text_maybe_correct_and_save(segmented_text, 'segmented', can_use_ai=can_use_ai,
+                                                                                        config_info=config_info, callback=callback)
+            all_api_calls += api_calls
+            return all_api_calls
         else:
             # Concatenate the page texts into a single string, putting <page> tags in between.
             full_text = "\n<page>".join(page_texts)
-            internalize_text(full_text, l2_language, l1_language, text_type)
-            # Save the text back to the project
-            self.save_text_version(text_type, full_text, user=user, source='human_revised')
+            internalised_segmented, all_api_calls = self.internalize_text_maybe_correct_and_save(full_text, text_type, can_use_ai=can_use_ai,
+                                                                                            config_info=config_info, callback=callback)
+            return all_api_calls
 
     # Create a prompt using null text to see if there is a template error
     def try_to_use_templates(self, generate_or_improve, version):
         return invoke_templates_on_trivial_text(generate_or_improve, version, self.l1_language, self.l2_language)
+
+    # Internalize text. This may raise an internalisation error.
+    def internalize_text(self, text, version):
+        return internalize_text(text, self.l2_language, self.l1_language, version)
+
+    # Internalize text and try to fix syntax errors if possible
+    def internalize_text_maybe_correct_and_save(self, text, version, can_use_ai=False, config_info={}, callback=None):
+        try:
+            text_object = internalize_text(text, self.l2_language, self.l1_language, version)
+            self.save_text_version(version, text, source='human_edited')
+##            # Do this so that we get an exception if the MWEs don't match the text
+##            if version == 'mwe':
+##                annotate_mwes_in_text(text_object)
+            api_calls = []
+            #print(f'\n\ninternalize_text_maybe_correct_and_save: {version}:')
+            #text_object.prettyprint()
+            return ( text_object, api_calls )
+        except InternalisationError as e:
+            if can_use_ai:
+                corrected_text, api_calls = correct_syntax_in_string(text, version, self.l2_language, l1=self.l1_language,
+                                                                     config_info=config_info, callback=callback)
+                #print(f'Corrected "{text}" to "{corrected_text}"')
+                text_object = internalize_text(corrected_text, self.l2_language, self.l1_language, version)
+                self.save_text_version(version, corrected_text, source='ai_corrected')
+                #print(f'\n\ninternalize_text_maybe_correct_and_save: {version}:')
+                #text_object.prettyprint()
+                return ( text_object, api_calls )
+            else:
+                raise e
+        except Exception as e:
+            raise e
 
     # Try to correct syntax in text and save if successful
     def correct_syntax_and_save(self, text, version, user='Unknown', label='', config_info={}, callback=None):

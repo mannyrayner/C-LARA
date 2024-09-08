@@ -174,34 +174,67 @@ def annotate_texts_using_closest_few_shot_examples(texts, few_shot_examples_pool
     return annotations, total_cost
 
 
-def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3):
+##def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3):
+##    """
+##    Returns the top n most similar few-shot examples for a given text based on embeddings cosine similarity.
+##    
+##    Parameters:
+##    - text: str, the input text string for which we want to find similar few-shot examples.
+##    - few_shot_examples: list of lists, where each sublist contains [text_string, mwes_string, analysis].
+##    - n: int, the number of most similar few-shot examples to return.
+##
+##    Returns:
+##    - list of the top n few-shot examples most similar to the input text.
+##    """
+##
+##    # Get the embedding for the input text
+##    target_embedding = get_embedding(text)
+##
+##    # Calculate embeddings for all few-shot examples (using only the text_string part)
+##    example_embeddings = [(example, get_embedding(example[0])) for example in few_shot_examples]
+##
+##    # Compute cosine similarities
+##    similarities = [(example, cosine_similarity(target_embedding, embedding)) 
+##                    for example, embedding in example_embeddings]
+##
+##    # Sort by similarity in descending order and select the top n examples
+##    top_n_similar_examples = sorted(similarities, key=lambda x: x[1], reverse=True)[:n]
+##
+##    # Return just the examples, not the similarity scores
+##    return [example[0] for example in top_n_similar_examples]
+
+def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3, similarity_metric='embeddings'):
     """
-    Returns the top n most similar few-shot examples for a given text based on embeddings cosine similarity.
+    Returns the top n most similar few-shot examples for a given text based on the specified similarity metric.
     
     Parameters:
     - text: str, the input text string for which we want to find similar few-shot examples.
     - few_shot_examples: list of lists, where each sublist contains [text_string, mwes_string, analysis].
     - n: int, the number of most similar few-shot examples to return.
+    - similarity_metric: str, the similarity metric to use ('pos' for POS-based or 'embeddings' for embeddings-based).
 
     Returns:
     - list of the top n few-shot examples most similar to the input text.
     """
-
-    # Get the embedding for the input text
-    target_embedding = get_embedding(text)
-
-    # Calculate embeddings for all few-shot examples (using only the text_string part)
-    example_embeddings = [(example, get_embedding(example[0])) for example in few_shot_examples]
-
-    # Compute cosine similarities
-    similarities = [(example, cosine_similarity(target_embedding, embedding)) 
-                    for example, embedding in example_embeddings]
+    if similarity_metric == 'embeddings':
+        # Calculate similarities based on embeddings
+        similarities = [
+            (example, embeddings_based_similarity(text, example[0])) for example in few_shot_examples
+        ]
+    elif similarity_metric == 'pos':
+        # Calculate similarities based on POS tags
+        similarities = [
+            (example, pos_based_similarity(text, example[0])) for example in few_shot_examples
+        ]
+    else:
+        raise ValueError(f"Unsupported similarity metric: {similarity_metric}")
 
     # Sort by similarity in descending order and select the top n examples
     top_n_similar_examples = sorted(similarities, key=lambda x: x[1], reverse=True)[:n]
 
     # Return just the examples, not the similarity scores
     return [example[0] for example in top_n_similar_examples]
+
 
 
 def mwe_annotate_segments_using_few_shot_examples(segments_and_few_shot_examples,

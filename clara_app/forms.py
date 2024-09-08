@@ -381,6 +381,7 @@ class CreatePhoneticTextForm(CreateAnnotatedTextForm):
 class CreateTranslatedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Use AI to translate text from segmented text'),
+        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('manual', 'Manually edit/enter translations'),
         ('load_archived', 'Load archived version')
     ]
@@ -448,6 +449,7 @@ class CreateMWETaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Generate annotated text from segmented text using AI'),
         ('mwe_simplify', 'Produce version without CoT analysis'),
+        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('manual', 'Manually edit annotated text'),
         ('load_archived', 'Load archived version')
     ]

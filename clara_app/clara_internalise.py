@@ -22,6 +22,7 @@ from . import clara_utils
 import regex
 import re
 import pprint
+import traceback
 
 def internalize_text(input_text, l2_language, l1_language, text_type):
     # Check if the first page starts with a <page> tag, if not prepend one
@@ -47,13 +48,7 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
         internalized_segments = []
 
         for segment_text in segments_text:
-            if not text_type in ( 'mwe', 'translated' ):
-                content_elements = parse_content_elements(segment_text, text_type)
-                internalized_segment = Segment(content_elements)
-            elif text_type == 'mwe':
-                internalized_segment = parse_segment_mwe(segment_text)
-            else:
-                internalized_segment = parse_segment_translated(segment_text)
+            internalized_segment = parse_segment_text(segment_text, text_type)
             internalized_segments.append(internalized_segment) 
 
         # Create a Page object with the internalized_segments and page_attributes
@@ -66,6 +61,15 @@ def internalize_text(input_text, l2_language, l1_language, text_type):
 
     internalized_text = Text(internalized_pages, l2_language=l2_language, l1_language=l1_language)
     return internalized_text
+
+def parse_segment_text(segment_text, text_type):
+    if not text_type in ( 'mwe', 'translated' ):
+        content_elements = parse_content_elements(segment_text, text_type)
+        return Segment(content_elements)
+    elif text_type == 'mwe':
+        return parse_segment_mwe(segment_text)
+    else:
+        return parse_segment_translated(segment_text)
 
 def parse_content_elements(segment_text, text_type):
     if text_type in ( 'plain', 'summary', 'title', 'cefr_level', 'segmented', 'segmented_title'):
@@ -114,11 +118,13 @@ def parse_segment_mwe(segment_text):
         trivial_result = parse_segment_mwe_trivial(segment_text)
         if trivial_result:
             return trivial_result
-        
     except Exception as e:
-        message = f"Unable to internalise '{segment_text}' as an MWE segment. Error: {str(e)}"
+        message = f"Unable to internalise '{segment_text}' as an MWE segment. Exception: {str(e)}\n{traceback.format_exc()}"
         print(message)
         raise InternalisationError(message=message)
+
+    message = f"Unable to internalise '{segment_text}' as an MWE segment."
+    raise InternalisationError(message=message) 
 
 def parse_segment_mwe_trivial(segment_text):
     analysis_prefix = "_analysis:"
@@ -127,12 +133,12 @@ def parse_segment_mwe_trivial(segment_text):
     if not analysis_prefix in segment_text and not mwes_prefix in segment_text:
         no_full_analysis = True
 
-    components = segment_text.strip().split('#')
+    components = split_escaped(segment_text.strip(), '#')
     n_components = len(components)
     if n_components != 3 or components[2].strip() != '':
         no_minimal_analysis = True
 
-    if no_full_analysis and no_minimal_analysis:
+    if no_full_analysis and no_minimal_analysis and n_components == 1:
         content_elements = parse_content_elements_segmented(segment_text)
         return Segment(content_elements, annotations={'analysis': '', 'mwes': []})
     else:
@@ -182,7 +188,7 @@ def parse_segment_mwe_full(segment_text):
     return Segment(content_elements, annotations={'analysis': analysis_text, 'mwes': mwes})
 
 def parse_segment_mwe_minimal(segment_text):
-    components = segment_text.split('#')
+    components = split_escaped(segment_text, '#')
     n_components = len(components)
     if n_components == 3 and components[2].strip() == '':
         main_text = components[0]
@@ -203,7 +209,7 @@ def parse_segment_mwe_minimal(segment_text):
 
 def parse_segment_translated(segment_text):
     try:
-        components = segment_text.split('#')
+        components = split_escaped(segment_text, '#')
         n_components = len(components)
         if n_components == 3 and components[2].strip() == '':
             main_text = components[0]

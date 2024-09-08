@@ -212,7 +212,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         translated_segments = internalised_translated_text.segments()
         segmented_elements_translations_dict = segments_to_translations_dict(translated_segments)
 
-    print(f'segmented_elements_translations_dict: {segmented_elements_translations_dict}')
+    #print(f'segmented_elements_translations_dict: {segmented_elements_translations_dict}')
 
     if internalised_current_annotated_text:
         if mwe or processing_phase in ( 'mwe', 'translated' ):
@@ -370,10 +370,11 @@ async def process_annotations_async(chunks, process_segments_singly, segmented_e
         tasks.append(asyncio.create_task(
             call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase, chunk,
                                                                 l1_language, l2_language, previous_version,
-                                                                mwe, mwes_for_segment, translation_for_segment, config_info, callback)
+                                                                mwe, mwes_for_segment, translation_for_segment,
+                                                                config_info=config_info, callback=callback)
         ))
 
-    post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
+    await post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
     results = await asyncio.gather(*tasks)
     all_api_calls = []
     annotations_for_segments = []
@@ -501,7 +502,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
             annotate_or_improve, processing_phase, elements,
             l1_language, l2_language,
             previous_version, mwe, mwes, translation,
-            config_info, callback
+            config_info=config_info, callback=callback
         ))
     else:
         # If not in an event loop, we can use asyncio.run
@@ -509,7 +510,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
             annotate_or_improve, processing_phase, elements,
             l1_language, l2_language,
             previous_version, mwe, mwes, translation,
-            config_info, callback
+            config_info=config_info, callback=callback
         ))
 
 
@@ -580,7 +581,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
         if n_attempts >= limit:
             raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
         n_attempts += 1
-        post_task_update_async(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
+        await post_task_update_async(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
         try:
             # Original sync call
             #api_call = clara_chatgpt4.call_chat_gpt4(annotation_prompt, config_info=config_info, callback=callback)
@@ -588,7 +589,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
             api_call = await clara_chatgpt4.get_api_chatgpt4_response(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
             if processing_phase == 'mwe':
-                mwes_and_analysis = parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe', callback=callback)
+                mwes_and_analysis = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe', callback=callback)
                 # Call find_mwe_positions_for_content_elements because we'll get an exception of the mwe can't be found in the segment.
                 # If so, we need to retry.
                 mwes = mwes_and_analysis['mwes']
@@ -596,12 +597,12 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                     find_mwe_positions_for_content_elements(elements, mwe)
                 return ( mwes_and_analysis, api_calls )
             elif processing_phase == 'translated':
-                translation_annotations = parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
-                                                                            previous_version=previous_version, callback=callback)
+                translation_annotations = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
+                                                                                  previous_version=previous_version, callback=callback)
                 return ( translation_annotations, api_calls )
             else:
-                annotated_simplified_elements = parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
-                                                                                  previous_version=previous_version, callback=callback)
+                annotated_simplified_elements = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
+                                                                                        previous_version=previous_version, callback=callback)
                 nontrivial_annotated_elements = [ unsimplify_element(element, processing_phase, previous_version=previous_version)
                                                   for element in annotated_simplified_elements ]
                 annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, processing_phase)
@@ -609,14 +610,14 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 return ( annotated_elements, api_calls )
                 
         except MWEError as e:
-            post_task_update_async(callback, f'*** Warning: {e.message}')
+            await post_task_update_async(callback, f'*** Warning: {e.message}')
         except ChatGPTError as e:
-            post_task_update_async(callback, f'*** Warning: unable to parse response from ChatGPT-4')
-            post_task_update_async(callback, e.message)
+            await post_task_update_async(callback, f'*** Warning: unable to parse response from ChatGPT-4')
+            await post_task_update_async(callback, e.message)
         except Exception as e:
-            post_task_update_async(callback, f'*** Warning: error when sending request to ChatGPT-4')
+            await post_task_update_async(callback, f'*** Warning: error when sending request to ChatGPT-4')
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-            post_task_update_async(callback, error_message)
+            await post_task_update_async(callback, error_message)
 
 def segment_elements_to_segment_translation_input(segment_elements):
     word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(segment_elements)
@@ -1086,7 +1087,7 @@ def unsimplify_element(element, processing_phase, previous_version='default'):
         print(message)
         raise InternalCLARAError(message = message)
 
-def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, previous_version='default', callback=None):
+async def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, previous_version='default', callback=None):
     print(f'parse_chatgpt_annotation_response({response}, ...')
     if processing_phase == 'mwe':
         # Extract the initial analysis text and the JSON list
@@ -1102,7 +1103,7 @@ def parse_chatgpt_annotation_response(response, simplified_elements, processing_
         else:
             message = f'Response is not a list of lists of strings: {response_object}'
             print(message)
-            post_task_update_async(callback, message)
+            await post_task_update_async(callback, message)
             raise ChatGPTError(message=message)
         
     if processing_phase == 'translated':

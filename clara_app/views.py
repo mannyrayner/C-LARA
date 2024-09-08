@@ -3969,7 +3969,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         clara_project_internal.try_to_use_templates('annotate', this_version)
                         async_task(perform_generate_operation_and_store_api_calls, this_version, project, clara_project_internal,
                                    request.user, label, previous_version=previous_version, prompt=prompt, callback=callback)
-                        print(f'--- Started generation task')
+                        print(f'--- Started generation task, callback = {callback}')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
                     # We are improving the text using the AI
@@ -4200,6 +4200,7 @@ def perform_correct_operation(annotated_text, version, clara_project_internal, u
 
 def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
                                                    user_object, label, previous_version='default', prompt=None, callback=None):
+    print(f'perform_generate_operation_and_store_api_calls({version}, {project}, {clara_project_internal}, {user_object}, {label}, {previous_version}, {prompt}, {callback})')
     try:
         config_info = get_user_config(user_object)
         operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label,
@@ -4444,10 +4445,13 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                  'create_dalle_style_image',
                                  'generate_image_descriptions',
                                  'create_image_request_sequence')
-    clara_version = get_user_config(request.user)['clara_version']
-    username = request.user.username
+    user = request.user
+    can_use_ai = user_has_open_ai_key_or_credit(user)
+    config_info = get_user_config(user)
+    username = user.username
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    clara_version = get_user_config(request.user)['clara_version']
 
     if project.uses_coherent_image_set and project.use_translation_for_images and not clara_project_internal.load_text_version("translated"):
         messages.error(request, f"Project is marked as using translations to create images, but there are no translations yet")
@@ -4470,6 +4474,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
     gloss_texts = None
     
     try:
+        # Don't try to correct syntax errors here, there should not be any.
         all_page_texts = clara_project_internal.get_page_texts()
         #pprint.pprint(all_page_texts)
         page_texts = all_page_texts['plain']
@@ -4478,6 +4483,13 @@ def edit_images(request, project_id, dall_e_3_image_status):
         mwe_texts = all_page_texts['mwe']
         lemma_texts = all_page_texts['lemma']
         gloss_texts = all_page_texts['gloss']
+        try:
+            mwe_text = clara_project_internal.load_text_version("mwe")
+            internalised_mwe_text = clara_project_internal.internalize_text(mwe_text, "mwe")
+            # Do this so that we get an exception we can report if the MWEs don't match the text
+            annotate_mwes_in_text(internalised_mwe_text)
+        except MWEError as e:
+             messages.error(request, f"{e.message}")
     except InternalisationError as e:
         messages.error(request, f"{e.message}")
     except InternalCLARAError as e:
@@ -4506,11 +4518,10 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'description_variable': img.description_variable,
                      'description_variables': ', '.join(img.description_variables) if img.description_variables else '',
                      'user_prompt': img.user_prompt,
-                     'display_text_fields': ( img.request_type == 'image-generation' ),
-                     'display_text_fields_label': 'Text versions' if ( img.request_type == 'image-generation' ) else 'none',
+                     'display_text_fields': ( img.request_type != 'image-understanding' ),
+                     'display_text_fields_label': 'Text versions' if ( img.request_type != 'image-understanding' ) else 'none',
                      }
                     for img in images ]
-    #pprint.pprint(initial_data)
 
     # Create placeholder image lines for pages that don't have an image, so that we can display the text versions for those pages.
     if page_texts:
@@ -4588,7 +4599,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
             action = request.POST['action']
             print(f'--- action = {action}')
             if action in actions_requiring_openai:
-                if not user_has_open_ai_key_or_credit(request.user):
+                if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                     return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                 if action == 'create_dalle_image_for_whole_text':
@@ -4691,7 +4702,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     })
                 for i in range(0, len(formset)):
                     form = formset[i]
-                    print(f"i = {i}. form.cleaned_data['display_text_fields'] = {form.cleaned_data['display_text_fields']}")
+                    #print(f"i = {i}. form.cleaned_data['display_text_fields_label'] = {form.cleaned_data['display_text_fields_label']}")
                     previous_record = initial_data[i] if i < len(initial_data) else None
                     #print(f'previous_record#{i} = {previous_record}')
                     # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
@@ -4750,7 +4761,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
 
                         #print(f'image_name = "{image_name}", real_image_file_path = "{real_image_file_path}"')
                         #print(f'user_prompt = "{user_prompt}", content_description = "{content_description}"')
-                        print(f'description_variables = "{description_variables}"')
+                        #print(f'description_variables = "{description_variables}"')
 
                         if image_name and delete and not errors:
                             # We are deleting an image
@@ -4803,18 +4814,33 @@ def edit_images(request, project_id, dall_e_3_image_status):
                             
                 # Save the concatenated texts back to the project
                 try:
-                    clara_project_internal.save_page_texts('plain', new_plain_texts, user=username)
-                    clara_project_internal.save_page_texts('segmented', new_segmented_texts, user=username)
-                    clara_project_internal.save_page_texts('translated', new_translated_texts, user=username)
-                    clara_project_internal.save_page_texts('mwe', new_mwe_texts, user=username)
-                    clara_project_internal.save_page_texts('lemma', new_lemma_texts, user=username)
-                    clara_project_internal.save_page_texts('gloss', new_gloss_texts, user=username)
-                except InternalisationError as e:
-                    messages.error(request, f"There appears to be an inconsistency. Error details: {e.message}")
-                    return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                    types_and_texts = { 'plain': new_plain_texts,
+                                        'segmented': new_segmented_texts,
+                                        'translated': new_translated_texts,
+                                        'mwe': new_mwe_texts,
+                                        'lemma': new_lemma_texts,
+                                        'gloss': new_gloss_texts }
+                    #print(f'types_and_texts:')
+                    #pprint.pprint(types_and_texts)
+                    api_calls = clara_project_internal.save_page_texts_multiple(types_and_texts, user=username, can_use_ai=False, config_info=config_info)
+                    store_api_calls(api_calls, project, project.user, 'correct')
+                except ( InternalisationError, MWEError ) as e:
+                    if not can_use_ai:
+                        messages.error(request, f"There appears to be an inconsistency. Error details: {e.message}")
+                        return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
+                    else:
+                        task_type = f'correct_syntax'
+                        callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                        print(f'--- About to start syntax correction task')
+                        async_task(save_page_texts_multiple, project, clara_project_internal, types_and_texts, username,
+                                   config_info=config_info, callback=callback)
+                        print(f'--- Started syntax correction task')
+                        #Redirect to the monitor view, passing the project ID and report ID as parameters
+                        return redirect('save_page_texts_multiple_monitor', project_id, report_id)
                                                    
                 if len(image_requests) != 0:
-                    if not user_has_open_ai_key_or_credit(request.user):
+                    if not can_use_ai:
                         messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                         return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                     task_type = f'create_dalle_e_3_images'
@@ -4838,6 +4864,10 @@ def edit_images(request, project_id, dall_e_3_image_status):
             messages.success(request, "Image task successfully completed")
         elif dall_e_3_image_status == 'error':
             messages.error(request, "Something went wrong when performing image task. Look at the 'Recent task updates' view for further information.")
+        elif dall_e_3_image_status == 'finished_syntax_correction':
+            messages.success(request, "There was an error in the syntax. This has been corrected and the text has been saved")
+        elif dall_e_3_image_status == 'error_syntax_correction':
+            messages.error(request, "There was an error in the syntax, and something went wrong when trying to fix it. Look at the 'Recent task updates' view for further information.")
 
     return render(request, 'clara_app/edit_images.html', {'formset': formset,
                                                           'description_formset': description_formset,
@@ -4847,6 +4877,40 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                           'uses_coherent_image_set': project.uses_coherent_image_set,
                                                           'clara_version': clara_version,
                                                           'errors': []})
+
+# Async function
+def save_page_texts_multiple(project, clara_project_internal, types_and_texts, username, config_info={}, callback=None):
+    try:
+        api_calls = clara_project_internal.save_page_texts_multiple(types_and_texts, user=username, can_use_ai=True, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, project.user, 'correct')
+        post_task_update(callback, f'--- Corrected texts')
+        post_task_update(callback, f"finished")
+
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+@login_required
+@user_has_a_project_role
+def save_page_texts_multiple_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_has_a_project_role
+def save_page_texts_multiple_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    
+    return render(request, 'clara_app/save_page_texts_multiple_monitor.html',
+                  {'project_id': project_id, 'project': project, 'report_id': report_id})
+
 
 def access_archived_images(request, project_id, image_name):
     project = get_object_or_404(CLARAProject, id=project_id)
