@@ -162,6 +162,7 @@ from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 #from .clara_utils import _use_orm_repositories
+from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text
 from .clara_utils import absolute_file_name, absolute_local_file_name
 from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
@@ -608,6 +609,9 @@ class CLARAProjectInternal:
         if not self.text_versions["segmented"]:
             raise InternalCLARAError(message = 'No segmented text, unable to produce page texts')
 
+        # Align everything with segmented in case we have alignment errors
+        self.align_all_text_versions_with_segmented_and_save()
+
         page_texts = {}
 
         segmented_text = self.load_text_version("segmented_with_images")
@@ -684,6 +688,10 @@ class CLARAProjectInternal:
         for text_type in types_and_texts:
             page_texts = types_and_texts[text_type]
             all_api_calls += self.save_page_texts(text_type, page_texts, user=user, can_use_ai=can_use_ai, config_info=config_info, callback=callback)
+
+        # Align all page texts with segmented in case we've lost alignment
+        self.align_all_text_versions_with_segmented_and_save()
+        
         return all_api_calls
 
     def save_page_texts(self, text_type, page_texts, user='', can_use_ai=False, config_info={}, callback=None):
@@ -754,7 +762,29 @@ class CLARAProjectInternal:
                                                              config_info=config_info, callback=callback)
         self.save_text_version(version, corrected_text, user=user, label=label, source='ai_corrected')
         return api_calls
-        
+
+    # Align a version with the segmented text if it exists and save the aligned text
+    def align_text_version_with_segmented_and_save(self, text_type):
+        try:
+            # If this version doesn't exist, nothing to do
+            if not self.text_versions[text_type]:
+                return
+            
+            segmented_text = self.load_text_version('segmented_with_images')
+            non_segmented_text = self.load_text_version(text_type)
+            
+            aligned_text = align_segmented_text_with_non_segmented_text(segmented_text, non_segmented_text,
+                                                                        self.l2_language, self.l1_language, text_type)
+            self.save_text_version(text_type, aligned_text, source='aligned')
+        except Exception as e:
+            error_message = f'Exception when performing alignment against segmented text: "{str(e)}"\n{traceback.format_exc()}'
+            raise InternalCLARAError(message = error_message)
+
+    # Align all existing versions against segmented
+    def align_all_text_versions_with_segmented_and_save(self):
+        for text_type in ( 'mwe', 'translated', 'gloss', 'lemma' ):
+            self.align_text_version_with_segmented_and_save(text_type)
+
     # Call ChatGPT-4 to create a story based on the given prompt
     def create_plain_text(self, prompt: Optional[str] = None, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         plain_text, api_calls = generate_story(self.l2_language, prompt, config_info=config_info, callback=callback)
