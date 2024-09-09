@@ -560,7 +560,8 @@ class CLARAProjectInternal:
     # Get text consisting of "segmented" text, plus segmented title if available, plus suitably tagged segmented text for any images that may be present
     def _create_and_load_segmented_with_images_text(self, callback=None):
         segmented_text = self.load_text_version("segmented")
-        images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
+        #images_text = self.image_repository.get_annotated_image_text(self.id, callback=callback)
+        images_text = ''
         segmented_with_images_text = segmented_text + '\n' + images_text
         text_title = self.load_text_version_or_null("segmented_title")
         if text_title != '':
@@ -683,7 +684,7 @@ class CLARAProjectInternal:
         return page_texts
 
     def save_page_texts_multiple(self, types_and_texts, user='', can_use_ai=False, config_info={}, callback=None):
-        print(f'save_page_texts_multiple (clara_main): can_use_ai = {can_use_ai}')
+        #print(f'save_page_texts_multiple (clara_main): can_use_ai = {can_use_ai}')
         all_api_calls = []
         for text_type in types_and_texts:
             page_texts = types_and_texts[text_type]
@@ -696,7 +697,7 @@ class CLARAProjectInternal:
 
     def save_page_texts(self, text_type, page_texts, user='', can_use_ai=False, config_info={}, callback=None):
         #print(f'save_page_texts(self, {text_type}, {page_texts}, user={user})')
-        print(f'save_page_texts (clara_main): can_use_ai = {can_use_ai}')
+        #print(f'save_page_texts (clara_main): can_use_ai = {can_use_ai}')
         l2_language = 'irrelevant'
         l1_language = 'irrelevant'
         all_api_calls = []
