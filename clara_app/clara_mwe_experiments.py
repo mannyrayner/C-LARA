@@ -168,7 +168,7 @@ def annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs, few_shot_ex
                                                    l2_language='english', n=3,
                                                    similarity_metric='pos', keep_incorrect_records=False, config_info={}):
     """
-    Annotates a list of text/MWE pairs using the closest few-shot examples from a pool based on embeddings similarity.
+    Annotates a list of text/MWE pairs using the closest few-shot examples from a pool based on embeddings/POS similarity.
 
     Parameters:
     - texts_mwes_pairs: list of dicts, each dict containing 'text' and 'mwes' as keys.
