@@ -1,7 +1,8 @@
-from .clara_embeddings import get_embedding, cosine_similarity
+from .clara_pos_tag_similarity import pos_based_similarity
+from .clara_embeddings import embeddings_based_similarity
 from .clara_internalise import internalize_text
 from .clara_create_annotations import call_chatgpt4_to_annotate_or_improve_elements_async
-from .clara_utils import absolute_file_name, make_directory, read_json_file, post_task_update_async
+from .clara_utils import absolute_file_name, make_directory, read_json_file, write_json_to_file, post_task_update_async
 
 import toml
 import re
@@ -106,33 +107,32 @@ def parse_gold_standard_mwes(input_file, train_indices, dev_indices, test_indice
 
     return train_sentences, dev_sentences, test_sentences
 
-
 def convert_mws_to_json(sentences):
     json_data = []
     for sentence_id, words, mwes in sentences:
         text = " ".join(words)
         # Filter out MWEs with only one word
         mwe_list = [mwe_words for mwe_words in mwes.values() if len(mwe_words) > 1]
+        # Convert MWE lists to a string format, where MWEs are comma-separated
+        mwe_string = ",".join([" ".join(mwe_words) for mwe_words in mwe_list])
         json_obj = {
             "text": text,
-            "mwes": mwe_list
+            "mwes": mwe_string  # Store MWEs as a single string
         }
         json_data.append(json_obj)
     return json_data
 
+
 def write_mwes_json_output(json_data, output_file):
-    with open(output_file, 'w', encoding='utf-8') as file:
-        for entry in json_data:
-            json.dump(entry, file)
-            file.write('\n')
+    write_json_to_file(json_data, output_file)
 
 # ----------------------------------------
 
 def test_mwe_annotate_segments_using_few_shot_examples():
-    segment1 = "I think he just made it up."
-    segment2 = "It|'s not a big deal."
+    segment1 = "I think he just made it up, the thing makes no sense."
+    segment2 = "It|'s not a big deal, I|'ll get over it."
     l2_language = 'english'
-    config_info = config_info={'gpt_model': 'gpt-4o'}
+    config_info = {'gpt_model': 'gpt-4o'}
     few_shot_examples_from_repo = read_json_file('$CLARA/prompt_templates/default/mwe_annotate_examples.json')
     segments_and_few_shot_examples = [ ( segment1, few_shot_examples_from_repo ),
                                        ( segment2, few_shot_examples_from_repo ) ]
@@ -142,66 +142,75 @@ def test_mwe_annotate_segments_using_few_shot_examples():
     print(f"result:")
     pprint.pprint(result)
 
-def annotate_texts_using_closest_few_shot_examples(texts, few_shot_examples_pool, l2_language='english', n=3, config_info={}):
+def annotate_sag_et_al_examples():
     """
-    Annotates a list of text strings using the closest few-shot examples from a pool based on embeddings similarity.
+    Annotate the examples adapted from Sag et al to create the initial pool for the MWE experiments.
+    We are going to edit the ones that come out wrong, so set keep_incorrect_records = True.
+    """
+    texts_mwes_pairs = read_json_file('$CLARA/linguistic_data/english/MWEsExperiment/sag_et_al/sag_et_al_examples.json')
+    few_shot_examples_pool = read_json_file('$CLARA/prompt_templates/default/mwe_annotate_examples.json')
+    l2_language='english'
+    n = 4
+    similarity_metric='pos'
+    keep_incorrect_records = True
+    config_info = {'gpt_model': 'gpt-4o'}
+    annotated_records = annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs,
+                                                                       few_shot_examples_pool,
+                                                                       l2_language=l2_language,
+                                                                       n=n,
+                                                                       similarity_metric=similarity_metric,
+                                                                       keep_incorrect_records=True,
+                                                                       config_info=config_info)
+    write_json_to_file(annotated_records,
+                       '$CLARA/linguistic_data/english/MWEsExperiment/sag_et_al/annotated_sag_et_al_examples.json')
+
+def annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs, few_shot_examples_pool,
+                                                   l2_language='english', n=3,
+                                                   similarity_metric='pos', keep_incorrect_records=False, config_info={}):
+    """
+    Annotates a list of text/MWE pairs using the closest few-shot examples from a pool based on embeddings similarity.
 
     Parameters:
-    - texts: list of str, the text strings to be annotated.
+    - texts_mwes_pairs: list of dicts, each dict containing 'text' and 'mwes' as keys.
     - few_shot_examples_pool: list of lists, the pool of few-shot examples in the format [text_string, mwes_string, analysis].
     - l2_language: str, the language of the texts being annotated.
     - n: int, the number of closest few-shot examples to use for each annotation.
+    - keep_incorrect_records: bool, whether to keep records of incorrect annotations. Default is False.
     - config_info: dict, configuration information for the annotation process.
 
     Returns:
-    - A tuple (annotations, total_cost) where:
-      - annotations: list of tuples, each containing (text, annotation_result).
+    - A tuple (filtered_annotations, total_cost) where:
+      - filtered_annotations: list of lists of the form [ text, mwes_string, CoT_analysis ].
+        If keep_incorrect_records=True, incorrect results have an mwe_string field of the form { 'identified': identified, 'correct': correct }
       - total_cost: float, the total cost of API calls for annotations.
     """
-
     segments_and_few_shot_examples = []
 
     # For each text, find the top n closest few-shot examples
-    for text in texts:
-        closest_examples = get_top_n_similar_few_shot_examples(text, few_shot_examples_pool, n=n)
-        segments_and_few_shot_examples.append((text, closest_examples))
+    for pair in texts_mwes_pairs:
+        text = pair['text']
+        correct_mwes = pair['mwes']
+
+        closest_examples = get_top_n_similar_few_shot_examples(text, few_shot_examples_pool, n=n, similarity_metric=similarity_metric)
+        segments_and_few_shot_examples.append((text, closest_examples, correct_mwes))
 
     # Annotate the texts using the selected few-shot examples
     annotations, total_cost = mwe_annotate_segments_using_few_shot_examples(
-        segments_and_few_shot_examples, l2_language, config_info=config_info
+        [(text, examples) for text, examples, _ in segments_and_few_shot_examples], l2_language, config_info=config_info
     )
 
-    return annotations, total_cost
+    filtered_annotations = []
 
+    # Filter annotations based on whether they match the correct MWEs
+    for (text, _, correct_mwes), annotation in zip(segments_and_few_shot_examples, annotations):
+        identified_mwes = annotation[1]
+        if make_mwes_canonical(correct_mwes) == make_mwes_canonical(identified_mwes):
+            filtered_annotations.append( [ text, correct_mwes, annotation[2] ] )
+        elif keep_incorrect_records:
+            # Append incorrect records with correct MWEs to permit editing
+            filtered_annotations.append( [ text, { 'identified': identified_mwes, 'correct': correct_mwes}, annotation[2] ] )
 
-##def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3):
-##    """
-##    Returns the top n most similar few-shot examples for a given text based on embeddings cosine similarity.
-##    
-##    Parameters:
-##    - text: str, the input text string for which we want to find similar few-shot examples.
-##    - few_shot_examples: list of lists, where each sublist contains [text_string, mwes_string, analysis].
-##    - n: int, the number of most similar few-shot examples to return.
-##
-##    Returns:
-##    - list of the top n few-shot examples most similar to the input text.
-##    """
-##
-##    # Get the embedding for the input text
-##    target_embedding = get_embedding(text)
-##
-##    # Calculate embeddings for all few-shot examples (using only the text_string part)
-##    example_embeddings = [(example, get_embedding(example[0])) for example in few_shot_examples]
-##
-##    # Compute cosine similarities
-##    similarities = [(example, cosine_similarity(target_embedding, embedding)) 
-##                    for example, embedding in example_embeddings]
-##
-##    # Sort by similarity in descending order and select the top n examples
-##    top_n_similar_examples = sorted(similarities, key=lambda x: x[1], reverse=True)[:n]
-##
-##    # Return just the examples, not the similarity scores
-##    return [example[0] for example in top_n_similar_examples]
+    return filtered_annotations, total_cost
 
 def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3, similarity_metric='embeddings'):
     """
@@ -330,4 +339,19 @@ def convert_annotation_results_to_few_shot_format(annotation_results):
         few_shot_examples.append(few_shot_example)
     
     return few_shot_examples
+
+def make_mwes_canonical(mwes_string):
+    """
+    Converts an MWE string into a canonical form where MWEs are alphabetically sorted.
+    
+    Parameters:
+    - mwes_string: str, MWEs as a comma-separated string (e.g., "going to, ended up, spilling the beans").
+
+    Returns:
+    - str: Canonical form of the MWEs (e.g., "ended up, going to, spilling the beans").
+    """
+    mwes_list = mwes_string.split(",")
+    canonical_mwes = ",".join(sorted(mwes_list))
+    return canonical_mwes
+
 
