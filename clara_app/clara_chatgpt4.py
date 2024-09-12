@@ -260,7 +260,7 @@ async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, ca
 
     response_url = response.data[0].url
 
-    save_openai_response_image(response_url, image_file)
+    await save_openai_response_image(response_url, image_file, callback=callback)
 
     cost = clara_openai.cost_of_gpt4_image_api_call(prompt, gpt_model=gpt_model, size=size)
     elapsed_time = time.time() - start_time
@@ -328,13 +328,19 @@ async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model
     return api_call
 
 # Download the image from the url and save it as a 512x512 jpg
-def save_openai_response_image(url, image_file):
-    abs_image_file = absolute_local_file_name(image_file)
-    response = requests.get(url)
-    image = Image.open(BytesIO(response.content))
-    # 512x512 is more convenient for C-LARA
-    image = image.resize((512, 512), Image.Resampling.LANCZOS)
-    image.convert("RGB").save(abs_image_file)
+async def save_openai_response_image(url, image_file, callback=None):
+    try:
+        abs_image_file = absolute_local_file_name(image_file)
+        await post_task_update_async(callback, f'--- Trying to download image from "{url}"')
+        response = requests.get(url)
+        await post_task_update_async(callback, f'--- Image downloaded"')
+        image = Image.open(BytesIO(response.content))
+        # 512x512 is more convenient for C-LARA
+        image = image.resize((512, 512), Image.Resampling.LANCZOS)
+        image.convert("RGB").save(abs_image_file)
+    except Exception as e:
+        await post_task_update_async(callback, f"Exception when downloading image: {str(e)}\n{traceback.format_exc()}")
+        raise ChatGPTError(message = f'Unable to download image from {url}')
 
 # Quite often, JSON responses come back wrapped in some text, usually
 #

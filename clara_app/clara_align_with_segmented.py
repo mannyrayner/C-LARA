@@ -22,17 +22,17 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
     - str: The realigned non-segmented text string.
     """
 
-    #print(f'segmented = {segmented}')
-    #print(f'non_segmented = {non_segmented}')
+##    print(f'segmented = {segmented}')
+##    print(f'non_segmented = {non_segmented}')
     
     # Step 1: Convert both texts to DiffElements
     segmented_diff = text_to_diff_elements_full(segmented, l2_language, l1_language, 'segmented')
     non_segmented_diff = text_to_diff_elements_full(non_segmented, l2_language, l1_language, text_type)
 
-    #print(f'segmented_diff = ')
-    #pprint.pprint(segmented_diff)
-    #print(f'non_segmented_diff = ')
-    #pprint.pprint(non_segmented_diff)
+##    print(f'segmented_diff = ')
+##    pprint.pprint(segmented_diff)
+##    print(f'non_segmented_diff = ')
+##    pprint.pprint(non_segmented_diff)
 
     # Step 2: Extract content for difflib
     segmented_content = [de.content for de in segmented_diff]
@@ -47,27 +47,29 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
             aligned_non_segmented.extend(non_segmented_diff[j1:j2])
         elif tag == 'insert':
             # B1: Discard inserts in non-segmented text
-            pass  # Do nothing
+            pass   # Do nothing
         elif tag == 'delete':
             # B2: Add placeholders for deletes in segmented text
             for index in range(i1, i2):
+                content_type = segmented_diff[index].type
                 content = segmented_diff[index].content
-                placeholder_annotations = get_placeholder_annotations(content, text_type)
-                aligned_non_segmented.append(DiffElement('ContentElement', content, placeholder_annotations))
+                placeholder_annotations = get_placeholder_annotations(content, text_type) if content_type == 'Word' else {}
+                aligned_non_segmented.append(DiffElement(content_type, content, placeholder_annotations))
         elif tag == 'replace':
             # Handle replacements as delete + insert
             for index in range(i1, i2):
+                content_type = segmented_diff[index].type
                 content = segmented_diff[index].content
-                placeholder_annotations = get_placeholder_annotations(content, text_type)
-                aligned_non_segmented.append(DiffElement('ContentElement', content, placeholder_annotations))
+                placeholder_annotations = get_placeholder_annotations(content, text_type) if content_type == 'Word' else {}
+                aligned_non_segmented.append(DiffElement(content_type, content, placeholder_annotations))
 
     # Step 4: Convert aligned DiffElements back to Text object
-    #print(f'aligned_non_segmented = ')
-    #pprint.pprint(aligned_non_segmented)
+##    print(f'aligned_non_segmented = ')
+##    pprint.pprint(aligned_non_segmented)
     
     aligned_text = diff_elements_to_text(aligned_non_segmented, l2_language, l1_language, text_type)
 
-    #print(f'aligned_text = {aligned_text}')
+##    print(f'aligned_text = {aligned_text}')
 
     return aligned_text
 
