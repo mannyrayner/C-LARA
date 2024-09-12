@@ -27,6 +27,7 @@ import requests
 import time
 import base64
 import json
+import traceback
 
 from openai import OpenAI
 from PIL import Image
