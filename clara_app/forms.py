@@ -55,7 +55,8 @@ class UserConfigForm(forms.ModelForm):
         widgets = {
             'clara_version': forms.Select(choices=[('simple_clara', 'Simple C-LARA'),
                                                    ('full_clara', 'Full C-LARA'),]),
-            'gpt_model': forms.Select(choices=[('gpt-4o', 'GPT-4o'),
+            'gpt_model': forms.Select(choices=[('gpt-4o-2024-08-06', 'GPT-4o 2024-08-06'),
+                                               ('gpt-4o', 'GPT-4o'),
                                                ('gpt-4-turbo', 'GPT-4 Turbo'),
                                                ('gpt-4-1106-preview', 'GPT-4 Turbo 2023-11-06'),
                                                ('gpt-4', 'GPT-4')]),

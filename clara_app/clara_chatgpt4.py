@@ -34,6 +34,8 @@ from io import BytesIO
 
 config = get_config()
 
+DEFAULT_GPT_4_MODEL = 'gpt-4o'
+
 def get_open_ai_api_key(config_info):
     if 'open_ai_api_key' in config_info and config_info['open_ai_api_key'] and config_info['open_ai_api_key'] != 'None':
         key = config_info['open_ai_api_key']
@@ -87,7 +89,7 @@ def call_chat_gpt4_interpret_image(prompt, image_file, config_info={}, callback=
     return asyncio.run(get_api_chatgpt4_interpret_image_response(prompt, image_file, config_info=config_info, callback=callback))
 
 def call_openai_api(messages, config_info):
-    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
+    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else DEFAULT_GPT_4_MODEL
     api_key = get_open_ai_api_key(config_info)
     client = OpenAI(api_key=api_key)
     chat_completion = client.chat.completions.create(
@@ -180,7 +182,7 @@ def call_openai_api_interpret_image(prompt, image_path, gpt_model, max_tokens, c
 
 async def get_api_chatgpt4_response(prompt, config_info={}, callback=None):
     start_time = time.time()
-    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else 'gpt-4-1106-preview'
+    gpt_model = config_info['gpt_model'] if 'gpt_model' in config_info else DEFAULT_GPT_4_MODEL
     n_prompt_chars = int(config.get('chatgpt4_trace', 'max_prompt_chars_to_show'))
     n_response_chars = int(config.get('chatgpt4_trace', 'max_response_chars_to_show'))
     if n_prompt_chars != 0:
