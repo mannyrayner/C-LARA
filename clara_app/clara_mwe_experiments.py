@@ -9,6 +9,8 @@ import re
 import json
 import asyncio
 import pprint
+import time
+import traceback
 from collections import defaultdict
 from pathlib import Path
 
@@ -142,6 +144,53 @@ def test_mwe_annotate_segments_using_few_shot_examples():
     print(f"result:")
     pprint.pprint(result)
 
+def annotate_speckled_band_dev(n=5, n_examples=50):
+    annotate_dev_examples('$CLARA/linguistic_data/english/MWEsExperiment/spec/dev.json', 
+                          f'$CLARA/linguistic_data/english/MWEsExperiment/spec/annotated_dev_portion_{n}_{n_examples}.json',
+                          n=n,
+                          n_examples=n_examples)
+
+def annotate_dancing_men_dev(n=5, n_examples=50):
+    annotate_dev_examples('$CLARA/linguistic_data/english/MWEsExperiment/danc/dev.json', 
+                          f'$CLARA/linguistic_data/english/MWEsExperiment/danc/annotated_dev_portion_{n}_{n_examples}.json',
+                          n=n,
+                          n_examples=n_examples)
+
+def annotate_dev_examples(dev_file_path, output_file_path, n=5, n_examples=50):
+    """
+    Annotate the dev examples from the specified file to evaluate MWE annotation quality.
+
+    Parameters:
+    - dev_file_path: str, the path to the dev set to be annotated.
+    - output_file_path: str, where to save the annotated results.
+    - n_examples: int, the number of examples to annotate (default 50).
+    """
+    # Load the dev set
+    texts_mwes_pairs = read_json_file(dev_file_path)
+
+    # Select a portion of the data for initial annotation (first n_examples)
+    texts_mwes_pairs = texts_mwes_pairs[:n_examples]
+
+    few_shot_examples_pool = read_json_file('$CLARA/linguistic_data/english/MWEsExperiment/sag_et_al/annotated_sag_et_al_examples_edited_plus_original.json')
+    l2_language = 'english'
+    n = n
+    similarity_metric = 'pos'
+    keep_incorrect_records = True
+    config_info = {'gpt_model': 'gpt-4o-2024-08-06'}
+    
+    # Annotate the dev examples
+    annotated_records, total_cost, total_execution_time = annotate_texts_using_closest_few_shot_examples(
+        texts_mwes_pairs, few_shot_examples_pool, l2_language=l2_language, n=n, 
+        similarity_metric=similarity_metric, keep_incorrect_records=keep_incorrect_records, config_info=config_info
+    )
+    
+    # Save the annotated results
+    write_json_to_file(annotated_records, output_file_path)
+
+    print(f"Annotated {len(texts_mwes_pairs)} examples, total cost: {total_cost}, execution time: {total_execution_time:.2f} seconds")
+
+
+
 def annotate_sag_et_al_examples():
     """
     Annotate the examples adapted from Sag et al to create the initial pool for the MWE experiments.
@@ -153,7 +202,7 @@ def annotate_sag_et_al_examples():
     n = 4
     similarity_metric='pos'
     keep_incorrect_records = True
-    config_info = {'gpt_model': 'gpt-4o'}
+    config_info = {'gpt_model': 'gpt-4o-2024-08-06'}
     annotated_records = annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs,
                                                                        few_shot_examples_pool,
                                                                        l2_language=l2_language,
@@ -163,6 +212,30 @@ def annotate_sag_et_al_examples():
                                                                        config_info=config_info)
     write_json_to_file(annotated_records,
                        '$CLARA/linguistic_data/english/MWEsExperiment/sag_et_al/annotated_sag_et_al_examples.json')
+
+async def annotate_texts_in_tranches(texts_mwes_pairs, few_shot_examples_pool, l2_language='english', n=3, 
+                                     similarity_metric='pos', max_requests_per_minute=20, config_info={}):
+    """
+    Annotates the texts in tranches to avoid exceeding the API rate limits.
+
+    Parameters:
+    - max_requests_per_minute: int, the max number of requests allowed per minute.
+    """
+    tranches = [texts_mwes_pairs[i:i + max_requests_per_minute] for i in range(0, len(texts_mwes_pairs), max_requests_per_minute)]
+    all_annotations = []
+    total_cost = 0.0
+    total_execution_time = 0.0
+
+    for tranche in tranches:
+        tranche_annotations, tranche_cost, tranche_execution_time = annotate_texts_using_closest_few_shot_examples(
+            tranche, few_shot_examples_pool, l2_language=l2_language, n=n, similarity_metric=similarity_metric, config_info=config_info
+        )
+        all_annotations.extend(tranche_annotations)
+        total_cost += tranche_cost
+        total_execution_time += tranche_execution_time
+        await asyncio.sleep(60)  # Wait for 60 seconds to avoid exceeding the RPM limit
+
+    return all_annotations, total_cost, total_execution_time
 
 def annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs, few_shot_examples_pool,
                                                    l2_language='english', n=3,
@@ -183,7 +256,10 @@ def annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs, few_shot_ex
       - filtered_annotations: list of lists of the form [ text, mwes_string, CoT_analysis ].
         If keep_incorrect_records=True, incorrect results have an mwe_string field of the form { 'identified': identified, 'correct': correct }
       - total_cost: float, the total cost of API calls for annotations.
+      - execution_time: float, the total time taken for the process in seconds.
     """
+    start_time = time.time()  # Start timing
+    
     segments_and_few_shot_examples = []
 
     # For each text, find the top n closest few-shot examples
@@ -210,7 +286,9 @@ def annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs, few_shot_ex
             # Append incorrect records with correct MWEs to permit editing
             filtered_annotations.append( [ text, { 'identified': identified_mwes, 'correct': correct_mwes}, annotation[2] ] )
 
-    return filtered_annotations, total_cost
+    execution_time = time.time() - start_time  # End timing
+
+    return filtered_annotations, total_cost, execution_time
 
 def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3, similarity_metric='embeddings'):
     """
@@ -295,7 +373,7 @@ async def mwe_annotate_segments_using_few_shot_examples_async(content_elements_a
                                                 config_info=config_info, callback=callback)
         ))
 
-    post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
+    await post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
     results = await asyncio.gather(*tasks)
     
     all_api_calls = []
@@ -314,11 +392,28 @@ async def call_chatgpt4_to_mwe_annotate_async(content_elements, l2_language, few
     annotate_or_improve = 'annotate'
     processing_phase = 'mwe'
     l1_language = 'irrelevant'
-    return await call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase,
-                                                                     content_elements,
-                                                                     l1_language, l2_language,
-                                                                     few_shot_examples=few_shot_examples,
-                                                                     config_info=config_info, callback=callback)
+    placeholder_annotations = { 'mwes': [], 'analysis': '*** ERROR ***' }
+    try:
+        result = await call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase,
+                                                                           content_elements,
+                                                                           l1_language, l2_language,
+                                                                           few_shot_examples=few_shot_examples,
+                                                                           config_info=config_info,
+                                                                           always_succeed=True,
+                                                                           callback=callback)
+        # call_chatgpt4_to_annotate_or_improve_elements_async hit the retry limit
+        if isinstance(result, ( list, tuple )) and len(result) == 2 and result[0] == '*FAILED*':
+            api_calls = result[1]
+            return ( placeholder_annotations, api_calls )
+        # Normal completion
+        else:
+            return result
+    except Exception as e:
+        # Things went so badly wrong that we don't even know what the API calls were
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        await post_task_update_async(callback, error_message)
+        api_calls = []
+        return ( placeholder_annotations, api_calls )
 
 def convert_annotation_results_to_few_shot_format(annotation_results):
     few_shot_examples = []

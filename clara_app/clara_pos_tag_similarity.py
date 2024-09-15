@@ -59,10 +59,64 @@ def create_sparse_vector_from_ngrams(ngrams_list):
     Returns:
     - A sparse vector representing the n-gram counts.
     """
+    # Check if ngrams_list is empty, return a default empty vector if so
+    if not ngrams_list:
+        return np.zeros((1, 1)), None  # Return an empty vector with no features
+    
     vectorizer = CountVectorizer(tokenizer=lambda x: x, preprocessor=lambda x: x, token_pattern=None)
     ngram_strs = [" ".join(ngram) for ngram in ngrams_list]
     vector = vectorizer.fit_transform([ngram_strs])
     return vector.toarray(), vectorizer
+
+##def get_weighted_pos_ngram_vector(text, ngram_ranges=[2, 3, 4], weights=[1, 4, 9]):
+##    """
+##    Generate a single weighted sparse vector of POS n-gram counts for a given text.
+##    
+##    Parameters:
+##    - text: str, input text to vectorize.
+##    - ngram_ranges: list of int, n-gram lengths to consider.
+##    - weights: list of int, weights to assign to each n-gram length.
+##    
+##    Returns:
+##    - A weighted sparse vector for the input text.
+##    """
+##
+##    # Normalize text to ensure consistency in cache lookups
+##    normalized_text = text.replace("\n", " ")
+##
+##    # Check if POS n-gram vector is already cached
+##    if normalized_text in pos_ngram_cache:
+##        return np.array(pos_ngram_cache[normalized_text])
+##    
+##    pos_tags = get_pos_tags(normalized_text)
+##
+##    # Early exit if the text is too short or has no POS tags
+##    if len(pos_tags) < 2:
+##        return np.zeros((1, 1))  # Return a default empty vector
+##    
+##    weighted_vector = np.zeros((1,))
+##
+##    for n, weight in zip(ngram_ranges, weights):
+##        pos_ngrams = generate_pos_ngrams(pos_tags, n)
+##        sparse_vector, _ = create_sparse_vector_from_ngrams(pos_ngrams)
+##        
+##        if weighted_vector.size == 1:  # Initialize on the first pass
+##            weighted_vector = weight * sparse_vector
+##        else:
+##            if weighted_vector.shape[1] < sparse_vector.shape[1]:
+##                # Extend weighted_vector to match the new sparse_vector size
+##                new_vector = np.zeros((1, sparse_vector.shape[1]))
+##                new_vector[:, :weighted_vector.shape[1]] = weighted_vector
+##                weighted_vector = new_vector
+##
+##            # Weight and add to the existing vector
+##            weighted_vector[:, :sparse_vector.shape[1]] += weight * sparse_vector
+##
+##    # Convert to list for JSON serialization and cache it
+##    pos_ngram_cache[normalized_text] = weighted_vector.tolist()
+##    save_pos_ngram_cache_to_file()
+##
+##    return weighted_vector
 
 def get_weighted_pos_ngram_vector(text, ngram_ranges=[2, 3, 4], weights=[1, 4, 9]):
     """
@@ -85,29 +139,30 @@ def get_weighted_pos_ngram_vector(text, ngram_ranges=[2, 3, 4], weights=[1, 4, 9
         return np.array(pos_ngram_cache[normalized_text])
     
     pos_tags = get_pos_tags(normalized_text)
-    weighted_vector = np.zeros((1,))
+    weighted_vector = np.zeros((1,), dtype=np.float64)  # Initialize as float64
 
     for n, weight in zip(ngram_ranges, weights):
         pos_ngrams = generate_pos_ngrams(pos_tags, n)
         sparse_vector, _ = create_sparse_vector_from_ngrams(pos_ngrams)
-        
+
         if weighted_vector.size == 1:  # Initialize on the first pass
-            weighted_vector = weight * sparse_vector
+            weighted_vector = weight * sparse_vector.astype(np.float64)  # Convert sparse vector to float64
         else:
             if weighted_vector.shape[1] < sparse_vector.shape[1]:
                 # Extend weighted_vector to match the new sparse_vector size
-                new_vector = np.zeros((1, sparse_vector.shape[1]))
+                new_vector = np.zeros((1, sparse_vector.shape[1]), dtype=np.float64)
                 new_vector[:, :weighted_vector.shape[1]] = weighted_vector
                 weighted_vector = new_vector
 
-            # Weight and add to the existing vector
-            weighted_vector[:, :sparse_vector.shape[1]] += weight * sparse_vector
+            # Weight and add to the existing vector, ensuring dtype consistency
+            weighted_vector[:, :sparse_vector.shape[1]] += weight * sparse_vector.astype(np.float64)
 
     # Convert to list for JSON serialization and cache it
     pos_ngram_cache[normalized_text] = weighted_vector.tolist()
     save_pos_ngram_cache_to_file()
 
     return weighted_vector
+
 
 def pad_vectors_to_same_length(vec1, vec2):
     """
@@ -140,6 +195,10 @@ def pad_vectors_to_same_length(vec1, vec2):
 def pos_based_similarity(text1, text2, ngram_ranges=[2, 3, 4], weights=[1, 4, 9]):
     vector1 = get_weighted_pos_ngram_vector(text1, ngram_ranges, weights)
     vector2 = get_weighted_pos_ngram_vector(text2, ngram_ranges, weights)
+
+    # If either vector is the default empty vector, return a similarity of 0.0
+    if vector1.shape[1] == 1 or vector2.shape[1] == 1:
+        return 0.0
 
     # Pad vectors to the same length
     padded_vector1, padded_vector2 = pad_vectors_to_same_length(vector1, vector2)

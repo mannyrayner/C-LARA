@@ -519,7 +519,9 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                                                               previous_version='default',
                                                               mwe=False, mwes=[], translation=None,
                                                               few_shot_examples=[],
-                                                              config_info={}, callback=None):
+                                                              config_info={},
+                                                              always_succeed=False,
+                                                              callback=None):
     word_elements = word_items_in_element_list(elements)
     if len(word_elements) == 0:
         # If we're doing MWE, return empty list
@@ -579,7 +581,10 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
     limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
     while True:
         if n_attempts >= limit:
-            raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
+            if always_succeed:
+                return ( '*FAILED*', api_calls )
+            else:
+                raise ChatGPTError( message=f'*** Giving up, have tried sending this to ChatGPT-4 {limit} times' )
         n_attempts += 1
         await post_task_update_async(callback, f'--- Calling ChatGPT-4 (attempt #{n_attempts}) to {annotate_or_improve} text ({n_words} words and punctuation marks): "{text_to_annotate}"')
         try:
