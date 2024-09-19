@@ -70,6 +70,7 @@ SUPPORTED_LANGUAGES = [
     ('dutch', 'Dutch'),
     ('english', 'English'),
     ('esperanto', 'Esperanto'),
+    ('estonian', 'Estonian'),
     ('faroese', 'Faroese'),
     ('farsi', 'Farsi'),
     ('finnish', 'Finnish'),

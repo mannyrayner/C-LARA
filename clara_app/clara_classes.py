@@ -19,6 +19,8 @@ It also defines the following classes:
 import json
 import os
 import regex
+import string
+import unicodedata
 
 class ContentElement:
     def __init__(self, element_type, content, annotations=None):
@@ -30,12 +32,14 @@ class ContentElement:
         def escape_special_chars(text):
             return text.replace("#", r"\#").replace("@", r"\@").replace("<", r"\<").replace(">", r"\>")
 
-        # If a Word element contains spaces, we need to add @ signs around it for the annotated text to be well-formed
+        # If a Word element contains spaces or punctuation, we need to add @ signs around it
+        # for the annotated text to be well-formed
         def put_at_signs_around_text_if_necessary(text, annotation_type):
-            if ' ' in text and annotation_type in ( 'segmented', 'mwe', 'translated', 'gloss', 'lemma' ):
-                return f'@{text}@'
-            else:
-                return text
+            # Check if text contains spaces or any Unicode punctuation
+            if any(unicodedata.category(char).startswith('P') for char in text) or ' ' in text:
+                if annotation_type in ('segmented', 'mwe', 'translated', 'gloss', 'lemma'):
+                    return f'@{text}@'
+            return text
         
         if self.type == "Word":
             escaped_content = escape_special_chars(self.content)
@@ -54,8 +58,10 @@ class ContentElement:
                 lemma, pos = ( annotations['lemma'], annotations['pos'] )
                 escaped_lemma = escape_special_chars(lemma)
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
-            elif annotation_type in ( 'plain', 'segmented', 'mwe', 'mwe_minimal', 'translated' ):
+            elif annotation_type in ( 'plain' ):
                 return self.content
+            elif annotation_type in ( 'segmented', 'mwe', 'mwe_minimal', 'translated' ):
+                return escaped_content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])
                 return f"{escaped_content}#{escaped_annotation}#"

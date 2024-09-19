@@ -680,7 +680,7 @@ class CLARAProjectInternal:
         for key in page_texts:
             page_texts[key] = [ text for text in page_texts[key] if not '<page img=' in text ]
 
-        pprint.pprint(page_texts)
+        #pprint.pprint(page_texts)
         return page_texts
 
     def save_page_texts_multiple(self, types_and_texts, user='', can_use_ai=False, config_info={}, callback=None):
@@ -765,18 +765,25 @@ class CLARAProjectInternal:
         return api_calls
 
     # Align a version with the segmented text if it exists and save the aligned text
-    def align_text_version_with_segmented_and_save(self, text_type):
+    def align_text_version_with_segmented_and_save(self, text_type, create_if_necessary=False, use_words_for_lemmas=False):
         try:
-            # If this version doesn't exist, nothing to do
-            if not self.text_versions[text_type]:
-                return
-            
             segmented_text = self.load_text_version('segmented_with_images')
-            non_segmented_text = self.load_text_version(text_type)
             
+            if self.text_versions[text_type]:
+                non_segmented_text = self.load_text_version(text_type)
+            else:
+                if create_if_necessary:
+                    non_segmented_text = ''
+                else:
+                    return
+                
             aligned_text = align_segmented_text_with_non_segmented_text(segmented_text, non_segmented_text,
-                                                                        self.l2_language, self.l1_language, text_type)
+                                                                        self.l2_language, self.l1_language,
+                                                                        text_type, use_words_for_lemmas=use_words_for_lemmas)
             self.save_text_version(text_type, aligned_text, source='aligned')
+            
+            api_calls = []
+            return api_calls
         except Exception as e:
             error_message = f'Exception when performing alignment against segmented text: "{str(e)}"\n{traceback.format_exc()}'
             raise InternalCLARAError(message = error_message)

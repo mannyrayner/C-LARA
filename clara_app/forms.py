@@ -383,7 +383,8 @@ class CreatePhoneticTextForm(CreateAnnotatedTextForm):
 class CreateTranslatedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Use AI to translate text from segmented text'),
-        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
+        ('correct', 'Try to fix errors in malformed annotated text using AI'),
+        ('placeholders', 'Add placeholder annotations, creating text if necessary' ),
         ('manual', 'Manually edit/enter translations'),
         ('load_archived', 'Load archived version')
     ]
@@ -421,6 +422,7 @@ class CreateGlossedTextForm(CreateAnnotatedTextForm):
         #('generate_gloss_from_lemma', 'Generate annotated text from LEMMA-TAGGED text using AI'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
+        ('placeholders', 'Add placeholder annotations, creating text if necessary' ),
         ('manual', 'Manually enter annotated text'),
         ('load_archived', 'Load archived version'),
         ('delete', 'Delete current glossed text')
@@ -436,7 +438,8 @@ class CreateLemmaTaggedTextForm(CreateAnnotatedTextForm):
         ('tree_tagger', 'Generate annotated text from segmented text using TreeTagger'),
         ('correct', 'Try to fix errors in malformed annotated text using AI'), 
         ('improve', 'Improve existing annotated text using AI'),
-        ('trivial', 'Generate annotated text from segmented text with trivial tags'),
+        ('placeholders', 'Add placeholder annotations, creating text if necessary' ),
+        #('trivial', 'Generate annotated text from segmented text with trivial tags'),
         ('manual', 'Manually enter annotated text'),
         ('load_archived', 'Load archived version')
     ]
@@ -451,7 +454,8 @@ class CreateMWETaggedTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [
         ('generate', 'Generate annotated text from segmented text using AI'),
         ('mwe_simplify', 'Produce version without CoT analysis'),
-        ('correct', 'Try to fix errors in malformed annotated text using AI'), 
+        ('correct', 'Try to fix errors in malformed annotated text using AI'),
+        ('placeholders', 'Add placeholder annotations, creating text if necessary' ),
         ('manual', 'Manually edit annotated text'),
         ('load_archived', 'Load archived version')
     ]

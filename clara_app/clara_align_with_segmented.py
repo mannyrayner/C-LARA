@@ -7,7 +7,8 @@ from typing import List
 import difflib
 import pprint
 
-def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: str, l2_language: str, l1_language: str, text_type: str) -> str:
+def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: str, l2_language: str, l1_language: str,
+                                                 text_type: str, use_words_for_lemmas=False) -> str:
     """
     Aligns the segmented text with a non-segmented version, ensuring structural consistency.
 
@@ -53,14 +54,14 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
             for index in range(i1, i2):
                 content_type = segmented_diff[index].type
                 content = segmented_diff[index].content
-                placeholder_annotations = get_placeholder_annotations(content, text_type) if content_type == 'Word' else {}
+                placeholder_annotations = get_placeholder_annotations(content, text_type, use_words_for_lemmas) if content_type == 'Word' else {}
                 aligned_non_segmented.append(DiffElement(content_type, content, placeholder_annotations))
         elif tag == 'replace':
             # Handle replacements as delete + insert
             for index in range(i1, i2):
                 content_type = segmented_diff[index].type
                 content = segmented_diff[index].content
-                placeholder_annotations = get_placeholder_annotations(content, text_type) if content_type == 'Word' else {}
+                placeholder_annotations = get_placeholder_annotations(content, text_type, use_words_for_lemmas) if content_type == 'Word' else {}
                 aligned_non_segmented.append(DiffElement(content_type, content, placeholder_annotations))
 
     # Step 4: Convert aligned DiffElements back to Text object
@@ -73,7 +74,7 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
 
     return aligned_text
 
-def get_placeholder_annotations(content: str, text_type: str) -> dict:
+def get_placeholder_annotations(content: str, text_type: str, use_words_for_lemmas) -> dict:
     """
     Generates placeholder annotations based on the content and version type.
 
@@ -99,6 +100,8 @@ def get_placeholder_annotations(content: str, text_type: str) -> dict:
     # Otherwise we don't have annotations on segment boundaries
     elif content in ( '<segment>', '</segment>', '<page>', '</page>' ):
         return {}
+    elif text_type == 'lemma' and use_words_for_lemmas:
+            return {'lemma': content.lower(), 'pos': 'X'}
     else:
         return placeholders.get(text_type, {})
 

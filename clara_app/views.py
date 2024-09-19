@@ -1210,8 +1210,8 @@ def edit_prompt(request):
                         if not new_prompts[-1][0] or not new_prompts[-1][1] or not new_prompts[-1][2]:
                             # We didn't use the extra last field
                             new_prompts = new_prompts[:-1]
-                    print(f'new_prompts:')
-                    pprint.pprint(new_prompts)
+                    #print(f'new_prompts:')
+                    #pprint.pprint(new_prompts)
                     try:
                         prompt_repo.save_template_or_examples(template_or_examples, annotation_type, operation, new_prompts, request.user.username)
                         messages.success(request, "Data saved successfully")
@@ -3891,7 +3891,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             username = request.user.username
             # We have an optional prompt when creating or improving the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
-            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'mwe_simplify',
+            if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'placeholders', 'mwe_simplify',
                                     'tree_tagger', 'jieba', 'pypinyin', 'delete' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
             # We're deleting the current version         
@@ -3947,7 +3947,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                 messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'
-            elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'tree_tagger', 'mwe_simplify', 'jieba', 'pypinyin' ):
+            elif text_choice in ( 'generate', 'correct', 'improve', 'trivial', 'placeholders', 'tree_tagger', 'mwe_simplify', 'jieba', 'pypinyin' ):
                 if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
                     raise PermissionDenied("You don't have permission to change the text.")
                 try:
@@ -3992,6 +3992,20 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         print(f'--- {success_message}')
                         messages.success(request, success_message)
                         current_version = clara_project_internal.get_file_description(this_version, 'current')
+                    # We are adding placeholders to the text, creating it if it doesn't already exist
+                    elif text_choice == 'placeholders':
+                        action, api_calls = ( 'generate', clara_project_internal.align_text_version_with_segmented_and_save(this_version,
+                                                                                                                            create_if_necessary=True,
+                                                                                                                            use_words_for_lemmas=True) )
+                        # These operations are handled elsewhere for generation and improvement, due to asynchrony
+                        store_api_calls(api_calls, project, request.user, this_version)
+                        annotated_text = clara_project_internal.load_text_version(this_version)
+                        text_choice = 'manual'
+                        success_message = f'Created {this_version} text with trivial tags'
+                        print(f'--- {success_message}')
+                        messages.success(request, success_message)
+                        current_version = clara_project_internal.get_file_description(this_version, 'current')
+
                     # We are creating the text using TreeTagger. This operation is only possible with lemma tagging
                     elif text_choice == 'tree_tagger':
                         action, api_calls = ( 'generate', clara_project_internal.create_lemma_tagged_text_with_treetagger(user=username, label=label) )
@@ -5175,8 +5189,8 @@ def create_image_request_sequence(project_id, callback=None):
         numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
         numbered_page_list_text = json.dumps(numbered_page_list)
 
-        print(f'numbered_page_list')
-        pprint.pprint(numbered_page_list)
+        #print(f'numbered_page_list')
+        #pprint.pprint(numbered_page_list)
 
         descriptions = clara_project_internal.get_all_project_image_descriptions(formatting='plain_lists', callback=callback)
         descriptions_text = json.dumps(descriptions)
