@@ -37,7 +37,7 @@ class ContentElement:
         def put_at_signs_around_text_if_necessary(text, annotation_type):
             # Check if text contains spaces or any Unicode punctuation
             if any(unicodedata.category(char).startswith('P') for char in text) or ' ' in text:
-                if annotation_type in ('segmented', 'mwe', 'translated', 'gloss', 'lemma'):
+                if annotation_type in ('segmented', 'mwe', 'mwe_minimal', 'translated', 'gloss', 'lemma'):
                     return f'@{text}@'
             return text
         
