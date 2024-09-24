@@ -28,7 +28,7 @@ class ContentElement:
         self.content = content
         self.annotations = annotations if annotations else {}
 
-    def to_text(self, annotation_type=None):
+    def to_text(self, annotation_type='plain'):
         def escape_special_chars(text):
             return text.replace("#", r"\#").replace("@", r"\@").replace("<", r"\<").replace(">", r"\>")
 
@@ -83,7 +83,7 @@ class Segment:
         self.content_elements = content_elements
         self.annotations = annotations or {}
 
-    def to_text(self, annotation_type=None):
+    def to_text(self, annotation_type='plain'):
         out_text = ''
         last_type = None
         for element in self.content_elements:
@@ -149,7 +149,7 @@ class Page:
             elements.extend(segment.content_elements)
         return elements
 
-    def to_text(self, annotation_type=None):
+    def to_text(self, annotation_type='plain'):
         segment_separator = '' if annotation_type == 'plain' else '||'
         segment_texts = segment_separator.join([segment.to_text(annotation_type) for segment in self.segments])
         if annotation_type == 'segmented_for_labelled':
@@ -254,7 +254,7 @@ class Text:
         if page_object in self.pages:
             self.pages.remove(page_object)
 
-    def to_text(self, annotation_type=None):
+    def to_text(self, annotation_type='plain'):
         return "\n".join([page.to_text(annotation_type) for page in self.pages])
 
     def prettyprint(self):
