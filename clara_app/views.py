@@ -4742,6 +4742,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                             real_image_file_path = None
                             uploaded_file = False
 
+                        #print(f"i = {i}, page_text = '{form.cleaned_data['page_text']}', translated_text = '{form.cleaned_data['translated_text']}'")     
+
                         if 'display_text_fields_label' in form.cleaned_data and form.cleaned_data['display_text_fields_label'] == 'Text versions':
                             new_plain_texts.append(form.cleaned_data['page_text'])
                             new_segmented_texts.append(form.cleaned_data['segmented_text'])

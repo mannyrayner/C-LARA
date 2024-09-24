@@ -7,6 +7,8 @@ from typing import List
 import difflib
 import pprint
 
+
+
 def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: str, l2_language: str, l1_language: str,
                                                  text_type: str, use_words_for_lemmas=False) -> str:
     """
@@ -23,8 +25,8 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
     - str: The realigned non-segmented text string.
     """
 
-##    print(f'segmented = {segmented}')
-##    print(f'non_segmented = {non_segmented}')
+##    print(f'segmented = """{segmented}"""')
+##    print(f'non_segmented = """{non_segmented}"""')
     
     # Step 1: Convert both texts to DiffElements
     segmented_diff = text_to_diff_elements_full(segmented, l2_language, l1_language, 'segmented')
@@ -70,7 +72,7 @@ def align_segmented_text_with_non_segmented_text(segmented: str, non_segmented: 
     
     aligned_text = diff_elements_to_text(aligned_non_segmented, l2_language, l1_language, text_type)
 
-##    print(f'aligned_text = {aligned_text}')
+##    print(f'aligned_text = """{aligned_text}"""')
 
     return aligned_text
 

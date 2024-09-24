@@ -144,19 +144,27 @@ def test_mwe_annotate_segments_using_few_shot_examples():
     print(f"result:")
     pprint.pprint(result)
 
-def annotate_speckled_band_dev(n=5, n_examples=50):
+def annotate_speckled_band_dev(n='all', n_examples=50, model='gpt-4o-2024-08-06'):
     annotate_dev_examples('$CLARA/linguistic_data/english/MWEsExperiment/spec/dev.json', 
-                          f'$CLARA/linguistic_data/english/MWEsExperiment/spec/annotated_dev_portion_{n}_{n_examples}.json',
+                          f'$CLARA/linguistic_data/english/MWEsExperiment/spec/annotated_dev_portion_{model}_{n}_{n_examples}.json',
                           n=n,
-                          n_examples=n_examples)
+                          n_examples=n_examples,
+                          model=model)
 
-def annotate_dancing_men_dev(n=5, n_examples=50):
+def annotate_dancing_men_dev(n='all', n_examples=50, model='gpt-4o-2024-08-06'):
     annotate_dev_examples('$CLARA/linguistic_data/english/MWEsExperiment/danc/dev.json', 
-                          f'$CLARA/linguistic_data/english/MWEsExperiment/danc/annotated_dev_portion_{n}_{n_examples}.json',
+                          f'$CLARA/linguistic_data/english/MWEsExperiment/danc/annotated_dev_portion_{model}_{n}_{n_examples}.json',
                           n=n,
-                          n_examples=n_examples)
+                          n_examples=n_examples,
+                          model=model)
 
-def annotate_dev_examples(dev_file_path, output_file_path, n=5, n_examples=50):
+_known_models = ( 'gpt-4o-2024-08-06', 'o1-preview' )
+
+def annotate_dev_examples(dev_file_path, output_file_path, n='all', n_examples=50, model='gpt-4o-2024-08-06'):
+    if not model in _known_models:
+        print(f'Unknown model "{model}". Must be one of {_known_models}')
+        return
+    
     """
     Annotate the dev examples from the specified file to evaluate MWE annotation quality.
 
@@ -171,12 +179,13 @@ def annotate_dev_examples(dev_file_path, output_file_path, n=5, n_examples=50):
     # Select a portion of the data for initial annotation (first n_examples)
     texts_mwes_pairs = texts_mwes_pairs[:n_examples]
 
-    few_shot_examples_pool = read_json_file('$CLARA/linguistic_data/english/MWEsExperiment/sag_et_al/annotated_sag_et_al_examples_edited_plus_original.json')
+    #few_shot_examples_pool = read_json_file('$CLARA/linguistic_data/english/MWEsExperiment/sag_et_al/annotated_sag_et_al_examples_edited_plus_original.json')
+    few_shot_examples_pool = read_json_file('$CLARA/linguistic_data/english/MWEsExperiment/sag_et_al/annotated_sag_et_al_examples_edited.json')
     l2_language = 'english'
     n = n
     similarity_metric = 'pos'
     keep_incorrect_records = True
-    config_info = {'gpt_model': 'gpt-4o-2024-08-06'}
+    config_info = {'gpt_model': model}
     
     # Annotate the dev examples
     annotated_records, total_cost, total_execution_time = annotate_texts_using_closest_few_shot_examples(
@@ -252,9 +261,12 @@ def annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs, few_shot_ex
     - config_info: dict, configuration information for the annotation process.
 
     Returns:
-    - A tuple (filtered_annotations, total_cost) where:
-      - filtered_annotations: list of lists of the form [ text, mwes_string, CoT_analysis ].
-        If keep_incorrect_records=True, incorrect results have an mwe_string field of the form { 'identified': identified, 'correct': correct }
+    - A tuple (filtered_annotations, total_cost, execution_time) where:
+      - filtered_annotations: list of dicts for each text containing:
+        - 'text': The original text.
+        - 'correct_mwes_identified': MWEs correctly identified.
+        - 'correct_mwes_missed': MWEs that were correct but not identified.
+        - 'incorrect_mwes_identified': MWEs identified but not correct.
       - total_cost: float, the total cost of API calls for annotations.
       - execution_time: float, the total time taken for the process in seconds.
     """
@@ -277,18 +289,33 @@ def annotate_texts_using_closest_few_shot_examples(texts_mwes_pairs, few_shot_ex
 
     filtered_annotations = []
 
-    # Filter annotations based on whether they match the correct MWEs
+    # Filter annotations and create comparison between correct and identified MWEs
     for (text, _, correct_mwes), annotation in zip(segments_and_few_shot_examples, annotations):
         identified_mwes = annotation[1]
-        if make_mwes_canonical(correct_mwes) == make_mwes_canonical(identified_mwes):
-            filtered_annotations.append( [ text, correct_mwes, annotation[2] ] )
-        elif keep_incorrect_records:
-            # Append incorrect records with correct MWEs to permit editing
-            filtered_annotations.append( [ text, { 'identified': identified_mwes, 'correct': correct_mwes}, annotation[2] ] )
+
+        # Canonicalize MWEs for comparison
+        canonical_correct_mwes = make_mwes_canonical(correct_mwes)
+        canonical_identified_mwes = make_mwes_canonical(identified_mwes)
+
+        # Determine MWEs correctly identified, missed, and incorrectly identified
+        correct_mwes_identified = [mwe for mwe in canonical_identified_mwes if mwe in canonical_correct_mwes]
+        correct_mwes_missed = [mwe for mwe in canonical_correct_mwes if mwe not in canonical_identified_mwes]
+        incorrect_mwes_identified = [mwe for mwe in canonical_identified_mwes if mwe not in canonical_correct_mwes]
+
+        annotation_result = {
+            'text': text,
+            'correct_mwes_identified': correct_mwes_identified,
+            'correct_mwes_missed': correct_mwes_missed,
+            'incorrect_mwes_identified': incorrect_mwes_identified,
+            'analysis': annotation[2]  # Keep the CoT analysis for reference
+        }
+
+        filtered_annotations.append(annotation_result)
 
     execution_time = time.time() - start_time  # End timing
 
     return filtered_annotations, total_cost, execution_time
+
 
 def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3, similarity_metric='embeddings'):
     """
@@ -303,7 +330,9 @@ def get_top_n_similar_few_shot_examples(text, few_shot_examples, n=3, similarity
     Returns:
     - list of the top n few-shot examples most similar to the input text.
     """
-    if similarity_metric == 'embeddings':
+    if n == 'all':
+        return few_shot_examples
+    elif similarity_metric == 'embeddings':
         # Calculate similarities based on embeddings
         similarities = [
             (example, embeddings_based_similarity(text, example[0])) for example in few_shot_examples
@@ -443,10 +472,10 @@ def make_mwes_canonical(mwes_string):
     - mwes_string: str, MWEs as a comma-separated string (e.g., "going to, ended up, spilling the beans").
 
     Returns:
-    - str: Canonical form of the MWEs (e.g., "ended up, going to, spilling the beans").
+    - str: Canonical form of the MWEs (e.g., ["ended up", "going to", "spilling the beans"]).
     """
     mwes_list = mwes_string.split(",")
-    canonical_mwes = ",".join(sorted(mwes_list))
+    canonical_mwes = [ X for X in sorted(mwes_list) if not X == "" ]
     return canonical_mwes
 
 

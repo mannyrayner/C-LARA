@@ -255,7 +255,8 @@ class Text:
             self.pages.remove(page_object)
 
     def to_text(self, annotation_type='plain'):
-        return "\n".join([page.to_text(annotation_type) for page in self.pages])
+        #return "\n".join([page.to_text(annotation_type) for page in self.pages])
+        return "".join([page.to_text(annotation_type) for page in self.pages])
 
     def prettyprint(self):
         print(f"Text Language (L2): {self.l2_language}, Annotation Language (L1): {self.l1_language}\n")
