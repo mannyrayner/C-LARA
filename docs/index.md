@@ -9,7 +9,7 @@
   <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Technical issues</a>
   <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog and Discord</a>
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
-  <a href="flinders_2024_workshop.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Upcoming workshop</a>
+  <a href="flinders_2024_workshop.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">2024 workshop</a>
 
 </div>
 ## C-LARA: ChatGPT-based Learning And Reading Assistant
@@ -22,7 +22,7 @@ completely rewritten.
 As the name suggests, ChatGPT-4 is at the centre of our activities. It is used in two complementary ways, both 
 as a software *component* and as a software *engineer*. In its software component role, ChatGPT-4 performs
 all the core language processing functions in the platform. It can write texts, divide them into sentences and 
-lexical units, add glosses in another language, and annotate words with lemmas (root form) information.
+lexical units, identify multi-word expressions, add glosses in another language, and annotate words with lemmas (root form) information.
 Audio is automatically added for the wide range of languages where a TTS engine is available.
 
 As a software engineer, ChatGPT-4 has played a central role in creating the codebase, which is freely

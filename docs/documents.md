@@ -9,10 +9,16 @@
   <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Technical issues</a>
   <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog and Discord</a>
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
-  <a href="flinders_2024_workshop.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Upcoming workshop</a>
+  <a href="flinders_2024_workshop.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">2024 workshop</a>
 
 </div>
 ## Documents
+- <a href="https://www.researchgate.net/publication/384217262_Echoes_of_Solitude_a_short_story_by_o1-preview" target="_blank">Echoes of Solitude: a short story by o1-preview</a>. A 3100 word science-fiction story entirely written by the o1-preview model, together with a full trace of how it was created.
+
+- <a href="https://www.researchgate.net/publication/383776754_Generative_AI_in_CALL_A_September_2024_perspectivet" target="_blank">Generative AI in CALL: A September 2024 perspective)</a>. We briefly survey the state of the art in using Generative AI for CALL, and argue that we are only a few years away from a human-level AI CALL tutor.
+
+- <a href="https://www.researchgate.net/publication/382496965_Reinforcement_Learning_for_Chain_of_Thought_Reasoning_A_Case_Study_Using_Tic-Tac-Toe" target="_blank">Reinforcement Learning for Chain of Thought Reasoning: A Case Study Using Tic-Tac-Toe</a>. We use reinforcement learning to train a GPT-4-based Tic-Tac-Toe player, achieving statistically significant improvement at the 1% level after 40 iterations.
+
 - <a href="researchgate.net/publication/381323238_Making_Picture_Book_Texts_with_C-LARA_interim_report" target="_blank">Making Picture Book Texts with C-LARA (interim report)</a>. Preliminary documentation for people who wish to experiment with picture book functionality
 
 - <a href="https://www.researchgate.net/publication/379119435_ChatGPT-Based_Learning_And_Reading_Assistant_C-LARA_Second_Report" target="_blank">ChatGPT-Based Learning And Reading Assistant (C-LARA): Second Report</a>. A comprehensive report as of late March 2024
