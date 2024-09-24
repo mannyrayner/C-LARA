@@ -168,58 +168,62 @@ class AudioAnnotator:
 
     def _get_all_audio_data(self, text_obj, phonetic=False, callback=None):
         post_task_update(callback, f"--- Getting all audio data")
-        words_data = []
-        segments_data = []
-        previous_canonical_text = ''
-        previous_canonical_texts = []
-        for page in text_obj.pages:
-            for segment in page.segments:
-                segment_text_plain = segment.to_text()
-                segment_text_canonical = canonical_text_for_audio(segment_text_plain, phonetic=phonetic)
-                #print(f'--- _get_all_audio_data: max_context_length = {self.max_context_length}')
-                start_of_context = -1 * self.max_context_length
-                #print(f'--- _get_all_audio_data: start_of_context = {start_of_context}')
-                context = '' if not self.use_context else previous_canonical_text[start_of_context:]
-                if not string_has_no_audio_content(segment_text_canonical):
-                    segments_data.append({ 'text': segment_text_plain, 'canonical_text': segment_text_canonical, 'context': context })
-                    previous_canonical_texts.append(segment_text_canonical)
-                    previous_canonical_text = ' '.join(previous_canonical_texts) 
-                
-                for content_element in segment.content_elements:
-                    if content_element.type == 'Word':
-                        if phonetic and 'phonetic' in content_element.annotations:
-                            audio_word_plain = content_element.annotations['phonetic']
-                        elif not phonetic:
-                            if 'mwe_text' in content_element.annotations:
-                                audio_word_plain = content_element.annotations['mwe_text']
+        try:
+            words_data = []
+            segments_data = []
+            previous_canonical_text = ''
+            previous_canonical_texts = []
+            for page in text_obj.pages:
+                for segment in page.segments:
+                    segment_text_plain = segment.to_text()
+                    segment_text_canonical = canonical_text_for_audio(segment_text_plain, phonetic=phonetic)
+                    #print(f'--- _get_all_audio_data: max_context_length = {self.max_context_length}')
+                    start_of_context = -1 * self.max_context_length
+                    #print(f'--- _get_all_audio_data: start_of_context = {start_of_context}')
+                    context = '' if not self.use_context else previous_canonical_text[start_of_context:]
+                    if not string_has_no_audio_content(segment_text_canonical):
+                        segments_data.append({ 'text': segment_text_plain, 'canonical_text': segment_text_canonical, 'context': context })
+                        previous_canonical_texts.append(segment_text_canonical)
+                        previous_canonical_text = ' '.join(previous_canonical_texts) 
+                    
+                    for content_element in segment.content_elements:
+                        if content_element.type == 'Word':
+                            if phonetic and 'phonetic' in content_element.annotations:
+                                audio_word_plain = content_element.annotations['phonetic']
+                            elif not phonetic:
+                                if 'mwe_text' in content_element.annotations:
+                                    audio_word_plain = content_element.annotations['mwe_text']
+                                else:
+                                    audio_word_plain = content_element.content
                             else:
-                                audio_word_plain = content_element.content
-                        else:
-                            audio_word_plain = None
-                            
-                        if audio_word_plain and not string_has_no_audio_content(audio_word_plain):
-                            audio_word_canonical = canonical_word_for_audio(audio_word_plain)
-                            words_data.append({ 'text': audio_word_plain, 'canonical_text': audio_word_canonical, 'context': '' })    
+                                audio_word_plain = None
+                                
+                            if audio_word_plain and not string_has_no_audio_content(audio_word_plain):
+                                audio_word_canonical = canonical_word_for_audio(audio_word_plain)
+                                words_data.append({ 'text': audio_word_plain, 'canonical_text': audio_word_canonical, 'context': '' })    
 
-        segment_file_paths = self.audio_repository.get_entry_batch(self.segment_engine_id, self.segment_language_id, self.segment_voice_id,
-                                                                   segments_data, callback=callback)
-        word_file_paths = self.audio_repository.get_entry_batch(self.word_engine_id, self.word_language_id, self.word_voice_id,
-                                                                words_data, callback=callback)
+            segment_file_paths = self.audio_repository.get_entry_batch(self.segment_engine_id, self.segment_language_id, self.segment_voice_id,
+                                                                       segments_data, callback=callback)
+            word_file_paths = self.audio_repository.get_entry_batch(self.word_engine_id, self.word_language_id, self.word_voice_id,
+                                                                    words_data, callback=callback)
 
-        for item in segments_data:
-            item['file_path'] = segment_file_paths[( item['canonical_text'], item['context'] )]
+            for item in segments_data:
+                item['file_path'] = segment_file_paths[( item['canonical_text'], item['context'] )]
 
-        for item in words_data:
-            item['file_path'] = word_file_paths[( item['canonical_text'], item['context'] )]
+            for item in words_data:
+                item['file_path'] = word_file_paths[( item['canonical_text'], item['context'] )]
 
-        words_data = remove_duplicates_general(words_data)
-        if phonetic:
-            segments_data = remove_duplicates_general(segments_data)
+            words_data = remove_duplicates_general(words_data)
+            if phonetic:
+                segments_data = remove_duplicates_general(segments_data)
 
-        #print(f'--- _get_all_audio_data output: words_data = {words_data}')
-        #print(f'--- _get_all_audio_data output: segments_data = {segments_data}')
-        
-        return words_data, segments_data
+            #print(f'--- _get_all_audio_data output: words_data = {words_data}')
+            #print(f'--- _get_all_audio_data output: segments_data = {segments_data}')
+            
+            return words_data, segments_data
+        except Exception as e:
+            post_task_update(callback, f"*** Error when collecting audio data: '{str(e)}'\n{traceback.format_exc()}")
+            return [], []
 
     def _get_page_audio_data(self, text_obj, segments_data, phonetic=False, callback=None):
         post_task_update(callback, f"--- Getting page audio data")
