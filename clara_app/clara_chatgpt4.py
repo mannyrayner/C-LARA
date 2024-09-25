@@ -28,6 +28,7 @@ import time
 import base64
 import json
 import traceback
+import pprint
 
 from openai import OpenAI
 from PIL import Image
@@ -214,11 +215,22 @@ async def get_api_chatgpt4_response(prompt, config_info={}, callback=None):
     # Once the API call is done:
     response = api_task.result()
 
+##    print(f'response:')
+##    pprint.pprint(response)
+
     response_string = response.choices[0].message.content
     if n_response_chars != 0:
         truncated_response = response_string if len(response_string) <= n_response_chars else response_string[:n_response_chars] + '...'
         await post_task_update_async(callback, f'--- Received response from {gpt_model}: "{truncated_response}"')
-    cost = clara_openai.cost_of_gpt4_api_call(messages, response_string, gpt_model=gpt_model)
+
+    # Extract reasoning tokens using attribute access, handling cases where they may not exist
+    if hasattr(response.usage, 'completion_tokens_details') and isinstance(response.usage.completion_tokens_details, dict):
+        reasoning_tokens = response.usage.completion_tokens_details.get('reasoning_tokens', 0)
+    else:
+        reasoning_tokens = 0
+    
+    cost = clara_openai.cost_of_gpt4_api_call(messages, response_string,
+                                              gpt_model=gpt_model, reasoning_tokens=reasoning_tokens)
     elapsed_time = time.time() - start_time
     await post_task_update_async(callback, f'--- Done (${cost:.2f}; {elapsed_time:.1f} secs)')
     

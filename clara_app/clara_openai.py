@@ -23,10 +23,20 @@ def print_openai_models():
     for model in models['data']:
         print(f"Model ID: {model.id}")
 
-def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o'):
-    """Returns the cost in dollars of an OpenAI API call, defined by a prompt in the form of a list of messages and a response string"""
-    n_message_tokens = ( num_gpt4_tokens_for_messages(messages) / 1000.0 )
-    n_response_tokens = ( num_gpt4_tokens_for_string(response_string) / 1000.0 )
+def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o', reasoning_tokens=0):
+    """
+    Returns the cost in dollars of an OpenAI API call, defined by a prompt in the form of a list of messages,
+    a response string, and reasoning tokens.
+    """
+    message_tokens = num_gpt4_tokens_for_messages(messages)
+    response_tokens = num_gpt4_tokens_for_string(response_string)
+
+##    print(f'n_message_tokens = {message_tokens}, response_tokens = {response_tokens}, reasoning_tokens = {reasoning_tokens}')
+
+    n_message_tokens = message_tokens / 1000.0
+    n_response_tokens = response_tokens / 1000.0
+    # Relevant for CoT models like o1-preview
+    n_reasoning_tokens = reasoning_tokens / 1000.0
 
     if gpt_model in ( 'gpt-4o' ):
         message_rate = float(config.get('chatgpt4_o_costs', 'prompt_per_thousand_tokens')) 
@@ -46,8 +56,13 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o'):
         response_rate = float(config.get('chatgpt4_costs', 'response_per_thousand_tokens'))
        
     input_cost = n_message_tokens * message_rate
-    response_cost = n_response_tokens * response_rate
-    return input_cost + response_cost
+    response_cost = (n_response_tokens + n_reasoning_tokens) * response_rate
+    
+    cost = input_cost + response_cost
+
+##    print(f'cost = ${cost:.2f}')
+
+    return cost
 
 def cost_of_gpt4_image_api_call(prompt, gpt_model='dall-e-3', size='1024x1024'):
     if size == '1024x1024':
