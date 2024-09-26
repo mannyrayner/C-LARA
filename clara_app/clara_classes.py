@@ -116,9 +116,11 @@ class Segment:
                     out_text += f"#{mwes_text}#"
         if annotation_type == 'translated':
             annotations = self.annotations
-            if 'translated' in annotations:
-                translated = annotations['translated']
-                out_text += f"#{translated}#"
+##            if 'translated' in annotations:
+##                translated = annotations['translated']
+##                out_text += f"#{translated}#"
+            translated = annotations['translated'] if 'translated' in annotations else ''
+            out_text += f"#{translated}#"
             
         return out_text
 
