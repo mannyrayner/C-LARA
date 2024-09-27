@@ -50,6 +50,9 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o', reasoni
     elif gpt_model in ( 'o1-preview' ):
         message_rate = float(config.get('o1_preview_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('o1_preview_costs', 'response_per_thousand_tokens'))
+    elif gpt_model in ( 'o1-mini' ):
+        message_rate = float(config.get('o1_mini_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('o1_mini_costs', 'response_per_thousand_tokens'))
     # Default is gpt-4
     else:
         message_rate = float(config.get('chatgpt4_costs', 'prompt_per_thousand_tokens')) 

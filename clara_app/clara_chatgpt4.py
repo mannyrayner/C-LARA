@@ -190,7 +190,7 @@ async def get_api_chatgpt4_response(prompt, config_info={}, callback=None):
     if n_prompt_chars != 0:
         truncated_prompt = prompt if len(prompt) <= n_prompt_chars else prompt[:n_prompt_chars] + '...'
         await post_task_update_async(callback, f'--- Sending request to {gpt_model}: "{truncated_prompt}"')
-    if gpt_model in ( 'o1-preview' ):
+    if gpt_model in ( 'o1-preview', 'o1-mini' ):
         # o1 does not yet support the 'system' role
         messages = [ {"role": "user", "content": prompt} ]
     else:
