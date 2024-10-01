@@ -14,6 +14,14 @@ from .clara_utils import (
     make_directory,
     absolute_file_name
     )
+
+# Test with Lily Goes the Whole Hog
+
+def test_lily_style():
+    project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
+    api_calls = asyncio.run(process_style(project_dir))
+    cost = sum([api_call.cost for api_call in api_calls])
+    print(f'Cost = ${cost:2f}')
     
 # Style
 
@@ -30,22 +38,23 @@ async def generate_expanded_style_description(project_dir):
     make_project_dir(project_dir, 'style')
     
     # Read the base style description
-    base_description = read_txt_file(project_pathname(project_dir, 'style/style_description.txt'))
+    base_description = read_project_txt_file(project_dir, 'style/style_description.txt')
 
     # Get the text of the story
     text = get_text(project_dir)
 
     # Create the prompt to expand the style description
-    prompt = f"""We want to create a set of images to illustrate the following text:
+    prompt = f"""We are later going to create a set of images to illustrate the following text:
 
 {text}
 
-The intended style is briefly described as follows:
+The intended style in which the images will be produced is briefly described as follows:
 
 {base_description}
 
-Please expand the brief description into a detailed specification that can be passed to DALL-E-3 to
-generate an image, appropriate to the story, which exemplifies the style."""
+For now, please expand the brief description into a detailed specification that can be passed to DALL-E-3 to
+generate a single image, appropriate to the story, which exemplifies the style. The description must be at
+most 3000 characters long to conform to DALL-E-3's constraints."""
 
     # Get the expanded description from the AI
     api_call = await get_api_chatgpt4_response(prompt)
@@ -84,7 +93,7 @@ intended style, and the information you provide will be used to ascertain how go
 
 async def evaluate_style_fit(project_dir, expanded_description, image_description):
     # Make directories if necessary
-    make_project_dir(project_dir, 'style/descriptions')
+    make_project_dir(project_dir, 'style/evaluations')
     
     prompt = f"""Please read the 'style description' and the 'image description' below.
 
@@ -107,20 +116,20 @@ The response will be read by a Python script, so give only the single-word evalu
 
     evaluation = api_call.response
 
-    write_text_file(description, project_pathname(project_dir, 'style/evaluations/style_evaluation.txt'))
+    write_project_txt_file(evaluation, project_dir, 'style/evaluations/style_evaluation.txt')
     
     return evaluation, api_call
 
 
 def get_pages(project_dir):
-    story_data = read_json_file(project_pathname(project_dir, 'story.json'))
+    story_data = read_project_json_file(project_dir, 'story.json')
 
     pages = [ item['page_number'] for item in story_data ]
                
     return pages
 
 def get_text(project_dir):
-    story_data = read_json_file(project_pathname(project_dir, 'story.json'))
+    story_data = read_project_json_file(project_dir, 'story.json')
 
     text_content = [ item['text'] for item in story_data ]
                
@@ -133,13 +142,20 @@ def project_pathname(project_dir, pathname):
     return absolute_file_name(os.path.join(project_dir, pathname))
 
 def make_project_dir(project_dir, directory):
-    make_directory(project_pathname(project_dir, directory), parents=True, exists_ok=True)
+    make_directory(project_pathname(project_dir, directory), parents=True, exist_ok=True)
+
+def read_project_txt_file(project_dir, pathname):
+    return read_txt_file(project_pathname(project_dir, pathname))
+
+def read_project_json_file(project_dir, pathname):
+    return read_json_file(project_pathname(project_dir, pathname))
+
 
 def write_project_txt_file(text, project_dir, pathname):
-    write_txt_file(expanded_description, project_pathname(project_dir, pathname))
+    write_txt_file(text, project_pathname(project_dir, pathname))
 
 def write_project_json_file(text, project_dir, pathname):
-    write_json_to_file(expanded_description, project_pathname(project_dir, pathname))
+    write_json_to_file(text, project_pathname(project_dir, pathname))
 
 
 ##    prompt = """Please provide as detailed a description as possible of the following image.
