@@ -135,7 +135,6 @@ def get_text(project_dir):
                
     return '\n'.join(text_content)
 
-
 # Utilities
 
 def project_pathname(project_dir, pathname):
@@ -149,7 +148,6 @@ def read_project_txt_file(project_dir, pathname):
 
 def read_project_json_file(project_dir, pathname):
     return read_json_file(project_pathname(project_dir, pathname))
-
 
 def write_project_txt_file(text, project_dir, pathname):
     write_txt_file(text, project_pathname(project_dir, pathname))
