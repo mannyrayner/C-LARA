@@ -13,6 +13,7 @@ from .clara_utils import (
     make_directory,
     absolute_file_name,
     file_exists,
+    directory_exists,
     copy_file,
     )
 
@@ -32,10 +33,14 @@ def test_lily_style():
 
 def test_lily_elements():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    api_calls = asyncio.run(process_elements(project_dir, 2, 2, n_elements_to_expand=2))
+    api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand='all'))
     cost = sum([api_call.cost for api_call in api_calls])
     print(f'Cost = ${cost:2f}')
 
+def test_lily_overview():
+    project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
+    title = 'Lily Goes the Whole Hog'
+    generate_overview_html(project_dir, title)
 
 # -----------------------------------------------
 # Style
@@ -542,6 +547,79 @@ The response will be read by a Python script, so write only the single evaluatio
 
 # -----------------------------------------------
 
+def generate_overview_html(project_dir, title):
+    # Make project_dir absolute
+    project_dir = absolute_file_name(project_dir)
+    
+    html_content = f"<html><head><title>{title} - Overview</title></head><body>"
+    html_content += f"<h1>{title} - Project Overview</h1>"
+
+    # Style Section
+    html_content += "<h2>Style</h2>"
+    # Read the expanded style description
+    try:
+        style_description = read_project_txt_file(project_dir, 'style/expanded_style_description.txt')
+        html_content += "<h3>Expanded Style Description</h3>"
+        html_content += f"<pre>{style_description}</pre>"
+    except Exception as e:
+        html_content += "<p><em>Style description not found.</em></p>"
+
+    # Display the style image
+    style_image_path = project_pathname(project_dir, 'style/style_image.jpg')
+    if file_exists(style_image_path):
+        relative_style_image_path = os.path.relpath(style_image_path, project_dir)
+        html_content += "<h3>Style Image</h3>"
+        html_content += f"<img src='{relative_style_image_path}' alt='Style Image' style='max-width:600px;'>"
+    else:
+        html_content += "<p><em>Style image not found.</em></p>"
+
+    # Elements Section
+    html_content += "<h2>Elements</h2>"
+
+    elements_json_path = project_pathname(project_dir, 'elements/elements.json')
+    if file_exists(elements_json_path):
+        # Read the elements from the JSON file
+        elements_data = read_project_json_file(project_dir, 'elements/elements.json')
+        if elements_data:
+            html_content += "<ul>"
+            for element in elements_data:
+                element_name = element['name']
+                element_text = element['text']
+                display_name = element_text  # Use the 'text' field for display
+                html_content += f"<li><a href='#{element_name}'>{display_name}</a></li>"
+            html_content += "</ul>"
+
+            for element in elements_data:
+                element_name = element['name']
+                element_text = element['text']
+                display_name = element_text
+                html_content += f"<h3 id='{element_name}'>{display_name}</h3>"
+                # Display the element image
+                element_image_path = project_pathname(project_dir, f'elements/{element_name}/image.jpg')
+                if file_exists(element_image_path):
+                    relative_element_image_path = os.path.relpath(element_image_path, project_dir)
+                    html_content += "<h4>Element Image</h4>"
+                    html_content += f"<img src='{relative_element_image_path}' alt='{display_name}' style='max-width:400px;'>"
+                else:
+                    html_content += "<p><em>Image not found for this element.</em></p>"
+                # Read the element's expanded description
+                element_description_path = f'elements/{element_name}/expanded_style_description.txt'
+                try:
+                    element_description = read_project_txt_file(project_dir, element_description_path)
+                    html_content += "<h4>Expanded Description</h4>"
+                    html_content += f"<pre>{element_description}</pre>"
+                except Exception as e:
+                    html_content += "<p><em>Expanded description not found for this element.</em></p>"
+        else:
+            html_content += "<p><em>No elements found in elements.json.</em></p>"
+    else:
+        html_content += "<p><em>elements.json not found.</em></p>"
+
+    html_content += "</body></html>"
+
+    # Write the HTML content to a file
+    write_project_txt_file(html_content, project_dir, 'overview.html')
+
 def get_pages(project_dir):
     story_data = read_project_json_file(project_dir, f'story.json')
 
@@ -580,13 +658,3 @@ def write_project_json_file(text, project_dir, pathname):
     write_json_to_file(text, project_pathname(project_dir, pathname))
 
 
-##    prompt = """Please provide as detailed a description as possible of the following image.
-##In particular, list the people, animals and any other creatures in it, and describe each of them
-##separately, including such details as size relative to other elements, colour of hair, fur or eyes,
-##clothing if applicable, apparent age and ethnicity if applicable, and general demeanour.
-##
-##Describe the location and background and what, if anything, appears to be happening in the scene.
-##
-##The image has been generated by DALL-E-3, and the information you provide will be used to ascertain
-##how closely it matches the instructions given.
-##"""
