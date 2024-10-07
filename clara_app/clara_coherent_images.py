@@ -1000,8 +1000,26 @@ The response will be read by a Python script, so write only the single evaluatio
 def generate_overview_html(project_dir, title):
     # Make project_dir absolute
     project_dir = absolute_file_name(project_dir)
+
+    html_content = f"""
+    <html>
+    <head>
+        <title>{title} - Overview</title>
+        <style>
+            .wrapped-pre {{
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                max-width: 800px;  /* Adjust the max-width as needed */
+            }}
+            img {{
+                max-width: 600px;
+                height: auto;
+            }}
+        </style>
+    </head>
+    <body>
+    """
     
-    html_content = f"<html><head><title>{title} - Overview</title></head><body>"
     html_content += f"<h1>{title} - Project Overview</h1>"
 
     # Style Section
@@ -1010,7 +1028,7 @@ def generate_overview_html(project_dir, title):
     try:
         style_description = read_project_txt_file(project_dir, 'style/expanded_style_description.txt')
         html_content += "<h3>Expanded Style Description</h3>"
-        html_content += f"<pre>{style_description}</pre>"
+        html_content += f"<pre class='wrapped-pre'>{style_description}</pre>"
     except Exception as e:
         html_content += "<p><em>Style description not found.</em></p>"
 
@@ -1057,7 +1075,7 @@ def generate_overview_html(project_dir, title):
                 try:
                     element_description = read_project_txt_file(project_dir, element_description_path)
                     html_content += "<h4>Expanded Description</h4>"
-                    html_content += f"<pre>{element_description}</pre>"
+                    html_content += f"<pre class='wrapped-pre'>{element_description}</pre>"
                 except Exception as e:
                     html_content += "<p><em>Expanded description not found for this element.</em></p>"
         else:
@@ -1091,7 +1109,7 @@ def generate_overview_html(project_dir, title):
             if file_exists(project_pathname(project_dir, expanded_description_path)):
                 expanded_description = read_project_txt_file(project_dir, expanded_description_path)
                 html_content += "<h4>Expanded Description</h4>"
-                html_content += f"<pre>{expanded_description}</pre>"
+                html_content += f"<pre class='wrapped-pre'>{expanded_description}</pre>"
             else:
                 html_content += "<p><em>Expanded description not found for this page.</em></p>"
 
@@ -1100,7 +1118,7 @@ def generate_overview_html(project_dir, title):
             if file_exists(project_pathname(project_dir, interpretation_path)):
                 interpretation = read_project_txt_file(project_dir, interpretation_path)
                 html_content += "<h4>Image Interpretation</h4>"
-                html_content += f"<pre>{interpretation}</pre>"
+                html_content += f"<pre class='wrapped-pre'>{interpretation}</pre>"
             else:
                 html_content += "<p><em>Image interpretation not found for this page.</em></p>"
 
