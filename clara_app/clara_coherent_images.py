@@ -780,7 +780,7 @@ def select_best_expanded_page_description_and_image(project_dir, page_number, al
     if best_description_file and best_image_file:
         copy_file(best_description_file, project_pathname(project_dir, f'pages/page{page_number}/expanded_description.txt'))
         copy_file(best_image_file, project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
-        copy_file(best_interpretation_file, project_pathname(project_dir, f'pages/page{page_number}/interpretation.jpg'))
+        copy_file(best_interpretation_file, project_pathname(project_dir, f'pages/page{page_number}/interpretation.txt'))
         write_project_txt_file(f'{best_score}', project_dir, f'pages/page{page_number}/evaluation.txt')
             
 async def generate_page_description_and_images(project_dir, page_number, previous_pages, elements,
@@ -1064,6 +1064,83 @@ def generate_overview_html(project_dir, title):
             html_content += "<p><em>No elements found in elements.json.</em></p>"
     else:
         html_content += "<p><em>elements.json not found.</em></p>"
+
+    # Pages Section
+    html_content += "<h2>Pages</h2>"
+
+    # Read the story data
+    story_data = read_project_json_file(project_dir, 'story.json')
+    if story_data:
+        for page in story_data:
+            page_number = page['page_number']
+            page_text = page['text']
+            html_content += f"<h3>Page {page_number}</h3>"
+            html_content += f"<p><strong>Text:</strong> {page_text}</p>"
+
+            # Display the page image
+            page_image_path = project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
+            if file_exists(page_image_path):
+                relative_page_image_path = os.path.relpath(page_image_path, project_dir)
+                html_content += "<h4>Page Image</h4>"
+                html_content += f"<img src='{relative_page_image_path}' alt='Page {page_number} Image' style='max-width:600px;'>"
+            else:
+                html_content += "<p><em>Image not found for this page.</em></p>"
+
+            # Read the expanded description (specification)
+            expanded_description_path = f'pages/page{page_number}/expanded_description.txt'
+            if file_exists(project_pathname(project_dir, expanded_description_path)):
+                expanded_description = read_project_txt_file(project_dir, expanded_description_path)
+                html_content += "<h4>Expanded Description</h4>"
+                html_content += f"<pre>{expanded_description}</pre>"
+            else:
+                html_content += "<p><em>Expanded description not found for this page.</em></p>"
+
+            # Read the image interpretation
+            interpretation_path = f'pages/page{page_number}/interpretation.txt'
+            if file_exists(project_pathname(project_dir, interpretation_path)):
+                interpretation = read_project_txt_file(project_dir, interpretation_path)
+                html_content += "<h4>Image Interpretation</h4>"
+                html_content += f"<pre>{interpretation}</pre>"
+            else:
+                html_content += "<p><em>Image interpretation not found for this page.</em></p>"
+
+            # Read the evaluation score
+            evaluation_path = f'pages/page{page_number}/evaluation.txt'
+            if file_exists(project_pathname(project_dir, evaluation_path)):
+                evaluation = read_project_txt_file(project_dir, evaluation_path)
+                html_content += f"<p><strong>Evaluation Score:</strong> {evaluation.strip()}</p>"
+            else:
+                html_content += "<p><em>Evaluation score not found for this page.</em></p>"
+
+            # Read the relevant pages and elements
+            relevant_info_path = f'pages/page{page_number}/relevant_pages_and_elements.json'
+            if file_exists(project_pathname(project_dir, relevant_info_path)):
+                relevant_info = read_project_json_file(project_dir, relevant_info_path)
+                # Display relevant previous pages
+                relevant_previous_pages = relevant_info.get('relevant_previous_pages', [])
+                if relevant_previous_pages:
+                    html_content += "<h4>Relevant Previous Pages</h4>"
+                    html_content += "<ul>"
+                    for prev_page in relevant_previous_pages:
+                        html_content += f"<li>Page {prev_page}</li>"
+                    html_content += "</ul>"
+                else:
+                    html_content += "<p><em>No relevant previous pages found for this page.</em></p>"
+                # Display relevant elements
+                relevant_elements = relevant_info.get('relevant_elements', [])
+                if relevant_elements:
+                    html_content += "<h4>Relevant Elements</h4>"
+                    html_content += "<ul>"
+                    for element in relevant_elements:
+                        html_content += f"<li>{element}</li>"
+                    html_content += "</ul>"
+                else:
+                    html_content += "<p><em>No relevant elements found for this page.</em></p>"
+            else:
+                html_content += "<p><em>Relevant pages and elements data not found for this page.</em></p>"
+
+    else:
+        html_content += "<p><em>Story data not found in story.json.</em></p>"
 
     html_content += "</body></html>"
 
