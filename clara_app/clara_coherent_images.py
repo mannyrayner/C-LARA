@@ -762,7 +762,8 @@ async def generate_image_for_page_and_context(project_dir, page_number, previous
 def select_best_expanded_page_description_and_image(project_dir, page_number, all_description_dirs):
     best_score = 0.0
     best_description_file = None
-    typical_image_file = None
+    best_image_file = None
+    best_interpretation_file = None
 
     for description_dir in all_description_dirs:
         image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
@@ -771,12 +772,16 @@ def select_best_expanded_page_description_and_image(project_dir, page_number, al
         if file_exists(image_info_file) and file_exists(description_file):
             image_info = read_json_file(image_info_file)
             if image_info['best_score'] > best_score:
+                best_score = image_info['best_score']
                 best_description_file = description_file
-                typical_image_file = image_info['image']
+                best_image_file = image_info['image']
+                best_interpretation_file = image_info['interpretation']
 
-    if best_description_file and typical_image_file:
+    if best_description_file and best_image_file:
         copy_file(best_description_file, project_pathname(project_dir, f'pages/page{page_number}/expanded_description.txt'))
-        copy_file(typical_image_file, project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
+        copy_file(best_image_file, project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
+        copy_file(best_interpretation_file, project_pathname(project_dir, f'pages/page{page_number}/interpretation.jpg'))
+        write_project_txt_file(f'{best_score}', project_dir, f'pages/page{page_number}/evaluation.txt')
             
 async def generate_page_description_and_images(project_dir, page_number, previous_pages, elements,
                                                description_version_number, n_images_per_description):
@@ -890,21 +895,24 @@ async def generate_and_rate_page_images(project_dir, page_number, expanded_descr
 def score_page_description_dir(project_dir, description_dir, image_dirs):
     scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir), image_dir )
                                for image_dir in image_dirs ]
-    scores = [ item[0] for item in scores_and_images_dirs ]
 
     # Find the image with the best fit
 
     best_score = 0.0
-    best_file = None
+    best_image_file = None
+    best_interpretation_file = None
 
     for score, image_dir in scores_and_images_dirs:
         image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
+        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
         if score > best_score and file_exists(image_file):
             best_score = score
-            best_file = image_file
+            best_image_file = image_file
+            best_interpretation_file = interpretation_file
 
     description_dir_info = { 'best_score': best_score,
-                             'image': image_file }
+                             'image': best_image_file,
+                             'interpretation': best_interpretation_file }
                                                                    
     write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
 
@@ -1107,6 +1115,9 @@ def get_page_text(project_dir, page_number):
 
 def get_page_description(project_dir, page_number):
     return read_project_txt_file(project_dir, f'pages/page{page_number}/expanded_description.txt')
+
+def get_page_image(project_dir, page_number):
+    return read_project_txt_file(project_dir, f'pages/page{page_number}/image.txt')
                                 
 
 # Utilities
