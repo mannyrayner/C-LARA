@@ -15,6 +15,7 @@ from .clara_utils import (
     file_exists,
     directory_exists,
     copy_file,
+    get_immediate_subdirectories_in_local_directory,
     )
 
 import json
@@ -40,9 +41,14 @@ def test_lily_elements():
 
 def test_lily_pages():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    api_calls = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages=4))
+    #api_calls = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages=4, keep_existing_pages=True))
+    api_calls = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages='all', keep_existing_pages=True))
     cost = sum([api_call.cost for api_call in api_calls])
     print(f'Cost = ${cost:2f}')
+
+def test_lily_select():
+    project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
+    select_all_best_expanded_page_descriptions_and_images_for_project(project_dir)
 
 def test_lily_overview():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
@@ -610,19 +616,28 @@ The hair color differs; the description mentions blonde hair, but the image show
 
 # Pages
 
-async def process_pages(project_dir, n_previous_pages, n_descriptions, n_images_per_description, n_pages='all'):
+async def process_pages(project_dir, n_previous_pages, n_descriptions, n_images_per_description, n_pages='all', keep_existing_pages=False):
     all_api_calls = []
     page_numbers = get_pages(project_dir)
     page_numbers = page_numbers if n_pages == 'all' else page_numbers[:n_pages]
 
     for page_number in page_numbers:
-        api_calls = await generate_image_for_page(project_dir, page_number, n_previous_pages, n_descriptions, n_images_per_description)
+        api_calls = await generate_image_for_page(project_dir, page_number, n_previous_pages, n_descriptions,
+                                                  n_images_per_description, keep_existing_pages=keep_existing_pages)
         all_api_calls.extend(api_calls)
     
     return all_api_calls
 
-async def generate_image_for_page(project_dir, page_number, n_previous_pages, n_descriptions, n_images_per_description):
+async def generate_image_for_page(project_dir, page_number, n_previous_pages, n_descriptions, n_images_per_description, keep_existing_pages=False):
     all_api_calls = []
+
+    if keep_existing_pages and file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
+        print(f'Page processing for page {page_number} already done, skipping')
+        return all_api_calls
+##    else:
+##        image_file = project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
+##        print(f'keep_existing_pages = {keep_existing_pages}, file_exists({image_file}) = {file_exists(image_file)}')
+    
     previous_pages, elements, context_api_calls = await find_relevant_previous_pages_and_elements_for_page(project_dir, page_number, n_previous_pages)
     all_api_calls.extend(context_api_calls)
 
@@ -800,10 +815,14 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     write_project_txt_file(all_error_messages, project_dir, f'pages/page{page_number}/error.txt')
     raise ImageGenerationError(message = f'Error when finding relevant elements for page {page_number}')
 
-async def generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_expanded_descriptions, n_images_per_description):
+async def generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_expanded_descriptions, n_images_per_description,
+                                              tries_left=3, previous_api_calls=[]):
+    if not tries_left:
+        return previous_api_calls
+    
     tasks = []
     all_description_dirs = []
-    all_api_calls = []
+    all_api_calls = previous_api_calls
     for description_version_number in range(0, n_expanded_descriptions):
         tasks.append(asyncio.create_task(generate_page_description_and_images(project_dir, page_number, previous_pages, elements,
                                                                               description_version_number, n_images_per_description)))
@@ -812,13 +831,30 @@ async def generate_image_for_page_and_context(project_dir, page_number, previous
         all_description_dirs.append(description_dir)
         all_api_calls.extend(api_calls)
     select_best_expanded_page_description_and_image(project_dir, page_number, all_description_dirs)
-    return all_api_calls
+
+    # We succeeded
+    if file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
+        return all_api_calls
+    # None of the descriptions produced a valid image, keep trying
+    else:
+        return generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_expanded_descriptions, n_images_per_description,
+                                                   tries_left=tries_left-1, previous_api_calls=all_api_calls)
+
+def select_all_best_expanded_page_descriptions_and_images_for_project(project_dir):
+    page_numbers = get_pages(project_dir)
+    for page_number in page_numbers:
+        page_dir = project_pathname(project_dir, f'pages/page{page_number}')
+        if directory_exists(page_dir):
+            description_dir_names = get_immediate_subdirectories_in_local_directory(page_dir)
+            all_description_dirs = [ os.path.join(page_dir, description_dir_name) for description_dir_name in description_dir_names ]
+            select_best_expanded_page_description_and_image(project_dir, page_number, all_description_dirs)
 
 def select_best_expanded_page_description_and_image(project_dir, page_number, all_description_dirs):
     best_score = 0.0
     best_description_file = None
     best_image_file = None
     best_interpretation_file = None
+    best_evaluation_file = None
 
     for description_dir in all_description_dirs:
         image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
@@ -831,12 +867,13 @@ def select_best_expanded_page_description_and_image(project_dir, page_number, al
                 best_description_file = description_file
                 best_image_file = image_info['image']
                 best_interpretation_file = image_info['interpretation']
+                best_evaluation_file = image_info['evaluation']
 
-    if best_description_file and best_image_file:
+    if best_description_file and best_image_file and best_interpretation_file:
         copy_file(best_description_file, project_pathname(project_dir, f'pages/page{page_number}/expanded_description.txt'))
         copy_file(best_image_file, project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
         copy_file(best_interpretation_file, project_pathname(project_dir, f'pages/page{page_number}/interpretation.txt'))
-        write_project_txt_file(f'{best_score}', project_dir, f'pages/page{page_number}/evaluation.txt')
+        copy_file(best_evaluation_file, project_pathname(project_dir, f'pages/page{page_number}/evaluation.txt'))
             
 async def generate_page_description_and_images(project_dir, page_number, previous_pages, elements,
                                                description_version_number, n_images_per_description):
@@ -857,7 +894,8 @@ async def generate_page_description_and_images(project_dir, page_number, previou
     else:
         previous_page_descriptions_text = f'Specifications of images on relevant previous pages:\n'
         for previous_page_number, previous_page_description in previous_page_descriptions_with_page_numbers:
-            previous_page_descriptions_text += f'\nPage {previous_page_number}:\n{previous_page_description}'
+            if previous_page_description:
+                previous_page_descriptions_text += f'\nPage {previous_page_number}:\n{previous_page_description}'
 
     element_description_with_element_texts = [ ( element_text, get_element_description(project_dir, element_text) )
                                                for element_text in elements ]
@@ -1060,7 +1098,7 @@ Score the evaluation as a number from 0 to 4 according to the following conventi
 
 **Provide the evaluation score, followed by a brief summary of any discrepancies identified.**
 
-Image specification:
++Image specification:
 {expanded_description}
 
 Image Description:
@@ -1121,6 +1159,10 @@ def generate_overview_html(project_dir, title):
 
     # Display the expanded style description
     try:
+        original_style_description = read_project_txt_file(project_dir, 'style_description.txt')
+        html_content += "<h3>User-Supplied Style Description</h3>"
+        html_content += f"<pre class='wrapped-pre'>{original_style_description}</pre>"
+        
         style_description = read_project_txt_file(project_dir, 'style/expanded_description.txt')
         html_content += "<h3>Expanded Style Description</h3>"
         html_content += f"<pre class='wrapped-pre'>{style_description}</pre>"
@@ -1266,6 +1308,86 @@ def generate_overview_html(project_dir, title):
 
 # -----------------------------------------------
 
+def score_description_dir_representative(project_dir, description_dir, image_dirs):
+    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir)[0], image_dir )
+                               for image_dir in image_dirs ]
+    scores = [ item[0] for item in scores_and_images_dirs ]
+    av_score = sum(scores) / len(scores)
+
+    # Find the image most representative of the average score
+
+    closest_match = 10.0
+    closest_file = None
+    closest_interpretation_file = None
+    closest_evaluation_file = None
+
+    for score, image_dir in scores_and_images_dirs:
+        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
+        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
+        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
+        if abs(score - av_score ) < closest_match and file_exists(image_file) and file_exists(evaluation_file):
+            closest_match = abs(score - av_score )
+            closest_file = image_file
+            closest_interpretation_file = interpretation_file
+            closest_evaluation_file = evaluation_file
+
+    description_dir_info = { 'av_score': av_score,
+                             'image': closest_file,
+                             'interpretation': closest_interpretation_file,
+                             'evaluation': closest_evaluation_file}
+                                                                   
+    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
+
+def score_description_dir_best(project_dir, description_dir, image_dirs):
+    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir)[0], image_dir )
+                               for image_dir in image_dirs ]
+
+    # Find the image with the best fit
+
+    best_score = 0
+    best_image_file = None
+    best_interpretation_file = None
+    best_evaluation_file = None
+
+    for score, image_dir in scores_and_images_dirs:
+        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
+        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
+        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
+        if score > best_score and file_exists(image_file):
+            best_score = score
+            best_image_file = image_file
+            best_interpretation_file = interpretation_file
+            best_evaluation_file = evaluation_file
+
+    description_dir_info = { 'best_score': best_score,
+                             'image': best_image_file,
+                             'interpretation': best_interpretation_file,
+                             'evaluation': best_evaluation_file }
+                                                                   
+    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
+
+# -----------------------------------------------
+
+def score_for_image_dir(project_dir, image_dir):
+    try:
+        evaluation_response = read_project_txt_file(project_dir, f'{image_dir}/evaluation.txt')
+        score, summary = parse_image_evaluation_response(evaluation_response)
+        return score, summary
+    except Exception as e:
+        return 0, ''
+
+def parse_image_evaluation_response(response):
+    lines = response.strip().split('\n')
+    score_line = lines[0]
+    summary_lines = lines[1:]
+    try:
+        score = int(score_line)
+    except ValueError:
+        score = 0  # Default to 0 if parsing fails
+    summary = '\n'.join(summary_lines)
+    return score, summary                                
+
+
 def get_story_data(project_dir):
     return read_project_json_file(project_dir, f'story.json')
 
@@ -1308,85 +1430,14 @@ def get_page_text(project_dir, page_number):
     raise ImageGenerationError(message=f'Unable to find page "{page_number}"')
 
 def get_page_description(project_dir, page_number):
-    return read_project_txt_file(project_dir, f'pages/page{page_number}/expanded_description.txt')
+    try:
+        return read_project_txt_file(project_dir, f'pages/page{page_number}/expanded_description.txt')
+    except Exception as e:
+        return None
 
 def get_page_image(project_dir, page_number):
     return read_project_txt_file(project_dir, f'pages/page{page_number}/image.txt')
 
-def score_description_dir_representative(project_dir, description_dir, image_dirs):
-    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir)[0], image_dir )
-                               for image_dir in image_dirs ]
-    scores = [ item[0] for item in scores_and_images_dirs ]
-    av_score = sum(scores) / len(scores)
-
-    # Find the image most representative of the average score
-
-    closest_match = 10.0
-    closest_file = None
-
-    for score, image_dir in scores_and_images_dirs:
-        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
-        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
-        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
-        if abs(score - av_score ) < closest_match and file_exists(image_file) and file_exists(evaluation_file):
-            closest_match = abs(score - av_score )
-            closest_file = image_file
-            closest_interpretation_file = interpretation_file
-            closest_evaluation_file = evaluation_file
-
-    description_dir_info = { 'av_score': av_score,
-                             'image': closest_file,
-                             'interpretation': closest_interpretation_file,
-                             'evaluation': closest_evaluation_file}
-                                                                   
-    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
-
-def score_description_dir_best(project_dir, description_dir, image_dirs):
-    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir)[0], image_dir )
-                               for image_dir in image_dirs ]
-
-    # Find the image with the best fit
-
-    best_score = 0.0
-    best_image_file = None
-    best_interpretation_file = None
-
-    for score, image_dir in scores_and_images_dirs:
-        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
-        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
-        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
-        if score > best_score and file_exists(image_file):
-            best_score = score
-            best_image_file = image_file
-            best_interpretation_file = interpretation_file
-            best_evaluation = evaluation_file
-
-    description_dir_info = { 'best_score': best_score,
-                             'image': best_image_file,
-                             'interpretation': best_interpretation_file,
-                             'evaluation': closest_evaluation_file }
-                                                                   
-    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
-
-
-def score_for_image_dir(project_dir, image_dir):
-    try:
-        evaluation_response = read_project_txt_file(project_dir, f'{image_dir}/evaluation.txt')
-        score, summary = parse_image_evaluation_response(evaluation_response)
-        return score, summary
-    except Exception as e:
-        return 0, ''
-
-def parse_image_evaluation_response(response):
-    lines = response.strip().split('\n')
-    score_line = lines[0]
-    summary_lines = lines[1:]
-    try:
-        score = int(score_line)
-    except ValueError:
-        score = 0  # Default to 0 if parsing fails
-    summary = '\n'.join(summary_lines)
-    return score, summary                                
 
 # Utilities
 
