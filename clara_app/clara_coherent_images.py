@@ -33,8 +33,8 @@ def test_lily_style():
 
 def test_lily_elements():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    #api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand='all'))
-    api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand=5))
+    api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand='all', keep_existing_elements=True))
+    #api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand=5, keep_existing_elements=True))
     cost = sum([api_call.cost for api_call in api_calls])
     print(f'Cost = ${cost:2f}')
 
@@ -248,10 +248,14 @@ The response will be read by a Python script, so write only the single evaluatio
 
 # Elements
 
-async def process_elements(project_dir, n_descriptions, n_images_per_description, n_elements_to_expand='all'):
+async def process_elements(project_dir, n_descriptions, n_images_per_description, n_elements_to_expand='all', keep_existing_elements=False):
     all_api_calls = []
-    element_list_with_names, element_names_api_calls = await generate_element_names(project_dir)
-    all_api_calls.extend(element_names_api_calls)
+
+    if keep_existing_elements and file_exists(project_pathname(project_dir, f'elements/elements.json')):
+        element_list_with_names = read_project_json_file(project_dir, f'elements/elements.json')
+    else:
+        element_list_with_names, element_names_api_calls = await generate_element_names(project_dir)
+        all_api_calls.extend(element_names_api_calls)
 
     element_list_with_names = element_list_with_names if n_elements_to_expand == 'all' else element_list_with_names[:n_elements_to_expand]
 
@@ -259,7 +263,8 @@ async def process_elements(project_dir, n_descriptions, n_images_per_description
     for item in element_list_with_names:
         name = item['name']
         text = item['text']
-        tasks.append(asyncio.create_task(process_single_element(project_dir, name, text, n_descriptions, n_images_per_description)))
+        tasks.append(asyncio.create_task(process_single_element(project_dir, name, text, n_descriptions,
+                                                                n_images_per_description, keep_existing_elements=keep_existing_elements)))
     results = await asyncio.gather(*tasks)
     for element_api_calls in results:
         all_api_calls.extend(element_api_calls)
@@ -333,10 +338,15 @@ def element_phrase_to_name(element):
         out_str += '_' if char.isspace() or unicodedata.category(char).startswith('P') else char
     return out_str
 
-async def process_single_element(project_dir, element_name, element_text, n_expanded_descriptions, n_images_per_description):
+async def process_single_element(project_dir, element_name, element_text, n_expanded_descriptions, n_images_per_description, keep_existing_elements=False):   
     tasks = []
     all_description_dirs = []
     all_api_calls = []
+
+    if keep_existing_elements and file_exists(project_pathname(project_dir, f'elements/{element_name}/image.jpg')):
+        print(f'Element processing for "{element_text}" already done, skipping')
+        return all_api_calls
+    
     for description_version_number in range(0, n_expanded_descriptions):
         tasks.append(asyncio.create_task(generate_expanded_element_description_and_images(project_dir, element_name, element_text,
                                                                                           description_version_number, n_images_per_description)))
