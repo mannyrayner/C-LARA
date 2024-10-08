@@ -350,7 +350,7 @@ async def save_openai_response_image(url, image_file, callback=None):
         abs_image_file = absolute_local_file_name(image_file)
         await post_task_update_async(callback, f'--- Trying to download image from "{url}"')
         response = requests.get(url)
-        await post_task_update_async(callback, f'--- Image downloaded"')
+        await post_task_update_async(callback, f'--- Image downloaded')
         image = Image.open(BytesIO(response.content))
         # 512x512 is more convenient for C-LARA
         image = image.resize((512, 512), Image.Resampling.LANCZOS)
