@@ -33,7 +33,8 @@ def test_lily_style():
 
 def test_lily_elements():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand='all'))
+    #api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand='all'))
+    api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand=5))
     cost = sum([api_call.cost for api_call in api_calls])
     print(f'Cost = ${cost:2f}')
 
@@ -78,10 +79,14 @@ def select_best_expanded_style_description_and_image(project_dir, all_descriptio
             if image_info['av_score'] > best_score:
                 best_description_file = description_file
                 typical_image_file = image_info['image']
+                typical_image_interpretation = image_info['interpretation']
+                typical_image_evaluation = image_info['evaluation']
 
     if best_description_file and typical_image_file:
-        copy_file(best_description_file, project_pathname(project_dir, f'style/expanded_style_description.txt'))
-        copy_file(typical_image_file, project_pathname(project_dir, f'style/style_image.jpg'))
+        copy_file(best_description_file, project_pathname(project_dir, f'style/expanded_description.txt'))
+        copy_file(typical_image_file, project_pathname(project_dir, f'style/image.jpg'))
+        copy_file(typical_image_interpretation, project_pathname(project_dir, f'style/interpretation.txt'))
+        copy_file(typical_image_evaluation, project_pathname(project_dir, f'style/evaluation.txt'))
             
 
 async def generate_expanded_style_description_and_images(project_dir, description_version_number, n_images_per_description):
@@ -155,31 +160,9 @@ async def generate_and_rate_style_images(project_dir, description, description_v
         all_image_dirs.append(image_dir)
         all_api_calls.extend(api_calls)
 
-    score_description_dir(project_dir, description_dir, all_image_dirs)
+    score_description_dir_representative(project_dir, description_dir, all_image_dirs)
         
     return all_api_calls
-
-def score_description_dir(project_dir, description_dir, image_dirs):
-    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir), image_dir )
-                               for image_dir in image_dirs ]
-    scores = [ item[0] for item in scores_and_images_dirs ]
-    av_score = sum(scores) / len(scores)
-
-    # Find the image most representative of the average score
-
-    closest_match = 10.0
-    closest_file = None
-
-    for score, image_dir in scores_and_images_dirs:
-        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
-        if abs(score - av_score ) < closest_match and file_exists(image_file):
-            closest_match = abs(score - av_score )
-            closest_file = image_file
-
-    description_dir_info = { 'av_score': av_score,
-                             'image': image_file }
-                                                                   
-    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
 
 async def generate_and_rate_style_image(project_dir, description, description_version_number, image_version_number):
     all_api_calls = []
@@ -260,13 +243,6 @@ The response will be read by a Python script, so write only the single evaluatio
     write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
     
     return evaluation, api_call
-
-def score_for_image_dir(project_dir, image_dir):
-    try:
-        score = read_project_txt_file(project_dir, f'{image_dir}/evaluation.txt')
-        return int(score)
-    except Exception as e:
-        return 0
 
 # -----------------------------------------------
 
@@ -385,10 +361,14 @@ def select_best_expanded_element_description_and_image(project_dir, element_name
             if image_info['av_score'] > best_score:
                 best_description_file = description_file
                 typical_image_file = image_info['image']
+                typical_image_interpretation = image_info['interpretation']
+                typical_image_evaluation = image_info['evaluation']
 
     if best_description_file and typical_image_file:
-        copy_file(best_description_file, project_pathname(project_dir, f'elements/{element_name}/expanded_style_description.txt'))
+        copy_file(best_description_file, project_pathname(project_dir, f'elements/{element_name}/expanded_description.txt'))
         copy_file(typical_image_file, project_pathname(project_dir, f'elements/{element_name}/image.jpg'))
+        copy_file(typical_image_interpretation, project_pathname(project_dir, f'elements/{element_name}/interpretation.txt'))
+        copy_file(typical_image_evaluation, project_pathname(project_dir, f'elements/{element_name}/evaluation.txt'))
             
 async def generate_expanded_element_description_and_images(project_dir, element_name, element_text,
                                                            description_version_number, n_images_per_description):
@@ -404,7 +384,8 @@ async def generate_expanded_element_description_and_images(project_dir, element_
     all_api_calls = []
 
     # Create the prompt to expand the element description
-    prompt = f"""We are later going to create a set of images to illustrate the following text:
+
+    prompt = f"""We are going to create a set of images to illustrate the following text:
 
 {text}
 
@@ -412,12 +393,33 @@ The intended style in which the images will be produced is described as follows:
 
 {style_description}
 
-As part of this process, we are first creating detailed descriptions of visual elements that occur multiple times in the text,
-e.g. characters, objects and locations.
+As part of this process, we are first creating detailed descriptions of visual elements that occur multiple times in the text, such as characters, objects, and locations.
 
-In this step, please create a detailed specification of the element "{element_text}", in the intended style,
-that can be passed to DALL-E-3 to generate a single image which shows how "{element_text}" will be realised. The description should be at
-most 1000 characters long, since it will later be combined with other descriptions."""
+**Your task is to create a detailed specification of the element "{element_text}", in the intended style,
+to be passed to DALL-E-3 to generate a single image showing how "{element_text}" will be realized.**
+
+**Please ensure that the specification includes specific physical characteristics. For a human character, these would include:**
+- **Apparent age**
+- **Gender**
+- **Ethnicity**
+- **Hair color and style**
+- **Eye color**
+- **Height and build**
+- **Clothing and accessories**
+- **Distinctive features or expressions**
+- **General demeanour**
+
+**Similarly, for an animal we would require characteristics like:**
+
+- **Size and shape**
+- **Colour of fur/scales, markings**
+- **Eye color**
+- **Distinctive features like wings, tail, horns**
+- **General demeanour**
+
+**Be as precise and detailed as possible to ensure consistency in the generated images.**
+
+The description should be at most 1000 characters long, as it will later be combined with other descriptions."""
 
     # Get the expanded description from the AI
     try:
@@ -464,7 +466,7 @@ async def generate_and_rate_element_images(project_dir, element_name, descriptio
         all_image_dirs.append(image_dir)
         all_api_calls.extend(api_calls)
 
-    score_description_dir(project_dir, description_dir, all_image_dirs)
+    score_description_dir_representative(project_dir, description_dir, all_image_dirs)
         
     return all_api_calls
 
@@ -503,13 +505,31 @@ async def generate_element_image(project_dir, image_dir, description):
 async def interpret_element_image(project_dir, image_dir, image_file):
 
     prompt = """Please provide as detailed a description as possible of the following image.
-For example, in the case of a human being, include information like apparent gender, age and ethnicity,
-hair, face, clothing and general demeanour. In the case of an animal, include information like
-shape, colour, fur or scales, face and general demeanour. 
-
 The image has been generated by DALL-E-3 to test whether the instructions used to produce it can
 reliably be used to create an image in an illustrated text, and the information you provide
 will be used to ascertain how good the match is.
+
+**Please ensure that the specification includes specific physical characteristics.
+For a human character, these would include:**
+- **Apparent age**
+- **Gender**
+- **Ethnicity**
+- **Hair color and style**
+- **Eye color**
+- **Height and build**
+- **Clothing and accessories**
+- **Distinctive features or expressions**
+- **General demeanour**
+
+**Similarly, for an animal we would require characteristics like:**
+
+- **Size and shape**
+- **Colour of fur/scales, markings**
+- **Eye color**
+- **Distinctive features like wings, tail, horns**
+- **General demeanour**
+
+**Be as precise and detailed as possible.**
 """
     api_call = await get_api_chatgpt4_interpret_image_response(prompt, image_file)
 
@@ -522,11 +542,39 @@ async def evaluate_element_fit(project_dir, image_dir, expanded_description, ima
     
     prompt = f"""Please read the 'element description' and the 'image description' below.
 
-The element description specifies an image exemplifying a visual element that will be used several times in a larger set of images.
+The element description specifies an image exemplifying a visual element that will be used multiple times in a larger set of images.
 
-The image description has been produced by gpt-4o, which was asked to describe the image generated from the element description. 
+The image description has been produced by GPT-4, which was asked to describe the image generated from the element description.
 
-Compare the element description with the image description and evaluate how well they match.
+**Your task is to compare the element description with the image description and evaluate how well they match,
+focusing on specific physical characteristics. For a human character, these would include:**
+- **Apparent age**
+- **Gender**
+- **Ethnicity**
+- **Hair color and style**
+- **Eye color**
+- **Height and build**
+- **Clothing and accessories**
+- **Distinctive features or expressions**
+
+**Similarly, for an animal, relevant characteristics would include:**
+
+- **Size and shape**
+- **Colour of fur/scales, markings**
+- **Eye color**
+- **Distinctive features like wings, tail, horns**
+- **General demeanour**
+
+**Identify any discrepancies between the descriptions for each characteristic.**
+
+Score the evaluation as a number from 0 to 4 according to the following conventions:
+- **4 = Excellent:** All key characteristics match precisely.
+- **3 = Good:** Minor discrepancies that don't significantly affect consistency.
+- **2 = Acceptable:** Some discrepancies, but the overall representation is acceptable.
+- **1 = Poor:** Significant discrepancies that affect consistency.
+- **0 = Unacceptable:** Major mismatches in critical characteristics.
+
+**Provide the evaluation score, followed by a brief summary of any discrepancies identified.**
 
 Element Description:
 {expanded_description}
@@ -534,15 +582,12 @@ Element Description:
 Image Description:
 {image_description}
 
-Score the evaluation as a number fron 0 to 4 according to the following conventions:
+The response will be read by a Python script, so write only the single evaluation score followed by the summary, separated by a newline.
 
-4 = excellent
-3 = good
-2 = clearly accesptable
-1 = possibly acceptable
-0 = unacceptable
+**Example Response:**
+3
+The hair color differs; the description mentions blonde hair, but the image shows brown hair."""
 
-The response will be read by a Python script, so write only the single evaluation score."""
     api_call = await get_api_chatgpt4_response(prompt)
 
     evaluation = api_call.response
@@ -888,33 +933,9 @@ async def generate_and_rate_page_images(project_dir, page_number, expanded_descr
         all_image_dirs.append(image_dir)
         all_api_calls.extend(api_calls)
 
-    score_page_description_dir(project_dir, description_dir, all_image_dirs)
+    score_description_dir_best(project_dir, description_dir, all_image_dirs)
         
     return all_api_calls
-
-def score_page_description_dir(project_dir, description_dir, image_dirs):
-    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir), image_dir )
-                               for image_dir in image_dirs ]
-
-    # Find the image with the best fit
-
-    best_score = 0.0
-    best_image_file = None
-    best_interpretation_file = None
-
-    for score, image_dir in scores_and_images_dirs:
-        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
-        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
-        if score > best_score and file_exists(image_file):
-            best_score = score
-            best_image_file = image_file
-            best_interpretation_file = interpretation_file
-
-    description_dir_info = { 'best_score': best_score,
-                             'image': best_image_file,
-                             'interpretation': best_interpretation_file }
-                                                                   
-    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
 
 async def generate_and_rate_page_image(project_dir, page_number, description, description_version_number, image_version_number):
     all_api_calls = []
@@ -955,6 +976,34 @@ async def interpret_page_image(project_dir, image_dir, image_file):
 The image has been generated by DALL-E-3 from a specification produced by gpt-4o, and the information you provide
 will be used to ascertain how good the match is between the specification and the image.
 """
+
+    prompt = """Please provide as detailed a description as possible of the following image.
+The image has been generated by DALL-E-3 from a specification produced by gpt-4o, and the information you provide
+will be used to ascertain how good the match is between the specification and the image.
+
+Describe the overall appearance of the image and add detailed descriptions of elements such as people, animals and important objects.
+Make sure that these descriptions includes specific physical characteristics. 
+For a human character, these characteristic would include:
+- **Apparent age**
+- **Gender**
+- **Ethnicity**
+- **Hair color and style**
+- **Eye color**
+- **Height and build**
+- **Clothing and accessories**
+- **Distinctive features or expressions**
+- **General demeanour**
+
+**Similarly, for an animal we would require characteristics like:**
+
+- **Size and shape**
+- **Colour of fur/scales, markings**
+- **Eye color**
+- **Distinctive features like wings, tail, horns**
+- **General demeanour**
+
+**Be as precise and detailed as possible.**
+"""
     api_call = await get_api_chatgpt4_interpret_image_response(prompt, image_file)
 
     image_interpretation = api_call.response
@@ -970,23 +1019,49 @@ The image specification gives the instructions passed to DALL-E-3 to create one 
 
 The image description has been produced by gpt-4o, which was asked to describe the image generated from the image specification. 
 
-Compare the image specification with the image description and evaluate how well they match.
+**Your task is to compare the image specification with the image description and evaluate how well they match.
+Compare both the overall image and elements such as people, animals and important objects,
+focusing on specific physical characteristics. For a human character, these would include:**
+- **Apparent age**
+- **Gender**
+- **Ethnicity**
+- **Hair color and style**
+- **Eye color**
+- **Height and build**
+- **Clothing and accessories**
+- **Distinctive features or expressions**
 
-Element Description:
+**Similarly, for an animal, relevant characteristics would include:**
+
+- **Size and shape**
+- **Colour of fur/scales, markings**
+- **Eye color**
+- **Distinctive features like wings, tail, horns**
+- **General demeanour**
+
+**Identify any discrepancies between the descriptions for each characteristic.**
+
+Score the evaluation as a number from 0 to 4 according to the following conventions:
+- **4 = Excellent:** All key characteristics match precisely.
+- **3 = Good:** Minor discrepancies that don't significantly affect consistency.
+- **2 = Acceptable:** Some discrepancies, but the overall representation is acceptable.
+- **1 = Poor:** Significant discrepancies that affect consistency.
+- **0 = Unacceptable:** Major mismatches in critical characteristics.
+
+**Provide the evaluation score, followed by a brief summary of any discrepancies identified.**
+
+Image specification:
 {expanded_description}
 
 Image Description:
 {image_description}
 
-Score the evaluation as a number fron 0 to 4 according to the following conventions:
+The response will be read by a Python script, so write only the single evaluation score followed by the summary, separated by a newline.
 
-4 = excellent
-3 = good
-2 = clearly accesptable
-1 = possibly acceptable
-0 = unacceptable
-
-The response will be read by a Python script, so write only the single evaluation score."""
+**Example Response:**
+3
+The hair color of the girl is different; the specification mentions blonde hair, but the image shows brown hair."""
+    
     api_call = await get_api_chatgpt4_response(prompt)
 
     evaluation = api_call.response
@@ -1024,22 +1099,23 @@ def generate_overview_html(project_dir, title):
 
     # Style Section
     html_content += "<h2>Style</h2>"
-    # Read the expanded style description
-    try:
-        style_description = read_project_txt_file(project_dir, 'style/expanded_style_description.txt')
-        html_content += "<h3>Expanded Style Description</h3>"
-        html_content += f"<pre class='wrapped-pre'>{style_description}</pre>"
-    except Exception as e:
-        html_content += "<p><em>Style description not found.</em></p>"
 
     # Display the style image
-    style_image_path = project_pathname(project_dir, 'style/style_image.jpg')
+    style_image_path = project_pathname(project_dir, 'style/image.jpg')
     if file_exists(style_image_path):
         relative_style_image_path = os.path.relpath(style_image_path, project_dir)
         html_content += "<h3>Style Image</h3>"
         html_content += f"<img src='{relative_style_image_path}' alt='Style Image' style='max-width:600px;'>"
     else:
         html_content += "<p><em>Style image not found.</em></p>"
+
+    # Display the expanded style description
+    try:
+        style_description = read_project_txt_file(project_dir, 'style/expanded_description.txt')
+        html_content += "<h3>Expanded Style Description</h3>"
+        html_content += f"<pre class='wrapped-pre'>{style_description}</pre>"
+    except Exception as e:
+        html_content += "<p><em>Style description not found.</em></p>"
 
     # Elements Section
     html_content += "<h2>Elements</h2>"
@@ -1071,13 +1147,23 @@ def generate_overview_html(project_dir, title):
                 else:
                     html_content += "<p><em>Image not found for this element.</em></p>"
                 # Read the element's expanded description
-                element_description_path = f'elements/{element_name}/expanded_style_description.txt'
+                element_description_path = f'elements/{element_name}/expanded_description.txt'
                 try:
                     element_description = read_project_txt_file(project_dir, element_description_path)
                     html_content += "<h4>Expanded Description</h4>"
                     html_content += f"<pre class='wrapped-pre'>{element_description}</pre>"
                 except Exception as e:
                     html_content += "<p><em>Expanded description not found for this element.</em></p>"
+                # Read the evaluation score
+                evaluation_path = f'elements/{element_name}/evaluation.txt'
+                if file_exists(project_pathname(project_dir, evaluation_path)):
+                    evaluation_response = read_project_txt_file(project_dir, evaluation_path)
+                    score, summary = parse_evaluation_response(evaluation_response)
+                    html_content += f"<p><strong>Average Evaluation Score:</strong> {score}</p>"
+                    if summary:
+                        html_content += f"<h4>Typical Discrepancies:</h4><pre class='wrapped-pre'>{summary}</pre>"
+                else:
+                    html_content += "<p><em>Evaluation score not found for this page.</em></p>"
         else:
             html_content += "<p><em>No elements found in elements.json.</em></p>"
     else:
@@ -1125,8 +1211,11 @@ def generate_overview_html(project_dir, title):
             # Read the evaluation score
             evaluation_path = f'pages/page{page_number}/evaluation.txt'
             if file_exists(project_pathname(project_dir, evaluation_path)):
-                evaluation = read_project_txt_file(project_dir, evaluation_path)
-                html_content += f"<p><strong>Evaluation Score:</strong> {evaluation.strip()}</p>"
+                evaluation_response = read_project_txt_file(project_dir, evaluation_path)
+                score, summary = parse_evaluation_response(evaluation_response)
+                html_content += f"<p><strong>Evaluation Score:</strong> {score}</p>"
+                if summary:
+                    html_content += f"<h4>Discrepancies:</h4><pre class='wrapped-pre'>{summary}</pre>"
             else:
                 html_content += "<p><em>Evaluation score not found for this page.</em></p>"
 
@@ -1185,7 +1274,7 @@ def get_text(project_dir):
     return '\n'.join(text_content)
 
 def get_style_description(project_dir):
-    return read_project_txt_file(project_dir, f'style/expanded_style_description.txt')
+    return read_project_txt_file(project_dir, f'style/expanded_description.txt')
 
 def get_all_element_texts(project_dir):
     element_list = read_project_json_file(project_dir, f'elements/elements.json')
@@ -1197,7 +1286,7 @@ def get_element_description(project_dir, element_text):
         text = item['text']
         if text == element_text:
             name = item['name']
-            return read_project_txt_file(project_dir, f'elements/{name}/expanded_style_description.txt')
+            return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
     raise ImageGenerationError(message=f'Unable to find element "{element_text}"')
 
 def get_page_text(project_dir, page_number):
@@ -1213,7 +1302,81 @@ def get_page_description(project_dir, page_number):
 
 def get_page_image(project_dir, page_number):
     return read_project_txt_file(project_dir, f'pages/page{page_number}/image.txt')
-                                
+
+def score_description_dir_representative(project_dir, description_dir, image_dirs):
+    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir)[0], image_dir )
+                               for image_dir in image_dirs ]
+    scores = [ item[0] for item in scores_and_images_dirs ]
+    av_score = sum(scores) / len(scores)
+
+    # Find the image most representative of the average score
+
+    closest_match = 10.0
+    closest_file = None
+
+    for score, image_dir in scores_and_images_dirs:
+        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
+        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
+        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
+        if abs(score - av_score ) < closest_match and file_exists(image_file) and file_exists(evaluation_file):
+            closest_match = abs(score - av_score )
+            closest_file = image_file
+            closest_interpretation_file = interpretation_file
+            closest_evaluation_file = evaluation_file
+
+    description_dir_info = { 'av_score': av_score,
+                             'image': closest_file,
+                             'interpretation': closest_interpretation_file,
+                             'evaluation': closest_evaluation_file}
+                                                                   
+    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
+
+def score_description_dir_best(project_dir, description_dir, image_dirs):
+    scores_and_images_dirs = [ ( score_for_image_dir(project_dir, image_dir)[0], image_dir )
+                               for image_dir in image_dirs ]
+
+    # Find the image with the best fit
+
+    best_score = 0.0
+    best_image_file = None
+    best_interpretation_file = None
+
+    for score, image_dir in scores_and_images_dirs:
+        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
+        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
+        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
+        if score > best_score and file_exists(image_file):
+            best_score = score
+            best_image_file = image_file
+            best_interpretation_file = interpretation_file
+            best_evaluation = evaluation_file
+
+    description_dir_info = { 'best_score': best_score,
+                             'image': best_image_file,
+                             'interpretation': best_interpretation_file,
+                             'evaluation': closest_evaluation_file }
+                                                                   
+    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
+
+
+def score_for_image_dir(project_dir, image_dir):
+    try:
+        evaluation_response = read_project_txt_file(project_dir, f'{image_dir}/evaluation.txt')
+        score, summary = parse_image_evaluation_response(evaluation_response)
+        return score, summary
+    except Exception as e:
+        return 0, ''
+
+def parse_image_evaluation_response(response):
+    lines = response.strip().split('\n')
+    score_line = lines[0]
+    summary_lines = lines[1:]
+    try:
+        score = int(score_line)
+    except ValueError:
+        score = 0  # Default to 0 if parsing fails
+    summary = '\n'.join(summary_lines)
+    return score, summary                                
 
 # Utilities
 
