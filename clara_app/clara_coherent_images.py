@@ -28,23 +28,20 @@ import unicodedata
 
 def test_lily_style():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    api_calls = asyncio.run(process_style(project_dir, 2, 2))
-    cost = sum([api_call.cost for api_call in api_calls])
-    print(f'Cost = ${cost:2f}')
+    cost_dict = asyncio.run(process_style(project_dir, 2, 2))
+    print_cost_dict(cost_dict)
 
 def test_lily_elements():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand='all', keep_existing_elements=True))
-    #api_calls = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand=5, keep_existing_elements=True))
-    cost = sum([api_call.cost for api_call in api_calls])
-    print(f'Cost = ${cost:2f}')
+    #cost_dict = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand=5, keep_existing_elements=False))
+    cost_dict = asyncio.run(process_elements(project_dir, 3, 3, n_elements_to_expand='all', keep_existing_elements=True))
+    print_cost_dict(cost_dict)
 
 def test_lily_pages():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    #api_calls = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages=4, keep_existing_pages=True))
-    api_calls = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages='all', keep_existing_pages=True))
-    cost = sum([api_call.cost for api_call in api_calls])
-    print(f'Cost = ${cost:2f}')
+    api_calls = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages=4, keep_existing_pages=True))
+    #cost_dict = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages='all', keep_existing_pages=True))
+    print_cost_dict(cost_dict)
 
 def test_lily_select():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
@@ -61,15 +58,16 @@ def test_lily_overview():
 async def process_style(project_dir, n_expanded_descriptions, n_images_per_description):
     tasks = []
     all_description_dirs = []
-    all_api_calls = []
+    total_cost_dict = {}
     for description_version_number in range(0, n_expanded_descriptions):
         tasks.append(asyncio.create_task(generate_expanded_style_description_and_images(project_dir, description_version_number, n_images_per_description)))
     results = await asyncio.gather(*tasks)
-    for description_dir, api_calls in results:
+    for description_dir, cost_dict in results:
         all_description_dirs.append(description_dir)
-        all_api_calls.extend(api_calls)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     select_best_expanded_style_description_and_image(project_dir, all_description_dirs)
-    return all_api_calls
+    write_project_cost_file(total_cost_dict, project_dir, f'style/cost.json')
+    return total_cost_dict
 
 def select_best_expanded_style_description_and_image(project_dir, all_description_dirs):
     best_score = 0.0
@@ -106,7 +104,7 @@ async def generate_expanded_style_description_and_images(project_dir, descriptio
     # Get the text of the story
     text = get_text(project_dir)
 
-    all_api_calls = []
+    total_cost_dict = {}
 
     # Create the prompt to expand the style description
     prompt = f"""We are later going to create a set of images to illustrate the following text:
@@ -129,7 +127,7 @@ most 3000 characters long to conform to DALL-E-3's constraints."""
         
         while not valid_expanded_description_produced and tries_left:
             description_api_call = await get_api_chatgpt4_response(prompt)
-            all_api_calls.append(description_api_call)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'style_description': description_api_call.cost })
 
             # Save the expanded description
             expanded_description = description_api_call.response
@@ -141,16 +139,17 @@ most 3000 characters long to conform to DALL-E-3's constraints."""
         write_project_txt_file(expanded_description, project_dir, f'style/description_v{description_version_number}/expanded_description.txt')
 
         # Create and rate the images
-        image_api_calls = await generate_and_rate_style_images(project_dir, expanded_description, description_version_number, n_images_per_description)
-        all_api_calls.extend(image_api_calls)
+        images_cost_dict = await generate_and_rate_style_images(project_dir, expanded_description, description_version_number, n_images_per_description)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, images_cost_dict)
 
-        return description_directory, all_api_calls
+        write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
+        return description_directory, total_cost_dict
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
 
-    return description_directory, []
+    return description_directory, total_cost_dict
 
 async def generate_and_rate_style_images(project_dir, description, description_version_number, n_images_per_description):
     description_dir = f'style/description_v{description_version_number}'
@@ -158,49 +157,49 @@ async def generate_and_rate_style_images(project_dir, description, description_v
     
     tasks = []
     all_image_dirs = []
-    all_api_calls = []
+    total_cost_dict = {}
     for image_version_number in range(0, n_images_per_description):
         tasks.append(asyncio.create_task(generate_and_rate_style_image(project_dir, description, description_version_number, image_version_number)))
     results = await asyncio.gather(*tasks)
-    for image_dir, api_calls in results:
+    for image_dir, cost_dict in results:
         all_image_dirs.append(image_dir)
-        all_api_calls.extend(api_calls)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
 
     score_description_dir_representative(project_dir, description_dir, all_image_dirs)
         
-    return all_api_calls
+    return total_cost_dict
 
 async def generate_and_rate_style_image(project_dir, description, description_version_number, image_version_number):
-    all_api_calls = []
+    total_cost_dict = {}
     
     image_dir = f'style/description_v{description_version_number}/image_v{image_version_number}'
     # Make directory if necessary
     make_project_dir(project_dir, image_dir)
 
     try:
-        image_file, image_api_call = await generate_style_image(project_dir, image_dir, description)
-        all_api_calls.append(image_api_call)
+        image_file, generate_cost_dict = await generate_style_image(project_dir, image_dir, description)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, generate_cost_dict)
 
-        image_interpretation, interpret_api_call = await interpret_style_image(project_dir, image_dir, image_file)
-        all_api_calls.append(interpret_api_call)
+        image_interpretation, interpret_cost_dict = await interpret_style_image(project_dir, image_dir, image_file)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
 
-        evaluation, evaluation_api_call = await evaluate_style_fit(project_dir, image_dir, description, image_interpretation)
-
-        all_api_calls.append(evaluation_api_call)
+        evaluation, evaluation_cost_dict = await evaluate_style_fit(project_dir, image_dir, description, image_interpretation)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, evaluation_cost_dict)
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'{image_dir}/error.txt')
         write_project_txt_file("0", project_dir, f'{image_dir}/evaluation.txt')
 
-    return image_dir, all_api_calls
+    write_project_cost_file(total_cost_dict, project_dir, f'{image_dir}/cost.json')
+    return image_dir, total_cost_dict
 
 async def generate_style_image(project_dir, image_dir, description):
     
     image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
     api_call = await get_api_chatgpt4_image_response(description, image_file)
 
-    return image_file, api_call
+    return image_file, { 'generate_style_image': api_call.cost }
 
 async def interpret_style_image(project_dir, image_dir, image_file):
 
@@ -215,7 +214,7 @@ intended style, and the information you provide will be used to ascertain how go
     image_interpretation = api_call.response
     write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
 
-    return image_interpretation, api_call
+    return image_interpretation, { 'interpret_style_image': api_call.cost }
 
 async def evaluate_style_fit(project_dir, image_dir, expanded_description, image_description):
     
@@ -248,20 +247,20 @@ The response will be read by a Python script, so write only the single evaluatio
 
     write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
     
-    return evaluation, api_call
+    return evaluation, { 'evaluate_style_image': api_call.cost }
 
 # -----------------------------------------------
 
 # Elements
 
 async def process_elements(project_dir, n_descriptions, n_images_per_description, n_elements_to_expand='all', keep_existing_elements=False):
-    all_api_calls = []
+    total_cost_dict = {}
 
     if keep_existing_elements and file_exists(project_pathname(project_dir, f'elements/elements.json')):
         element_list_with_names = read_project_json_file(project_dir, f'elements/elements.json')
     else:
-        element_list_with_names, element_names_api_calls = await generate_element_names(project_dir)
-        all_api_calls.extend(element_names_api_calls)
+        element_list_with_names, element_names_cost_dict = await generate_element_names(project_dir)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, element_names_cost_dict)
 
     element_list_with_names = element_list_with_names if n_elements_to_expand == 'all' else element_list_with_names[:n_elements_to_expand]
 
@@ -272,9 +271,11 @@ async def process_elements(project_dir, n_descriptions, n_images_per_description
         tasks.append(asyncio.create_task(process_single_element(project_dir, name, text, n_descriptions,
                                                                 n_images_per_description, keep_existing_elements=keep_existing_elements)))
     results = await asyncio.gather(*tasks)
-    for element_api_calls in results:
-        all_api_calls.extend(element_api_calls)
-    return all_api_calls
+    for element_cost_dict in results:
+        total_cost_dict = combine_cost_dicts(total_cost_dict, element_cost_dict)
+
+    write_project_cost_file(total_cost_dict, project_dir, f'elements/cost.json')
+    return total_cost_dict
 
 async def generate_element_names(project_dir):
     # Make directory if necessary
@@ -284,7 +285,7 @@ async def generate_element_names(project_dir):
     # Get the text of the story
     text = get_text(project_dir)
 
-    all_api_calls = []
+    total_cost_dict = {}
 
     # Create the prompt to find the elements
     prompt = f"""We are later going to create a set of images to illustrate the following text:
@@ -318,7 +319,7 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     while not valid_list_produced and tries_left:
         try:
             api_call = await get_api_chatgpt4_response(prompt)
-            all_api_calls.append(api_call)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, {'generate_element_names': api_call.cost})
 
             # Save the expanded description
             element_list_txt = api_call.response
@@ -326,14 +327,14 @@ Please write out only the JSON-formatted list, since it will be read by a Python
             valid_list_produced = True
             element_list_with_names = add_names_to_element_list(element_list)
             write_project_json_file(element_list_with_names, project_dir, f'elements/elements.json')
-            return element_list_with_names, all_api_calls
+            return element_list_with_names, total_cost_dict
         except Exception as e:
             error_messages += f'-------------------\n"{str(e)}"\n{traceback.format_exc()}'
             tries_left -= 1
 
     # We ran out of tries, log error messages
     write_project_txt_file(error_messages, project_dir, f'elements/error.txt')
-    return [], all_api_calls
+    return [], total_cost_dict
 
 def add_names_to_element_list(element_list):
     return [ { 'name': element_phrase_to_name(element), 'text': element } for element in element_list ]
@@ -347,21 +348,23 @@ def element_phrase_to_name(element):
 async def process_single_element(project_dir, element_name, element_text, n_expanded_descriptions, n_images_per_description, keep_existing_elements=False):   
     tasks = []
     all_description_dirs = []
-    all_api_calls = []
+    total_cost_dict = {}
 
     if keep_existing_elements and file_exists(project_pathname(project_dir, f'elements/{element_name}/image.jpg')):
         print(f'Element processing for "{element_text}" already done, skipping')
-        return all_api_calls
+        return total_cost_dict
     
     for description_version_number in range(0, n_expanded_descriptions):
         tasks.append(asyncio.create_task(generate_expanded_element_description_and_images(project_dir, element_name, element_text,
                                                                                           description_version_number, n_images_per_description)))
     results = await asyncio.gather(*tasks)
-    for description_dir, api_calls in results:
+    for description_dir, cost_dict in results:
         all_description_dirs.append(description_dir)
-        all_api_calls.extend(api_calls)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     select_best_expanded_element_description_and_image(project_dir, element_name, all_description_dirs)
-    return all_api_calls
+
+    write_project_cost_file(total_cost_dict, project_dir, f'elements/{element_name}/cost.json')
+    return total_cost_dict
 
 def select_best_expanded_element_description_and_image(project_dir, element_name, all_description_dirs):
     best_score = 0.0
@@ -397,7 +400,7 @@ async def generate_expanded_element_description_and_images(project_dir, element_
     text = get_text(project_dir)
     style_description = get_style_description(project_dir)
 
-    all_api_calls = []
+    total_cost_dict = {}
 
     # Create the prompt to expand the element description
 
@@ -445,7 +448,7 @@ The description should be at most 1000 characters long, as it will later be comb
         
         while not valid_expanded_description_produced and tries_left:
             description_api_call = await get_api_chatgpt4_response(prompt)
-            all_api_calls.append(description_api_call)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_element_description': description_api_call.cost })
 
             # Save the expanded description
             expanded_description = description_api_call.response
@@ -457,16 +460,18 @@ The description should be at most 1000 characters long, as it will later be comb
         write_project_txt_file(expanded_description, project_dir, f'elements/{element_name}/description_v{description_version_number}/expanded_description.txt')
 
         # Create and rate the images
-        image_api_calls = await generate_and_rate_element_images(project_dir, element_name, expanded_description, description_version_number, n_images_per_description)
-        all_api_calls.extend(image_api_calls)
+        image_cost_dict = await generate_and_rate_element_images(project_dir, element_name, expanded_description, description_version_number, n_images_per_description)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
-        return description_directory, all_api_calls
+        write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
+        return description_directory, total_cost_dict
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'elements/{element_name}/description_v{description_version_number}/error.txt')
 
-    return description_directory, []
+    write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
+    return description_directory, {}
 
 async def generate_and_rate_element_images(project_dir, element_name, description, description_version_number, n_images_per_description):
     description_dir = f'elements/{element_name}/description_v{description_version_number}'
@@ -474,49 +479,49 @@ async def generate_and_rate_element_images(project_dir, element_name, descriptio
     
     tasks = []
     all_image_dirs = []
-    all_api_calls = []
+    total_cost_dict = {}
     for image_version_number in range(0, n_images_per_description):
         tasks.append(asyncio.create_task(generate_and_rate_element_image(project_dir, element_name, description, description_version_number, image_version_number)))
     results = await asyncio.gather(*tasks)
-    for image_dir, api_calls in results:
+    for image_dir, cost_dict in results:
         all_image_dirs.append(image_dir)
-        all_api_calls.extend(api_calls)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
 
     score_description_dir_representative(project_dir, description_dir, all_image_dirs)
         
-    return all_api_calls
+    return total_cost_dict
 
 async def generate_and_rate_element_image(project_dir, element_name, description, description_version_number, image_version_number):
-    all_api_calls = []
+    total_cost_dict = {}
     
     image_dir = f'elements/{element_name}/description_v{description_version_number}/image_v{image_version_number}'
     # Make directory if necessary
     make_project_dir(project_dir, image_dir)
 
     try:
-        image_file, image_api_call = await generate_element_image(project_dir, image_dir, description)
-        all_api_calls.append(image_api_call)
+        image_file, image_cost_dict = await generate_element_image(project_dir, image_dir, description)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
-        image_interpretation, interpret_api_call = await interpret_element_image(project_dir, image_dir, image_file)
-        all_api_calls.append(interpret_api_call)
+        image_interpretation, interpret_cost_dict = await interpret_element_image(project_dir, image_dir, image_file)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
 
-        evaluation, evaluation_api_call = await evaluate_element_fit(project_dir, image_dir, description, image_interpretation)
-
-        all_api_calls.append(evaluation_api_call)
+        evaluation, evaluation_cost_dict = await evaluate_element_fit(project_dir, image_dir, description, image_interpretation)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, evaluation_cost_dict)
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'{image_dir}/error.txt')
         write_project_txt_file("0", project_dir, f'{image_dir}/evaluation.txt')
 
-    return image_dir, all_api_calls
+    write_project_cost_file(total_cost_dict, project_dir, f'{image_dir}/cost.json')
+    return image_dir, total_cost_dict
 
 async def generate_element_image(project_dir, image_dir, description):
     
     image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
     api_call = await get_api_chatgpt4_image_response(description, image_file)
 
-    return image_file, api_call
+    return image_file, { 'generate_element_image': api_call.cost }
 
 async def interpret_element_image(project_dir, image_dir, image_file):
 
@@ -552,7 +557,7 @@ For a human character, these would include:**
     image_interpretation = api_call.response
     write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
 
-    return image_interpretation, api_call
+    return image_interpretation, { 'interpret_element_image': api_call.cost }
 
 async def evaluate_element_fit(project_dir, image_dir, expanded_description, image_description):
     
@@ -610,54 +615,53 @@ The hair color differs; the description mentions blonde hair, but the image show
 
     write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
     
-    return evaluation, api_call
+    return evaluation, { 'evaluate_element_image': api_call.cost }
 
 # -----------------------------------------------
 
 # Pages
 
 async def process_pages(project_dir, n_previous_pages, n_descriptions, n_images_per_description, n_pages='all', keep_existing_pages=False):
-    all_api_calls = []
+    total_cost_dict = {}
     page_numbers = get_pages(project_dir)
     page_numbers = page_numbers if n_pages == 'all' else page_numbers[:n_pages]
 
     for page_number in page_numbers:
-        api_calls = await generate_image_for_page(project_dir, page_number, n_previous_pages, n_descriptions,
+        cost_dict = await generate_image_for_page(project_dir, page_number, n_previous_pages, n_descriptions,
                                                   n_images_per_description, keep_existing_pages=keep_existing_pages)
-        all_api_calls.extend(api_calls)
-    
-    return all_api_calls
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+
+    write_project_cost_file(total_cost_dict, project_dir, f'pages/cost.json')
+    return total_cost_dict
 
 async def generate_image_for_page(project_dir, page_number, n_previous_pages, n_descriptions, n_images_per_description, keep_existing_pages=False):
-    all_api_calls = []
+    total_cost_dict = {}
 
     if keep_existing_pages and file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
         print(f'Page processing for page {page_number} already done, skipping')
-        return all_api_calls
-##    else:
-##        image_file = project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
-##        print(f'keep_existing_pages = {keep_existing_pages}, file_exists({image_file}) = {file_exists(image_file)}')
-    
-    previous_pages, elements, context_api_calls = await find_relevant_previous_pages_and_elements_for_page(project_dir, page_number, n_previous_pages)
-    all_api_calls.extend(context_api_calls)
+        return total_cost_dict
+   
+    previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(project_dir, page_number, n_previous_pages)
+    total_cost_dict = combine_cost_dicts(total_cost_dict, context_cost_dict)
 
-    generation_api_calls = await generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_descriptions, n_images_per_description)
-    all_api_calls.extend(generation_api_calls)
+    generation_cost_dict = await generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_descriptions, n_images_per_description)
+    total_cost_dict = combine_cost_dicts(total_cost_dict, generation_cost_dict)
 
-    return all_api_calls
+    write_project_cost_file(total_cost_dict, project_dir, f'pages/page{page_number}/cost.json')
+    return total_cost_dict
 
 async def find_relevant_previous_pages_and_elements_for_page(project_dir, page_number, n_previous_pages):
-    all_api_calls = []
+    total_cost_dict = {}
     
-    previous_pages, previous_pages_api_calls = await find_relevant_previous_pages_for_page(project_dir, page_number, n_previous_pages)
-    all_api_calls.extend(previous_pages_api_calls)
+    previous_pages, previous_pages_cost_dict = await find_relevant_previous_pages_for_page(project_dir, page_number, n_previous_pages)
+    total_cost_dict = combine_cost_dicts(total_cost_dict, previous_pages_cost_dict)
 
-    elements, elements_api_calls = await find_relevant_elements_for_page(project_dir, page_number)
-    all_api_calls.extend(elements_api_calls)
+    elements, elements_cost_dict = await find_relevant_elements_for_page(project_dir, page_number)
+    total_cost_dict = combine_cost_dicts(total_cost_dict, elements_cost_dict)
 
     info = { 'relevant_previous_pages': previous_pages,'relevant_elements': elements }
     write_project_json_file(info, project_dir, f'pages/page{page_number}/relevant_pages_and_elements.json')
-    return previous_pages, elements, all_api_calls
+    return previous_pages, elements, total_cost_dict
 
 async def find_relevant_previous_pages_for_page(project_dir, page_number, n_previous_pages):
 
@@ -699,7 +703,7 @@ since we want to appearance of Humpty Dumpty and the wall to be similar in the i
 Please write out only the JSON-formatted list, since it will be read by a Python script.
 """
 
-    all_api_calls = []
+    total_cost_dict = {}
     all_error_messages = ''
     # Get the expanded description from the AI
 
@@ -708,14 +712,14 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     while tries_left:
         try:
             api_call = await get_api_chatgpt4_response(prompt)
-            all_api_calls.append(api_call)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'find_relevant_previous_pages': api_call.cost })
 
             # Save the expanded description
             list_text = api_call.response
             list_object = interpret_chat_gpt4_response_as_json(list_text, object_type='list')
 
             if all([ isinstance(item, ( int )) and item < page_number for item in list_object ]):
-                return list_object, all_api_calls
+                return list_object, total_cost_dict
             else:
                 error_message = f'{list_object} contains page number greater than or equal to {page_number}'
                 all_error_messages += f'\n-------------------------------\n{error_message}'
@@ -783,7 +787,7 @@ since the image on page 2 will contain Humpty Dumpty and the wall, but probably 
 Please write out only the JSON-formatted list, since it will be read by a Python script.
 """
 
-    all_api_calls = []
+    total_cost_dict = {}
     all_error_messages = ''
     # Get the expanded description from the AI
 
@@ -792,14 +796,14 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     while tries_left:
         try:
             api_call = await get_api_chatgpt4_response(prompt)
-            all_api_calls.append(api_call)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'find_relevant_elements': api_call.cost })
 
             # Save the expanded description
             list_text = api_call.response
             list_object = interpret_chat_gpt4_response_as_json(list_text, object_type='list')
 
             if all([ item in all_element_texts for item in list_object ]):
-                return list_object, all_api_calls
+                return list_object, total_cost_dict
             else:
                 error_message = f'{list_object} contains element name not in {all_element_texts}'
                 all_error_messages += f'\n-------------------------------\n{error_message}'
@@ -816,29 +820,29 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     raise ImageGenerationError(message = f'Error when finding relevant elements for page {page_number}')
 
 async def generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_expanded_descriptions, n_images_per_description,
-                                              tries_left=3, previous_api_calls=[]):
+                                              tries_left=3, previous_cost_dict={}):
     if not tries_left:
-        return previous_api_calls
+        return previous_cost_dict
     
     tasks = []
     all_description_dirs = []
-    all_api_calls = previous_api_calls
+    total_cost_dict = previous_cost_dict
     for description_version_number in range(0, n_expanded_descriptions):
         tasks.append(asyncio.create_task(generate_page_description_and_images(project_dir, page_number, previous_pages, elements,
                                                                               description_version_number, n_images_per_description)))
     results = await asyncio.gather(*tasks)
-    for description_dir, api_calls in results:
+    for description_dir, cost_dict in results:
         all_description_dirs.append(description_dir)
-        all_api_calls.extend(api_calls)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     select_best_expanded_page_description_and_image(project_dir, page_number, all_description_dirs)
 
     # We succeeded
     if file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
-        return all_api_calls
+        return total_cost_dict
     # None of the descriptions produced a valid image, keep trying
     else:
-        return generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_expanded_descriptions, n_images_per_description,
-                                                   tries_left=tries_left-1, previous_api_calls=all_api_calls)
+        return await generate_image_for_page_and_context(project_dir, page_number, previous_pages, elements, n_expanded_descriptions, n_images_per_description,
+                                                         tries_left=tries_left-1, previous_cost_dict=total_cost_dict)
 
 def select_all_best_expanded_page_descriptions_and_images_for_project(project_dir):
     page_numbers = get_pages(project_dir)
@@ -850,6 +854,8 @@ def select_all_best_expanded_page_descriptions_and_images_for_project(project_di
             select_best_expanded_page_description_and_image(project_dir, page_number, all_description_dirs)
 
 def select_best_expanded_page_description_and_image(project_dir, page_number, all_description_dirs):
+    #print(f'select_best_expanded_page_description_and_image({project_dir}, {page_number}, {all_description_dirs})')
+          
     best_score = 0.0
     best_description_file = None
     best_image_file = None
@@ -874,6 +880,8 @@ def select_best_expanded_page_description_and_image(project_dir, page_number, al
         copy_file(best_image_file, project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
         copy_file(best_interpretation_file, project_pathname(project_dir, f'pages/page{page_number}/interpretation.txt'))
         copy_file(best_evaluation_file, project_pathname(project_dir, f'pages/page{page_number}/evaluation.txt'))
+    else:
+        print('No best_expanded_page_description_and_image found')
             
 async def generate_page_description_and_images(project_dir, page_number, previous_pages, elements,
                                                description_version_number, n_images_per_description):
@@ -906,7 +914,7 @@ async def generate_page_description_and_images(project_dir, page_number, previou
         for element_text, element_description in element_description_with_element_texts:
             element_descriptions_text += f'\nElement "{element_text}":\n{element_description}'
 
-    all_api_calls = []
+    total_cost_dict = {}
 
     # Create the prompt 
     prompt = f"""We are generating a set of images to illustrate the following text, which has been divided into numbered pages:
@@ -944,7 +952,7 @@ The specification must be at most 4000 characters long to conform with DALL-E-3'
         
         while not valid_expanded_description_produced and tries_left:
             description_api_call = await get_api_chatgpt4_response(prompt)
-            all_api_calls.append(description_api_call)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_page_description': description_api_call.cost })
 
             # Save the expanded description
             expanded_description = description_api_call.response
@@ -956,16 +964,17 @@ The specification must be at most 4000 characters long to conform with DALL-E-3'
         write_project_txt_file(expanded_description, project_dir, f'pages/page{page_number}/description_v{description_version_number}/expanded_description.txt')
 
         # Create and rate the images
-        image_api_calls = await generate_and_rate_page_images(project_dir, page_number, expanded_description, description_version_number, n_images_per_description)
-        all_api_calls.extend(image_api_calls)
+        image_cost_dict = await generate_and_rate_page_images(project_dir, page_number, expanded_description, description_version_number, n_images_per_description)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
-        return description_directory, all_api_calls
+        write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
+        return description_directory, total_cost_dict
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
 
-    return description_directory, []
+    return description_directory, {}
 
 async def generate_and_rate_page_images(project_dir, page_number, expanded_description, description_version_number, n_images_per_description):
     description_dir = f'pages/page{page_number}/description_v{description_version_number}'
@@ -973,49 +982,49 @@ async def generate_and_rate_page_images(project_dir, page_number, expanded_descr
     
     tasks = []
     all_image_dirs = []
-    all_api_calls = []
+    total_cost_dict = {}
     for image_version_number in range(0, n_images_per_description):
         tasks.append(asyncio.create_task(generate_and_rate_page_image(project_dir, page_number, expanded_description, description_version_number, image_version_number)))
     results = await asyncio.gather(*tasks)
-    for image_dir, api_calls in results:
+    for image_dir, cost_dict in results:
         all_image_dirs.append(image_dir)
-        all_api_calls.extend(api_calls)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
 
     score_description_dir_best(project_dir, description_dir, all_image_dirs)
         
-    return all_api_calls
+    return total_cost_dict
 
 async def generate_and_rate_page_image(project_dir, page_number, description, description_version_number, image_version_number):
-    all_api_calls = []
+    total_cost_dict = {}
     
     image_dir = f'pages/page{page_number}/description_v{description_version_number}/image_v{image_version_number}'
     # Make directory if necessary
     make_project_dir(project_dir, image_dir)
 
     try:
-        image_file, image_api_call = await generate_page_image(project_dir, image_dir, description)
-        all_api_calls.append(image_api_call)
+        image_file, image_cost_dict = await generate_page_image(project_dir, image_dir, description)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
-        image_interpretation, interpret_api_call = await interpret_page_image(project_dir, image_dir, image_file)
-        all_api_calls.append(interpret_api_call)
+        image_interpretation, interpret_cost_dict = await interpret_page_image(project_dir, image_dir, image_file)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
 
-        evaluation, evaluation_api_call = await evaluate_page_fit(project_dir, image_dir, description, image_interpretation)
-
-        all_api_calls.append(evaluation_api_call)
+        evaluation, evaluation_cost_dict = await evaluate_page_fit(project_dir, image_dir, description, image_interpretation)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, evaluation_cost_dict)
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'{image_dir}/error.txt')
         write_project_txt_file("0", project_dir, f'{image_dir}/evaluation.txt')
 
-    return image_dir, all_api_calls
+    write_project_cost_file(total_cost_dict, project_dir, f'{image_dir}/cost.json')
+    return image_dir, total_cost_dict
 
 async def generate_page_image(project_dir, image_dir, description):
     
     image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
     api_call = await get_api_chatgpt4_image_response(description, image_file)
 
-    return image_file, api_call
+    return image_file, { 'generate_page_image': api_call.cost }
 
 async def interpret_page_image(project_dir, image_dir, image_file):
 
@@ -1057,7 +1066,7 @@ For a human character, these characteristic would include:
     image_interpretation = api_call.response
     write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
 
-    return image_interpretation, api_call
+    return image_interpretation, { 'interpret_page_image': api_call.cost }
 
 async def evaluate_page_fit(project_dir, image_dir, expanded_description, image_description):
     
@@ -1116,7 +1125,7 @@ The hair color of the girl is different; the specification mentions blonde hair,
 
     write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
     
-    return evaluation, api_call
+    return evaluation, { 'evaluate_page_image': api_call.cost }
 
 # -----------------------------------------------
 
@@ -1459,7 +1468,39 @@ def write_project_txt_file(text, project_dir, pathname):
 def write_project_json_file(text, project_dir, pathname):
     write_json_to_file(text, project_pathname(project_dir, pathname))
 
-
 class ImageGenerationError(Exception):
     def __init__(self, message = 'Image generation error'):
         self.message = message
+
+def api_calls_to_cost(api_calls):
+    return sum([ api_call.cost for api_call in api_calls ])
+
+def combine_cost_dicts(*dicts):
+    """
+    Combine multiple cost dictionaries by summing the values for matching keys.
+
+    Parameters:
+    *dicts: Variable number of dictionaries with task names as keys and costs as values.
+
+    Returns:
+    A single dictionary with the combined costs.
+    """
+    combined_dict = {}
+    for d in dicts:
+        for key, value in d.items():
+            if key in combined_dict:
+                combined_dict[key] += value
+            else:
+                combined_dict[key] = value
+    return combined_dict
+
+def print_cost_dict(cost_dict):
+    if not 'total' in cost_dict:
+        cost_dict['total'] = sum([ cost_dict[key] for key in cost_dict ])
+    for key in cost_dict:
+        print(f'{key}: {cost_dict[key]:2f}')
+        
+def write_project_cost_file(cost_dict, project_dir, pathname):
+    if not 'total' in cost_dict:
+        cost_dict['total'] = sum([ cost_dict[key] for key in cost_dict ])
+    write_project_json_file(cost_dict, project_dir, pathname)
