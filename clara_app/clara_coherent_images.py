@@ -39,7 +39,7 @@ def test_lily_elements():
 
 def test_lily_pages():
     project_dir = '$CLARA/coherent_images/LilyGoesTheWholeHog'
-    api_calls = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages=4, keep_existing_pages=True))
+    cost_dict = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages=4, keep_existing_pages=True))
     #cost_dict = asyncio.run(process_pages(project_dir, 2, 2, 2, n_pages='all', keep_existing_pages=True))
     print_cost_dict(cost_dict)
 
