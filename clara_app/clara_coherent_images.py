@@ -35,6 +35,17 @@ def test_la_fontaine_style():
     cost_dict = asyncio.run(process_style(params))
     print_cost_dict(cost_dict)
 
+def test_la_fontaine_style_o1():
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
+               'n_expanded_descriptions': 3,
+               'n_images_per_description': 3,
+               'models_for_tasks': { 'default': 'gpt-4o',
+                                     'generate_style_description': 'o1-mini' }
+               }
+    cost_dict = asyncio.run(process_style(params))
+    print_cost_dict(cost_dict)
+
+
 def test_la_fontaine_elements():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard',
                'n_expanded_descriptions': 2,
@@ -42,6 +53,18 @@ def test_la_fontaine_elements():
                'n_elements_to_expand': 'all',
                'keep_existing_elements': True,
                'models_for_tasks': { 'default': 'gpt-4o' }
+               }
+    cost_dict = asyncio.run(process_elements(params))
+    print_cost_dict(cost_dict)
+
+def test_la_fontaine_elements_o1():
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
+               'n_expanded_descriptions': 2,
+               'n_images_per_description': 2,
+               'n_elements_to_expand': 'all',
+               'keep_existing_elements': True,
+               'models_for_tasks': { 'default': 'gpt-4o',
+                                     'generate_element_description': 'o1-mini' }
                }
     cost_dict = asyncio.run(process_elements(params))
     print_cost_dict(cost_dict)
@@ -58,13 +81,27 @@ def test_la_fontaine_pages():
     cost_dict = asyncio.run(process_pages(params))
     print_cost_dict(cost_dict)
 
-def test_la_fontaine_select():
-    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard' }
-    select_all_best_expanded_page_descriptions_and_images_for_project(params)
+def test_la_fontaine_pages_o1():
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
+               'n_expanded_descriptions': 2,
+               'n_images_per_description': 2,
+               'n_pages': 'all',
+               'n_previous_pages': 2,
+               'keep_existing_pages': True,
+               'models_for_tasks': { 'default': 'gpt-4o',
+                                     'generate_page_description': 'o1-mini' }
+               }
+    cost_dict = asyncio.run(process_pages(params))
+    print_cost_dict(cost_dict)
 
 def test_la_fontaine_overview():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard',
                'title': 'Le Corbeau et le Renard' }
+    generate_overview_html(params)
+
+def test_la_fontaine_overview_o1():
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
+               'title': 'Le Corbeau et le Renard (o1-mini version)' }
     generate_overview_html(params)
 
 # Test with Lily Goes the Whole Hog
@@ -192,8 +229,8 @@ most 3000 characters long to conform to DALL-E-3's constraints."""
         max_dall_e_3_prompt_length = 4000
         
         while not valid_expanded_description_produced and tries_left:
-            description_api_call = await get_api_chatgpt4_response(prompt)
-            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'style_description': description_api_call.cost })
+            description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_style_description', params)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_style_description': description_api_call.cost })
 
             # Save the expanded description
             expanded_description = description_api_call.response
@@ -1050,13 +1087,14 @@ In this step, please create a detailed specification of the image on page {page_
 and also consistent with the relevant previous pages and relevant elements, that can be passed to DALL-E-3 to
 generate a single image for page {page_number}.
 
-The specification must be at most 4000 characters long to conform with DALL-E-3's constraints.
+*IMPORTANT*: the specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
 """
 
     # Get the expanded description from the AI
     try:
         valid_expanded_description_produced = False
         tries_left = 5
+        #tries_left = 1
         max_dall_e_3_prompt_length = 4000
         
         while not valid_expanded_description_produced and tries_left:
@@ -1068,12 +1106,19 @@ The specification must be at most 4000 characters long to conform with DALL-E-3'
             if len(expanded_description) < max_dall_e_3_prompt_length:
                 valid_expanded_description_produced = True
             else:
+                print(f'Length of description = {len(expanded_description)}')
                 tries_left -= 1
-            
+
         write_project_txt_file(expanded_description, project_dir, f'pages/page{page_number}/description_v{description_version_number}/expanded_description.txt')
 
+        if valid_expanded_description_produced:   
         # Create and rate the images
-        image_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_version_number, params)
+            image_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_version_number, params)
+        else:
+            image_cost_dict = {}
+            error_message = f"No generated description was less than {max_dall_e_3_prompt_length} characters long"
+            write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
+            
         total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
         write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
@@ -1602,7 +1647,7 @@ async def get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file,
 def get_config_info_and_callback_from_params(task_name, params):
 
     if task_name in params['models_for_tasks']:
-        model = params['models_for_tasks']['task_name']
+        model = params['models_for_tasks'][task_name]
     elif 'default' in params['models_for_tasks']:
         model = params['models_for_tasks']['default']
     else:
@@ -1611,7 +1656,7 @@ def get_config_info_and_callback_from_params(task_name, params):
     config_info = params['config_info'] if 'config_info' in params else {}
 
     if model:
-        config_info['gpt4_model'] = model
+        config_info['gpt_model'] = model
 
     callback = params['callback'] if 'callback' in params else None
 
