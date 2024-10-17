@@ -1173,7 +1173,25 @@ In this step, please create a detailed specification of the image on page {page_
 and also consistent with the relevant previous pages and relevant elements, that can be passed to DALL-E-3 to
 generate a single image for page {page_number}.
 
-*IMPORTANT*: the specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+*IMPORTANT*:
+
+1. The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+
+2. Start the specification with a short section entitled "Essential aspects", where you list the aspects of the
+image which are essential to the text and must be represented. For example, if the text were the traditional nursery rhyme
+
+[ {{ "page_number": 1, "text": "Humpty Dumpty sat on a wall" }},
+  {{ "page_number": 2, "text": "Humpty Dumpty had a great fall" }},
+  {{ "page_number": 3, "text": "All the King's horses and all the King's men" }},
+  {{ "page_number": 4, "text": "Couldn't put Humpty Dumpty together again" }}
+  ]
+
+then the "Essential aspects" section for page 2 might read:
+
+"Humpy Dumpty is falling off the wall."
+
+The "Essential aspects" section will be used to check the correctness of the generated image.
+
 """
 
     # Get the expanded description from the AI
@@ -1189,7 +1207,7 @@ generate a single image for page {page_number}.
 
             # Save the expanded description
             expanded_description = description_api_call.response
-            if len(expanded_description) < max_dall_e_3_prompt_length:
+            if len(expanded_description) < max_dall_e_3_prompt_length and "essential aspects" in expanded_description.lower():
                 valid_expanded_description_produced = True
             else:
                 print(f'Length of description = {len(expanded_description)}')
@@ -1318,9 +1336,9 @@ The image specification gives the instructions passed to DALL-E-3 to create one 
 
 The image description has been produced by gpt-4o, which was asked to describe the image generated from the image specification. 
 
-**Your task is to compare the image specification with the image description and evaluate how well they match.
+Your task is to compare the image specification with the image description and evaluate how well they match.
 Compare both the overall image and elements such as people, animals and important objects,
-focusing on specific physical characteristics. For a human character, these would include:**
+focusing on specific physical characteristics. For a human character, these would include:
 - **Apparent age**
 - **Gender**
 - **Ethnicity**
@@ -1330,7 +1348,7 @@ focusing on specific physical characteristics. For a human character, these woul
 - **Clothing and accessories**
 - **Distinctive features or expressions**
 
-**Similarly, for an animal, relevant characteristics would include:**
+Similarly, for an animal, relevant characteristics would include:
 
 - **Size and shape**
 - **Colour of fur/scales, markings**
@@ -1339,6 +1357,10 @@ focusing on specific physical characteristics. For a human character, these woul
 - **General demeanour**
 
 **Identify any discrepancies between the descriptions for each characteristic.**
+
+**Look in particular at the section in the specification entitled "Essential aspects".
+If any item mentioned in the "Essential aspects" section fails to match the description, then
+the image is not acceptable.**
 
 Score the evaluation as a number from 0 to 4 according to the following conventions:
 - **4 = Excellent:** All key characteristics match precisely.
