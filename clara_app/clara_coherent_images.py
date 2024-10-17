@@ -192,7 +192,6 @@ def select_best_expanded_style_description_and_image(all_description_dirs, param
         copy_file(typical_image_interpretation, project_pathname(project_dir, f'style/interpretation.txt'))
         copy_file(typical_image_evaluation, project_pathname(project_dir, f'style/evaluation.txt'))
             
-
 async def generate_expanded_style_description_and_images(description_version_number, params):
     project_dir = params['project_dir']
     n_expanded_descriptions = params['n_expanded_descriptions']
@@ -209,6 +208,44 @@ async def generate_expanded_style_description_and_images(description_version_num
 
     total_cost_dict = {}
 
+    try:
+        valid_expanded, expanded_style_description, style_cost_dict = await generate_expanded_style_description(description_version_number, params)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, style_cost_dict)
+
+        if valid_expanded:
+            valid_example, example_description, example_cost_dict = await generate_style_description_example(description_version_number, expanded_style_description, params)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, example_cost_dict)
+            if valid_example:
+                # Create and rate the images
+                images_cost_dict = await generate_and_rate_style_images(example_description, description_version_number, params)
+                total_cost_dict = combine_cost_dicts(total_cost_dict, images_cost_dict)
+            else:
+                error_message = f'Unable to create example image'
+                write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
+        else:
+            error_message = f'Unable to create expanded style description'
+            write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
+
+        write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
+        return description_directory, total_cost_dict
+
+    except Exception as e:
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
+
+    return description_directory, total_cost_dict
+
+async def generate_expanded_style_description(description_version_number, params):
+    project_dir = params['project_dir']
+    
+    total_cost_dict = {}
+    
+    # Read the base style description
+    base_description = read_project_txt_file(project_dir, f'style_description.txt')
+
+    # Get the text of the story
+    text = get_text(params)
+
     # Create the prompt to expand the style description
     prompt = f"""We are later going to create a set of images to illustrate the following text:
 
@@ -218,19 +255,26 @@ The intended style in which the images will be produced is briefly described as 
 
 {base_description}
 
-For now, please expand the brief description into a detailed specification that can be passed to DALL-E-3 to
-generate a single image, appropriate to the story, which exemplifies the style. The description must be at
-most 3000 characters long to conform to DALL-E-3's constraints."""
+For now, please expand the brief style description into a detailed specification that can be used as
+part of the prompts later passed to DALL-E-3 to create illustrations for this story and enforce
+a uniform appearance.
+
+The expanded style specification should at a minimum include information about the medium and technique, the colour palette,
+the line work, and the mood/atmosphere, since these are all critical to maintaining coherence of the images
+which will use this style.
+
+The specification needs to be at most 1000 characters long"""
 
     # Get the expanded description from the AI
     try:
+        expanded_description = None
         valid_expanded_description_produced = False
         tries_left = 5
-        max_dall_e_3_prompt_length = 4000
+        max_dall_e_3_prompt_length = 1500
         
-        while not valid_expanded_description_produced and tries_left:
+        while not expanded_description and tries_left:
             description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_style_description', params)
-            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_style_description': description_api_call.cost })
+            cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_style_description': description_api_call.cost })
 
             # Save the expanded description
             expanded_description = description_api_call.response
@@ -241,18 +285,60 @@ most 3000 characters long to conform to DALL-E-3's constraints."""
             
         write_project_txt_file(expanded_description, project_dir, f'style/description_v{description_version_number}/expanded_description.txt')
 
-        # Create and rate the images
-        images_cost_dict = await generate_and_rate_style_images(expanded_description, description_version_number, params)
-        total_cost_dict = combine_cost_dicts(total_cost_dict, images_cost_dict)
-
-        write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
-        return description_directory, total_cost_dict
-
     except Exception as e:
+        
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
 
-    return description_directory, total_cost_dict
+    return valid_expanded_description_produced, expanded_description, total_cost_dict
+
+async def generate_style_description_example(description_version_number, expanded_style_description, params):
+    project_dir = params['project_dir']
+    
+    total_cost_dict = {}
+    
+    # Get the text of the story
+    text = get_text(params)
+
+    # Create the prompt to expand the style description
+    prompt = f"""We are later going to create a set of images to illustrate the following text:
+
+{text}
+
+The style in which the images will be produced is described as follows:
+
+{expanded_style_description}
+
+For now, please expand the style description into a detailed specification that can be passed to DALL-E-3 to
+generate a single image, appropriate to the story, which exemplifies the style. The description must be at
+most 3000 characters long to conform to DALL-E-3's constraints."""
+
+    # Get the expanded description from the AI
+    try:
+        image_description = None
+        valid_image_description_produced = False
+        tries_left = 5
+        max_dall_e_3_prompt_length = 4000
+        
+        while not valid_image_description_produced and tries_left:
+            description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_example_style_description', params)
+            cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_style_description': description_api_call.cost })
+
+            # Save the expanded description
+            image_description = description_api_call.response
+            if len(image_description) < max_dall_e_3_prompt_length:
+                valid_image_description_produced = True
+            else:
+                tries_left -= 1
+            
+        write_project_txt_file(image_description, project_dir, f'style/description_v{description_version_number}/example_image_description.txt')
+
+    except Exception as e:
+        
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
+
+    return valid_image_description_produced, image_description, total_cost_dict
 
 async def generate_and_rate_style_images(description, description_version_number, params):
     project_dir = params['project_dir']
@@ -1071,7 +1157,7 @@ The intended style in which the images will be produced is described as follows:
 
 {style_description}
 
-We are about to generate the image for page {page_number}, whoe text is
+We are about to generate the image for page {page_number}, whose text is
 
 {page_text}
 
