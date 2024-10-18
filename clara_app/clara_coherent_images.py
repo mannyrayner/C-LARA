@@ -91,7 +91,8 @@ def test_la_fontaine_pages_o1():
                'n_previous_pages': 2,
                'keep_existing_pages': True,
                'models_for_tasks': { 'default': 'gpt-4o',
-                                     'generate_page_description': 'o1-mini' }
+                                     'generate_page_description': 'o1-mini',
+                                     'evaluate_page_image': 'o1-mini' }
                }
     cost_dict = asyncio.run(process_pages(params))
     print_cost_dict(cost_dict)
@@ -1207,10 +1208,13 @@ generate a single image for page {page_number}.
 
 *IMPORTANT*:
 
-1. The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+A. The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
 
-2. Start the specification with a short section entitled "Essential aspects", where you list the aspects of the
-image which are essential to the text and must be represented. For example, if the text were the traditional nursery rhyme
+B. Start the specification with a short section entitled "Essential aspects", where you list the aspects of the
+image which are essential to the text and must be represented. This will often include material not mentioned
+in the text on the current page, which is necessary to maintain continuity and must be inferred from text on the other pages.
+
+For example, if the text were the traditional nursery rhyme
 
 [ {{ "page_number": 1, "text": "Humpty Dumpty sat on a wall" }},
   {{ "page_number": 2, "text": "Humpty Dumpty had a great fall" }},
@@ -1222,8 +1226,11 @@ then the "Essential aspects" section for page 2 might read:
 
 "Humpy Dumpty is falling off the wall."
 
-The "Essential aspects" section will be used to check the correctness of the generated image.
+despite the fact that there is no mention of the wall in the page 2 text.
 
+The "Essential aspects" section will be used to check the correctness of the generated image.
+If any item listed there fails to match, the image will be rejected, so only include material
+in this section which is genuinely essential, as opposed to just desirable.
 """
 
     # Get the expanded description from the AI
@@ -1389,10 +1396,6 @@ Similarly, for an animal, relevant characteristics would include:
 
 **Identify any discrepancies between the descriptions for each characteristic.**
 
-**Look in particular at the section in the specification entitled "Essential aspects".
-If any item mentioned in the "Essential aspects" section fails to match the description, then
-the image is not acceptable.**
-
 Score the evaluation as a number from 0 to 4 according to the following conventions:
 - **4 = Excellent:** All key characteristics match precisely.
 - **3 = Good:** Minor discrepancies that don't significantly affect consistency.
@@ -1408,11 +1411,18 @@ Score the evaluation as a number from 0 to 4 according to the following conventi
 Image Description:
 {image_description}
 
-The response will be read by a Python script, so write only the single evaluation score followed by the summary, separated by a newline.
+**IMPORTANT**
+
+A. Look in particular at the section in the specification entitled "Essential aspects".
+If any item mentioned in the "Essential aspects" section fails to match the description, then
+the match must be scored as 1 ("Poor") or 0 ("Unacceptable").
+
+B. The response will be read by a Python script, so write only the single evaluation score followed by the summary, separated by a newline.
 
 **Example Response:**
 3
-The hair color of the girl is different; the specification mentions blonde hair, but the image shows brown hair."""
+The hair color of the girl is different; the specification mentions blonde hair, but the image shows brown hair.
+"""
     
     api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_page_image', params)
 
