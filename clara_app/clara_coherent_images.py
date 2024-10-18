@@ -72,7 +72,8 @@ def test_la_fontaine_elements_o1():
 def test_la_fontaine_pages():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard',
                'n_expanded_descriptions': 2,
-               'n_images_per_description': 2,
+               'max_description_generation_rounds': 4,
+               'n_images_per_description': 3,
                'n_pages': 'all',
                'n_previous_pages': 2,
                'keep_existing_pages': True,
@@ -84,7 +85,8 @@ def test_la_fontaine_pages():
 def test_la_fontaine_pages_o1():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
                'n_expanded_descriptions': 2,
-               'n_images_per_description': 2,
+               'max_description_generation_rounds': 4,
+               'n_images_per_description': 3,
                'n_pages': 'all',
                'n_previous_pages': 2,
                'keep_existing_pages': True,
@@ -1048,32 +1050,58 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     write_project_txt_file(all_error_messages, project_dir, f'pages/page{page_number}/error.txt')
     raise ImageGenerationError(message = f'Error when finding relevant elements for page {page_number}')
 
-async def generate_image_for_page_and_context(page_number, previous_pages, elements, params, tries_left=3, previous_cost_dict={}):
+async def generate_image_for_page_and_context(page_number, previous_pages, elements, params):
+    
     project_dir = params['project_dir']
-    
-    if not tries_left:
-        return previous_cost_dict
 
-    n_expanded_descriptions = params['n_expanded_descriptions']
-    
-    tasks = []
-    all_description_dirs = []
-    total_cost_dict = previous_cost_dict
-    for description_version_number in range(0, n_expanded_descriptions):
-        tasks.append(asyncio.create_task(generate_page_description_and_images(page_number, previous_pages, elements, description_version_number, params)))
-    results = await asyncio.gather(*tasks)
-    for description_dir, cost_dict in results:
-        all_description_dirs.append(description_dir)
-        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
-    select_best_expanded_page_description_and_image(page_number, all_description_dirs, params)
+    DEFAULT_MAX_DESCRIPTION_GENERATION_ROUNDS = 3
 
-    # We succeeded
-    if file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
-        return total_cost_dict
-    # None of the descriptions produced a valid image, keep trying
+    n_previous_rounds = 0
+    n_rounds_left = params['max_description_generation_rounds'] if 'max_description_generation_rounds' in params else DEFAULT_MAX_DESCRIPTION_GENERATION_ROUNDS
+
+    total_cost_dict = {}
+
+    while n_rounds_left > 0:
+
+        # We generate n_expanded_descriptions each round to get the directories.
+        # If we're not on the first round, we do all the previous directories, but the old ones will be skipped.
+        n_expanded_descriptions = params['n_expanded_descriptions'] * ( 1 + n_previous_rounds )
+        
+        tasks = []
+        all_description_dirs = []
+        
+        for description_version_number in range(0, n_expanded_descriptions):
+            tasks.append(asyncio.create_task(generate_page_description_and_images(page_number, previous_pages, elements, description_version_number, params)))
+        results = await asyncio.gather(*tasks)
+        for description_dir, cost_dict in results:
+            all_description_dirs.append(description_dir)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+        select_best_expanded_page_description_and_image(page_number, all_description_dirs, params)
+
+        if acceptable_page_image_exists(page_number, params):
+            # We succeeded. Return the costs
+            return total_cost_dict
+        else:
+            # We failed. Try again, creating n_expanded_descriptions more description directories
+            n_rounds_left -= 1
+            n_previous_rounds += 1
+
+    # None of the descriptions produced an acceptable image and we're out of lives. Give up.
+    return total_cost_dict
+
+def acceptable_page_image_exists(page_number, params):
+    project_dir = params['project_dir']
+
+    image_file_exists = file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
+    score, comments = score_for_evaluation_file(f'pages/page{page_number}/evaluation.txt', params)
+
+    if image_file_exists and score >= 3:  # 3 = "good"
+        return True
     else:
-        return await generate_image_for_page_and_context(page_number, previous_pages, elements, params, tries_left=tries_left-1, previous_cost_dict=total_cost_dict)
+        return False
+    
 
+# Only used for cleaning up
 def select_all_best_expanded_page_descriptions_and_images_for_project(params):
     project_dir = params['project_dir']
     
@@ -1121,6 +1149,12 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     # Make directory if necessary
     description_directory = f'pages/page{page_number}/description_v{description_version_number}'
     make_project_dir(project_dir, description_directory)
+
+    total_cost_dict = {}
+
+    if file_exists(project_pathname(project_dir, f'{description_directory}/image_info.json')):
+        # We've already done this directory
+        return description_directory, total_cost_dict
     
     # Get the text of the story, the style description, the relevant previous pages and the relevant element descriptions
     story_data = get_story_data(params)
@@ -1145,8 +1179,6 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
         element_descriptions_text = f'Specifications of relevant elements:\n'
         for element_text, element_description in element_description_with_element_texts:
             element_descriptions_text += f'\nElement "{element_text}":\n{element_description}'
-
-    total_cost_dict = {}
 
     # Create the prompt 
     prompt = f"""We are generating a set of images to illustrate the following text, which has been divided into numbered pages:
@@ -1231,8 +1263,7 @@ The "Essential aspects" section will be used to check the correctness of the gen
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
-
-    return description_directory, {}
+        return description_directory, {}
 
 async def generate_and_rate_page_images(page_number, expanded_description, description_version_number, params):
     project_dir = params['project_dir']
@@ -1652,10 +1683,13 @@ def score_description_dir_best(description_dir, image_dirs, params):
 # -----------------------------------------------
 
 def score_for_image_dir(image_dir, params):
+    return score_for_evaluation_file(f'{image_dir}/evaluation.txt', params)
+
+def score_for_evaluation_file(project_file, params):
     project_dir = params['project_dir']
     
     try:
-        evaluation_response = read_project_txt_file(project_dir, f'{image_dir}/evaluation.txt')
+        evaluation_response = read_project_txt_file(project_dir, project_file)
         score, summary = parse_image_evaluation_response(evaluation_response)
         return score, summary
     except Exception as e:
