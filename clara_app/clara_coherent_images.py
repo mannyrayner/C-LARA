@@ -20,9 +20,13 @@ from .clara_utils import (
 
 import json
 import os
+import sys
 import asyncio
 import traceback
 import unicodedata
+from PIL import Image
+
+
 
 # Test with La Fontaine 'Le Corbeau et le Renard'
 
@@ -85,7 +89,7 @@ def test_la_fontaine_pages():
 def test_la_fontaine_pages_o1():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
                'n_expanded_descriptions': 2,
-               'max_description_generation_rounds': 4,
+               'max_description_generation_rounds': 1,
                'n_images_per_description': 3,
                'n_pages': 'all',
                'n_previous_pages': 2,
@@ -106,6 +110,11 @@ def test_la_fontaine_overview_o1():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
                'title': 'Le Corbeau et le Renard (o1-mini version)' }
     generate_overview_html(params)
+
+def test_la_fontaine_evaluate_o1_v8():
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v8',
+               'title': 'Le Corbeau et le Renard (o1-mini version)' }
+    human_evaluation(params)
 
 # Test with Lily Goes the Whole Hog
 
@@ -222,12 +231,12 @@ async def generate_expanded_style_description_and_images(description_version_num
                 # Create and rate the images
                 images_cost_dict = await generate_and_rate_style_images(example_description, description_version_number, params)
                 total_cost_dict = combine_cost_dicts(total_cost_dict, images_cost_dict)
-            else:
-                error_message = f'Unable to create example image'
-                write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
-        else:
-            error_message = f'Unable to create expanded style description'
-            write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
+##            else:
+##                error_message = f'Unable to create example image'
+##                write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
+##        else:
+##            error_message = f'Unable to create expanded style description'
+##            write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
 
         write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
         return description_directory, total_cost_dict
@@ -269,13 +278,14 @@ which will use this style.
 The specification needs to be at most 1000 characters long"""
 
     # Get the expanded description from the AI
-    try:
-        expanded_description = None
-        valid_expanded_description_produced = False
-        tries_left = 5
-        max_dall_e_3_prompt_length = 1500
-        
-        while not expanded_description and tries_left:
+    expanded_description = None
+    valid_expanded_description_produced = False
+    error_message = ''
+    tries_left = 5
+    max_dall_e_3_prompt_length = 1500
+    
+    while not valid_expanded_description_produced and tries_left:
+        try:
             description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_style_description', params)
             cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_style_description': description_api_call.cost })
 
@@ -284,15 +294,18 @@ The specification needs to be at most 1000 characters long"""
             if len(expanded_description) < max_dall_e_3_prompt_length:
                 valid_expanded_description_produced = True
             else:
+                error_message += f'-----------\nExpanded style description too long, {len(expanded_description)} chars over limit of {max_dall_e_3_prompt_length} chars'
                 tries_left -= 1
-            
-        write_project_txt_file(expanded_description, project_dir, f'style/description_v{description_version_number}/expanded_description.txt')
 
-    except Exception as e:
+        except Exception as e:
+            error_message += f'-----------\n"{str(e)}"\n{traceback.format_exc()}'
+            tries_left -= 1
         
-        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+    if valid_expanded_description_produced:
+        write_project_txt_file(expanded_description, project_dir, f'style/description_v{description_version_number}/expanded_description.txt')
+    else:
         write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
-
+        
     return valid_expanded_description_produced, expanded_description, total_cost_dict
 
 async def generate_style_description_example(description_version_number, expanded_style_description, params):
@@ -317,13 +330,15 @@ generate a single image, appropriate to the story, which exemplifies the style. 
 most 3000 characters long to conform to DALL-E-3's constraints."""
 
     # Get the expanded description from the AI
-    try:
-        image_description = None
-        valid_image_description_produced = False
-        tries_left = 5
-        max_dall_e_3_prompt_length = 4000
+    image_description = None
+    valid_image_description_produced = False
+    error_message = ''
+    tries_left = 5
+    max_dall_e_3_prompt_length = 4000
+    
         
-        while not valid_image_description_produced and tries_left:
+    while not valid_image_description_produced and tries_left:
+        try:
             description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_example_style_description', params)
             cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_style_description': description_api_call.cost })
 
@@ -332,14 +347,17 @@ most 3000 characters long to conform to DALL-E-3's constraints."""
             if len(image_description) < max_dall_e_3_prompt_length:
                 valid_image_description_produced = True
             else:
+                error_message += f'-----------\nStyle description example too long, {len(expanded_description)} chars over limit of {max_dall_e_3_prompt_length} chars'
                 tries_left -= 1
-            
-        write_project_txt_file(image_description, project_dir, f'style/description_v{description_version_number}/example_image_description.txt')
+                
+        except Exception as e:
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            tries_left -= 1
 
-    except Exception as e:
-        
-        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-        write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
+        if valid_image_description_produced:
+            write_project_txt_file(image_description, project_dir, f'style/description_v{description_version_number}/example_image_description.txt')
+        else:
+            write_project_txt_file(error_message, project_dir, f'style/description_v{description_version_number}/error.txt')
 
     return valid_image_description_produced, image_description, total_cost_dict
 
@@ -1210,9 +1228,10 @@ generate a single image for page {page_number}.
 
 A. The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
 
-B. Start the specification with a short section entitled "Essential aspects", where you list the aspects of the
-image which are essential to the text and must be represented. This will often include material not mentioned
-in the text on the current page, which is necessary to maintain continuity and must be inferred from text on the other pages.
+B. Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
+idea of the image and then list the aspects of the image which are essential to the text and must be represented.
+This will often include material not mentioned in the text on the current page, which is necessary to maintain continuity,
+and must be inferred from text on the other pages or from other background knowledge.
 
 For example, if the text were the traditional nursery rhyme
 
@@ -1224,9 +1243,10 @@ For example, if the text were the traditional nursery rhyme
 
 then the "Essential aspects" section for page 2 might read:
 
-"Humpy Dumpty is falling off the wall."
+"Humpy Dumpty is falling off the wall.
+Humpty Dumpty is an anthropomorphic egg. He looks surprised and frightened."
 
-despite the fact that there is no mention of the wall in the page 2 text.
+despite the fact that there is no mention of the wall in the page 2 text, and no mention anywhere that Humpty Dumpty is an anthropomorphic egg.
 
 The "Essential aspects" section will be used to check the correctness of the generated image.
 If any item listed there fails to match, the image will be rejected, so only include material
@@ -1362,7 +1382,6 @@ For a human character, these characteristic would include:
 
     image_interpretation = api_call.response
     write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
-
     return image_interpretation, { 'interpret_page_image': api_call.cost }
 
 async def evaluate_page_fit(image_dir, expanded_description, image_description, params):
@@ -1546,12 +1565,10 @@ def generate_overview_html(params):
     if story_data:
         for page in story_data:
             page_number = page['page_number']
-            page_text = page['text']
-            page_text_lines = page_text.split('\\n')
             html_content += f"<h3>Page {page_number}</h3>"
             html_content += f"<p><strong>Text</strong></p>"
-            for page_text_line in page_text_lines:
-                html_content += f"<p>{page_text_line}</p>"
+            page_text = page['text']
+            html_content += f"<pre class='wrapped-pre'>{page_text}</pre>"
 
             # Display the page image
             page_image_path = project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
@@ -1649,16 +1666,21 @@ def score_description_dir_representative(description_dir, image_dirs, params):
         evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
         if abs(score - av_score ) < closest_match and file_exists(image_file) and file_exists(evaluation_file):
             closest_match = abs(score - av_score )
-            closest_file = image_file
+            closest_image_file = image_file
             closest_interpretation_file = interpretation_file
             closest_evaluation_file = evaluation_file
 
     description_dir_info = { 'av_score': av_score,
-                             'image': closest_file,
+                             'image': closest_image_file,
                              'interpretation': closest_interpretation_file,
                              'evaluation': closest_evaluation_file}
                                                                    
     write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
+
+    if closest_image_file and closest_interpretation_file and closest_evaluation_file:
+        copy_file(closest_image_file, project_pathname(project_dir, f'{description_dir}/image.jpg'))
+        copy_file(closest_interpretation_file, project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
+        copy_file(closest_evaluation_file, project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
 
 def score_description_dir_best(description_dir, image_dirs, params):
     project_dir = params['project_dir']
@@ -1690,7 +1712,151 @@ def score_description_dir_best(description_dir, image_dirs, params):
                                                                    
     write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
 
+    if best_image_file and best_interpretation_file and best_evaluation_file:
+        copy_file(best_image_file, project_pathname(project_dir, f'{description_dir}/image.jpg'))
+        copy_file(best_interpretation_file, project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
+        copy_file(best_evaluation_file, project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
+
 # -----------------------------------------------
+
+
+def human_evaluation(params):
+    project_dir = params['project_dir']
+    project_dir = absolute_file_name(project_dir)
+
+    # Read the story data
+    story_data = get_story_data(params)
+
+    # Path to the evaluations file
+    evaluations_path = project_pathname(project_dir, f'human_evaluations.json')
+
+    # Initialize a list to store evaluations
+    evaluations = []
+
+    # If the evaluations file exists, read it and build a set of already evaluated images
+    evaluated_images = set()
+    if file_exists(evaluations_path):
+        try:
+            evaluations = read_json_file(evaluations_path)
+            # Build a set of tuples to identify already evaluated images
+            for eval in evaluations:
+                key = (eval['page_number'], eval['description_version'], eval['image_version'])
+                evaluated_images.add(key)
+            print(f"Resuming from existing evaluations file. {len(evaluations)} evaluations loaded.")
+        except Exception as e:
+            print(f"Error reading evaluations file: {e}")
+            return
+
+    # Iterate over each page in the story
+    for page in story_data:
+        page_number = page['page_number']
+        page_text = page['text']
+
+        print(f"\nPage {page_number}:")
+        print(f"Text:\n{page_text}\n")
+
+        # Path to the page directory
+        page_dir = project_pathname(project_dir, f'pages/page{page_number}')
+
+        # Check if the page directory exists
+        if not directory_exists(page_dir):
+            print(f"Directory not found for page {page_number}. Skipping this page.")
+            continue
+
+        # Collect all image paths under description_v*/image_v*/image.jpg
+        image_infos = []
+        for description_dir_name in get_immediate_subdirectories_in_local_directory(page_dir):
+            description_dir_path = project_pathname(page_dir, description_dir_name)
+            if directory_exists(description_dir_path) and description_dir_name.startswith('description_v'):
+                for image_dir_name in get_immediate_subdirectories_in_local_directory(description_dir_path):
+                    image_dir_path = project_pathname(description_dir_path, image_dir_name)
+                    if directory_exists(image_dir_path) and image_dir_name.startswith('image_v'):
+                        image_file_path = os.path.join(image_dir_path, 'image.jpg')
+                        if file_exists(image_file_path):
+                            image_info = {
+                                'page_number': page_number,
+                                'description_version': description_dir_name,
+                                'image_version': image_dir_name,
+                                'image_path': image_file_path,
+                                'text': page_text
+                            }
+                            image_infos.append(image_info)
+
+        # If no images found, skip this page
+        if not image_infos:
+            print(f"No images found for page {page_number}. Skipping this page.")
+            continue
+
+        # Iterate over all collected images for this page
+        for idx, image_info in enumerate(image_infos):
+            key = (image_info['page_number'], image_info['description_version'], image_info['image_version'])
+
+            # Skip if already evaluated
+            if key in evaluated_images:
+                print(f"Skipping already evaluated image: Page {image_info['page_number']}, "
+                      f"{image_info['description_version']}, {image_info['image_version']}")
+                continue
+
+            print(f"\nEvaluating image {idx + 1} of {len(image_infos)} for page {page_number}:")
+            print(f"Description version: {image_info['description_version']}, Image version: {image_info['image_version']}")
+
+            # Open and display the image using PIL
+            try:
+                image = Image.open(image_info['image_path'])
+                image.show()
+            except Exception as e:
+                print(f"Error opening image for page {page_number}: {e}")
+                continue
+
+            # Prompt the user for a score between 0 and 4, or 'p' to pause
+            while True:
+                score_input = input("Please rate how well the image matches the text (0-4), or 'p' to pause: ")
+                if score_input.lower() == 'p':
+                    # Write evaluations to file and exit
+                    try:
+                        write_json_to_file(evaluations, evaluations_path)
+                        print(f"\nEvaluations saved to {evaluations_path}")
+                    except Exception as e:
+                        print(f"Error writing evaluations to file: {e}")
+                    print("Evaluation paused by user.")
+                    return
+                try:
+                    score = int(score_input)
+                    if 0 <= score <= 4:
+                        break
+                    else:
+                        print("Score must be an integer between 0 and 4.")
+                except ValueError:
+                    print("Invalid input. Please enter an integer between 0 and 4, or 'p' to pause.")
+
+            # Optionally, collect comments
+            comments = input("Optional: Enter any comments about this image (or press Enter to skip): ")
+
+            # Store the evaluation data
+            evaluation = {
+                'page_number': image_info['page_number'],
+                'description_version': image_info['description_version'],
+                'image_version': image_info['image_version'],
+                'score': score,
+                'comments': comments,
+                'text': image_info['text'],
+                'image_path': image_info['image_path']
+            }
+            evaluations.append(evaluation)
+            evaluated_images.add(key)
+
+            # Close the image display
+            image.close()
+
+    # All evaluations completed, write to file
+    try:
+        write_json_to_file(evaluations, evaluations_path)
+        print(f"\nAll evaluations completed and saved to {evaluations_path}")
+    except Exception as e:
+        print(f"Error writing evaluations to file: {e}")
+
+# -----------------------------------------------
+
 
 def score_for_image_dir(image_dir, params):
     return score_for_evaluation_file(f'{image_dir}/evaluation.txt', params)
