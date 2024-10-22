@@ -1,3 +1,56 @@
+known_prompt_template_types = [ 'generate_style_description',
+                                'generate_style_description_example',
+                                'style_example_interpretation',
+                                'style_example_evaluation',
+
+                                'generate_element_names',
+                                'generate_element_description',
+                                'element_interpretation',
+                                'element_evaluation',
+                                
+                                'get_relevant_previous_pages',
+                                'get_relevant_elements',
+                                'generate_page_description',
+                                'page_interpretation',
+                                'page_evaluation'
+                                ]
+
+def get_prompt_template(prompt_id, prompt_type):
+    
+    if not prompt_type in known_prompt_template_types:
+        raise ValueError(f"Prompt type '{prompt_type}' not found.")
+
+    if prompt_type == 'generate_style_description' and prompt_id in generate_style_description_prompt_templates:
+        return generate_style_description_prompt_templates[prompt_id]
+    elif prompt_type == 'generate_style_description_example' and prompt_id in generate_style_description_example_prompt_templates:
+        return generate_style_description_example_prompt_templates[prompt_id]
+    elif prompt_type == 'style_example_interpretation' and prompt_id in style_example_interpretation_prompt_templates:
+        return style_example_interpretation_prompt_templates[prompt_id]
+    elif prompt_type == 'style_example_evaluation' and prompt_id in style_example_evaluation_prompt_templates:
+        return style_example_evaluation_prompt_templates[prompt_id]
+
+    elif prompt_type == 'generate_element_names' and prompt_id in generate_element_names_prompt_templates:
+        return generate_element_names_prompt_templates[prompt_id]
+    elif prompt_type == 'generate_element_description' and prompt_id in generate_element_description_prompt_templates:
+        return generate_element_description_prompt_templates[prompt_id]
+    elif prompt_type == 'element_interpretation' and prompt_id in element_interpretation_prompt_templates:
+        return element_interpretation_prompt_templates[prompt_id]
+    elif prompt_type == 'element_evaluation' and prompt_id in element_evaluation_prompt_templates:
+        return element_evaluation_prompt_templates[prompt_id]
+
+    elif prompt_type == 'get_relevant_previous_pages' and prompt_id in get_relevant_previous_pages_prompt_templates:
+        return get_relevant_previous_pages_prompt_templates[prompt_id]
+    elif prompt_type == 'get_relevant_elements' and prompt_id in get_relevant_elements_prompt_templates:
+        return get_relevant_elements_prompt_templates[prompt_id]
+    elif prompt_type == 'generate_page_description' and prompt_id in generate_page_description_prompt_templates:
+        return generate_page_description_prompt_templates[prompt_id]
+    elif prompt_type == 'page_interpretation' and prompt_id in page_interpretation_prompt_templates:
+        return page_interpretation_prompt_templates[prompt_id]
+    elif prompt_type == 'page_evaluation' and prompt_id in page_evaluation_prompt_templates:
+        return page_evaluation_prompt_templates[prompt_id]
+    else:
+        raise ValueError(f"Prompt template '{prompt_id}' of type '{prompt_type}' not found.")
+
 # Style
 
 generate_style_description_prompt_templates = {
@@ -105,7 +158,8 @@ The intended style in which the images will be produced is described as follows:
 
 {style_description}
 
-As part of this process, we are first creating detailed descriptions of visual elements that occur multiple times in the text, such as characters, objects, and locations.
+As part of this process, we are first creating detailed descriptions of visual elements that occur multiple times in the text,
+such as characters, objects, and locations.
 
 **Your task is to create a detailed specification of the element "{element_text}", in the intended style,
 to be passed to DALL-E-3 to generate a single image showing how "{element_text}" will be realized.**
@@ -437,56 +491,3 @@ The hair color of the girl is different; the specification mentions blonde hair,
 """,
     }
 
-known_prompt_template_types = [ 'generate_style_description',
-                                'generate_style_description_example',
-                                'style_example_interpretation',
-                                'style_example_evaluation',
-
-                                'generate_element_names',
-                                'generate_element_description',
-                                'element_interpretation',
-                                'element_evaluation',
-                                
-                                'get_relevant_previous_pages',
-                                'get_relevant_elements',
-                                'generate_page_description',
-                                'page_interpretation',
-                                'page_evaluation'
-                                ]
-
-def get_prompt_template(prompt_id, prompt_type):
-    
-    if not prompt_type in known_prompt_template_types:
-        raise ValueError(f"Prompt type '{prompt_type}' not found.")
-
-    if prompt_type == 'generate_style_description' and prompt_id in generate_style_description_prompt_templates:
-        return generate_style_description_prompt_templates[prompt_id]
-    elif prompt_type == 'generate_style_description_example' and prompt_id in generate_style_description_example_prompt_templates:
-        return generate_style_description_example_prompt_templates[prompt_id]
-    elif prompt_type == 'style_example_interpretation' and prompt_id in style_example_interpretation_prompt_templates:
-        return style_example_interpretation_prompt_templates[prompt_id]
-    elif prompt_type == 'style_example_evaluation' and prompt_id in style_example_evaluation_prompt_templates:
-        return style_example_evaluation_prompt_templates[prompt_id]
-
-    elif prompt_type == 'generate_element_names' and prompt_id in generate_element_names_prompt_templates:
-        return generate_element_names_prompt_templates[prompt_id]
-    elif prompt_type == 'generate_element_description' and prompt_id in generate_element_description_prompt_templates:
-        return generate_element_description_prompt_templates[prompt_id]
-    elif prompt_type == 'element_interpretation' and prompt_id in element_interpretation_prompt_templates:
-        return element_interpretation_prompt_templates[prompt_id]
-    elif prompt_type == 'element_evaluation' and prompt_id in element_evaluation_prompt_templates:
-        return element_evaluation_prompt_templates[prompt_id]
-
-    elif prompt_type == 'get_relevant_previous_pages' and prompt_id in get_relevant_previous_pages_prompt_templates:
-        return get_relevant_previous_pages_prompt_templates[prompt_id]
-    elif prompt_type == 'get_relevant_elements' and prompt_id in get_relevant_elements_prompt_templates:
-        return get_relevant_elements_prompt_templates[prompt_id]
-    elif prompt_type == 'generate_page_description' and prompt_id in generate_page_description_prompt_templates:
-        return generate_page_description_prompt_templates[prompt_id]
-    elif prompt_type == 'page_interpretation' and prompt_id in page_interpretation_prompt_templates:
-        return page_interpretation_prompt_templates[prompt_id]
-    elif prompt_type == 'page_evaluation' and prompt_id in page_evaluation_prompt_templates:
-        return page_evaluation_prompt_templates[prompt_id]
-    else:
-        raise ValueError(f"Prompt template '{prompt_id}' of type '{prompt_type}' not found.")
-    

@@ -119,6 +119,17 @@ def test_la_fontaine_evaluate_o1_v8():
                'title': 'Le Corbeau et le Renard (o1-mini version)' }
     human_evaluation(params)
 
+def test_la_fontaine_prompts_o1_v8(interpretation_prompt_id='default', evaluation_prompt_id='default'):
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v8',
+               'interpretation_prompt_id': interpretation_prompt_id,
+               'evaluation_prompt_id': evaluation_prompt_id,
+               'models_for_tasks': { 'default': 'gpt-4o',
+                                     'evaluate_page_image': 'o1-mini' } }
+
+    cost_dict = asyncio.run(test_prompts_for_interpretation_and_evaluation(params))
+    print_cost_dict(cost_dict)
+
+
 # Test with Lily Goes the Whole Hog
 
 def test_lily_style():
@@ -1529,10 +1540,16 @@ async def test_prompts_for_interpretation_and_evaluation(params):
     
     # Collect results and save
     augmented_evaluations = [result for result in results if result is not None]
-    augmented_evaluations_path = project_pathname(project_dir, 'automated_evaluations.json')
+    augmented_evaluations_path = project_pathname(project_dir, f'automated_evaluations_{interpretation_prompt_id}_{evaluation_prompt_id}.json')
     write_json_to_file(augmented_evaluations, augmented_evaluations_path)
     print(f"Automated evaluations saved to {augmented_evaluations_path}")
 
+    total_cost_dict = {}
+    for result in augmented_evaluations:
+        if 'cost_info' in result:
+            total_cost_dict = combine_cost_dicts(total_cost_dict, result['cost_info'])
+    return total_cost_dict
+                                                                         
 async def interpret_and_evaluate_single_image(evaluation, params):
     project_dir = params['project_dir']
     
@@ -1561,7 +1578,7 @@ async def interpret_and_evaluate_single_image(evaluation, params):
             params['interpretation_prompt_id']
         )
     except Exception as e:
-        print(f"Error interpreting image {image_path}: {e}")
+        print(f'Error interpreting image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
         return None
 
     # Evaluate the fit
@@ -1573,8 +1590,10 @@ async def interpret_and_evaluate_single_image(evaluation, params):
             params['evaluation_prompt_id']
         )
     except Exception as e:
-        print(f"Error evaluating fit for image {image_path}: {e}")
+        print(f'Error evaluating fit for image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
         return None
+
+    fit_score, fit_comments = parse_image_evaluation_response(fit_evaluation)
 
     # Combine cost information
     total_cost = combine_cost_dicts(interpret_cost, evaluate_cost)
@@ -1584,7 +1603,8 @@ async def interpret_and_evaluate_single_image(evaluation, params):
     augmented_evaluation.update({
         'expanded_description': expanded_description,
         'image_interpretation': image_interpretation,
-        'fit_evaluation': fit_evaluation,
+        'fit_score': fit_score,
+        'fit_comments': fit_comments,
         'interpretation_prompt_id': params['interpretation_prompt_id'],
         'evaluation_prompt_id': params['evaluation_prompt_id'],
         'cost_info': total_cost
@@ -1606,17 +1626,17 @@ async def interpret_image_with_prompt(image_path, params, prompt_id):
     image_interpretation = api_call.response
     return image_interpretation, {'interpret_image': api_call.cost}
 
-async def evaluate_fit_with_prompt(expanded_description, image_interpretation, params, prompt_id):
+async def evaluate_fit_with_prompt(expanded_description, image_description, params, prompt_id):
     # Retrieve the prompt template based on prompt_id
     prompt = get_prompt_template(prompt_id, 'page_evaluation').format(
         expanded_description=expanded_description,
-        image_interpretation=image_interpretation
+        image_description=image_description
     )
 
     # Perform the API call
     api_call = await get_api_chatgpt4_response_for_task(
         prompt,
-        'evaluate_fit',
+        'evaluate_page_image',
         params
     )
     fit_evaluation = api_call.response
