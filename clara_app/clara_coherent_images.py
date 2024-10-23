@@ -29,7 +29,10 @@ import traceback
 import unicodedata
 from PIL import Image
 
-
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import pearsonr, spearmanr
+from sklearn.metrics import mean_absolute_error, cohen_kappa_score, confusion_matrix
 
 # Test with La Fontaine 'Le Corbeau et le Renard'
 
@@ -129,6 +132,11 @@ def test_la_fontaine_prompts_o1_v8(interpretation_prompt_id='default', evaluatio
     cost_dict = asyncio.run(test_prompts_for_interpretation_and_evaluation(params))
     print_cost_dict(cost_dict)
 
+def test_la_fontaine_prompt_agreement_o1_v8(interpretation_prompt_id='default', evaluation_prompt_id='default'):
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v8',
+               'interpretation_prompt_id': interpretation_prompt_id,
+               'evaluation_prompt_id': evaluation_prompt_id }
+    analyse_human_ai_agreement_for_prompt_test(params)
 
 # Test with Lily Goes the Whole Hog
 
@@ -1056,13 +1064,13 @@ async def generate_and_rate_page_image(page_number, description, description_ver
     make_project_dir(project_dir, image_dir)
 
     try:
-        image_file, image_cost_dict = await generate_page_image(image_dir, description, params)
+        image_file, image_cost_dict = await generate_page_image(image_dir, description, page_number, params)
         total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
-        image_interpretation, interpret_cost_dict = await interpret_page_image(image_dir, image_file, params)
+        image_interpretation, interpret_cost_dict = await interpret_page_image(image_dir, image_file, page_number, params)
         total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
 
-        evaluation, evaluation_cost_dict = await evaluate_page_fit(image_dir, description, image_interpretation, params)
+        evaluation, evaluation_cost_dict = await evaluate_page_fit(image_dir, description, image_interpretation, page_number, params)
         total_cost_dict = combine_cost_dicts(total_cost_dict, evaluation_cost_dict)
 
     except Exception as e:
@@ -1073,7 +1081,7 @@ async def generate_and_rate_page_image(page_number, description, description_ver
     write_project_cost_file(total_cost_dict, project_dir, f'{image_dir}/cost.json')
     return image_dir, total_cost_dict
 
-async def generate_page_image(image_dir, description, params):
+async def generate_page_image(image_dir, description, page_number, params):
     project_dir = params['project_dir']
     
     image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
@@ -1081,12 +1089,17 @@ async def generate_page_image(image_dir, description, params):
 
     return image_file, { 'generate_page_image': api_call.cost }
 
-async def interpret_page_image(image_dir, image_file, params):
+async def interpret_page_image(image_dir, image_file, page_number, params):
     project_dir = params['project_dir']
+
+    story_data = get_story_data(params)
+    formatted_story_data = json.dumps(story_data, indent=4)
+    
+    page_text = get_page_text(page_number, params)
 
     prompt_template = get_prompt_template('default', 'page_interpretation')
 
-    prompt = prompt_template.format()
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
 
     api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_page_image', params)
 
@@ -1094,13 +1107,18 @@ async def interpret_page_image(image_dir, image_file, params):
     write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
     return image_interpretation, { 'interpret_page_image': api_call.cost }
 
-async def evaluate_page_fit(image_dir, expanded_description, image_description, params):
+async def evaluate_page_fit(image_dir, expanded_description, image_description, page_number, params):
     project_dir = params['project_dir']
 
     prompt_template = get_prompt_template('default', 'page_evaluation')
 
-    prompt = prompt_template.format(expanded_description=expanded_description,
-                                    image_description=image_description)
+    story_data = get_story_data(params)
+    formatted_story_data = json.dumps(story_data, indent=4)
+    
+    page_text = get_page_text(page_number, params)
+
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text,
+                                    expanded_description=expanded_description, image_description=image_description)
     
     api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_page_image', params)
 
@@ -1574,26 +1592,31 @@ async def interpret_and_evaluate_single_image(evaluation, params):
     try:
         image_interpretation, interpret_cost = await interpret_image_with_prompt(
             image_path,
-            params,
-            params['interpretation_prompt_id']
+            page_number,
+            params['interpretation_prompt_id'],
+            params
         )
     except Exception as e:
         print(f'Error interpreting image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
         return None
 
     # Evaluate the fit
-    try:
-        fit_evaluation, evaluate_cost = await evaluate_fit_with_prompt(
-            expanded_description,
-            image_interpretation,
-            params,
-            params['evaluation_prompt_id']
-        )
-    except Exception as e:
-        print(f'Error evaluating fit for image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
-        return None
+    if image_interpretation:
+        try:
+            fit_evaluation, evaluate_cost = await evaluate_fit_with_prompt(
+                expanded_description,
+                image_interpretation,
+                params['evaluation_prompt_id'],
+                page_number,
+                params
+            )
+        except Exception as e:
+            print(f'Error evaluating fit for image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
+            return None
 
-    fit_score, fit_comments = parse_image_evaluation_response(fit_evaluation)
+        fit_score, fit_comments = parse_image_evaluation_response(fit_evaluation)
+    else:
+        fit_score, fit_comments, evaluate_cost = ( None, '', {} )
 
     # Combine cost information
     total_cost = combine_cost_dicts(interpret_cost, evaluate_cost)
@@ -1612,35 +1635,111 @@ async def interpret_and_evaluate_single_image(evaluation, params):
 
     return augmented_evaluation
 
-async def interpret_image_with_prompt(image_path, params, prompt_id):
+async def interpret_image_with_prompt(image_path, page_number, prompt_id, params):
     # Retrieve the prompt template based on prompt_id
-    prompt = get_prompt_template(prompt_id, 'page_interpretation')
+    prompt_template = get_prompt_template(prompt_id, 'page_interpretation')
+
+    story_data = get_story_data(params)
+    formatted_story_data = json.dumps(story_data, indent=4)
+    
+    page_text = get_page_text(page_number, params)
+
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
 
     # Perform the API call
-    api_call = await get_api_chatgpt4_interpret_image_response_for_task(
-        prompt,
-        image_path,
-        'evaluate_page_image',
-        params
-    )
-    image_interpretation = api_call.response
-    return image_interpretation, {'interpret_image': api_call.cost}
+    tries_left = params['n_retries'] if 'n_retries' in params else 5
+    total_cost = 0
 
-async def evaluate_fit_with_prompt(expanded_description, image_description, params, prompt_id):
+    while tries_left:
+        try:
+            api_call = await get_api_chatgpt4_interpret_image_response_for_task(
+                prompt,
+                image_path,
+                'evaluate_page_image',
+                params
+            )
+            image_interpretation = api_call.response
+            total_cost += api_call.cost
+            return image_interpretation, {'interpret_image': total_cost}
+        
+        except Exception as e:
+            tries_left -= 1
+
+    # We failed
+    return None, {'interpret_image': total_cost}
+
+async def evaluate_fit_with_prompt(expanded_description, image_description, prompt_id, page_number, params):
     # Retrieve the prompt template based on prompt_id
-    prompt = get_prompt_template(prompt_id, 'page_evaluation').format(
-        expanded_description=expanded_description,
-        image_description=image_description
-    )
+    prompt_template = get_prompt_template(prompt_id, 'page_evaluation')
+
+    story_data = get_story_data(params)
+    formatted_story_data = json.dumps(story_data, indent=4)
+    
+    page_text = get_page_text(page_number, params)
+
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text,
+                                    expanded_description=expanded_description, image_description=image_description)
 
     # Perform the API call
-    api_call = await get_api_chatgpt4_response_for_task(
-        prompt,
-        'evaluate_page_image',
-        params
-    )
-    fit_evaluation = api_call.response
-    return fit_evaluation, {'evaluate_fit': api_call.cost}
+    tries_left = params['n_retries'] if 'n_retries' in params else 5
+    total_cost = 0
+
+    while tries_left:
+        try:
+            api_call = await get_api_chatgpt4_response_for_task(
+                prompt,
+                'evaluate_page_image',
+                params
+            )
+            fit_evaluation = api_call.response
+            total_cost += api_call.cost
+            return fit_evaluation, {'evaluate_fit': total_cost}
+        
+        except Exception as e:
+                tries_left -= 1
+
+    # We failed
+    return None, {'evaluate_fit': total_cost}
+
+# -----------------------------------------------
+
+def analyse_human_ai_agreement_for_prompt_test(params):
+    project_dir = params['project_dir']
+    interpretation_prompt_id = params['interpretation_prompt_id']
+    evaluation_prompt_id = params['evaluation_prompt_id']
+    augmented_evaluations = read_project_json_file(project_dir, f'automated_evaluations_{interpretation_prompt_id}_{evaluation_prompt_id}.json')
+    
+    human_scores = [ e['score'] for e in augmented_evaluations if e['fit_score'] ]
+    ai_scores = [ e['fit_score'] for e in augmented_evaluations if e['fit_score'] ]
+
+    # Pearson Correlation
+    pearson_corr, _ = pearsonr(human_scores, ai_scores)
+    print(f"Pearson Correlation: {pearson_corr:.2f}")
+
+    # Spearman Correlation
+    spearman_corr, _ = spearmanr(human_scores, ai_scores)
+    print(f"Spearman Correlation: {spearman_corr:.2f}")
+
+    # Mean Absolute Error
+    mae = mean_absolute_error(human_scores, ai_scores)
+    print(f"Mean Absolute Error: {mae:.2f}")
+
+    # Cohen's Kappa
+    kappa = cohen_kappa_score(human_scores, ai_scores)
+    print(f"Cohen's Kappa: {kappa:.2f}")
+
+    # Confusion Matrix
+    cm = confusion_matrix(human_scores, ai_scores, labels=[0, 1, 2, 3, 4])
+    print("Confusion Matrix:")
+    print(cm)
+
+    # Scatter Plot
+    plt.scatter(human_scores, ai_scores, alpha=0.6)
+    plt.xlabel('Human Scores')
+    plt.ylabel('AI Scores')
+    plt.title('Human vs AI Scores')
+    plt.grid(True)
+    plt.show()
 
 
 # -----------------------------------------------
