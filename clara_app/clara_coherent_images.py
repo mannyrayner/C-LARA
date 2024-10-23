@@ -2,12 +2,48 @@
 from .clara_coherent_images_prompt_templates import (
     get_prompt_template,
     )
+
+from .clara_coherent_images_evaluate_prompts import (
+    human_evaluation,
+    test_prompts_for_interpretation_and_evaluation,
+    analyse_human_ai_agreement_for_prompt_test,
+    generate_prompt_evaluation_html_report,
+    )
+
 from .clara_chatgpt4 import (
-    get_api_chatgpt4_response,
-    get_api_chatgpt4_image_response,
-    get_api_chatgpt4_interpret_image_response,
     interpret_chat_gpt4_response_as_json,
     )
+
+from .clara_coherent_images_utils import (
+    score_for_image_dir,
+    score_for_evaluation_file,
+    parse_image_evaluation_response,
+    get_story_data,
+    get_pages,
+    get_text,
+    get_style_description,
+    get_all_element_texts,
+    get_element_description,
+    get_page_text,
+    get_page_description,
+    get_page_image,
+    get_api_chatgpt4_response_for_task,
+    get_api_chatgpt4_image_response_for_task,
+    get_api_chatgpt4_interpret_image_response_for_task,
+    get_config_info_and_callback_from_params,
+    api_calls_to_cost,
+    combine_cost_dicts,
+    print_cost_dict,
+    write_project_cost_file,
+    project_pathname,
+    make_project_dir,
+    read_project_txt_file,
+    read_project_json_file,
+    write_project_txt_file,
+    write_project_json_file,
+    ImageGenerationError,
+    )
+
 from .clara_utils import (
     read_txt_file,
     write_txt_file,
@@ -28,11 +64,6 @@ import asyncio
 import traceback
 import unicodedata
 from PIL import Image
-
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import pearsonr, spearmanr
-from sklearn.metrics import mean_absolute_error, cohen_kappa_score, confusion_matrix
 
 # Test with La Fontaine 'Le Corbeau et le Renard'
 
@@ -117,13 +148,13 @@ def test_la_fontaine_overview_o1():
                'title': 'Le Corbeau et le Renard (o1-mini version)' }
     generate_overview_html(params)
 
-def test_la_fontaine_evaluate_o1_v8():
-    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v8',
+def test_la_fontaine_judge_o1(version):
+    params = { 'project_dir': f'$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v{version}',
                'title': 'Le Corbeau et le Renard (o1-mini version)' }
     human_evaluation(params)
 
-def test_la_fontaine_prompts_o1_v8(interpretation_prompt_id='default', evaluation_prompt_id='default'):
-    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v8',
+def test_la_fontaine_prompts_o1(version, interpretation_prompt_id='default', evaluation_prompt_id='default'):
+    params = { 'project_dir': f'$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v{version}',
                'interpretation_prompt_id': interpretation_prompt_id,
                'evaluation_prompt_id': evaluation_prompt_id,
                'models_for_tasks': { 'default': 'gpt-4o',
@@ -132,11 +163,17 @@ def test_la_fontaine_prompts_o1_v8(interpretation_prompt_id='default', evaluatio
     cost_dict = asyncio.run(test_prompts_for_interpretation_and_evaluation(params))
     print_cost_dict(cost_dict)
 
-def test_la_fontaine_prompt_agreement_o1_v8(interpretation_prompt_id='default', evaluation_prompt_id='default'):
-    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v8',
+def test_la_fontaine_prompt_agreement_o1(version, interpretation_prompt_id='default', evaluation_prompt_id='default'):
+    params = { 'project_dir': f'$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v{version}',
                'interpretation_prompt_id': interpretation_prompt_id,
                'evaluation_prompt_id': evaluation_prompt_id }
     analyse_human_ai_agreement_for_prompt_test(params)
+
+def test_la_fontaine_prompt_agreement_html_o1(version, interpretation_prompt_id='default', evaluation_prompt_id='default'):
+    params = { 'project_dir': f'$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v{version}',
+               'interpretation_prompt_id': interpretation_prompt_id,
+               'evaluation_prompt_id': evaluation_prompt_id }
+    generate_prompt_evaluation_html_report(params)
 
 # Test with Lily Goes the Whole Hog
 
@@ -1396,532 +1433,5 @@ def score_description_dir_best(description_dir, image_dirs, params):
 
 # -----------------------------------------------
 
-def human_evaluation(params):
-    project_dir = params['project_dir']
-    project_dir = absolute_file_name(project_dir)
 
-    # Read the story data
-    story_data = get_story_data(params)
-
-    # Path to the evaluations file
-    evaluations_path = project_pathname(project_dir, f'human_evaluations.json')
-
-    # Initialize a list to store evaluations
-    evaluations = []
-
-    # If the evaluations file exists, read it and build a set of already evaluated images
-    evaluated_images = set()
-    if file_exists(evaluations_path):
-        try:
-            evaluations = read_json_file(evaluations_path)
-            # Build a set of tuples to identify already evaluated images
-            for eval in evaluations:
-                key = (eval['page_number'], eval['description_version'], eval['image_version'])
-                evaluated_images.add(key)
-            print(f"Resuming from existing evaluations file. {len(evaluations)} evaluations loaded.")
-        except Exception as e:
-            print(f"Error reading evaluations file: {e}")
-            return
-
-    # Iterate over each page in the story
-    for page in story_data:
-        page_number = page['page_number']
-        page_text = page['text']
-
-        print(f"\nPage {page_number}:")
-        print(f"Text:\n{page_text}\n")
-
-        # Path to the page directory
-        page_dir = project_pathname(project_dir, f'pages/page{page_number}')
-
-        # Check if the page directory exists
-        if not directory_exists(page_dir):
-            print(f"Directory not found for page {page_number}. Skipping this page.")
-            continue
-
-        # Collect all image paths under description_v*/image_v*/image.jpg
-        image_infos = []
-        for description_dir_name in get_immediate_subdirectories_in_local_directory(page_dir):
-            description_dir_path = project_pathname(page_dir, description_dir_name)
-            if directory_exists(description_dir_path) and description_dir_name.startswith('description_v'):
-                for image_dir_name in get_immediate_subdirectories_in_local_directory(description_dir_path):
-                    image_dir_path = project_pathname(description_dir_path, image_dir_name)
-                    if directory_exists(image_dir_path) and image_dir_name.startswith('image_v'):
-                        image_file_path = os.path.join(image_dir_path, 'image.jpg')
-                        if file_exists(image_file_path):
-                            image_info = {
-                                'page_number': page_number,
-                                'description_version': description_dir_name,
-                                'image_version': image_dir_name,
-                                'image_path': image_file_path,
-                                'text': page_text
-                            }
-                            image_infos.append(image_info)
-
-        # If no images found, skip this page
-        if not image_infos:
-            print(f"No images found for page {page_number}. Skipping this page.")
-            continue
-
-        # Iterate over all collected images for this page
-        for idx, image_info in enumerate(image_infos):
-            key = (image_info['page_number'], image_info['description_version'], image_info['image_version'])
-
-            # Skip if already evaluated
-            if key in evaluated_images:
-                print(f"Skipping already evaluated image: Page {image_info['page_number']}, "
-                      f"{image_info['description_version']}, {image_info['image_version']}")
-                continue
-
-            print(f"\nEvaluating image {idx + 1} of {len(image_infos)} for page {page_number}:")
-            print(f"Description version: {image_info['description_version']}, Image version: {image_info['image_version']}")
-
-            # Open and display the image using PIL
-            try:
-                image = Image.open(image_info['image_path'])
-                image.show()
-            except Exception as e:
-                print(f"Error opening image for page {page_number}: {e}")
-                continue
-
-            # Prompt the user for a score between 0 and 4, or 'p' to pause
-            while True:
-                score_input = input("Please rate how well the image matches the text (0-4), or 'p' to pause: ")
-                if score_input.lower() == 'p':
-                    # Write evaluations to file and exit
-                    try:
-                        write_json_to_file(evaluations, evaluations_path)
-                        print(f"\nEvaluations saved to {evaluations_path}")
-                    except Exception as e:
-                        print(f"Error writing evaluations to file: {e}")
-                    print("Evaluation paused by user.")
-                    return
-                try:
-                    score = int(score_input)
-                    if 0 <= score <= 4:
-                        break
-                    else:
-                        print("Score must be an integer between 0 and 4.")
-                except ValueError:
-                    print("Invalid input. Please enter an integer between 0 and 4, or 'p' to pause.")
-
-            # Optionally, collect comments
-            comments = input("Optional: Enter any comments about this image (or press Enter to skip): ")
-
-            # Store the evaluation data
-            evaluation = {
-                'page_number': image_info['page_number'],
-                'description_version': image_info['description_version'],
-                'image_version': image_info['image_version'],
-                'score': score,
-                'comments': comments,
-                'text': image_info['text'],
-                'image_path': image_info['image_path']
-            }
-            evaluations.append(evaluation)
-            evaluated_images.add(key)
-
-            # Close the image display
-            image.close()
-
-    # All evaluations completed, write to file
-    try:
-        write_json_to_file(evaluations, evaluations_path)
-        print(f"\nAll evaluations completed and saved to {evaluations_path}")
-    except Exception as e:
-        print(f"Error writing evaluations to file: {e}")
-
-# -----------------------------------------------
-
-async def test_prompts_for_interpretation_and_evaluation(params):
-    project_dir = params['project_dir']
-    project_dir = absolute_file_name(project_dir)
-    
-    interpretation_prompt_id = params['interpretation_prompt_id']
-    evaluation_prompt_id = params['evaluation_prompt_id']
-    
-    # Read human evaluations
-    evaluations_path = project_pathname(project_dir, 'human_evaluations.json')
-    if not file_exists(evaluations_path):
-        print(f"Human evaluations file not found at {evaluations_path}")
-        return
-
-    evaluations = read_json_file(evaluations_path)
-    
-    # Prepare tasks for asyncio
-    tasks = []
-    for evaluation in evaluations:
-        tasks.append(interpret_and_evaluate_single_image(evaluation, params))
-    
-    # Run tasks in parallel
-    results = await asyncio.gather(*tasks)
-    
-    # Collect results and save
-    augmented_evaluations = [result for result in results if result is not None]
-    augmented_evaluations_path = project_pathname(project_dir, f'automated_evaluations_{interpretation_prompt_id}_{evaluation_prompt_id}.json')
-    write_json_to_file(augmented_evaluations, augmented_evaluations_path)
-    print(f"Automated evaluations saved to {augmented_evaluations_path}")
-
-    total_cost_dict = {}
-    for result in augmented_evaluations:
-        if 'cost_info' in result:
-            total_cost_dict = combine_cost_dicts(total_cost_dict, result['cost_info'])
-    return total_cost_dict
-                                                                         
-async def interpret_and_evaluate_single_image(evaluation, params):
-    project_dir = params['project_dir']
-    
-    page_number = evaluation['page_number']
-    description_version = evaluation['description_version']
-    image_version = evaluation['image_version']
-    image_path = evaluation['image_path']
-    text = evaluation['text']
-    
-    # Retrieve the expanded description
-    expanded_description_path = project_pathname(
-        project_dir,
-        f'pages/page{page_number}/{description_version}/expanded_description.txt'
-    )
-    if not file_exists(expanded_description_path):
-        print(f"Expanded description not found for page {page_number}, {description_version}")
-        return None
-
-    expanded_description = read_txt_file(expanded_description_path)
-
-    # Interpret the image
-    try:
-        image_interpretation, interpret_cost = await interpret_image_with_prompt(
-            image_path,
-            page_number,
-            params['interpretation_prompt_id'],
-            params
-        )
-    except Exception as e:
-        print(f'Error interpreting image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
-        return None
-
-    # Evaluate the fit
-    if image_interpretation:
-        try:
-            fit_evaluation, evaluate_cost = await evaluate_fit_with_prompt(
-                expanded_description,
-                image_interpretation,
-                params['evaluation_prompt_id'],
-                page_number,
-                params
-            )
-        except Exception as e:
-            print(f'Error evaluating fit for image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
-            return None
-
-        fit_score, fit_comments = parse_image_evaluation_response(fit_evaluation)
-    else:
-        fit_score, fit_comments, evaluate_cost = ( None, '', {} )
-
-    # Combine cost information
-    total_cost = combine_cost_dicts(interpret_cost, evaluate_cost)
-
-    # Augment the evaluation data
-    augmented_evaluation = evaluation.copy()
-    augmented_evaluation.update({
-        'expanded_description': expanded_description,
-        'image_interpretation': image_interpretation,
-        'fit_score': fit_score,
-        'fit_comments': fit_comments,
-        'interpretation_prompt_id': params['interpretation_prompt_id'],
-        'evaluation_prompt_id': params['evaluation_prompt_id'],
-        'cost_info': total_cost
-    })
-
-    return augmented_evaluation
-
-async def interpret_image_with_prompt(image_path, page_number, prompt_id, params):
-    # Retrieve the prompt template based on prompt_id
-    prompt_template = get_prompt_template(prompt_id, 'page_interpretation')
-
-    story_data = get_story_data(params)
-    formatted_story_data = json.dumps(story_data, indent=4)
-    
-    page_text = get_page_text(page_number, params)
-
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
-
-    # Perform the API call
-    tries_left = params['n_retries'] if 'n_retries' in params else 5
-    total_cost = 0
-
-    while tries_left:
-        try:
-            api_call = await get_api_chatgpt4_interpret_image_response_for_task(
-                prompt,
-                image_path,
-                'evaluate_page_image',
-                params
-            )
-            image_interpretation = api_call.response
-            total_cost += api_call.cost
-            return image_interpretation, {'interpret_image': total_cost}
-        
-        except Exception as e:
-            tries_left -= 1
-
-    # We failed
-    return None, {'interpret_image': total_cost}
-
-async def evaluate_fit_with_prompt(expanded_description, image_description, prompt_id, page_number, params):
-    # Retrieve the prompt template based on prompt_id
-    prompt_template = get_prompt_template(prompt_id, 'page_evaluation')
-
-    story_data = get_story_data(params)
-    formatted_story_data = json.dumps(story_data, indent=4)
-    
-    page_text = get_page_text(page_number, params)
-
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text,
-                                    expanded_description=expanded_description, image_description=image_description)
-
-    # Perform the API call
-    tries_left = params['n_retries'] if 'n_retries' in params else 5
-    total_cost = 0
-
-    while tries_left:
-        try:
-            api_call = await get_api_chatgpt4_response_for_task(
-                prompt,
-                'evaluate_page_image',
-                params
-            )
-            fit_evaluation = api_call.response
-            total_cost += api_call.cost
-            return fit_evaluation, {'evaluate_fit': total_cost}
-        
-        except Exception as e:
-                tries_left -= 1
-
-    # We failed
-    return None, {'evaluate_fit': total_cost}
-
-# -----------------------------------------------
-
-def analyse_human_ai_agreement_for_prompt_test(params):
-    project_dir = params['project_dir']
-    interpretation_prompt_id = params['interpretation_prompt_id']
-    evaluation_prompt_id = params['evaluation_prompt_id']
-    augmented_evaluations = read_project_json_file(project_dir, f'automated_evaluations_{interpretation_prompt_id}_{evaluation_prompt_id}.json')
-    
-    human_scores = [ e['score'] for e in augmented_evaluations if e['fit_score'] ]
-    ai_scores = [ e['fit_score'] for e in augmented_evaluations if e['fit_score'] ]
-
-    # Pearson Correlation
-    pearson_corr, _ = pearsonr(human_scores, ai_scores)
-    print(f"Pearson Correlation: {pearson_corr:.2f}")
-
-    # Spearman Correlation
-    spearman_corr, _ = spearmanr(human_scores, ai_scores)
-    print(f"Spearman Correlation: {spearman_corr:.2f}")
-
-    # Mean Absolute Error
-    mae = mean_absolute_error(human_scores, ai_scores)
-    print(f"Mean Absolute Error: {mae:.2f}")
-
-    # Cohen's Kappa
-    kappa = cohen_kappa_score(human_scores, ai_scores)
-    print(f"Cohen's Kappa: {kappa:.2f}")
-
-    # Confusion Matrix
-    cm = confusion_matrix(human_scores, ai_scores, labels=[0, 1, 2, 3, 4])
-    print("Confusion Matrix:")
-    print(cm)
-
-    # Scatter Plot
-    plt.scatter(human_scores, ai_scores, alpha=0.6)
-    plt.xlabel('Human Scores')
-    plt.ylabel('AI Scores')
-    plt.title('Human vs AI Scores')
-    plt.grid(True)
-    plt.show()
-
-
-# -----------------------------------------------
-
-def score_for_image_dir(image_dir, params):
-    return score_for_evaluation_file(f'{image_dir}/evaluation.txt', params)
-
-def score_for_evaluation_file(project_file, params):
-    project_dir = params['project_dir']
-    
-    try:
-        evaluation_response = read_project_txt_file(project_dir, project_file)
-        score, summary = parse_image_evaluation_response(evaluation_response)
-        return score, summary
-    except Exception as e:
-        return 0, ''
-
-def parse_image_evaluation_response(response):
-    lines = response.strip().split('\n')
-    score_line = lines[0]
-    summary_lines = lines[1:]
-    try:
-        score = int(score_line)
-    except ValueError:
-        score = 0  # Default to 0 if parsing fails
-    summary = '\n'.join(summary_lines)
-    return score, summary                                
-
-
-def get_story_data(params):
-    project_dir = params['project_dir']
-    
-    return read_project_json_file(project_dir, f'story.json')
-
-def get_pages(params):
-    story_data = get_story_data(params)
-
-    pages = [ item['page_number'] for item in story_data ]
-               
-    return pages
-
-def get_text(params):
-    story_data = get_story_data(params)
-
-    text_content = [ item['text'] for item in story_data ]
-               
-    return '\n'.join(text_content)
-
-def get_style_description(params):
-    project_dir = params['project_dir']
-    
-    return read_project_txt_file(project_dir, f'style/expanded_description.txt')
-
-def get_all_element_texts(params):
-    project_dir = params['project_dir']
-    
-    element_list = read_project_json_file(project_dir, f'elements/elements.json')
-    return [ item['text'] for item in element_list ]
-
-def get_element_description(element_text, params):
-    project_dir = params['project_dir']
-    
-    element_list = read_project_json_file(project_dir, f'elements/elements.json')
-    for item in element_list:
-        text = item['text']
-        if text == element_text:
-            name = item['name']
-            return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
-    raise ImageGenerationError(message=f'Unable to find element "{element_text}"')
-
-def get_page_text(page_number, params):
-    story_data = get_story_data(params)
-    for item in story_data:
-        if page_number == item['page_number']:
-            text = item['text']
-            return text
-    raise ImageGenerationError(message=f'Unable to find page "{page_number}"')
-
-def get_page_description(page_number, params):
-    project_dir = params['project_dir']
-    
-    try:
-        return read_project_txt_file(project_dir, f'pages/page{page_number}/expanded_description.txt')
-    except Exception as e:
-        return None
-
-def get_page_image(page_number, params):
-    project_dir = params['project_dir']
-    
-    return read_project_txt_file(project_dir, f'pages/page{page_number}/image.txt')
-
-
-# Utilities
-
-# OpenAI calls
-
-async def get_api_chatgpt4_response_for_task(prompt, task_name, params):
-    config_info, callback = get_config_info_and_callback_from_params(task_name, params)
-    return await get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback)
-
-async def get_api_chatgpt4_image_response_for_task(description, image_file, task_name, params):
-    config_info, callback = get_config_info_and_callback_from_params(task_name, params)
-    return await get_api_chatgpt4_image_response(description, image_file, config_info=config_info, callback=callback)
-
-async def get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, task_name, params):
-    config_info, callback = get_config_info_and_callback_from_params(task_name, params)
-    return await get_api_chatgpt4_interpret_image_response(prompt, image_file, config_info=config_info, callback=callback)
-
-def get_config_info_and_callback_from_params(task_name, params):
-
-    if task_name in params['models_for_tasks']:
-        model = params['models_for_tasks'][task_name]
-    elif 'default' in params['models_for_tasks']:
-        model = params['models_for_tasks']['default']
-    else:
-        model = None
-
-    config_info = params['config_info'] if 'config_info' in params else {}
-
-    if model:
-        config_info['gpt_model'] = model
-
-    callback = params['callback'] if 'callback' in params else None
-
-    return config_info, callback
-
-# Costs
-
-def api_calls_to_cost(api_calls):
-    return sum([ api_call.cost for api_call in api_calls ])
-
-def combine_cost_dicts(*dicts):
-    """
-    Combine multiple cost dictionaries by summing the values for matching keys.
-
-    Parameters:
-    *dicts: Variable number of dictionaries with task names as keys and costs as values.
-
-    Returns:
-    A single dictionary with the combined costs.
-    """
-    combined_dict = {}
-    for d in dicts:
-        for key, value in d.items():
-            if key in combined_dict:
-                combined_dict[key] += value
-            else:
-                combined_dict[key] = value
-    return combined_dict
-
-def print_cost_dict(cost_dict):
-    if not 'total' in cost_dict:
-        cost_dict['total'] = sum([ cost_dict[key] for key in cost_dict ])
-    for key in cost_dict:
-        print(f'{key}: {cost_dict[key]:2f}')
-        
-def write_project_cost_file(cost_dict, project_dir, pathname):
-    if not 'total' in cost_dict:
-        cost_dict['total'] = sum([ cost_dict[key] for key in cost_dict ])
-    write_project_json_file(cost_dict, project_dir, pathname)
-
-# Project files etc
-
-def project_pathname(project_dir, pathname):
-    return absolute_file_name(os.path.join(project_dir, pathname))
-
-def make_project_dir(project_dir, directory):
-    make_directory(project_pathname(project_dir, directory), parents=True, exist_ok=True)
-
-def read_project_txt_file(project_dir, pathname):
-    return read_txt_file(project_pathname(project_dir, pathname))
-
-def read_project_json_file(project_dir, pathname):
-    return read_json_file(project_pathname(project_dir, pathname))
-
-def write_project_txt_file(text, project_dir, pathname):
-    write_txt_file(text, project_pathname(project_dir, pathname))
-
-def write_project_json_file(text, project_dir, pathname):
-    write_json_to_file(text, project_pathname(project_dir, pathname))
-
-class ImageGenerationError(Exception):
-    def __init__(self, message = 'Image generation error'):
-        self.message = message
 
