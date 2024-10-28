@@ -261,7 +261,7 @@ async def interpret_and_evaluate_single_image(evaluation, params):
 
     # Interpret the image
     try:
-        image_interpretation, interpret_cost = await interpret_image_with_prompt(
+        image_interpretation, interpretation_errors, interpret_cost = await interpret_image_with_prompt(
             image_path,
             expanded_description,
             page_number,
@@ -269,28 +269,34 @@ async def interpret_and_evaluate_single_image(evaluation, params):
             params
         )
     except Exception as e:
-        print(f'Error interpreting image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
-        return None
+        interpretation_errors = f'Error interpreting image {image_path}: "{str(e)}"\n{traceback.format_exc()}"'
+        image_interpretation = None
+        interpret_cost = {}
 
     # Evaluate the fit
     if image_interpretation:
         try:
-            fit_evaluation, evaluate_cost = await evaluate_fit_with_prompt(
+            fit_evaluation, fit_errors, evaluate_cost = await evaluate_fit_with_prompt(
                 expanded_description,
                 image_interpretation,
                 params['evaluation_prompt_id'],
                 page_number,
                 params
             )
+            if fit_evaluation:
+                fit_score, fit_comments = parse_image_evaluation_response(fit_evaluation)
+            else:
+                fit_score = 0
+                fit_comments = fit_errors
         except Exception as e:
-            print(f'Error evaluating fit for image {image_path}: "{str(e)}"\n{traceback.format_exc()}"')
-            return None
+            fit_errors = f'Error evaluating fit for image {image_path}: "{str(e)}"\n{traceback.format_exc()}"'
+            fit_score = 0
+            fit_comments = fit_errors
 
-        fit_score, fit_comments = parse_image_evaluation_response(fit_evaluation)
     else:
-        fit_score, fit_comments, evaluate_cost = ( None, '', {} )
+        fit_score, fit_comments, evaluate_cost = ( None, interpretation_errors, {} )
 
-    # Combine cost information
+    # Combine cost and errors information
     total_cost = combine_cost_dicts(interpret_cost, evaluate_cost)
 
     # Augment the evaluation data
@@ -324,6 +330,7 @@ async def interpret_image_with_prompt(image_path, expanded_description, page_num
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
     total_cost = 0
+    errors = ''
 
     while tries_left:
         try:
@@ -335,35 +342,43 @@ async def interpret_image_with_prompt(image_path, expanded_description, page_num
             )
             image_interpretation = api_call.response
             total_cost += api_call.cost
-            return image_interpretation, {'interpret_image': total_cost}
+            return image_interpretation, errors, {'interpret_image': total_cost}
         
         except Exception as e:
+            error = f'"{str(e)}"\n{traceback.format_exc()}'
+            errors += f"""{error}
+------------------
+"""
             tries_left -= 1
 
     # We failed
-    return None, {'interpret_image': total_cost}
+    return None, errors, {'interpret_image': total_cost}
 
 async def interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params):
     total_cost = 0
+    errors = ''
 
     try:
         # Find the elements in the image
-        elements_in_image, get_elements_cost = await get_elements_shown_in_image(image_path, params)
+        elements_in_image, elements_in_image_errors, get_elements_cost = await get_elements_shown_in_image(image_path, params)
         total_cost += get_elements_cost
+        errors += elements_in_image_errors
         if not elements_in_image:
-            return None, {'interpret_image': total_cost}
+            return None, errors, {'interpret_image': total_cost}
 
         # Get descriptions of the relevant elements and the style
-        element_and_style_descriptions, descriptions_cost = await get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params)
+        element_and_style_descriptions, description_errors, descriptions_cost = await get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params)
         total_cost += descriptions_cost
+        errors += description_errors
         if not element_and_style_descriptions:
-            return None, {'interpret_image': total_cost}
+            return None, errors, {'interpret_image': total_cost}
 
         # Find the important pairs
-        important_pairs, pairs_cost = await get_important_pairs_in_image(elements_in_image, expanded_description, params)
+        important_pairs, pairs_errors, pairs_cost = await get_important_pairs_in_image(elements_in_image, expanded_description, params)
         total_cost += pairs_cost
+        errors += description_errors
         if not important_pairs:
-            return None, {'interpret_image': total_cost}
+            return None, errors, {'interpret_image': total_cost}
 
         # Get descriptions of the relationships obtaining for the important pairs
         tasks = []
@@ -371,17 +386,20 @@ async def interpret_image_with_prompt_multiple_questions(image_path, expanded_de
             tasks.append(get_relationship_of_element_pair_in_image(pair, image_path, params))
         results = await asyncio.gather(*tasks)
         pair_descriptions = [ result[0] for result in results ]
-        pair_description_costs = sum([ result[1] for result in results ])
+        pair_errors = [ result[1] for result in results ]
+        errors += "\n------------------".join(pair_errors)
+        pair_description_costs = sum([ result[2] for result in results ])
         total_cost += pair_description_costs
 
         # Put everything together
         full_description = combine_results_of_multiple_questions(elements_in_image, element_and_style_descriptions, pair_descriptions)
-        return full_description, {'interpret_image': total_cost}
+        return full_description, errors, {'interpret_image': total_cost}
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         print(error_message)
-        return None, {'interpret_image': total_cost}
+        errors += error_message
+        return None, errors, {'interpret_image': total_cost}
         
 async def get_elements_shown_in_image(image_path, params):
     # Retrieve the prompt template based on prompt_id
@@ -396,6 +414,7 @@ async def get_elements_shown_in_image(image_path, params):
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
     total_cost = 0
+    errors = ''
 
     while tries_left:
         try:
@@ -410,17 +429,21 @@ async def get_elements_shown_in_image(image_path, params):
             elements_present = interpret_chat_gpt4_response_as_json(image_interpretation, object_type='list')
 
             if all([ element in elements for element in elements_present ]):
-                return elements_present, total_cost
+                return elements_present, errors, total_cost
             else:
+                errors += f"""
+Not all elements in {elements_present} are in {elements}
+"""
                 tries_left -= 1
         
         except Exception as e:
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
             print(error_message)
+            errors += error_message
             tries_left -= 1
 
     # We failed
-    return None, total_cost
+    return None, errors, total_cost
 
 async def get_important_pairs_in_image(elements_in_image, expanded_description, params):
     prompt_template = get_prompt_template('default', 'get_important_pairs_in_image')
@@ -434,6 +457,7 @@ async def get_important_pairs_in_image(elements_in_image, expanded_description, 
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
     total_cost = 0
+    errors = ''
 
     while tries_left:
         try:
@@ -446,17 +470,21 @@ async def get_important_pairs_in_image(elements_in_image, expanded_description, 
             total_cost += api_call.cost
             important_pairs = interpret_chat_gpt4_response_as_json(important_pairs_text, object_type='list')
             if all([ element1 in elements_in_image and element1 in elements_in_image for (element1, element2) in important_pairs ]):
-                return important_pairs, total_cost
+                return important_pairs, errors, total_cost
             else:
+                errors += f"""
+Not all elements in {important_pairs} are in {elements_in_image}
+"""
                 tries_left -= 1
         
         except Exception as e:
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-            print(error_message)    
+            print(error_message)
+            errors += error_message
             tries_left -= 1
 
     # We failed
-    return None, total_cost
+    return None, errors, total_cost
 
 async def get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params):
     prompt_template = get_prompt_template('default', 'get_elements_descriptions_and_style_in_image')
@@ -468,6 +496,7 @@ async def get_elements_descriptions_and_style_in_image(image_path, elements_in_i
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
     total_cost = 0
+    errors = ''
 
     while tries_left:
         try:
@@ -479,11 +508,12 @@ async def get_elements_descriptions_and_style_in_image(image_path, elements_in_i
             )
             image_interpretation = api_call.response
             total_cost += api_call.cost
-            return image_interpretation, total_cost
+            return image_interpretation, errors, total_cost
         
         except Exception as e:
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
             print(error_message)
+            errors += error_message
             tries_left -= 1
 
     # We failed
@@ -501,6 +531,7 @@ async def get_relationship_of_element_pair_in_image(pair, image_path, params):
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
     total_cost = 0
+    errors = ''
 
     while tries_left:
         try:
@@ -515,10 +546,11 @@ async def get_relationship_of_element_pair_in_image(pair, image_path, params):
             image_interpretation_with_heading = f"""Relationship between '{element1}' and '{element2}':
 {image_interpretation}
 """
-            return image_interpretation_with_heading, total_cost
+            return image_interpretation_with_heading, errors, total_cost
         
         except Exception as e:
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            errors += error_message
             print(error_message)
             tries_left -= 1
 
@@ -560,6 +592,7 @@ async def evaluate_fit_with_prompt(expanded_description, image_description, prom
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
     total_cost = 0
+    errors = ''
 
     while tries_left:
         try:
@@ -570,13 +603,16 @@ async def evaluate_fit_with_prompt(expanded_description, image_description, prom
             )
             fit_evaluation = api_call.response
             total_cost += api_call.cost
-            return fit_evaluation, {'evaluate_fit': total_cost}
+            return fit_evaluation, errors, {'evaluate_fit': total_cost}
         
         except Exception as e:
-                tries_left -= 1
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            errors += error_message
+            print(error_message)
+            tries_left -= 1
 
     # We failed
-    return None, {'evaluate_fit': total_cost}
+    return None, errors, {'evaluate_fit': total_cost}
 
 # -----------------------------------------------
 
