@@ -123,13 +123,15 @@ def test_la_fontaine_pages():
     cost_dict = asyncio.run(process_pages(params))
     print_cost_dict(cost_dict)
 
-def test_la_fontaine_pages_o1():
+def test_la_fontaine_pages_o1(interpretation_prompt_id='default', evaluation_prompt_id='default'):
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
                'n_expanded_descriptions': 2,
                'max_description_generation_rounds': 1,
                'n_images_per_description': 3,
                'n_pages': 'all',
                'n_previous_pages': 2,
+               'interpretation_prompt_id': interpretation_prompt_id,
+               'evaluation_prompt_id': evaluation_prompt_id,
                'keep_existing_pages': True,
                'models_for_tasks': { 'default': 'gpt-4o',
                                      'generate_page_description': 'o1-mini',
@@ -153,8 +155,12 @@ def test_la_fontaine_judge_o1(version):
                'title': 'Le Corbeau et le Renard (o1-mini version)' }
     human_evaluation(params)
 
-def test_la_fontaine_prompts_o1(version, interpretation_prompt_id='default', evaluation_prompt_id='default'):
+def test_la_fontaine_evaluate_prompts_o1(version,
+                                         interpretation_prompt_id='default',
+                                         evaluation_prompt_id='default',
+                                         n_images='all'):
     params = { 'project_dir': f'$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v{version}',
+               'n_images': n_images,
                'interpretation_prompt_id': interpretation_prompt_id,
                'evaluation_prompt_id': evaluation_prompt_id,
                'models_for_tasks': { 'default': 'gpt-4o',
@@ -1134,7 +1140,8 @@ async def interpret_page_image(image_dir, image_file, page_number, params):
     
     page_text = get_page_text(page_number, params)
 
-    prompt_template = get_prompt_template('default', 'page_interpretation')
+    interpretation_prompt_id = params['interpretation_prompt_id'] if 'interpretation_prompt_id' in params else 'default'
+    prompt_template = get_prompt_template(interpretation_prompt_id, 'page_interpretation')
 
     prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
 
@@ -1147,7 +1154,8 @@ async def interpret_page_image(image_dir, image_file, page_number, params):
 async def evaluate_page_fit(image_dir, expanded_description, image_description, page_number, params):
     project_dir = params['project_dir']
 
-    prompt_template = get_prompt_template('default', 'page_evaluation')
+    evaluation_prompt_id = params['evaluation_prompt_id'] if 'evaluation_prompt_id' in params else 'default' 
+    prompt_template = get_prompt_template(evaluation_prompt_id, 'page_evaluation')
 
     story_data = get_story_data(params)
     formatted_story_data = json.dumps(story_data, indent=4)

@@ -2,6 +2,10 @@ from .clara_coherent_images_prompt_templates import (
     get_prompt_template,
     )
 
+from .clara_chatgpt4 import (
+    interpret_chat_gpt4_response_as_json,
+    )
+
 from .clara_coherent_images_utils import (
     score_for_image_dir,
     score_for_evaluation_file,
@@ -211,6 +215,9 @@ async def test_prompts_for_interpretation_and_evaluation(params):
         return
 
     evaluations = read_json_file(evaluations_path)
+
+    if 'n_images' in params and params['n_images'] != 'all':
+        evaluations = evaluations[:params['n_images']]
     
     # Prepare tasks for asyncio
     tasks = []
@@ -256,6 +263,7 @@ async def interpret_and_evaluate_single_image(evaluation, params):
     try:
         image_interpretation, interpret_cost = await interpret_image_with_prompt(
             image_path,
+            expanded_description,
             page_number,
             params['interpretation_prompt_id'],
             params
@@ -299,7 +307,10 @@ async def interpret_and_evaluate_single_image(evaluation, params):
 
     return augmented_evaluation
 
-async def interpret_image_with_prompt(image_path, page_number, prompt_id, params):
+async def interpret_image_with_prompt(image_path, expanded_description, page_number, prompt_id, params):
+    if prompt_id == 'multiple_questions':
+        return await interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params)
+    
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template(prompt_id, 'page_interpretation')
 
@@ -331,6 +342,208 @@ async def interpret_image_with_prompt(image_path, page_number, prompt_id, params
 
     # We failed
     return None, {'interpret_image': total_cost}
+
+async def interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params):
+    total_cost = 0
+
+    try:
+        # Find the elements in the image
+        elements_in_image, get_elements_cost = await get_elements_shown_in_image(image_path, params)
+        total_cost += get_elements_cost
+        if not elements_in_image:
+            return None, {'interpret_image': total_cost}
+
+        # Get descriptions of the relevant elements and the style
+        element_and_style_descriptions, descriptions_cost = await get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params)
+        total_cost += descriptions_cost
+        if not element_and_style_descriptions:
+            return None, {'interpret_image': total_cost}
+
+        # Find the important pairs
+        important_pairs, pairs_cost = await get_important_pairs_in_image(elements_in_image, expanded_description, params)
+        total_cost += pairs_cost
+        if not important_pairs:
+            return None, {'interpret_image': total_cost}
+
+        # Get descriptions of the relationships obtaining for the important pairs
+        tasks = []
+        for pair in important_pairs:
+            tasks.append(get_relationship_of_element_pair_in_image(pair, image_path, params))
+        results = await asyncio.gather(*tasks)
+        pair_descriptions = [ result[0] for result in results ]
+        pair_description_costs = sum([ result[1] for result in results ])
+        total_cost += pair_description_costs
+
+        # Put everything together
+        full_description = combine_results_of_multiple_questions(elements_in_image, element_and_style_descriptions, pair_descriptions)
+        return full_description, {'interpret_image': total_cost}
+
+    except Exception as e:
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        print(error_message)
+        return None, {'interpret_image': total_cost}
+        
+async def get_elements_shown_in_image(image_path, params):
+    # Retrieve the prompt template based on prompt_id
+    prompt_template = get_prompt_template('default', 'get_elements_shown_in_image')
+
+    text = get_text(params)
+
+    elements = get_all_element_texts(params)
+
+    prompt = prompt_template.format(text=text, elements=elements)
+
+    # Perform the API call
+    tries_left = params['n_retries'] if 'n_retries' in params else 5
+    total_cost = 0
+
+    while tries_left:
+        try:
+            api_call = await get_api_chatgpt4_interpret_image_response_for_task(
+                prompt,
+                image_path,
+                'evaluate_page_image',
+                params
+            )
+            image_interpretation = api_call.response
+            total_cost += api_call.cost
+            elements_present = interpret_chat_gpt4_response_as_json(image_interpretation, object_type='list')
+
+            if all([ element in elements for element in elements_present ]):
+                return elements_present, total_cost
+            else:
+                tries_left -= 1
+        
+        except Exception as e:
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            print(error_message)
+            tries_left -= 1
+
+    # We failed
+    return None, total_cost
+
+async def get_important_pairs_in_image(elements_in_image, expanded_description, params):
+    prompt_template = get_prompt_template('default', 'get_important_pairs_in_image')
+
+    text = get_text(params)
+
+    prompt = prompt_template.format(text=text, 
+                                    expanded_description=expanded_description,
+                                    elements_in_image=elements_in_image)
+
+    # Perform the API call
+    tries_left = params['n_retries'] if 'n_retries' in params else 5
+    total_cost = 0
+
+    while tries_left:
+        try:
+            api_call = await get_api_chatgpt4_response_for_task(
+                prompt,
+                'evaluate_page_image',
+                params
+            )
+            important_pairs_text = api_call.response
+            total_cost += api_call.cost
+            important_pairs = interpret_chat_gpt4_response_as_json(important_pairs_text, object_type='list')
+            if all([ element1 in elements_in_image and element1 in elements_in_image for (element1, element2) in important_pairs ]):
+                return important_pairs, total_cost
+            else:
+                tries_left -= 1
+        
+        except Exception as e:
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            print(error_message)    
+            tries_left -= 1
+
+    # We failed
+    return None, total_cost
+
+async def get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params):
+    prompt_template = get_prompt_template('default', 'get_elements_descriptions_and_style_in_image')
+
+    text = get_text(params)
+
+    prompt = prompt_template.format(text=text, elements_in_image=elements_in_image)
+
+    # Perform the API call
+    tries_left = params['n_retries'] if 'n_retries' in params else 5
+    total_cost = 0
+
+    while tries_left:
+        try:
+            api_call = await get_api_chatgpt4_interpret_image_response_for_task(
+                prompt,
+                image_path,
+                'evaluate_page_image',
+                params
+            )
+            image_interpretation = api_call.response
+            total_cost += api_call.cost
+            return image_interpretation, total_cost
+        
+        except Exception as e:
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            print(error_message)
+            tries_left -= 1
+
+    # We failed
+    return None, total_cost
+
+async def get_relationship_of_element_pair_in_image(pair, image_path, params):
+    prompt_template = get_prompt_template('default', 'get_relationship_of_element_pair_in_image')
+
+    element1, element2 = pair
+
+    text = get_text(params)
+    
+    prompt = prompt_template.format(text=text, element1=element1, element2=element2)
+
+    # Perform the API call
+    tries_left = params['n_retries'] if 'n_retries' in params else 5
+    total_cost = 0
+
+    while tries_left:
+        try:
+            api_call = await get_api_chatgpt4_interpret_image_response_for_task(
+                prompt,
+                image_path,
+                'evaluate_page_image',
+                params
+            )
+            image_interpretation = api_call.response
+            total_cost += api_call.cost
+            image_interpretation_with_heading = f"""Relationship between '{element1}' and '{element2}':
+{image_interpretation}
+"""
+            return image_interpretation_with_heading, total_cost
+        
+        except Exception as e:
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            print(error_message)
+            tries_left -= 1
+
+    # We failed
+    return None, total_cost
+
+def combine_results_of_multiple_questions(elements_in_image, element_and_style_descriptions, pair_descriptions):
+    text = ''
+
+    text += f"""**Elements found in image**
+The following elements were found in the image: {elements_in_image}
+
+"""
+
+    text += f"""{element_and_style_descriptions}
+
+"""
+
+    text += f"""**Descriptions of relationships between some pairs of elements**
+
+"""
+    for pair_description in pair_descriptions:
+        text += f"""- {pair_description}
+"""
+    return text
 
 async def evaluate_fit_with_prompt(expanded_description, image_description, prompt_id, page_number, params):
     # Retrieve the prompt template based on prompt_id
