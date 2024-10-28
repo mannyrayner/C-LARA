@@ -1,3 +1,7 @@
+from .clara_coherent_images_evaluate_image import (
+    interpret_image_with_prompt,
+    evaluate_fit_with_prompt
+    )
 
 from .clara_coherent_images_prompt_templates import (
     get_prompt_template,
@@ -123,12 +127,12 @@ def test_la_fontaine_pages():
     cost_dict = asyncio.run(process_pages(params))
     print_cost_dict(cost_dict)
 
-def test_la_fontaine_pages_o1(interpretation_prompt_id='default', evaluation_prompt_id='default'):
+def test_la_fontaine_pages_o1(interpretation_prompt_id='default', evaluation_prompt_id='default', n_pages='all'):
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
                'n_expanded_descriptions': 2,
                'max_description_generation_rounds': 1,
                'n_images_per_description': 3,
-               'n_pages': 'all',
+               'n_pages': n_pages,
                'n_previous_pages': 2,
                'interpretation_prompt_id': interpretation_prompt_id,
                'evaluation_prompt_id': evaluation_prompt_id,
@@ -1101,6 +1105,8 @@ async def generate_and_rate_page_image(page_number, description, description_ver
     project_dir = params['project_dir']
     
     total_cost_dict = {}
+    total_errors = ''
+    evaluation = None
     
     image_dir = f'pages/page{page_number}/description_v{description_version_number}/image_v{image_version_number}'
     # Make directory if necessary
@@ -1110,16 +1116,38 @@ async def generate_and_rate_page_image(page_number, description, description_ver
         image_file, image_cost_dict = await generate_page_image(image_dir, description, page_number, params)
         total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
-        image_interpretation, interpret_cost_dict = await interpret_page_image(image_dir, image_file, page_number, params)
-        total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
+        if file_exists(image_file):
+            #image_interpretation, interpret_cost_dict = await interpret_page_image(image_dir, image_file, page_number, params)
+            interpretation_prompt_id = params['interpretation_prompt_id'] if 'interpretation_prompt_id' in params else 'default'
+            image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_image_with_prompt(image_file, description, page_number,
+                                                                                                                 interpretation_prompt_id, params)
+            if image_interpretation:
+                write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
+            else:
+                total_errors += f'\n------------------\n{interpretation_errors}'
+            total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
+        else:
+            image_interpretation = None
 
-        evaluation, evaluation_cost_dict = await evaluate_page_fit(image_dir, description, image_interpretation, page_number, params)
+        if image_interpretation:
+            #evaluation, evaluation_cost_dict = await evaluate_page_fit(image_dir, description, image_interpretation, page_number, params)
+            evaluation_prompt_id = params['evaluation_prompt_id'] if 'evaluation_prompt_id' in params else 'default' 
+            evaluation, evaluation_errors, evaluation_cost_dict = await evaluate_fit_with_prompt(description, image_interpretation,
+                                                                                     evaluation_prompt_id, page_number, params)
+            if evaluation:
+                write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
+            else:
+                total_errors += f'\n------------------\n{evaluation_errors}'
+            
         total_cost_dict = combine_cost_dicts(total_cost_dict, evaluation_cost_dict)
 
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-        write_project_txt_file(error_message, project_dir, f'{image_dir}/error.txt')
+        total_errors += f'\n------------------\n{error_message}'
         write_project_txt_file("0", project_dir, f'{image_dir}/evaluation.txt')
+
+    if not evaluation:
+        write_project_txt_file(total_errors, project_dir, f'{image_dir}/error.txt')
 
     write_project_cost_file(total_cost_dict, project_dir, f'{image_dir}/cost.json')
     return image_dir, total_cost_dict
@@ -1132,46 +1160,46 @@ async def generate_page_image(image_dir, description, page_number, params):
 
     return image_file, { 'generate_page_image': api_call.cost }
 
-async def interpret_page_image(image_dir, image_file, page_number, params):
-    project_dir = params['project_dir']
-
-    story_data = get_story_data(params)
-    formatted_story_data = json.dumps(story_data, indent=4)
-    
-    page_text = get_page_text(page_number, params)
-
-    interpretation_prompt_id = params['interpretation_prompt_id'] if 'interpretation_prompt_id' in params else 'default'
-    prompt_template = get_prompt_template(interpretation_prompt_id, 'page_interpretation')
-
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
-
-    api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_page_image', params)
-
-    image_interpretation = api_call.response
-    write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
-    return image_interpretation, { 'interpret_page_image': api_call.cost }
-
-async def evaluate_page_fit(image_dir, expanded_description, image_description, page_number, params):
-    project_dir = params['project_dir']
-
-    evaluation_prompt_id = params['evaluation_prompt_id'] if 'evaluation_prompt_id' in params else 'default' 
-    prompt_template = get_prompt_template(evaluation_prompt_id, 'page_evaluation')
-
-    story_data = get_story_data(params)
-    formatted_story_data = json.dumps(story_data, indent=4)
-    
-    page_text = get_page_text(page_number, params)
-
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text,
-                                    expanded_description=expanded_description, image_description=image_description)
-    
-    api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_page_image', params)
-
-    evaluation = api_call.response
-
-    write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
-    
-    return evaluation, { 'evaluate_page_image': api_call.cost }
+##async def interpret_page_image(image_dir, image_file, page_number, params):
+##    project_dir = params['project_dir']
+##
+##    story_data = get_story_data(params)
+##    formatted_story_data = json.dumps(story_data, indent=4)
+##    
+##    page_text = get_page_text(page_number, params)
+##
+##    interpretation_prompt_id = params['interpretation_prompt_id'] if 'interpretation_prompt_id' in params else 'default'
+##    prompt_template = get_prompt_template(interpretation_prompt_id, 'page_interpretation')
+##
+##    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
+##
+##    api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_page_image', params)
+##
+##    image_interpretation = api_call.response
+##    write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
+##    return image_interpretation, { 'interpret_page_image': api_call.cost }
+##
+##async def evaluate_page_fit(image_dir, expanded_description, image_description, page_number, params):
+##    project_dir = params['project_dir']
+##
+##    evaluation_prompt_id = params['evaluation_prompt_id'] if 'evaluation_prompt_id' in params else 'default' 
+##    prompt_template = get_prompt_template(evaluation_prompt_id, 'page_evaluation')
+##
+##    story_data = get_story_data(params)
+##    formatted_story_data = json.dumps(story_data, indent=4)
+##    
+##    page_text = get_page_text(page_number, params)
+##
+##    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text,
+##                                    expanded_description=expanded_description, image_description=image_description)
+##    
+##    api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_page_image', params)
+##
+##    evaluation = api_call.response
+##
+##    write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
+##    
+##    return evaluation, { 'evaluate_page_image': api_call.cost }
 
 # -----------------------------------------------
 
