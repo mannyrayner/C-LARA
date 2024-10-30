@@ -200,9 +200,13 @@ to be passed to DALL-E-3 to generate a single image showing how "{element_text}"
 - **Distinctive features like wings, tail, horns**
 - **General demeanour**
 
-**Be as precise and detailed as possible to ensure consistency in the generated images.**
+** IMPORTANT **
 
-The description should be at most 1000 characters long, as it will later be combined with other descriptions."""
+- Be as precise and detailed as possible to ensure consistency in the generated images.**
+
+- The description should be at most 1000 characters long, as it will later be combined with other descriptions.
+
+{advice_text}"""
     }
 
 element_interpretation_prompt_templates= {
@@ -392,9 +396,9 @@ generate a single image for page {page_number}.
 
 *IMPORTANT*:
 
-A. The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+- The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
 
-B. Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
+- Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
 idea of the image and then list the aspects of the image which are essential to the text and must be represented.
 This will often include material not mentioned in the text on the current page, which is necessary to maintain continuity,
 and must be inferred from text on the other pages or from other background knowledge.
@@ -417,6 +421,8 @@ despite the fact that there is no mention of the wall in the page 2 text, and no
 The "Essential aspects" section will be used to check the correctness of the generated image.
 If any item listed there fails to match, the image will be rejected, so only include material
 in this section which is genuinely essential, as opposed to just desirable.
+
+{advice_text}
 """
     }
 

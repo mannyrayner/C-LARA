@@ -7,6 +7,13 @@ from .clara_coherent_images_prompt_templates import (
     get_prompt_template,
     )
 
+from .clara_coherent_images_advice import (
+    get_element_advice,
+    get_page_advice,
+    set_element_advice,
+    set_page_advice,
+    )
+
 from .clara_coherent_images_evaluate_prompts import (
     human_evaluation,
     test_prompts_for_interpretation_and_evaluation,
@@ -102,10 +109,10 @@ def test_la_fontaine_elements():
     cost_dict = asyncio.run(process_elements(params))
     print_cost_dict(cost_dict)
 
-def test_la_fontaine_elements_o1():
+def test_la_fontaine_elements_o1(n_expanded_descriptions=2, n_images_per_description=3):
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
-               'n_expanded_descriptions': 2,
-               'n_images_per_description': 2,
+               'n_expanded_descriptions': n_expanded_descriptions,
+               'n_images_per_description': n_images_per_description,
                'n_elements_to_expand': 'all',
                'keep_existing_elements': True,
                'models_for_tasks': { 'default': 'gpt-4o',
@@ -113,6 +120,12 @@ def test_la_fontaine_elements_o1():
                }
     cost_dict = asyncio.run(process_elements(params))
     print_cost_dict(cost_dict)
+
+def test_la_fontaine_add_element_advice(element_name, advice_text):
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1' 
+               }
+    set_element_advice(advice_text, element_name, params)
+    print(f'Advice set for "{element_name}"')
 
 def test_la_fontaine_pages():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard',
@@ -127,7 +140,7 @@ def test_la_fontaine_pages():
     cost_dict = asyncio.run(process_pages(params))
     print_cost_dict(cost_dict)
 
-def test_la_fontaine_pages_o1(interpretation_prompt_id='default', evaluation_prompt_id='default', n_pages='all'):
+def test_la_fontaine_pages_o1(interpretation_prompt_id='multiple_questions', evaluation_prompt_id='with_context_lenient', n_pages='all'):
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
                'n_expanded_descriptions': 2,
                'max_description_generation_rounds': 1,
@@ -143,6 +156,12 @@ def test_la_fontaine_pages_o1(interpretation_prompt_id='default', evaluation_pro
                }
     cost_dict = asyncio.run(process_pages(params))
     print_cost_dict(cost_dict)
+
+def test_la_fontaine_add_page_advice(page_number, advice_text):
+    params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1' 
+               }
+    set_page_advice(advice_text, page_number, params)
+    print(f'Advice set for "{element_name}"')
 
 def test_la_fontaine_overview():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard',
@@ -570,6 +589,10 @@ async def process_single_element(element_name, element_text, params):
     n_images_per_description = params['n_images_per_description']
     n_elements_to_expand = params['n_elements_to_expand']
     keep_existing_elements = params['keep_existing_elements']
+
+    # Make directory if necessary
+    element_directory = f'elements/{element_name}'
+    make_project_dir(project_dir, element_directory)
     
     tasks = []
     all_description_dirs = []
@@ -578,14 +601,15 @@ async def process_single_element(element_name, element_text, params):
     if keep_existing_elements and file_exists(project_pathname(project_dir, f'elements/{element_name}/image.jpg')):
         print(f'Element processing for "{element_text}" already done, skipping')
         return total_cost_dict
-    
-    for description_version_number in range(0, n_expanded_descriptions):
-        tasks.append(asyncio.create_task(generate_expanded_element_description_and_images(element_name, element_text, description_version_number, params)))
-    results = await asyncio.gather(*tasks)
-    for description_dir, cost_dict in results:
-        all_description_dirs.append(description_dir)
-        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
-    select_best_expanded_element_description_and_image(element_name, all_description_dirs, params)
+
+    if n_expanded_descriptions != 0:
+        for description_version_number in range(0, n_expanded_descriptions):
+            tasks.append(asyncio.create_task(generate_expanded_element_description_and_images(element_name, element_text, description_version_number, params)))
+        results = await asyncio.gather(*tasks)
+        for description_dir, cost_dict in results:
+            all_description_dirs.append(description_dir)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+        select_best_expanded_element_description_and_image(element_name, all_description_dirs, params)
 
     write_project_cost_file(total_cost_dict, project_dir, f'elements/{element_name}/cost.json')
     return total_cost_dict
@@ -624,15 +648,24 @@ async def generate_expanded_element_description_and_images(element_name, element
     description_directory = f'elements/{element_name}/description_v{description_version_number}'
     make_project_dir(project_dir, description_directory)
     
-    # Get the text of the story and the style description
+    # Get the text of the story, the style description, and the advice if there is any
     text = get_text(params)
     style_description = get_style_description(params)
+    advice = get_element_advice(element_text, params)
+    if advice:
+        advice_text = f"""
+- Bear in mind the following advice from the user when creating the description:
+
+{advice}
+"""
+    else:
+        advice_text = ''
 
     total_cost_dict = {}
 
     # Create the prompt to expand the element description
     prompt_template = get_prompt_template('default', 'generate_element_description')
-    prompt = prompt_template.format(text=text, style_description=style_description, element_text=element_text)
+    prompt = prompt_template.format(text=text, style_description=style_description, element_text=element_text, advice_text=advice_text)
 
     # Get the expanded description from the AI
     try:
@@ -1012,6 +1045,17 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     
     page_text = get_page_text(page_number, params)
     style_description = get_style_description(params)
+
+    #Get the advice if there is any
+    advice = get_page_advice(page_number, params)
+    if advice:
+        advice_text = f"""
+**Bear in mind the following advice from the user when creating the page description:**
+
+{advice}
+"""
+    else:
+        advice_text = ''
     
     previous_page_descriptions_with_page_numbers = [ ( previous_page_number, get_page_description(previous_page_number, params) )
                                                      for previous_page_number in previous_pages ]
@@ -1038,6 +1082,7 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
                                     style_description=style_description,
                                     page_number=page_number,
                                     page_text=page_text,
+                                    advice_text=advice_text,
                                     element_descriptions_text=element_descriptions_text,
                                     previous_page_descriptions_text=previous_page_descriptions_text)
     
