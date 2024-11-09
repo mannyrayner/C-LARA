@@ -46,5 +46,13 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20240608093054"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\mwe_annotate_examples.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109045858"
     }
 ]
