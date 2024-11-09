@@ -717,6 +717,7 @@ class MWEExampleForm(forms.Form):
     string2 = forms.CharField(
         widget=forms.TextInput(attrs={'size': '60'}),
         label="MWEs Identified",
+        required=False,
         help_text="Comma-separated list of MWEs identified in the input"
     )
 
