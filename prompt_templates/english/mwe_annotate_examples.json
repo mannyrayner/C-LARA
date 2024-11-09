@@ -18,5 +18,50 @@
         "Shall we shoot the breeze for a while before talking business?",
         "shoot the breeze",
         "**Analysis:**\r\n- **\"shoot the breeze\"** is an idiomatic expression meaning to engage in casual conversation. It functions as a single verb phrase, and its meaning is not directly deducible from the individual words. Hence, it is an MWE.\r\n- **\"for a while\"** is a prepositional phrase indicating a duration. Its meaning is directly derivable from the individual words, so it is not an MWE.\r\n- **\"talking business\"** is a standard verb-noun phrase where the meaning is compositional and directly related to its components. Therefore, it is not an MWE."
+    ],
+    [
+        "You must first prove yourself.",
+        "prove yourself",
+        "**Analysis:**\r\n\r\n- **\"must prove\"**: This is a combination of the modal verb \"must\" and the main verb \"prove.\" The meaning of this phrase is directly deducible from its individual components, indicating necessity or obligation to prove something. Therefore, it does not qualify as an MWE.\r\n\r\n- **\"prove yourself\"**: This phrase consists of the verb \"prove\" and the reflexive pronoun \"yourself.\" It conveys the idea of demonstrating one's abilities or worth, and the meaning is not fully deducible from the individual words, hence it is considered an MWE.\r\n\r\n- **\"must first prove yourself\"**: This entire sequence is a verb phrase where \"must\" modifies the MWE \"prove yourself,\" and \"first\" serves as an adverb. The meaning is deducible from these components, so it is not itself an MWE although it contains one."
+    ],
+    [
+        "What parts of speech do you know? _analysis: **Analysis:**",
+        "parts of speech",
+        "**Analysis:**\r\n\r\n- **\"parts of speech\"**: This is a established linguistic term referring to categories such as nouns, verbs, adjectives, etc. It functions as a single noun phrase, and its meaning is not directly deducible from the individual words \"parts,\" \"of,\" and \"speech.\" Therefore, it qualifies as an MWE.\r\n\r\n- **\"What,\" \"do,\" \"you,\" \"know\"**: These words form a standard interrogative sentence. The meanings of these words are directly deducible from their individual components, and they do not function as a single semantic unit beyond their literal interpretation. Hence, they are not considered MWEs."
+    ],
+    [
+        "What a beautiful city San Francisco is!",
+        "San Francisco",
+        "**Analysis:**\r\n- **\"San Francisco\"** is a proper noun referring to a specific city. It functions as a single semantic unit and is commonly recognized as the name of a place. As such, it qualifies as a Multi-Word Expression (MWE).\r\n  \r\n- **Other combinations** such as \"beautiful city\" are adjective-noun pairs where the meaning is directly deducible from their individual components. They do not function as single lexical entries in a comprehensive lexicon."
+    ],
+    [
+        "Never give up hope.",
+        "give up",
+        "**Analysis:**\r\n\r\n- **\"give up\"**\r\n  - *Explanation:* \"give up\" is a phrasal verb meaning to cease making an effort or to abandon something. As a phrasal verb, it functions as a single unit with a meaning that isn't directly deducible from the individual words \"give\" and \"up.\" This aligns with the definition of an MWE, functioning as a single verb and likely to appear as an entry in a comprehensive lexicon.\r\n  \r\n- **\"Never give up\"**\r\n  - *Explanation:* While \"never give up\" is a commonly used imperative phrase encouraging persistence, the MWE definition emphasizes that the expression should function as a single part of speech with a non-compositional meaning. In this case, \"never\" modifies the phrasal verb \"give up\" but doesn't form a new semantic unit on its own. Therefore, \"Never give up\" is not considered an MWE under the provided definition.\r\n\r\n- **Other Parts (\"Never\", \"hope\")**\r\n  - *Explanation:* \"Never\" is an adverb modifying the verb phrase \"give up,\" and \"hope\" is a noun object of the verb. Neither forms an MWE on their own or in combination outside of \"give up.\""
+    ],
+    [
+        "Take a look at this map.",
+        "Take a look",
+        "**Analysis:**\r\n\r\nLet's examine the given sentence token by token to identify potential Multi-Word Expressions (MWEs):\r\n\r\n1. **\"Take a look\"**\r\n   - **Justification:** This is an idiomatic expression meaning to examine or observe something. The phrase functions as a single verb phrase where the meaning isn't directly deducible from the individual words \"take,\" \"a,\" and \"look.\" It is commonly used in English and can be expected to appear as an entry in comprehensive lexicons.\r\n   \r\n2. **\"look at\"**\r\n   - **Justification:** In other contexts, this is a phrasal verb meaning to direct one's gaze toward something. But here, it is part of the phrase \"take a look at\". \"Take a look\" is an MWE, hence \"look at\" is here *not* an MWE."
+    ],
+    [
+        "The traffic light turned green.",
+        "traffic light",
+        "**Analysis:**\r\n\r\n- **\"traffic light\"**: This is a compound noun referring to the signaling device used to control the flow of traffic. The meaning of \"traffic light\" is not directly deducible from the individual words \"traffic\" and \"light\" when used separately. Instead, together they form a specific term that functions as a single noun within the context of the sentence. Therefore, \"traffic light\" qualifies as a Multi-Word Expression (MWE).\r\n\r\n- **\"turned green\"**: This phrase combines the verb \"turned\" with the adjective \"green\" to describe the action of the traffic light changing its signal. While it functions as a verb phrase, the meaning is straightforward and directly derived from its components. It describes a literal change in color rather than functioning as an idiomatic or fixed expression. Hence, \"turned green\" does not qualify as an MWE.\r\n\r\n- **Other elements (\"The\", \".\", etc.)**: These are individual words or punctuation marks that do not form meaningful multi-word units and thus do not qualify as MWEs."
+    ],
+    [
+        "The picture is in black and white.",
+        "black and white",
+        "**Analysis:**\r\n\r\n- **\"is in\"**: This is a standard verb-preposition combination where \"is\" is the verb and \"in\" is the preposition. The meaning of \"is in\" is directly deducible from its component words. Therefore, it is **not** an MWE.\r\n\r\n- **\"black and white\"**: This is a set expression referring to the absence of color, typically describing images or situations without shades, using only black and white. The phrase functions as a single adjective phrase, and its meaning is not entirely deducible from the individual words \"black\" and \"white\" alone. It is commonly used as a fixed expression and could be expected to appear as an entry in a comprehensive lexicon. Therefore, **\"black and white\"** is an MWE."
+    ],
+    [
+        "He wined me and dined me and then wanted to take me to bed!",
+        "wined and dined,take to bed",
+        "**Analysis:**\r\n\r\n- **\"wined and dined\"**: This is an inflected form of the phrasal verb \"wine and dine,\" which functions as a single verb meaning to entertain someone with food and drink, typically for social or romantic purposes. The phrase \"wined and dined\" acts as a unified expression whose meaning is not directly deducible from its individual components. Therefore, it qualifies as an MWE.\r\n\r\n- **\"take to bed\"**: This is a phrasal verb meaning to have sexual relations. In the sentence, the phrase appears as \"take me to bed.\" While \"me\" is an intervening word, the core MWE here is \"take to bed.\" This phrase functions as a single verbal unit with a meaning that cannot be directly inferred from the meanings of \"take,\" \"to,\" and \"bed.\" Hence, \"take to bed\" is identified as an MWE.\r\n\r\nOther combinations of words in the sentence do not form fixed expressions or their meanings are directly deducible from their individual components, and thus do not qualify as MWEs."
+    ],
+    [
+        "The kid is a pain in the neck.",
+        "pain in the neck",
+        "**Analysis:**\r\n\r\n- **\"pain in the neck\"**: This is a common idiomatic expression in English used to describe someone or something that is particularly troublesome or annoying. The meaning of this phrase is not directly deducible from the individual words \"pain,\" \"in,\" \"the,\" and \"neck.\" Instead, it functions as a single noun phrase that conveys a specific meaning beyond the sum of its parts. Therefore, \"pain in the neck\" qualifies as a Multi-Word Expression (MWE).\r\n\r\nOther combinations of words in the sentence do not form MWEs:\r\n\r\n- **\"The kid\"**: This is a simple noun phrase with no idiomatic or fixed expression qualities.\r\n- **\"is a\"**: A common grammatical construction without idiomatic meaning.\r\n- **\"in the\"**: A prepositional phrase without a specific idiomatic meaning.\r\n- **\"neck\"**: A standalone noun.\r\n- **\"The\", \"kid\", \"is\", \"a\", \"neck\", \".\"**: These elements do not combine to form any additional MWEs in this context."
     ]
 ]

@@ -48,11 +48,91 @@
         "timestamp": "20240608093054"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\mwe_annotate_examples.json",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109051018.json",
         "annotation_type": "mwe",
         "template_or_examples": "examples",
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20241109045858"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109051117.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109051018"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109051208.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109051117"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109051315.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109051208"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109052322.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109051315"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109052717.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109052322"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109052825.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109052717"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109052917.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109052825"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109053014.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109052917"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\mwe_annotate_examples_20241109053106.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109053014"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\mwe_annotate_examples.json",
+        "annotation_type": "mwe",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241109053106"
     }
 ]
