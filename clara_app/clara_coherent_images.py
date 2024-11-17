@@ -26,9 +26,19 @@ from .clara_chatgpt4 import (
     )
 
 from .clara_coherent_images_utils import (
+    get_project_params,
+    set_project_params,
+    set_story_data_from_numbered_page_list,
+    set_style_advice,
+    get_style_params_from_project_params,
+    get_element_names_params_from_project_params,
+    get_element_descriptions_params_from_project_params,
+    get_element_descriptions_params_from_project_params,
+    get_page_params_from_project_params,
     score_for_image_dir,
     score_for_evaluation_file,
     parse_image_evaluation_response,
+    get_style_advice,
     get_story_data,
     get_pages,
     get_text,
@@ -75,6 +85,62 @@ import asyncio
 import traceback
 import unicodedata
 from PIL import Image
+
+# Test with 'Boy meets girl' (minimal toy text)
+
+boy_meets_girl_project_dir = '$CLARA/coherent_images/BoyMeetsGirl'
+
+boy_meets_girl_params = {
+    'n_expanded_descriptions': 2,
+    'n_images_per_description': 2,
+
+    'page_interpretation_prompt': 'default',
+    'page_evaluation_prompt': 'default',
+
+    'default_model': 'gpt-4o',
+    'generate_description_model': 'gpt-4o',
+    'example_evaluation_model': 'gpt-4o'
+    }
+
+boy_meets_girl_story = [
+    { "page_number": 1, "text": "The Age-Old Story: Boy meets Girl" },
+    { "page_number": 2, "text": "Boy meets girl." },
+    { "page_number": 3, "text": "Boy loses girl." },
+    { "page_number": 4, "text": "Boy gets girl back again." }
+    ]
+
+boy_meets_girl_style_advice = 'In a manga/anime style'
+
+def test_boy_meets_girl_setup():
+    set_project_params(boy_meets_girl_params, boy_meets_girl_project_dir)
+    set_story_data_from_numbered_page_list(boy_meets_girl_story, boy_meets_girl_project_dir)
+    set_style_advice(boy_meets_girl_style_advice, boy_meets_girl_project_dir)
+
+def test_boy_meets_girl_style():
+    style_params = get_style_params_from_project_params(boy_meets_girl_params, boy_meets_girl_project_dir)
+    style_params['project_dir'] = boy_meets_girl_project_dir
+    cost_dict = asyncio.run(process_style(style_params))
+    print_cost_dict(cost_dict)
+
+def test_boy_meets_girl_element_names():
+    element_name_params = get_element_names_params_from_project_params(boy_meets_girl_params, boy_meets_girl_project_dir)
+    element_name_params['project_dir'] = boy_meets_girl_project_dir
+    element_list_with_names, cost_dict = asyncio.run(process_elements(element_name_params))
+    print(f'Element list with names: {element_list_with_names}')
+    print_cost_dict(cost_dict)
+
+def test_boy_meets_girl_elements():
+    element_params = get_element_descriptions_params_from_project_params(boy_meets_girl_params, boy_meets_girl_project_dir)
+    element_params['project_dir'] = boy_meets_girl_project_dir
+    cost_dict = asyncio.run(generate_element_names(element_params))
+    print_cost_dict(cost_dict)
+
+def test_boy_meets_girl_pages():
+    page_params = get_page_params_from_project_params(boy_meets_girl_params, boy_meets_girl_project_dir)
+    page_params['project_dir'] = boy_meets_girl_project_dir
+    cost_dict = asyncio.run(generate_pages(page_params))
+    print_cost_dict(cost_dict)
+
 
 # Test with La Fontaine 'Le Corbeau et le Renard'
 
@@ -301,7 +367,7 @@ async def generate_expanded_style_description_and_images(description_version_num
     make_project_dir(project_dir, description_directory)
     
     # Read the base style description
-    base_description = read_project_txt_file(project_dir, f'style_description.txt')
+    base_description = get_style_advice(params)
 
     # Get the text of the story
     text = get_text(params)
@@ -509,6 +575,7 @@ async def evaluate_style_fit(image_dir, expanded_description, image_description,
 async def process_elements(params):
     project_dir = params['project_dir']
     n_elements_to_expand = params['n_elements_to_expand']
+    elements_to_generate = params['elements_to_generate'] if 'elements_to_generate' in params else None
     keep_existing_elements = params['keep_existing_elements']
     
     total_cost_dict = {}
@@ -519,7 +586,12 @@ async def process_elements(params):
         element_list_with_names, element_names_cost_dict = await generate_element_names(params)
         total_cost_dict = combine_cost_dicts(total_cost_dict, element_names_cost_dict)
 
-    element_list_with_names = element_list_with_names if n_elements_to_expand == 'all' else element_list_with_names[:n_elements_to_expand]
+    # We can give a specific list of elements to generate
+    if elements_to_generate:
+        element_list_with_names = elements_to_generate
+    # Or say to do the first n
+    elif n_elements_to_expand != 'all':
+        element_list_with_names = element_list_with_names[:n_elements_to_expand]
 
     tasks = []
     for item in element_list_with_names:
@@ -790,10 +862,14 @@ async def evaluate_element_fit(image_dir, expanded_description, image_descriptio
 async def process_pages(params):
     project_dir = params['project_dir']
     n_pages = params['n_pages']
+    pages_to_generate = params['pages_to_generate'] if 'pages_to_generate' in params else None
     
     total_cost_dict = {}
-    page_numbers = get_pages(params)
-    page_numbers = page_numbers if n_pages == 'all' else page_numbers[:n_pages]
+    if pages_to_generate:
+        page_numbers = pages_to_generate
+    else:
+        page_numbers = get_pages(params)
+        page_numbers = page_numbers if n_pages == 'all' else page_numbers[:n_pages]
 
     for page_number in page_numbers:
         cost_dict = await generate_image_for_page(page_number, params)
@@ -1258,6 +1334,7 @@ def generate_overview_html(params):
     html_content = f"""
     <html>
     <head>
+        <meta charset="UTF-8">
         <title>{title} - Overview</title>
         <style>
             .wrapped-pre {{
@@ -1359,7 +1436,7 @@ def generate_overview_html(params):
     story_data = read_project_json_file(project_dir, 'story.json')
     if story_data:
         for page in story_data:
-            page_number = page['page_number']
+            page_number = page['page']
             html_content += f"<h3>Page {page_number}</h3>"
             html_content += f"<p><strong>Text</strong></p>"
             page_text = page['text']

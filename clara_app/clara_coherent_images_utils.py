@@ -5,7 +5,6 @@ from .clara_chatgpt4 import (
     interpret_chat_gpt4_response_as_json,
     )
 
-
 from .clara_utils import (
     read_txt_file,
     write_txt_file,
@@ -19,6 +18,12 @@ from .clara_utils import (
     get_immediate_subdirectories_in_local_directory,
     )
 
+from .constants import (
+    SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+    SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
+    SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
+    )
+
 import json
 import os
 import sys
@@ -27,6 +32,100 @@ import traceback
 import unicodedata
 from PIL import Image
 
+# Params files
+
+default_params = { 'n_expanded_descriptions': 1,
+                   'n_images_per_description': 1,
+                   
+                   'page_interpretation_prompt': 'default',
+                   'page_evaluation_prompt': 'default',
+                   
+                   'default_model': 'gpt-4o',
+                   'generate_description_model': 'gpt-4o',
+                   'example_evaluation_model': 'gpt-4o' }
+
+def get_project_params(project_dir):
+    params_file = project_params_file(project_dir)
+    try:
+        return read_json_file(params_file)
+    except Exception as e:
+        return default_params
+
+def set_project_params(params, project_dir):
+    check_valid_project_params(params)
+    params_file = project_params_file(project_dir)
+    make_root_project_dir(project_dir)
+    write_json_to_file(params, params_file)
+
+def project_params_file(project_dir):
+    return project_pathname(project_dir, 'params.json')
+
+def check_valid_project_params(params):
+    supported_models = [ item[0] for item in SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2 ]
+    
+    supported_page_interpretation_prompts = [ item[0] for item in SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2 ]
+    
+    supported_page_evaluation_prompts = [ item[0] for item in SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2 ]
+                                                   
+    if not isinstance(params, (dict)):
+        raise ImageGenerationError(message=f'bad params {params}')
+    
+    if not 'n_expanded_descriptions' in params or not isinstance(params['n_expanded_descriptions'], (int)):
+        raise ImageGenerationError(message=f'bad params {params}')
+    if not 'n_images_per_description' in params or not isinstance(params['n_images_per_description'], (int)):
+        raise ImageGenerationError(message=f'bad params {params}')
+
+    if not 'page_interpretation_prompt' in params or not params['page_interpretation_prompt'] in supported_page_interpretation_prompts:
+        raise ImageGenerationError(message=f'bad params {params}')
+    if not 'page_evaluation_prompt' in params or not params['page_evaluation_prompt'] in supported_page_interpretation_prompts:
+        raise ImageGenerationError(message=f'bad params {params}')
+
+    if not 'default_model' in params or not params['default_model'] in supported_models:
+        raise ImageGenerationError(message=f'bad params {params}')
+    if not 'generate_description_model' in params or not params['generate_description_model'] in supported_models:
+        raise ImageGenerationError(message=f'bad params {params}')
+    if not 'example_evaluation_model' in params or not params['example_evaluation_model'] in supported_models:
+        raise ImageGenerationError(message=f'bad params {params}')
+
+def get_style_params_from_project_params(params, project_dir):
+    style_params = { 'project_dir': project_dir,
+                     'n_expanded_descriptions': params['n_expanded_descriptions'],
+                     'n_images_per_description': params['n_images_per_description'],
+                     'models_for_tasks': { 'default': params['default_model'],
+                                           'generate_style_description': params['generate_description_model'],
+                                           'style_example_evaluation': params['example_evaluation_model']}
+                     }
+    return style_params
+
+def get_element_names_params_from_project_params(params, project_dir):
+    element_params = { 'project_dir': project_dir,
+                       'models_for_tasks': { 'default': params['default_model']}
+                       }
+    return element_params
+
+def get_element_descriptions_params_from_project_params(params, project_dir):
+    element_params = { 'project_dir': project_dir,
+                   'elements_to_generate': elements_to_generate,
+                   'n_expanded_descriptions': params['n_expanded_descriptions'],
+                   'n_images_per_description': params['n_images_per_description'],
+                   'models_for_tasks': { 'default': params['default_model'],
+                                         'generate_element_description': params['generate_description_model'],
+                                         'evaluate_element_image': params['example_evaluation_model']}
+                   }
+    return element_params
+
+def get_page_params_from_project_params(params, project_dir):
+    page_params = { 'project_dir': project_dir,
+                    'pages_to_generate': pages_to_generate,
+                    'n_expanded_descriptions': params['n_expanded_descriptions'],
+                    'n_images_per_description': params['n_images_per_description'],
+                    'page_interpretation_prompt': params['page_interpretation_prompt'],
+                    'page_evaluation_prompt': params['page_evaluation_prompt'],
+                    'models_for_tasks': { 'default': params['default_model'],
+                                          'generate_page_description': params['generate_description_model'],
+                                          'evaluate_page_image': params['example_evaluation_model']}
+             }
+    return page_params
 
 def score_for_image_dir(image_dir, params):
     return score_for_evaluation_file(f'{image_dir}/evaluation.txt', params)
@@ -52,16 +151,28 @@ def parse_image_evaluation_response(response):
     summary = '\n'.join(summary_lines)
     return score, summary                                
 
+def get_style_advice(params):
+    project_dir = params['project_dir']
+    
+    return read_project_txt_file(project_dir, f'style_description.txt')
+
+def set_style_advice(text, project_dir):
+    make_root_project_dir(project_dir)
+    return write_project_txt_file(text, project_dir, f'style_description.txt')
 
 def get_story_data(params):
     project_dir = params['project_dir']
     
     return read_project_json_file(project_dir, f'story.json')
 
+def set_story_data_from_numbered_page_list(numbered_page_list, project_dir):
+    make_root_project_dir(project_dir)
+    write_project_json_file(numbered_page_list, project_dir, f'story.json')
+
 def get_pages(params):
     story_data = get_story_data(params)
 
-    pages = [ item['page_number'] for item in story_data ]
+    pages = [ item['page'] for item in story_data ]
                
     return pages
 
@@ -77,6 +188,11 @@ def get_style_description(params):
     
     return read_project_txt_file(project_dir, f'style/expanded_description.txt')
 
+def get_style_image(params):
+    project_dir = params['project_dir']
+    
+    return f'style/image.jpg'
+
 def get_all_element_texts(params):
     project_dir = params['project_dir']
     
@@ -86,18 +202,30 @@ def get_all_element_texts(params):
 def get_element_description(element_text, params):
     project_dir = params['project_dir']
     
+    name = element_text_to_element_name(element_text, params)
+    return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
+
+def get_element_image(element_text, params):
+    project_dir = params['project_dir']
+    
+    name = element_text_to_element_name(element_text, params)
+    return f'elements/{name}/image.jpg'
+
+def element_text_to_element_name(element_text, params):
+    project_dir = params['project_dir']
+    
     element_list = read_project_json_file(project_dir, f'elements/elements.json')
     for item in element_list:
         text = item['text']
         if text == element_text:
             name = item['name']
-            return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
+            return name
     raise ImageGenerationError(message=f'Unable to find element "{element_text}"')
 
 def get_page_text(page_number, params):
     story_data = get_story_data(params)
     for item in story_data:
-        if page_number == item['page_number']:
+        if page_number == item['page']:
             text = item['text']
             return text
     raise ImageGenerationError(message=f'Unable to find page "{page_number}"')
@@ -182,10 +310,15 @@ def write_project_cost_file(cost_dict, project_dir, pathname):
         cost_dict['total'] = sum([ cost_dict[key] for key in cost_dict ])
     write_project_json_file(cost_dict, project_dir, pathname)
 
+
+
 # Project files etc
 
 def project_pathname(project_dir, pathname):
     return absolute_file_name(os.path.join(project_dir, pathname))
+
+def make_root_project_dir(project_dir):
+    make_directory(project_dir, parents=True, exist_ok=True)
 
 def make_project_dir(project_dir, directory):
     make_directory(project_pathname(project_dir, directory), parents=True, exist_ok=True)
@@ -199,8 +332,8 @@ def read_project_json_file(project_dir, pathname):
 def write_project_txt_file(text, project_dir, pathname):
     write_txt_file(text, project_pathname(project_dir, pathname))
 
-def write_project_json_file(text, project_dir, pathname):
-    write_json_to_file(text, project_pathname(project_dir, pathname))
+def write_project_json_file(data, project_dir, pathname):
+    write_json_to_file(data, project_pathname(project_dir, pathname))
 
 class ImageGenerationError(Exception):
     def __init__(self, message = 'Image generation error'):

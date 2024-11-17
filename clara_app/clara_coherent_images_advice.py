@@ -43,15 +43,13 @@ def set_page_advice(advice_text, page_number, params):
     check_valid_page_number(page_number, params)
     return set_advice_text(advice_text, 'page', page_number, params)
  
-
-
 def get_advice_text(element_or_page, advice_id, params):
     pathname = advice_pathname(element_or_page, params)
     if file_exists(pathname):
         advice_dict = read_json_file(pathname)
-        return advice_dict[advice_id] if advice_id in advice_dict else None
+        return advice_dict[advice_id] if advice_id in advice_dict else ''
     else:
-        return None
+        return ''
 
 def set_advice_text(advice_text, element_or_page, advice_id, params):
     pathname = advice_pathname(element_or_page, params)

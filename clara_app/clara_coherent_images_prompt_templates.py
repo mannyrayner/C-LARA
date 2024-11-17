@@ -671,7 +671,7 @@ Score the evaluation as a number from 0 to 4 according to the following conventi
 
 **Provide the evaluation score, followed by a brief summary of any discrepancies identified.**
 
-+Image specification:
+Image specification:
 {expanded_description}
 
 Image Description:
