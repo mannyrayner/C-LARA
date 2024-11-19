@@ -227,6 +227,15 @@ def get_element_image(element_text, params):
     name = element_text_to_element_name(element_text, params)
     return f'elements/{name}/image.jpg'
 
+def style_image_name():
+    return 'style'
+
+def element_image_name(element_name):
+    return f'element_{element_name}'
+
+def page_image_name(page_number):
+    return f'page_{page_number}'
+
 def element_text_to_element_name(element_text, params):
     project_dir = params['project_dir']
     

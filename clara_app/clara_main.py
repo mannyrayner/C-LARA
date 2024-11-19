@@ -164,6 +164,7 @@ from .clara_coherent_images_utils import get_project_params, set_project_params,
 from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, set_style_advice
 from .clara_coherent_images_utils import get_style_advice, get_style_description, get_style_image, get_all_element_texts
 from .clara_coherent_images_utils import get_element_description, get_element_image, get_page_description, get_page_image
+from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name
 from .clara_coherent_images_advice import get_element_advice, get_page_advice, set_page_advice, set_element_advice
 from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text
 from .clara_utils import absolute_file_name, absolute_local_file_name
@@ -1624,7 +1625,7 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         set_style_advice(advice, project_dir)
 
-        image_name = f'style'
+        image_name = style_image_name()
         self.store_image_advice(image_name, advice, 'style')
 
     def set_element_advice_v2(self, advice, element_name):
@@ -1632,7 +1633,7 @@ class CLARAProjectInternal:
         params = { 'project_dir': project_dir }
         set_element_advice(advice, element_name, params)
 
-        image_name = f'element_{element_name}'
+        image_name = element_image_name(element_name)
         self.store_image_advice(image_name, advice, 'element')
 
     def set_page_advice_v2(self, advice, page_number):
@@ -1640,7 +1641,7 @@ class CLARAProjectInternal:
         params = { 'project_dir': project_dir }
         set_page_advice(advice, page_number, params)
 
-        image_name = f'page_{page_number}'
+        image_name = page_image_name(page_number)
         self.store_image_advice(image_name, advice, 'page')
 
     def store_v2_style_data(self, params, callback=None):

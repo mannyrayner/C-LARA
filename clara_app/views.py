@@ -67,7 +67,7 @@ from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 
 from .clara_coherent_images_utils import get_style_params_from_project_params, get_element_names_params_from_project_params
 from .clara_coherent_images_utils import get_element_names_params_from_project_params, get_element_descriptions_params_from_project_params
-from .clara_coherent_images_utils import get_page_params_from_project_params, default_params
+from .clara_coherent_images_utils import get_page_params_from_project_params, default_params, style_image_name, element_image_name, page_image_name
 
 from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
@@ -5094,8 +5094,9 @@ def edit_images_v2(request, project_id, status):
                     errors = element_formset.errors
                 else:
                     # Go through the element items in the form.
-                    # Collect material to save and items where we want to (re-)generate the image.
+                    # Collect material to save and items where we want to delete or (re-)generate the image.
                     elements_to_generate = []
+                    elements_to_delete = []
                     
                     for i in range(0, len(element_formset)):
                         form = element_formset[i]
@@ -5103,8 +5104,11 @@ def edit_images_v2(request, project_id, status):
                         element_name = form.cleaned_data.get('element_name')
                         advice = form.cleaned_data.get('advice')
                         generate = form.cleaned_data.get('generate')
+                        delete = form.cleaned_data.get('delete')
 
                         clara_project_internal.set_element_advice_v2(advice, element_name)
+                        if delete:
+                            elements_to_delete.append(element_name)
                         if generate:
                             elements_to_generate.append(element_name)
             elif action in ( 'save_page_advice', 'create_page_descriptions_and_images'):
@@ -5115,6 +5119,7 @@ def edit_images_v2(request, project_id, status):
                     # Go through the page items in the form.
                     # Collect material to save and items where we want to (re-)generate the image.
                     pages_to_generate = []
+                    pages_to_delete = []
                     
                     new_plain_texts = []
                     new_segmented_texts = []
@@ -5136,8 +5141,11 @@ def edit_images_v2(request, project_id, status):
                         page = form.cleaned_data.get('page', 1)
                         advice = form.cleaned_data.get('advice')
                         generate = form.cleaned_data.get('generate')
+                        delete = form.cleaned_data.get('delete')
 
                         clara_project_internal.set_page_advice_v2(advice, page)
+                        if delete:
+                            pages_to_delete.append(page)
                         if generate:
                             pages_to_generate.append(page)
                                     
@@ -5214,8 +5222,28 @@ def edit_images_v2(request, project_id, status):
                 elif action == 'save_style_advice':
                     messages.success(request, "Style advice updated")
                 elif action == 'save_element_advice':
+                    if elements_to_delete:
+                        try:
+                            for element_name in elements_to_delete:
+                                image_name = element_image_name(element_name)
+                                clara_project_internal.remove_project_image(image_name)
+                            all_deleted_elements_string = ", ".join(elements_to_delete)
+                            messages.success(request, f"Element deleted: '{all_deleted_elements_string}'")
+                        except Exception as e:
+                            messages.error(request, f"Error when trying to delete elements")
+                            messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     messages.success(request, "Element advice updated")
                 elif action == 'save_page_advice':
+                    if pages_to_delete:
+                        try:
+                            for page_number in pages_to_delete:
+                                image_name = page_image_name(page_number)
+                                clara_project_internal.remove_project_image(image_name)
+                            all_deleted_pages_string = ", ".join([str(page_number) for page_number in pages_to_delete])
+                            messages.success(request, f"Page images deleted: '{all_deleted_pages_string}'")
+                        except Exception as e:
+                            messages.error(request, f"Error when trying to delete page images")
+                            messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     messages.success(request, "Page advice updated")
                 return redirect('edit_images_v2', project_id=project_id, status='none')
             
