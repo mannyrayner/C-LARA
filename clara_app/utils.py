@@ -128,6 +128,26 @@ def store_api_calls(api_calls, project, user, operation):
         
     #print(f'get_project_operation_costs after: {get_project_operation_costs(user, project)}')
 
+def store_cost_dict(cost_dict, project, user):
+    print(cost_dict)
+    user_profile = user.userprofile
+    total_cost = sum(Decimal(cost_dict[operation]) for operation in cost_dict)
+
+    with transaction.atomic():
+        timestamp = timezone.now()  # Use current time for the aggregated entry
+        APICall.objects.create(
+            user=user,
+            project=project,
+            operation='coherent_image_generation',
+            cost=total_cost,
+            duration=0,
+            retries=0,
+            timestamp=timestamp,
+        )
+        # Deduct the total cost from the user's credit balance
+        user_profile.credit -= total_cost
+        user_profile.save()
+
 def get_user_api_cost(user):
     total_cost = APICall.objects.filter(user=user).aggregate(Sum('cost'))
     return total_cost['cost__sum'] if total_cost['cost__sum'] is not None else 0

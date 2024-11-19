@@ -4,8 +4,9 @@ from .clara_coherent_images_utils import (
     get_text,
     get_style_description,
     get_all_element_texts,
-    get_config_info_and_callback_from_params,
+    get_config_info_from_params,
     project_pathname,
+    make_project_dir,
     read_project_txt_file,
     read_project_json_file,
     write_project_txt_file,
@@ -40,6 +41,8 @@ def set_element_advice(advice_text, element_name, params):
     set_advice_text(advice_text, 'element', element_name, params)
 
 def set_page_advice(advice_text, page_number, params):
+    project_dir = params['project_dir']
+    make_project_dir(project_dir, 'pages')
     check_valid_page_number(page_number, params)
     return set_advice_text(advice_text, 'page', page_number, params)
  

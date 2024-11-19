@@ -73,6 +73,7 @@ class CLARAProject(models.Model):
     l1 = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES)
     simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
     uses_coherent_image_set = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set.")
+    uses_coherent_image_set_v2 = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set (V2).")
     use_translation_for_images = models.BooleanField(default=False, help_text="Use translations for generating coherent image sets.")
 
 # Move this to utils.py to avoid circular import
@@ -641,6 +642,12 @@ class ImageMetadata(models.Model):
         ('inline', 'Inline'),
     ]
 
+    IMAGE_TYPE_CHOICES = [
+        ('style', 'Style'),
+        ('element', 'Element'),
+        ('page', 'Page'),
+    ]
+
     REQUEST_TYPE_CHOICES = [
         ('image-generation', 'Generation'),
         ('image-understanding', 'Understanding'),
@@ -659,10 +666,14 @@ class ImageMetadata(models.Model):
                                            help_text='AI-generated description of the image content.')
     user_prompt = models.TextField(blank=True, default='',
                                    help_text='Most recent user prompt for generating or modifying this image.')
-    request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='image-generatio')
+    image_type = models.CharField(max_length=20, choices=IMAGE_TYPE_CHOICES, default='page')
+    request_type = models.CharField(max_length=20, choices=REQUEST_TYPE_CHOICES, default='image-generation')
     description_variable = models.CharField(max_length=255, blank=True, default='',
                                             help_text='Variable name for storing image understanding result.')
     description_variables = models.JSONField(blank=True, default=list, help_text='List of description variables for this image generation request.')
+    element_name = models.CharField(max_length=255, blank=True, default='',
+                                    help_text='Name of element for an element entry.')
+    advice = models.TextField(blank=True, default='')
 
     class Meta:
         db_table = 'orm_image_metadata'
@@ -685,10 +696,12 @@ class ArchivedImageMetadata(models.Model):
     style_description = models.TextField(blank=True)
     content_description = models.TextField(blank=True)
     user_prompt = models.TextField(blank=True)
+    image_type = models.CharField(max_length=20, default='page')
     request_type = models.CharField(max_length=200, default='image-generation')
     description_variable = models.CharField(max_length=200, blank=True)
     description_variables = models.JSONField(default=list, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+    advice = models.TextField(blank=True, default='')
 
 class ImageDescription(models.Model):
     project_id = models.CharField(max_length=255)
@@ -705,6 +718,24 @@ class ImageDescription(models.Model):
 
     def __str__(self):
         return f"{self.project_id} | {self.description_variable}"
+            
+# Instead, do this with a file in the coherent image generation directory to keep it self-contained.
+
+##class ImageGenerationParams(models.Model):
+##    MODEL_CHOICES = [
+##        ('gpt-4o', 'GPT-4o'),
+##        ('o1-mini', 'O1-Mini'),
+##    ]
+##
+##    project_id = models.CharField(max_length=255)
+##    n_expanded_descriptions = models.IntegerField(default=1)
+##    n_images_per_description = models.IntegerField(default=1)
+##    default_model = models.CharField(max_length=20, choices=MODEL_CHOICES, default='gpt-4o')
+##    generate_description_model = models.CharField(max_length=20, choices=MODEL_CHOICES, default='gpt-4o')
+##    example_evaluation_model = models.CharField(max_length=20, choices=MODEL_CHOICES, default='gpt-4o')
+##
+##    def __str__(self):
+##        return f"{self.project_id} image generation params"
 
 class PhoneticEncoding(models.Model):
     language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES, primary_key=True)

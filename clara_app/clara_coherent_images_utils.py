@@ -36,6 +36,8 @@ from PIL import Image
 
 default_params = { 'n_expanded_descriptions': 1,
                    'n_images_per_description': 1,
+                   'n_previous_pages': 1,
+                   'max_description_generation_rounds': 1,
                    
                    'page_interpretation_prompt': 'default',
                    'page_evaluation_prompt': 'default',
@@ -71,60 +73,74 @@ def check_valid_project_params(params):
         raise ImageGenerationError(message=f'bad params {params}')
     
     if not 'n_expanded_descriptions' in params or not isinstance(params['n_expanded_descriptions'], (int)):
-        raise ImageGenerationError(message=f'bad params {params}')
+        raise ImageGenerationError(message=f'bad params {params}: n_expanded_descriptions')
     if not 'n_images_per_description' in params or not isinstance(params['n_images_per_description'], (int)):
-        raise ImageGenerationError(message=f'bad params {params}')
+        raise ImageGenerationError(message=f'bad params {params}: n_images_per_description')
+    if not 'n_previous_pages' in params or not isinstance(params['n_previous_pages'], (int)):
+        raise ImageGenerationError(message=f'bad params {params}: n_previous_pages')
+    if not 'max_description_generation_rounds' in params or not isinstance(params['max_description_generation_rounds'], (int)):
+        raise ImageGenerationError(message=f'bad params {params}: max_description_generation_rounds')
 
     if not 'page_interpretation_prompt' in params or not params['page_interpretation_prompt'] in supported_page_interpretation_prompts:
-        raise ImageGenerationError(message=f'bad params {params}')
+        raise ImageGenerationError(message=f'bad params {params}: page_interpretation_prompt')
     if not 'page_evaluation_prompt' in params or not params['page_evaluation_prompt'] in supported_page_interpretation_prompts:
-        raise ImageGenerationError(message=f'bad params {params}')
+        raise ImageGenerationError(message=f'bad params {params}: page_evaluation_prompt')
 
     if not 'default_model' in params or not params['default_model'] in supported_models:
-        raise ImageGenerationError(message=f'bad params {params}')
+        raise ImageGenerationError(message=f'bad params {params}: default_model')
     if not 'generate_description_model' in params or not params['generate_description_model'] in supported_models:
-        raise ImageGenerationError(message=f'bad params {params}')
+        raise ImageGenerationError(message=f'bad params {params}: generate_description_model')
     if not 'example_evaluation_model' in params or not params['example_evaluation_model'] in supported_models:
-        raise ImageGenerationError(message=f'bad params {params}')
+        raise ImageGenerationError(message=f'bad params {params}: example_evaluation_model')
 
-def get_style_params_from_project_params(params, project_dir):
-    style_params = { 'project_dir': project_dir,
-                     'n_expanded_descriptions': params['n_expanded_descriptions'],
-                     'n_images_per_description': params['n_images_per_description'],
-                     'models_for_tasks': { 'default': params['default_model'],
-                                           'generate_style_description': params['generate_description_model'],
-                                           'style_example_evaluation': params['example_evaluation_model']}
+def get_style_params_from_project_params(params):
+    style_params = {
+        'n_expanded_descriptions': params['n_expanded_descriptions'],
+        'n_images_per_description': params['n_images_per_description'],
+        'models_for_tasks': { 'default': params['default_model'],
+                              'generate_style_description': params['generate_description_model'],
+                              'style_example_evaluation': params['example_evaluation_model']}
                      }
     return style_params
 
-def get_element_names_params_from_project_params(params, project_dir):
-    element_params = { 'project_dir': project_dir,
-                       'models_for_tasks': { 'default': params['default_model']}
-                       }
+def get_element_names_params_from_project_params(params):
+    element_params = {
+        'models_for_tasks': { 'default': params['default_model']}
+        }
     return element_params
 
-def get_element_descriptions_params_from_project_params(params, project_dir):
-    element_params = { 'project_dir': project_dir,
-                   'elements_to_generate': elements_to_generate,
-                   'n_expanded_descriptions': params['n_expanded_descriptions'],
-                   'n_images_per_description': params['n_images_per_description'],
-                   'models_for_tasks': { 'default': params['default_model'],
-                                         'generate_element_description': params['generate_description_model'],
-                                         'evaluate_element_image': params['example_evaluation_model']}
-                   }
+def get_element_descriptions_params_from_project_params(params, elements_to_generate=None):
+    element_params = {
+        'n_expanded_descriptions': params['n_expanded_descriptions'],
+        'n_images_per_description': params['n_images_per_description'],
+        'models_for_tasks': { 'default': params['default_model'],
+                              'generate_element_description': params['generate_description_model'],
+                              'evaluate_element_image': params['example_evaluation_model']}
+        }
+
+    if elements_to_generate:
+        element_params['elements_to_generate'] = elements_to_generate
+        
     return element_params
 
-def get_page_params_from_project_params(params, project_dir):
-    page_params = { 'project_dir': project_dir,
-                    'pages_to_generate': pages_to_generate,
-                    'n_expanded_descriptions': params['n_expanded_descriptions'],
-                    'n_images_per_description': params['n_images_per_description'],
-                    'page_interpretation_prompt': params['page_interpretation_prompt'],
-                    'page_evaluation_prompt': params['page_evaluation_prompt'],
-                    'models_for_tasks': { 'default': params['default_model'],
-                                          'generate_page_description': params['generate_description_model'],
-                                          'evaluate_page_image': params['example_evaluation_model']}
+def get_page_params_from_project_params(params, pages_to_generate=None):
+    page_params = {
+        'pages_to_generate': pages_to_generate,
+        'n_expanded_descriptions': params['n_expanded_descriptions'],
+        'n_images_per_description': params['n_images_per_description'],
+        'n_previous_pages': params['n_previous_pages'],
+        'max_description_generation_rounds': params['max_description_generation_rounds'],
+        
+        'page_interpretation_prompt': params['page_interpretation_prompt'],
+        'page_evaluation_prompt': params['page_evaluation_prompt'],
+        
+        'models_for_tasks': { 'default': params['default_model'],
+                              'generate_page_description': params['generate_description_model'],
+                              'evaluate_page_image': params['example_evaluation_model']}
              }
+    if pages_to_generate:
+        page_params['pages_to_generate'] = pages_to_generate
+    
     return page_params
 
 def score_for_image_dir(image_dir, params):
@@ -172,7 +188,7 @@ def set_story_data_from_numbered_page_list(numbered_page_list, project_dir):
 def get_pages(params):
     story_data = get_story_data(params)
 
-    pages = [ item['page'] for item in story_data ]
+    pages = [ item['page_number'] for item in story_data ]
                
     return pages
 
@@ -225,7 +241,7 @@ def element_text_to_element_name(element_text, params):
 def get_page_text(page_number, params):
     story_data = get_story_data(params)
     for item in story_data:
-        if page_number == item['page']:
+        if page_number == item['page_number']:
             text = item['text']
             return text
     raise ImageGenerationError(message=f'Unable to find page "{page_number}"')
@@ -241,23 +257,23 @@ def get_page_description(page_number, params):
 def get_page_image(page_number, params):
     project_dir = params['project_dir']
     
-    return read_project_txt_file(project_dir, f'pages/page{page_number}/image.txt')
+    return project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
 
 # OpenAI calls
 
-async def get_api_chatgpt4_response_for_task(prompt, task_name, params):
-    config_info, callback = get_config_info_and_callback_from_params(task_name, params)
+async def get_api_chatgpt4_response_for_task(prompt, task_name, params, callback=None):
+    config_info = get_config_info_from_params(task_name, params)
     return await get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback)
 
-async def get_api_chatgpt4_image_response_for_task(description, image_file, task_name, params):
-    config_info, callback = get_config_info_and_callback_from_params(task_name, params)
+async def get_api_chatgpt4_image_response_for_task(description, image_file, task_name, params, callback=None):
+    config_info = get_config_info_from_params(task_name, params)
     return await get_api_chatgpt4_image_response(description, image_file, config_info=config_info, callback=callback)
 
-async def get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, task_name, params):
-    config_info, callback = get_config_info_and_callback_from_params(task_name, params)
+async def get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, task_name, params, callback=None):
+    config_info = get_config_info_from_params(task_name, params)
     return await get_api_chatgpt4_interpret_image_response(prompt, image_file, config_info=config_info, callback=callback)
 
-def get_config_info_and_callback_from_params(task_name, params):
+def get_config_info_from_params(task_name, params):
 
     if task_name in params['models_for_tasks']:
         model = params['models_for_tasks'][task_name]
@@ -271,9 +287,7 @@ def get_config_info_and_callback_from_params(task_name, params):
     if model:
         config_info['gpt_model'] = model
 
-    callback = params['callback'] if 'callback' in params else None
-
-    return config_info, callback
+    return config_info
 
 # Costs
 

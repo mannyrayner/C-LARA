@@ -65,8 +65,10 @@ class ImageRepositoryORM:
 
     def add_entry(self, project_id, image_name, file_path, associated_text='', associated_areas='',
                   page=1, position='bottom', style_description='', content_description='',
-                  user_prompt='', request_type='image-generation', description_variable='',
-                  description_variables=[], callback=None):  
+                  user_prompt='', request_type='image-generation',
+                  description_variable='', description_variables=[],
+                  image_type='page', advice='', element_name='',
+                  callback=None):  
         try:
             project_id = str(project_id)
             page = int(page)
@@ -84,7 +86,10 @@ class ImageRepositoryORM:
                     'content_description': content_description,
                     'request_type': request_type,
                     'description_variable': description_variable,
-                    'description_variables': description_variables,  
+                    'description_variables': description_variables,
+                    'image_type': image_type,
+                    'advice': advice,
+                    'element_name': element_name,
                     'user_prompt': user_prompt
                 }
             )
@@ -96,6 +101,25 @@ class ImageRepositoryORM:
 
         except Exception as e:
             error_message = f'*** Error when adding/updating image entry "{project_id}/{image_name}" in the database: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image database inconsistency')
+
+    def store_advice(self, project_id, image_name, advice, image_type, callback=None):
+        try:
+            # Ensure project_id is a string
+            project_id = str(project_id)
+
+            # Try to update the existing entry with the new advice
+            updated_count = ImageMetadata.objects.filter(project_id=project_id, image_name=image_name).update(advice=advice)
+
+            if updated_count == 0:
+                # We don't already have an image record here, so create one as a placeholder for the advice
+                file_path = ''
+                #post_task_update(callback, f'{self}.add_entry({project_id}, {image_name}, {file_path}, image_type={image_type}, advice={advice}, callback={callback})')
+                self.add_entry(project_id, image_name, file_path, image_type=image_type, advice=advice, callback=callback)
+            
+        except Exception as e:
+            error_message = f'*** Error when updating advice for "{project_id}/{image_name}": "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image database inconsistency')
 
@@ -176,6 +200,9 @@ class ImageRepositoryORM:
                 request_type=entry.request_type,
                 description_variable=entry.description_variable,
                 description_variables=entry.description_variables,
+                image_type=entry.image_type,
+                advice=entry.advice,
+                element_name=entry.element_name,
                 user_prompt=entry.user_prompt
             )
 
@@ -211,8 +238,11 @@ class ImageRepositoryORM:
                 content_description=entry.content_description,
                 request_type=entry.request_type,
                 description_variable=entry.description_variable,
-                description_variables=entry.description_variables, 
-                user_prompt=entry.user_prompt
+                description_variables=entry.description_variables,
+                user_prompt=entry.user_prompt,
+                image_type=entry.image_type,
+                element_name=entry.element_name,
+                advice=entry.advice
             )
 
             return image
@@ -251,7 +281,10 @@ class ImageRepositoryORM:
                               request_type=entry.request_type,
                               description_variable=entry.description_variable,
                               description_variables=entry.description_variables,
-                              user_prompt=entry.user_prompt)
+                              user_prompt=entry.user_prompt,
+                              image_type=entry.image_type,
+                              element_name=entry.element_name,
+                              advice=entry.advice)
                 images.append(image)
 
             post_task_update(callback, f'--- Retrieved {len(images)} images for project {project_id}')
@@ -509,7 +542,10 @@ class ImageRepositoryORM:
                 user_prompt=image_metadata.user_prompt,
                 request_type=image_metadata.request_type,
                 description_variable=image_metadata.description_variable,
-                description_variables=image_metadata.description_variables
+                description_variables=image_metadata.description_variables,
+                advice=image_metadata.advice,
+                element_name=image_metadata.image_metadata,
+                image_type=image_metadata.image_type
             )
         except Exception as e:
             error_message = f'*** Error when archiving image entry "{image_metadata.project_id}/{image_metadata.image_name}" in the database: "{str(e)}"\n{traceback.format_exc()}'

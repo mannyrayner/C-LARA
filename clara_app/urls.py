@@ -108,6 +108,7 @@ urlpatterns = [
     path('project/<int:project_id>/process_manual_alignment_complete/<str:status>/', views.process_manual_alignment_complete, name='process_manual_alignment_complete'),
     path('project/<int:project_id>/generate_annotated_segmented_file/', views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
+    path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
     path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 
     
@@ -116,6 +117,8 @@ urlpatterns = [
     path('project/<int:project_id>/delete_archive_image/<str:archived_image_id>', views.delete_archive_image, name='delete_archive_image'),
     path('project/<int:project_id>/create_dall_e_3_image_status/<str:report_id>/', views.create_dall_e_3_image_status, name='create_dall_e_3_image_status'),
     path('project/<int:project_id>/create_dall_e_3_image_monitor/<str:report_id>/', views.create_dall_e_3_image_monitor, name='create_dall_e_3_image_monitor'),
+    path('project/<int:project_id>/coherent_images_v2_status/<str:report_id>/', views.coherent_images_v2_status, name='coherent_images_v2_status'),
+    path('project/<int:project_id>/coherent_images_v2_monitor/<str:report_id>/', views.coherent_images_v2_monitor, name='coherent_images_v2_monitor'),
     path('project/<int:project_id>/set_format_preferences/', views.set_format_preferences, name='set_format_preferences'),
     path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
     path('project/<int:project_id>/render_text_start_phonetic/', views.render_text_start_phonetic, name='render_text_start_phonetic'),

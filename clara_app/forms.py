@@ -8,9 +8,21 @@ from .models import Activity, ActivityRegistration, ActivityComment, ActivityVot
 
 from django.contrib.auth.models import User
 
-from .constants import SUPPORTED_LANGUAGES, SUPPORTED_LANGUAGES_AND_DEFAULT, SUPPORTED_LANGUAGES_AND_OTHER, SIMPLE_CLARA_TYPES
-from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES, RECENT_TIME_PERIOD_CHOICES, DEFAULT_RECENT_TIME_PERIOD
-from .constants import TTS_CHOICES
+from .constants import (
+    SUPPORTED_LANGUAGES,
+    SUPPORTED_LANGUAGES_AND_DEFAULT,
+    SUPPORTED_LANGUAGES_AND_OTHER,
+    SIMPLE_CLARA_TYPES,
+    ACTIVITY_CATEGORY_CHOICES,
+    ACTIVITY_STATUS_CHOICES,
+    ACTIVITY_RESOLUTION_CHOICES,
+    RECENT_TIME_PERIOD_CHOICES,
+    DEFAULT_RECENT_TIME_PERIOD,
+    TTS_CHOICES,
+    SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+    SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
+    SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
+    )
 
 from .clara_utils import is_rtl_language, is_chinese_language
         
@@ -117,8 +129,10 @@ class UnifiedSearchForm(forms.Form):
 class ProjectCreationForm(forms.ModelForm):
     #title = forms.CharField(widget=forms.TextInput(attrs={'style': 'width: 100%;'}))  # Uses full width of its container
     title = forms.CharField(widget=forms.TextInput(attrs={'size': '60'}))
-    uses_coherent_image_set = forms.BooleanField(required=False, label='Use Coherent Image Set',
-                                                 help_text="Check this if the project should use a coherent style for all images.")
+    uses_coherent_image_set = forms.BooleanField(required=False, label='Use Coherent Image Set (V2)',
+                                                 help_text="Check this if the project should use a coherent style for all images (V1).")
+    uses_coherent_image_set_v2 = forms.BooleanField(required=False, label='Use Coherent Image Set (V2)',
+                                                 help_text="Check this if the project should use a coherent style for all images (V2).")
     use_translation_for_images = forms.BooleanField(required=False, label='Use Translations for Images',
                                                     help_text="Check this if the project should use translations for generating coherent image sets.")
 
@@ -238,6 +252,7 @@ class UpdateProjectTitleForm(forms.Form):
 
 class UpdateCoherentImageSetForm(forms.Form):
     uses_coherent_image_set = forms.BooleanField(required=False)
+    uses_coherent_image_set_v2 = forms.BooleanField(required=False)
     use_translation_for_images = forms.BooleanField(required=False)
 
 class AddCreditForm(forms.Form):
@@ -801,6 +816,43 @@ class ImageForm(forms.Form):
 
 ImageFormSet = formset_factory(ImageForm, extra=1)
 
+class ImageFormV2(forms.Form):
+    image_type = forms.ChoiceField(label='Image Type',
+                                   required=False,
+                                   choices=[('style', 'Style'), ('element', 'Element'), ('page', 'Page')])
+    image_file_path = forms.ImageField(label='Image File', required=False)
+    image_base_name = forms.CharField(label='Image File Base Name',
+                                      max_length=100,
+                                      widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+                                      required=False)
+    image_name = forms.CharField(label='Image Name', max_length=100, required=False)
+    advice = forms.CharField(label='Advice for creating image', widget=forms.Textarea(attrs={'rows': 12}), required=False)
+    page_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    segmented_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    translated_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    mwe_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    lemma_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    gloss_text = forms.CharField(label='Page Text',
+                                widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
+                                required=False)
+    page = forms.IntegerField(label='Page Number', min_value=1, required=False)
+    position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=False)
+    element_name = forms.CharField(label='Element name', max_length=100, required=False)
+    generate = forms.BooleanField(label='Generate Image', required=False)
+    delete = forms.BooleanField(label='Delete Image', required=False)
+
+ImageFormSetV2 = formset_factory(ImageFormV2, extra=0)
+
 class ImageDescriptionForm(forms.Form):
     description_variable = forms.CharField(label='Description Variable', max_length=255, required=False)
     explanation = forms.CharField(label='Explanation', widget=forms.Textarea(attrs={'rows': 4}), required=False)
@@ -818,6 +870,26 @@ class StyleImageForm(forms.Form):
 
 class ImageSequenceForm(forms.Form):
     pass
+
+# For coherent images v2
+class CoherentImagesV2ParamsForm(forms.Form):
+    n_expanded_descriptions = forms.IntegerField(label="Number of descriptions to create per item")
+    n_images_per_description = forms.IntegerField(label="Number of images to create per description")
+    n_previous_pages = forms.IntegerField(label="Number of previous pages to use as context when creating a page image")
+    max_description_generation_rounds = forms.IntegerField(label="Maximum number of rounds of generation to try when creating a page image")
+    
+    page_interpretation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
+                                                   label="Method to use for interpreting page images")
+    page_evaluation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
+                                               label="Method to use for comparing interpretation and prompt for page images")
+    
+    default_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+                                      label="Default AI model")
+    generate_description_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+                                                   label="AI model to use for generating image prompts")
+    example_evaluation_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+                                                 label="AI model to use for checking descriptions")
+    
 
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:

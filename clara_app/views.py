@@ -45,7 +45,8 @@ from .forms import ImageForm, ImageFormSet, ImageDescriptionForm, ImageDescripti
 from .forms import PhoneticLexiconForm, PlainPhoneticLexiconEntryFormSet, AlignedPhoneticLexiconEntryFormSet
 from .forms import L2LanguageSelectionForm, AddProjectToReadingHistoryForm, RequirePhoneticTextForm, SatisfactionQuestionnaireForm
 from .forms import GraphemePhonemeCorrespondenceFormSet, AccentCharacterFormSet, FormatPreferencesForm
-from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, make_asynch_callback_and_report_id
+from .forms import ImageFormV2, ImageFormSetV2, CoherentImagesV2ParamsForm
+from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, store_cost_dict, make_asynch_callback_and_report_id
 from .utils import get_user_api_cost, get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
 from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_named_project_role, language_master_required
 from .utils import post_task_update_in_db, get_task_updates, has_saved_internalised_and_annotated_text
@@ -63,6 +64,10 @@ from .clara_prompt_templates import PromptTemplateRepository
 from .clara_dependencies import CLARADependencies
 from .clara_reading_histories import ReadingHistoryInternal
 from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+
+from .clara_coherent_images_utils import get_style_params_from_project_params, get_element_names_params_from_project_params
+from .clara_coherent_images_utils import get_element_names_params_from_project_params, get_element_descriptions_params_from_project_params
+from .clara_coherent_images_utils import get_page_params_from_project_params, default_params
 
 from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
@@ -1919,13 +1924,18 @@ def create_project(request):
             l2_language = form.cleaned_data['l2']
             l1_language = form.cleaned_data['l1']
             uses_coherent_image_set = form.cleaned_data['uses_coherent_image_set']
+            uses_coherent_image_set_v2 = form.cleaned_data['uses_coherent_image_set_v2']
             use_translation_for_images = form.cleaned_data['use_translation_for_images']
+            if uses_coherent_image_set and uses_coherent_image_set_v2:
+                messages.error(request, "The coherent image set cannot be both V1 and V2")
+                return render(request, 'clara_app/create_project.html', {'form': form})
             # Create a new project in Django's database, associated with the current user
             clara_project = CLARAProject(title=title,
                                          user=request.user,
                                          l2=l2_language,
                                          l1=l1_language,
                                          uses_coherent_image_set=uses_coherent_image_set,
+                                         uses_coherent_image_set_v2=uses_coherent_image_set_v2,
                                          use_translation_for_images=use_translation_for_images)
             clara_project.save()
             internal_id = create_internal_project_id(title, clara_project.id)
@@ -3158,6 +3168,7 @@ def project_detail(request, project_id):
         title_form = UpdateProjectTitleForm(prefix="title")
         image_set_form = UpdateCoherentImageSetForm(prefix="image_set",
                                                     initial={'uses_coherent_image_set': project.uses_coherent_image_set,
+                                                             'uses_coherent_image_set_v2': project.uses_coherent_image_set_v2,
                                                              'use_translation_for_images': project.use_translation_for_images})
 
     clara_version = get_user_config(request.user)['clara_version']
@@ -4894,6 +4905,345 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                           'clara_version': clara_version,
                                                           'errors': []})
 
+# Version of edit_images for uses_coherent_image_set_v2
+@login_required
+@user_has_a_project_role
+def edit_images_v2(request, project_id, status):
+    actions_requiring_openai = ( 'create_style_description_and_image',
+                                 'create_element_names',
+                                 'create_element_descriptions_and_images',
+                                 'create_page_descriptions_and_images' )
+    user = request.user
+    can_use_ai = user_has_open_ai_key_or_credit(user)
+    config_info = get_user_config(user)
+    username = user.username
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    clara_version = get_user_config(request.user)['clara_version']
+    inconsistent = False
+
+    if project.use_translation_for_images and not clara_project_internal.load_text_version("translated"):
+        messages.error(request, f"Project is marked as using translations to create images, but there are no translations yet")
+        inconsistent = True
+
+    try:
+        project_dir = clara_project_internal.coherent_images_v2_project_dir
+        # Retrieve the stored params
+        params = clara_project_internal.get_coherent_images_v2_params()
+    except Exception as e:
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        params = default_params
+        inconsistent = True
+    
+    try:
+        # Don't try to correct syntax errors here, there should not be any.
+        all_page_texts = clara_project_internal.get_page_texts()
+        #pprint.pprint(all_page_texts)
+        page_texts = all_page_texts['plain']
+        segmented_texts = all_page_texts['segmented']
+        translated_texts = all_page_texts['translated']
+        mwe_texts = all_page_texts['mwe']
+        lemma_texts = all_page_texts['lemma']
+        gloss_texts = all_page_texts['gloss']
+        try:
+            mwe_text = clara_project_internal.load_text_version("mwe")
+            internalised_mwe_text = clara_project_internal.internalize_text(mwe_text, "mwe")
+            # Do this so that we get an exception we can report if the MWEs don't match the text
+            annotate_mwes_in_text(internalised_mwe_text)
+        except MWEError as e:
+             messages.error(request, f"{e.message}")
+    except InternalisationError as e:
+        messages.error(request, f"{e.message}")
+        inconsistent = True
+    except InternalCLARAError as e:
+        messages.error(request, f"{e.message}")
+        inconsistent = True
+    except Exception as e:
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        inconsistent = True
+   
+    # Retrieve existing images for pages, elements and style
+    try:
+        images = clara_project_internal.get_all_project_images()
+        pprint.pprint(images)
+    except Exception as e:
+        messages.error(request, f"Unable to retrieve image information")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        style_data = []
+        element_data = []
+        indexed_page_data = []
+        inconsistent = True
+
+    try:    
+        style_data = [{'image_file_path': img.image_file_path,
+                       'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
+                       'image_name': img.image_name,
+                       'advice': img.advice }
+                      for img in images if img.image_type == 'style' ]
+
+        # Add a blank style record if we don't already have one, so that we can start
+        if len(style_data) == 0:
+            style_data = [{'image_file_path': None,
+                           'image_base_name': None,
+                           'image_name': 'style',
+                           'advice': '' }]
+    except Exception as e:
+        messages.error(request, f"Unable to get style information")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        style_data = []
+        inconsistent = True
+
+    try:
+        element_data = [{'image_file_path': img.image_file_path,
+                         'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
+                         'image_name': img.image_name,
+                         'element_name': img.element_name,
+                         'advice': img.advice }
+                        for img in images if img.image_type == 'element' ]
+    except Exception as e:
+        messages.error(request, f"Unable to get element information")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        element_data = []
+        inconsistent = True
+
+    try:
+        indexed_page_data = {img.page: {'image_file_path': img.image_file_path,
+                                        'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
+                                        'image_name': img.image_name,
+                                        'position': img.position,
+                                        'advice': img.advice}
+                             for img in images if img.image_type == 'page'}
+    except Exception as e:
+        messages.error(request, f"Unable to get page information")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        indexed_page_data = {}
+        inconsistent = True
+
+    # Since we are displaying text and annotated text data for each page, add it here. 
+    # We also need to create entries for the pages that currently have no image.
+    try:
+        page_data = []
+        for index in range(0, len(page_texts)):
+            page = index + 1
+            item = { 'page': page,
+                     'page_text': page_texts[index],
+                     'segmented_text': segmented_texts[index],
+                     'translated_text': translated_texts[index],
+                     'mwe_text': mwe_texts[index],
+                     'lemma_text': lemma_texts[index],
+                     'gloss_text': gloss_texts[index],
+                     'image_file_path': indexed_page_data[page]['image_file_path'] if page in indexed_page_data else None,
+                     'image_base_name': indexed_page_data[page]['image_base_name'] if page in indexed_page_data else None,
+                     'image_name': indexed_page_data[page]['image_name'] if page in indexed_page_data else f'image_{page}_top',
+                     'position': indexed_page_data[page]['position'] if page in indexed_page_data else 'top',
+                     'advice': indexed_page_data[page]['advice'] if page in indexed_page_data else None }
+            page_data.append(item)
+    except Exception as e:
+        messages.error(request, f"Unable to get page information")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        page_data = []
+        inconsistent = True
+
+    if inconsistent:
+        return render(request, 'clara_app/edit_images_v2.html', { 'params_form': None,
+                                                                  'style_formset': None,
+                                                                  'element_formset': None,
+                                                                  'page_formset': None,
+                                                                  'project': project,
+                                                                  'clara_version': clara_version,
+                                                                  'errors': None,
+                                                                  })
+    
+    if request.method == 'POST':
+        errors = None
+        if 'action' in request.POST: 
+            action = request.POST['action']
+            print(f'--- action = {action}')
+            if action == 'save_params':
+                params_form = CoherentImagesV2ParamsForm(request.POST, prefix='params')
+                if not params_form.is_valid():
+                    errors = params_form.errors
+                else:
+                    # Get the params from the params_form and save them
+                    params = { 'n_expanded_descriptions': params_form.cleaned_data['n_expanded_descriptions'],
+                               'n_images_per_description': params_form.cleaned_data['n_images_per_description'],
+                               'n_previous_pages': params_form.cleaned_data['n_previous_pages'],
+                               'max_description_generation_rounds': params_form.cleaned_data['max_description_generation_rounds'],
+
+                               'page_interpretation_prompt': params_form.cleaned_data['page_interpretation_prompt'],
+                               'page_evaluation_prompt': params_form.cleaned_data['page_evaluation_prompt'],
+
+                               'default_model': params_form.cleaned_data['default_model'],
+                               'generate_description_model': params_form.cleaned_data['generate_description_model'],
+                               'example_evaluation_model': params_form.cleaned_data['example_evaluation_model'],
+                               }
+                    clara_project_internal.save_coherent_images_v2_params(params)
+            elif action in ( 'save_style_advice', 'create_style_description_and_image'):
+                style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
+                if not style_formset.is_valid():
+                    errors = style_formset.errors
+                else:
+                    # If we have a style image line, save the advice
+                    if len(style_formset) != 0:
+                        form = style_formset[0]
+                        style_advice = form.cleaned_data.get('advice')
+                        clara_project_internal.set_style_advice_v2(style_advice)
+            elif action in ( 'save_element_advice', 'create_element_descriptions_and_images'):
+                element_formset = ImageFormSetV2(request.POST, request.FILES, prefix='elements')
+                if not element_formset.is_valid():
+                    errors = element_formset.errors
+                else:
+                    # Go through the element items in the form.
+                    # Collect material to save and items where we want to (re-)generate the image.
+                    elements_to_generate = []
+                    
+                    for i in range(0, len(element_formset)):
+                        form = element_formset[i]
+                                
+                        element_name = form.cleaned_data.get('element_name')
+                        advice = form.cleaned_data.get('advice')
+                        generate = form.cleaned_data.get('generate')
+
+                        clara_project_internal.set_element_advice_v2(advice, element_name)
+                        if generate:
+                            elements_to_generate.append(element_name)
+            elif action in ( 'save_page_advice', 'create_page_descriptions_and_images'):
+                page_formset = ImageFormSetV2(request.POST, request.FILES, prefix='pages')
+                if not page_formset.is_valid():
+                    errors = page_formset.errors
+                else:
+                    # Go through the page items in the form.
+                    # Collect material to save and items where we want to (re-)generate the image.
+                    pages_to_generate = []
+                    
+                    new_plain_texts = []
+                    new_segmented_texts = []
+                    new_translated_texts = []
+                    new_mwe_texts = []
+                    new_lemma_texts = []
+                    new_gloss_texts = []
+                    
+                    for i in range(0, len(page_formset)):
+                        form = page_formset[i]
+
+                        new_plain_texts.append(form.cleaned_data['page_text'])
+                        new_segmented_texts.append(form.cleaned_data['segmented_text'])
+                        new_translated_texts.append(form.cleaned_data['translated_text'])
+                        new_mwe_texts.append(form.cleaned_data['mwe_text'])
+                        new_lemma_texts.append(form.cleaned_data['lemma_text'])
+                        new_gloss_texts.append(form.cleaned_data['gloss_text'])
+                            
+                        page = form.cleaned_data.get('page', 1)
+                        advice = form.cleaned_data.get('advice')
+                        generate = form.cleaned_data.get('generate')
+
+                        clara_project_internal.set_page_advice_v2(advice, page)
+                        if generate:
+                            pages_to_generate.append(page)
+                                    
+                    # Save the texts back to the project
+                    try:
+                        types_and_texts = { 'plain': new_plain_texts,
+                                            'segmented': new_segmented_texts,
+                                            'translated': new_translated_texts,
+                                            'mwe': new_mwe_texts,
+                                            'lemma': new_lemma_texts,
+                                            'gloss': new_gloss_texts }
+                        # First try saving without the option of using the AI
+                        api_calls = clara_project_internal.save_page_texts_multiple(types_and_texts, user=username, can_use_ai=False, config_info=config_info)
+                        store_api_calls(api_calls, project, project.user, 'correct')
+                    except ( InternalisationError, MWEError ) as e:
+                        if not can_use_ai:
+                            messages.error(request, f"There appears to be an inconsistency. Error details: {e.message}")
+                            return redirect('edit_images_v2', project_id=project_id, status='none')
+                        else:
+                            # There was some kind of inconsistency, so now try doing it again using the AI.
+                            task_type = f'correct_syntax'
+                            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
+
+                            print(f'--- About to start syntax correction task')
+                            async_task(save_page_texts_multiple, project, clara_project_internal, types_and_texts, username,
+                                       config_info=config_info, callback=callback)
+                            print(f'--- Started syntax correction task')
+                            #Redirect to the monitor view, passing the project ID and report ID as parameters
+                            return redirect('save_page_texts_multiple_monitor', project_id, report_id)
+
+            # If we have errors, pass them to the template and return
+            if errors:
+                params_form = CoherentImagesV2ParamsForm(initial=params, prefix='params')
+                page_formset = ImageFormSetV2(initial=page_data, prefix='pages')
+                element_formset = ImageFormSetV2(initial=element_data, prefix='elements')
+                style_formset = ImageFormSetV2(initial=style_data, prefix='style')
+                return render(request, 'clara_app/edit_images_v2.html', {
+                    'params_form': params_form,
+                    'page_formset': page_formset,
+                    'element_formset': element_formset,
+                    'style_formset': style_formset,
+                    'project': project,
+                    'clara_version': clara_version,
+                    'errors': errors,
+                })
+            # If we've got one of the AI actions, again we should have everything saved so we can execute it as an async and return
+            elif action in actions_requiring_openai:
+                if not can_use_ai:
+                    messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('edit_images_v2', project_id=project_id, status='none')
+
+                # We should have saved everything, so we can get the story data from the project
+                numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
+                clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
+
+                callback, report_id = make_asynch_callback_and_report_id(request, action)
+
+                if action == 'create_style_description_and_image':
+                    async_task(create_style_description_and_image, project, clara_project_internal, params, callback=callback)
+                elif action == 'create_element_names':
+                    async_task(create_element_names, project, clara_project_internal, params, callback=callback)
+                elif action == 'create_element_descriptions_and_images':
+                    async_task(create_element_descriptions_and_images, project, clara_project_internal, params, elements_to_generate, callback=callback)
+                elif action == 'create_page_descriptions_and_images':
+                    async_task(create_page_descriptions_and_images, project, clara_project_internal, params, pages_to_generate, callback=callback)
+
+                print(f'--- Started async "{action}" task')
+                #Redirect to the monitor view, passing the task ID and report ID as parameters
+                return redirect('coherent_images_v2_monitor', project_id, report_id)
+            else:
+                # We had a save action
+                if action == 'save_params':
+                    messages.success(request, "Parameter data updated")
+                elif action == 'save_style_advice':
+                    messages.success(request, "Style advice updated")
+                elif action == 'save_element_advice':
+                    messages.success(request, "Element advice updated")
+                elif action == 'save_page_advice':
+                    messages.success(request, "Page advice updated")
+                return redirect('edit_images_v2', project_id=project_id, status='none')
+            
+    else:
+        # GET 
+        params_form = CoherentImagesV2ParamsForm(initial=params, prefix='params')
+        page_formset = ImageFormSetV2(initial=page_data, prefix='pages')
+        element_formset = ImageFormSetV2(initial=element_data, prefix='elements')
+        style_formset = ImageFormSetV2(initial=style_data, prefix='style')
+
+        # If 'status' is something we got after returning from an async call, display a suitable message
+        if status == 'finished':
+            messages.success(request, "Image task successfully completed")
+        elif status == 'error':
+            messages.error(request, "Something went wrong when performing this image task. Look at the 'Recent task updates' view for further information.")
+        elif status == 'finished_syntax_correction':
+            messages.success(request, "There was an error in the syntax. This has been corrected and the text has been saved")
+        elif status == 'error_syntax_correction':
+            messages.error(request, "There was an error in the syntax, and something went wrong when trying to fix it. Look at the 'Recent task updates' view for further information.")
+
+    return render(request, 'clara_app/edit_images_v2.html', {'params_form': params_form,
+                                                             'style_formset': style_formset,
+                                                             'element_formset': element_formset,
+                                                             'page_formset': page_formset,
+                                                             'project': project,
+                                                             'clara_version': clara_version,
+                                                             'errors': []})
+
 # Async function
 def save_page_texts_multiple(project, clara_project_internal, types_and_texts, username, config_info={}, callback=None):
     try:
@@ -4927,6 +5277,75 @@ def save_page_texts_multiple_monitor(request, project_id, report_id):
     return render(request, 'clara_app/save_page_texts_multiple_monitor.html',
                   {'project_id': project_id, 'project': project, 'report_id': report_id})
 
+
+# Async functions for coherent images v2
+
+def create_style_description_and_image(project, clara_project_internal, params, callback=None):
+    try:
+        style_params = get_style_params_from_project_params(params)
+        cost_dict = clara_project_internal.create_style_description_and_image_v2(style_params, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Error when creating style")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+def create_element_names(project, clara_project_internal, params, callback=None):
+    try:
+        element_params = get_element_names_params_from_project_params(params)
+        cost_dict = clara_project_internal.create_element_names_v2(element_params, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Error when creating element names")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+def create_element_descriptions_and_images(project, clara_project_internal, params, elements_to_generate, callback=None):
+    try:
+        element_params = get_element_descriptions_params_from_project_params(params)
+        element_params['elements_to_generate'] = elements_to_generate
+        cost_dict = clara_project_internal.create_element_descriptions_and_images_v2(element_params, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Error when creating element descriptions and images")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+def create_page_descriptions_and_images(project, clara_project_internal, params, pages_to_generate, callback=None):
+    try:
+        page_params = get_page_params_from_project_params(params)
+        page_params['pages_to_generate'] = pages_to_generate
+        cost_dict = clara_project_internal.create_page_descriptions_and_images_v2(page_params, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        post_task_update(callback, f"finished")
+    except Exception as e:
+        post_task_update(callback, f"Error when creating page images")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+@login_required
+@user_has_a_project_role
+def coherent_images_v2_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_has_a_project_role
+def coherent_images_v2_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    
+    return render(request, 'clara_app/coherent_images_v2_monitor.html',
+                  {'project_id': project_id, 'project': project, 'report_id': report_id})
 
 def access_archived_images(request, project_id, image_name):
     project = get_object_or_404(CLARAProject, id=project_id)

@@ -150,9 +150,7 @@ from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glos
 from .clara_merge_glossed_and_tagged import merge_with_translation_annotations, merge_with_mwe_annotations
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
-#from .clara_image_repository import ImageRepository
 from .clara_image_repository_orm import ImageRepositoryORM
-#from .clara_phonetic_lexicon_repository import PhoneticLexiconRepository
 from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
 from .clara_renderer import StaticHTMLRenderer
 from .clara_annotated_images import add_image_to_text
@@ -161,7 +159,12 @@ from .clara_mwe import simplify_mwe_tagged_text, annotate_mwes_in_text
 from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
-#from .clara_utils import _use_orm_repositories
+from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
+from .clara_coherent_images_utils import get_project_params, set_project_params, project_pathname, get_pages
+from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, set_style_advice
+from .clara_coherent_images_utils import get_style_advice, get_style_description, get_style_image, get_all_element_texts
+from .clara_coherent_images_utils import get_element_description, get_element_image, get_page_description, get_page_image
+from .clara_coherent_images_advice import get_element_advice, get_page_advice, set_page_advice, set_element_advice
 from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text
 from .clara_utils import absolute_file_name, absolute_local_file_name
 from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
@@ -181,6 +184,7 @@ import pprint
 import traceback
 import tempfile
 import pickle
+import asyncio
 
 config = get_config()
 
@@ -211,6 +215,7 @@ class CLARAProjectInternal:
             "mwe": None,
             "image_request_sequence": None
         }
+        self.coherent_images_v2_project_dir = self.project_dir / 'coherent_images_v2_project_dir'
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
         self.internalised_and_annotated_text_path_phonetic = self.project_dir / 'internalised_and_annotated_text_phonetic.pickle'
         self.image_repository = ImageRepositoryORM()
@@ -1297,10 +1302,11 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             return False
 
-    def add_project_image(self, image_name, image_file_path, associated_text='', associated_areas='',
+    def add_project_image(self, image_name, image_file_path, keep_file_name=True, associated_text='', associated_areas='',
                           page=1, position='bottom', style_description='', content_description='', user_prompt='',
-                          request_type='image-generation', description_variable='',
-                          description_variables=[], archive=True, callback=None):  
+                          request_type='image-generation', description_variable='', description_variables=[],
+                          image_type='page', advice='', element_name='', 
+                          archive=True, callback=None):  
         try:
             project_id = self.id
             
@@ -1312,7 +1318,8 @@ class CLARAProjectInternal:
             
             # Store the new image file 
             if image_file_path and file_exists(image_file_path):
-                stored_image_path = self.image_repository.store_image(project_id, image_file_path, callback=callback)
+                stored_image_path = self.image_repository.store_image(project_id, image_file_path,
+                                                                      keep_file_name=keep_file_name, callback=callback)
             else:
                 stored_image_path = ''
             
@@ -1325,7 +1332,8 @@ class CLARAProjectInternal:
                                             user_prompt=user_prompt,
                                             request_type=request_type,
                                             description_variable=description_variable,
-                                            description_variables=description_variables,  # New field
+                                            description_variables=description_variables,
+                                            image_type=image_type, advice=advice, element_name=element_name,
                                             callback=callback)
             
             post_task_update(callback, f"--- Image {image_name} added successfully")
@@ -1512,6 +1520,17 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             # Handle the exception as needed
             return None
+
+    def store_image_advice(self, image_name, advice, image_type, callback=None):
+        try:
+            project_id = self.id
+            
+            post_task_update(callback, f"--- Storing advice for {image_name}")
+            self.image_repository.store_advice(project_id, image_name, advice, image_type, callback=callback)
+        except Exception as e:
+            post_task_update(callback, f"*** Error storing advice of type {image_type} for {image_name}")
+            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
         
     def store_image_understanding_result(self, description_variable, result,
                                          image_name=None, page=None, position=None, user_prompt=None,
@@ -1587,6 +1606,118 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             # Handle the exception as needed
             return None
+
+    def get_coherent_images_v2_params(self):
+        project_dir = self.coherent_images_v2_project_dir
+        return get_project_params(project_dir)
+
+    def save_coherent_images_v2_params(self, params):
+        project_dir = self.coherent_images_v2_project_dir
+        return get_project_params(params, project_dir)
+
+    def set_story_data_from_numbered_page_list_v2(self, numbered_page_list):
+        project_dir = self.coherent_images_v2_project_dir
+        set_story_data_from_numbered_page_list(numbered_page_list, project_dir)
+
+    def set_style_advice_v2(self, advice):
+        project_dir = self.coherent_images_v2_project_dir
+        set_style_advice(advice, project_dir)
+
+        image_name = f'style'
+        self.store_image_advice(image_name, advice, 'style')
+
+    def set_element_advice_v2(self, advice, element_name):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        set_element_advice(advice, element_name, params)
+
+        image_name = f'element_{element_name}'
+        self.store_image_advice(image_name, advice, 'element')
+
+    def set_page_advice_v2(self, advice, page_number):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        set_page_advice(advice, page_number, params)
+
+        image_name = f'page_{page_number}'
+        self.store_image_advice(image_name, advice, 'page')
+
+    def store_v2_style_data(self, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        
+        image_type = 'style'
+        advice = get_style_advice(params)
+        image_file_path = project_pathname(project_dir, get_style_image(params))
+        image_name = 'style'
+        
+        self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice,
+                               keep_file_name=False, archive=False, callback=callback)
+
+    def store_v2_element_name_data(self, element_list_with_names, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        
+        image_type = 'element'
+        advice = ''
+        image_file_path = None
+        for item in element_list_with_names:
+            element_name = item['text']
+            image_name = f'element_{element_name}'
+            self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, element_name=element_name,
+                                   keep_file_name=False, archive=False, callback=callback)
+
+    def store_v2_element_data(self, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        
+        element_names = get_all_element_texts(params)
+        image_type = 'element'
+        for element_name in element_names:
+            image_name = f'element_{element_name}'
+            advice = get_element_advice(element_name, params)
+            image_file_path = project_pathname(project_dir, get_element_image(element_name, params))
+            self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, element_name=element_name,
+                                   keep_file_name=False, archive=False, callback=callback)
+    
+    def store_v2_page_data(self, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+
+        pages_numbers = get_pages(params)
+        image_type = 'page'
+        for page_number in pages_numbers:
+            image_name = f'page_{page_number}'
+            advice = get_page_advice(page_number, params)
+            real_image_file_path = project_pathname(project_dir, get_page_image(page_number, params))
+            image_file_path = real_image_file_path if file_exists(real_image_file_path) else None
+            self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, page=page_number,
+                                   keep_file_name=False, archive=False, callback=callback)
+
+    def create_style_description_and_image_v2(self, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        cost_dict = asyncio.run(process_style(params, callback=callback))
+        self.store_v2_style_data(params, callback=callback)
+        return cost_dict
+
+    def create_element_names_v2(self, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        element_list_with_names, cost_dict = asyncio.run(generate_element_names(params, callback=callback))
+        self.store_v2_element_name_data(element_list_with_names, params, callback=callback)
+        return cost_dict
+
+    def create_element_descriptions_and_images_v2(self, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        cost_dict = asyncio.run(process_elements(params, callback=callback))
+        self.store_v2_element_data(params, callback=callback)
+        return cost_dict
+
+    def create_page_descriptions_and_images_v2(self, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        cost_dict = asyncio.run(process_pages(params, callback=callback))
+        self.store_v2_page_data(params, callback=callback)
+        return cost_dict
+    
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.

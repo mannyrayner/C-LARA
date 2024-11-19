@@ -227,7 +227,7 @@ class Text:
                 page_text = page.to_translated_text()
             else:
                 page_text = page.to_text(annotation_type='plain').replace('<page>', '')
-            numbered_pages.append({'page': number, 'text': page_text})
+            numbered_pages.append({'page_number': number, 'text': page_text})
             number += 1
         return numbered_pages
 
@@ -301,7 +301,10 @@ class Image:
                  content_description=None, user_prompt=None,
                  request_type='image-generation',
                  description_variable=None,
-                 description_variables=None,  # New field
+                 description_variables=None,
+                 advice='',
+                 image_type='page',
+                 element_name='',
                  page_object=None):
         self.image_file_path = image_file_path
         self.thumbnail_file_path = thumbnail_file_path
@@ -315,7 +318,10 @@ class Image:
         self.user_prompt = user_prompt
         self.request_type = request_type
         self.description_variable = description_variable
-        self.description_variables = description_variables or []  # New field
+        self.description_variables = description_variables or []
+        self.advice=advice
+        self.image_type=image_type
+        self.element_name=element_name
         self.page_object = page_object
 
     def to_json(self):
@@ -339,11 +345,9 @@ class Image:
         self.page_object = page_object
 
     def __repr__(self):
-        return (f"Image(image_file_path={self.image_file_path}, image_name={self.image_name}, "
-                f"style_description={self.style_description}, content_description={self.content_description}, "
-                f"user_prompt={self.user_prompt}, description_variables={self.description_variables})")
-
-
+        return f"""Image(image_file_path={self.image_file_path}, image_type={self.image_type},
+image_name={self.image_name}, advice={self.advice}, element_name={self.element_name}"""
+                
 class ImageDescriptionObject:
     def __init__(self, project_id, description_variable, explanation):
         self.project_id = project_id

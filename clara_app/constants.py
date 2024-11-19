@@ -125,4 +125,22 @@ TTS_CHOICES = [
     ( 'openai', 'OpenAI TTS' ),
     ( 'eleven_labs', 'Eleven Labs TTS' ),
     ( 'abair', 'ABAIR' ),
-]
+    ]
+
+SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2 = [
+    ( 'gpt-4o', 'gpt-4o' ),
+    ( 'o1-mini', 'o1-mini' )
+    ]
+
+SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2 = [
+    ( 'default', 'Default' ),
+    ( 'with_context', 'With context' ),
+    ( 'with_context_v2',  'With context v2' ),
+    ( 'multiple_questions', 'Multiple questions' )
+    ]
+
+SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2 = [
+    ( 'default', 'Default' ),
+    ( 'with_context_lenient', 'With context, lenient' )
+    ]
+

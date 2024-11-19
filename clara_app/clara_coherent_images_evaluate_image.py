@@ -22,7 +22,7 @@ from .clara_coherent_images_utils import (
     get_api_chatgpt4_response_for_task,
     get_api_chatgpt4_image_response_for_task,
     get_api_chatgpt4_interpret_image_response_for_task,
-    get_config_info_and_callback_from_params,
+    get_config_info_from_params,
     api_calls_to_cost,
     combine_cost_dicts,
     print_cost_dict,
@@ -56,9 +56,9 @@ import asyncio
 import traceback
 import unicodedata
 
-async def interpret_image_with_prompt(image_path, expanded_description, page_number, prompt_id, params):
+async def interpret_image_with_prompt(image_path, expanded_description, page_number, prompt_id, params, callback=None):
     if prompt_id == 'multiple_questions':
-        return await interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params)
+        return await interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params, callback=callback)
     
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template(prompt_id, 'page_interpretation')
@@ -81,7 +81,8 @@ async def interpret_image_with_prompt(image_path, expanded_description, page_num
                 prompt,
                 image_path,
                 'evaluate_page_image',
-                params
+                params,
+                callback=callback
             )
             image_interpretation = api_call.response
             total_cost += api_call.cost
@@ -97,27 +98,28 @@ async def interpret_image_with_prompt(image_path, expanded_description, page_num
     # We failed
     return None, errors, {'interpret_image': total_cost}
 
-async def interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params):
+async def interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params, callback=None):
     total_cost = 0
     errors = ''
 
     try:
         # Find the elements in the image
-        elements_in_image, elements_in_image_errors, get_elements_cost = await get_elements_shown_in_image(image_path, params)
+        elements_in_image, elements_in_image_errors, get_elements_cost = await get_elements_shown_in_image(image_path, params, callback=callback)
         total_cost += get_elements_cost
         errors += elements_in_image_errors
         if not elements_in_image:
             return None, errors, {'interpret_image': total_cost}
 
         # Get descriptions of the relevant elements and the style
-        element_and_style_descriptions, description_errors, descriptions_cost = await get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params)
+        element_and_style_descriptions, description_errors, descriptions_cost = await get_elements_descriptions_and_style_in_image(image_path, elements_in_image,
+                                                                                                                                   params, callback=callback)
         total_cost += descriptions_cost
         errors += description_errors
         if not element_and_style_descriptions:
             return None, errors, {'interpret_image': total_cost}
 
         # Find the important pairs
-        important_pairs, pairs_errors, pairs_cost = await get_important_pairs_in_image(elements_in_image, expanded_description, params)
+        important_pairs, pairs_errors, pairs_cost = await get_important_pairs_in_image(elements_in_image, expanded_description, params, callback=callback)
         total_cost += pairs_cost
         errors += description_errors
         if not important_pairs:
@@ -144,7 +146,7 @@ async def interpret_image_with_prompt_multiple_questions(image_path, expanded_de
         errors += error_message
         return None, errors, {'interpret_image': total_cost}
         
-async def get_elements_shown_in_image(image_path, params):
+async def get_elements_shown_in_image(image_path, params, callback=None):
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template('default', 'get_elements_shown_in_image')
 
@@ -165,7 +167,8 @@ async def get_elements_shown_in_image(image_path, params):
                 prompt,
                 image_path,
                 'evaluate_page_image',
-                params
+                params,
+                callback=callback
             )
             image_interpretation = api_call.response
             total_cost += api_call.cost
@@ -188,7 +191,7 @@ Not all elements in {elements_present} are in {elements}
     # We failed
     return None, errors, total_cost
 
-async def get_important_pairs_in_image(elements_in_image, expanded_description, params):
+async def get_important_pairs_in_image(elements_in_image, expanded_description, params, callback=None):
     prompt_template = get_prompt_template('default', 'get_important_pairs_in_image')
 
     text = get_text(params)
@@ -207,7 +210,8 @@ async def get_important_pairs_in_image(elements_in_image, expanded_description, 
             api_call = await get_api_chatgpt4_response_for_task(
                 prompt,
                 'evaluate_page_image',
-                params
+                params,
+                callback=callback
             )
             important_pairs_text = api_call.response
             total_cost += api_call.cost
@@ -229,7 +233,7 @@ Not all elements in {important_pairs} are in {elements_in_image}
     # We failed
     return None, errors, total_cost
 
-async def get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params):
+async def get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params, callback=None):
     prompt_template = get_prompt_template('default', 'get_elements_descriptions_and_style_in_image')
 
     text = get_text(params)
@@ -247,7 +251,8 @@ async def get_elements_descriptions_and_style_in_image(image_path, elements_in_i
                 prompt,
                 image_path,
                 'evaluate_page_image',
-                params
+                params,
+                callback=callback
             )
             image_interpretation = api_call.response
             total_cost += api_call.cost
@@ -262,7 +267,7 @@ async def get_elements_descriptions_and_style_in_image(image_path, elements_in_i
     # We failed
     return None, total_cost
 
-async def get_relationship_of_element_pair_in_image(pair, image_path, params):
+async def get_relationship_of_element_pair_in_image(pair, image_path, params, callback=None):
     prompt_template = get_prompt_template('default', 'get_relationship_of_element_pair_in_image')
 
     element1, element2 = pair
@@ -282,7 +287,8 @@ async def get_relationship_of_element_pair_in_image(pair, image_path, params):
                 prompt,
                 image_path,
                 'evaluate_page_image',
-                params
+                params,
+                callback=callback
             )
             image_interpretation = api_call.response
             total_cost += api_call.cost
@@ -320,7 +326,7 @@ The following elements were found in the image: {elements_in_image}
 """
     return text
 
-async def evaluate_fit_with_prompt(expanded_description, image_description, prompt_id, page_number, params):
+async def evaluate_fit_with_prompt(expanded_description, image_description, prompt_id, page_number, params, callback=None):
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template(prompt_id, 'page_evaluation')
 
@@ -342,7 +348,8 @@ async def evaluate_fit_with_prompt(expanded_description, image_description, prom
             api_call = await get_api_chatgpt4_response_for_task(
                 prompt,
                 'evaluate_page_image',
-                params
+                params,
+                callback=callback
             )
             fit_evaluation = api_call.response
             total_cost += api_call.cost

@@ -27,7 +27,7 @@ from .clara_coherent_images_utils import (
     get_api_chatgpt4_response_for_task,
     get_api_chatgpt4_image_response_for_task,
     get_api_chatgpt4_interpret_image_response_for_task,
-    get_config_info_and_callback_from_params,
+    get_config_info_from_params,
     api_calls_to_cost,
     combine_cost_dicts,
     print_cost_dict,
