@@ -11,6 +11,7 @@ from .clara_utils import (
     read_json_file,
     write_json_to_file,
     make_directory,
+    remove_directory,
     absolute_file_name,
     file_exists,
     directory_exists,
@@ -215,6 +216,13 @@ def get_all_element_texts(params):
     element_list = read_project_json_file(project_dir, f'elements/elements.json')
     return [ item['text'] for item in element_list ]
 
+def remove_element_name_from_list_of_elements(element_name, params):
+    project_dir = params['project_dir']
+    
+    element_list = read_project_json_file(project_dir, f'elements/elements.json')
+    element_list1 = [ item for item in element_list if item['text'] != element_name ]
+    write_project_json_file(element_list1, project_dir, f'elements/elements.json')
+
 def get_element_description(element_text, params):
     project_dir = params['project_dir']
     
@@ -226,6 +234,17 @@ def get_element_image(element_text, params):
     
     name = element_text_to_element_name(element_text, params)
     return f'elements/{name}/image.jpg'
+
+def remove_top_level_element_directory(params):
+    project_dir = params['project_dir']
+    
+    remove_project_dir(project_dir, f'elements')
+
+def remove_element_directory(element_text, params):
+    project_dir = params['project_dir']
+    
+    name = element_text_to_element_name(element_text, params)
+    remove_project_dir(project_dir, f'elements/{name}')
 
 def style_image_name():
     return 'style'
@@ -267,6 +286,11 @@ def get_page_image(page_number, params):
     project_dir = params['project_dir']
     
     return project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
+
+def remove_page_directory(page_number, params):
+    project_dir = params['project_dir']
+    
+    remove_project_dir(project_dir, f'pages/page{page_number}')
 
 # OpenAI calls
 
@@ -345,6 +369,9 @@ def make_root_project_dir(project_dir):
 
 def make_project_dir(project_dir, directory):
     make_directory(project_pathname(project_dir, directory), parents=True, exist_ok=True)
+
+def remove_project_dir(project_dir, directory):
+    remove_directory(project_pathname(project_dir, directory))
 
 def read_project_txt_file(project_dir, pathname):
     return read_txt_file(project_pathname(project_dir, pathname))

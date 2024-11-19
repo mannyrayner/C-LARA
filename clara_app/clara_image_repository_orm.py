@@ -337,6 +337,17 @@ class ImageRepositoryORM:
             post_task_update(callback, error_message)
             raise InternalCLARAError(message='Image repository error')
 
+    def remove_all_element_entries(self, project_id, callback=None):
+        try:
+            images = self.get_all_entries(project_id, callback=callback)
+            for image in images:
+                if image.image_type == 'element':
+                    self.remove_entry(project_id, image.image_name, callback=callback)
+        except Exception as e:
+            error_message = f'*** Error when deleting all element images for project "{project_id}" in image repository: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+            raise InternalCLARAError(message='Image repository error')
+
     def remove_entry(self, project_id, image_name, callback=None):
         try:
             project_id = str(project_id)

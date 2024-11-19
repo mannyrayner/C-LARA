@@ -161,7 +161,7 @@ from .clara_export_import import create_export_zipfile, change_project_id_in_imp
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_pathname, get_pages
-from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, set_style_advice
+from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, set_style_advice, remove_top_level_element_directory
 from .clara_coherent_images_utils import get_style_advice, get_style_description, get_style_image, get_all_element_texts
 from .clara_coherent_images_utils import get_element_description, get_element_image, get_page_description, get_page_image
 from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name
@@ -1702,6 +1702,28 @@ class CLARAProjectInternal:
     def create_element_names_v2(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
+
+        self.remove_all_element_information_v2(params)
+        element_list_with_names, cost_dict = asyncio.run(generate_element_names(params, callback=callback))
+        self.store_v2_element_name_data(element_list_with_names, params, callback=callback)
+        return cost_dict
+
+    def remove_all_element_information_v2(self, params, callback=None):
+        try:
+            project_id = self.id
+            project_dir = self.coherent_images_v2_project_dir
+            params['project_dir'] = project_dir
+
+            post_task_update(callback, f"--- Removing all element information from project {project_id}")
+
+            self.image_repository.remove_all_element_entries(project_id, callback=callback)
+            remove_top_level_element_directory(params)
+
+            post_task_update(callback, f"--- Element information for {project_id} removed successfully")
+        except Exception as e:
+            post_task_update(callback, f"*** Error when removing element information: {str(e)}")
+        
+        
         element_list_with_names, cost_dict = asyncio.run(generate_element_names(params, callback=callback))
         self.store_v2_element_name_data(element_list_with_names, params, callback=callback)
         return cost_dict

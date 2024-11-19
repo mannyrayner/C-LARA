@@ -68,6 +68,7 @@ from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 from .clara_coherent_images_utils import get_style_params_from_project_params, get_element_names_params_from_project_params
 from .clara_coherent_images_utils import get_element_names_params_from_project_params, get_element_descriptions_params_from_project_params
 from .clara_coherent_images_utils import get_page_params_from_project_params, default_params, style_image_name, element_image_name, page_image_name
+from .clara_coherent_images_utils import remove_element_directory, remove_page_directory, remove_element_name_from_list_of_elements
 
 from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
@@ -5217,6 +5218,7 @@ def edit_images_v2(request, project_id, status):
                 return redirect('coherent_images_v2_monitor', project_id, report_id)
             else:
                 # We had a save action
+                params_for_project_dir = { 'project_dir': project_dir }
                 if action == 'save_params':
                     messages.success(request, "Parameter data updated")
                 elif action == 'save_style_advice':
@@ -5227,6 +5229,8 @@ def edit_images_v2(request, project_id, status):
                             for element_name in elements_to_delete:
                                 image_name = element_image_name(element_name)
                                 clara_project_internal.remove_project_image(image_name)
+                                remove_element_directory(element_name, params_for_project_dir)
+                                remove_element_name_from_list_of_elements(element_name, params_for_project_dir)
                             all_deleted_elements_string = ", ".join(elements_to_delete)
                             messages.success(request, f"Element deleted: '{all_deleted_elements_string}'")
                         except Exception as e:
@@ -5237,6 +5241,7 @@ def edit_images_v2(request, project_id, status):
                     if pages_to_delete:
                         try:
                             for page_number in pages_to_delete:
+                                remove_page_directory(page_number, params_for_project_dir)
                                 image_name = page_image_name(page_number)
                                 clara_project_internal.remove_project_image(image_name)
                             all_deleted_pages_string = ", ".join([str(page_number) for page_number in pages_to_delete])
