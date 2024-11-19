@@ -32,14 +32,27 @@
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ style_formset.management_form }}
-    {% for form in style_formset %}
+	<table>
+      <thead>
+        <tr>
+          <th>Advice</th>
+          <th>Image</th>
+        </tr>
+      </thead>
+	  <tbody>
+      {% for form in style_formset %}
       <div class="style-section">
-        <p><strong>Advice:</strong> {{ form.advice }}</p>
-        {% if form.image_base_name.value %}
-          <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">
-        {% else %}
-          <p>No style image currently stored.</p>
-        {% endif %}
+        <tr>
+            <td>{{ form.advice }}</td>
+            <td>{% if form.image_base_name.value %}
+				<img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">
+			
+				{% else %}
+				No style image currently stored.
+				{% endif %}
+			</td>
+		</tbody>
+    </table>
 		<button type="submit" name="action" value="save_style_advice">Save Style Advice</button>
         <button type="submit" name="action" value="create_style_description_and_image">Generate Style Image</button>
       </div>
