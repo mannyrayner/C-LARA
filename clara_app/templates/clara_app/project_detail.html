@@ -24,10 +24,17 @@
                 {% csrf_token %}
                 <table>
                     <tr>
-                        <td>Use coherent AI-generated image set:</td>
+                        <td>Use coherent AI-generated image set (V1):</td>
                         <td>{{ image_set_form.uses_coherent_image_set }}</td>
+					</tr>
+					<tr>
+                        <td>Use coherent AI-generated image set (V2):</td>
+                        <td>{{ image_set_form.uses_coherent_image_set_v2 }}</td>
+					</tr>
+					<tr>
 						<td>Base image set on translations:</td>
 						<td>{{ image_set_form.use_translation_for_images }}</td>
+					<tr>
                         <td><button type="submit">Update Coherent Image Set</button></td>
                     </tr>
                 </table>
@@ -77,11 +84,19 @@
 		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
 		  Create/Edit MWE-tagged Text</a>
 		  {% if up_to_date_dict.mwe %}✓{% endif %}</p>
-	<p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image'%}" 
-	      data-tooltip="Upload, replace or remove images to include in the text." 
-	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
-		  Add/Remove Images</a>
-		  {% if up_to_date_dict.images %}✓{% endif %}</p>
+	{% if project.uses_coherent_image_set_v2 %}
+		  <p><a href="{% url 'edit_images_v2' project.id 'none' %}" 
+			  data-tooltip="Create/edit coherent images, V2." 
+			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+			  Create/Edit Coherent Images V2</a>
+			  {% if up_to_date_dict.images %}✓{% endif %}</p>
+	{% else %}
+		  <p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image' %}" 
+			  data-tooltip="Upload, replace or remove images to include in the text." 
+			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+			  Add/Remove Images</a>
+			  {% if up_to_date_dict.images %}✓{% endif %}</p>
+	{% endif %}
 	<p><a href="{% url 'create_phonetic_text' project.id %}"
 	      data-tooltip="If a phonetic lexicon has been uploaded for this language, create a version of the text divided into phonetic units."
 	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>

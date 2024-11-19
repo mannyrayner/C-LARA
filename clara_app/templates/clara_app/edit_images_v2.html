@@ -1,0 +1,179 @@
+{% extends "clara_app/base.html" %}
+
+{% block title %}Edit Images V2{% endblock %}
+
+{% block content %}
+<div class="main-content">
+  {% if errors %}
+    <div class="error-messages alert alert-danger">
+      <p>Errors found in form:</p>
+      <ul>
+        {% for form_errors in errors %}
+          {% for field, field_errors in form_errors.items %}
+            <li>{{ field }}: {{ field_errors|join:", " }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <h2>Edit Images V2 ("{{ project.title }}")</h2>
+
+  <!-- Parameters Form -->
+  <h3>Image Generation Parameters</h3>
+  <form method="post">
+    {% csrf_token %}
+    {{ params_form.as_p }}
+    <button type="submit" name="action" value="save_params">Save Parameters</button>
+  </form>
+
+  <!-- Style Section -->
+  <h3>Style</h3>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ style_formset.management_form }}
+    {% for form in style_formset %}
+      <div class="style-section">
+        <p><strong>Advice:</strong> {{ form.advice }}</p>
+        {% if form.image_base_name.value %}
+          <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">
+        {% else %}
+          <p>No style image currently stored.</p>
+        {% endif %}
+		<button type="submit" name="action" value="save_style_advice">Save Style Advice</button>
+        <button type="submit" name="action" value="create_style_description_and_image">Generate Style Image</button>
+      </div>
+    {% endfor %}
+  </form>
+
+  <!-- Elements Section -->
+  <h3>Elements</h3>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ element_formset.management_form }}
+    <table>
+      <thead>
+        <tr>
+          <th>Element Name</th>
+          <th>Advice</th>
+          <th>Image</th>
+          <th>Generate</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in element_formset %}
+          <tr>
+            <td>{{ form.element_name }}</td>
+            <td>{{ form.advice }}</td>
+            <td>
+              {% if form.image_base_name.value %}
+                <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="{{ form.element_name.value }}" style="max-width: 200px; max-height: 200px;">
+              {% else %}
+                <p>No image.</p>
+              {% endif %}
+            </td>
+            <td>{{ form.generate }}</td>
+            <td>{{ form.delete }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <button type="submit" name="action" value="create_element_names">Generate Element Names</button>
+	<button type="submit" name="action" value="save_element_advice">Save Element Advice</button>
+    <button type="submit" name="action" value="create_element_descriptions_and_images">Generate Selected Elements</button>
+  </form>
+
+  <!-- Pages Section -->
+  <h3>Pages</h3>
+  <form id="display-options-form">
+    <label><input type="checkbox" id="show-segmented" checked> Display Segmented Text</label>
+    <label><input type="checkbox" id="show-translated" checked> Display Translated Text</label>
+    <label><input type="checkbox" id="show-mwe" checked> Display MWE Text</label>
+    <label><input type="checkbox" id="show-lemma" checked> Display Lemma Text</label>
+    <label><input type="checkbox" id="show-gloss" checked> Display Gloss Text</label>
+   </form>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ page_formset.management_form }}
+    <table>
+      <thead>
+        <tr>
+          <th>Page Number</th>
+          <th>Advice</th>
+          <th>Image</th>
+          <th>Generate</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in page_formset %}
+          <tr>
+            <td>{{ form.page }}</td>
+            <td>{{ form.advice }}</td>
+            <td>
+              {% if form.image_base_name.value %}
+                <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Page {{ form.page.value }}" style="max-width: 200px; max-height: 200px;">
+              {% else %}
+                <p>No image.</p>
+              {% endif %}
+            </td>
+            <td>{{ form.generate }}</td>
+            <td>{{ form.delete }}</td>
+          </tr>
+          <tr>
+		    <td>Plain text</td><td colspan="5">{{ form.page_text }}</td>
+		  </tr>
+		  <tr class="segmented-text-row">
+		    <td>Segmented text</td><td colspan="5">{{ form.segmented_text }}</td>
+		  </tr>
+		  <tr class="translated-text-row">
+		    <td>Translated text</td><td colspan="5">{{ form.translated_text }}</td>
+		  </tr>
+		  <tr class="mwe-text-row">
+			 <td>MWE-tagged text</td><td colspan="5">{{ form.mwe_text }}</td>
+		  </tr> 
+		  <tr class="gloss-text-row">
+			 <td>Glossed text</td><td colspan="5">{{ form.gloss_text }}</td> 
+		  </tr>   
+		  <tr class="lemma-text-row">
+			 <td>Lemma-tagged text</td><td colspan="5">{{ form.lemma_text }}</td>
+		  </tr>  
+        {% endfor %}
+      </tbody>
+    </table>
+	<button type="submit" name="action" value="save_page_advice">Save Page Advice</button>
+    <button type="submit" name="action" value="create_page_descriptions_and_images">Generate Selected Pages</button>
+  </form>
+
+</div>
+
+<div class="sticky-footer">
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+</div>
+<script>
+  document.getElementById('show-segmented').addEventListener('change', function() {
+    toggleDisplay('segmented-text-row', this.checked);
+  });
+  document.getElementById('show-translated').addEventListener('change', function() {
+    toggleDisplay('translated-text-row', this.checked);
+  });
+  document.getElementById('show-mwe').addEventListener('change', function() {
+    toggleDisplay('mwe-text-row', this.checked);
+  });
+  document.getElementById('show-gloss').addEventListener('change', function() {
+    toggleDisplay('gloss-text-row', this.checked);
+  });
+  document.getElementById('show-lemma').addEventListener('change', function() {
+    toggleDisplay('lemma-text-row', this.checked);
+  });
+
+  function toggleDisplay(className, show) {
+    const elements = document.getElementsByClassName(className);
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].style.display = show ? '' : 'none';
+    }
+  }
+  </script>
+
+{% endblock %}
