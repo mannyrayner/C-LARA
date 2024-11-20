@@ -891,6 +891,10 @@ async def generate_image_for_page(page_number, params, callback=None):
     if keep_existing_pages and file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
         print(f'Page processing for page {page_number} already done, skipping')
         return total_cost_dict
+
+    # Make directory if necessary
+    page_number_directory = f'pages/page{page_number}'
+    make_project_dir(project_dir, page_number_directory)
    
     previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=callback)
     total_cost_dict = combine_cost_dicts(total_cost_dict, context_cost_dict)
@@ -920,9 +924,8 @@ async def find_relevant_previous_pages_for_page(page_number, params, callback=No
     project_dir = params['project_dir']
     n_previous_pages = params['n_previous_pages']
 
-    # Make directory if necessary
-    page_number_directory = f'pages/page{page_number}'
-    make_project_dir(project_dir, page_number_directory)
+    if n_previous_pages == 0:
+        return [], {}
     
     # Get the text of the story and the current page
     story_data = get_story_data(params)
@@ -976,6 +979,9 @@ async def find_relevant_elements_for_page(page_number, params, callback=None):
     page_text = get_page_text(page_number, params)
 
     all_element_texts = get_all_element_texts(params)
+
+    if len(all_element_texts) == 0:
+        return [], {}
 
     # Create the prompt
     prompt_template = get_prompt_template('default', 'get_relevant_elements')

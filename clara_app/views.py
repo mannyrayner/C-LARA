@@ -5097,7 +5097,13 @@ def edit_images_v2(request, project_id, status):
                                'generate_description_model': params_form.cleaned_data['generate_description_model'],
                                'example_evaluation_model': params_form.cleaned_data['example_evaluation_model'],
                                }
-                    clara_project_internal.save_coherent_images_v2_params(params)
+                    try:
+                        clara_project_internal.save_coherent_images_v2_params(params)
+                    except ImageGenerationError as e:
+                        messages.error(request, f"{e.message}")
+                    except Exception as e:
+                        messages.error(request, f"Error when trying to save parameters")
+                        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
                 if not style_formset.is_valid():

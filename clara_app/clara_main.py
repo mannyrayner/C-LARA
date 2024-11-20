@@ -1620,7 +1620,7 @@ class CLARAProjectInternal:
 
     def save_coherent_images_v2_params(self, params):
         project_dir = self.coherent_images_v2_project_dir
-        return get_project_params(params, project_dir)
+        set_project_params(params, project_dir)
 
     def set_story_data_from_numbered_page_list_v2(self, numbered_page_list):
         project_dir = self.coherent_images_v2_project_dir

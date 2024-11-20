@@ -84,7 +84,7 @@ def check_valid_project_params(params):
 
     if not 'page_interpretation_prompt' in params or not params['page_interpretation_prompt'] in supported_page_interpretation_prompts:
         raise ImageGenerationError(message=f'bad params {params}: page_interpretation_prompt')
-    if not 'page_evaluation_prompt' in params or not params['page_evaluation_prompt'] in supported_page_interpretation_prompts:
+    if not 'page_evaluation_prompt' in params or not params['page_evaluation_prompt'] in supported_page_evaluation_prompts:
         raise ImageGenerationError(message=f'bad params {params}: page_evaluation_prompt')
 
     if not 'default_model' in params or not params['default_model'] in supported_models:
@@ -212,9 +212,12 @@ def get_style_image(params):
 
 def get_all_element_texts(params):
     project_dir = params['project_dir']
-    
-    element_list = read_project_json_file(project_dir, f'elements/elements.json')
-    return [ item['text'] for item in element_list ]
+
+    if file_exists(project_pathname(project_dir, f'elements/elements.json')):
+        element_list = read_project_json_file(project_dir, f'elements/elements.json')
+        return [ item['text'] for item in element_list ]
+    else:
+        return []
 
 def remove_element_name_from_list_of_elements(element_name, params):
     project_dir = params['project_dir']

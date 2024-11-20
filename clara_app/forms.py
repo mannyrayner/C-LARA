@@ -880,7 +880,7 @@ class CoherentImagesV2ParamsForm(forms.Form):
     
     page_interpretation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
                                                    label="Method to use for interpreting page images")
-    page_evaluation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
+    page_evaluation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
                                                label="Method to use for comparing interpretation and prompt for page images")
     
     default_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
