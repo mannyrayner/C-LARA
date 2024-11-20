@@ -259,6 +259,9 @@ def update_images_from_imported_directory(project, tmp_dir, callback=None):
                                   request_type=item['request_type'],
                                   description_variable=item['description_variable'],
                                   description_variables=item['description_variables'],
+                                  image_type=item['image_type'],
+                                  advice=item['advice'],
+                                  element_name=item['element_name'],
                                   callback=callback)
 
     

@@ -337,8 +337,11 @@ class Image:
             'content_description': self.content_description,
             'request_type': self.request_type,
             'description_variable': self.description_variable,
-            'description_variables': self.description_variables,  # New field
-            'user_prompt': self.user_prompt
+            'description_variables': self.description_variables,  
+            'user_prompt': self.user_prompt,
+            'image_type': self.image_type,
+            'advice': self.advice,
+            'element_name': self.element_name
         }
 
     def merge_page(self, page_object):

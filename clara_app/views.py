@@ -2867,11 +2867,26 @@ def import_project_from_zip_file(zip_file, project_id, internal_id, callback=Non
         #  "human_voice_id": "mannyrayner",
         #  "human_voice_id_phonetic": "mannyrayner",
         #  "audio_type_for_words": "human",
-        #  "audio_type_for_segments": "tts"
+        #  "audio_type_for_segments": "tts",
+        #  "uses_coherent_image_set": False,
+        #  "uses_coherent_image_set_v2": True,
+        #  "use_translation_for_images": False
         #}
         if global_metadata and isinstance(global_metadata, dict):
             if "simple_clara_type" in global_metadata:
                 clara_project.simple_clara_type = global_metadata["simple_clara_type"]
+                clara_project.save()
+
+            if "uses_coherent_image_set" in global_metadata:
+                clara_project.uses_coherent_image_set = global_metadata["uses_coherent_image_set"]
+                clara_project.save()
+
+            if "uses_coherent_image_set_v2" in global_metadata:
+                clara_project.uses_coherent_image_set_v2 = global_metadata["uses_coherent_image_set_v2"]
+                clara_project.save()
+
+            if "use_translation_for_images" in global_metadata:
+                clara_project.use_translation_for_images = global_metadata["use_translation_for_images"]
                 clara_project.save()
                 
             if "human_voice_id" in global_metadata and global_metadata["human_voice_id"]:                       
@@ -6031,12 +6046,18 @@ def create_dall_e_3_image_monitor(request, project_id, report_id):
 
 def clara_project_internal_make_export_zipfile(clara_project_internal,
                                                simple_clara_type='create_text_and_image',
+                                               uses_coherent_image_set=False,
+                                               uses_coherent_image_set_v2=False,
+                                               use_translation_for_images=False,
                                                human_voice_id=None, human_voice_id_phonetic=None,
                                                audio_type_for_words='tts', audio_type_for_segments='tts', 
                                                callback=None):
     print(f'--- Asynchronous rendering task started for creating export zipfile')
     try:
         clara_project_internal.create_export_zipfile(simple_clara_type=simple_clara_type,
+                                                     uses_coherent_image_set=uses_coherent_image_set,
+                                                     uses_coherent_image_set_v2=uses_coherent_image_set_v2,
+                                                     use_translation_for_images=use_translation_for_images,
                                                      human_voice_id=human_voice_id, human_voice_id_phonetic=human_voice_id_phonetic,
                                                      audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                                      callback=callback)
@@ -6079,6 +6100,9 @@ def make_export_zipfile(request, project_id):
             try:
                 task_id = async_task(clara_project_internal_make_export_zipfile, clara_project_internal,
                                      simple_clara_type=project.simple_clara_type,
+                                     uses_coherent_image_set=project.uses_coherent_image_set,
+                                     uses_coherent_image_set_v2=project.uses_coherent_image_set_v2,
+                                     use_translation_for_images=project.use_translation_for_images,
                                      human_voice_id=human_voice_id, human_voice_id_phonetic=human_voice_id_phonetic,
                                      audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                      callback=callback)

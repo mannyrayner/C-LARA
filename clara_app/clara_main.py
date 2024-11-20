@@ -1832,11 +1832,16 @@ class CLARAProjectInternal:
         return None if not audio_annotator else audio_annotator.printname_for_voice()
 
     # Make a zipfile for exporting the project and other metadata
-    def create_export_zipfile(self, simple_clara_type='create_text_and_image', uses_coherent_image_set=False,
+    def create_export_zipfile(self, simple_clara_type='create_text_and_image',
+                              uses_coherent_image_set=False,
+                              uses_coherent_image_set_v2=False,
+                              use_translation_for_images=False,
                               human_voice_id=None, human_voice_id_phonetic=None,
                               audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
         global_metadata = { 'simple_clara_type': simple_clara_type,
                             'uses_coherent_image_set': uses_coherent_image_set,
+                            'uses_coherent_image_set_v2': uses_coherent_image_set_v2,
+                            'use_translation_for_images': use_translation_for_images,
                             'human_voice_id': human_voice_id,
                             'human_voice_id_phonetic': human_voice_id_phonetic,
                             'audio_type_for_words': audio_type_for_words,
