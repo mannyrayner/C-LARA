@@ -158,6 +158,18 @@
 	<button type="submit" name="action" value="save_page_advice">Save And/Or Delete</button>
     <button type="submit" name="action" value="create_page_descriptions_and_images">Generate Selected Pages</button>
   </form>
+  
+  <!-- Overview Section -->
+	<h3>Overview Document</h3>
+	<form method="post">
+	  {% csrf_token %}
+	  <button type="submit" name="action" value="create_overview">Create Overview Document</button>
+	  {% if overview_file_exists %}
+		<p>You can view the generated overview document here: <a href="{% url 'serve_coherent_images_v2_overview' project.id %}" target="_blank"}>Overview Document</a></p>
+	  {% endif %}
+	</form>
+
+<a href="{% url 'serve_rendered_text' project.id 'normal' 'page_1.html' %}" target="_blank"}" 
 
 </div>
 
