@@ -319,6 +319,8 @@ class CLARAProjectInternal:
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
             self._copy_text_version_if_it_exists("gloss", new_project)
+        if directory_exists(self.coherent_images_v2_project_dir):
+            copy_directory(self.coherent_images_v2_project_dir, new_project.coherent_images_v2_project_dir)
         # Copy over any images we may have (it's possible we will choose to delete them later)
         images = self.get_all_project_images()
         if images:
@@ -1338,7 +1340,7 @@ class CLARAProjectInternal:
                                             image_type=image_type, advice=advice, element_name=element_name,
                                             callback=callback)
             
-            post_task_update(callback, f"--- Image {image_name} added successfully")
+            post_task_update(callback, f"--- Image {image_name} added successfully as {stored_image_path}")
             return stored_image_path
         except Exception as e:
             post_task_update(callback, f"*** CLARAProjectInternal: error when adding/updating image {image_name}")
@@ -1598,6 +1600,9 @@ class CLARAProjectInternal:
                                        request_type=image.request_type,
                                        description_variable=image.description_variable,
                                        description_variables=image.description_variables,
+                                       image_type=image.image_type,
+                                       advice=image.advice,
+                                       element_name=image.element_name,
                                        callback=callback)
             
             post_task_update(callback, f"--- {len(images)} images added successfully")

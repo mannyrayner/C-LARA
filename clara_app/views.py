@@ -2997,6 +2997,7 @@ def clone_project(request, project_id):
                 new_project = CLARAProject(title=new_title, user=request.user, l2=new_l2, l1=new_l1,
                                            simple_clara_type=project.simple_clara_type,
                                            uses_coherent_image_set=project.uses_coherent_image_set,
+                                           uses_coherent_image_set_v2=project.uses_coherent_image_set_v2,
                                            use_translation_for_images=project.use_translation_for_images)
                 new_internal_id = create_internal_project_id(new_title, new_project.id)
                 new_project.internal_id = new_internal_id
@@ -4548,6 +4549,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                      'display_text_fields_label': 'Text versions' if ( img.request_type != 'image-understanding' ) else 'none',
                      }
                     for img in images ]
+    pprint.pprint(initial_data)
 
     # Create placeholder image lines for pages that don't have an image, so that we can display the text versions for those pages.
     if page_texts:
@@ -5950,7 +5952,7 @@ Make the style of the image consistent with the style of the previously generate
                         store_api_calls(api_calls_generate, project, project.user, 'image')
                         post_task_update(callback, f"--- Image created: {tmp_image_file}")
 
-                        clara_project_internal.add_project_image(image_name, tmp_image_file, 
+                        clara_project_internal.add_project_image(image_name, tmp_image_file, keep_file_name=False,
                                                                  associated_text='', associated_areas='',
                                                                  page=page, position=position,
                                                                  user_prompt=user_prompt,

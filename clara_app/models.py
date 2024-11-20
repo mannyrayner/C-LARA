@@ -702,6 +702,8 @@ class ArchivedImageMetadata(models.Model):
     description_variables = models.JSONField(default=list, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     advice = models.TextField(blank=True, default='')
+    element_name = models.CharField(max_length=255, blank=True, default='',
+                                    help_text='Name of element for an element entry.')
 
 class ImageDescription(models.Model):
     project_id = models.CharField(max_length=255)

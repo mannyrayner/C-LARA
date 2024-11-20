@@ -555,7 +555,7 @@ class ImageRepositoryORM:
                 description_variable=image_metadata.description_variable,
                 description_variables=image_metadata.description_variables,
                 advice=image_metadata.advice,
-                element_name=image_metadata.image_metadata,
+                element_name=image_metadata.element_name,
                 image_type=image_metadata.image_type
             )
         except Exception as e:
