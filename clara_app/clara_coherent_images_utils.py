@@ -210,6 +210,9 @@ def get_style_image(params):
     
     return f'style/image.jpg'
 
+def overview_file(project_dir):
+    return project_pathname(project_dir, 'overview.html')
+
 def get_all_element_texts(params):
     project_dir = params['project_dir']
 

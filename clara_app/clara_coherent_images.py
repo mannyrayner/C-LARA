@@ -1333,7 +1333,11 @@ async def generate_page_image(image_dir, description, page_number, params, callb
 
 # -----------------------------------------------
 
-def generate_overview_html(params):
+def generate_overview_html(params, mode='plain', project_id=None):
+    permitted_modes = ( 'plain', 'server' )
+    if not mode in permitted_modes:
+        raise ValueError(f'Bad mode argument "{mode}" to generate_overview_html, must be one of {permitted_modes}')
+            
     project_dir = params['project_dir']
     title = params['title']
     
@@ -1368,7 +1372,7 @@ def generate_overview_html(params):
     # Display the style image
     style_image_path = project_pathname(project_dir, 'style/image.jpg')
     if file_exists(style_image_path):
-        relative_style_image_path = os.path.relpath(style_image_path, project_dir)
+        relative_style_image_path = format_overview_style_image_path(mode, project_id)
         html_content += "<h3>Style Image</h3>"
         html_content += f"<img src='{relative_style_image_path}' alt='Style Image' style='max-width:600px;'>"
     else:
@@ -1410,7 +1414,7 @@ def generate_overview_html(params):
                 # Display the element image
                 element_image_path = project_pathname(project_dir, f'elements/{element_name}/image.jpg')
                 if file_exists(element_image_path):
-                    relative_element_image_path = os.path.relpath(element_image_path, project_dir)
+                    relative_element_image_path = format_overview_element_image_path(element_name, mode, project_id)
                     html_content += "<h4>Element Image</h4>"
                     html_content += f"<img src='{relative_element_image_path}' alt='{display_name}' style='max-width:400px;'>"
                 else:
@@ -1454,7 +1458,7 @@ def generate_overview_html(params):
             # Display the page image
             page_image_path = project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
             if file_exists(page_image_path):
-                relative_page_image_path = os.path.relpath(page_image_path, project_dir)
+                relative_page_image_path = format_overview_page_image_path(page_number, mode, project_id)
                 html_content += "<h4>Page Image</h4>"
                 html_content += f"<img src='{relative_page_image_path}' alt='Page {page_number} Image' style='max-width:600px;'>"
             else:
@@ -1523,6 +1527,24 @@ def generate_overview_html(params):
 
     # Write the HTML content to a file
     write_project_txt_file(html_content, project_dir, 'overview.html')
+
+def format_overview_style_image_path(mode, project_id):
+    if mode == 'plain':
+        return 'style/image.jpg'
+    else:
+        return f'/accounts/projects/serve_coherent_images_v2_style_image/{project_id}'
+
+def format_overview_element_image_path(element_name, mode, project_id):
+    if mode == 'plain':
+        return f'elements/{element_name}/image.jpg'
+    else:
+        return f'/accounts/projects/serve_coherent_images_v2_element_image/{project_id}/{element_name}'
+
+def format_overview_page_image_path(page_number, mode, project_id):
+    if mode == 'plain':
+        return f'pages/page{page_number}/image.jpg'
+    else:
+        return f'/accounts/projects/serve_coherent_images_v2_page_image/{project_id}/{page_number}'
 
 # -----------------------------------------------
 

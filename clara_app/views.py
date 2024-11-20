@@ -4952,6 +4952,13 @@ def edit_images_v2(request, project_id, status):
         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
         params = default_params
         inconsistent = True
+
+    try:
+        overview_file_exists = clara_project_internal.overview_document_v2_exists()
+    except Exception as e:
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        overview_file_exists = False
+        inconsistent = True   
     
     try:
         # Don't try to correct syntax errors here, there should not be any.
@@ -5071,6 +5078,7 @@ def edit_images_v2(request, project_id, status):
                                                                   'page_formset': None,
                                                                   'project': project,
                                                                   'clara_version': clara_version,
+                                                                  'overview_file_exists': overview_file_exists,
                                                                   'errors': None,
                                                                   })
     
@@ -5104,6 +5112,17 @@ def edit_images_v2(request, project_id, status):
                     except Exception as e:
                         messages.error(request, f"Error when trying to save parameters")
                         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+            elif action == 'create_overview':
+                try:
+                    clara_project_internal.create_overview_document_v2(project)
+                    if clara_project_internal.overview_document_v2_exists():
+                        messages.success(request, "Overview created")
+                    else:
+                        messages.error(request, f"Error when trying to create overview")
+                except Exception as e:
+                        messages.error(request, f"Error when trying to create overview")
+                        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                return redirect('edit_images_v2', project_id=project_id, status='none')   
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
                 if not style_formset.is_valid():
@@ -5215,6 +5234,7 @@ def edit_images_v2(request, project_id, status):
                     'style_formset': style_formset,
                     'project': project,
                     'clara_version': clara_version,
+                    'overview_file_exists': overview_file_exists,
                     'errors': errors,
                 })
             # If we've got one of the AI actions, again we should have everything saved so we can execute it as an async and return
@@ -5300,6 +5320,7 @@ def edit_images_v2(request, project_id, status):
                                                              'page_formset': page_formset,
                                                              'project': project,
                                                              'clara_version': clara_version,
+                                                             'overview_file_exists': overview_file_exists,
                                                              'errors': []})
 
 # Async function
@@ -7023,7 +7044,17 @@ def confirm_funding_approvals(request):
     else:
         form = ConfirmTransferForm()
 
-    return render(request, 'clara_app/confirm_funding_approvals.html', {'form': form})    
+    return render(request, 'clara_app/confirm_funding_approvals.html', {'form': form})
+
+def serve_coherent_images_v2_overview(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f"overview.html"))
+    if file_exists(file_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    else:
+        raise Http404
 
 @xframe_options_sameorigin
 def serve_rendered_text(request, project_id, phonetic_or_normal, filename):
@@ -7116,6 +7147,37 @@ def serve_project_image(request, project_id, base_filename):
             return HttpResponse(open(file_path, 'rb'), content_type=content_type)
     else:
         raise Http404
+
+def serve_coherent_images_v2_style_image(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'style/image.jpg' ))
+    if file_exists(file_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    else:
+        raise Http404
+
+def serve_coherent_images_v2_element_image(request, project_id, element_name):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'elements/{element_name}/image.jpg' ))
+    if file_exists(file_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    else:
+        raise Http404
+
+def serve_coherent_images_v2_page_image(request, project_id, page_number):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'pages/page{page_number}/image.jpg' ))
+    if file_exists(file_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    else:
+        raise Http404
+
 
 @login_required
 def serve_audio_file(request, engine_id, l2, voice_id, base_filename):
