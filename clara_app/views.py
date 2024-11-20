@@ -4968,6 +4968,8 @@ def edit_images_v2(request, project_id, status):
             internalised_mwe_text = clara_project_internal.internalize_text(mwe_text, "mwe")
             # Do this so that we get an exception we can report if the MWEs don't match the text
             annotate_mwes_in_text(internalised_mwe_text)
+        except FileNotFoundError as e:
+            pass
         except MWEError as e:
              messages.error(request, f"{e.message}")
     except InternalisationError as e:
