@@ -41,7 +41,6 @@
       </thead>
 	  <tbody>
       {% for form in style_formset %}
-      <div class="style-section">
         <tr>
             <td>{{ form.advice }}</td>
             <td>{% if form.image_base_name.value %}
@@ -51,12 +50,13 @@
 				No style image currently stored.
 				{% endif %}
 			</td>
-		</tbody>
+		</tr>
+	  {% endfor %}
+	  </tbody>
     </table>
 		<button type="submit" name="action" value="save_style_advice">Save Style Advice</button>
         <button type="submit" name="action" value="create_style_description_and_image">Generate Style Image</button>
-      </div>
-    {% endfor %}
+ 
   </form>
 
   <!-- Elements Section -->
