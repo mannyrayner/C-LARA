@@ -163,7 +163,7 @@
 	<h3>Overview Document</h3>
 	<form method="post">
 	  {% csrf_token %}
-	  <button type="submit" name="action" value="create_overview">Create Overview Document</button>
+	  <button type="submit" name="action" value="create_overview">Generate Overview Document</button>
 	  {% if overview_file_exists %}
 		<p>You can view the generated overview document here: <a href="{% url 'serve_coherent_images_v2_overview' project.id %}" target="_blank"}>Overview Document</a></p>
 	  {% endif %}
