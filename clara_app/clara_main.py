@@ -574,7 +574,9 @@ class CLARAProjectInternal:
         text_title = self.load_text_version_or_null("segmented_title")
         if text_title != '':
             # We need to put segment breaks around the text_title to get the right interaction with segment audio
-            segmented_with_images_text = f'<h1>||{text_title}||</h1><page>\n' + segmented_with_images_text
+            # and if the main text doesn't start with a <page> tag we need to add one.
+            separating_page_tag = '' if segmented_with_images_text.startswith('<page') else '<page>'
+            segmented_with_images_text = f'<h1>||{text_title}||</h1>{separating_page_tag}\n' + segmented_with_images_text
         return segmented_with_images_text
 
     # Get text consisting of "segmented" text, plus segmented title if available
@@ -776,9 +778,12 @@ class CLARAProjectInternal:
     def align_text_version_with_segmented_and_save(self, text_type, create_if_necessary=False, use_words_for_lemmas=False):
         try:
             segmented_text = self.load_text_version('segmented_with_images')
+            print(f'Aligning')
+            print(f'segmented text: {segmented_text}')
             
             if self.text_versions[text_type]:
                 non_segmented_text = self.load_text_version(text_type)
+                print(f'{text_type} text: {segmented_text}')
             else:
                 if create_if_necessary:
                     non_segmented_text = ''
@@ -788,6 +793,7 @@ class CLARAProjectInternal:
             aligned_text = align_segmented_text_with_non_segmented_text(segmented_text, non_segmented_text,
                                                                         self.l2_language, self.l1_language,
                                                                         text_type, use_words_for_lemmas=use_words_for_lemmas)
+            print(f'aligned text: {segmented_text}')
             self.save_text_version(text_type, aligned_text, source='aligned')
             
             api_calls = []

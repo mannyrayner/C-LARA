@@ -151,11 +151,16 @@ urlpatterns = [
     path('serve_zipfile/<int:project_id>/', views.serve_zipfile, name='serve_zipfile'),
     path('serve_export_zipfile/<int:project_id>/', views.serve_export_zipfile, name='serve_export_zipfile'),
     path('projects/serve_project_image/<str:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
-    path('projects/serve_coherent_images_v2_style_image/<int:project_id>', views.serve_coherent_images_v2_style_image, name='serve_coherent_images_v2_style_image'),
-    path('projects/serve_coherent_images_v2_element_image/<int:project_id>/<str:element_name>', views.serve_coherent_images_v2_element_image,
-         name='serve_coherent_images_v2_element_image'),
-    path('projects/serve_coherent_images_v2_page_image/<int:project_id>/<int:page_number>', views.serve_coherent_images_v2_page_image,
-         name='serve_coherent_images_v2_page_image'),
+##    path('projects/serve_coherent_images_v2_style_image/<int:project_id>', views.serve_coherent_images_v2_style_image, name='serve_coherent_images_v2_style_image'),
+##    path('projects/serve_coherent_images_v2_element_image/<int:project_id>/<str:element_name>', views.serve_coherent_images_v2_element_image,
+##         name='serve_coherent_images_v2_element_image'),
+##    path('projects/serve_coherent_images_v2_page_image/<int:project_id>/<int:page_number>', views.serve_coherent_images_v2_page_image,
+##         name='serve_coherent_images_v2_page_image'),
+    path(
+        'accounts/projects/serve_coherent_images_v2_file/<int:project_id>/<path:relative_path>/',
+        views.serve_coherent_images_v2_file,
+        name='serve_coherent_images_v2_file'
+    ),
     path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', views.serve_audio_file, name='serve_audio_file'),
 
     path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),

@@ -79,6 +79,8 @@ from .clara_utils import (
     get_immediate_subdirectories_in_local_directory,
     )
 
+from django.urls import reverse
+
 import json
 import os
 import sys
@@ -1377,11 +1379,12 @@ def generate_overview_html(params, mode='plain', project_id=None):
     html_content += "<h2>Style</h2>"
 
     # Display the style image
+    relative_style_image_path = 'style/image.jpg'
     style_image_path = project_pathname(project_dir, 'style/image.jpg')
     if file_exists(style_image_path):
-        relative_style_image_path = format_overview_style_image_path(mode, project_id)
+        style_image_url = format_overview_image_path(relative_style_image_path, mode, project_id)
         html_content += "<h3>Style Image</h3>"
-        html_content += f"<img src='{relative_style_image_path}' alt='Style Image' style='max-width:600px;'>"
+        html_content += f"<img src='{style_image_url}' alt='Style Image' style='max-width:600px;'>"
     else:
         html_content += "<p><em>Style image not found.</em></p>"
 
@@ -1419,11 +1422,12 @@ def generate_overview_html(params, mode='plain', project_id=None):
                 display_name = element_text
                 html_content += f"<h3 id='{element_name}'>{display_name}</h3>"
                 # Display the element image
+                relative_element_image_path = f'elements/{element_name}/image.jpg'
                 element_image_path = project_pathname(project_dir, f'elements/{element_name}/image.jpg')
                 if file_exists(element_image_path):
-                    relative_element_image_path = format_overview_element_image_path(element_name, mode, project_id)
+                    element_image_url = format_overview_image_path(relative_element_image_path, mode, project_id)
                     html_content += "<h4>Element Image</h4>"
-                    html_content += f"<img src='{relative_element_image_path}' alt='{display_name}' style='max-width:400px;'>"
+                    html_content += f"<img src='{element_image_url}' alt='{display_name}' style='max-width:400px;'>"
                 else:
                     html_content += "<p><em>Image not found for this element.</em></p>"
                 # Read the element's expanded description
@@ -1463,11 +1467,13 @@ def generate_overview_html(params, mode='plain', project_id=None):
             html_content += f"<pre class='wrapped-pre'>{page_text}</pre>"
 
             # Display the page image
-            page_image_path = project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
+            
+            relative_page_image_path = f'pages/page{page_number}/image.jpg'
+            page_image_path = project_pathname(project_dir, relative_page_image_path)
             if file_exists(page_image_path):
-                relative_page_image_path = format_overview_page_image_path(page_number, mode, project_id)
+                page_image_url = format_overview_image_path(relative_page_image_path, mode, project_id)
                 html_content += "<h4>Page Image</h4>"
-                html_content += f"<img src='{relative_page_image_path}' alt='Page {page_number} Image' style='max-width:600px;'>"
+                html_content += f"<img src='{page_image_url}' alt='Page {page_number} Image' style='max-width:600px;'>"
             else:
                 html_content += "<p><em>Image not found for this page.</em></p>"
 
@@ -1536,23 +1542,29 @@ def generate_overview_html(params, mode='plain', project_id=None):
     output_file = 'overview_plain.html' if mode == 'plain' else 'overview.html'
     write_project_txt_file(html_content, project_dir, output_file)
 
-def format_overview_style_image_path(mode, project_id):
+def format_overview_image_path(relative_path, mode, project_id):
     if mode == 'plain':
-        return 'style/image.jpg'
+        return relative_path
     else:
-        return f'/accounts/projects/serve_coherent_images_v2_style_image/{project_id}'
+        return reverse('serve_coherent_images_v2_file', args=[project_id, relative_path])
 
-def format_overview_element_image_path(element_name, mode, project_id):
-    if mode == 'plain':
-        return f'elements/{element_name}/image.jpg'
-    else:
-        return f'/accounts/projects/serve_coherent_images_v2_element_image/{project_id}/{element_name}'
-
-def format_overview_page_image_path(page_number, mode, project_id):
-    if mode == 'plain':
-        return f'pages/page{page_number}/image.jpg'
-    else:
-        return f'/accounts/projects/serve_coherent_images_v2_page_image/{project_id}/{page_number}'
+##def format_overview_style_image_path(mode, project_id):
+##    if mode == 'plain':
+##        return 'style/image.jpg'
+##    else:
+##        return f'/accounts/projects/serve_coherent_images_v2_style_image/{project_id}'
+##
+##def format_overview_element_image_path(element_name, mode, project_id):
+##    if mode == 'plain':
+##        return f'elements/{element_name}/image.jpg'
+##    else:
+##        return f'/accounts/projects/serve_coherent_images_v2_element_image/{project_id}/{element_name}'
+##
+##def format_overview_page_image_path(page_number, mode, project_id):
+##    if mode == 'plain':
+##        return f'pages/page{page_number}/image.jpg'
+##    else:
+##        return f'/accounts/projects/serve_coherent_images_v2_page_image/{project_id}/{page_number}'
 
 # -----------------------------------------------
 

@@ -16,6 +16,7 @@ from django.core.mail import send_mail
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.http import unquote
 from django.urls import reverse
 
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, ContentAccess, TaskUpdate, Update, ReadingHistory
@@ -4964,7 +4965,7 @@ def edit_images_v2(request, project_id, status):
     try:
         # Don't try to correct syntax errors here, there should not be any.
         all_page_texts = clara_project_internal.get_page_texts()
-        #pprint.pprint(all_page_texts)
+        pprint.pprint(all_page_texts)
         page_texts = all_page_texts['plain']
         segmented_texts = all_page_texts['segmented']
         translated_texts = all_page_texts['translated']
@@ -7149,35 +7150,59 @@ def serve_project_image(request, project_id, base_filename):
     else:
         raise Http404
 
-def serve_coherent_images_v2_style_image(request, project_id):
+def serve_coherent_images_v2_file(request, project_id, relative_path):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'style/image.jpg' ))
-    if file_exists(file_path):
-        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-    else:
-        raise Http404
 
-def serve_coherent_images_v2_element_image(request, project_id, element_name):
-    project = get_object_or_404(CLARAProject, pk=project_id)
-    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'elements/{element_name}/image.jpg' ))
-    if file_exists(file_path):
-        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-    else:
-        raise Http404
+    base_dir = os.path.realpath(absolute_file_name(clara_project_internal.coherent_images_v2_project_dir))
 
-def serve_coherent_images_v2_page_image(request, project_id, page_number):
-    project = get_object_or_404(CLARAProject, pk=project_id)
-    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'pages/page{page_number}/image.jpg' ))
-    if file_exists(file_path):
-        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    # Clean and normalize the relative path to prevent directory traversal
+    safe_relative_path = os.path.normpath(relative_path)
+
+    # Construct the absolute path to the requested file
+    requested_path = os.path.realpath(os.path.join(base_dir, safe_relative_path))
+
+    # Ensure that the requested path is within the base directory
+    if not requested_path.startswith(base_dir + os.sep):
+        raise Http404("Invalid file path.")
+
+    # Check if the file exists and is a file (not a directory)
+    if os.path.isfile(requested_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(requested_path)))
+        with open(requested_path, 'rb') as f:
+            return HttpResponse(f.read(), content_type=content_type)
     else:
-        raise Http404
+        raise Http404("File not found.")
+
+##def serve_coherent_images_v2_style_image(request, project_id):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'style/image.jpg' ))
+##    if file_exists(file_path):
+##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+##    else:
+##        raise Http404
+##
+##def serve_coherent_images_v2_element_image(request, project_id, element_name):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'elements/{element_name}/image.jpg' ))
+##    if file_exists(file_path):
+##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+##    else:
+##        raise Http404
+##
+##def serve_coherent_images_v2_page_image(request, project_id, page_number):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'pages/page{page_number}/image.jpg' ))
+##    if file_exists(file_path):
+##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+##    else:
+##        raise Http404
 
 
 @login_required

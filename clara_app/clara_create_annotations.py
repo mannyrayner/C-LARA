@@ -1135,7 +1135,7 @@ async def parse_chatgpt_annotation_response(response, simplified_elements, proce
         usable_response_object = []
         for element in response_object:
             if not well_formed_element_in_annotation_response(element, processing_phase, previous_version=previous_version,):
-                post_task_update(callback, f'*** Warning: bad element {element} in annotation response, discarding')
+                await post_task_update_async(callback, f'*** Warning: bad element {element} in annotation response, discarding')
             else:
                 usable_response_object.append(element)
 
@@ -1145,7 +1145,7 @@ async def parse_chatgpt_annotation_response(response, simplified_elements, proce
             warning = f"""*** Warning: original text and annotated text are different.
      Original text: {original_text}
     Annotated text: {annotated_text}"""
-            post_task_update(callback, warning)
+            await post_task_update_async(callback, warning)
 
         return usable_response_object
 
