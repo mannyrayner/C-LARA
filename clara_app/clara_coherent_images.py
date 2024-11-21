@@ -47,6 +47,8 @@ from .clara_coherent_images_utils import (
     get_page_text,
     get_page_description,
     get_page_image,
+    remove_element_directory,
+    remove_page_directory,
     get_api_chatgpt4_response_for_task,
     get_api_chatgpt4_image_response_for_task,
     get_api_chatgpt4_interpret_image_response_for_task,
@@ -666,9 +668,7 @@ async def process_single_element(element_name, element_text, params, callback=No
     n_images_per_description = params['n_images_per_description']
     keep_existing_elements = params['keep_existing_elements'] if 'keep_existing_elements' in params else False
 
-    # Make directory if necessary
     element_directory = f'elements/{element_name}'
-    make_project_dir(project_dir, element_directory)
     
     tasks = []
     all_description_dirs = []
@@ -677,6 +677,10 @@ async def process_single_element(element_name, element_text, params, callback=No
     if keep_existing_elements and file_exists(project_pathname(project_dir, f'elements/{element_name}/image.jpg')):
         print(f'Element processing for "{element_text}" already done, skipping')
         return total_cost_dict
+    elif directory_exists(project_pathname(project_dir, element_directory)):
+        remove_element_directory(element_text, params)
+
+    make_project_dir(project_dir, element_directory)
 
     if n_expanded_descriptions != 0:
         for description_version_number in range(0, n_expanded_descriptions):
@@ -888,12 +892,15 @@ async def generate_image_for_page(page_number, params, callback=None):
     
     total_cost_dict = {}
 
+    page_number_directory = f'pages/page{page_number}'
+
     if keep_existing_pages and file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
         print(f'Page processing for page {page_number} already done, skipping')
         return total_cost_dict
+    elif directory_exists(project_pathname(project_dir, page_number_directory)):
+        remove_page_directory(page_number, params)
 
-    # Make directory if necessary
-    page_number_directory = f'pages/page{page_number}'
+    # Make directory 
     make_project_dir(project_dir, page_number_directory)
    
     previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=callback)
@@ -1364,7 +1371,7 @@ def generate_overview_html(params, mode='plain', project_id=None):
     <body>
     """
     
-    html_content += f"<h1>{title} - Project Overview</h1>"
+    html_content += f"<h1>{title} - Image Generation Overview</h1>"
 
     # Style Section
     html_content += "<h2>Style</h2>"
@@ -1526,7 +1533,8 @@ def generate_overview_html(params, mode='plain', project_id=None):
     html_content += "</body></html>"
 
     # Write the HTML content to a file
-    write_project_txt_file(html_content, project_dir, 'overview.html')
+    output_file = 'overview_plain.html' if mode == 'plain' else 'overview.html'
+    write_project_txt_file(html_content, project_dir, output_file)
 
 def format_overview_style_image_path(mode, project_id):
     if mode == 'plain':

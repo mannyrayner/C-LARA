@@ -3179,6 +3179,7 @@ def project_detail(request, project_id):
             project.save()
         if image_set_form.is_valid():
             project.uses_coherent_image_set = image_set_form.cleaned_data['uses_coherent_image_set']
+            project.uses_coherent_image_set_v2 = image_set_form.cleaned_data['uses_coherent_image_set_v2']
             project.use_translation_for_images = image_set_form.cleaned_data['use_translation_for_images']
             project.save()
     else:
