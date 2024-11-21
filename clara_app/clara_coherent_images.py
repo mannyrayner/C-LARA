@@ -77,6 +77,8 @@ from .clara_utils import (
     directory_exists,
     copy_file,
     get_immediate_subdirectories_in_local_directory,
+    post_task_update_async,
+    post_task_update,
     )
 
 from django.urls import reverse
@@ -873,6 +875,7 @@ async def process_pages(params, callback=None):
     project_dir = params['project_dir']
     n_pages = params['n_pages'] if 'n_pages' in params else 'all'
     pages_to_generate = params['pages_to_generate'] if 'pages_to_generate' in params else None
+    n_previous_pages = params['n_previous_pages'] if 'n_previous_pages' in params else 0
     
     total_cost_dict = {}
     if pages_to_generate:
@@ -881,12 +884,26 @@ async def process_pages(params, callback=None):
         page_numbers = get_pages(params)
         page_numbers = page_numbers if n_pages == 'all' else page_numbers[:n_pages]
 
-    for page_number in page_numbers:
-        cost_dict = await generate_image_for_page(page_number, params, callback=callback)
-        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+    if n_previous_pages == 0:
+        # If n_previous_pages is zero, all the pages can be generated independently, so do it parallel using asyncio
+        tasks = []
+        for page_number in page_numbers:
+            tasks.append(asyncio.create_task(generate_image_for_page(page_number, params, callback=callback)))
+        results = await asyncio.gather(*tasks)
+        for cost_dict in results:
+            total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+    else:
+        for page_number in page_numbers:
+            cost_dict = await generate_image_for_page(page_number, params, callback=callback)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
 
     write_project_cost_file(total_cost_dict, project_dir, f'pages/cost.json')
     return total_cost_dict
+
+##    for description_version_number in range(0, n_expanded_descriptions):
+##        tasks.append(asyncio.create_task(generate_page_description_and_images(page_number, previous_pages, elements, description_version_number, params, callback=callback)))
+##    results = await asyncio.gather(*tasks)
+##    for description_dir, cost_dict in results:
 
 async def generate_image_for_page(page_number, params, callback=None):
     project_dir = params['project_dir']
@@ -897,9 +914,10 @@ async def generate_image_for_page(page_number, params, callback=None):
     page_number_directory = f'pages/page{page_number}'
 
     if keep_existing_pages and file_exists(project_pathname(project_dir, f'pages/page{page_number}/image.jpg')):
-        print(f'Page processing for page {page_number} already done, skipping')
+        await post_task_update_async(callback, f'Page processing for page {page_number} already done, skipping')
         return total_cost_dict
     elif directory_exists(project_pathname(project_dir, page_number_directory)):
+        await post_task_update_async(callback, f'Processing page {page_number}')
         remove_page_directory(page_number, params)
 
     # Make directory 
