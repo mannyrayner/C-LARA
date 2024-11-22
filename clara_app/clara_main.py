@@ -1757,8 +1757,8 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir,
                    'title': project.title }
-        generate_overview_html(params, mode='server', project_id=project.id)
-        generate_overview_html(params, mode='plain')
+        asyncio.run(generate_overview_html(params, mode='server', project_id=project.id))
+        asyncio.run(generate_overview_html(params, mode='plain'))
 
     def overview_document_v2_exists(self):
         project_dir = self.coherent_images_v2_project_dir

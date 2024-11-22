@@ -21,6 +21,10 @@ from .clara_coherent_images_evaluate_prompts import (
     generate_prompt_evaluation_html_report,
     )
 
+from .clara_coherent_images_alternate import (
+    create_alternate_images_json,
+    )
+
 from .clara_chatgpt4 import (
     interpret_chat_gpt4_response_as_json,
     )
@@ -151,7 +155,7 @@ def test_boy_meets_girl_pages():
 def test_boy_meets_girl_overview():
     params = { 'project_dir': boy_meets_girl_project_dir,
                'title': 'Boy Meets Girl' }
-    generate_overview_html(params)
+    asyncio.run(generate_overview_html(params))
 
 # Test with La Fontaine 'Le Corbeau et le Renard'
 
@@ -243,12 +247,12 @@ def test_la_fontaine_add_page_advice(page_number, advice_text):
 def test_la_fontaine_overview():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard',
                'title': 'Le Corbeau et le Renard' }
-    generate_overview_html(params)
+    asyncio.run(generate_overview_html(params))
 
 def test_la_fontaine_overview_o1():
     params = { 'project_dir': '$CLARA/coherent_images/LeCorbeauEtLeRenard_o1',
                'title': 'Le Corbeau et le Renard (o1-mini version)' }
-    generate_overview_html(params)
+    asyncio.run(generate_overview_html(params))
 
 def test_la_fontaine_judge_o1(version):
     params = { 'project_dir': f'$CLARA/coherent_images/LeCorbeauEtLeRenard_o1_v{version}',
@@ -322,7 +326,7 @@ def test_lily_select():
 def test_lily_overview():
     params = { 'project_dir': '$CLARA/coherent_images/LilyGoesTheWholeHog',
                'title': 'Lily Goes the Whole Hog' }
-    generate_overview_html(params)
+    asyncio.run(generate_overview_html(params))
 
 # -----------------------------------------------
 # Style
@@ -341,6 +345,7 @@ async def process_style(params, callback=None):
         all_description_dirs.append(description_dir)
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     select_best_expanded_style_description_and_image(all_description_dirs, params)
+    await create_alternate_images_json(project_pathname(project_dir, 'style'), project_dir, callback=callback)
     write_project_cost_file(total_cost_dict, project_dir, f'style/cost.json')
     return total_cost_dict
 
@@ -695,6 +700,7 @@ async def process_single_element(element_name, element_text, params, callback=No
             total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
         select_best_expanded_element_description_and_image(element_name, all_description_dirs, params)
 
+    await create_alternate_images_json(project_pathname(project_dir, element_directory), project_dir, callback=callback)
     write_project_cost_file(total_cost_dict, project_dir, f'elements/{element_name}/cost.json')
     return total_cost_dict
 
@@ -929,6 +935,7 @@ async def generate_image_for_page(page_number, params, callback=None):
     generation_cost_dict = await generate_image_for_page_and_context(page_number, previous_pages, elements, params, callback=callback)
     total_cost_dict = combine_cost_dicts(total_cost_dict, generation_cost_dict)
 
+    await create_alternate_images_json(project_pathname(project_dir, page_number_directory), project_dir, callback=callback)
     write_project_cost_file(total_cost_dict, project_dir, f'pages/page{page_number}/cost.json')
     return total_cost_dict
 
@@ -1360,7 +1367,7 @@ async def generate_page_image(image_dir, description, page_number, params, callb
 
 # -----------------------------------------------
 
-def generate_overview_html(params, mode='plain', project_id=None):
+async def generate_overview_html(params, mode='plain', project_id=None):
     permitted_modes = ( 'plain', 'server' )
     if not mode in permitted_modes:
         raise ValueError(f'Bad mode argument "{mode}" to generate_overview_html, must be one of {permitted_modes}')
