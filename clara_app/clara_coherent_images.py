@@ -22,6 +22,7 @@ from .clara_coherent_images_evaluate_prompts import (
     )
 
 from .clara_coherent_images_alternate import (
+    get_alternate_images_json,
     create_alternate_images_json,
     )
 
@@ -1324,47 +1325,6 @@ async def generate_page_image(image_dir, description, page_number, params, callb
 
     return image_file, { 'generate_page_image': api_call.cost }
 
-##async def interpret_page_image(image_dir, image_file, page_number, params):
-##    project_dir = params['project_dir']
-##
-##    story_data = get_story_data(params)
-##    formatted_story_data = json.dumps(story_data, indent=4)
-##    
-##    page_text = get_page_text(page_number, params)
-##
-##    interpretation_prompt_id = params['interpretation_prompt_id'] if 'interpretation_prompt_id' in params else 'default'
-##    prompt_template = get_prompt_template(interpretation_prompt_id, 'page_interpretation')
-##
-##    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
-##
-##    api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_page_image', params)
-##
-##    image_interpretation = api_call.response
-##    write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
-##    return image_interpretation, { 'interpret_page_image': api_call.cost }
-##
-##async def evaluate_page_fit(image_dir, expanded_description, image_description, page_number, params):
-##    project_dir = params['project_dir']
-##
-##    evaluation_prompt_id = params['evaluation_prompt_id'] if 'evaluation_prompt_id' in params else 'default' 
-##    prompt_template = get_prompt_template(evaluation_prompt_id, 'page_evaluation')
-##
-##    story_data = get_story_data(params)
-##    formatted_story_data = json.dumps(story_data, indent=4)
-##    
-##    page_text = get_page_text(page_number, params)
-##
-##    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text,
-##                                    expanded_description=expanded_description, image_description=image_description)
-##    
-##    api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_page_image', params)
-##
-##    evaluation = api_call.response
-##
-##    write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
-##    
-##    return evaluation, { 'evaluate_page_image': api_call.cost }
-
 # -----------------------------------------------
 
 async def generate_overview_html(params, mode='plain', project_id=None):
@@ -1410,6 +1370,20 @@ async def generate_overview_html(params, mode='plain', project_id=None):
         style_image_url = format_overview_image_path(relative_style_image_path, mode, project_id)
         html_content += "<h3>Style Image</h3>"
         html_content += f"<img src='{style_image_url}' alt='Style Image' style='max-width:600px;'>"
+        # Get alternate images for the style
+        content_dir = f'{project_dir}/style'
+        alternate_images = await get_alternate_images_json(content_dir, project_dir)
+
+        if len(alternate_images) > 1:
+            html_content += "<h4>Alternate Images</h4>"
+            html_content += "<div class='image-gallery'>"
+            for alt_image in alternate_images:
+                image_path = alt_image['image_path']
+                image_url = format_overview_image_path(image_path, mode, project_id)
+                html_content += f"<img src='{image_url}' alt='style image' style='max-width:200px; margin:5px;'>"
+            html_content += "</div>"
+        else:
+            html_content += "<p><em>No alternate images found for style.</em></p>"
     else:
         html_content += "<p><em>Style image not found.</em></p>"
 
@@ -1452,7 +1426,21 @@ async def generate_overview_html(params, mode='plain', project_id=None):
                 if file_exists(element_image_path):
                     element_image_url = format_overview_image_path(relative_element_image_path, mode, project_id)
                     html_content += "<h4>Element Image</h4>"
-                    html_content += f"<img src='{element_image_url}' alt='{display_name}' style='max-width:400px;'>"
+                    html_content += f"<img src='{element_image_url}' alt='{element_name} image' style='max-width:400px;'>"
+                    # Get alternate images for the element
+                    content_dir = f'{project_dir}/elements/{element_name}'
+                    alternate_images = await get_alternate_images_json(content_dir, project_dir)
+
+                    if len(alternate_images) > 1:
+                        html_content += "<h4>Alternate Images</h4>"
+                        html_content += "<div class='image-gallery'>"
+                        for alt_image in alternate_images:
+                            image_path = alt_image['image_path']
+                            image_url = format_overview_image_path(image_path, mode, project_id)
+                            html_content += f"<img src='{image_url}' alt='{element_name} Image' style='max-width:200px; margin:5px;'>"
+                        html_content += "</div>"
+                    else:
+                        html_content += "<p><em>No alternate images found for this element.</em></p>"
                 else:
                     html_content += "<p><em>Image not found for this element.</em></p>"
                 # Read the element's expanded description
@@ -1499,9 +1487,22 @@ async def generate_overview_html(params, mode='plain', project_id=None):
                 page_image_url = format_overview_image_path(relative_page_image_path, mode, project_id)
                 html_content += "<h4>Page Image</h4>"
                 html_content += f"<img src='{page_image_url}' alt='Page {page_number} Image' style='max-width:600px;'>"
+                # Get alternate images for the element
+                content_dir = f'{project_dir}/pages/page{page_number}'
+                alternate_images = await get_alternate_images_json(content_dir, project_dir)
+
+                if len(alternate_images) > 1:
+                    html_content += "<h4>Alternate Images</h4>"
+                    html_content += "<div class='image-gallery'>"
+                    for alt_image in alternate_images:
+                        image_path = alt_image['image_path']
+                        image_url = format_overview_image_path(image_path, mode, project_id)
+                        html_content += f"<img src='{image_url}' alt='Page {page_number} Image' style='max-width:200px; margin:5px;'>"
+                    html_content += "</div>"
+                else:
+                    html_content += "<p><em>No alternate images found for this element.</em></p>"
             else:
                 html_content += "<p><em>Image not found for this page.</em></p>"
-
             # Read the expanded description (specification)
             expanded_description_path = f'pages/page{page_number}/expanded_description.txt'
             if file_exists(project_pathname(project_dir, expanded_description_path)):

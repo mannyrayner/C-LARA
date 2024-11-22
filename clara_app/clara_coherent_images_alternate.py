@@ -18,6 +18,34 @@ import os
 import json
 from pathlib import Path
 
+async def get_alternate_images_json(content_dir, project_dir, callback=None):
+    """
+    Retrieve the alternate_images.json data from the specified content directory.
+    If the file does not exist, create it first.
+
+    Args:
+        content_dir (str or Path): The path to the content directory.
+        project_dir (str or Path): The path to the top-level coherent images v2 directory for the project.
+        callback (function, optional): A callback function for task updates.
+
+    Returns:
+        list: A list of dictionaries representing the alternate images.
+    """
+    content_dir = Path(absolute_file_name(content_dir))
+    alternate_images_json_path = content_dir / 'alternate_images.json'
+
+    # Check if the alternate_images.json file exists
+    if not file_exists(alternate_images_json_path):
+        # Create the alternate_images.json file
+        await create_alternate_images_json(content_dir, project_dir, callback)
+
+    # Read the alternate_images.json file if it could be created, else return an empty list
+    if file_exists(alternate_images_json_path):
+        alternate_images = read_json_file(alternate_images_json_path)
+        return alternate_images
+    else:
+        return []
+
 async def create_alternate_images_json(content_dir, project_dir, callback=None):
     """
     Create an alternate_images.json file in the specified content directory.
