@@ -167,6 +167,7 @@ from .clara_coherent_images_utils import get_element_description, get_element_im
 from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name, overview_file
 from .clara_coherent_images_utils import style_directory, element_directory, page_directory
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
+from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image
 from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text
 from .clara_utils import absolute_file_name, absolute_local_file_name
 from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
@@ -779,12 +780,12 @@ class CLARAProjectInternal:
     def align_text_version_with_segmented_and_save(self, text_type, create_if_necessary=False, use_words_for_lemmas=False):
         try:
             segmented_text = self.load_text_version('segmented_with_images')
-            print(f'Aligning')
-            print(f'segmented text: {segmented_text}')
+##            print(f'Aligning')
+##            print(f'segmented text: {segmented_text}')
             
             if self.text_versions[text_type]:
                 non_segmented_text = self.load_text_version(text_type)
-                print(f'{text_type} text: {segmented_text}')
+##                print(f'{text_type} text: {segmented_text}')
             else:
                 if create_if_necessary:
                     non_segmented_text = ''
@@ -794,7 +795,7 @@ class CLARAProjectInternal:
             aligned_text = align_segmented_text_with_non_segmented_text(segmented_text, non_segmented_text,
                                                                         self.l2_language, self.l1_language,
                                                                         text_type, use_words_for_lemmas=use_words_for_lemmas)
-            print(f'aligned text: {segmented_text}')
+##            print(f'aligned text: {segmented_text}')
             self.save_text_version(text_type, aligned_text, source='aligned')
             
             api_calls = []
@@ -1620,6 +1621,10 @@ class CLARAProjectInternal:
             post_task_update(callback, error_message)
             # Handle the exception as needed
             return None
+
+    def get_project_images_dict_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        return asyncio.run(get_project_images_dict(project_dir))
 
     def get_coherent_images_v2_params(self):
         project_dir = self.coherent_images_v2_project_dir

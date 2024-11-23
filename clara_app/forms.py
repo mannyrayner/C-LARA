@@ -817,15 +817,10 @@ class ImageForm(forms.Form):
 ImageFormSet = formset_factory(ImageForm, extra=1)
 
 class ImageFormV2(forms.Form):
-    image_type = forms.ChoiceField(label='Image Type',
-                                   required=False,
-                                   choices=[('style', 'Style'), ('element', 'Element'), ('page', 'Page')])
-    image_file_path = forms.ImageField(label='Image File', required=False)
-    image_base_name = forms.CharField(label='Image File Base Name',
-                                      max_length=100,
-                                      widget=forms.TextInput(attrs={'readonly': 'readonly'}),
-                                      required=False)
-    image_name = forms.CharField(label='Image Name', max_length=100, required=False)
+    relative_file_path = forms.CharField(
+        widget=forms.HiddenInput(),
+        required=False
+    )
     advice = forms.CharField(label='Advice for creating image', widget=forms.Textarea(attrs={'rows': 12}), required=False)
     page_text = forms.CharField(label='Page Text',
                                 widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
@@ -846,7 +841,6 @@ class ImageFormV2(forms.Form):
                                 widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),
                                 required=False)
     page = forms.IntegerField(label='Page Number', min_value=1, required=False)
-    position = forms.ChoiceField(label='Position', choices=[('top', 'Top'), ('bottom', 'Bottom')], required=False)
     element_name = forms.CharField(label='Element name', max_length=100, required=False)
     generate = forms.BooleanField(label='Generate Image', required=False)
     delete = forms.BooleanField(label='Delete Image', required=False)

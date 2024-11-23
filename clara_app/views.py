@@ -4965,7 +4965,7 @@ def edit_images_v2(request, project_id, status):
     try:
         # Don't try to correct syntax errors here, there should not be any.
         all_page_texts = clara_project_internal.get_page_texts()
-        pprint.pprint(all_page_texts)
+        #pprint.pprint(all_page_texts)
         page_texts = all_page_texts['plain']
         segmented_texts = all_page_texts['segmented']
         translated_texts = all_page_texts['translated']
@@ -4993,8 +4993,9 @@ def edit_images_v2(request, project_id, status):
    
     # Retrieve existing images for pages, elements and style
     try:
-        images = clara_project_internal.get_all_project_images()
-        pprint.pprint(images)
+        #images = clara_project_internal.get_all_project_images()
+        images = clara_project_internal.get_project_images_dict_v2()
+        #pprint.pprint(images)
     except Exception as e:
         messages.error(request, f"Unable to retrieve image information")
         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
@@ -5004,17 +5005,17 @@ def edit_images_v2(request, project_id, status):
         inconsistent = True
 
     try:    
-        style_data = [{'image_file_path': img.image_file_path,
-                       'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
-                       'image_name': img.image_name,
-                       'advice': img.advice }
-                      for img in images if img.image_type == 'style' ]
+##        style_data = [{'image_file_path': img.image_file_path,
+##                       'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
+##                       'image_name': img.image_name,
+##                       'advice': img.advice }
+##                      for img in images if img.image_type == 'style' ]
+        style_data = [ images['style'] ] if images['style'] else []
 
         # Add a blank style record if we don't already have one, so that we can start
         if len(style_data) == 0:
-            style_data = [{'image_file_path': None,
-                           'image_base_name': None,
-                           'image_name': 'style',
+            style_data = [{'relative_file_path': None,
+                           'alternate_images': [],
                            'advice': '' }]
     except Exception as e:
         messages.error(request, f"Unable to get style information")
@@ -5022,26 +5023,33 @@ def edit_images_v2(request, project_id, status):
         style_data = []
         inconsistent = True
 
+    element_data = []
     try:
-        element_data = [{'image_file_path': img.image_file_path,
-                         'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
-                         'image_name': img.image_name,
-                         'element_name': img.element_name,
-                         'advice': img.advice }
-                        for img in images if img.image_type == 'element' ]
+##        element_data = [{'image_file_path': img.image_file_path,
+##                         'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
+##                         'image_name': img.image_name,
+##                         'element_name': img.element_name,
+##                         'advice': img.advice }
+##                        for img in images if img.image_type == 'element' ]
+        indexed_element_data = images['elements']
+        for element_name in indexed_element_data:
+            item = indexed_element_data[element_name]
+            element_data.append({ 'element_name': element_name,
+                                  'relative_file_path': item['relative_file_path'],
+                                  'alternate_images': item['alternate_images'] })
     except Exception as e:
         messages.error(request, f"Unable to get element information")
         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-        element_data = []
         inconsistent = True
 
     try:
-        indexed_page_data = {img.page: {'image_file_path': img.image_file_path,
-                                        'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
-                                        'image_name': img.image_name,
-                                        'position': img.position,
-                                        'advice': img.advice}
-                             for img in images if img.image_type == 'page'}
+##        indexed_page_data = {img.page: {'image_file_path': img.image_file_path,
+##                                        'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
+##                                        'image_name': img.image_name,
+##                                        'position': img.position,
+##                                        'advice': img.advice}
+##                             for img in images if img.image_type == 'page'}
+        indexed_page_data = images['pages']
     except Exception as e:
         messages.error(request, f"Unable to get page information")
         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
@@ -5061,11 +5069,15 @@ def edit_images_v2(request, project_id, status):
                      'mwe_text': mwe_texts[index],
                      'lemma_text': lemma_texts[index],
                      'gloss_text': gloss_texts[index],
-                     'image_file_path': indexed_page_data[page]['image_file_path'] if page in indexed_page_data else None,
-                     'image_base_name': indexed_page_data[page]['image_base_name'] if page in indexed_page_data else None,
-                     'image_name': indexed_page_data[page]['image_name'] if page in indexed_page_data else f'image_{page}_top',
-                     'position': indexed_page_data[page]['position'] if page in indexed_page_data else 'top',
-                     'advice': indexed_page_data[page]['advice'] if page in indexed_page_data else None }
+                     #'image_file_path': indexed_page_data[page]['image_file_path'] if page in indexed_page_data else None,
+                     'relative_file_path': indexed_page_data[page]['relative_file_path'] if page in indexed_page_data else None,
+                     #'image_base_name': indexed_page_data[page]['image_base_name'] if page in indexed_page_data else None,
+                     #'image_name': indexed_page_data[page]['image_name'] if page in indexed_page_data else f'image_{page}_top',
+                     #'position': indexed_page_data[page]['position'] if page in indexed_page_data else 'top',
+                     'position': 'top',
+                     'advice': indexed_page_data[page]['advice'] if page in indexed_page_data else None,
+                     'alternate_images': indexed_page_data[page]['alternate_images'] if page in indexed_page_data else None
+                     }
             page_data.append(item)
     except Exception as e:
         messages.error(request, f"Unable to get page information")
@@ -5300,12 +5312,14 @@ def edit_images_v2(request, project_id, status):
                 return redirect('edit_images_v2', project_id=project_id, status='none')
             
     else:
-        # GET 
+        # GET
+        print(f'style_data')
+        pprint.pprint(style_data)
         params_form = CoherentImagesV2ParamsForm(initial=params, prefix='params')
         page_formset = ImageFormSetV2(initial=page_data, prefix='pages')
         element_formset = ImageFormSetV2(initial=element_data, prefix='elements')
         style_formset = ImageFormSetV2(initial=style_data, prefix='style')
-
+        
         # If 'status' is something we got after returning from an async call, display a suitable message
         if status == 'finished':
             messages.success(request, "Image task successfully completed")
