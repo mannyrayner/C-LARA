@@ -55,22 +55,20 @@
 			{% if form.initial.alternate_images %}
 			<tr>
 				<div class="alternate-images">
+					<td colspan="2">
 					{% for alt_image in form.initial.alternate_images %}
-						<td>
-						<div class="alternate-image">
-							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
-							<!-- Promote Button -->
-							<form method="post" style="display:inline;">
-								{% csrf_token %}
-								<input type="hidden" name="action" value="promote_alternate_image">
-								<input type="hidden" name="content_type" value="style">
-								<input type="hidden" name="content_identifier" value="style">
-								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
-								<button type="submit">Promote</button>
-							</form>
-						</div>
-						</td>
+						<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
+						<!-- Promote Button -->
+						<form method="post" style="display:inline;">
+							{% csrf_token %}
+							<input type="hidden" name="action" value="promote_alternate_image">
+							<input type="hidden" name="content_type" value="style">
+							<input type="hidden" name="content_identifier" value="style">
+							<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
+							<button type="submit">Promote</button>
+						</form>
 					{% endfor %}
+					</td>
 				</div>
 			</tr>
 			{% endif %}
@@ -117,9 +115,8 @@
 			{% if form.initial.alternate_images %}
 			<tr>
 				<div class="alternate-images">
+					<td colspan=5>
 					{% for alt_image in form.initial.alternate_images %}
-						<td>
-						<div class="alternate-image">
 							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
 							<!-- Promote Button -->
 							<form method="post" style="display:inline;">
@@ -130,9 +127,8 @@
 								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
 								<button type="submit">Promote</button>
 							</form>
-						</div>
-						</td>
 					{% endfor %}
+					</td>
 				</div>
 			</tr>
 			{% endif %}
@@ -185,9 +181,8 @@
 			{% if form.initial.alternate_images %}
 			<tr>
 				<div class="alternate-images">
+					<td colspan="5">
 					{% for alt_image in form.initial.alternate_images %}
-						<td>
-						<div class="alternate-image">
 							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
 							<!-- Promote Button -->
 							<form method="post" style="display:inline;">
@@ -198,9 +193,8 @@
 								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
 								<button type="submit">Promote</button>
 							</form>
-						</div>
-						</td>
 					{% endfor %}
+					</td>
 				</div>
 			</tr>
 			{% endif %}
