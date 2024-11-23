@@ -168,15 +168,6 @@ def parse_image_evaluation_response(response):
     summary = '\n'.join(summary_lines)
     return score, summary                                
 
-def get_style_advice(params):
-    project_dir = params['project_dir']
-    
-    return read_project_txt_file(project_dir, f'style_description.txt')
-
-def set_style_advice(text, project_dir):
-    make_root_project_dir(project_dir)
-    return write_project_txt_file(text, project_dir, f'style_description.txt')
-
 def get_story_data(params):
     project_dir = params['project_dir']
     
@@ -213,14 +204,16 @@ def get_style_image(params):
 def overview_file(project_dir):
     return project_pathname(project_dir, 'overview.html')
 
-def get_all_element_texts(params):
+def get_all_element_names_and_texts(params):
     project_dir = params['project_dir']
-
+    
     if file_exists(project_pathname(project_dir, f'elements/elements.json')):
-        element_list = read_project_json_file(project_dir, f'elements/elements.json')
-        return [ item['text'] for item in element_list ]
+        return read_project_json_file(project_dir, f'elements/elements.json')
     else:
         return []
+
+def get_all_element_texts(params):
+    return [ item['text'] for item in get_all_element_names_and_texts(params) ]
 
 def remove_element_name_from_list_of_elements(element_name, params):
     project_dir = params['project_dir']
@@ -260,6 +253,18 @@ def element_image_name(element_name):
 
 def page_image_name(page_number):
     return f'page_{page_number}'
+
+def style_directory(params):
+    project_dir = params['project_dir']
+    return project_pathname(project_dir, 'style')
+
+def element_directory(element_text, params):
+    element_name = element_text_to_element_name(element_text, params)
+    return project_pathname(project_dir, 'elements/{element_name}')
+
+def page_directory(page_number, params):
+    project_dir = params['project_dir']
+    return project_pathname(project_dir, 'pages/page{page_number}')
 
 def element_text_to_element_name(element_text, params):
     project_dir = params['project_dir']

@@ -4,6 +4,7 @@ from .clara_coherent_images_utils import (
     get_text,
     get_style_description,
     get_all_element_texts,
+    make_root_project_dir,
     get_config_info_from_params,
     project_pathname,
     make_project_dir,
@@ -27,6 +28,15 @@ import json
 import os
 import sys
 import traceback
+
+def get_style_advice(params):
+    project_dir = params['project_dir']
+    
+    return read_project_txt_file(project_dir, f'style_description.txt')
+
+def set_style_advice(text, project_dir):
+    make_root_project_dir(project_dir)
+    return write_project_txt_file(text, project_dir, f'style_description.txt')
 
 def get_element_advice(element_name, params):
     check_valid_element_name(element_name, params)

@@ -349,7 +349,7 @@ class Image:
 
     def __repr__(self):
         return f"""Image(image_file_path={self.image_file_path}, image_type={self.image_type},
-image_name={self.image_name}, advice={self.advice}, element_name={self.element_name}"""
+image_name={self.image_name}, advice={self.advice}, element_name={self.element_name})"""
                 
 class ImageDescriptionObject:
     def __init__(self, project_id, description_variable, explanation):

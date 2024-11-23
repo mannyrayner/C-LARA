@@ -1,3 +1,15 @@
+from .clara_coherent_images_utils import (
+    get_all_element_names_and_texts,
+    project_pathname,
+    )
+
+from .clara_coherent_images_advice import (
+    get_style_advice,
+    get_element_advice,
+    get_page_advice,
+    )    
+
+
 from .clara_utils import (
     read_txt_file,
     write_txt_file,
@@ -17,6 +29,7 @@ import asyncio
 import os
 import json
 from pathlib import Path
+import pprint
 
 async def get_alternate_images_json(content_dir, project_dir, callback=None):
     """
@@ -108,3 +121,117 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
     write_json_to_file(alternate_images, alternate_images_json_path)
 
     post_task_update_async(callback, f"Created alternate_images.json in {content_dir}")
+
+def promote_alternate_image(content_dir, project_dir, alternate_image_id):
+    """
+    Promote an alternate image to be the primary image.
+
+    Args:
+        content_dir (str or Path): The path to the content directory.
+        project_dir (str or Path): The path to the project directory.
+        alternate_image_id (int): The ID of the alternate image to promote.
+    """
+    content_dir = Path(content_dir)
+    project_dir = Path(project_dir)
+    
+    # Read the alternate_images.json file
+    alternate_images = read_json_file(content_dir / 'alternate_images.json')
+
+    # Find the alternate image with the given ID
+    for alt_image in alternate_images:
+        if alt_image['id'] == alternate_image_id:
+            # Copy the relevant files to the top-level content directory
+            copy_file(project_dir / alt_image['image_path'], content_dir / 'image.jpg')
+            copy_file(project_dir / alt_image['expanded_description_path'], content_dir / 'expanded_description.txt')
+            copy_file(project_dir / alt_image['image_interpretation_path'], content_dir / 'interpretation.txt')
+            copy_file(project_dir / alt_image['image_evaluation_path'], content_dir / 'evaluation.txt')
+
+            return True  # Indicate success
+
+    return False  # Indicate failure if ID not found
+
+def test_get_project_images_dict(id):
+    print(f'id = "{id}"')
+    if id == 'boy_meets_girl':
+        project_dir = '$CLARA/clara_content/Boy_Meets_Girl_v3_307/coherent_images_v2_project_dir'
+    elif id == 'icelandic':
+        project_dir = '$CLARA/clara_content/Icelandic_picture_dictionary_314/coherent_images_v2_project_dir'
+    elif id == 'kok_kaper':
+        project_dir = '$CLARA/clara_content/Kok_Kaper_10_words_dot_painting_cartoon_None/coherent_images_v2_project_dir'
+    else:
+        print(f'Unknown id: {id}')
+        return
+
+    result = asyncio.run(get_project_images_dict(project_dir))
+    pprint.pprint(result)
+
+async def get_project_images_dict(project_dir):
+    project_dir = Path(absolute_file_name(project_dir))
+    params = { 'project_dir': project_dir }
+    images_dict = {
+        'style': None,
+        'elements': {},
+        'pages': {}
+    }
+
+    # Style Image
+    style_dir = project_dir / 'style'
+    if style_dir.exists():
+        style_image_path = style_dir / 'image.jpg'
+        advice = get_style_advice(params)
+        alternate_images = await get_alternate_images_json_index_and_image(style_dir, project_dir)
+
+        style_data = {
+            'relative_file_path': str(style_image_path.relative_to(project_dir)) if style_image_path.exists() else None,
+            'advice': advice,
+            'alternate_images': alternate_images
+        }
+
+        images_dict['style'] = style_data
+
+    # Elements
+    elements_dir = project_dir / 'elements'
+    element_names_and_texts = get_all_element_names_and_texts(params)
+    for item in element_names_and_texts:
+        element_name = item['name']
+        element_text = item['text']
+        element_dir = elements_dir / element_name
+        if element_dir.is_dir():
+            image_path = element_dir / 'image.jpg'
+            advice = get_element_advice(element_text, params)
+            alternate_images = await get_alternate_images_json_index_and_image(element_dir, project_dir)
+
+            element_data = {
+                'relative_file_path': str(image_path.relative_to(project_dir)) if image_path.exists() else None,
+                'advice': advice,
+                'alternate_images': alternate_images
+            }
+
+            images_dict['elements'][element_text] = element_data
+
+    # Pages
+    pages_dir = project_dir / 'pages'
+    if pages_dir.exists():
+        for page_dir in pages_dir.iterdir():
+            if page_dir.is_dir() and page_dir.name.startswith('page'):
+                page_number = int(page_dir.name.replace('page', ''))
+                image_path = page_dir / 'image.jpg'
+                advice = get_page_advice(page_number, params)
+                alternate_images = await get_alternate_images_json_index_and_image(page_dir, project_dir)
+
+                page_data = {
+                    'relative_file_path': str(image_path.relative_to(project_dir)) if image_path.exists() else None,
+                    'advice': advice,
+                    'alternate_images': alternate_images
+                }
+
+                images_dict['pages'][page_number] = page_data
+
+    return images_dict
+
+async def get_alternate_images_json_index_and_image(content_dir, project_dir):
+    alternate_images_info = await get_alternate_images_json(content_dir, project_dir)
+    return [ { 'id': item['id'], 'relative_file_path': item['image_path'] } for item in alternate_images_info ]
+
+
+    

@@ -8,6 +8,8 @@ from .clara_coherent_images_prompt_templates import (
     )
 
 from .clara_coherent_images_advice import (
+    get_style_advice,
+    set_style_advice,
     get_element_advice,
     get_page_advice,
     set_element_advice,
@@ -34,7 +36,6 @@ from .clara_coherent_images_utils import (
     get_project_params,
     set_project_params,
     set_story_data_from_numbered_page_list,
-    set_style_advice,
     get_style_params_from_project_params,
     get_element_names_params_from_project_params,
     get_element_descriptions_params_from_project_params,
@@ -42,7 +43,6 @@ from .clara_coherent_images_utils import (
     score_for_image_dir,
     score_for_evaluation_file,
     parse_image_evaluation_response,
-    get_style_advice,
     get_story_data,
     get_pages,
     get_text,
