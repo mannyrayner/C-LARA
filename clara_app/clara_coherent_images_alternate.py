@@ -31,7 +31,7 @@ import json
 from pathlib import Path
 import pprint
 
-async def get_alternate_images_json(content_dir, project_dir, callback=None):
+async def get_alternate_images_json(content_dir, project_dir, force_remake=False, callback=None):
     """
     Retrieve the alternate_images.json data from the specified content directory.
     If the file does not exist, create it first.
@@ -44,32 +44,31 @@ async def get_alternate_images_json(content_dir, project_dir, callback=None):
     Returns:
         list: A list of dictionaries representing the alternate images.
     """
+    FORCE_REMAKE = True
+    #FORCE_REMAKE = False
+    
     content_dir = Path(absolute_file_name(content_dir))
     alternate_images_json_path = content_dir / 'alternate_images.json'
-
+ 
     # Check if the alternate_images.json file exists
-    if not file_exists(alternate_images_json_path):
+    if FORCE_REMAKE or not file_exists(alternate_images_json_path):
         # Create the alternate_images.json file
         await create_alternate_images_json(content_dir, project_dir, callback)
 
     # Read the alternate_images.json file if it could be created, else return an empty list
     if file_exists(alternate_images_json_path):
         alternate_images = read_json_file(alternate_images_json_path)
-        alternate_images_with_forward_slashes = [ replace_backslashes(item) for item in alternate_images ]
         return alternate_images
     else:
         return []
-
-def replace_backslashes(item):
-    return item.replace('\\', '/') if isinstance(item, ( str )) else item
 
 async def create_alternate_images_json(content_dir, project_dir, callback=None):
     """
     Create an alternate_images.json file in the specified content directory.
     
     Args:
-        content_dir (str or Path): The path to the content directory.
-        project_dir (str or Path): The path to the top level coherent images v2 directory for the project.
+        content_dir (str): The path to the content directory.
+        project_dir (str): The path to the top level coherent images v2 directory for the project.
     """
     content_dir = Path(absolute_file_name(content_dir))
     project_dir = Path(absolute_file_name(project_dir))
@@ -93,13 +92,13 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
             # Iterate over image directories within the description directory
             for image_dir in sorted(description_dir.glob('image_v*')):
                 if directory_exists(image_dir):
-                    image_index = image_dir.name.split('_v')[-1]  # Get the image version index
+                    image_index = image_dir.name.split('_v')[-1] 
                     image_path = image_dir / 'image.jpg'
                     image_interpretation_path = image_dir / 'image_interpretation.txt'
-                    image_evaluation_path = image_dir / 'evaluation.txt'  # Sometimes evaluation might be here
+                    image_evaluation_path = image_dir / 'evaluation.txt'  
 
                     # Build the relative paths (relative to the content directory)
-                    relative_image_path = image_path.relative_to(project_dir)
+                    relative_image_path = image_path.relative_to(project_dir).as_posix()
                     relative_expanded_description_path = expanded_description_path.relative_to(project_dir) if expanded_description_path.exists() else None
                     relative_interpretation_path = interpretation_path.relative_to(project_dir) if interpretation_path.exists() else None
                     relative_evaluation_path = evaluation_path.relative_to(project_dir) if evaluation_path.exists() else None
@@ -186,7 +185,7 @@ async def get_project_images_dict(project_dir):
         alternate_images = await get_alternate_images_json_index_and_image(style_dir, project_dir)
 
         style_data = {
-            'relative_file_path': str(style_image_path.relative_to(project_dir)) if style_image_path.exists() else None,
+            'relative_file_path': str(style_image_path.relative_to(project_dir).as_posix()) if style_image_path.exists() else None,
             'advice': advice,
             'alternate_images': alternate_images
         }
@@ -206,7 +205,7 @@ async def get_project_images_dict(project_dir):
             alternate_images = await get_alternate_images_json_index_and_image(element_dir, project_dir)
 
             element_data = {
-                'relative_file_path': str(image_path.relative_to(project_dir)) if image_path.exists() else None,
+                'relative_file_path': str(image_path.relative_to(project_dir).as_posix()) if image_path.exists() else None,
                 'advice': advice,
                 'alternate_images': alternate_images
             }
@@ -224,7 +223,7 @@ async def get_project_images_dict(project_dir):
                 alternate_images = await get_alternate_images_json_index_and_image(page_dir, project_dir)
 
                 page_data = {
-                    'relative_file_path': str(image_path.relative_to(project_dir)) if image_path.exists() else None,
+                    'relative_file_path': str(image_path.relative_to(project_dir).as_posix()) if image_path.exists() else None,
                     'advice': advice,
                     'alternate_images': alternate_images
                 }

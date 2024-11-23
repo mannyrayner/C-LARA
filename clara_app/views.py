@@ -5343,6 +5343,8 @@ def edit_images_v2(request, project_id, status):
         page_formset = ImageFormSetV2(initial=page_data, prefix='pages')
         element_formset = ImageFormSetV2(initial=element_data, prefix='elements')
         style_formset = ImageFormSetV2(initial=style_data, prefix='style')
+
+        #pprint.pprint(style_data)
         
         # If 'status' is something we got after returning from an async call, display a suitable message
         if status == 'finished':
