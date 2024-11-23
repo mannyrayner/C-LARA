@@ -125,8 +125,8 @@
 							<form method="post" style="display:inline;">
 								{% csrf_token %}
 								<input type="hidden" name="action" value="promote_alternate_image">
-								<input type="hidden" name="content_type" value="style">
-								<input type="hidden" name="content_identifier" value="style">
+								<input type="hidden" name="content_type" value="element">
+								<input type="hidden" name="content_identifier" value="{{ form.element_name.value }}">
 								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
 								<button type="submit">Promote</button>
 							</form>
@@ -193,8 +193,8 @@
 							<form method="post" style="display:inline;">
 								{% csrf_token %}
 								<input type="hidden" name="action" value="promote_alternate_image">
-								<input type="hidden" name="content_type" value="style">
-								<input type="hidden" name="content_identifier" value="style">
+								<input type="hidden" name="content_type" value="page">
+								<input type="hidden" name="content_identifier" value="{{ form.page.value }}">
 								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
 								<button type="submit">Promote</button>
 							</form>
