@@ -41,17 +41,41 @@
       </thead>
 	  <tbody>
       {% for form in style_formset %}
-        <tr>
-            <td>{{ form.advice }}</td>
-            <td>{% if form.image_base_name.value %}
-				<img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">
-			
-				{% else %}
-				No style image currently stored.
-				{% endif %}
-			</td>
+			<tr>
+				<td>{{ form.advice }}</td>
+				<td>{% if form.relative_file_path.value %}
+					<img src="{% url 'serve_coherent_images_v2_file' project.id form.relative_file_path.value %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">
+				
+					{% else %}
+					No style image currently stored.
+					{% endif %}
+				</td>
+			</tr>
+		<!-- Display alternate images -->
+			{% if form.initial.alternate_images %}
+			<tr>
+				<div class="alternate-images">
+					{% for alt_image in form.initial.alternate_images %}
+						<td>
+						<div class="alternate-image">
+							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
+							<!-- Promote Button -->
+							<form method="post" style="display:inline;">
+								{% csrf_token %}
+								<input type="hidden" name="action" value="promote_alternate_image">
+								<input type="hidden" name="content_type" value="style">
+								<input type="hidden" name="content_identifier" value="style">
+								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
+								<button type="submit">Promote</button>
+							</form>
+						</div>
+						</td>
+					{% endfor %}
+				</div>
+			</tr>
+			{% endif %}
+		{% endfor %}
 		</tr>
-	  {% endfor %}
 	  </tbody>
     </table>
 		<button type="submit" name="action" value="save_style_advice">Save Style Advice</button>
@@ -76,19 +100,42 @@
       </thead>
       <tbody>
         {% for form in element_formset %}
-          <tr>
-            <td>{{ form.element_name }}</td>
-            <td>{{ form.advice }}</td>
-            <td>
-              {% if form.image_base_name.value %}
-                <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="{{ form.element_name.value }}" style="max-width: 200px; max-height: 200px;">
-              {% else %}
-                <p>No image.</p>
-              {% endif %}
-            </td>
-            <td>{{ form.generate }}</td>
-            <td>{{ form.delete }}</td>
-          </tr>
+			  <tr>
+				<td>{{ form.element_name }}</td>
+				<td>{{ form.advice }}</td>
+				<td>
+				  {% if form.relative_file_path.value %}
+					<img src="{% url 'serve_coherent_images_v2_file' project.id form.relative_file_path.value %}" alt="{{ form.element_name.value }}" style="max-width: 200px; max-height: 200px;">
+				  {% else %}
+					<p>No image.</p>
+				  {% endif %}
+				</td>
+				<td>{{ form.generate }}</td>
+				<td>{{ form.delete }}</td>
+			  </tr>
+		<!-- Display alternate images -->
+			{% if form.initial.alternate_images %}
+			<tr>
+				<div class="alternate-images">
+					{% for alt_image in form.initial.alternate_images %}
+						<td>
+						<div class="alternate-image">
+							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
+							<!-- Promote Button -->
+							<form method="post" style="display:inline;">
+								{% csrf_token %}
+								<input type="hidden" name="action" value="promote_alternate_image">
+								<input type="hidden" name="content_type" value="style">
+								<input type="hidden" name="content_identifier" value="style">
+								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
+								<button type="submit">Promote</button>
+							</form>
+						</div>
+						</td>
+					{% endfor %}
+				</div>
+			</tr>
+			{% endif %}
         {% endfor %}
       </tbody>
     </table>
@@ -125,8 +172,8 @@
             <td>{{ form.page }}</td>
             <td>{{ form.advice }}</td>
             <td>
-              {% if form.image_base_name.value %}
-                <img src="{% url 'serve_project_image' project.internal_id form.image_base_name.value %}" alt="Page {{ form.page.value }}" style="max-width: 200px; max-height: 200px;">
+              {% if form.relative_file_path.value %}
+                <img src="{% url 'serve_coherent_images_v2_file' project.id form.relative_file_path.value %}" alt="Page {{ form.page.value }}" style="max-width: 200px; max-height: 200px;">
               {% else %}
                 <p>No image.</p>
               {% endif %}
@@ -134,6 +181,29 @@
             <td>{{ form.generate }}</td>
             <td>{{ form.delete }}</td>
           </tr>
+		  <!-- Display alternate images -->
+			{% if form.initial.alternate_images %}
+			<tr>
+				<div class="alternate-images">
+					{% for alt_image in form.initial.alternate_images %}
+						<td>
+						<div class="alternate-image">
+							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
+							<!-- Promote Button -->
+							<form method="post" style="display:inline;">
+								{% csrf_token %}
+								<input type="hidden" name="action" value="promote_alternate_image">
+								<input type="hidden" name="content_type" value="style">
+								<input type="hidden" name="content_identifier" value="style">
+								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
+								<button type="submit">Promote</button>
+							</form>
+						</div>
+						</td>
+					{% endfor %}
+				</div>
+			</tr>
+			{% endif %}
           <tr>
 		    <td>Plain text</td><td colspan="5">{{ form.page_text }}</td>
 		  </tr>
