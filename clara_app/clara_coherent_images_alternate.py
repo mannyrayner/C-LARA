@@ -55,9 +55,13 @@ async def get_alternate_images_json(content_dir, project_dir, callback=None):
     # Read the alternate_images.json file if it could be created, else return an empty list
     if file_exists(alternate_images_json_path):
         alternate_images = read_json_file(alternate_images_json_path)
+        alternate_images_with_forward_slashes = [ replace_backslashes(item) for item in alternate_images ]
         return alternate_images
     else:
         return []
+
+def replace_backslashes(item):
+    return item.replace('\\', '/') if isinstance(item, ( str )) else item
 
 async def create_alternate_images_json(content_dir, project_dir, callback=None):
     """
