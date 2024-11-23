@@ -5136,7 +5136,33 @@ def edit_images_v2(request, project_id, status):
                 except Exception as e:
                         messages.error(request, f"Error when trying to create overview")
                         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-                return redirect('edit_images_v2', project_id=project_id, status='none')   
+                return redirect('edit_images_v2', project_id=project_id, status='none')
+            elif action == 'promote_alternate_image':
+                try:
+                    content_type = request.POST.get('content_type')
+                    content_identifier = request.POST.get('content_identifier')
+                    alternate_image_id = int(request.POST.get('alternate_image_id'))
+                    #print(f'promote_alternate_image: content_type={content_type}, content_identifier={content_identifier}, alternate_image_id={alternate_image_id}')
+
+                    if content_type == 'style':
+                        clara_project_internal.promote_v2_style_image(alternate_image_id)
+                    elif content_type == 'element':
+                        element_name = content_identifier
+                        clara_project_internal.promote_v2_element_image(element_name, alternate_image_id)
+                    elif content_type == 'page':
+                        page_number = int(content_identifier)
+                        clara_project_internal.promote_v2_page_image(page_number, alternate_image_id)
+                    else:
+                        messages.error(request, f"Invalid content type, '{content_type}'")
+                        return redirect('edit_images_v2', project_id=project.id, status=status)
+
+                    messages.success(request, f"Alternate {content_type} image promoted successfully.")
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+                except Exception as e:
+                    messages.error(request, f"Error when trying to promote alternate image")
+                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+                
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
                 if not style_formset.is_valid():
@@ -5313,8 +5339,6 @@ def edit_images_v2(request, project_id, status):
             
     else:
         # GET
-        print(f'style_data')
-        pprint.pprint(style_data)
         params_form = CoherentImagesV2ParamsForm(initial=params, prefix='params')
         page_formset = ImageFormSetV2(initial=page_data, prefix='pages')
         element_formset = ImageFormSetV2(initial=element_data, prefix='elements')

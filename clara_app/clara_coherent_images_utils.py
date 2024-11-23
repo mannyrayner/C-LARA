@@ -260,11 +260,11 @@ def style_directory(params):
 
 def element_directory(element_text, params):
     element_name = element_text_to_element_name(element_text, params)
-    return project_pathname(project_dir, 'elements/{element_name}')
+    return project_pathname(project_dir, f'elements/{element_name}')
 
 def page_directory(page_number, params):
     project_dir = params['project_dir']
-    return project_pathname(project_dir, 'pages/page{page_number}')
+    return project_pathname(project_dir, f'pages/page{page_number}')
 
 def element_text_to_element_name(element_text, params):
     project_dir = params['project_dir']

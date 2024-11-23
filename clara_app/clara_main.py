@@ -1661,8 +1661,9 @@ class CLARAProjectInternal:
         image_name = page_image_name(page_number)
         self.store_image_advice(image_name, advice, 'page')
 
-    def promote_v2_style_image(self, alternate_image_id, params, callback=None):
+    def promote_v2_style_image(self, alternate_image_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
         content_dir = style_directory(params)
         promote_alternate_image(content_dir, project_dir, alternate_image_id)
         self.store_v2_style_data(params, callback=callback)
@@ -1690,10 +1691,11 @@ class CLARAProjectInternal:
             self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, element_name=element_name,
                                    keep_file_name=False, archive=False, callback=callback)
 
-    def promote_v2_element_image(self, element_name, alternate_image_id, params, callback=None):
+    def promote_v2_element_image(self, element_name, alternate_image_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir,
+                   'elements_to_generate': [element_name] }
         content_dir = element_directory(element_name, params)
-        params['elements_to_generate'] = [element_name]
         promote_alternate_image(content_dir, project_dir, alternate_image_id)
         self.store_v2_element_data(params, callback=callback)
 
@@ -1709,12 +1711,13 @@ class CLARAProjectInternal:
             self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, element_name=element_name,
                                    keep_file_name=False, archive=False, callback=callback)
 
-    def promote_v2_page_image(self, page_number, alternate_image_id, params, callback=None):
+    def promote_v2_page_image(self, page_number, alternate_image_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir,
+                   'pages_to_generate': [page_number] }
         content_dir = page_directory(page_number, params)
-        params['pages_to_generate'] = [page_number]
         promote_alternate_image(content_dir, project_dir, alternate_image_id)
-        self.store_v2_element_data(params, element_names=[element_name], callback=callback)
+        self.store_v2_page_data(params, callback=callback)
     
     def store_v2_page_data(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
