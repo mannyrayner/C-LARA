@@ -40,6 +40,9 @@ from .clara_coherent_images_utils import (
     get_element_names_params_from_project_params,
     get_element_descriptions_params_from_project_params,
     get_page_params_from_project_params,
+    existing_description_version_directories_and_first_unused_number_for_style,
+    existing_description_version_directories_and_first_unused_number_for_element,
+    existing_description_version_directories_and_first_unused_number_for_page,
     score_for_image_dir,
     score_for_evaluation_file,
     parse_image_evaluation_response,
@@ -337,9 +340,10 @@ async def process_style(params, callback=None):
     n_expanded_descriptions = params['n_expanded_descriptions']
     
     tasks = []
-    all_description_dirs = []
+    all_description_dirs, initial_description_version_number = existing_description_version_directories_and_first_unused_number_for_style(params)
     total_cost_dict = {}
-    for description_version_number in range(0, n_expanded_descriptions):
+    
+    for description_version_number in range(initial_description_version_number, initial_description_version_number + n_expanded_descriptions):
         tasks.append(asyncio.create_task(generate_expanded_style_description_and_images(description_version_number, params, callback=callback)))
     results = await asyncio.gather(*tasks)
     for description_dir, cost_dict in results:
@@ -681,19 +685,19 @@ async def process_single_element(element_name, element_text, params, callback=No
     element_directory = f'elements/{element_name}'
     
     tasks = []
-    all_description_dirs = []
     total_cost_dict = {}
 
     if keep_existing_elements and file_exists(project_pathname(project_dir, f'elements/{element_name}/image.jpg')):
         print(f'Element processing for "{element_text}" already done, skipping')
         return total_cost_dict
-    elif directory_exists(project_pathname(project_dir, element_directory)):
-        remove_element_directory(element_text, params)
-
+##    elif directory_exists(project_pathname(project_dir, element_directory)):
+##        remove_element_directory(element_text, params)
+        
     make_project_dir(project_dir, element_directory)
+    all_description_dirs, initial_description_version_number = existing_description_version_directories_and_first_unused_number_for_element(element_name, params)
 
     if n_expanded_descriptions != 0:
-        for description_version_number in range(0, n_expanded_descriptions):
+        for description_version_number in range(initial_description_version_number, initial_description_version_number + n_expanded_descriptions):
             tasks.append(asyncio.create_task(generate_expanded_element_description_and_images(element_name, element_text, description_version_number, params, callback=callback)))
         results = await asyncio.gather(*tasks)
         for description_dir, cost_dict in results:
@@ -925,7 +929,7 @@ async def generate_image_for_page(page_number, params, callback=None):
         return total_cost_dict
     elif directory_exists(project_pathname(project_dir, page_number_directory)):
         await post_task_update_async(callback, f'Processing page {page_number}')
-        remove_page_directory(page_number, params)
+        #remove_page_directory(page_number, params)
 
     # Make directory 
     make_project_dir(project_dir, page_number_directory)
@@ -1070,9 +1074,9 @@ async def generate_image_for_page_and_context(page_number, previous_pages, eleme
         n_expanded_descriptions = params['n_expanded_descriptions'] * ( 1 + n_previous_rounds )
         
         tasks = []
-        all_description_dirs = []
+        all_description_dirs, initial_description_version_number = existing_description_version_directories_and_first_unused_number_for_page(page_number, params)
         
-        for description_version_number in range(0, n_expanded_descriptions):
+        for description_version_number in range(initial_description_version_number, initial_description_version_number + n_expanded_descriptions):
             tasks.append(asyncio.create_task(generate_page_description_and_images(page_number, previous_pages, elements, description_version_number, params, callback=callback)))
         results = await asyncio.gather(*tasks)
         for description_dir, cost_dict in results:
@@ -1090,7 +1094,7 @@ async def generate_image_for_page_and_context(page_number, previous_pages, eleme
 
     # None of the descriptions produced an acceptable image and we're out of lives. Give up.
     return total_cost_dict
-
+                                
 def acceptable_page_image_exists(page_number, params):
     project_dir = params['project_dir']
 

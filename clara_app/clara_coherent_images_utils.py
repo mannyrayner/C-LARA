@@ -144,6 +144,48 @@ def get_page_params_from_project_params(params, pages_to_generate=None):
     
     return page_params
 
+def existing_description_version_directories_and_first_unused_number_for_style(params):
+    project_dir = params['project_dir']
+
+    description_version_number = 0
+    existing_description_directories = []
+    
+    while True:
+        description_directory = f'style/description_v{description_version_number}'
+        if not directory_exists(project_pathname(project_dir, description_directory)):
+            return existing_description_directories, description_version_number
+        else:
+            existing_description_directories.append(description_directory)
+            description_version_number += 1
+
+def existing_description_version_directories_and_first_unused_number_for_element(element_name, params):
+    project_dir = params['project_dir']
+
+    description_version_number = 0
+    existing_description_directories = []
+    
+    while True:
+        description_directory = f'elements/{element_name}/description_v{description_version_number}'
+        if not directory_exists(project_pathname(project_dir, description_directory)):
+            return existing_description_directories, description_version_number
+        else:
+            existing_description_directories.append(description_directory)
+            description_version_number += 1
+
+def existing_description_version_directories_and_first_unused_number_for_page(page_number, params):
+    project_dir = params['project_dir']
+
+    description_version_number = 0
+    existing_description_directories = []
+    
+    while True:
+        description_directory = f'pages/page{page_number}/description_v{description_version_number}'
+        if not directory_exists(project_pathname(project_dir, description_directory)):
+            return existing_description_directories, description_version_number
+        else:
+            existing_description_directories.append(description_directory)
+            description_version_number += 1
+
 def score_for_image_dir(image_dir, params):
     return score_for_evaluation_file(f'{image_dir}/evaluation.txt', params)
 
@@ -259,6 +301,7 @@ def style_directory(params):
     return project_pathname(project_dir, 'style')
 
 def element_directory(element_text, params):
+    project_dir = params['project_dir']
     element_name = element_text_to_element_name(element_text, params)
     return project_pathname(project_dir, f'elements/{element_name}')
 
