@@ -31,6 +31,7 @@ import sys
 import asyncio
 import traceback
 import unicodedata
+from pathlib import Path
 from PIL import Image
 
 # Params files
@@ -414,6 +415,38 @@ def write_project_cost_file(cost_dict, project_dir, pathname):
 
 
 # Project files etc
+
+def sanitize_path(project_dir, pathname):
+    """
+    Sanitize a pathname read from a JSON file, ensuring it is relative to project_dir.
+
+    Args:
+        project_dir (str or Path): The path to the project directory.
+        pathname (str or Path): The pathname to sanitize.
+
+    Returns:
+        Path: The sanitized path.
+    """
+    project_dir = Path(project_dir)
+    pathname = Path(pathname)
+
+    # If pathname is absolute, make it relative to project_dir or 'coherent_images_v2_project_dir'
+    if pathname.is_absolute():
+        try:
+            relative_path = pathname.relative_to(project_dir)
+            return relative_path
+        except ValueError:
+            # Attempt to find 'coherent_images_v2_project_dir' in the path
+            coherent_images_dir_name = 'coherent_images_v2_project_dir'
+            parts = pathname.parts
+            if coherent_images_dir_name in parts:
+                index = parts.index(coherent_images_dir_name)
+                relative_parts = parts[(index + 1):]
+                return Path(*relative_parts)
+            else:
+                raise ValueError(f"Cannot sanitize path: {pathname}")
+    else:
+        return pathname
 
 def project_pathname(project_dir, pathname):
     return absolute_file_name(os.path.join(project_dir, pathname))
