@@ -434,7 +434,7 @@ def sanitize_path(project_dir, pathname):
     if pathname.is_absolute():
         try:
             relative_path = pathname.relative_to(project_dir)
-            return relative_path
+            return str(relative_path.as_posix())
         except ValueError:
             # Attempt to find 'coherent_images_v2_project_dir' in the path
             coherent_images_dir_name = 'coherent_images_v2_project_dir'
@@ -442,7 +442,7 @@ def sanitize_path(project_dir, pathname):
             if coherent_images_dir_name in parts:
                 index = parts.index(coherent_images_dir_name)
                 relative_parts = parts[(index + 1):]
-                return Path(*relative_parts)
+                return str(Path(*relative_parts).as_posix())
             else:
                 raise ValueError(f"Cannot sanitize path: {pathname}")
     else:

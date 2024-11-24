@@ -350,35 +350,39 @@ async def process_style(params, callback=None):
     for description_dir, cost_dict in results:
         all_description_dirs.append(description_dir)
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
-    select_best_expanded_style_description_and_image(all_description_dirs, params)
+    await select_best_expanded_style_description_and_image(all_description_dirs, params, callback=callback)
     await create_alternate_images_json(project_pathname(project_dir, 'style'), project_dir, callback=callback)
     write_project_cost_file(total_cost_dict, project_dir, f'style/cost.json')
     return total_cost_dict
 
-def select_best_expanded_style_description_and_image(all_description_dirs, params):
-    project_dir = params['project_dir']
-    
-    best_score = 0.0
-    best_description_file = None
-    typical_image_file = None
+async def select_best_expanded_style_description_and_image(all_description_dirs, params, callback=None):
+    try:
+        project_dir = params['project_dir']
+        
+        best_score = 0.0
+        best_description_file = None
+        typical_image_file = None
 
-    for description_dir in all_description_dirs:
-        image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
-        description_file = project_pathname(project_dir, f'{description_dir}/expanded_description.txt')
+        for description_dir in all_description_dirs:
+            image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
+            description_file = project_pathname(project_dir, f'{description_dir}/expanded_description.txt')
 
-        if file_exists(image_info_file) and file_exists(description_file):
-            image_info = read_json_file(image_info_file)
-            if image_info['av_score'] > best_score:
-                best_description_file = f'{description_dir}/expanded_description.txt'
-                typical_image_file = sanitize_path(project_dir, image_info['image'])
-                typical_image_interpretation = sanitize_path(project_dir, image_info['interpretation'])
-                typical_image_evaluation = sanitize_path(project_dir, image_info['evaluation'])
+            if file_exists(image_info_file) and file_exists(description_file):
+                image_info = read_json_file(image_info_file)
+                if image_info['av_score'] > best_score:
+                    best_description_file = f'{description_dir}/expanded_description.txt'
+                    typical_image_file = sanitize_path(project_dir, image_info['image'])
+                    typical_image_interpretation = sanitize_path(project_dir, image_info['interpretation'])
+                    typical_image_evaluation = sanitize_path(project_dir, image_info['evaluation'])
 
-    if best_description_file and typical_image_file:
-        copy_file(project_pathname(project_dir, best_description_file), project_pathname(project_dir, f'style/expanded_description.txt'))
-        copy_file(project_pathname(project_dir, typical_image_file), project_pathname(project_dir, f'style/image.jpg'))
-        copy_file(project_pathname(project_dir, typical_image_interpretation), project_pathname(project_dir, f'style/interpretation.txt'))
-        copy_file(project_pathname(project_dir, typical_image_evaluation), project_pathname(project_dir, f'style/evaluation.txt'))
+        if best_description_file and typical_image_file:
+            copy_file(project_pathname(project_dir, best_description_file), project_pathname(project_dir, f'style/expanded_description.txt'))
+            copy_file(project_pathname(project_dir, typical_image_file), project_pathname(project_dir, f'style/image.jpg'))
+            copy_file(project_pathname(project_dir, typical_image_interpretation), project_pathname(project_dir, f'style/interpretation.txt'))
+            copy_file(project_pathname(project_dir, typical_image_evaluation), project_pathname(project_dir, f'style/evaluation.txt'))
+    except Exception as e:
+        post_task_update_async(callback, 'Error when selecting best style description')
+        post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             
 async def generate_expanded_style_description_and_images(description_version_number, params, callback=None):
     project_dir = params['project_dir']
@@ -704,36 +708,40 @@ async def process_single_element(element_name, element_text, params, callback=No
         for description_dir, cost_dict in results:
             all_description_dirs.append(description_dir)
             total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
-        select_best_expanded_element_description_and_image(element_name, all_description_dirs, params)
+        await select_best_expanded_element_description_and_image(element_name, all_description_dirs, params, callback=callback)
 
     await create_alternate_images_json(project_pathname(project_dir, element_directory), project_dir, callback=callback)
     write_project_cost_file(total_cost_dict, project_dir, f'elements/{element_name}/cost.json')
     return total_cost_dict
 
-def select_best_expanded_element_description_and_image(element_name, all_description_dirs, params):
-    project_dir = params['project_dir']
-    
-    best_score = 0.0
-    best_description_file = None
-    typical_image_file = None
+async def select_best_expanded_element_description_and_image(element_name, all_description_dirs, params, callback=None):
+    try:
+        project_dir = params['project_dir']
+        
+        best_score = 0.0
+        best_description_file = None
+        typical_image_file = None
 
-    for description_dir in all_description_dirs:
-        image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
-        description_file = project_pathname(project_dir, f'{description_dir}/expanded_description.txt')
+        for description_dir in all_description_dirs:
+            image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
+            description_file = project_pathname(project_dir, f'{description_dir}/expanded_description.txt')
 
-        if file_exists(image_info_file) and file_exists(description_file):
-            image_info = read_json_file(image_info_file)
-            if image_info['av_score'] > best_score:
-                best_description_file = f'{description_dir}/expanded_description.txt'
-                typical_image_file = sanitize_path(project_dir, image_info['image'])
-                typical_image_interpretation = sanitize_path(project_dir, image_info['interpretation'])
-                typical_image_evaluation = sanitize_path(project_dir, image_info['evaluation'])
+            if file_exists(image_info_file) and file_exists(description_file):
+                image_info = read_json_file(image_info_file)
+                if image_info['av_score'] > best_score:
+                    best_description_file = f'{description_dir}/expanded_description.txt'
+                    typical_image_file = sanitize_path(project_dir, image_info['image'])
+                    typical_image_interpretation = sanitize_path(project_dir, image_info['interpretation'])
+                    typical_image_evaluation = sanitize_path(project_dir, image_info['evaluation'])
 
-    if best_description_file and typical_image_file:
-        copy_file(project_pathname(project_dir, best_description_file), project_pathname(project_dir, f'elements/{element_name}/expanded_description.txt'))
-        copy_file(project_pathname(project_dir, typical_image_file), project_pathname(project_dir, f'elements/{element_name}/image.jpg'))
-        copy_file(project_pathname(project_dir, typical_image_interpretation), project_pathname(project_dir, f'elements/{element_name}/interpretation.txt'))
-        copy_file(project_pathname(project_dir, typical_image_evaluation), project_pathname(project_dir, f'elements/{element_name}/evaluation.txt'))
+        if best_description_file and typical_image_file:
+            copy_file(project_pathname(project_dir, best_description_file), project_pathname(project_dir, f'elements/{element_name}/expanded_description.txt'))
+            copy_file(project_pathname(project_dir, typical_image_file), project_pathname(project_dir, f'elements/{element_name}/image.jpg'))
+            copy_file(project_pathname(project_dir, typical_image_interpretation), project_pathname(project_dir, f'elements/{element_name}/interpretation.txt'))
+            copy_file(project_pathname(project_dir, typical_image_evaluation), project_pathname(project_dir, f'elements/{element_name}/evaluation.txt'))
+    except Exception as e:
+        post_task_update_async(callback, f'Error when selecting best element description for element "{element_name}"')
+        post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             
 async def generate_expanded_element_description_and_images(element_name, element_text, description_version_number, params, callback=None):
 
@@ -1083,7 +1091,7 @@ async def generate_image_for_page_and_context(page_number, previous_pages, eleme
         for description_dir, cost_dict in results:
             all_description_dirs.append(description_dir)
             total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
-        select_best_expanded_page_description_and_image(page_number, all_description_dirs, params)
+        await select_best_expanded_page_description_and_image(page_number, all_description_dirs, params, callback=callback)
 
         if acceptable_page_image_exists(page_number, params):
             # We succeeded. Return the costs
@@ -1107,48 +1115,39 @@ def acceptable_page_image_exists(page_number, params):
     else:
         return False
     
+async def select_best_expanded_page_description_and_image(page_number, all_description_dirs, params, callback=None):
+    try:
+        project_dir = params['project_dir']
+              
+        best_score = 0.0
+        best_description_file = None
+        best_image_file = None
+        best_interpretation_file = None
+        best_evaluation_file = None
 
-# Only used for cleaning up
-def select_all_best_expanded_page_descriptions_and_images_for_project(params):
-    project_dir = params['project_dir']
-    
-    page_numbers = get_pages(params)
-    for page_number in page_numbers:
-        page_dir = project_pathname(project_dir, f'pages/page{page_number}')
-        if directory_exists(page_dir):
-            description_dir_names = get_immediate_subdirectories_in_local_directory(page_dir)
-            all_description_dirs = [ os.path.join(page_dir, description_dir_name) for description_dir_name in description_dir_names ]
-            select_best_expanded_page_description_and_image(page_number, all_description_dirs, params)
+        for description_dir in all_description_dirs:
+            image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
+            description_file = project_pathname(project_dir, f'{description_dir}/expanded_description.txt')
 
-def select_best_expanded_page_description_and_image(page_number, all_description_dirs, params):
-    project_dir = params['project_dir']
-          
-    best_score = 0.0
-    best_description_file = None
-    best_image_file = None
-    best_interpretation_file = None
-    best_evaluation_file = None
+            if file_exists(image_info_file) and file_exists(description_file):
+                image_info = read_json_file(image_info_file)
+                if image_info['best_score'] > best_score:
+                    best_score = image_info['best_score']
+                    best_description_file = f'{description_dir}/expanded_description.txt'
+                    best_image_file = sanitize_path(project_dir, image_info['image'])
+                    best_interpretation_file = sanitize_path(project_dir, image_info['interpretation'])
+                    best_evaluation_file = sanitize_path(project_dir, image_info['evaluation'])
 
-    for description_dir in all_description_dirs:
-        image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
-        description_file = project_pathname(project_dir, f'{description_dir}/expanded_description.txt')
-
-        if file_exists(image_info_file) and file_exists(description_file):
-            image_info = read_json_file(image_info_file)
-            if image_info['best_score'] > best_score:
-                best_score = image_info['best_score']
-                best_description_file = f'{description_dir}/expanded_description.txt'
-                best_image_file = sanitize_path(project_dir, image_info['image'])
-                best_interpretation_file = sanitize_path(project_dir, image_info['interpretation'])
-                best_evaluation_file = sanitize_path(project_dir, image_info['evaluation'])
-
-    if best_description_file and best_image_file and best_interpretation_file:
-        copy_file(project_pathname(project_dir, best_description_file), project_pathname(project_dir, f'pages/page{page_number}/expanded_description.txt'))
-        copy_file(project_pathname(project_dir, best_image_file), project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
-        copy_file(project_pathname(project_dir, best_interpretation_file), project_pathname(project_dir, f'pages/page{page_number}/interpretation.txt'))
-        copy_file(project_pathname(project_dir, best_evaluation_file), project_pathname(project_dir, f'pages/page{page_number}/evaluation.txt'))
-    else:
-        print('No best_expanded_page_description_and_image found')
+        if best_description_file and best_image_file and best_interpretation_file:
+            copy_file(project_pathname(project_dir, best_description_file), project_pathname(project_dir, f'pages/page{page_number}/expanded_description.txt'))
+            copy_file(project_pathname(project_dir, best_image_file), project_pathname(project_dir, f'pages/page{page_number}/image.jpg'))
+            copy_file(project_pathname(project_dir, best_interpretation_file), project_pathname(project_dir, f'pages/page{page_number}/interpretation.txt'))
+            copy_file(project_pathname(project_dir, best_evaluation_file), project_pathname(project_dir, f'pages/page{page_number}/evaluation.txt'))
+        else:
+            print('No best_expanded_page_description_and_image found')
+    except Exception as e:
+        post_task_update_async(callback, f'Error when selecting best element description for page "{page_number}"')
+        post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             
 async def generate_page_description_and_images(page_number, previous_pages, elements, description_version_number, params, callback=None):
     project_dir = params['project_dir']
