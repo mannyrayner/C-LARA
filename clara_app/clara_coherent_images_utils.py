@@ -449,6 +449,7 @@ def sanitize_path(project_dir, pathname):
         return pathname
 
 def project_pathname(project_dir, pathname):
+    project_dir = str(project_dir) #In case it's a Path
     return absolute_file_name(os.path.join(project_dir, pathname))
 
 def make_root_project_dir(project_dir):

@@ -4993,7 +4993,6 @@ def edit_images_v2(request, project_id, status):
    
     # Retrieve existing images for pages, elements and style
     try:
-        #images = clara_project_internal.get_all_project_images()
         images = clara_project_internal.get_project_images_dict_v2()
         #pprint.pprint(images)
     except Exception as e:
@@ -5005,11 +5004,6 @@ def edit_images_v2(request, project_id, status):
         inconsistent = True
 
     try:    
-##        style_data = [{'image_file_path': img.image_file_path,
-##                       'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
-##                       'image_name': img.image_name,
-##                       'advice': img.advice }
-##                      for img in images if img.image_type == 'style' ]
         style_data = [ images['style'] ] if images['style'] else []
 
         # Add a blank style record if we don't already have one, so that we can start
@@ -5025,17 +5019,12 @@ def edit_images_v2(request, project_id, status):
 
     element_data = []
     try:
-##        element_data = [{'image_file_path': img.image_file_path,
-##                         'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
-##                         'image_name': img.image_name,
-##                         'element_name': img.element_name,
-##                         'advice': img.advice }
-##                        for img in images if img.image_type == 'element' ]
         indexed_element_data = images['elements']
         for element_name in indexed_element_data:
             item = indexed_element_data[element_name]
             element_data.append({ 'element_name': element_name,
                                   'relative_file_path': item['relative_file_path'],
+                                  'advice': item['advice'],
                                   'alternate_images': item['alternate_images'] })
     except Exception as e:
         messages.error(request, f"Unable to get element information")
@@ -5043,12 +5032,6 @@ def edit_images_v2(request, project_id, status):
         inconsistent = True
 
     try:
-##        indexed_page_data = {img.page: {'image_file_path': img.image_file_path,
-##                                        'image_base_name': basename(img.image_file_path) if img.image_file_path else None,
-##                                        'image_name': img.image_name,
-##                                        'position': img.position,
-##                                        'advice': img.advice}
-##                             for img in images if img.image_type == 'page'}
         indexed_page_data = images['pages']
     except Exception as e:
         messages.error(request, f"Unable to get page information")
@@ -5069,11 +5052,7 @@ def edit_images_v2(request, project_id, status):
                      'mwe_text': mwe_texts[index],
                      'lemma_text': lemma_texts[index],
                      'gloss_text': gloss_texts[index],
-                     #'image_file_path': indexed_page_data[page]['image_file_path'] if page in indexed_page_data else None,
                      'relative_file_path': indexed_page_data[page]['relative_file_path'] if page in indexed_page_data else None,
-                     #'image_base_name': indexed_page_data[page]['image_base_name'] if page in indexed_page_data else None,
-                     #'image_name': indexed_page_data[page]['image_name'] if page in indexed_page_data else f'image_{page}_top',
-                     #'position': indexed_page_data[page]['position'] if page in indexed_page_data else 'top',
                      'position': 'top',
                      'advice': indexed_page_data[page]['advice'] if page in indexed_page_data else None,
                      'alternate_images': indexed_page_data[page]['alternate_images'] if page in indexed_page_data else None
@@ -5223,7 +5202,7 @@ def edit_images_v2(request, project_id, status):
                         new_lemma_texts.append(form.cleaned_data['lemma_text'])
                         new_gloss_texts.append(form.cleaned_data['gloss_text'])
                             
-                        page = form.cleaned_data.get('page', 1)
+                        page = int(form.cleaned_data.get('page', 1))
                         advice = form.cleaned_data.get('advice')
                         generate = form.cleaned_data.get('generate')
                         delete = form.cleaned_data.get('delete')

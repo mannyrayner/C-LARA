@@ -206,6 +206,8 @@ to be passed to DALL-E-3 to generate a single image showing how "{element_text}"
 
 - The description should be at most 1000 characters long, as it will later be combined with other descriptions.
 
+- Take account of the following advice from the user about how to realise the image:
+
 {advice_text}"""
     }
 
@@ -421,6 +423,8 @@ despite the fact that there is no mention of the wall in the page 2 text, and no
 The "Essential aspects" section will be used to check the correctness of the generated image.
 If any item listed there fails to match, the image will be rejected, so only include material
 in this section which is genuinely essential, as opposed to just desirable.
+
+- Take account of the following advice from the user about how to realise the image:
 
 {advice_text}
 """

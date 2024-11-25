@@ -920,11 +920,6 @@ async def process_pages(params, callback=None):
     write_project_cost_file(total_cost_dict, project_dir, f'pages/cost.json')
     return total_cost_dict
 
-##    for description_version_number in range(0, n_expanded_descriptions):
-##        tasks.append(asyncio.create_task(generate_page_description_and_images(page_number, previous_pages, elements, description_version_number, params, callback=callback)))
-##    results = await asyncio.gather(*tasks)
-##    for description_dir, cost_dict in results:
-
 async def generate_image_for_page(page_number, params, callback=None):
     project_dir = params['project_dir']
     keep_existing_pages = params['keep_existing_pages'] if 'keep_existing_pages' in params else False
@@ -1447,6 +1442,12 @@ async def generate_overview_html(params, mode='plain', project_id=None):
                         html_content += "<p><em>No alternate images found for this element.</em></p>"
                 else:
                     html_content += "<p><em>Image not found for this element.</em></p>"
+                # Read the element's advice
+                element_advice = get_element_advice(element_name, params)
+                if not element_advice:
+                    element_advice = f'(No advice)' 
+                html_content += "<h4>Advice</h4>"
+                html_content += f"<pre class='wrapped-pre'>{element_advice}</pre>"
                 # Read the element's expanded description
                 element_description_path = f'elements/{element_name}/expanded_description.txt'
                 try:
@@ -1507,6 +1508,12 @@ async def generate_overview_html(params, mode='plain', project_id=None):
                     html_content += "<p><em>No alternate images found for this element.</em></p>"
             else:
                 html_content += "<p><em>Image not found for this page.</em></p>"
+            # Read the element's advice
+            page_advice = get_page_advice(page_number, params)
+            if not page_advice:
+                page_advice = f'(No advice)' 
+            html_content += "<h4>Advice</h4>"
+            html_content += f"<pre class='wrapped-pre'>{page_advice}</pre>"
             # Read the expanded description (specification)
             expanded_description_path = f'pages/page{page_number}/expanded_description.txt'
             if file_exists(project_pathname(project_dir, expanded_description_path)):
