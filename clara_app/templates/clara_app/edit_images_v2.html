@@ -178,6 +178,7 @@
 			  <th><b>Page Number</b></th>
 			  <th><b>Advice</b></th>
 			  <th><b>Image</b></th>
+			  <th><b>Upload image</b></th>
 			  <th><b>Generate</b></th>
 			  <th><b>Delete</b></th>
           </tr>
@@ -191,14 +192,19 @@
                 <p>No image.</p>
               {% endif %}
             </td>
+			<!-- Image upload field -->
+			<td>
+			  {{ form.uploaded_image_file_path }}
+			</td>
             <td>{{ form.generate }}</td>
             <td>{{ form.delete }}</td>
+			<td></td>
           </tr>
 		  <!-- Display alternate images -->
 			{% if form.initial.alternate_images %}
 			<tr>
 				<div class="alternate-images">
-					<td colspan="5">
+					<td colspan="7">
 					{% for alt_image in form.initial.alternate_images %}
 							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
 							<!-- Promote Button -->
