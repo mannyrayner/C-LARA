@@ -5208,6 +5208,12 @@ def edit_images_v2(request, project_id, status):
                         delete = form.cleaned_data.get('delete')
 
                         clara_project_internal.set_page_advice_v2(advice, page)
+
+                        if form.cleaned_data.get('uploaded_image_file_path'):
+                            uploaded_image_file_path = form.cleaned_data.get('uploaded_image_file_path') 
+                            real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
+                            clara_project_internal.add_uploaded_page_image_v2(real_image_file_path, page)
+
                         if delete:
                             pages_to_delete.append(page)
                         if generate:

@@ -201,6 +201,13 @@ def copy_file(pathname1, pathname2):
     else:
         shutil.copyfile(abspathname1, abspathname2)
 
+def move_file(pathname1, pathname2):
+    abspathname1 = absolute_file_name(pathname1)
+    abspathname2 = absolute_file_name(pathname2)
+    
+    shutil.copyfile(abspathname1, abspathname2)
+
+
 # In this version, pathname1 is a local file.
 # pathname2 will be another local file or an S3 file, depending on the value of _s3_storage
 def copy_local_file(pathname1, pathname2):

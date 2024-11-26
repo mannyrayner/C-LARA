@@ -85,6 +85,7 @@ from .clara_utils import (
     file_exists,
     directory_exists,
     copy_file,
+    move_file,
     get_immediate_subdirectories_in_local_directory,
     post_task_update_async,
     post_task_update,
@@ -98,6 +99,7 @@ import sys
 import asyncio
 import traceback
 import unicodedata
+from pathlib import Path
 from PIL import Image
 
 # Test with 'Boy meets girl' (minimal toy text)
@@ -947,6 +949,59 @@ async def generate_image_for_page(page_number, params, callback=None):
     await create_alternate_images_json(project_pathname(project_dir, page_number_directory), project_dir, callback=callback)
     write_project_cost_file(total_cost_dict, project_dir, f'pages/page{page_number}/cost.json')
     return total_cost_dict
+
+def add_uploaded_page_image(image_file_path, page_number, params, callback=None):
+    """
+    Add an uploaded image to the V2 data structure for the specified page.
+
+    Args:
+        image_full_path (str): The full path to the uploaded image.
+        page_number (int): The page number to associate the image with.
+        params: project params, defining 'project_dir'
+    """
+    
+    project_dir = params['project_dir']
+
+    rel_page_dir = f'pages/page{page_number}'
+    page_dir = project_pathname(project_dir, rel_page_dir)
+    make_project_dir(project_dir, rel_page_dir)
+    
+    # Find the next available description index
+    existing_descriptions = [d for d in Path(page_dir).glob('description_v*') if d.is_dir()]
+    description_indices = [int(d.name.split('_v')[-1]) for d in existing_descriptions]
+    next_description_index = max(description_indices, default=-1) + 1
+    rel_description_dir = f'{rel_page_dir}/description_v{next_description_index}'
+    make_project_dir(project_dir, rel_description_dir)
+    
+    # Create image_v0 directory
+    rel_image_dir = f'{rel_description_dir}/image_v0'
+    make_project_dir(project_dir, rel_image_dir)
+    
+    # Move the uploaded image to the image directory
+    destination_image_path_image = project_pathname(project_dir, f'{rel_image_dir}/image.jpg')
+    destination_image_path_description = project_pathname(project_dir, f'{rel_description_dir}/image.jpg')
+    #move_file(image_file_path, destination_image_path)
+    copy_file(image_file_path, destination_image_path_image)
+    copy_file(image_file_path, destination_image_path_description)
+    #print(f'copy_file({image_file_path}, {destination_image_path})')
+    
+    # Create placeholder files
+    rel_expanded_description_path = f'{rel_description_dir}/expanded_description.txt'
+    write_project_txt_file("User uploaded image", project_dir, rel_expanded_description_path)
+    
+    rel_evaluation_path_image = f'{rel_image_dir}/evaluation.txt'
+    rel_evaluation_path_description = f'{rel_description_dir}/evaluation.txt'
+    write_project_txt_file("4\nAssume perfect fit since uploaded", project_dir, rel_evaluation_path_image)
+    write_project_txt_file("4\nAssume perfect fit since uploaded", project_dir, rel_evaluation_path_description)
+
+    rel_interpretation_path_image = f'{rel_image_dir}/image_interpretation.txt'
+    rel_interpretation_path_description = f'{rel_description_dir}/interpretation.txt'
+    write_project_txt_file("So far no interpretation", project_dir, rel_interpretation_path_image)
+    write_project_txt_file("So far no interpretation", project_dir, rel_interpretation_path_description)
+    
+    # Update alternate_images.json
+    asyncio.run(create_alternate_images_json(page_dir, project_dir))
+    
 
 async def find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=None):
     project_dir = params['project_dir']

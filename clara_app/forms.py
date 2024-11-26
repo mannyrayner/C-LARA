@@ -821,6 +821,7 @@ class ImageFormV2(forms.Form):
         widget=forms.HiddenInput(),
         required=False
     )
+    uploaded_image_file_path = forms.ImageField(label='Uploaded Image File', required=False)
     advice = forms.CharField(label='Advice for creating image', widget=forms.Textarea(attrs={'rows': 12}), required=False)
     page_text = forms.CharField(label='Page Text',
                                 widget=forms.Textarea(attrs={'rows': 4, 'cols': 100}),

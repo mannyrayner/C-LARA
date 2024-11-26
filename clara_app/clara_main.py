@@ -159,7 +159,7 @@ from .clara_mwe import simplify_mwe_tagged_text, annotate_mwes_in_text
 from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
-from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages, generate_overview_html
+from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages, generate_overview_html, add_uploaded_page_image
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_pathname, get_pages
 from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, remove_top_level_element_directory
 from .clara_coherent_images_utils import get_style_description, get_all_element_texts
@@ -1718,7 +1718,14 @@ class CLARAProjectInternal:
         content_dir = page_directory(page_number, params)
         promote_alternate_image(content_dir, project_dir, alternate_image_id)
         self.store_v2_page_data(params, callback=callback)
-    
+
+    def add_uploaded_page_image_v2(self, image_file_path, page_number, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        alternate_image_id = add_uploaded_page_image(image_file_path, page_number, params, callback=callback)
+        # Assume that an uploaded image will by default be preferred
+        self.promote_v2_page_image(page_number, alternate_image_id, callback=callback)
+
     def store_v2_page_data(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
 
