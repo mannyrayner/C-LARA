@@ -18,6 +18,16 @@
   {% endif %}
 
   <h2>Edit Images V2 ("{{ project.title }}")</h2>
+  
+    <!-- Overview Section -->
+	<h3>Overview Document</h3>
+	<form method="post">
+	  {% csrf_token %}
+	  <button type="submit" name="action" value="create_overview">Generate Overview Document</button>
+	  {% if overview_file_exists %}
+		<p>You can view the generated overview document here: <a href="{% url 'serve_coherent_images_v2_overview' project.id %}" target="_blank"}>Overview Document</a></p>
+	  {% endif %}
+	</form>
 
   <!-- Parameters Form -->
   <h3>Image Generation Parameters</h3>
@@ -154,16 +164,23 @@
     {{ page_formset.management_form }}
     <table>
       <thead>
-        <tr>
+        <!-- <tr>
           <th>Page Number</th>
           <th>Advice</th>
           <th>Image</th>
           <th>Generate</th>
           <th>Delete</th>
-        </tr>
-      </thead>
+        </tr> 
+      </thead> -->
       <tbody>
         {% for form in page_formset %}
+		  <tr>
+			  <th><b>Page Number</b></th>
+			  <th><b>Advice</b></th>
+			  <th><b>Image</b></th>
+			  <th><b>Generate</b></th>
+			  <th><b>Delete</b></th>
+          </tr>
           <tr>
             <td>{{ form.page }}</td>
             <td>{{ form.advice }}</td>
@@ -198,6 +215,10 @@
 				</div>
 			</tr>
 			{% endif %}
+		  <tr>
+		    <td><button type="submit" name="action" value="save_page_advice">Save And/Or Delete</button></td>
+			<td><button type="submit" name="action" value="create_page_descriptions_and_images">Generate Selected Pages</button></td>
+		  </tr>
           <tr>
 		    <td>Plain text</td><td colspan="5">{{ form.page_text }}</td>
 		  </tr>
@@ -222,18 +243,6 @@
 	<button type="submit" name="action" value="save_page_advice">Save And/Or Delete</button>
     <button type="submit" name="action" value="create_page_descriptions_and_images">Generate Selected Pages</button>
   </form>
-  
-  <!-- Overview Section -->
-	<h3>Overview Document</h3>
-	<form method="post">
-	  {% csrf_token %}
-	  <button type="submit" name="action" value="create_overview">Generate Overview Document</button>
-	  {% if overview_file_exists %}
-		<p>You can view the generated overview document here: <a href="{% url 'serve_coherent_images_v2_overview' project.id %}" target="_blank"}>Overview Document</a></p>
-	  {% endif %}
-	</form>
-
-<a href="{% url 'serve_rendered_text' project.id 'normal' 'page_1.html' %}" target="_blank"}" 
 
 </div>
 
