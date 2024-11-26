@@ -6,6 +6,7 @@ from .clara_coherent_images_utils import (
     get_all_element_texts,
     make_root_project_dir,
     get_config_info_from_params,
+    element_text_to_element_name,
     project_pathname,
     make_project_dir,
     read_project_txt_file,
@@ -18,6 +19,8 @@ from .clara_coherent_images_utils import (
 from .clara_utils import (
     read_json_file,
     write_json_to_file,
+    read_txt_file,
+    write_txt_file,
     absolute_file_name,
     file_exists,
     directory_exists,
@@ -44,11 +47,9 @@ def get_element_advice(element_name, params):
     return get_advice_text('element', element_name, params)
 
 def get_page_advice(page_number, params):
-    page_number = int(page_number)
-    #print(f'get_page_advice({page_number}, {params})')
+    page_number = page_number
     check_valid_page_number(page_number, params)
-    result = get_advice_text('page', str(page_number), params)
-    #print(f'result = {result}')
+    result = get_advice_text('page', page_number, params)
     return result
 
 def set_element_advice(advice_text, element_name, params):
@@ -60,30 +61,21 @@ def set_page_advice(advice_text, page_number, params):
     project_dir = params['project_dir']
     make_project_dir(project_dir, 'pages')
     check_valid_page_number(page_number, params)
-    return set_advice_text(advice_text, 'page', str(page_number), params)
+    return set_advice_text(advice_text, 'page', page_number, params)
  
 def get_advice_text(element_or_page, advice_id, params):
-    pathname = advice_pathname(element_or_page, params)
-    #print(f'get_advice_text({element_or_page}, {advice_id}, {params})')
-    #print(f'Reading from {pathname}')
+    pathname = advice_pathname(advice_id, element_or_page, params)
     if file_exists(pathname):
-        advice_dict = read_json_file(pathname)
-        #pprint.pprint(advice_dict)
-        return advice_dict[advice_id] if advice_id in advice_dict else ''
+        advice_text = read_txt_file(pathname)
+        #print(f'Read advice text "{advice_text}" from {pathname}')
+        return advice_text
     else:
         return ''
 
 def set_advice_text(advice_text, element_or_page, advice_id, params):
-    pathname = advice_pathname(element_or_page, params)
-    #print(f'set_advice_text({advice_text}, {element_or_page}, {advice_id}, {params}')
-    #print(f'Writing to {pathname}')
-    if file_exists(pathname):
-        advice_dict = read_json_file(pathname)
-    else:
-        advice_dict = {}
-    advice_dict[advice_id] = advice_text
-    #pprint.pprint(advice_dict)
-    write_json_to_file(advice_dict, pathname)
+    pathname = advice_pathname(advice_id, element_or_page, params)
+    write_txt_file(advice_text, pathname)
+    #print(f'Written advice text "{advice_text}" to {pathname}')
 
 
 def check_valid_element_name(element_name, params):
@@ -96,14 +88,15 @@ def check_valid_page_number(page_number, params):
     if not page_number in page_numbers:
         raise ValueError(f'Unknown page number "{page_number}"')
 
-def advice_pathname(element_or_page, params):
+def advice_pathname(advice_id, element_or_page, params):
     valid_types = ( 'element', 'page' )
     if not element_or_page in valid_types:
         raise ValueError(f'Unknown first argument "{element_or_page}" in advice_pathname, must be one of {valid_types}')
 
     project_dir = params['project_dir']
     if element_or_page == 'element':
-        return project_pathname(project_dir, f'elements/advice.json')
+        element_name = element_text_to_element_name(advice_id, params)
+        return project_pathname(project_dir, f'elements/{element_name}/advice.txt')
     elif element_or_page == 'page':
-        return project_pathname(project_dir, f'pages/advice.json')
+        return project_pathname(project_dir, f'pages/page{advice_id}/advice.txt')
     
