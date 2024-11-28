@@ -1535,6 +1535,10 @@ async def generate_overview_html(params, mode='plain', project_id=None):
         for page in story_data:
             page_number = page['page_number']
             html_content += f"<h3>Page {page_number}</h3>"
+            if 'original_page_text' in page:
+                html_content += f"<p><strong>Original text</strong></p>"
+                original_page_text = page['original_page_text']
+                html_content += f"<pre class='wrapped-pre'>{original_page_text}</pre>"
             html_content += f"<p><strong>Text</strong></p>"
             page_text = page['text']
             html_content += f"<pre class='wrapped-pre'>{page_text}</pre>"

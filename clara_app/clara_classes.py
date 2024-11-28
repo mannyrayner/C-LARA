@@ -225,9 +225,14 @@ class Text:
         for page in self.pages:
             if translated:
                 page_text = page.to_translated_text()
+                original_page_text = page.to_text(annotation_type='plain').replace('<page>', '')
+                numbered_pages.append({'page_number': number,
+                                       'original_page_text': original_page_text,
+                                       'text': page_text})
             else:
                 page_text = page.to_text(annotation_type='plain').replace('<page>', '')
-            numbered_pages.append({'page_number': number, 'text': page_text})
+                numbered_pages.append({'page_number': number,
+                                       'text': page_text})
             number += 1
         return numbered_pages
 
