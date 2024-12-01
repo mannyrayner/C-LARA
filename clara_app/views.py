@@ -4932,7 +4932,8 @@ def edit_images_v2(request, project_id, status):
     actions_requiring_openai = ( 'create_style_description_and_image',
                                  'create_element_names',
                                  'create_element_descriptions_and_images',
-                                 'create_page_descriptions_and_images' )
+                                 'create_page_descriptions_and_images',
+                                 'generate_variant_images' )
     user = request.user
     can_use_ai = user_has_open_ai_key_or_credit(user)
     config_info = get_user_config(user)
@@ -5286,6 +5287,11 @@ def edit_images_v2(request, project_id, status):
                     async_task(create_element_descriptions_and_images, project, clara_project_internal, params, elements_to_generate, callback=callback)
                 elif action == 'create_page_descriptions_and_images':
                     async_task(create_page_descriptions_and_images, project, clara_project_internal, params, pages_to_generate, callback=callback)
+                elif action == 'generate_variant_images':
+                    content_type = request.POST.get('content_type')
+                    content_identifier = int(request.POST.get('content_identifier'))
+                    alternate_image_id = int(request.POST.get('alternate_image_id'))
+                    async_task(create_variant_images, project, clara_project_internal, params, content_type, content_identifier, alternate_image_id, callback=callback)
 
                 print(f'--- Started async "{action}" task')
                 #Redirect to the monitor view, passing the task ID and report ID as parameters
@@ -5435,6 +5441,22 @@ def create_page_descriptions_and_images(project, clara_project_internal, params,
         post_task_update(callback, f"Error when creating page images")
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
+
+def create_variant_images(project, clara_project_internal, params, content_type, content_identifier, alternate_image_id, callback=None):
+    if content_type != 'page':
+        post_task_update(callback, f"Cannot yet create variant images for {content_type}")
+        post_task_update(callback, f"error")
+    else:
+        try:
+            page_params = get_page_params_from_project_params(params)
+            page = content_identifier
+            cost_dict = clara_project_internal.create_variant_images_for_page_v2(page_params, page, alternate_image_id, callback=callback)
+            store_cost_dict(cost_dict, project, project.user)
+            post_task_update(callback, f"finished")
+        except Exception as e:
+            post_task_update(callback, f"Error when creating variant page images")
+            post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+            post_task_update(callback, f"error")
 
 @login_required
 @user_has_a_project_role

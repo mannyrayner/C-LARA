@@ -159,7 +159,8 @@ from .clara_mwe import simplify_mwe_tagged_text, annotate_mwes_in_text
 from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
-from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages, generate_overview_html, add_uploaded_page_image
+from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
+from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_pathname, get_pages
 from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, remove_top_level_element_directory
 from .clara_coherent_images_utils import get_style_description, get_all_element_texts
@@ -1786,6 +1787,14 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
         cost_dict = asyncio.run(process_pages(params, callback=callback))
+        self.store_v2_page_data(params, callback=callback)
+        return cost_dict
+
+    def create_variant_images_for_page_v2(self, params, page, alternate_image_id, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        params['pages_to_generate'] = [ page ]
+        cost_dict = asyncio.run(create_variant_images_for_page(params, page, alternate_image_id, callback=callback))
         self.store_v2_page_data(params, callback=callback)
         return cost_dict
 

@@ -99,6 +99,7 @@ import sys
 import asyncio
 import traceback
 import unicodedata
+import pprint
 from pathlib import Path
 from PIL import Image
 
@@ -383,8 +384,8 @@ async def select_best_expanded_style_description_and_image(all_description_dirs,
             copy_file(project_pathname(project_dir, typical_image_interpretation), project_pathname(project_dir, f'style/interpretation.txt'))
             copy_file(project_pathname(project_dir, typical_image_evaluation), project_pathname(project_dir, f'style/evaluation.txt'))
     except Exception as e:
-        post_task_update_async(callback, 'Error when selecting best style description')
-        post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+        await post_task_update_async(callback, 'Error when selecting best style description')
+        await post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             
 async def generate_expanded_style_description_and_images(description_version_number, params, callback=None):
     project_dir = params['project_dir']
@@ -742,8 +743,8 @@ async def select_best_expanded_element_description_and_image(element_name, all_d
             copy_file(project_pathname(project_dir, typical_image_interpretation), project_pathname(project_dir, f'elements/{element_name}/interpretation.txt'))
             copy_file(project_pathname(project_dir, typical_image_evaluation), project_pathname(project_dir, f'elements/{element_name}/evaluation.txt'))
     except Exception as e:
-        post_task_update_async(callback, f'Error when selecting best element description for element "{element_name}"')
-        post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+        await post_task_update_async(callback, f'Error when selecting best element description for element "{element_name}"')
+        await post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
             
 async def generate_expanded_element_description_and_images(element_name, element_text, description_version_number, params, callback=None):
 
@@ -1196,8 +1197,42 @@ async def select_best_expanded_page_description_and_image(page_number, all_descr
         else:
             print('No best_expanded_page_description_and_image found')
     except Exception as e:
-        post_task_update_async(callback, f'Error when selecting best element description for page "{page_number}"')
-        post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+        await post_task_update_async(callback, f'Error when selecting best element description for page "{page_number}"')
+        await post_task_update_async(callback, f'"{str(e)}"\n{traceback.format_exc()}')
+
+async def create_variant_images_for_page(params, page_number, alternate_image_id, callback=None):
+    print(f'Creating variant_images for page {page_number}, alternate_image_id = {alternate_image_id}')
+    await post_task_update_async(callback, f'Creating variant_images for page {page_number}, alternate_image_id = {alternate_image_id}')
+    project_dir = params['project_dir']
+    page_dir = f'pages/page{page_number}'
+    alternate_images_file = f'{page_dir}/alternate_images.json'
+
+    all_alternate_images_info = read_project_json_file(project_dir, alternate_images_file)
+    alternate_images_info = get_alternate_image_info_for_index(all_alternate_images_info, alternate_image_id)
+##    print(f'alternate_images_info for index {alternate_image_id}')
+##    pprint.pprint(alternate_images_info)
+    description_index = int(alternate_images_info['description_index'])
+    expanded_description = read_project_txt_file(project_dir, alternate_images_info['expanded_description_path'])
+##    print(f'expanded_description = {expanded_description}')
+    if uploaded_image_description(expanded_description):
+        await post_task_update_async(callback, f'Cannot yet create variant of uploaded image')
+        raise ValueError(f'Cannot yet create variant of uploaded image')
+##    print(f'Generating pages images for description_version_number = {description_index}')
+    await post_task_update_async(callback, f'Generating pages images for description_version_number = {description_index}')
+    cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_index,
+                                                    params, keep_existing_images=True, callback=callback)
+    # Update alternate_images.json
+    await create_alternate_images_json(page_dir, project_dir)
+    return cost_dict
+
+def get_alternate_image_info_for_index(all_alternate_images_info, alternate_image_id):
+    for alternate_images_info in all_alternate_images_info:
+        if int(alternate_images_info['id']) == int(alternate_image_id):
+            return alternate_images_info
+    raise ValueError(f'Unable to find alternate image #{alternate_image_id}')
+
+def uploaded_image_description(expanded_description):
+    return expanded_description == "User uploaded image"
             
 async def generate_page_description_and_images(page_number, previous_pages, elements, description_version_number, params, callback=None):
     project_dir = params['project_dir']
@@ -1296,9 +1331,10 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
-        return description_directory, {}
+        return description_directory, {}   
 
-async def generate_and_rate_page_images(page_number, expanded_description, description_version_number, params, callback=None):
+async def generate_and_rate_page_images(page_number, expanded_description, description_version_number, params,
+                                        keep_existing_images=False, callback=None):
     project_dir = params['project_dir']
     n_images_per_description = params['n_images_per_description']
                             
@@ -1306,9 +1342,20 @@ async def generate_and_rate_page_images(page_number, expanded_description, descr
     make_project_dir(project_dir, description_dir)
     
     tasks = []
-    all_image_dirs = []
     total_cost_dict = {}
-    for image_version_number in range(0, n_images_per_description):
+    
+    if keep_existing_images:
+        abs_description_dir = project_pathname(project_dir, description_dir)
+        existing_images = [d for d in Path(abs_description_dir).glob('image_v*') if d.is_dir()]
+        print(f'existing_images = {existing_images}')
+        image_indices = [int(d.name.split('_v')[-1]) for d in existing_images]
+        next_image_index = max(image_indices, default=-1) + 1
+        all_image_dirs = [ f'{description_dir}/image_v{image_index}' for image_index in image_indices ]
+    else:
+        next_image_index = 0
+        all_image_dirs = []
+        
+    for image_version_number in range(next_image_index, next_image_index + n_images_per_description):
         tasks.append(asyncio.create_task(generate_and_rate_page_image(page_number, expanded_description, description_version_number, image_version_number,
                                                                       params, callback=callback)))
     results = await asyncio.gather(*tasks)
@@ -1321,6 +1368,7 @@ async def generate_and_rate_page_images(page_number, expanded_description, descr
     return total_cost_dict
 
 async def generate_and_rate_page_image(page_number, description, description_version_number, image_version_number, params, callback=None):
+##    print(f'Generating and rating image for page {page_number}, description_version_number = {description_version_number} image_version_number = {image_version_number}')
     project_dir = params['project_dir']
     
     total_cost_dict = {}
