@@ -200,13 +200,15 @@
             <td>{{ form.delete }}</td>
 			<td></td>
           </tr>
-		  <!-- Display alternate images -->
-			{% if form.initial.alternate_images %}
-			<tr>
-				<div class="alternate-images">
-					<td colspan="7">
+		 <!-- Display alternate images -->
+		{% if form.initial.alternate_images %}
+		<tr>
+			<div class="alternate-images">
+				<td colspan="7">
 					{% for alt_image in form.initial.alternate_images %}
+						<div style="display:inline-block; margin:10px; text-align:center;">
 							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
+							<br>
 							<!-- Promote Button -->
 							<form method="post" style="display:inline;">
 								{% csrf_token %}
@@ -216,11 +218,22 @@
 								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
 								<button type="submit">Promote</button>
 							</form>
+							<br>
+							<!-- Generate Variant Button -->
+							<form method="post" style="display:inline;">
+								{% csrf_token %}
+								<input type="hidden" name="action" value="generate_variant_images">
+								<input type="hidden" name="content_type" value="page">
+								<input type="hidden" name="content_identifier" value="{{ form.page.value }}">
+								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
+								<button type="submit">Generate<br>Variants</button>
+							</form>
+						</div>
 					{% endfor %}
-					</td>
-				</div>
-			</tr>
-			{% endif %}
+				</td>
+			</div>
+		</tr>
+		{% endif %}
 		  <tr>
 		    <td><button type="submit" name="action" value="save_page_advice">Save And/Or Delete</button></td>
 			<td><button type="submit" name="action" value="create_page_descriptions_and_images">Generate Selected Pages</button></td>
