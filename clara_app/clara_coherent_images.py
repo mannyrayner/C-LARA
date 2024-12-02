@@ -1437,7 +1437,6 @@ async def generate_page_image(image_dir, description, page_number, params, callb
     return image_file, { 'generate_page_image': api_call.cost }
 
 async def create_and_store_expanded_description_for_uploaded_image(rel_image_path, page_number, description_version_number, params, callback=None):
-    print(f'create_and_store_expanded_description_for_uploaded_image({rel_image_path}, {page_number}, {description_version_number}, {params}, callback={callback})')
     try:
         project_dir = params['project_dir']
 
