@@ -64,7 +64,8 @@ def set_page_advice(advice_text, page_number, params):
     return set_advice_text(advice_text, 'page', page_number, params)
  
 def get_advice_text(element_or_page, advice_id, params):
-    pathname = advice_pathname(advice_id, element_or_page, params)
+    project_dir = params['project_dir']
+    pathname = project_pathname(project_dir, advice_pathname(advice_id, element_or_page, params))
     if file_exists(pathname):
         advice_text = read_txt_file(pathname)
         #print(f'Read advice text "{advice_text}" from {pathname}')
@@ -73,8 +74,12 @@ def get_advice_text(element_or_page, advice_id, params):
         return ''
 
 def set_advice_text(advice_text, element_or_page, advice_id, params):
-    pathname = advice_pathname(advice_id, element_or_page, params)
-    write_txt_file(advice_text, pathname)
+    project_dir = params['project_dir']
+    directory = advice_dir(advice_id, element_or_page, params)
+    file = advice_pathname(advice_id, element_or_page, params)
+
+    make_project_dir(project_dir, directory)
+    write_project_txt_file(advice_text, project_dir, file)
     #print(f'Written advice text "{advice_text}" to {pathname}')
 
 
@@ -89,14 +94,16 @@ def check_valid_page_number(page_number, params):
         raise ValueError(f'Unknown page number "{page_number}"')
 
 def advice_pathname(advice_id, element_or_page, params):
+    directory = advice_dir(advice_id, element_or_page, params)
+    return f'{directory}/advice.txt'
+    
+def advice_dir(advice_id, element_or_page, params):
     valid_types = ( 'element', 'page' )
     if not element_or_page in valid_types:
-        raise ValueError(f'Unknown first argument "{element_or_page}" in advice_pathname, must be one of {valid_types}')
+        raise ValueError(f'Unknown first argument "{element_or_page}" in advice_dir, must be one of {valid_types}')
 
-    project_dir = params['project_dir']
     if element_or_page == 'element':
         element_name = element_text_to_element_name(advice_id, params)
-        return project_pathname(project_dir, f'elements/{element_name}/advice.txt')
+        return f'elements/{element_name}'
     elif element_or_page == 'page':
-        return project_pathname(project_dir, f'pages/page{advice_id}/advice.txt')
-    
+        return f'pages/page{advice_id}'

@@ -381,6 +381,12 @@ def interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list',
 
 
 def extract_intro_and_json_list_from_response_string(response, object_type='list', callback=None):
+    # If we find the string "json" or "``" in the response, only take the part after it
+    if "json" in response:
+        response = response.split("json")[-1]
+    elif "``" in response:
+        response = response.split("``")[-1]
+        
     _valid_object_types = ( 'list', 'dict' )
     if not object_type in _valid_object_types:
         raise ChatGPTError(message = f'object_type argument {object_type} in call to extract_json_list_from_response_string not one of {_valid_object_types}')

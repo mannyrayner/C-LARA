@@ -169,6 +169,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, 'plain')
     else:
         internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
+
+    #pprint.pprint(internalised_annotated_text)
         
     if current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'gloss':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'gloss')
@@ -630,6 +632,7 @@ def segment_elements_to_segment_translation_input(segment_elements):
     return segment_text.replace('\n', ' ').strip()
 
 def merge_elements_and_annotated_elements(elements, annotated_elements, processing_phase):
+    #print(f'merge_elements_and_annotated_elements({elements}, {annotated_elements}, {processing_phase})')
     matcher = difflib.SequenceMatcher(None, 
         [element.content.strip() for element in elements], 
         [element.content.strip() for element in annotated_elements])
@@ -651,8 +654,11 @@ def merge_elements_and_annotated_elements(elements, annotated_elements, processi
             # Handle deletions if necessary
             pass
         elif tag == 'replace':
-            # Handle replacements if necessary
-            pass
+            # If the replacement covers the same number of elements, guess the annotations are correct and the words have been changed
+            if i2 - i1 == j2 - j1:
+                for i, j in zip(range(i1, i2), range(j1, j2)):
+                    elements[i].annotations.update(annotated_elements[j].annotations)
+    #print(f'result = {elements}')
     return elements
 
 def segmentation_prompt(annotate_or_improve, text, l2_language):
@@ -829,7 +835,7 @@ def glossing_examples_to_examples_text(examples_structure, l2_language, l1_langu
         return intro_and_examples_text + translations_text
 
 def tagging_examples_to_examples_text(examples_structure, l2_language, mwe=False, mwes=[]):
-    print(f'--- tagging_examples_to_examples_text({examples_structure}, {l2_language}, mwe={mwe}, mwes={mwes})')
+    #print(f'--- tagging_examples_to_examples_text({examples_structure}, {l2_language}, mwe={mwe}, mwes={mwes})')
     # We aren't using MWEs at all
     if not mwe:
         return '\n\n'.join([ tagging_example_to_example_text(example, l2_language) for example in examples_structure ])
