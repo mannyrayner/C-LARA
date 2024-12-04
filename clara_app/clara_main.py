@@ -161,7 +161,7 @@ from .clara_export_import import create_export_zipfile, change_project_id_in_imp
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
 from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page
-from .clara_coherent_images_utils import get_project_params, set_project_params, project_pathname, get_pages
+from .clara_coherent_images_utils import get_project_params, set_project_params, project_pathname, get_pages, make_project_dir
 from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, remove_top_level_element_directory
 from .clara_coherent_images_utils import get_style_description, get_all_element_texts
 from .clara_coherent_images_utils import get_element_description, get_element_image, get_page_description, get_style_image, get_page_image
@@ -1687,10 +1687,13 @@ class CLARAProjectInternal:
         advice = ''
         image_file_path = None
         for item in element_list_with_names:
-            element_name = item['text']
-            image_name = f'element_{element_name}'
+            element_text = item['text']
+            element_name = item['name']
+            image_name = f'element_{element_text}'
             self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, element_name=element_name,
                                    keep_file_name=False, archive=False, callback=callback)
+            element_directory = f'elements/{element_name}'
+            make_project_dir(project_dir, element_directory)
 
     def promote_v2_element_image(self, element_name, alternate_image_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir

@@ -5247,10 +5247,6 @@ def edit_images_v2(request, project_id, status):
                             #Redirect to the monitor view, passing the project ID and report ID as parameters
                             return redirect('save_page_texts_multiple_monitor', project_id, report_id)
 
-                    # We should have saved everything, so we can get the story data from the project
-                    numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
-                    clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
-
             # If we have errors, pass them to the template and return
             if errors:
                 params_form = CoherentImagesV2ParamsForm(initial=params, prefix='params')
@@ -5267,8 +5263,13 @@ def edit_images_v2(request, project_id, status):
                     'overview_file_exists': overview_file_exists,
                     'errors': errors,
                 })
+
+            # We should have saved everything, so we can get the story data from the project
+            numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
+            clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
+                                                                                     
             # If we've got one of the AI actions, again we should have everything saved so we can execute it as an async and return
-            elif action in actions_requiring_openai:
+            if action in actions_requiring_openai:
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                     return redirect('edit_images_v2', project_id=project_id, status='none')

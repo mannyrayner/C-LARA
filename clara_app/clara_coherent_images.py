@@ -1808,7 +1808,7 @@ def score_description_dir_representative(description_dir, image_dirs, params):
     # Find the image most representative of the average score
 
     closest_match = 10.0
-    closest_file = None
+    closest_image_file = None
     closest_interpretation_file = None
     closest_evaluation_file = None
 

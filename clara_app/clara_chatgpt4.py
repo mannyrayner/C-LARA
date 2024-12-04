@@ -382,10 +382,15 @@ def interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list',
 
 def extract_intro_and_json_list_from_response_string(response, object_type='list', callback=None):
     # If we find the string "json" or "``" in the response, only take the part after it
+    skipped_intro = ''
     if "json" in response:
-        response = response.split("json")[-1]
+        components = response.split("json")
+        response = components[-1]
+        skipped_intro = "json".join(components[:-1])
     elif "``" in response:
-        response = response.split("``")[-1]
+        components = response.split("``")
+        response = components[-1]
+        skipped_intro = "``".join(components[:-1])
         
     _valid_object_types = ( 'list', 'dict' )
     if not object_type in _valid_object_types:
@@ -400,7 +405,7 @@ def extract_intro_and_json_list_from_response_string(response, object_type='list
         # Extract the JSON string
         json_str = response[start_index:end_index]
         # Parse the JSON string into a Python object
-        intro = response[:start_index]
+        intro = skipped_intro + response[:start_index]
         result = json.loads(json_str)
         #post_task_update(callback, f'--- Intro = "{response[:start_index]}", removed "{response[end_index:]}" from end')
         return ( intro, result )
