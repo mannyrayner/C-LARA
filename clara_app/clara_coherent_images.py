@@ -1631,7 +1631,7 @@ async def generate_overview_html(params, mode='plain', project_id=None):
                 else:
                     html_content += "<p><em>Image not found for this element.</em></p>"
                 # Read the element's advice
-                element_advice = get_element_advice(element_name, params)
+                element_advice = get_element_advice(element_text, params)
                 if not element_advice:
                     element_advice = f'(No advice)' 
                 html_content += "<h4>Advice</h4>"
