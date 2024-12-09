@@ -1,8 +1,10 @@
 from .clara_internalise import internalize_text
-from .clara_utils import post_task_update
+from .clara_utils import post_task_update, post_task_update_async
 from .clara_classes import MWEError
 
 from itertools import product
+
+import asyncio
 
 def simplify_mwe_tagged_text(mwe_tagged_text):
     ( l2_language, l1_language ) = ( 'irrelevant', 'irrelevant' )
@@ -79,4 +81,24 @@ def find_mwe_positions_for_content_elements(content_elements, mwe, callback=None
     
     return list(best_combination)
 
+async def check_mwes_are_consistently_annotated(content_elements, mwes, processing_phase, callback=None):
+    content_elements = [ content_element for content_element in content_elements if content_element.type == 'Word' ]
+    #await post_task_update_async(callback, f'check_mwes_are_consistently_annotated({content_elements}, {mwes}, {processing_phase})')
+    for mwe in mwes:
+        positions = find_mwe_positions_for_content_elements(content_elements, mwe)
+        annotations = [ annotation_for_processing_phase(content_elements[position], processing_phase) for position in positions ]
+        if not all(annotation == annotations[0] for annotation in annotations):
+            message = f"MWE error: MWE '{mwe}' inconsistently annotated in '{content_elements}'."
+            await post_task_update_async(callback, message)
+            raise MWEError(message = message)
 
+def annotation_for_processing_phase(content_element, processing_phase):
+    annotations = content_element.annotations
+    if processing_phase == 'gloss':
+        return annotations['gloss']
+    elif processing_phase == 'lemma':
+        # We don't want to fail because POS is wrong
+        return annotations['lemma']
+    else:
+        return None
+    

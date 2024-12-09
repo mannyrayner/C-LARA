@@ -1184,8 +1184,8 @@ class CLARAProjectInternal:
         images = self.get_all_project_images()
         post_task_update(callback, f"--- Found {len(images)} images")
         for image in images:
-            # We don't want to include style images (both V1 and V2), element images (V2), or image-understanding images (V1)
-            if not image.image_type in ('style', 'element') and image.request_type != 'image-understanding' and image.page != 0:
+            # We don't want to include null images, style images (both V1 and V2), element images (V2), or image-understanding images (V1)
+            if image.image_file_path and not image.image_type in ('style', 'element') and image.request_type != 'image-understanding' and image.page != 0:
                 # Find the corresponding Page object, if there is one.
                 page_object = text_object.find_page_by_image(image)
                 if page_object:

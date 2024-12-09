@@ -32,7 +32,7 @@ from . import clara_prompt_templates
 from . import clara_chatgpt4
 from . import clara_internalise
 
-from .clara_mwe import find_mwe_positions_for_content_elements
+from .clara_mwe import find_mwe_positions_for_content_elements, check_mwes_are_consistently_annotated
 from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings
 from .clara_classes import *
 
@@ -613,7 +613,8 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 nontrivial_annotated_elements = [ unsimplify_element(element, processing_phase, previous_version=previous_version)
                                                   for element in annotated_simplified_elements ]
                 annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, processing_phase)
-                #print(f'call_chatgpt4_to_annotate_or_improve_elements_async: total cost = {sum([ api_call.cost for api_call in api_calls ])}')
+                if n_attempts < limit: #Don't give up if MWEs are not consistently annotated
+                    await check_mwes_are_consistently_annotated(elements, mwes, processing_phase, callback=callback)
                 return ( annotated_elements, api_calls )
                 
         except MWEError as e:
@@ -821,10 +822,10 @@ def glossing_examples_to_examples_text(examples_structure, l2_language, l1_langu
                             if example[1].strip() != '' ]
         mwes_text = mwes_to_json_string(mwes)
         if len(mwes) == 1:
-            intro1 = f'The following sequence of words should be treated as a single multi-word expression (MWE)'
+            intro1 = f'The following sequence of words must be treated as a single multi-word expression (MWE)'
         else:
-            intro1 = f'The following sequences of words should be treated as single multi-word expressions (MWEs)'
-        intro2 = f'This means that each of the component words in the MWE should be glossed in the same way. Here are some examples of how to gloss:'
+            intro1 = f'The following sequences of words must be treated as single multi-word expressions (MWEs)'
+        intro2 = f'This means that each of the component words in the MWE must be glossed in the same way. Here are some examples of how to gloss:'
         examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
         intro_and_examples_text = f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
 
@@ -852,10 +853,10 @@ def tagging_examples_to_examples_text(examples_structure, l2_language, mwe=False
                             if example[1].strip() != '' ]
         mwes_text = mwes_to_json_string(mwes)
         if len(mwes) == 1:
-            intro1 = f'The following sequence of words should be treated as a single multi-word expression (MWE)'
+            intro1 = f'The following sequence of words must be treated as a single multi-word expression (MWE)'
         else:
-            intro1 = f'The following sequences of words should be treated as single multi-word expressions (MWEs)'
-        intro2 = f'This means that each of the component words in the MWE should be tagged in the same way. Here are some examples of how to gloss:'
+            intro1 = f'The following sequences of words must be treated as single multi-word expressions (MWEs)'
+        intro2 = f'This means that each of the component must in the MWE must be tagged in the same way. Here are some examples of how to tag:'
         examples_text = '\n\n'.join([ tagging_example_with_mwes_to_example_text(example, l2_language) for example in examples_to_use ])
         return f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
 
