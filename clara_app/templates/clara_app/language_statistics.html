@@ -33,6 +33,7 @@
         <tr>
             <th>Language</th>
             <th>Number of Contents</th>
+            <th>Total Accesses</th>
         </tr>
     </thead>
     <tbody>
@@ -40,11 +41,13 @@
         <tr>
             <td>{{ stat.l2|titlecase }}</td>
             <td>{{ stat.total }}</td>
+            <td>{{ stat.total_access }}</td>
         </tr>
         {% endfor %}
-		<tr>
+        <tr>
             <td><strong>Total</strong></td>
             <td><strong>{{ total_contents }}</strong></td>
+            <td><strong>{{ total_accesses }}</strong></td>
         </tr>
     </tbody>
 </table>
