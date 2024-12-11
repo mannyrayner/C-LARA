@@ -1986,22 +1986,24 @@ def language_statistics(request):
         .order_by('-total')
     )
 
-    # Aggregate content counts by l2 language
+    # Aggregate content counts by l2 language, including total unique_access_count
     content_stats = (
         Content.objects.values('l2')
-        .annotate(total=Count('id'))
+        .annotate(total=Count('id'), total_access=Sum('unique_access_count'))
         .order_by('-total')
     )
 
     # Calculate the totals
     total_projects = sum(stat['total'] for stat in project_stats)
     total_contents = sum(stat['total'] for stat in content_stats)
+    total_accesses = sum(stat['total_access'] for stat in content_stats if stat['total_access'] is not None)
 
     return render(request, 'clara_app/language_statistics.html', {
         'project_stats': project_stats,
         'content_stats': content_stats,
         'total_projects': total_projects,
         'total_contents': total_contents,
+        'total_accesses': total_accesses,
     })
 
 def get_simple_clara_resources_helper(project_id, user):
