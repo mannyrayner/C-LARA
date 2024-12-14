@@ -46,5 +46,13 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20240205221855"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\mandarin\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241213195854"
     }
 ]

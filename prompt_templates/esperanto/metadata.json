@@ -8,7 +8,7 @@
         "timestamp": "20240529064631"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\segmented_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\archive\\segmented_annotate_template_20241213201028.txt",
         "annotation_type": "segmented",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -270,5 +270,13 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20240530154413"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\esperanto\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241213201028"
     }
 ]
