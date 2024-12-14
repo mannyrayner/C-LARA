@@ -1,17 +1,13 @@
-Annotate the following Swedish text, dividing it up in a natural way into pages, and each page into sentence-like segments. 
+Annotate the following Swedish text in the following way: if a word in the text appears to be a compound noun, compound adjective or compound adverb that can be divided into smaller words, all of which are nouns, verbs, adjectives or adverbs, and the meaning of the word can be inferred from the meaning of the components, separate the components with vertical bars, |. 
 
-Pages are separated using instances of the <page> tag.
-
-Segments are separated using instance of a double bar, ||.
-
-Also, divide up compound words using single bars, |. Note: *only* divide up compound words. Do not split endings off inflected verbs, nouns and adjectives.
+Do NOT split up words in other ways. In particular, do not split off inflectional or derivational affixes. For example, words like "storlek", "förutseende", "utvandra" or "otrevligheter" should not be divided up, because components like "-lek", "för-", "-eende", "ut-", "o-" and "-heter" are not nouns, verbs, adjectives or adverbs.
 
 Here are some examples: 
 
 {examples}
 
-Here is the text to annotate:
+Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. This may include linebreaks or other whitespace characters, which must be kept unchanged. 
 
-"{text}"
+<startoftext>{text}<endoftext>
 
-The output will be read by a Python script, so produce just the text without any comments or introduction.
+The output will be read by a Python script, which will expect the annotated output text also to be enclosed within the tags <startoftext> and <endoftext>.

@@ -1,17 +1,13 @@
-Annotate the following {l2_language} text, dividing it up in a natural way into pages, and each page into sentence-like segments. 
+Annotate the following French text in the following way: if a word in the text is composed of smaller words connected by an apostrophe or hyphen, and the meaning of the word is clearly comprehensible from the components, separate the components with vertical bars. 
 
-Pages are separated using instances of the <page> tag.
-
-Segments are separated using instance of a double bar, ||.
-
-Also, if a word in the text is composed of smaller words, separate them with vertical bars.
+Do NOT split up words in other ways. In particular, do not split off inflectional or derivational affixes. 
 
 Here are some examples:
 
 {examples}
 
-Here is the text to annotate:
+Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. This may include linebreaks or other whitespace characters, which must be kept unchanged. 
 
-"{text}"
+<startoftext>{text}<endoftext>
 
-The output will be read by a Python script, so produce just the text without any comments or introduction.
+The output will be read by a Python script, which will expect the annotated output text also to be enclosed within the tags <startoftext> and <endoftext>.

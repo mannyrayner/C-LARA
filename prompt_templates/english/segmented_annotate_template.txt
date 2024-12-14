@@ -1,19 +1,15 @@
-Annotate the following English text, dividing it up in a natural way into pages, and each page into sentence-like segments. 
+Annotate the following English text in the following way: if a word in the text appears to be a compound noun, compound adjective or compound adverb that can be divided into smaller words, and the meaning of the word can be inferred from the meaning of the components, separate the components with vertical bars. 
 
-Pages are separated using instances of the <page> tag.
+Similarly, if a surface word contains a reduced auxiliary, possessive marker or similar, attached with an apostrophe, separate off the auxiliary or possessive with a vertical bar.
 
-Segments are separated using instances of a double bar, ||.
-
-If a word in the text appears to be a compound noun, compound adjective or compound adverb that can be divided into smaller words, and the meaning of the word can be inferred from the meaning of the components, separate the components with vertical bars. Do not split up words in other ways.
-
-Do not change the layout. In particular, if the text appears to be formatted as a poem, leave the line-breaks as they are.
+Do NOT split up words in other ways. In particular, do not split off inflectional or derivational affixes. For example, words like "lasting", "untainted" or "breezy" should be left as they are.
 
 Here are some examples:
 
 {examples}
 
-Here is the text to annotate:
+Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. This may include linebreaks or other whitespace characters, which must be kept unchanged. 
 
-{text}
+<startoftext>{text}<endoftext>
 
-The output will be read by a Python script, so produce just the text without any comments or introduction.
+The output will be read by a Python script, which will expect the annotated output text also to be enclosed within the tags <startoftext> and <endoftext>.

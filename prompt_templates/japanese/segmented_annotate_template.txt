@@ -1,4 +1,4 @@
-Annotate the following Chinese text, dividing it into words separated with single vertical bars, |.
+Annotate the following Japanese text, dividing it into words separated with single vertical bars, |.
 
 Here are some examples:
 

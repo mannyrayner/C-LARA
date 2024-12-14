@@ -1,6 +1,6 @@
-Annotate the following Chinese text, dividing it into words separated with single vertical bars, |.
+Annotate the following Norwegian text to divide up compound words using single vertical bars, |. Note: *only* divide up compound words. Do not split endings off inflected verbs, nouns and adjectives.
 
-Here are some examples:
+Here are some examples in Swedish: 
 
 {examples}
 
