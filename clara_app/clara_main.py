@@ -1146,7 +1146,7 @@ class CLARAProjectInternal:
                 merged_text_with_mwes = merge_with_mwe_annotations(merged_text, internalised_mwe_tagged_text)
                 annotate_mwes_in_text(merged_text_with_mwes)
                 merged_text = merged_text_with_mwes
-            
+
             return merged_text
 
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations

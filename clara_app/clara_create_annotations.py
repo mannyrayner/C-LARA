@@ -33,7 +33,7 @@ from . import clara_chatgpt4
 from . import clara_internalise
 
 from .clara_mwe import find_mwe_positions_for_content_elements, check_mwes_are_consistently_annotated
-from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings
+from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings, find_between
 from .clara_classes import *
 
 import asyncio
@@ -50,11 +50,14 @@ ASYNC = True
 
 # Try invoking the template-based prompt generation with trivial text to see if we get an error
 def invoke_templates_on_trivial_text(annotate_or_improve, version, l1_language, l2_language):
-    if not version in ( 'segmented', 'gloss', 'lemma', 'pinyin', 'lemma_and_gloss' ):
+    if not version in ( 'presegmented', 'segmented', 'gloss', 'lemma', 'pinyin', 'lemma_and_gloss' ):
         return True
     if version == 'segmented':
         text = ''
         return segmentation_prompt(annotate_or_improve, text, l2_language)
+    if version == 'presegmented':
+        text = ''
+        return presegmentation_prompt(annotate_or_improve, text, l2_language)
     if version == 'gloss':
         simplified_elements_json = []
         return glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language)
@@ -73,11 +76,13 @@ def invoke_templates_on_trivial_text(annotate_or_improve, version, l1_language, 
     
 # Annotate the text with pages and segments
 def generate_segmented_version(text, l2_language, config_info={}, callback=None):
-    return generate_or_improve_segmented_version('annotate', text, l2_language, config_info=config_info, callback=callback)
+    #return generate_or_improve_segmented_version('annotate', text, l2_language, config_info=config_info, callback=callback)
+    return generate_or_improve_segmented_version_two_phase('annotate', text, l2_language, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with pages and segments
 def improve_segmented_version(text, l2_language, config_info={}, callback=None):
-    return generate_or_improve_segmented_version('improve', text, l2_language, config_info=config_info, callback=callback)
+    #return generate_or_improve_segmented_version('improve', text, l2_language, config_info=config_info, callback=callback)
+    return generate_or_improve_segmented_version_two_phase('improve', text, l2_language, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with pages and segments
 def improve_morphology_in_segmented_version(text, l2_language, config_info={}, callback=None):
@@ -143,6 +148,49 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
     api_call = clara_chatgpt4.call_chat_gpt4(annotate_prompt, config_info=config_info, callback=callback)
     return ( api_call.response, [ api_call ] )
 
+def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l2_language,
+                                                    config_info={}, callback=None):
+    if annotate_or_improve != 'annotate':
+        raise ValueError('Improvement of segmented text not currently supported')
+    all_api_calls = []
+    l1_language = 'irrelevant'
+    l2_language = l2_language.capitalize()
+    
+    if len(text.split('\n')) < 2:
+        #If we only have one line, the AI may be confused by a presegmentation request              
+        presegmented_text = text
+    else:
+        presegment_prompt =  presegmentation_prompt(annotate_or_improve, text, l2_language)
+        n_attempts = 0
+        valid_presegmentation_found = False
+        limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
+        while not valid_presegmentation_found:
+            if n_attempts >= limit:
+                raise ChatGPTError( message=f'*** Giving up, have tried sending this to AI {limit} times' )
+            n_attempts += 1
+            post_task_update(callback, f'--- Calling AI (attempt #{n_attempts}) to presegment text')
+            try:
+                presegment_api_call = clara_chatgpt4.call_chat_gpt4(presegment_prompt, config_info=config_info, callback=callback)
+                presegmented_text0 = presegment_api_call.response
+                print(f'presegmented_text0:\n{presegmented_text0}')
+                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>"
+                presegmented_text = find_between(presegmented_text0, "<startoftext>", "<endoftext>")
+                valid_presegmentation_found = True
+                all_api_calls.append(presegment_api_call)
+            except ValueError as e:
+                post_task_update(callback, f'*** Warning: error when sending request to AI')
+                error_message = f'"{str(e)}"'
+                post_task_update(callback, error_message)
+            except Exception as e:
+                post_task_update(callback, f'*** Warning: error when sending request to AI')
+                error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+                post_task_update(callback, error_message)
+
+    segmented_text, segmented_api_calls = generate_or_improve_annotated_version('annotate', 'segmented', presegmented_text, l1_language, l2_language,
+                                                                                previous_version='presegmented', config_info=config_info, callback=callback)
+    all_api_calls.extend(segmented_api_calls)
+    return ( segmented_text, all_api_calls )
+
 def generate_or_improve_annotated_version(annotate_or_improve, processing_phase, annotated_text, l1_language, l2_language,
                                           previous_version='default', mwe=False,
                                           current_annotated_text=None, current_translated_text=None,
@@ -154,7 +202,9 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
 ##                                          config_info={config_info}, callback=callback)
 ##""")
 
-    if previous_version == 'lemma':
+    if previous_version == 'presegmented':
+        source_version = 'presegmented'
+    elif previous_version == 'lemma':
         source_version = 'lemma'
     elif mwe:
         source_version = 'mwe'
@@ -270,8 +320,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         # We're doing everything from scratch
         #print(f'--- Doing {processing_phase} element by element')
         if processing_phase == 'mwe' or mwe or ( processing_phase == 'gloss' and previous_version == 'lemma' ) or \
-           processing_phase == 'segmented' and previous_version == 'segmented':
-            # Do tagging involving MWEs, gloss-from-lemma and morphology improvement one segment at a time
+           processing_phase == 'segmented' and previous_version in ( 'presegmented', 'segmented'):
+            # Do tagging involving MWEs, gloss-from-lemma, segmentation and morphology improvement one segment at a time
             chunks = segmented_elements
             process_segments_singly = True
         else:
@@ -300,21 +350,32 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                                                                                                                  mwes=mwes_for_segment,
                                                                                                                  translation=translation_for_segment,
                                                                                                                  config_info=config_info, callback=callback)
-                if processing_phase == 'mwe':
+                if processing_phase == 'segmented':
+                    annotations_for_segments.append(annotated_chunk_or_segment_annotation)
+                elif processing_phase == 'mwe':
                     annotations_for_segments.append(annotated_chunk_or_segment_annotation)
                 elif processing_phase == 'translated':
                     annotations_for_segments += annotated_chunk_or_segment_annotation
                 else:
                     annotated_elements += annotated_chunk_or_segment_annotation
                 all_api_calls += api_calls
-            
+
+    #print(f': annotations_for_segments: {annotations_for_segments}')
+    
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
     #print(f'annotations_for_segments = {annotations_for_segments}')
     for page in internalised_annotated_text.pages:
         for segment in page.segments:
+            # If we are doing segmentation, the "annotations" are the segmented_text
+            # We create a segment with one ContentElement holding the segmented_text.
+            # This is okay, since we're immediately after going to convert the internalised text to surface text.
+            if processing_phase == 'segmented':
+                segmented_text = annotations_for_segments[index]
+                segment.content_elements = [ ContentElement('Word', segmented_text) ]
+                index += 1
             # If we are doing MWE, add the annotations to the segment
-            if processing_phase == 'mwe':
+            elif processing_phase == 'mwe':
                 segment.annotations = annotations_for_segments[index]
                 index += 1
             # If we are doing segment translation, add the annotations to the segment
@@ -328,9 +389,11 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                 n_elements_in_segment = len(segment.content_elements)
                 segment.content_elements = annotated_elements[index:index+n_elements_in_segment]
                 index += n_elements_in_segment
-            
-    #print(f'internalised_annotated_text: {internalised_annotated_text}')        
-    human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase)
+
+    #print(f'internalised_annotated_text: {internalised_annotated_text}')
+
+    processing_phase1 = 'presegmented' if processing_phase == 'segmented' else processing_phase
+    human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase1)
     #print(f'generate_or_improve_annotated_version: total cost = {sum([ api_call.cost for api_call in all_api_calls ])}')
     return ( human_readable_text, all_api_calls )
 
@@ -384,7 +447,9 @@ async def process_annotations_async(chunks, process_segments_singly, segmented_e
 
     for result in results:
         annotated_chunk_or_segment_annotation, api_calls = result
-        if processing_phase == 'mwe':
+        if processing_phase == 'segmented' and previous_version == 'presegmented':
+            annotations_for_segments.append(annotated_chunk_or_segment_annotation)
+        elif processing_phase == 'mwe':
             annotations_for_segments.append(annotated_chunk_or_segment_annotation)
         elif processing_phase == 'translated':
             annotations_for_segments += annotated_chunk_or_segment_annotation
@@ -525,59 +590,68 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                                                               always_succeed=False,
                                                               callback=None):
     word_elements = word_items_in_element_list(elements)
-    if len(word_elements) == 0:
+    n_words = len(word_elements)
+    # If there are no words in the input, handle specially to avoid making an AI call
+    if n_words == 0:
         # If we're doing MWE, return empty list
         if processing_phase == 'mwe':
             return ( [], [] )
+        # If we're doing segmentation, return the surface content
+        elif processing_phase == 'segmented':
+            return ( ''.join([element.content for element in elements]), [] )
         # If we're doing translation, return null translation for each element
         elif processing_phase == 'translated':
             return ( ['' for element in elements], [] )
         # Otherwise, return the elements unchanged
         else:
             return ( elements, [] )
-        
-    # Remove markup from the elements before passing to GPT-4 to make things easier for the AI
-    if processing_phase == 'translated':
-        simplified_elements0 = []
-        for segment_elements in elements:
-            segment_text = segment_elements_to_segment_translation_input(segment_elements)
-            # Don't include null segments, as they can confuse gpt-4
-            if segment_text:
-                simplified_elements0.append(segment_text)
-    else:
-        word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(elements)
-        
-        if annotate_or_improve == 'annotate' and previous_version == 'lemma':
-            simplified_elements0 = [ simplify_element_to_list(element, 'lemma') for element in word_and_non_word_text_elements ]
-        elif annotate_or_improve == 'annotate':
-            simplified_elements0 = [ simplify_element_to_string(element) for element in word_and_non_word_text_elements ]
-        else:
-            simplified_elements0 = [ simplify_element_to_list(element, processing_phase) for element in word_and_non_word_text_elements ]
-    simplified_elements = [ element for element in simplified_elements0 if element != False ]
-    text_to_annotate = simplified_element_list_to_text(simplified_elements) 
-    simplified_elements_json = json.dumps(simplified_elements)
-    n_words = len(simplified_elements)
+
     l1_language = l1_language.capitalize()
     l2_language = l2_language.capitalize()
-    if processing_phase == 'translated':
-        annotation_prompt = translation_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language)
-    elif processing_phase == 'segmented':
-        annotation_prompt = morphology_prompt(simplified_elements_json, l2_language)
-    elif processing_phase == 'gloss':
-        annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language,
-                                            previous_version=previous_version, mwe=mwe, mwes=mwes, translation=translation)
-    elif processing_phase == 'lemma':
-        annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, mwe=mwe, mwes=mwes)
-    elif processing_phase == 'mwe':
-        annotation_prompt = mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, few_shot_examples=few_shot_examples)
-    elif processing_phase == 'pinyin':
-        annotation_prompt = pinyin_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
-    elif processing_phase == 'lemma_and_gloss' and annotate_or_improve == 'improve':
-        annotation_prompt = joint_tagging_and_glossing_prompt(simplified_elements_json, l1_language, l2_language)
+    if processing_phase == 'segmented' and previous_version == 'presegmented':
+        text_to_annotate = content_elements_to_segmentation_input(elements)
+        annotation_prompt = segmentation_prompt(annotate_or_improve, text_to_annotate, l2_language)
     else:
-        message = f'Unsupported combination processing_phase = {processing_phase} and annotate_or_improve = {annotate_or_improve} in create_annotation'
-        #print(message)
-        raise InternalCLARAError(message = message )
+        # Remove markup from the elements before passing to GPT-4 to make things easier for the AI
+        if processing_phase == 'translated':
+            simplified_elements0 = []
+            for segment_elements in elements:
+                segment_text = segment_elements_to_segment_translation_input(segment_elements)
+                # Don't include null segments, as they can confuse gpt-4
+                if segment_text:
+                    simplified_elements0.append(segment_text)
+        else:
+            word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(elements)
+            
+            if annotate_or_improve == 'annotate' and previous_version == 'lemma':
+                simplified_elements0 = [ simplify_element_to_list(element, 'lemma') for element in word_and_non_word_text_elements ]
+            elif annotate_or_improve == 'annotate':
+                simplified_elements0 = [ simplify_element_to_string(element) for element in word_and_non_word_text_elements ]
+            else:
+                simplified_elements0 = [ simplify_element_to_list(element, processing_phase) for element in word_and_non_word_text_elements ]
+        simplified_elements = [ element for element in simplified_elements0 if element != False ]
+        text_to_annotate = simplified_element_list_to_text(simplified_elements) 
+        simplified_elements_json = json.dumps(simplified_elements)
+        #n_words = len(simplified_elements)
+        if processing_phase == 'translated':
+            annotation_prompt = translation_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language)
+        elif processing_phase == 'segmented':
+            annotation_prompt = morphology_prompt(simplified_elements_json, l2_language)
+        elif processing_phase == 'gloss':
+            annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language,
+                                                previous_version=previous_version, mwe=mwe, mwes=mwes, translation=translation)
+        elif processing_phase == 'lemma':
+            annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, mwe=mwe, mwes=mwes)
+        elif processing_phase == 'mwe':
+            annotation_prompt = mwe_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, few_shot_examples=few_shot_examples)
+        elif processing_phase == 'pinyin':
+            annotation_prompt = pinyin_tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language)
+        elif processing_phase == 'lemma_and_gloss' and annotate_or_improve == 'improve':
+            annotation_prompt = joint_tagging_and_glossing_prompt(simplified_elements_json, l1_language, l2_language)
+        else:
+            message = f'Unsupported combination processing_phase = {processing_phase} and annotate_or_improve = {annotate_or_improve} in create_annotation'
+            #print(message)
+            raise InternalCLARAError(message = message )
     api_calls = []
     n_attempts = 0
     limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
@@ -603,6 +677,13 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 for mwe in mwes:
                     find_mwe_positions_for_content_elements(elements, mwe)
                 return ( mwes_and_analysis, api_calls )
+            elif processing_phase == 'segmented' and previous_version == 'presegmented':
+                segmented_text0 = api_call.response
+                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>"
+                segmented_text = find_between(segmented_text0, "<startoftext>", "<endoftext>")
+                if text_to_annotate != segmented_text.replace('|', ''):
+                    raise ChatGPTError( message = f'Segmented text "{segmented_text}" does not match original text "{text_to_annotate}"' )
+                return ( segmented_text, api_calls )
             elif processing_phase == 'translated':
                 translation_annotations = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
                                                                                   previous_version=previous_version, callback=callback)
@@ -620,12 +701,16 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
         except MWEError as e:
             await post_task_update_async(callback, f'*** Warning: {e.message}')
         except ChatGPTError as e:
-            await post_task_update_async(callback, f'*** Warning: unable to parse response from ChatGPT-4')
+            await post_task_update_async(callback, f'*** Warning: bad response from ChatGPT-4')
             await post_task_update_async(callback, e.message)
         except Exception as e:
             await post_task_update_async(callback, f'*** Warning: error when sending request to ChatGPT-4')
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'
             await post_task_update_async(callback, error_message)
+
+def content_elements_to_segmentation_input(content_elements):
+    segment_text = ''.join([ element.content for element in content_elements ])
+    return segment_text
 
 def segment_elements_to_segment_translation_input(segment_elements):
     word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(segment_elements)
@@ -664,6 +749,15 @@ def merge_elements_and_annotated_elements(elements, annotated_elements, processi
 
 def segmentation_prompt(annotate_or_improve, text, l2_language):
     template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, 'segmented', l2_language)
+    examples = segmentation_examples_to_text(annotated_example_list)
+    return template.format( l2_language=l2_language,
+                            examples=examples,
+                            text=text )
+
+def presegmentation_prompt(annotate_or_improve, text, l2_language):
+    if annotate_or_improve != 'annotate':
+        raise ValueError('Cannot currently improve presegmentation')
+    template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, 'presegmented', l2_language)
     examples = segmentation_examples_to_text(annotated_example_list)
     return template.format( l2_language=l2_language,
                             examples=examples,

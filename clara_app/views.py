@@ -1135,7 +1135,7 @@ def edit_prompt(request):
                 PromptFormSet = forms.formset_factory(MWEExampleForm, formset=CustomMWEExampleFormSet, extra=1)
             elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
                 PromptFormSet = forms.formset_factory(ExampleWithMWEForm, formset=ExampleWithMWEFormSet, extra=1)
-            elif (operation == 'annotate' or annotation_type == 'segmented'):
+            elif ( operation == 'annotate' or annotation_type in ('presegmented', 'segmented') ):
                 PromptFormSet = forms.formset_factory(StringForm, formset=CustomStringFormSet, extra=1)
             else:
                 PromptFormSet = forms.formset_factory(StringPairForm, formset=CustomStringPairFormSet, extra=1)
@@ -1207,7 +1207,7 @@ def edit_prompt(request):
                         if not new_prompts[-1][0]:
                             # We didn't use the extra last field
                             new_prompts = new_prompts[:-1]
-                    elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type == 'segmented'):
+                    elif template_or_examples == 'examples' and (operation == 'annotate' or annotation_type in ( 'presegmented', 'segmented') ):
                         new_prompts = [form.cleaned_data.get('string') for form in prompt_formset]
                         if not new_prompts[-1]:
                             # We didn't use the extra last field

@@ -913,6 +913,14 @@ def canonical_text_for_audio(text, phonetic=False):
 
         return text
 
+def find_between(s, first, last):
+    try:
+        start = s.index(first) + len(first)
+        end = s.index(last, start)
+        return s[start:end]
+    except ValueError:
+        raise ValueError(f'Error: string "{s}" does not contain "{first}" followed by "{last}"')
+
 def remove_blank_lines(text):
     lines = text.split('\n')
     return '\n'.join([ line for line in lines if len(line.strip()) != 0 ])

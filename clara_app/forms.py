@@ -603,6 +603,7 @@ class PromptSelectionForm(forms.Form):
     ]
     
     annotation_type_choices = [
+        ("presegmented", "Pre-segmented"),
         ("segmented", "Segmented"),
         ("morphology", "Morphology"),
         ("translated", "Translated"),

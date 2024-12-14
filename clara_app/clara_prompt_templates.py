@@ -41,7 +41,7 @@ class PromptTemplateRepository:
 
     # Return the contents of file version, or None.
     # template_or_examples is one of ( "template", "examples" )
-    # annotation_type is one of ( "segmented", "translation", "gloss", "gloss_with_mwe", "gloss_with_lemma", "lemma", "lemma_with_mwe", "mwe", "pinyin", "lemma_with_gloss" )
+    # annotation_type is one of ( "presegmented", "segmented", "translation", "gloss", "gloss_with_mwe", "gloss_with_lemma", "lemma", "lemma_with_mwe", "mwe", "pinyin", "lemma_with_gloss" )
     # operation is one of ( "annotate", "improve" )
     # Optionally load from a specified archive path probably extracted from the metadata
     def load_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str, archive_path=None):
@@ -68,7 +68,7 @@ class PromptTemplateRepository:
             return [ ( ' ', ' ', ' ' ) ]
         elif annotation_type in ( 'gloss_with_mwe', 'lemma_with_mwe' ):
             return [ ( ' ', ' ' ) ]
-        elif (operation == 'annotate' or annotation_type == 'segmented'):
+        elif (operation == 'annotate' or annotation_type == 'presegmented' or annotation_type == 'segmented'):
             return [ ' ' ]
         else:
             return [ ( ' ', ' ' ) ]
@@ -168,7 +168,7 @@ def check_well_formed_for_saving(data, template_or_examples, annotation_type, op
     check_well_formed_for_loading(data, template_or_examples, annotation_type, operation, language)
     if template_or_examples == 'template':
         check_validity_of_template(data, annotation_type)
-    elif annotation_type == 'segmented':
+    elif annotation_type in ( 'presegmented', 'segmented' ):
         for string in data:
             try:
                 elements = string_to_list_of_content_elements(string, 'segmented')
@@ -339,7 +339,7 @@ def check_validity_of_template_and_annotated_example_list(template, annotated_ex
 def check_validity_of_template(template, annotation_type):
     if not template:
         raise TemplateError(message = 'Unable to find template')
-    if annotation_type == 'segmented':
+    if annotation_type in ( 'presegmented', 'segmented' ):
         try:
             result = template.format( l2_language='***l2_language***',
                                       examples='***examples***',

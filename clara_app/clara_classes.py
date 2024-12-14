@@ -30,11 +30,15 @@ class ContentElement:
 
     def to_text(self, annotation_type='plain'):
         def escape_special_chars(text):
+            if not isinstance(text, (str)):
+                raise ValueError(f'Non-string argument to escape_special_chars: {text}') 
             return text.replace("#", r"\#").replace("@", r"\@").replace("<", r"\<").replace(">", r"\>")
 
         # If a Word element contains spaces or punctuation, we need to add @ signs around it
         # for the annotated text to be well-formed
         def put_at_signs_around_text_if_necessary(text, annotation_type):
+            if not isinstance(text, (str)):
+                raise ValueError(f'Non-string argument to put_at_signs_around_text_if_necessary: {text}') 
             # Check if text contains spaces or any Unicode punctuation
             if any(unicodedata.category(char).startswith('P') for char in text) or ' ' in text:
                 if annotation_type in ('segmented', 'mwe', 'mwe_minimal', 'translated', 'gloss', 'lemma'):
@@ -60,7 +64,7 @@ class ContentElement:
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
             elif annotation_type in ( 'plain' ):
                 return self.content
-            elif annotation_type in ( 'segmented', 'mwe', 'mwe_minimal', 'translated' ):
+            elif annotation_type in ( 'presegmented', 'segmented', 'mwe', 'mwe_minimal', 'translated' ):
                 return escaped_content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])

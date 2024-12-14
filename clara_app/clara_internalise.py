@@ -72,7 +72,7 @@ def parse_segment_text(segment_text, text_type):
         return parse_segment_translated(segment_text)
 
 def parse_content_elements(segment_text, text_type):
-    if text_type in ( 'plain', 'summary', 'title', 'cefr_level', 'segmented', 'segmented_title'):
+    if text_type in ( 'plain', 'summary', 'title', 'cefr_level', 'presegmented', 'segmented', 'segmented_title'):
         return parse_content_elements_segmented(segment_text, text_type=text_type)
     else:
         return parse_content_elements_glossed_or_tagged(segment_text, text_type)
@@ -85,6 +85,14 @@ def parse_content_elements_segmented(segment_text, text_type='segmented'):
     for item in words_and_elements:
         if all(c.isspace() or regex.match(r"\p{P}", c) for c in item):
             content_elements.append(ContentElement("NonWordText", content=item, annotations={}))
+        # For text_type == 'plain', we leave words with vertical bars as they are
+        elif "|" in item and text_type != 'plain':
+            # Word with smaller pieces
+            pieces = item.split("|")
+            for piece in pieces:
+                if piece != '':
+                    piece1 = piece.replace("@", "")
+                    content_elements.append(ContentElement("Word", content=piece1, annotations={}))
         elif "@" in item:
             # Multi-word expression
             mwe = item.replace("@", "")
@@ -92,13 +100,6 @@ def parse_content_elements_segmented(segment_text, text_type='segmented'):
         elif item.startswith("<") and item.endswith(">"):
             # HTML markup
             content_elements.append(ContentElement("Markup", item))
-        # For text_type == 'plain', we leave words with vertical bars as they are
-        elif "|" in item and text_type != 'plain':
-            # Word with smaller pieces
-            pieces = item.split("|")
-            for piece in pieces:
-                if piece != '':
-                    content_elements.append(ContentElement("Word", content=piece, annotations={}))
         else:
             # Regular word
             content_elements.append(ContentElement("Word", content=item, annotations={}))
@@ -245,18 +246,19 @@ def parse_content_elements_glossed_or_tagged(segment_text, text_type):
     for word_with_annotation in words_with_annotations:
         if all(c.isspace() or regex.match(r"\p{P}", c) for c in word_with_annotation):
             content_elements.append(ContentElement("NonWordText", content=word_with_annotation, annotations={}))
-        elif "@" in word_with_annotation:
-            # Multi-word expression
-            word_with_annotation = word_with_annotation.replace("@", "")
-            content_element = word_with_annotation_to_content_element(word_with_annotation, annotation_key)
-            content_elements.append(content_element)
         elif "|" in word_with_annotation:
             # Word with smaller pieces
             pieces = word_with_annotation.split("|")
             for piece in pieces:
                 if len(piece) != 0:
-                    content_element = word_with_annotation_to_content_element(piece, annotation_key)
+                    piece1 = piece.replace("@", "")
+                    content_element = word_with_annotation_to_content_element(piece1, annotation_key)
                     content_elements.append(content_element)
+        elif "@" in word_with_annotation:
+            # Multi-word expression
+            word_with_annotation = word_with_annotation.replace("@", "")
+            content_element = word_with_annotation_to_content_element(word_with_annotation, annotation_key)
+            content_elements.append(content_element)
         elif word_with_annotation.startswith("<img") or word_with_annotation.startswith("<audio"):
             # Embedded image or audio
             attributes = regex.findall(r'(\w+)=[\'"]([^\'"]*)', word_with_annotation)

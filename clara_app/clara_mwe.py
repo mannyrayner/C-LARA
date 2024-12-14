@@ -87,7 +87,7 @@ async def check_mwes_are_consistently_annotated(content_elements, mwes, processi
     for mwe in mwes:
         positions = find_mwe_positions_for_content_elements(content_elements, mwe)
         annotations = [ annotation_for_processing_phase(content_elements[position], processing_phase) for position in positions ]
-        if not all(annotation == annotations[0] for annotation in annotations):
+        if not all(annotation == annotations[0] for annotation in annotations) or annotations[0] == '-':
             message = f"MWE error: MWE '{mwe}' inconsistently annotated in '{content_elements}'."
             await post_task_update_async(callback, message)
             raise MWEError(message = message)

@@ -41,11 +41,15 @@ def merge_annotations1_and_annotations2(annotations1_text, annotations2_text, op
         merged_segments = []
 
         for annotations1_segment, annotations2_segment in zip(annotations1_page.segments, annotations2_page.segments):
-            matcher = difflib.SequenceMatcher(None, annotations1_segment.content_elements, annotations2_segment.content_elements)
+            #matcher = difflib.SequenceMatcher(None, annotations1_segment.content_elements, annotations2_segment.content_elements)
+            annotations1_strings = [ el.content for el in annotations1_segment.content_elements ]
+            annotations2_strings = [ el.content for el in annotations2_segment.content_elements ]
+            matcher = difflib.SequenceMatcher(None, annotations1_strings, annotations2_strings)
 
             merged_elements = []
 
             for operation, i1, i2, j1, j2 in matcher.get_opcodes():
+                #print(f'operation = {operation}, i1 = {i1}, i2 = {i2}, j1 = {j1}, j2 = {j2}')
                 if operation == "equal":
                     for annotations1_element, annotations2_element in zip(annotations1_segment.content_elements[i1:i2], annotations2_segment.content_elements[j1:j2]):
                         merged_element = merge_elements(annotations1_element, annotations2_element)
@@ -66,9 +70,6 @@ def merge_annotations1_and_annotations2(annotations1_text, annotations2_text, op
             merged_annotations.update(annotations2_segment.annotations)
             
             merged_segments.append(Segment(merged_elements, annotations=merged_annotations))
-##            print(f'annotations1_segment.annotations = {annotations1_segment.annotations}')
-##            print(f'annotations2_segment.annotations = {annotations2_segment.annotations}')
-##            print(f'merged_annotations = {merged_annotations}')
 
         # Assume that annotations1_page and annotations2_page have the same annotations
         merged_pages.append(Page(merged_segments, annotations=annotations1_page.annotations))
