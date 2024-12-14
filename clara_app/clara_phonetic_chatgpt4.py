@@ -1,5 +1,5 @@
 
-from .clara_chatgpt4 import call_chat_gpt4
+from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json
 from .clara_utils import get_config, post_task_update, remove_duplicates_from_list_of_hashable_items
 from .clara_classes import ChatGPTError
 
@@ -140,12 +140,13 @@ into
 """
 
 def parse_chatgpt_phonetic_lexicon_response(response, words):
-    try:
-        response_object = json.loads(response)
-    except:
-        raise ChatGPTError(message = 'Response is not correctly formatted JSON')
-    if not isinstance(response_object, list):
-        raise ChatGPTError(message = 'Response is not a list')
+##    try:
+##        response_object = json.loads(response)
+##    except:
+##        raise ChatGPTError(message = 'Response is not correctly formatted JSON')
+##    if not isinstance(response_object, list):
+##        raise ChatGPTError(message = 'Response is not a list')
+    response_object = interpret_chat_gpt4_response_as_json(response, object_type='list')
     usable_response_object = []
     for element in response_object:
         if not well_formed_element_in_phonetic_lexicon_response(element):
