@@ -674,8 +674,16 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 # Call find_mwe_positions_for_content_elements because we'll get an exception of the mwe can't be found in the segment.
                 # If so, we need to retry.
                 mwes = mwes_and_analysis['mwes']
+                correct_mwes = []
                 for mwe in mwes:
-                    find_mwe_positions_for_content_elements(elements, mwe)
+                    try:
+                        find_mwe_positions_for_content_elements(elements, mwe)
+                        correct_mwes.append(mwe)
+                    except MWEError as e:
+                        # Try again if possible, otherwise discard the MWE so that we don't fail
+                        if n_attempts < limit:
+                            raise e
+                mwes_and_analysis['mwes'] = correct_mwes
                 return ( mwes_and_analysis, api_calls )
             elif processing_phase == 'segmented' and previous_version == 'presegmented':
                 segmented_text0 = api_call.response
