@@ -826,6 +826,15 @@ def remove_language_master(request, pk):
         
         return render(request, 'clara_app/remove_language_master_confirm.html', {'language_master': language_master, 'clara_version': clara_version})
 
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def delete_old_task_updates(request):
+    threshold_date = timezone.now() - timedelta(days=30)
+    deleted_count, _ = TaskUpdate.objects.filter(timestamp__lt=threshold_date).delete()
+
+    messages.success(request, f"{deleted_count} old task updates were successfully deleted.")
+    return redirect('view_task_updates')
+
 # Display recent task update messages
 @login_required
 def view_task_updates(request):

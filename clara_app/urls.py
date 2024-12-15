@@ -39,6 +39,7 @@ urlpatterns = [
     path('confirm_transfer/', views.confirm_transfer, name='confirm_transfer'),
     path('credit_balance/', views.credit_balance, name='credit_balance'),
     path('view_task_updates/', views.view_task_updates, name='view_task_updates'),
+    path('delete_old_task_updates/', views.delete_old_task_updates, name='delete_old_task_updates'),
     path('activity/<int:activity_id>/activity_detail/', views.activity_detail, name='activity_detail'),
     path('create_activity/', views.create_activity, name='create_activity'),
     path('list_activities/', views.list_activities, name='list_activities'),
