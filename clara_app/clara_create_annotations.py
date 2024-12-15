@@ -681,7 +681,8 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 segmented_text0 = api_call.response
                 # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>"
                 segmented_text = find_between(segmented_text0, "<startoftext>", "<endoftext>")
-                if text_to_annotate != segmented_text.replace('|', ''):
+                # Do not fail because of a mismatch, but try to correct if we have tries left 
+                if text_to_annotate != segmented_text.replace('|', '') and n_attempts < limit:
                     raise ChatGPTError( message = f'Segmented text "{segmented_text}" does not match original text "{text_to_annotate}"' )
                 return ( segmented_text, api_calls )
             elif processing_phase == 'translated':

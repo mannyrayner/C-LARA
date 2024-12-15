@@ -2774,6 +2774,20 @@ def simple_clara_create_rendered_text_helper(username, project_id, simple_clara_
         store_api_calls(api_calls, project, user, 'segmented_title')
         post_task_update(callback, f"ENDED TASK: add segmentation information to text title")
 
+    # Create translated text
+    if not up_to_date_dict['translated']:
+        post_task_update(callback, f"STARTED TASK: add segment translations")
+        api_calls = clara_project_internal.create_translated_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'translate')
+        post_task_update(callback, f"ENDED TASK: add segment translations")
+
+    # Create MWE-annotated text
+    if not up_to_date_dict['mwe']:
+        post_task_update(callback, f"STARTED TASK: find MWEs")
+        api_calls = clara_project_internal.create_mwe_tagged_text(user=username, config_info=config_info, callback=callback)
+        store_api_calls(api_calls, project, user, 'mwe')
+        post_task_update(callback, f"ENDED TASK: find MWEs")
+
     # Create glossed text
     if not up_to_date_dict['gloss']:
         post_task_update(callback, f"STARTED TASK: add glosses")
