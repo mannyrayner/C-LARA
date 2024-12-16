@@ -4269,7 +4269,7 @@ def perform_correct_operation(annotated_text, version, clara_project_internal, u
 
 def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
                                                    user_object, label, previous_version='default', prompt=None, callback=None):
-    print(f'perform_generate_operation_and_store_api_calls({version}, {project}, {clara_project_internal}, {user_object}, {label}, {previous_version}, {prompt}, {callback})')
+    #post_task_update(callback, f'perform_generate_operation_and_store_api_calls({version}, {project}, {clara_project_internal}, {user_object}, {label}, {previous_version}, {prompt}, {callback})')
     try:
         config_info = get_user_config(user_object)
         operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label,
@@ -4279,7 +4279,7 @@ def perform_generate_operation_and_store_api_calls(version, project, clara_proje
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"Exception in perform_generate_operation_and_store_api_calls({version}, ...): {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
     
 def perform_generate_operation(version, clara_project_internal, user, label, previous_version=None, prompt=None, config_info={}, callback=None):
@@ -4321,7 +4321,7 @@ def perform_improve_operation_and_store_api_calls(version, project, clara_projec
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:
-        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"Exception in perform_improve_operation_and_store_api_calls({version},...): {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
  
 def perform_improve_operation(version, clara_project_internal, user, label, prompt=None, config_info={}, callback=None):
