@@ -45,11 +45,13 @@ class PromptTemplateRepository:
     # operation is one of ( "annotate", "improve" )
     # Optionally load from a specified archive path probably extracted from the metadata
     def load_template_or_examples(self, template_or_examples: str, annotation_type: str, operation: str, archive_path=None):
+        print(f'load_template_or_examples({template_or_examples}, {annotation_type}, {operation})')
         if archive_path:
             file_path = archive_path
         else:
             file_path = self._get_file_path(template_or_examples, annotation_type, operation)
-            
+
+        print(f'file_path = {file_path}')
         if file_exists(file_path):
             data = read_json_or_txt_file(file_path)
             if isinstance(data, str):
@@ -385,7 +387,19 @@ Template may not contain any substitution elements except {l1_language}, {l2_lan
 Template must contain the substitution elements {examples}, {simplified_elements_json} and {mwes}""")
         except:
             raise TemplateError(message = """Error in template.
-Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples}, {simplified_elements_json} and {mwes}""")    
+Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples}, {simplified_elements_json} and {mwes}""")
+    elif annotation_type == 'lemma_with_mwe':
+        try:
+            result = template.format( l2_language='***l2_language***',
+                                      examples='***examples***',
+                                      simplified_elements_json='***simplified_elements_json***',
+                                      mwes='***mwes***' )
+            if not '***examples***' in result or not '***simplified_elements_json***' or not '***mwes***' in result:
+                raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {examples}, {simplified_elements_json} and {mwes}""")
+        except:
+            raise TemplateError(message = """Error in template.
+Template may not contain any substitution elements except {l2_language}, {examples}, {simplified_elements_json} and {mwes}""")
     else:
         try:
             result = template.format( l1_language='***l1_language***',
