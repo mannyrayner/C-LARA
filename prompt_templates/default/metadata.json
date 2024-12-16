@@ -712,7 +712,7 @@
         "timestamp": "20240513210141"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\lemma_with_mwe_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\lemma_with_mwe_annotate_template_20241216064112.txt",
         "annotation_type": "lemma_with_mwe",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -966,5 +966,13 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20241216015915"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\lemma_with_mwe_annotate_template.txt",
+        "annotation_type": "lemma_with_mwe",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241216064112"
     }
 ]
