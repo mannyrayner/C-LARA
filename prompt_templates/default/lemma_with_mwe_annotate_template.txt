@@ -1,9 +1,16 @@
-I am going to give you a short passage in {l2_language}, presented in a JSON format.
-I want you to add {l2_language} root forms and part-of-speech (POS) tags in the following way.
+I am going to give you a short passage in {l2_language}, presented in a JSON format. I want you to add {l2_language} root forms and part-of-speech (POS) tags in the following way.
 
-The JSON is a list of strings. Each string is either a {l2_language} word or a punctuation mark.
+The JSON is a list of pairs. The first element in each pair is a string which is either a {l2_language} word or a punctuation mark. If the second element in the pair is non-null, it specifies a multi-word expression (MWE) and indicates that this element is part of the given MWE.
 
-Please replace each string with a three-element list in which the first element is the original string, the second is a root form in {l2_language}, and the third is a POS tag taken from the Universal Dependencies version 2 tagset. This has the following tags:
+Your task is to replace each pair with a three-element list in which the first element is the first element in the original pair, the second is a root form in {l2_language}, and the third is a POS tag taken from the Universal Dependencies version 2 tagset. Use the following rules:
+
+1. If the element is marked as an MWE, the lemma and POS tag should be for the given MWE. Each component of an MWE must have the exact same lemma and POS tag for the MWE, regardless of context. 
+
+2. If the second element is null, the lemma and root form should be for the first element.
+
+Do not add or remove any elements from the JSON list provided in the input.
+
+Universal Dependencies version 2 tagset has the following tags:
 
 ADJ: adjective
 ADP: adposition
@@ -28,5 +35,6 @@ X: other
 Here are the items to annotate:
 
 {simplified_elements_json}
+MWEs: {mwes}
 
 Write out just the annotated JSON with no introduction or comments, since it will be processed by a Python script.
