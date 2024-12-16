@@ -32,7 +32,7 @@ from . import clara_prompt_templates
 from . import clara_chatgpt4
 from . import clara_internalise
 
-from .clara_mwe import find_mwe_positions_for_content_elements, check_mwes_are_consistently_annotated
+from .clara_mwe import find_mwe_positions_for_content_elements, find_mwe_positions_for_content_string_list, check_mwes_are_consistently_annotated
 from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings, find_between
 from .clara_classes import *
 
@@ -638,7 +638,8 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
         elif processing_phase == 'segmented':
             annotation_prompt = morphology_prompt(simplified_elements_json, l2_language)
         elif processing_phase == 'gloss':
-            annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language,
+            # Note that in this case we pass simplified_elements rather than simplified_elements_json, since we need to manipulate the elements
+            annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements, l1_language, l2_language,
                                                 previous_version=previous_version, mwe=mwe, mwes=mwes, translation=translation)
         elif processing_phase == 'lemma':
             annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements_json, l2_language, mwe=mwe, mwes=mwes)
@@ -795,24 +796,32 @@ def translation_prompt(annotate_or_improve, simplified_elements_json, l1_languag
                             )
 
 
-def glossing_prompt(annotate_or_improve, simplified_elements_json, l1_language, l2_language,
+def glossing_prompt(annotate_or_improve, simplified_elements, l1_language, l2_language,
                     previous_version='segmented_with_images', mwe=False, mwes=[], translation=None):
     if previous_version == 'lemma':
         template_and_examples_version = 'gloss_with_lemma'
+        simplified_elements_to_show = simplified_elements
     elif mwe:
         template_and_examples_version = 'gloss_with_mwe'
+        simplified_elements_to_show = substitute_mwes_in_content_string_list(simplified_elements, mwes)
     else:
         template_and_examples_version = 'gloss'
+        simplified_elements_to_show = simplified_elements
+        
     template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, template_and_examples_version, l2_language)
     if annotate_or_improve == 'annotate':
         examples = glossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language, previous_version=previous_version,
                                                       mwe=mwe, mwes=mwes, translation=translation)
     else:
         examples = reglossing_examples_to_examples_text(annotated_example_list, l1_language, l2_language)
+
+    simplified_elements_json = json.dumps(simplified_elements_to_show)
+    mwes_json = json.dumps(mwes)
     return template.format( l1_language=l1_language,
                             l2_language=l2_language,
                             examples=examples,
-                            simplified_elements_json=simplified_elements_json
+                            simplified_elements_json=simplified_elements_json,
+                            mwes=mwes_json
                             )
 
 # We only have 'improvement' for 'lemma_and_gloss'
@@ -919,18 +928,21 @@ def glossing_examples_to_examples_text(examples_structure, l2_language, l1_langu
         intro = 'Here are some examples:'
         examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
         intro_and_examples_text = f'{intro}\n\n{examples_text}'
-    # W3b)e are using MWEs, and this particular text has MWEs, so we use only examples with MWEs
+    # 3b) We are using MWEs, and this particular text has MWEs, so we use only examples with MWEs
     else:
         examples_to_use = [ example for example in examples_structure
                             if example[1].strip() != '' ]
-        mwes_text = mwes_to_json_string(mwes)
-        if len(mwes) == 1:
-            intro1 = f'The following sequence of words must be treated as a single multi-word expression (MWE)'
-        else:
-            intro1 = f'The following sequences of words must be treated as single multi-word expressions (MWEs)'
-        intro2 = f'This means that each of the component words in the MWE must be glossed in the same way. Here are some examples of how to gloss:'
+##        mwes_text = mwes_to_json_string(mwes)
+##        if len(mwes) == 1:
+##            intro1 = f'The following sequence of words must be treated as a single multi-word expression (MWE)'
+##        else:
+##            intro1 = f'The following sequences of words must be treated as single multi-word expressions (MWEs)'
+##        intro2 = f'This means that each of the component words in the MWE must be glossed in the same way. Here are some examples of how to gloss:'
+##        examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
+##        intro_and_examples_text = f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
+        intro = 'Here are some examples:'
         examples_text = '\n\n'.join([ glossing_example_with_mwes_to_example_text(example, l2_language, l1_language) for example in examples_to_use ])
-        intro_and_examples_text = f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
+        intro_and_examples_text = f'{intro}\n\n{examples_text}'
 
     if not translation:
         return intro_and_examples_text
@@ -959,7 +971,7 @@ def tagging_examples_to_examples_text(examples_structure, l2_language, mwe=False
             intro1 = f'The following sequence of words must be treated as a single multi-word expression (MWE)'
         else:
             intro1 = f'The following sequences of words must be treated as single multi-word expressions (MWEs)'
-        intro2 = f'This means that each of the component must in the MWE must be tagged in the same way. Here are some examples of how to tag:'
+        intro2 = f'Each of the component in the MWE must be tagged in the same way. Here are some examples of how to tag:'
         examples_text = '\n\n'.join([ tagging_example_with_mwes_to_example_text(example, l2_language) for example in examples_to_use ])
         return f'{intro1}\n\n{mwes_text}\n\n{intro2}\n\n{examples_text}'
 
@@ -989,7 +1001,23 @@ def glossing_example_with_mwes_to_example_text(example_pair, l2_language, l1_lan
     if not mwes.strip():
         return f'Input: {json.dumps(simplified_internalised_example_words)}\nOutput: {json.dumps(simplified_internalised_example)}'
     else:
-        return f'Input: {json.dumps(simplified_internalised_example_words)}\nMWES:{json.dumps(mwes)}\nOutput: {json.dumps(simplified_internalised_example)}'
+        #return f'Input: {json.dumps(simplified_internalised_example_words)}\nMWES:{json.dumps(mwes)}\nOutput: {json.dumps(simplified_internalised_example)}'
+        mwes_lists = mwes_string_to_mwes_lists(mwes)
+        simplified_internalised_example_words_with_mwe_substitution = substitute_mwes_in_content_string_list(simplified_internalised_example_words, mwes_lists)
+        return f'Input: {json.dumps(simplified_internalised_example_words_with_mwe_substitution)}\nMWES:{json.dumps(mwes_lists)}\nOutput: {json.dumps(simplified_internalised_example)}'
+
+def mwes_string_to_mwes_lists(all_mwes_string):
+    mwe_strings = all_mwes_string.strip().split(',')
+    return [ mwe_string.split() for mwe_string in mwe_strings ]
+
+def substitute_mwes_in_content_string_list(simplified_internalised_example_words, mwes_lists):
+    output = [ [ item, None ] for item in simplified_internalised_example_words ]
+    for mwe_list in mwes_lists:
+        mwe_text = ' '.join(mwe_list)
+        mwe_indices = find_mwe_positions_for_content_string_list(simplified_internalised_example_words, mwe_list)
+        for index in mwe_indices:
+            output[index][1] = mwe_text
+    return output 
 
 def tagging_example_with_mwes_to_example_text(example_pair, l2_language):
     example, mwes = example_pair

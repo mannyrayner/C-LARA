@@ -50,16 +50,22 @@ def find_mwe_positions_for_segment(segment, mwe, callback=None):
     return find_mwe_positions_for_content_elements(content_elements, mwe)
 
 def find_mwe_positions_for_content_elements(content_elements, mwe, callback=None):
+    #segment_text = ' '.join([ element.to_text(annotation_type='plain') for element in content_elements if element.type == 'Word' ])
+    segment_text = ''.join([ element.to_text(annotation_type='plain') for element in content_elements ])
+    content_string_list = [ element.content for element in content_elements ]
+    return find_mwe_positions_for_content_string_list(content_string_list, mwe, callback=callback)
+
+def find_mwe_positions_for_content_string_list(content_string_list, mwe, callback=None):
+    full_text = ''.join(content_string_list)
     mwe_text = ' '.join(mwe)
-    segment_text = ' '.join([ element.to_text(annotation_type='plain') for element in content_elements if element.type == 'Word' ])
     # Find all positions of each word in the MWE
     all_positions = []
     
     for word in mwe:
-        positions = [i for i, element in enumerate(content_elements) if element.content == word]
+        positions = [i for i, element in enumerate(content_string_list) if element == word]
         if not positions:
-            message = f"MWE error: the word '{word}' in the MWE '{mwe_text}' is not one of the words in '{segment_text}'."
-            post_task_update(callback, message)
+            message = f"MWE error: the word '{word}' in the MWE '{mwe_text}' is not one of the words in '{full_text}'."
+            #post_task_update(callback, message)
             raise MWEError(message = message)
         all_positions.append(positions)
     
@@ -75,8 +81,8 @@ def find_mwe_positions_for_content_elements(content_elements, mwe, callback=None
                 best_combination = combination
                 
     if best_combination is None:
-        message = f"MWE error: unable to find valid combination for MWE '{mwe}' in segment '{segment_text}'."
-        post_task_update(callback, message)
+        message = f"MWE error: unable to find valid combination for MWE '{mwe_text}' in segment '{full_text}'."
+        #post_task_update(callback, message)
         raise MWEError(message = message)
     
     return list(best_combination)
