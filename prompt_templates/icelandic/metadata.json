@@ -1,6 +1,6 @@
 [
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\icelandic\\segmented_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\icelandic\\archive\\segmented_annotate_template_20241216105815.txt",
         "annotation_type": "segmented",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -14,5 +14,13 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20241216104952"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\icelandic\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241216105815"
     }
 ]
