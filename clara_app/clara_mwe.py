@@ -51,12 +51,11 @@ def find_mwe_positions_for_segment(segment, mwe, callback=None):
 
 def find_mwe_positions_for_content_elements(content_elements, mwe, callback=None):
     #segment_text = ' '.join([ element.to_text(annotation_type='plain') for element in content_elements if element.type == 'Word' ])
-    segment_text = ''.join([ element.to_text(annotation_type='plain') for element in content_elements ])
     content_string_list = [ element.content for element in content_elements ]
     return find_mwe_positions_for_content_string_list(content_string_list, mwe, callback=callback)
 
 def find_mwe_positions_for_content_string_list(content_string_list, mwe, callback=None):
-    full_text = ''.join(content_string_list)
+    full_text = ' '.join(content_string_list)
     mwe_text = ' '.join(mwe)
     # Find all positions of each word in the MWE
     all_positions = []
@@ -88,7 +87,7 @@ def find_mwe_positions_for_content_string_list(content_string_list, mwe, callbac
     return list(best_combination)
 
 async def check_mwes_are_consistently_annotated(content_elements, mwes, processing_phase, callback=None):
-    content_elements = [ content_element for content_element in content_elements if content_element.type == 'Word' ]
+    content_elements = [ content_element for content_element in content_elements if content_element.type in ( 'Word', 'NonWordText' ) ]
     #await post_task_update_async(callback, f'check_mwes_are_consistently_annotated({content_elements}, {mwes}, {processing_phase})')
     for mwe in mwes:
         positions = find_mwe_positions_for_content_elements(content_elements, mwe)
@@ -101,10 +100,10 @@ async def check_mwes_are_consistently_annotated(content_elements, mwes, processi
 def annotation_for_processing_phase(content_element, processing_phase):
     annotations = content_element.annotations
     if processing_phase == 'gloss':
-        return annotations['gloss']
+        return annotations['gloss'] if 'gloss' in annotations else '-'
     elif processing_phase == 'lemma':
         # We don't want to fail because POS is wrong
-        return annotations['lemma']
+        return annotations['lemma'] if 'lemma' in annotations else '-'
     else:
         return None
     

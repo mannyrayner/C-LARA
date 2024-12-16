@@ -1176,7 +1176,7 @@ def unsimplify_element(element, processing_phase, previous_version='default'):
         content, annotation = element
         # String only consists of punctuation marks
         if all(regex.match(r"\p{P}", c) for c in content):
-            return ContentElement("NonWordText", content)
+            return ContentElement("NonWordText", content, annotations={ processing_phase: annotation })
         # String is an HTML tag
         elif regex.match(r"<\/?\w+>", content):
             return ContentElement("Markup", content)
