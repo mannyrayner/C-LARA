@@ -672,7 +672,7 @@
         "timestamp": "20240513200658"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_with_mwe_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_mwe_annotate_template_20241215130745.txt",
         "annotation_type": "gloss_with_mwe",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -926,5 +926,45 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20241213061230"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_mwe_annotate_template_20241215132226.txt",
+        "annotation_type": "gloss_with_mwe",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241215130745"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_mwe_annotate_template_20241215132308.txt",
+        "annotation_type": "gloss_with_mwe",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241215132226"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_mwe_annotate_template_20241216003316.txt",
+        "annotation_type": "gloss_with_mwe",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241215132308"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_mwe_annotate_template_20241216015915.txt",
+        "annotation_type": "gloss_with_mwe",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241216003316"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_with_mwe_annotate_template.txt",
+        "annotation_type": "gloss_with_mwe",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241216015915"
     }
 ]

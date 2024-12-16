@@ -1,13 +1,22 @@
 I am going to give you a short passage in {l2_language}, presented in a JSON format. I want you to add {l1_language} glosses in the following way.
 
-The JSON is a list of strings. Each string is either a {l2_language} word or a punctuation mark.
+The JSON is a list of pairs. The first element in each pair is a string which is either a {l2_language} word or a punctuation mark. If the second element in the pair is non-null, it specifies a multi-word expression (MWE) and indicates that this element is part of the given MWE.
 
-Please replace each string with a two-element list in which the first element is the original string and the second is a gloss in {l1_language}. If there is no sensible way to gloss the string in {l1_language}, gloss it as '-'. 
+Your task is to replace the second element in each pair with a gloss in {l1_language}. Use the following rules:
+
+1. If the element is marked as an MWE, the gloss should be for the given MWE. Each component of an MWE must have the exact same gloss for the MWE, regardless of context. 
+
+2. If the second element is null, the gloss should be for the first element, if there is a sensible way to produce such a gloss.
+
+3. If the second element is null, and there  is no sensible way to gloss the first element in {l1_language}, the gloss should be specifically '-'. 
+
+Do not add or remove any elements or alter the structure of the JSON list provided in the input.
 
 {examples}
 
 Here are the items to gloss:
 
 {simplified_elements_json}
+MWEs: {mwes}
 
 Write out just the annotated JSON with no introduction, since it will be processed by a Python script.
