@@ -1,0 +1,13 @@
+Annotate the following German text in the following way: if a word in the text appears to be a compound noun, compound adjective or compound adverb that can be divided into smaller words, all of which are nouns, verbs, adjectives or adverbs, and the meaning of the word can be inferred from the meaning of the components, separate the components with vertical bars, |. Similarly, if words "'s" (contraction of "es") or "'n" (contraction of "ein") are affixed to the end of a word, separate it off with a vertical bar.
+
+Do NOT split up words in other ways. In particular, do not split off inflectional or derivational affixes. 
+
+Here are some examples: 
+
+{examples}
+
+Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. This may include linebreaks or other whitespace characters, which must be kept unchanged. 
+
+<startoftext>{text}<endoftext>
+
+The output will be read by a Python script, which will expect the annotated output text also to be enclosed within the tags <startoftext> and <endoftext>.

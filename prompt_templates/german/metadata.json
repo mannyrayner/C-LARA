@@ -1,0 +1,58 @@
+[
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\archive\\segmented_annotate_template_20241217023741.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217021439"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\archive\\segmented_annotate_examples_20241217023618.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217023033"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\archive\\segmented_annotate_examples_20241217024038.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217023618"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\archive\\segmented_annotate_template_20241217024026.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217023741"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217024026"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\archive\\segmented_annotate_examples_20241217024044.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217024038"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217024044"
+    }
+]
