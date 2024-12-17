@@ -6,7 +6,7 @@ Here are some examples:
 
 {examples}
 
-Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. This may include linebreaks or other whitespace characters, which must be kept unchanged. 
+Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. If this includes linebreaks or other whitespace characters, they must be kept unchanged. 
 
 <startoftext>{text}<endoftext>
 
