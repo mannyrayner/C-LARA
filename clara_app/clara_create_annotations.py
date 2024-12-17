@@ -33,7 +33,7 @@ from . import clara_chatgpt4
 from . import clara_internalise
 
 from .clara_mwe import find_mwe_positions_for_content_elements, find_mwe_positions_for_content_string_list, check_mwes_are_consistently_annotated
-from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings, find_between
+from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings, find_between_tags
 from .clara_classes import *
 
 import asyncio
@@ -173,8 +173,8 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
                 presegment_api_call = clara_chatgpt4.call_chat_gpt4(presegment_prompt, config_info=config_info, callback=callback)
                 presegmented_text0 = presegment_api_call.response
                 print(f'presegmented_text0:\n{presegmented_text0}')
-                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>"
-                presegmented_text = find_between(presegmented_text0, "<startoftext>", "<endoftext>")
+                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>", but sometimes these don't come out quite right
+                presegmented_text = find_between_tags(presegmented_text0, "text", "text")
                 valid_presegmentation_found = True
                 all_api_calls.append(presegment_api_call)
             except ValueError as e:
@@ -689,8 +689,8 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 return ( mwes_and_analysis, api_calls )
             elif processing_phase == 'segmented' and previous_version == 'presegmented':
                 segmented_text0 = api_call.response
-                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>"
-                segmented_text = find_between(segmented_text0, "<startoftext>", "<endoftext>")
+                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>", but sometimes these don't come out quite right
+                segmented_text = find_between_tags(segmented_text0, "text", "text")
                 # Do not fail because of a mismatch, but try to correct if we have tries left 
                 if text_to_annotate != segmented_text.replace('|', '') and n_attempts < limit:
                     raise ChatGPTError( message = f'Segmented text "{segmented_text}" does not match original text "{text_to_annotate}"' )

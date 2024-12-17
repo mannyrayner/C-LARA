@@ -921,6 +921,35 @@ def find_between(s, first, last):
     except ValueError:
         raise ValueError(f'Error: string "{s}" does not contain "{first}" followed by "{last}"')
 
+def find_between_tags(s, start_tag_text, end_tag_text):
+    """
+    Extracts text between a start tag and an end tag, allowing wildcard prefixes and suffixes in the tags.
+    
+    Args:
+        start_tag_text (str): The core text of the starting tag (e.g., "startoftext").
+        end_tag_text (str): The core text of the ending tag (e.g., "endoftext").
+        s (str): The input string to search.
+    
+    Returns:
+        str: The text between the tags.
+    
+    Raises:
+        ValueError: If no matching pattern is found.
+    """
+    # Build regex patterns for flexible tags
+    start_pattern = r"<[^>]*" + re.escape(start_tag_text) + r"[^>]*>"
+    end_pattern = r"<[^>]*" + re.escape(end_tag_text) + r"[^>]*>"
+    
+    # Match text between the start and end patterns (non-greedy)
+    pattern = start_pattern + r"(.*?)" + end_pattern
+    
+    match = re.search(pattern, s, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    else:
+        raise ValueError(f'Error: could not find text between tags containing "{start_tag_text}" and "{end_tag_text}".')
+
+
 def remove_blank_lines(text):
     lines = text.split('\n')
     return '\n'.join([ line for line in lines if len(line.strip()) != 0 ])
