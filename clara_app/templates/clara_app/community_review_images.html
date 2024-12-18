@@ -1,0 +1,42 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+
+<div class="main-content">
+<h2>Community Review - Project: {{ project.title }}</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Page Number</th>
+            <th>Excerpt</th>
+            <th>Image</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for page in pages_info %}
+        <tr>
+            <td>{{ page.page_number }}</td>
+            <td><pre>{{ page.excerpt }}</pre></td>
+            <td>
+                {% if page.relative_page_image_path %}
+                    <img src="{% url 'serve_coherent_images_v2_file' project.id page.relative_page_image_path %}" alt="Page {{ page.page_number }} image" style="max-width:100px; max-height:100px;">
+                {% else %}
+                    <em>No image</em>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'community_review_images_for_page' project.id page.page_number %}">Review this Page</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<div class="sticky-footer">
+  <a href="{% url 'project_detail' project.id %}">Back to Project</a>
+</div>
+
+{% endblock %}

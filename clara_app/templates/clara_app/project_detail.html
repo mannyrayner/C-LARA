@@ -97,6 +97,13 @@
 			  Add/Remove Images</a>
 			  {% if up_to_date_dict.images %}✓{% endif %}</p>
 	{% endif %}
+	{% if project.uses_coherent_image_set_v2 %}
+		  <p><a href="{% url 'community_review_images' project.id %}" 
+			  data-tooltip="Participate in community reviewing of images." 
+			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+			  Review images as community member</a>
+			  {% if up_to_date_dict.images %}✓{% endif %}</p>
+	{% endif %}
 	<p><a href="{% url 'create_phonetic_text' project.id %}"
 	      data-tooltip="If a phonetic lexicon has been uploaded for this language, create a version of the text divided into phonetic units."
 	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>
