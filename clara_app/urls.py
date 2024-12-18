@@ -110,6 +110,10 @@ urlpatterns = [
     path('project/<int:project_id>/generate_annotated_segmented_file/', views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
     path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
+
+    path('project/<int:project_id>/community_review_images', views.community_review_images, name='community_review_images'),
+    path('project/<int:project_id>/community_review_images_for_page/<int:page_number>', views.community_review_images_for_page, name='community_review_images_for_page'),
+    
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
     path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 
     
