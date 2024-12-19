@@ -5449,91 +5449,6 @@ def community_review_images(request, project_id):
         'clara_version': clara_version,
     })
 
-##@login_required
-###@user_passes_test(is_community_member)
-##def community_review_images_for_page(request, project_id, page_number):
-##    user = request.user
-##    config_info = get_user_config(user)
-##    username = user.username
-##    project = get_object_or_404(CLARAProject, pk=project_id)
-##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-##    clara_version = get_user_config(request.user)['clara_version']
-##    project_dir = clara_project_internal.coherent_images_v2_project_dir
-##
-##    # Load the alternate_images.json for this page
-##    content_dir = project_pathname(project_dir, f"pages/page{page_number}")
-##    alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
-##
-##    # Process form submissions
-##    if request.method == 'POST':
-##        action = request.POST.get('action', '')
-##        description_index = request.POST.get('description_index')
-##        image_index = request.POST.get('image_index')
-##        userid = request.user.username
-##
-##        if description_index is not None:
-##            description_index = int(description_index)
-##        if image_index is not None and image_index != '':
-##            image_index = int(image_index)
-##        else:
-##            image_index = None
-##
-##        if action == 'vote':
-##            vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
-##            if vote_type in ['upvote', 'downvote'] and image_index is not None:
-##                register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid)
-##                return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number)
-##
-##        elif action == 'request_variants':
-##            # If the user wants more variants for a given image/description
-##            # If image_index is None, maybe we handle the case by requesting variants from the base description?
-##            register_cm_image_variants_request(project_dir, page_number, description_index, image_index, userid)
-##            return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number)
-##
-##        elif action == 'add_advice':
-##            advice_text = request.POST.get('advice_text', '')
-##            if advice_text.strip():
-##                register_cm_image_advice(project_dir, page_number, description_index, advice_text.strip(), userid)
-##            return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number)
-##
-##    # Group images by description_index
-##    images_by_description = {}
-##    for img in alternate_images:
-##        d_idx = img['description_index']
-##        if d_idx not in images_by_description:
-##            images_by_description[d_idx] = []
-##        images_by_description[d_idx].append(img)
-##
-##    # For each description, get advice & variants requests
-##    # For each image, get votes
-##    descriptions_info = {}
-##    for d_idx, imgs in images_by_description.items():
-##        desc_info = get_cm_description_info(project_dir, page_number, d_idx)
-##        # Also load votes for each image
-##        for img_info in imgs:
-##            i_idx = img_info['image_index']
-##            img_feedback = get_cm_image_info(project_dir, page_number, d_idx, i_idx)
-##            img_info['votes'] = img_feedback['votes']
-##            # If we wanted to show aggregated vote counts:
-##            upvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'upvote')
-##            downvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'downvote')
-##            img_info['upvotes_count'] = upvotes
-##            img_info['downvotes_count'] = downvotes
-##        descriptions_info[d_idx] = {
-##            'advice': desc_info['advice'],
-##            'variants_requests': desc_info['variants_requests'],
-##            'images': imgs
-##        }
-##
-##    clara_version = get_user_config(request.user)['clara_version']
-##
-##    return render(request, 'clara_app/community_review_images_for_page.html', {
-##        'project': project,
-##        'page_number': page_number,
-##        'descriptions_info': descriptions_info,
-##        'clara_version': clara_version,
-##    })
-
 @login_required
 #@user_passes_test(is_community_member)
 def community_review_images_for_page(request, project_id, page_number):
@@ -5625,7 +5540,7 @@ def community_review_images_for_page(request, project_id, page_number):
             'images': imgs
         }
 
-    pprint.pprint(descriptions_info)
+    #pprint.pprint(descriptions_info)
 
     return render(request, 'clara_app/community_review_images_for_page.html', {
         'project': project,
