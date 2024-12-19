@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="main-content">
-<h2>Community Review for Project {{ project_id }} - Page {{ page_number }}</h2>
+<h2>Community Review ({{ project.title }}, Page {{ page_number }})</h2>
 
 {% for d_idx, dinfo in descriptions_info.items %}
   <h3>Description: {{ d_idx }}</h3>
@@ -30,8 +30,8 @@
 
   <h4>Images</h4>
   {% for img in dinfo.images %}
-    <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
-      <img src="{% url 'serve_coherent_images_v2_file' project_id img.image_path %}" style="max-width:200px;"/><br/>
+	<div class="image-container {% if img.preferred %}preferred-image{% else %}non-preferred-image{% endif %}">
+      <img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:200px;"/><br/>
       Upvotes: {{ img.upvotes_count }} Downvotes: {{ img.downvotes_count }}
 
       <form method="post" style="display:inline-block;">
@@ -65,7 +65,7 @@
 </div>
 
 <div class="sticky-footer">
-  <a href="{% url 'community_review_images' project_id %}">Back to Overview</a>
+  <a href="{% url 'community_review_images' project.id %}">Back to Overview</a>
 </div>
 
 {% endblock %}

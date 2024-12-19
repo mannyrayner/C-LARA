@@ -135,6 +135,24 @@
   color: #f5ac0f; /* Color of selected stars */
 }
 
+.preferred-image {
+    border: 3px solid #4CAF50; /* Green border for preferred image */
+    padding: 5px;
+    background-color: #f9f9f9;
+}
+
+.non-preferred-image {
+    border: 1px solid #ccc; /* Light gray border for non-preferred images */
+    padding: 5px;
+    background-color: #ffffff; /* White background for non-preferred images */
+    opacity: 0.8; /* Slightly dim to de-emphasize */
+}
+
+.image-container:hover {
+    opacity: 1; /* Restore full visibility on hover */
+    transition: opacity 0.3s ease-in-out;
+}
+
   </style>
   <title>{% block title %}C-LARA{% endblock %}</title>
 </head>
