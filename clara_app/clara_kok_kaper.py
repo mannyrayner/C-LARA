@@ -60,9 +60,9 @@ def parse_fifty_words():
     make_fifty_words_glossed(fifty_words_parsed)
 
 def parse_line(line):
-    components = line.split()
-    word = components[0]
-    translation = components[1].replace('(', '').replace(')', '')
+    components = line.split('(')
+    word = components[0].strip()
+    translation = components[1].replace(')', '').strip()
     return { 'word': word, 'translation': translation }
 
 def make_fifty_words_plain(fifty_words_parsed):

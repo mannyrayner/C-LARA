@@ -5417,12 +5417,13 @@ def community_review_images(request, project_id):
     if story_data:
         for page in story_data:
             page_number = page['page_number']
-            page_text = page.get('text', '')
-            original_page_text = page.get('original_page_text', '')
+            page_text = page.get('text', '').strip()
+            original_page_text = page.get('original_page_text', '').strip()
 
             # Take a short excerpt of page_text for display
             excerpt_length = 100
             excerpt = (page_text[:excerpt_length] + '...') if len(page_text) > excerpt_length else page_text
+            original_text_excerpt = (original_page_text[:excerpt_length] + '...') if len(original_page_text) > excerpt_length else original_page_text
 
             # Make sure the preferred image is up to date
             content_dir = project_pathname(project_dir, f'pages/page{page_number}')
@@ -5438,14 +5439,14 @@ def community_review_images(request, project_id):
             pages_info.append({
                 'page_number': page_number,
                 'excerpt': excerpt,
-                'original_text': original_page_text,
+                'original_text_excerpt': original_text_excerpt,
                 'relative_page_image_path': ( relative_page_image_path if page_image_exists else None )
             })
     else:
         # No story data means no pages
         pass
 
-    #pprint.pprint(pages_info)
+    pprint.pprint(pages_info)
 
     return render(request, 'clara_app/community_review_images.html', {
         'project': project,
@@ -5460,6 +5461,11 @@ def community_review_images_for_page(request, project_id, page_number):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     project_dir = clara_project_internal.coherent_images_v2_project_dir
+    
+    story_data = read_project_json_file(project_dir, 'story.json')
+    page = story_data[page_number - 1]
+    page_text = page.get('text', '').strip()
+    original_page_text = page.get('original_page_text', '').strip()
 
     # Update AI votes
     try:
@@ -5544,11 +5550,13 @@ def community_review_images_for_page(request, project_id, page_number):
             'images': imgs
         }
 
-    #pprint.pprint(descriptions_info)
+    pprint.pprint(descriptions_info)
 
     return render(request, 'clara_app/community_review_images_for_page.html', {
         'project': project,
         'page_number': page_number,
+        'page_text': page_text,
+        'original_page_text': original_page_text,
         'descriptions_info': descriptions_info,
     })
 
