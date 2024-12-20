@@ -4,6 +4,14 @@
 <div class="main-content">
 <h2>Community Review ({{ project.title }}, Page {{ page_number }})</h2>
 
+<h3>Text used to create images</h3> 
+<p>{{ page_text }}</p>
+
+{% if original_page_text %}
+  <h3>Original text</h3>
+  <p>{{ original_page_text }}</p>
+{% endif %}
+
 {% for d_idx, dinfo in descriptions_info.items %}
   <h3>Description: {{ d_idx }}</h3>
 
