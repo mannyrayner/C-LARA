@@ -47,8 +47,9 @@ def get_element_advice(element_name, params):
     return get_advice_text('element', element_name, params)
 
 def get_page_advice(page_number, params):
-    page_number = page_number
-    check_valid_page_number(page_number, params)
+    # If we have just added new pages to a text, the story data may not be saved yet
+    # and the check_valid_page_number test will fail
+    #check_valid_page_number(page_number, params)
     result = get_advice_text('page', page_number, params)
     return result
 
@@ -60,7 +61,9 @@ def set_page_advice(advice_text, page_number, params):
     page_number = int(page_number)
     project_dir = params['project_dir']
     make_project_dir(project_dir, 'pages')
-    check_valid_page_number(page_number, params)
+    # If we have just added new pages to a text, the story data may not be saved yet
+    # and the check_valid_page_number test will fail
+    #check_valid_page_number(page_number, params)
     return set_advice_text(advice_text, 'page', page_number, params)
  
 def get_advice_text(element_or_page, advice_id, params):

@@ -5242,7 +5242,11 @@ def edit_images_v2(request, project_id, status):
                         generate = form.cleaned_data.get('generate')
                         delete = form.cleaned_data.get('delete')
 
-                        clara_project_internal.set_page_advice_v2(advice, page)
+                        try:
+                            clara_project_internal.set_page_advice_v2(advice, page)
+                        except Exception as e:
+                            messages.error(request, f"Warning: error when trying to save advice '{advice}' for page {page}. Advice not saved.")
+                            messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
 
                         if form.cleaned_data.get('uploaded_image_file_path'):
                             uploaded_image_file_path = form.cleaned_data.get('uploaded_image_file_path') 
@@ -5458,11 +5462,11 @@ def community_review_images_for_page(request, project_id, page_number):
     project_dir = clara_project_internal.coherent_images_v2_project_dir
 
     # Update AI votes
-##    try:
-##        update_ai_votes_in_feedback(project_dir, page_number)
-##    except Exception as e:
-##        messages.error(request, f"Error updating AI votes: {e}")
-    update_ai_votes_in_feedback(project_dir, page_number)
+    try:
+        update_ai_votes_in_feedback(project_dir, page_number)
+    except Exception as e:
+        messages.error(request, f"Error updating AI votes: {e}")
+    #update_ai_votes_in_feedback(project_dir, page_number)
 
     # Load alternate images
     content_dir = project_pathname(project_dir, f"pages/page{page_number}")
