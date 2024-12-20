@@ -5446,7 +5446,7 @@ def community_review_images(request, project_id):
         # No story data means no pages
         pass
 
-    pprint.pprint(pages_info)
+    #pprint.pprint(pages_info)
 
     return render(request, 'clara_app/community_review_images.html', {
         'project': project,
@@ -5550,7 +5550,7 @@ def community_review_images_for_page(request, project_id, page_number):
             'images': imgs
         }
 
-    pprint.pprint(descriptions_info)
+    #pprint.pprint(descriptions_info)
 
     return render(request, 'clara_app/community_review_images_for_page.html', {
         'project': project,
