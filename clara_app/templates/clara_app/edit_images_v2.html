@@ -206,7 +206,8 @@
 			<div class="alternate-images">
 				<td colspan="7">
 					{% for alt_image in form.initial.alternate_images %}
-						<div style="display:inline-block; margin:10px; text-align:center;">
+						<div style="display:inline-block; margin:10px; text-align:center;" 
+						{% if alt_image.hidden %} class="hidden-image" {% endif %}>
 							<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
 							<br>
 							<!-- Promote Button -->
@@ -217,6 +218,23 @@
 								<input type="hidden" name="content_identifier" value="{{ form.page.value }}">
 								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
 								<button type="submit">Promote</button>
+							</form>
+							<br>
+							<!-- Hide/Unhide Toggle -->
+							<form method="post" style="display:inline;">
+								{% csrf_token %}
+								<input type="hidden" name="action" value="hide_alternate_image">
+								<input type="hidden" name="content_type" value="page">
+								<input type="hidden" name="content_identifier" value="{{ form.page.value }}">
+								<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
+								<input type="hidden" name="hidden_status" value="{% if alt_image.hidden %}false{% else %}true{% endif %}">
+								<button type="submit">
+									{% if alt_image.hidden %}
+										Unhide
+									{% else %}
+										Hide
+									{% endif %}
+								</button>
 							</form>
 							<br>
 							<!-- Generate Variant Button -->
