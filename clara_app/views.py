@@ -72,7 +72,7 @@ from .clara_coherent_images_utils import get_page_params_from_project_params, de
 from .clara_coherent_images_utils import remove_element_directory, remove_page_directory, remove_element_name_from_list_of_elements, project_pathname
 from .clara_coherent_images_utils import read_project_json_file
 
-from .clara_coherent_images_alternate import get_alternate_images_json
+from .clara_coherent_images_alternate import get_alternate_images_json, set_alternate_image_hidden_status
 
 from .clara_coherent_images_community_feedback import (load_community_feedback, save_community_feedback,
                                                        register_cm_image_vote, register_cm_image_variants_request,
@@ -5151,6 +5151,7 @@ def edit_images_v2(request, project_id, status):
                         messages.error(request, f"Error when trying to create overview")
                         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                 return redirect('edit_images_v2', project_id=project_id, status='none')
+            
             elif action == 'promote_alternate_image':
                 try:
                     content_type = request.POST.get('content_type')
@@ -5176,7 +5177,49 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Error when trying to promote alternate image")
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project.id, status='none')
-                
+
+            elif action == 'hide_alternate_image':
+                try:
+                    content_type = request.POST.get('content_type')
+                    content_identifier = request.POST.get('content_identifier')
+                    alternate_image_id = int(request.POST.get('alternate_image_id'))
+                    hidden_status = request.POST.get('hidden_status') == 'true'
+
+                    # Determine page/element/style context
+                    if content_type == 'page':
+                        page_number = int(content_identifier)
+                        content_dir = f'{project_dir}/pages/page{page_number}'
+                        print(f'alternate_images for page {page_number}')
+                        pprint.pprint(indexed_page_data[page_number]['alternate_images'])
+                        for img in indexed_page_data[page_number]['alternate_images']:
+                            if img['id'] == alternate_image_id:
+                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
+                                break
+                    elif content_type == 'element':
+                        element_name = content_identifier
+                        content_dir = f'{project_dir}/elements/{element_name}'
+                        for img in indexed_element_data[element_name]['alternate_images']:
+                            if img['id'] == alternate_image_id:
+                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
+                                break
+                    elif content_type == 'style':
+                        content_dir = f'{project_dir}/style'
+                        for img in style_data[0]['alternate_images']:
+                            if img['id'] == alternate_image_id:
+                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
+                                break
+                    else:
+                        messages.error(request, f"Invalid content type '{content_type}' for hiding/unhiding.")
+                        return redirect('edit_images_v2', project_id=project_id, status=status)
+
+                    messages.success(request, f"Image hidden/unhidden successfully.")
+                    return redirect('edit_images_v2', project_id=project_id, status='none')
+
+                except Exception as e:
+                    messages.error(request, f"Error when trying to hide/unhide image.")
+                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('edit_images_v2', project_id=project_id, status='none')
+
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
                 if not style_formset.is_valid():
@@ -5311,10 +5354,6 @@ def edit_images_v2(request, project_id, status):
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                     return redirect('edit_images_v2', project_id=project_id, status='none')
-
-##                # We should have saved everything, so we can get the story data from the project
-##                numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
-##                clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
 
                 callback, report_id = make_asynch_callback_and_report_id(request, action)
 
@@ -5532,25 +5571,27 @@ def community_review_images_for_page(request, project_id, page_number):
     descriptions_info = {}
     for d_idx, imgs in images_by_description.items():
         desc_info = get_cm_description_info(project_dir, page_number, d_idx)
-        for img_info in imgs:
-            i_idx = img_info['image_index']
-            img_feedback = get_cm_image_info(project_dir, page_number, d_idx, i_idx)
-            img_info['votes'] = img_feedback['votes']
-            upvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'upvote')
-            downvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'downvote')
-            img_info['upvotes_count'] = upvotes
-            img_info['downvotes_count'] = downvotes
+        non_hidden_imgs = [ img for img in imgs if not img['hidden'] ]
+        if non_hidden_imgs:
+            for img_info in non_hidden_imgs:
+                i_idx = img_info['image_index']
+                img_feedback = get_cm_image_info(project_dir, page_number, d_idx, i_idx)
+                img_info['votes'] = img_feedback['votes']
+                upvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'upvote')
+                downvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'downvote')
+                img_info['upvotes_count'] = upvotes
+                img_info['downvotes_count'] = downvotes
 
-            # Determine if this is the preferred image
-            img_info['preferred'] = img_info['id'] == preferred_image_id
-            
-        descriptions_info[d_idx] = {
-            'advice': desc_info['advice'],
-            'variants_requests': desc_info['variants_requests'],
-            'images': imgs
-        }
+                # Determine if this is the preferred image
+                img_info['preferred'] = img_info['id'] == preferred_image_id
+                
+            descriptions_info[d_idx] = {
+                'advice': desc_info['advice'],
+                'variants_requests': desc_info['variants_requests'],
+                'images': non_hidden_imgs
+            }
 
-    #pprint.pprint(descriptions_info)
+    pprint.pprint(descriptions_info)
 
     return render(request, 'clara_app/community_review_images_for_page.html', {
         'project': project,

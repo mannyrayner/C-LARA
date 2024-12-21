@@ -105,6 +105,9 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
                     relative_image_interpretation_path = image_interpretation_path.relative_to(project_dir) if image_interpretation_path.exists() else None
                     relative_image_evaluation_path = image_evaluation_path.relative_to(project_dir) if image_evaluation_path.exists() else None
 
+                    # Get the hidden status
+                    hidden_status = get_alternate_image_hidden_status(content_dir, description_index, image_index)
+
                     # Create the alternate image record
                     alternate_image = {
                         'id': id_counter,
@@ -114,6 +117,7 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
                         'expanded_description_path': str(relative_expanded_description_path) if relative_expanded_description_path else None,
                         'image_interpretation_path': str(relative_image_interpretation_path) if relative_image_interpretation_path else None,
                         'image_evaluation_path': str(relative_image_evaluation_path) if relative_image_evaluation_path else None,
+                        'hidden': hidden_status,
                     }
 
                     alternate_images.append(alternate_image)
@@ -153,6 +157,44 @@ def promote_alternate_image(content_dir, project_dir, alternate_image_id):
 
     return False  # Indicate failure if ID not found
 
+def set_alternate_image_hidden_status(content_dir, description_index, image_index, hidden=True):
+    """
+    Set the hidden status of an alternate image by creating or removing a 'hidden' marker file.
+
+    Args:
+        content_dir (str): Path to the content directory.
+        description_index (int): Index of the description.
+        image_index (int): Index of the image within the description.
+        hidden (bool): Whether to hide (True) or unhide (False) the image.
+
+    Returns:
+        None
+    """
+    image_dir = Path(content_dir) / f"description_v{description_index}/image_v{image_index}"
+    hidden_file = image_dir / "hidden"
+
+    if hidden:
+        hidden_file.touch()  # Create the hidden marker file
+    else:
+        if hidden_file.exists():
+            hidden_file.unlink()  # Remove the hidden marker file
+
+def get_alternate_image_hidden_status(content_dir, description_index, image_index):
+    """
+    Get the hidden status of an alternate image by checking for the presence of a 'hidden' marker file.
+
+    Args:
+        content_dir (str): Path to the content directory.
+        description_index (int): Index of the description.
+        image_index (int): Index of the image within the description.
+
+    Returns:
+        bool: True if the image is hidden, False otherwise.
+    """
+    image_dir = Path(content_dir) / f"description_v{description_index}/image_v{image_index}"
+    hidden_file = image_dir / "hidden"
+    return hidden_file.exists()
+
 def test_get_project_images_dict(id):
     print(f'id = "{id}"')
     if id == 'boy_meets_girl':
@@ -182,7 +224,7 @@ async def get_project_images_dict(project_dir):
     if style_dir.exists():
         style_image_path = style_dir / 'image.jpg'
         advice = get_style_advice(params)
-        alternate_images = await get_alternate_images_json_index_and_image(style_dir, project_dir)
+        alternate_images = await get_alternate_images_info_for_get_project_images_dict(style_dir, project_dir)
 
         style_data = {
             'relative_file_path': str(style_image_path.relative_to(project_dir).as_posix()) if style_image_path.exists() else None,
@@ -202,7 +244,7 @@ async def get_project_images_dict(project_dir):
         if element_dir.is_dir():
             image_path = element_dir / 'image.jpg'
             advice = get_element_advice(element_text, params)
-            alternate_images = await get_alternate_images_json_index_and_image(element_dir, project_dir)
+            alternate_images = await get_alternate_images_info_for_get_project_images_dict(element_dir, project_dir)
 
             element_data = {
                 'relative_file_path': str(image_path.relative_to(project_dir).as_posix()) if image_path.exists() else None,
@@ -220,7 +262,7 @@ async def get_project_images_dict(project_dir):
                 page_number = int(page_dir.name.replace('page', ''))
                 image_path = page_dir / 'image.jpg'
                 advice = get_page_advice(page_number, params)
-                alternate_images = await get_alternate_images_json_index_and_image(page_dir, project_dir)
+                alternate_images = await get_alternate_images_info_for_get_project_images_dict(page_dir, project_dir)
 
                 page_data = {
                     'relative_file_path': str(image_path.relative_to(project_dir).as_posix()) if image_path.exists() else None,
@@ -232,9 +274,15 @@ async def get_project_images_dict(project_dir):
 
     return images_dict
 
-async def get_alternate_images_json_index_and_image(content_dir, project_dir):
+async def get_alternate_images_info_for_get_project_images_dict(content_dir, project_dir):
     alternate_images_info = await get_alternate_images_json(content_dir, project_dir)
-    return [ { 'id': item['id'], 'relative_file_path': item['image_path'] } for item in alternate_images_info ]
+    return [ { 'id': item['id'],
+               'description_index': item['description_index'],
+               'image_index': item['image_index'],
+               'relative_file_path': item['image_path'],
+               'hidden': item['hidden']
+               }
+             for item in alternate_images_info ]
 
 
     

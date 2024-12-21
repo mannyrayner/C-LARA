@@ -218,14 +218,15 @@ def determine_preferred_image(content_dir, project_dir, page_number):
     # Tally votes for each image
     vote_counts = {}
     for img in alternate_images:
-        image_id = img['id']
-        description_index = int(img['description_index'])
-        image_index = int(img['image_index'])
-        relevant_votes = [v for v in votes if v['description_index'] == description_index and v['image_index'] == image_index]
+        if not img['hidden']:
+            image_id = img['id']
+            description_index = int(img['description_index'])
+            image_index = int(img['image_index'])
+            relevant_votes = [v for v in votes if v['description_index'] == description_index and v['image_index'] == image_index]
 
-        upvotes = sum(1 for v in relevant_votes if v['vote_type'] == 'upvote')
-        downvotes = sum(1 for v in relevant_votes if v['vote_type'] == 'downvote')
-        vote_counts[image_id] = upvotes - downvotes  # Net score
+            upvotes = sum(1 for v in relevant_votes if v['vote_type'] == 'upvote')
+            downvotes = sum(1 for v in relevant_votes if v['vote_type'] == 'downvote')
+            vote_counts[image_id] = upvotes - downvotes  # Net score
 
     # Find the image with the highest net score
     preferred_image_id = max(vote_counts, key=vote_counts.get, default=None)
