@@ -5554,7 +5554,7 @@ def community_review_images_for_page(request, project_id, page_number):
 
         return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number)
 
-    advice = get_cm_page_advice(project_dir, page)
+    advice = get_cm_page_advice(project_dir, page_number)
 
     preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
     if preferred_image_id is not None:
@@ -5591,16 +5591,18 @@ def community_review_images_for_page(request, project_id, page_number):
                 'images': non_hidden_imgs
             }
 
-    #pprint.pprint(descriptions_info)
-
-    return render(request, 'clara_app/community_review_images_for_page.html', {
+    rendering_parameters = {
         'project': project,
         'page_number': page_number,
         'page_text': page_text,
         'original_page_text': original_page_text,
         'page_advice': advice,
         'descriptions_info': descriptions_info,
-    })
+    }
+
+    #pprint.pprint(rendering_parameters)
+
+    return render(request, 'clara_app/community_review_images_for_page.html', rendering_parameters)
 
 
 # Async function
