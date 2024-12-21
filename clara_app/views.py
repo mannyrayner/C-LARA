@@ -76,7 +76,7 @@ from .clara_coherent_images_alternate import get_alternate_images_json, set_alte
 
 from .clara_coherent_images_community_feedback import (load_community_feedback, save_community_feedback,
                                                        register_cm_image_vote, register_cm_image_variants_request,
-                                                       register_cm_image_advice, get_cm_image_info, get_cm_description_info,
+                                                       register_cm_page_advice, get_cm_page_advice, get_cm_image_info, get_cm_description_info,
                                                        update_ai_votes_in_feedback, determine_preferred_image)
 
 from .clara_internalise import internalize_text
@@ -5511,7 +5511,6 @@ def community_review_images_for_page(request, project_id, page_number):
         update_ai_votes_in_feedback(project_dir, page_number)
     except Exception as e:
         messages.error(request, f"Error updating AI votes: {e}")
-    #update_ai_votes_in_feedback(project_dir, page_number)
 
     # Load alternate images
     content_dir = project_pathname(project_dir, f"pages/page{page_number}")
@@ -5520,11 +5519,11 @@ def community_review_images_for_page(request, project_id, page_number):
     # Process form submissions
     if request.method == 'POST':
         action = request.POST.get('action', '')
-        description_index = request.POST.get('description_index')
+        description_index = request.POST.get('description_index', '')
         image_index = request.POST.get('image_index')
         userid = request.user.username
 
-        if description_index is not None:
+        if description_index is not None and description_index != '':
             description_index = int(description_index)
         if image_index is not None and image_index != '':
             image_index = int(image_index)
@@ -5538,12 +5537,12 @@ def community_review_images_for_page(request, project_id, page_number):
                     register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid)
 
             elif action == 'request_variants':
-                register_cm_image_variants_request(project_dir, page_number, description_index, image_index, userid)
+                register_cm_image_variants_request(project_dir, page_number, description_index, userid)
 
             elif action == 'add_advice':
                 advice_text = request.POST.get('advice_text', '')
                 if advice_text.strip():
-                    register_cm_image_advice(project_dir, page_number, description_index, advice_text.strip(), userid)
+                    register_cm_page_advice(project_dir, page_number, advice_text.strip(), userid)
 
             # Recalculate and promote the preferred image
             preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
@@ -5554,6 +5553,8 @@ def community_review_images_for_page(request, project_id, page_number):
             messages.error(request, f"Error processing your request: {e}")
 
         return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number)
+
+    advice = get_cm_page_advice(project_dir, page)
 
     preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
     if preferred_image_id is not None:
@@ -5567,7 +5568,7 @@ def community_review_images_for_page(request, project_id, page_number):
             images_by_description[d_idx] = []
         images_by_description[d_idx].append(img)
 
-    # For each description, get advice & variants requests, and votes
+    # For each description, get variants requests, and votes
     descriptions_info = {}
     for d_idx, imgs in images_by_description.items():
         desc_info = get_cm_description_info(project_dir, page_number, d_idx)
@@ -5586,18 +5587,18 @@ def community_review_images_for_page(request, project_id, page_number):
                 img_info['preferred'] = img_info['id'] == preferred_image_id
                 
             descriptions_info[d_idx] = {
-                'advice': desc_info['advice'],
                 'variants_requests': desc_info['variants_requests'],
                 'images': non_hidden_imgs
             }
 
-    pprint.pprint(descriptions_info)
+    #pprint.pprint(descriptions_info)
 
     return render(request, 'clara_app/community_review_images_for_page.html', {
         'project': project,
         'page_number': page_number,
         'page_text': page_text,
         'original_page_text': original_page_text,
+        'page_advice': advice,
         'descriptions_info': descriptions_info,
     })
 

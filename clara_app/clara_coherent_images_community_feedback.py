@@ -67,18 +67,15 @@ def register_cm_image_vote(project_dir, page, description_index, image_index, vo
     save_community_feedback(project_dir, page, data)
 
 
-def register_cm_image_variants_request(project_dir, page, description_index, image_index, userid):
+def register_cm_image_variants_request(project_dir, page, description_index, userid):
     """
-    The user is requesting new variants for a given image.
-    If image_index might be optional (e.g. requesting variants from the base description), 
-    you can allow image_index=None or treat missing image_index as a special case.
+    The user is requesting new variants for a given image grouè.
     """
     data = load_community_feedback(project_dir, page)
 
     new_request = {
         "user_id": userid,
         "description_index": description_index,
-        "image_index": image_index,
         "timestamp": current_timestamp()
     }
     data["variants_requests"].append(new_request)
@@ -86,15 +83,14 @@ def register_cm_image_variants_request(project_dir, page, description_index, ima
     save_community_feedback(project_dir, page, data)
 
 
-def register_cm_image_advice(project_dir, page, description_index, advice_text, userid):
+def register_cm_page_advice(project_dir, page, advice_text, userid):
     """
-    Associates advice with a given description (not specific image).
+    Associates advice with the *entire page*, not a specific description or image.
     """
     data = load_community_feedback(project_dir, page)
 
     new_advice = {
         "user_id": userid,
-        "description_index": description_index,
         "text": advice_text,
         "timestamp": current_timestamp()
     }
@@ -127,21 +123,27 @@ def get_cm_image_info(project_dir, page, description_index, image_index):
 
 def get_cm_description_info(project_dir, page, description_index):
     """
-    Returns all advice and variants requests related to a particular description.
+    Returns all variants requests related to a particular description.
     Variant requests may or may not require image_index, depending on your use case.
     """
     description_index = int(description_index)
     
     data = load_community_feedback(project_dir, page)
 
-    description_advice = [a for a in data["advice"] if a["description_index"] == description_index]
     description_variants_requests = [r for r in data["variants_requests"]
                                      if r["description_index"] == description_index]
 
-    return {
-        "advice": description_advice,
-        "variants_requests": description_variants_requests
-    }
+    return { "variants_requests": description_variants_requests }
+
+def get_cm_page_advice(project_dir, page):
+    """
+    Returns all advice related to a particular page.
+    """
+    
+    data = load_community_feedback(project_dir, page)
+
+    return data['advice']
+
 
 def update_ai_votes_in_feedback(project_dir, page_number):
     """
