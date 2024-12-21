@@ -32,7 +32,7 @@
         "timestamp": "20241217023741"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\segmented_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\archive\\segmented_annotate_template_20241217053914.txt",
         "annotation_type": "segmented",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -54,5 +54,13 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20241217024044"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\german\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20241217053914"
     }
 ]
