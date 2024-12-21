@@ -13,30 +13,9 @@
 {% endif %}
 
 {% for d_idx, dinfo in descriptions_info.items %}
-  <h3>Description: {{ d_idx }}</h3>
 
-  <p>Advice so far:</p>
-  <ul>
-  {% for adv in dinfo.advice %}
-    <li>{{ adv.text }} (by {{ adv.user_id }})</li>
-  {% endfor %}
-  </ul>
-  <form method="post" style="margin-bottom:1em;">
-    {% csrf_token %}
-    <input type="hidden" name="action" value="add_advice">
-    <input type="hidden" name="description_index" value="{{ d_idx }}">
-    <textarea name="advice_text" placeholder="Add your advice"></textarea>
-    <button type="submit">Submit Advice</button>
-  </form>
-
-  <p>Variant requests:</p>
-  <ul>
-  {% for varrq in dinfo.variants_requests %}
-    <li>Requested by {{ varrq.user_id }} at {{ varrq.timestamp }}</li>
-  {% endfor %}
-  </ul>
-
-  <h4>Images</h4>
+  <div class="description-group">
+  <div class="image-row">
   {% for img in dinfo.images %}
 	<div class="image-container {% if img.preferred %}preferred-image{% else %}non-preferred-image{% endif %}">
       <img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:200px;"/><br/>
@@ -59,17 +38,37 @@
         <input type="hidden" name="vote_type" value="downvote">
         <button type="submit">👎</button>
       </form>
-
-      <form method="post" style="display:inline-block; margin-left:10px;">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="request_variants">
-        <input type="hidden" name="description_index" value="{{ d_idx }}">
-        <input type="hidden" name="image_index" value="{{ img.image_index }}">
-        <button type="submit">Request Variants</button>
-      </form>
+	  
     </div>
   {% endfor %}
+  </div>
+  
+  <form method="post" style="display:inline-block;">
+	{% csrf_token %}
+	<input type="hidden" name="action" value="request_variants">
+	<input type="hidden" name="description_index" value="{{ d_idx }}">
+	<button type="submit">Create similar images</button>
+  </form>
+  </div>
 {% endfor %}
+
+<h3>Advice from Community Members</h3>
+{% if page_advice %}
+  <ul>
+    {% for adv in page_advice %}
+      <li>{{ adv.text }} <small>(by {{ adv.user_id }} on {{ adv.timestamp }})</small></li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No advice yet for this page.</p>
+{% endif %}
+
+<form method="post" style="margin-bottom:1em;">
+{% csrf_token %}
+<input type="hidden" name="action" value="add_advice">
+<textarea name="advice_text" placeholder="Add your advice"></textarea>
+<button type="submit">Submit Advice</button>
+</form>
 </div>
 
 <div class="sticky-footer">

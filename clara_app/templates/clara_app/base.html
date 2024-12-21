@@ -135,13 +135,28 @@
   color: #f5ac0f; /* Color of selected stars */
 }
 
+.description-group {
+  border: 4px solid #ccc;    /* Light gray border for group */
+  padding: 10px;
+  margin-bottom: 2em;        /* space between description blocks */
+}
+
+.image-row {
+  display: flex;             /* lay out images side by side */
+  flex-direction: row;       /* horizontal flow */
+  flex-wrap: wrap;           /* allow wrapping if too many images */
+  gap: 1em;                  /* optional: space between images */
+}
+
 .preferred-image {
-    border: 3px solid #4CAF50; /* Green border for preferred image */
+	display:inline-block;
+    border: 8px solid #4CAF50; /* Green border for preferred image */
     padding: 5px;
     background-color: #f9f9f9;
 }
 
 .non-preferred-image {
+	display:inline-block;
     border: 1px solid #ccc; /* Light gray border for non-preferred images */
     padding: 10px;
     background-color: #ffffff; /* White background for non-preferred images */
