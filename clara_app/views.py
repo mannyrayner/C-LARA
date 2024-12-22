@@ -5539,6 +5539,18 @@ def community_review_images_for_page(request, project_id, page_number):
             elif action == 'request_variants':
                 register_cm_image_variants_request(project_dir, page_number, description_index, userid)
 
+            elif action == 'upload_image':
+                # The user is uploading a new image
+                if 'uploaded_image_file_path' in request.FILES:
+                    # Convert the in-memory file object to a local file path
+                    uploaded_file_obj = request.FILES['uploaded_image_file_path']
+                    real_image_file_path = uploaded_file_to_file(uploaded_file_obj)
+
+                    clara_project_internal.add_uploaded_page_image_v2(real_image_file_path, page_number)
+                    messages.success(request, "Your image was uploaded.")
+                else:
+                    messages.error(request, "No file found for the upload_image action.")
+
             elif action == 'add_advice':
                 advice_text = request.POST.get('advice_text', '')
                 if advice_text.strip():
