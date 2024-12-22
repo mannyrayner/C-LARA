@@ -52,6 +52,17 @@
   </div>
 {% endfor %}
 
+<!-- Upload a user image for the page -->
+<h3>Upload Your Own Image</h3>
+
+<form method="post" enctype="multipart/form-data" style="margin-bottom:1em;">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="upload_image">
+  <label for="uploaded_image_file_path">Choose an image file:</label>
+  <input type="file" name="uploaded_image_file_path" required>
+  <button type="submit">Upload</button>
+</form>
+
 <h3>Advice from Community Members</h3>
 {% if page_advice %}
   <ul>
