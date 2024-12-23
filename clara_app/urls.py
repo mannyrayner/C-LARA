@@ -113,7 +113,10 @@ urlpatterns = [
 
     path('project/<int:project_id>/community_review_images', views.community_review_images, name='community_review_images'),
     path('project/<int:project_id>/community_organiser_review_images', views.community_organiser_review_images, name='community_organiser_review_images'),
-    path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/', views.community_review_images_for_page, name='community_review_images_for_page'),
+    path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/<str:status>/', views.community_review_images_for_page, name='community_review_images_for_page'),
+
+    path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', views.execute_community_requests_for_page_monitor, name='execute_community_requests_for_page_monitor'),
+    path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', views.execute_community_requests_for_page_status, name='execute_community_requests_for_page_status'),
     
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
     path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 

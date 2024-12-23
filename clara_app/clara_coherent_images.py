@@ -26,6 +26,12 @@ from .clara_coherent_images_evaluate_prompts import (
 from .clara_coherent_images_alternate import (
     get_alternate_images_json,
     create_alternate_images_json,
+    alternate_image_id_for_description_index,
+    )
+
+from .clara_coherent_images_community_feedback import (
+    get_cm_page_advice,
+    remove_cm_request
     )
 
 from .clara_chatgpt4 import (
@@ -100,6 +106,7 @@ import asyncio
 import traceback
 import unicodedata
 import pprint
+import copy
 from pathlib import Path
 from PIL import Image
 
@@ -889,6 +896,48 @@ async def evaluate_element_fit(image_dir, expanded_description, image_descriptio
     write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
     
     return evaluation, { 'evaluate_element_image': api_call.cost }
+
+# -----------------------------------------------
+# Community requests
+
+async def execute_community_requests_list(project_dir, requests, callback=None):
+    project_params = get_project_params(project_dir)
+    params = get_page_params_from_project_params(project_params)
+    params['project_dir'] = project_dir
+    
+    total_cost_dict = {}
+    for request in requests:
+        cost_dict = await execute_community_request(params, request, callback=callback)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+    return total_cost_dict
+
+async def execute_community_request(params, request, callback=None):
+    project_dir = params['project_dir']
+    params1 = copy.copy(params)
+    
+    request_type = request['request_type']
+    page_number = request['page']
+    if request_type == 'advice':
+        index = request['index']
+        advice_text = None
+        advice_list = get_cm_page_advice(project_dir, page)
+        for advice_item in advice_list:
+            if advice_item == index:
+                advice_text = advice_item['text']
+        if not advice_text:
+            raise ValueError(f'Cannot find advice for {request}')
+        set_page_advice(advice_text, page_number, params1)
+        params1['pages_to_generate'] = [ page_number ]
+        cost_dict = await process_pages(params, callback=callback)
+    elif request_type == 'variants_requests':
+        description_index = request['description_index']
+        alternate_image_id = await alternate_image_id_for_description_index(project_dir, page_number, description_index)
+        cost_dict = await create_variant_images_for_page(params1, page_number, alternate_image_id, callback=callback)
+    else:
+        raise ValueError(f'Unknown request type in {request}')
+
+    remove_cm_request(project_dir, request)
+    return cost_dict
 
 # -----------------------------------------------
 

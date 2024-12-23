@@ -251,17 +251,17 @@ def add_indices_to_advice(advice_list):
         item['index'] = index
         index += 1
 
-def get_all_cm_requests(project_dir):
+def get_all_cm_requests(project_dir, status='any'):
     params = { 'project_dir': project_dir }
     pages = get_pages(params)
     requests = []
 
     for page in pages:
-        requests.extend(get_all_cm_requests_for_page(project_dir, page))
+        requests.extend(get_all_cm_requests_for_page(project_dir, page, status=status))
 
     return requests
 
-def get_all_cm_requests_for_page(project_dir, page):
+def get_all_cm_requests_for_page(project_dir, page, status='any'):
     requests = []
                         
     data = load_community_feedback(project_dir, page)
@@ -284,6 +284,9 @@ def get_all_cm_requests_for_page(project_dir, page):
                     'status': item['status'] if 'status' in item else 'submitted',
                     }
         requests.append(request)
+
+    if status != 'any':
+        requests = [ request for request in requests if request['status'] == status ]
 
     return requests
         
@@ -311,4 +314,23 @@ def set_cm_request_status(project_dir, request_item, status):
 
     save_community_feedback(project_dir, page_number, data)
 
-    
+def remove_cm_request(project_dir, request_item):
+    """
+    Remove a request
+    """
+
+    request_type = request_item['request_type']
+    page_number = request_item['page']
+
+    data = load_community_feedback(project_dir, page_number)
+
+    if request_type == 'variants_requests':
+        description_index = request_item['description_index']
+        data['variants_requests'] = [ item for item in data['variants_requests']
+                                      if item['description_index'] != description_index ]
+    elif request_type == 'advice':
+        index = request_item['index']
+        data['advice'] = [ item for item in data['advice']
+                           if item['index'] != index ]
+
+    save_community_feedback(project_dir, page_number, data)

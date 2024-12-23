@@ -78,7 +78,8 @@ from .clara_coherent_images_community_feedback import (load_community_feedback, 
                                                        register_cm_image_vote, register_cm_image_variants_request,
                                                        register_cm_page_advice, get_cm_page_advice, get_cm_image_info, get_cm_description_info,
                                                        update_ai_votes_in_feedback, determine_preferred_image,
-                                                       get_all_cm_requests_for_page, set_cm_request_status)
+                                                       get_all_cm_requests_for_page, set_cm_request_status,
+                                                       get_all_cm_requests)
 
 from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
@@ -5509,11 +5510,15 @@ def community_review_images_cm_or_co(request, project_id, cm_or_co):
 
 @login_required
 #@user_passes_test(is_community_member)
-def community_review_images_for_page(request, project_id, page_number, cm_or_co):
+def community_review_images_for_page(request, project_id, page_number, cm_or_co, status):
     user = request.user
+    can_use_ai = user_has_open_ai_key_or_credit(user)
+    config_info = get_user_config(user)
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     project_dir = clara_project_internal.coherent_images_v2_project_dir
+    approved_requests_for_page = get_all_cm_requests_for_page(project_dir, page_number, status='approved')
+    n_approved_requests_for_page = len(approved_requests_for_page)
     
     story_data = read_project_json_file(project_dir, 'story.json')
     page = story_data[page_number - 1]
@@ -5551,7 +5556,20 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co)
 
         try:
             #print(f'action = {action}')
-            if action == 'vote':
+            if action == 'run_approved_requests':
+                if not can_use_ai:
+                    messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co, status='none')
+
+                requests = get_all_cm_requests_for_page(project_dir, page_number, status='approved')
+
+                callback, report_id = make_asynch_callback_and_report_id(request, 'execute_community_requests')
+
+                async_task(execute_community_requests, project, clara_project_internal, requests, callback=callback)
+
+                return redirect('execute_community_requests_for_page_monitor', project_id, report_id, page_number)
+                
+            elif action == 'vote':
                 vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
                 if vote_type in ['upvote', 'downvote'] and image_index is not None:
                     register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid)
@@ -5589,7 +5607,7 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co)
                 else:
                     messages.error(request, f"Error when trying to set request status for request of type '{request_type}'")
                     messages.error(request, f"page = {page}, request_type = '{request_type}', description_index = '{description_index}', index='{index}'")
-                    return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co)
+                    return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co, status='none')
                 set_cm_request_status(project_dir, request_item, status)
 
             elif action == 'add_advice':
@@ -5605,7 +5623,7 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co)
         except Exception as e:
             messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
 
-        return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co)
+        return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co, status='none')
 
     advice = get_cm_page_advice(project_dir, page_number)
 
@@ -5645,6 +5663,12 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co)
                 'images': non_hidden_imgs
             }
 
+    # If 'status' is something we got after returning from an async call, display a suitable message
+    if status == 'finished':
+        messages.success(request, "Image task successfully completed")
+    elif status == 'error':
+        messages.error(request, "Something went wrong when performing this image task. Look at the 'Recent task updates' view for further information.")
+
     rendering_parameters = {
         'cm_or_co': cm_or_co,
         'project': project,
@@ -5653,12 +5677,45 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co)
         'original_page_text': original_page_text,
         'page_advice': advice,
         'descriptions_info': descriptions_info,
+        'n_approved_requests_for_page': n_approved_requests_for_page,
     }
 
     #pprint.pprint(rendering_parameters)
 
     return render(request, 'clara_app/community_review_images_for_page.html', rendering_parameters)
 
+# Async function
+def execute_community_requests(project, clara_project_internal, requests, callback=None):
+    try:
+        cost_dict = clara_project_internal.execute_community_requests_list_v2(requests, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        post_task_update(callback, f'--- Executed community requests')
+        post_task_update(callback, f"finished")
+
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+@login_required
+@user_has_a_project_role
+def execute_community_requests_for_page_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_has_a_project_role
+def execute_community_requests_for_page_monitor(request, project_id, report_id, page_number):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    
+    return render(request, 'clara_app/execute_community_requests_for_page_monitor.html',
+                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'page_number': page_number})
 
 # Async function
 def save_page_texts_multiple(project, clara_project_internal, types_and_texts, username, config_info={}, callback=None):

@@ -83,7 +83,7 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
     # Iterate over description directories (e.g., description_v0, description_v1, ...)
     for description_dir in sorted(content_dir.glob('description_v*')):
         if directory_exists(description_dir):
-            description_index = description_dir.name.split('_v')[-1]  # Get the version index
+            description_index = int(description_dir.name.split('_v')[-1])  # Get the version index
             # Paths to expanded description, interpretation, and evaluation
             expanded_description_path = description_dir / 'expanded_description.txt'
             interpretation_path = description_dir / 'interpretation.txt'
@@ -92,7 +92,7 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
             # Iterate over image directories within the description directory
             for image_dir in sorted(description_dir.glob('image_v*')):
                 if directory_exists(image_dir):
-                    image_index = image_dir.name.split('_v')[-1] 
+                    image_index = int(image_dir.name.split('_v')[-1]) 
                     image_path = image_dir / 'image.jpg'
                     image_interpretation_path = image_dir / 'image_interpretation.txt'
                     image_evaluation_path = image_dir / 'evaluation.txt'  
@@ -283,6 +283,14 @@ async def get_alternate_images_info_for_get_project_images_dict(content_dir, pro
                'hidden': item['hidden']
                }
              for item in alternate_images_info ]
+
+async def alternate_image_id_for_description_index(project_dir, page_number, description_index):
+    content_dir = f'{project_dir}/pages/page{page_number}'
+    alternate_images_info = await get_alternate_images_json(content_dir, project_dir)
+    for item in alternate_images_info:
+        if item['description_index'] == description_index:
+            return item['id']
+    raise ValueError(f'Cannot find description_index {description_index} for page {page_number}')
 
 
     
