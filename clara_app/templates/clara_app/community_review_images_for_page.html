@@ -73,6 +73,8 @@
   {% if dinfo.variants_requests %}
 	  {% if dinfo.variants_requests.0.status == 'approved' %}
 		  <p>Similar images requested [approved, waiting to run]</p>
+	  {% elif dinfo.variants_requests.0.status == 'rejected' %}
+		  <p>Similar images requested [rejected]</p>		
 	  {% else %}
 		   {% if cm_or_co == 'co' %}
 			   <p><b>Similar images requested</b></p>
@@ -125,6 +127,8 @@
       <li> 
 	  {% if adv.status == 'approved' %}
 		  {{ adv.text }} [approved, waiting to run]
+	  {% elif adv.status == 'rejected' %}
+		  {{ adv.text }} [rejected]
 	  {% else %}
 		  {% if cm_or_co == 'co' %}
 			   <b>{{ adv.text }}</b>
@@ -160,6 +164,16 @@
 <textarea name="advice_text" placeholder="Add your advice"></textarea>
 <button type="submit">Submit Advice</button>
 </form>
+
+{% if cm_or_co == 'co' and n_approved_requests_for_page != 0%}
+	<h3>Running Approved Requests</h3>
+	<p><b>{{ n_approved_requests_for_page }} approved requests on this page</b></p>
+	<form method="post" style="display:inline-block;">
+	{% csrf_token %}
+	<input type="hidden" name="action" value="run_approved_requests">
+	<button type="submit">Run requests</button>
+   </form>
+{% endif %}
 </div>
 
 <div class="sticky-footer">

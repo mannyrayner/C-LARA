@@ -37,7 +37,7 @@
 				<td>{% if page.requests_exist_for_page %}✔{% endif %}</td>
 			{% endif %}
             <td>
-                <a href="{% url 'community_review_images_for_page' project.id page.page_number cm_or_co %}">Review this Page</a>
+                <a href="{% url 'community_review_images_for_page' project.id page.page_number cm_or_co 'none' %}">Review this Page</a>
             </td>
         </tr>
         {% endfor %}
