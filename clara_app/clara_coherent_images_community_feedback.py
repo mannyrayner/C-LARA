@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 
 from .clara_coherent_images_alternate import get_alternate_images_json
-from .clara_coherent_images_utils import score_for_image_dir
+from .clara_coherent_images_utils import score_for_image_dir, get_pages
 
 def community_feedback_path(project_dir, page):
     return os.path.join(project_dir, "pages", f"page{page}", "community_feedback.json")
@@ -96,6 +96,8 @@ def register_cm_page_advice(project_dir, page, advice_text, userid):
     }
     data["advice"].append(new_advice)
 
+    add_indices_to_advice(data["advice"])
+
     save_community_feedback(project_dir, page, data)
 
 
@@ -141,6 +143,10 @@ def get_cm_page_advice(project_dir, page):
     """
     
     data = load_community_feedback(project_dir, page)
+
+    add_indices_to_advice(data["advice"])
+
+    save_community_feedback(project_dir, page, data)
 
     return data['advice']
 
@@ -234,3 +240,75 @@ def determine_preferred_image(content_dir, project_dir, page_number):
     preferred_image_id = max(vote_counts, key=vote_counts.get, default=None)
 
     return preferred_image_id
+
+def add_indices_to_advice(advice_list):
+    """
+    Add indices to advice. Advice items will not change, so this is safe.
+    """
+    
+    index = 1
+    for item in advice_list:
+        item['index'] = index
+        index += 1
+
+def get_all_cm_requests(project_dir):
+    params = { 'project_dir': project_dir }
+    pages = get_pages(params)
+    requests = []
+
+    for page in pages:
+        requests.extend(get_all_cm_requests_for_page(project_dir, page))
+
+    return requests
+
+def get_all_cm_requests_for_page(project_dir, page):
+    requests = []
+                        
+    data = load_community_feedback(project_dir, page)
+    
+    advice_list = data['advice']
+    add_indices_to_advice(advice_list)
+    for item in advice_list:
+        request = { 'request_type': 'advice',
+                    'page': page,
+                    'index': item['index'],
+                    'status': item['status'] if 'status' in item else 'submitted',
+                    }
+        requests.append(request)
+
+    variants_requests_list = data['variants_requests']
+    for item in variants_requests_list:
+        request = { 'request_type': 'variants_requests',
+                    'page': page,
+                    'description_index': item['description_index'],
+                    'status': item['status'] if 'status' in item else 'submitted',
+                    }
+        requests.append(request)
+
+    return requests
+        
+
+def set_cm_request_status(project_dir, request_item, status):
+    """
+    Sets the status on a piece of advice
+    """
+
+    request_type = request_item['request_type']
+    page_number = request_item['page']
+
+    data = load_community_feedback(project_dir, page_number)
+
+    if request_type == 'variants_requests':
+        description_index = request_item['description_index']
+        for item in data['variants_requests']:
+            if item['description_index'] == description_index:
+                item['status'] = status
+    elif request_type == 'advice':
+        index = request_item['index']
+        for item in data['advice']:
+            if item['index'] == index:
+                item['status'] = status
+
+    save_community_feedback(project_dir, page_number, data)
+
+    

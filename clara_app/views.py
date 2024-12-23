@@ -77,7 +77,8 @@ from .clara_coherent_images_alternate import get_alternate_images_json, set_alte
 from .clara_coherent_images_community_feedback import (load_community_feedback, save_community_feedback,
                                                        register_cm_image_vote, register_cm_image_variants_request,
                                                        register_cm_page_advice, get_cm_page_advice, get_cm_image_info, get_cm_description_info,
-                                                       update_ai_votes_in_feedback, determine_preferred_image)
+                                                       update_ai_votes_in_feedback, determine_preferred_image,
+                                                       get_all_cm_requests_for_page, set_cm_request_status)
 
 from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
@@ -5189,8 +5190,8 @@ def edit_images_v2(request, project_id, status):
                     if content_type == 'page':
                         page_number = int(content_identifier)
                         content_dir = f'{project_dir}/pages/page{page_number}'
-                        print(f'alternate_images for page {page_number}')
-                        pprint.pprint(indexed_page_data[page_number]['alternate_images'])
+                        #print(f'alternate_images for page {page_number}')
+                        #pprint.pprint(indexed_page_data[page_number]['alternate_images'])
                         for img in indexed_page_data[page_number]['alternate_images']:
                             if img['id'] == alternate_image_id:
                                 set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
@@ -5441,6 +5442,14 @@ def edit_images_v2(request, project_id, status):
 @login_required
 # @user_passes_test(is_community_member) # We will add community membership checks later
 def community_review_images(request, project_id):
+    return community_review_images_cm_or_co(request, project_id, 'cm')
+
+@login_required
+# @user_passes_test(is_community_member) # We will add community membership checks later
+def community_organiser_review_images(request, project_id):
+    return community_review_images_cm_or_co(request, project_id, 'co')
+
+def community_review_images_cm_or_co(request, project_id, cm_or_co):
     user = request.user
     config_info = get_user_config(user)
     username = user.username
@@ -5475,11 +5484,15 @@ def community_review_images(request, project_id):
             page_image_path = project_pathname(project_dir, relative_page_image_path)
             page_image_exists = file_exists(page_image_path)
 
+            requests_for_page = get_all_cm_requests_for_page(project_dir, page_number)
+            requests_exist_for_page = ( len([ request for request in requests_for_page if request['status'] == 'submitted' ]) != 0 )
+
             pages_info.append({
                 'page_number': page_number,
                 'excerpt': excerpt,
                 'original_text_excerpt': original_text_excerpt,
-                'relative_page_image_path': ( relative_page_image_path if page_image_exists else None )
+                'relative_page_image_path': ( relative_page_image_path if page_image_exists else None ),
+                'requests_exist_for_page': requests_exist_for_page,
             })
     else:
         # No story data means no pages
@@ -5488,6 +5501,7 @@ def community_review_images(request, project_id):
     #pprint.pprint(pages_info)
 
     return render(request, 'clara_app/community_review_images.html', {
+        'cm_or_co': cm_or_co,
         'project': project,
         'pages_info': pages_info,
         'clara_version': clara_version,
@@ -5495,7 +5509,7 @@ def community_review_images(request, project_id):
 
 @login_required
 #@user_passes_test(is_community_member)
-def community_review_images_for_page(request, project_id, page_number):
+def community_review_images_for_page(request, project_id, page_number, cm_or_co):
     user = request.user
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -5520,7 +5534,8 @@ def community_review_images_for_page(request, project_id, page_number):
     if request.method == 'POST':
         action = request.POST.get('action', '')
         description_index = request.POST.get('description_index', '')
-        image_index = request.POST.get('image_index')
+        image_index = request.POST.get('image_index', '')
+        index = request.POST.get('index', '')
         userid = request.user.username
 
         if description_index is not None and description_index != '':
@@ -5529,14 +5544,23 @@ def community_review_images_for_page(request, project_id, page_number):
             image_index = int(image_index)
         else:
             image_index = None
+        if index is not None and index != '':
+            index = int(index)
+        else:
+            index = None
 
         try:
+            #print(f'action = {action}')
             if action == 'vote':
                 vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
                 if vote_type in ['upvote', 'downvote'] and image_index is not None:
                     register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid)
 
-            elif action == 'request_variants':
+            elif action == 'hide_or_unhide':
+                hidden_status = ( request.POST.get('hidden_status')  == 'true' )
+                set_alternate_image_hidden_status(content_dir, description_index, image_index, hidden_status)
+
+            elif action == 'variants_requests':
                 register_cm_image_variants_request(project_dir, page_number, description_index, userid)
 
             elif action == 'upload_image':
@@ -5551,6 +5575,23 @@ def community_review_images_for_page(request, project_id, page_number):
                 else:
                     messages.error(request, "No file found for the upload_image action.")
 
+            elif action == 'set_request_status':
+                request_type = request.POST.get('request_type', '')
+                status = request.POST.get('status', '')
+                if request_type == 'variants_requests' and isinstance(description_index, (int)):
+                    request_item = { 'request_type': 'variants_requests',
+                                     'page': page_number,
+                                     'description_index': description_index }
+                elif request_type == 'advice' and isinstance(index, (int)):
+                    request_item = { 'request_type': 'advice',
+                                     'page': page_number,
+                                     'index': index }
+                else:
+                    messages.error(request, f"Error when trying to set request status for request of type '{request_type}'")
+                    messages.error(request, f"page = {page}, request_type = '{request_type}', description_index = '{description_index}', index='{index}'")
+                    return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co)
+                set_cm_request_status(project_dir, request_item, status)
+
             elif action == 'add_advice':
                 advice_text = request.POST.get('advice_text', '')
                 if advice_text.strip():
@@ -5562,9 +5603,9 @@ def community_review_images_for_page(request, project_id, page_number):
                 clara_project_internal.promote_v2_page_image(page_number, preferred_image_id)
 
         except Exception as e:
-            messages.error(request, f"Error processing your request: {e}")
+            messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
 
-        return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number)
+        return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co)
 
     advice = get_cm_page_advice(project_dir, page_number)
 
@@ -5584,7 +5625,8 @@ def community_review_images_for_page(request, project_id, page_number):
     descriptions_info = {}
     for d_idx, imgs in images_by_description.items():
         desc_info = get_cm_description_info(project_dir, page_number, d_idx)
-        non_hidden_imgs = [ img for img in imgs if not img['hidden'] ]
+        # If we're in the CO view, we show the hidden images with a red border
+        non_hidden_imgs = [ img for img in imgs if not img['hidden'] ] if cm_or_co == 'cm' else imgs
         if non_hidden_imgs:
             for img_info in non_hidden_imgs:
                 i_idx = img_info['image_index']
@@ -5604,6 +5646,7 @@ def community_review_images_for_page(request, project_id, page_number):
             }
 
     rendering_parameters = {
+        'cm_or_co': cm_or_co,
         'project': project,
         'page_number': page_number,
         'page_text': page_text,
