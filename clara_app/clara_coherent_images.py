@@ -920,15 +920,15 @@ async def execute_community_request(params, request, callback=None):
     if request_type == 'advice':
         index = request['index']
         advice_text = None
-        advice_list = get_cm_page_advice(project_dir, page)
+        advice_list = get_cm_page_advice(project_dir, page_number)
         for advice_item in advice_list:
-            if advice_item == index:
+            if advice_item['index'] == index:
                 advice_text = advice_item['text']
         if not advice_text:
-            raise ValueError(f'Cannot find advice for {request}')
+            raise ValueError(f'Cannot find advice with page = {page_number} and index = {index} for {request}')
         set_page_advice(advice_text, page_number, params1)
         params1['pages_to_generate'] = [ page_number ]
-        cost_dict = await process_pages(params, callback=callback)
+        cost_dict = await process_pages(params1, callback=callback)
     elif request_type == 'variants_requests':
         description_index = request['description_index']
         alternate_image_id = await alternate_image_id_for_description_index(project_dir, page_number, description_index)
