@@ -155,13 +155,13 @@
     {% endfor %}
   </ul>
 {% else %}
-  <p>No advice yet for this page.</p>
+  <p>No unprocessed advice items for this page.</p>
 {% endif %}
 
 <form method="post" style="margin-bottom:1em;">
 {% csrf_token %}
 <input type="hidden" name="action" value="add_advice">
-<textarea name="advice_text" placeholder="Add your advice"></textarea>
+<textarea name="advice_text" placeholder="Add your advice" rows="4" cols="80"></textarea>
 <button type="submit">Submit Advice</button>
 </form>
 
