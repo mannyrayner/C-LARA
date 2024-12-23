@@ -5,7 +5,7 @@
 {% if cm_or_co == 'cm' %}
 	<h2>Community Member Reviewing ({{ project.title }}, Page {{ page_number }})</h2>
 {% else %}
-	<h2>Community Member Reviewing ({{ project.title }}, Page {{ page_number }})</h2>
+	<h2>Community Organiser Reviewing ({{ project.title }}, Page {{ page_number }})</h2>
 {% endif %}
 
 <h3>Text used to create images</h3> 
@@ -163,7 +163,10 @@
 </div>
 
 <div class="sticky-footer">
-  <a href="{% url 'community_review_images' project.id %}">Back to Overview</a>
+{% if cm_or_co == 'cm' %}
+	<a href="{% url 'community_review_images' project.id %}">Back to Overview</a>
+{% else %}
+	<a href="{% url 'community_organiser_review_images' project.id %}">Back to Overview</a>
+{% endif %}
 </div>
-
 {% endblock %}
