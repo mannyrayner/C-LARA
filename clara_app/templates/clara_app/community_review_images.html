@@ -3,7 +3,11 @@
 {% block content %}
 
 <div class="main-content">
-<h2>Community Review - Project: {{ project.title }}</h2>
+{% if cm_or_co == 'cm' %}
+	<h2>Community Member Reviewing Overview ({{ project.title }})</h2>
+{% else %}
+	<h2>Community Organiser Reviewing Overview ({{ project.title }})</h2>
+{% endif %}
 
 <table class="table">
     <thead>
@@ -11,6 +15,9 @@
             <th>Page Number</th>
             <th>Text</th>
             <th>Image</th>
+			{% if cm_or_co == 'co' %}
+				<th>Requests</th>
+			{% endif %}
             <th>Actions</th>
         </tr>
     </thead>
@@ -26,8 +33,11 @@
                     <em>No image</em>
                 {% endif %}
             </td>
+			{% if cm_or_co == 'co' %}
+				<td>{% if page.requests_exist_for_page %}✔{% endif %}</td>
+			{% endif %}
             <td>
-                <a href="{% url 'community_review_images_for_page' project.id page.page_number %}">Review this Page</a>
+                <a href="{% url 'community_review_images_for_page' project.id page.page_number cm_or_co %}">Review this Page</a>
             </td>
         </tr>
         {% endfor %}

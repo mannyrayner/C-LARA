@@ -2,7 +2,11 @@
 {% block content %}
 
 <div class="main-content">
-<h2>Community Review ({{ project.title }}, Page {{ page_number }})</h2>
+{% if cm_or_co == 'cm' %}
+	<h2>Community Member Reviewing ({{ project.title }}, Page {{ page_number }})</h2>
+{% else %}
+	<h2>Community Member Reviewing ({{ project.title }}, Page {{ page_number }})</h2>
+{% endif %}
 
 <h3>Text used to create images</h3> 
 <p>{{ page_text }}</p>
@@ -17,9 +21,15 @@
   <div class="description-group">
   <div class="image-row">
   {% for img in dinfo.images %}
-	<div class="image-container {% if img.preferred %}preferred-image{% else %}non-preferred-image{% endif %}">
-      <img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:200px;"/><br/>
-      Upvotes: {{ img.upvotes_count }} Downvotes: {{ img.downvotes_count }}
+    {% if img.preferred %}
+	<div class="image-container preferred-image">
+	{% elif img.hidden %}
+	<div class="image-container hidden-image">
+	{% else %}
+	<div class="image-container non-preferred-image">
+	{% endif %}
+        <img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:200px;"/><br/>
+        Upvotes: {{ img.upvotes_count }} Downvotes: {{ img.downvotes_count }}
 
       <form method="post" style="display:inline-block;">
         {% csrf_token %}
@@ -38,17 +48,62 @@
         <input type="hidden" name="vote_type" value="downvote">
         <button type="submit">👎</button>
       </form>
+	  {% if cm_or_co == 'co' %}
+	    <br>
+		<!-- Hide/Unhide Toggle -->
+		<form method="post" style="display:inline;">
+			{% csrf_token %}
+			<input type="hidden" name="action" value="hide_or_unhide">
+			<input type="hidden" name="description_index" value="{{ img.description_index }}">
+			<input type="hidden" name="image_index" value="{{ img.image_index }}">
+			<input type="hidden" name="hidden_status" value="{% if img.hidden %}false{% else %}true{% endif %}">
+			<button type="submit">
+				{% if img.hidden %}
+					Unhide
+				{% else %}
+					Hide
+				{% endif %}
+			</button>
+		</form>
+		{% endif %}
 	  
     </div>
   {% endfor %}
   </div>
-  
-  <form method="post" style="display:inline-block;">
-	{% csrf_token %}
-	<input type="hidden" name="action" value="request_variants">
-	<input type="hidden" name="description_index" value="{{ d_idx }}">
-	<button type="submit">Create similar images</button>
-  </form>
+  {% if dinfo.variants_requests %}
+	  {% if dinfo.variants_requests.0.status == 'approved' %}
+		  <p>Similar images requested [approved, waiting to run]</p>
+	  {% else %}
+		   {% if cm_or_co == 'co' %}
+			   <p><b>Similar images requested</b></p>
+			   <form method="post" style="display:inline-block;">
+				{% csrf_token %}
+				<input type="hidden" name="action" value="set_request_status">
+				<input type="hidden" name="request_type" value="variants_requests">
+				<input type="hidden" name="description_index" value="{{ d_idx }}">
+				<input type="hidden" name="status" value="approved">
+				<button type="submit">Approve</button>
+			   </form>
+			   <form method="post" style="display:inline-block;">
+				{% csrf_token %}
+				<input type="hidden" name="action" value="set_request_status">
+				<input type="hidden" name="request_type" value="variants_requests">
+				<input type="hidden" name="description_index" value="{{ d_idx }}">
+				<input type="hidden" name="status" value="rejected">
+				<button type="submit">Reject</button>
+			   </form>
+		   {% else %}
+			   <p>Similar images requested [waiting for approval]</p>
+		   {% endif %}
+	  {% endif %}
+  {% else %}
+	  <form method="post" style="display:inline-block;">
+		{% csrf_token %}
+		<input type="hidden" name="action" value="variants_requests">
+		<input type="hidden" name="description_index" value="{{ d_idx }}">
+		<button type="submit">Create similar images</button>
+	  </form>
+  {% endif %}
   </div>
 {% endfor %}
 
@@ -67,7 +122,32 @@
 {% if page_advice %}
   <ul>
     {% for adv in page_advice %}
-      <li>{{ adv.text }} <small>(by {{ adv.user_id }} on {{ adv.timestamp }})</small></li>
+      <li> 
+	  {% if adv.status == 'approved' %}
+		  {{ adv.text }} [approved, waiting to run]
+	  {% else %}
+		  {% if cm_or_co == 'co' %}
+			   <b>{{ adv.text }}</b>
+			   <form method="post" style="display:inline-block;">
+				{% csrf_token %}
+				<input type="hidden" name="action" value="set_request_status">
+				<input type="hidden" name="request_type" value="advice">
+				<input type="hidden" name="index" value="{{ adv.index }}">
+				<input type="hidden" name="status" value="approved">
+				<button type="submit">Approve</button>
+			   </form>
+			   <form method="post" style="display:inline-block;">
+				{% csrf_token %}
+				<input type="hidden" name="action" value="set_requests_status">
+				<input type="hidden" name="request_type" value="advice">
+				<input type="hidden" name="index" value="{{ adv.index">
+				<button type="submit">Reject</button>
+			   </form>
+		  {% else %}
+			   {{ adv.text }} [waiting for approval]
+		  {% endif %}
+	  {% endif %}
+	  </li>
     {% endfor %}
   </ul>
 {% else %}
