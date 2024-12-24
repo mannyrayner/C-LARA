@@ -216,6 +216,9 @@
 			  <a class="dropdown-item" href="{% url 'friends' %}"
 					 data-toggle="tooltip" title="Show friends and outstanding friend requests.">
 					 Friends</a>
+			  <a class="dropdown-item" href="{% url 'assign_member_to_community' %}"
+					 data-toggle="tooltip" title="Add a new member to a community for which you are coordinator.">
+					 Add member to community</a>
 			  <a class="dropdown-item" href="{% url 'language_statistics' %}"
 					 data-toggle="tooltip" title="Show tables listing numbers of projects of pieces of content, broken down by language.">
 					 Project and content statistics</a>
@@ -288,6 +291,12 @@
 					<a class="dropdown-item" href="{% url 'admin_project_ownership' %}"
 						   data-toggle="tooltip" title="Give yourself a COOWNER role on a project, if you are an admin and need to access it urgently for some reason.">
 						   Make yourself co-owner of a project</a>
+					<a class="dropdown-item" href="{% url 'create_community' %}"
+						   data-toggle="tooltip" title="Create a new community for image reviewing and similar activities.">
+						   Create community</a>
+					<a class="dropdown-item" href="{% url 'assign_coordinator_to_community' %}"
+						   data-toggle="tooltip" title="Assign a coordinator to an language community.">
+						   Assign coordinator to community</a>
 					<a class="dropdown-item" href="{% url 'manage_language_masters' %}"
 						   data-toggle="tooltip" title="Give users 'language master' privileges, so that they can customise annotation prompts and edit phonetic lexicon data.">
 						   Manage language masters</a>

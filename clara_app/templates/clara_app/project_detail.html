@@ -45,6 +45,9 @@
 	<p>Text Language: {{ project.l2|titlecase }}</p>
 	<p>Annotation Language: {{ project.l1|titlecase }}</p>
 	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
+	<p><a href="{% url 'project_community' project.id %}" 
+	      data-tooltip="Optionally assign the project to a community." >
+		  Community</a>✓</p>
 	<p><a href="{% url 'create_plain_text' project.id %}" 
 	      data-tooltip="Tell the AI to create the original text for your project. Alternately, edit the result or paste in your own text." >
 		  Create/Edit Plain Text</a> 

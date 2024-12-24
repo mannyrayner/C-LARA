@@ -1,0 +1,9 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+  <h2>Make a User a Community Member</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Assign as Member</button>
+  </form>
+{% endblock %}
