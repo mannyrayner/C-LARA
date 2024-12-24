@@ -62,8 +62,30 @@ class LanguageMaster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='language_master_set')
     language = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
 
-    #class Meta:
-    #    unique_together = ['user', 'language']
+class Community(models.Model):
+    name = models.CharField(max_length=200)
+    language = models.CharField(
+        max_length=50, 
+        choices=SUPPORTED_LANGUAGES,
+        help_text="Language primarily associated with this community."
+    )
+    description = models.TextField(blank=True, default='')
+    # Possibly other fields (creation_date, region, contact info, etc.)
+
+    def __str__(self):
+        return f"{self.name} ({self.language})"
+
+class CommunityMembership(models.Model):
+    community = models.ForeignKey(Community, on_delete=models.CASCADE,
+                                  related_name='memberships')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    ROLE_CHOICES = [
+        ('COORDINATOR', 'Coordinator'),
+        ('MEMBER', 'Member'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES,
+                            default='MEMBER')
+    joined_at = models.DateTimeField(auto_now_add=True)
 
 class CLARAProject(models.Model):
     title = models.CharField(max_length=200)
@@ -75,12 +97,14 @@ class CLARAProject(models.Model):
     uses_coherent_image_set = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set.")
     uses_coherent_image_set_v2 = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set (V2).")
     use_translation_for_images = models.BooleanField(default=False, help_text="Use translations for generating coherent image sets.")
-
-# Move this to utils.py to avoid circular import
-
-##    def has_saved_internalised_and_annotated_text(self, phonetic=False):
-##        clara_project_internal = CLARAProjectInternal(self.internal_id, self.l2, self.l1)
-##        return clara_project_internal.get_saved_internalised_and_annotated_text(phonetic=phonetic)
+    community = models.ForeignKey(
+        Community,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='projects',
+        help_text="If set, this project belongs to the specified community."
+        )
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [

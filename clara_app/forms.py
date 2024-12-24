@@ -3,7 +3,7 @@ from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
 from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest, Acknowledgements
-from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
+from .models import CLARAProject, Community, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from .models import Activity, ActivityRegistration, ActivityComment, ActivityVote
 
 from django.contrib.auth.models import User
@@ -43,7 +43,7 @@ class UserSelectForm(forms.Form):
                                   label="Select a user", empty_label="Choose a user")
 
 class AdminPasswordResetForm(forms.Form):
-    user = forms.ModelChoiceField(queryset=User.objects.all())
+    user = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'))
     new_password = forms.CharField(widget=forms.PasswordInput())
         
 class UserProfileForm(forms.ModelForm):
@@ -86,7 +86,7 @@ class UserConfigForm(forms.ModelForm):
         self.fields['max_annotation_words'].required = False
         
 class AssignLanguageMasterForm(forms.Form):
-    user = forms.ModelChoiceField(queryset=User.objects.all())
+    user = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'))
     language = forms.ChoiceField(choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
 
 class InitialiseORMRepositoriesForm(forms.Form):
@@ -205,6 +205,74 @@ class ProjectSelectionForm(forms.Form):
     
 ProjectSelectionFormSet = formset_factory(ProjectSelectionForm, extra=0)
 
+class CreateCommunityForm(forms.ModelForm):
+    class Meta:
+        model = Community
+        fields = ['name', 'language', 'description']
+
+class ProjectCommunityForm(forms.Form):
+    """
+    A simple form that lets the user pick among communities whose language matches
+    the project's l2, or 'None' to unassign the community.
+    """
+    community_id = forms.ChoiceField(
+        label="Assign this project to a community",
+        required=False,  # so it can be None
+    )
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop('project', None)
+        super().__init__(*args, **kwargs)
+
+        # We'll build the choice list dynamically:
+        #  1) None option
+        #  2) All communities matching project.l2
+        choices = [('', 'No community')]  # empty string => None
+        if project:
+            matching_communities = Community.objects.filter(language=project.l2)
+            for community in matching_communities:
+                choices.append((str(community.id), f"{community.name} ({community.language})"))
+
+        self.fields['community_id'].choices = choices
+
+class AssignMemberForm(forms.Form):
+    user = forms.ModelChoiceField(
+        queryset=User.objects.all().order_by('username'),
+        label="Select a user",
+        empty_label="Choose a user"
+    )
+    community = forms.ModelChoiceField(
+        queryset=Community.objects.none(),  # we'll override in __init__
+        label="Select one of your communities",
+        empty_label="Choose a community"
+    )
+
+    def __init__(self, *args, **kwargs):
+        # We expect the calling view to pass 'coordinator_user' to the form's constructor
+        coordinator_user = kwargs.pop('coordinator_user', None)
+        super().__init__(*args, **kwargs)
+        
+        if coordinator_user:
+            # find all communities that this user coordinates
+            coord_communities = Community.objects.filter(
+                memberships__user=coordinator_user,
+                memberships__role='COORDINATOR'
+            ).distinct()
+
+            self.fields['community'].queryset = coord_communities
+
+class UserAndCommunityForm(forms.Form):
+    user = forms.ModelChoiceField(
+        queryset=User.objects.all().order_by('username'),
+        label="Select a user",
+        empty_label="Choose a user"
+    )
+    community = forms.ModelChoiceField(
+        queryset=Community.objects.all().order_by('name'),
+        label="Select a community",
+        empty_label="Choose a community"
+    )
+
 class L2LanguageSelectionForm(forms.Form):
     l2 = forms.ChoiceField(required=False)
 
@@ -256,7 +324,7 @@ class UpdateCoherentImageSetForm(forms.Form):
     use_translation_for_images = forms.BooleanField(required=False)
 
 class AddCreditForm(forms.Form):
-    user = forms.ModelChoiceField(queryset=User.objects.all())
+    user = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'))
     credit = forms.DecimalField()
 
 class ConfirmTransferForm(forms.Form):

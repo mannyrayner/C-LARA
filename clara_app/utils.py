@@ -10,6 +10,7 @@ from django.core.mail import EmailMessage
 
 from .models import CLARAProject, User, UserConfiguration, HumanAudioInfo, PhoneticHumanAudioInfo, FormatPreferences, Acknowledgements
 from .models import APICall, ProjectPermissions, LanguageMaster, TaskUpdate, Update, FriendRequest, Content, SatisfactionQuestionnaire
+from .models import Community, CommunityMembership
 
 from .clara_main import CLARAProjectInternal
 
@@ -244,6 +245,134 @@ def language_master_required(function):
             return function(request, *args, **kwargs)
         else:
             return HttpResponseForbidden('You are not authorized to edit language prompts')
+    return _wrapped_view
+
+def user_is_community_member(view_func):
+    """
+    Decorator to ensure the request.user is a member of the community
+    associated with this project.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        project_id = kwargs.get('project_id')
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        community = project.community
+        
+        # If the project has no community, this check should fail (or pass by design).
+        # Here, we fail with PermissionDenied.
+        if not community:
+            raise PermissionDenied("This project is not assigned to a community.")
+
+        # Now we check whether the request.user is a member of that community.
+        # If not, we raise PermissionDenied.
+        membership = CommunityMembership.objects.filter(
+            community=community,
+            user=request.user
+        ).first()
+        if not membership:
+            raise PermissionDenied("You are not a member of this community.")
+
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+def user_is_community_coordinator(view_func):
+    """
+    Decorator to ensure the request.user is a coordinator of the community
+    associated with this project.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        project_id = kwargs.get('project_id')
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        community = project.community
+        
+        if not community:
+            raise PermissionDenied("This project is not assigned to a community.")
+
+        membership = CommunityMembership.objects.filter(
+            community=community,
+            user=request.user
+        ).first()
+        # We expect membership.role == 'COORDINATOR', or whatever
+        # logic you use to store coordinator status.
+        if not membership or membership.role != 'COORDINATOR':
+            raise PermissionDenied("You are not a coordinator of this community.")
+        
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+def user_is_coordinator_of_some_community(view_func):
+    """
+    Decorator ensuring the user is coordinator for at least one community.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        
+        # check if the user has a membership with role=COORDINATOR
+        is_coord = CommunityMembership.objects.filter(
+            user=request.user,
+            role='COORDINATOR'
+        ).exists()
+
+        if not is_coord:
+            raise PermissionDenied("You must be a coordinator of at least one community.")
+        
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+def community_role_required(view_func):
+    """
+    Decorator that checks the user's membership/role in a community 
+    associated with a project at runtime, based on a URL kwarg `cm_or_co`. 
+    The URL pattern could look like:
+    
+        path("community/<str:cm_or_co>/project/<int:project_id>/page/<int:page_number>/", 
+             views.community_review_images_for_page, 
+             name="community_review_images_for_page")
+
+    Where cm_or_co is either 'cm' or 'co'.
+    """
+
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+
+        # 1) Extract runtime argument from the URL route
+        cm_or_co = kwargs.get('cm_or_co', 'cm')  # default to 'cm' if not in route
+
+        project_id = kwargs.get('project_id')
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        community = project.community
+
+        if not community:
+            raise PermissionDenied("This project is not assigned to any community.")
+
+        # 2) Look up membership for request.user
+        membership = CommunityMembership.objects.filter(
+            community=community,
+            user=request.user
+        ).first()
+
+        if not membership:
+            # User is not in the community at all
+            raise PermissionDenied("You are not a member of this community.")
+
+        # 3) Check role according to cm_or_co
+        if cm_or_co == 'cm':
+            # Must at least be a member. 
+            # If you want to disallow CO in the 'cm' path, 
+            # you might add an extra condition here. Usually not needed.
+            pass
+
+        elif cm_or_co == 'co':
+            # Must be a coordinator
+            if membership.role != 'COORDINATOR':
+                raise PermissionDenied("You are not a coordinator in this community.")
+        else:
+            raise ValueError(f"Invalid cm_or_co value: {cm_or_co}")
+
+        # If checks pass, call the wrapped view
+        return view_func(request, *args, **kwargs)
+
     return _wrapped_view
 
 def compute_md5_of_content(content):

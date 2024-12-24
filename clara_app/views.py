@@ -5,6 +5,7 @@ from django.http import HttpResponse, FileResponse, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.core.paginator import Paginator
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.conf import settings
 from django import forms
@@ -22,6 +23,7 @@ from django.urls import reverse
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, ContentAccess, TaskUpdate, Update, ReadingHistory
 from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements, Activity, ActivityRegistration, ActivityComment, ActivityVote, CurrentActivityVote
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
+from .models import Community, CommunityMembership
 from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
@@ -30,6 +32,7 @@ from django_q.models import Task
 from .forms import RegistrationForm, UserForm, UserSelectForm, UserProfileForm, FriendRequestForm, AdminPasswordResetForm, ProjectSelectionFormSet, UserConfigForm
 from .forms import AssignLanguageMasterForm, AddProjectMemberForm, FundingRequestForm, FundingRequestSearchForm, ApproveFundingRequestFormSet, UserPermissionsForm
 from .forms import ContentSearchForm, ContentRegistrationForm, AcknowledgementsForm, UnifiedSearchForm
+from .forms import ProjectCommunityForm, CreateCommunityForm, UserAndCommunityForm, ProjectCommunityForm, AssignMemberForm
 from .forms import ActivityForm, ActivitySearchForm, ActivityRegistrationForm, ActivityCommentForm, ActivityVoteForm, ActivityStatusForm, ActivityResolutionForm
 from .forms import AIActivitiesUpdateForm, DeleteContentForm
 from .forms import ProjectCreationForm, UpdateProjectTitleForm, UpdateCoherentImageSetForm
@@ -53,6 +56,7 @@ from .utils import user_is_project_owner, user_has_a_project_role, user_has_a_na
 from .utils import post_task_update_in_db, get_task_updates, has_saved_internalised_and_annotated_text
 from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
 from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date, get_previous_week_start_date
+from .utils import user_is_community_member, user_is_community_coordinator, community_role_required, user_is_coordinator_of_some_community
 
 from .clara_main import CLARAProjectInternal
 #from .clara_audio_repository import AudioRepository
@@ -65,6 +69,8 @@ from .clara_prompt_templates import PromptTemplateRepository
 from .clara_dependencies import CLARADependencies
 from .clara_reading_histories import ReadingHistoryInternal
 from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+
+from .clara_community import assign_project_to_community
 
 from .clara_coherent_images_utils import get_style_params_from_project_params, get_element_names_params_from_project_params
 from .clara_coherent_images_utils import get_element_names_params_from_project_params, get_element_descriptions_params_from_project_params
@@ -3250,6 +3256,135 @@ def project_detail(request, project_id):
                     }
                     )
 
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def create_community(request):
+    """
+    Admin-only view to create a new Community.
+    """
+    if request.method == 'POST':
+        form = CreateCommunityForm(request.POST)
+        if form.is_valid():
+            community = form.save()
+            # Optionally flash a success message, etc.
+            return redirect('home_page')  # Or wherever you want
+    else:
+        form = CreateCommunityForm()
+
+    return render(request, 'clara_app/admin_create_community.html', {
+        'form': form
+    })
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)  
+def assign_coordinator_to_community(request):
+    """
+    Admin-only view: Turn a user into COORDINATOR in the selected community.
+    """
+    if request.method == 'POST':
+        form = UserAndCommunityForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data['user']
+            community = form.cleaned_data['community']
+
+            # We create/get the membership and set role = COORDINATOR
+            membership, created = CommunityMembership.objects.get_or_create(
+                community=community, user=user
+            )
+            membership.role = 'COORDINATOR'
+            membership.save()
+
+            # Redirect or show success message
+            return redirect('home_page')  # adapt as needed
+    else:
+        form = UserAndCommunityForm()
+
+    return render(request, 'clara_app/admin_assign_coordinator.html', {
+        'form': form,
+    })
+
+@login_required
+@user_is_coordinator_of_some_community
+def assign_member_to_community(request):
+    """
+    Only a user who is coordinator in at least one community can access this.
+    Lets them pick a (user, community) pair to assign the user as an ordinary member.
+    """
+    if request.method == 'POST':
+        # pass the request.user in as 'coordinator_user' so the form can limit communities
+        form = AssignMemberForm(request.POST, coordinator_user=request.user)
+        if form.is_valid():
+            the_user = form.cleaned_data['user']
+            the_community = form.cleaned_data['community']
+            
+            # check if the requesting user is coordinator of that specific community
+            # we do the same membership check as in the form’s queryset logic,
+            # but let's be extra safe to avoid tampering
+            if not CommunityMembership.objects.filter(
+                user=request.user,
+                community=the_community,
+                role='COORDINATOR'
+            ).exists():
+                raise PermissionDenied("You are not coordinator of that community.")
+            
+            # create or update membership
+            membership, created = CommunityMembership.objects.get_or_create(
+                user=the_user,
+                community=the_community
+            )
+            membership.role = 'MEMBER'
+            membership.save()
+
+            messages.success(
+                request,
+                f"Assigned {the_user.username} as a MEMBER in {the_community.name}."
+            )
+            return redirect('home_page')  # or wherever you want
+    else:
+        # GET: just show the form
+        form = AssignMemberForm(coordinator_user=request.user)
+
+    return render(request, 'clara_app/assign_member_to_community.html', {
+        'form': form,
+    })
+
+@login_required
+@user_is_project_owner
+def project_community(request, project_id):
+    """
+    Allows a project owner to assign/unassign the project's community.
+    """
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    if request.method == 'POST':
+        form = ProjectCommunityForm(request.POST, project=project)
+        if form.is_valid():
+            community_id_str = form.cleaned_data['community_id']
+            try:
+                if not community_id_str:
+                    # The user chose "No community"
+                    project.community = None
+                    project.save()
+                else:
+                    # Assign to a real community
+                    community_id = int(community_id_str)
+                    assign_project_to_community(project_id, community_id)
+                    messages.success(request, f"Assigned project to community '{project.community.name}'.")
+            except (ValueError, ValidationError) as e:
+                form.add_error('community_id', str(e))
+            else:
+                return redirect('project_detail', project_id=project.id)
+    else:
+        # Pre-select the current community if any
+        form = ProjectCommunityForm(project=project, initial={
+            'community_id': str(project.community.id) if project.community else ''
+        })
+
+    return render(request, 'clara_app/project_community.html', {
+        'project': project,
+        'form': form,
+    })
+
 def phonetic_resources_are_available(l2_language):
     return phonetic_orthography_resources_available(l2_language) or grapheme_phoneme_resources_available(l2_language)
 
@@ -5441,12 +5576,12 @@ def edit_images_v2(request, project_id, status):
                                                              'errors': []})
 
 @login_required
-# @user_passes_test(is_community_member) # We will add community membership checks later
+@user_is_community_member
 def community_review_images(request, project_id):
     return community_review_images_cm_or_co(request, project_id, 'cm')
 
 @login_required
-# @user_passes_test(is_community_member) # We will add community membership checks later
+@user_is_community_coordinator
 def community_organiser_review_images(request, project_id):
     return community_review_images_cm_or_co(request, project_id, 'co')
 
@@ -5509,7 +5644,7 @@ def community_review_images_cm_or_co(request, project_id, cm_or_co):
     })
 
 @login_required
-#@user_passes_test(is_community_member)
+@community_role_required
 def community_review_images_for_page(request, project_id, page_number, cm_or_co, status):
     user = request.user
     can_use_ai = user_has_open_ai_key_or_credit(user)

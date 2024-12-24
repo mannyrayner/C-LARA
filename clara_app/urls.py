@@ -111,8 +111,12 @@ urlpatterns = [
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
     path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
 
-    path('project/<int:project_id>/community_review_images', views.community_review_images, name='community_review_images'),
-    path('project/<int:project_id>/community_organiser_review_images', views.community_organiser_review_images, name='community_organiser_review_images'),
+    path('create_community/', views.create_community, name='create_community'),
+    path('assign_coordinator_to_community/', views.assign_coordinator_to_community, name='assign_coordinator_to_community'),
+    path('assign_member_to_community/', views.assign_member_to_community, name='assign_member_to_community'),
+    path('project/<int:project_id>/project_community/', views.project_community, name='project_community'),
+    path('project/<int:project_id>/community_review_images/', views.community_review_images, name='community_review_images'),
+    path('project/<int:project_id>/community_organiser_review_images/', views.community_organiser_review_images, name='community_organiser_review_images'),
     path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/<str:status>/', views.community_review_images_for_page, name='community_review_images_for_page'),
 
     path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', views.execute_community_requests_for_page_monitor, name='execute_community_requests_for_page_monitor'),
