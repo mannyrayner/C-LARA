@@ -3368,8 +3368,12 @@ def project_community(request, project_id):
                 else:
                     # Assign to a real community
                     community_id = int(community_id_str)
-                    assign_project_to_community(project_id, community_id)
-                    messages.success(request, f"Assigned project to community '{project.community.name}'.")
+                    community = get_object_or_404(Community, pk=community_id)
+                    if project.l2 != community.language:
+                        raise ValidationError("Project L2 does not match community language")
+                    project.community = community
+                    project.save()
+                    messages.success(request, f"Assigned project to community '{project.community}'.")
             except (ValueError, ValidationError) as e:
                 form.add_error('community_id', str(e))
             else:

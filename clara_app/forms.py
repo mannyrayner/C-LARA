@@ -3,7 +3,8 @@ from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 
 from .models import Content, UserProfile, UserConfiguration, LanguageMaster, SatisfactionQuestionnaire, FundingRequest, Acknowledgements
-from .models import CLARAProject, Community, HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
+from .models import CLARAProject, Community, CommunityMembership
+from .models import HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from .models import Activity, ActivityRegistration, ActivityComment, ActivityVote
 
 from django.contrib.auth.models import User
@@ -222,16 +223,19 @@ class ProjectCommunityForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop('project', None)
+        user = project.user
         super().__init__(*args, **kwargs)
 
         # We'll build the choice list dynamically:
         #  1) None option
-        #  2) All communities matching project.l2
+        #  2) All communities matching project.l2 and where project.user is a member
         choices = [('', 'No community')]  # empty string => None
         if project:
             matching_communities = Community.objects.filter(language=project.l2)
             for community in matching_communities:
-                choices.append((str(community.id), f"{community.name} ({community.language})"))
+                membership = CommunityMembership.objects.filter(community=community, user=user).first()
+                if membership:
+                    choices.append((str(community.id), f"{community.name} ({community.language})"))
 
         self.fields['community_id'].choices = choices
 
