@@ -1,13 +1,13 @@
 {% if user_role == "COORDINATOR" %}
-    <h2>Welcome, Coordinator of {{ community.name }}!</h2>
+    <h1>Welcome, Coordinator of {{ community.name }}!</h1>
     <!-- Possibly link to membership management, or list all members. -->
 {% else %}
-    <h2>Welcome to the {{ community.name }} community!</h2>
+    <h1>Welcome to the {{ community.name }} community!</h1>
 {% endif %}
 
 <p>{{ community.description }}</p>
 
-<h3>Projects</h3>
+<h2>Projects</h2>
 <ul>
   {% for project in projects %}
     {% if user_role == "COORDINATOR" %}
