@@ -3287,7 +3287,7 @@ def create_community(request):
         if form.is_valid():
             community = form.save()
             # Optionally flash a success message, etc.
-            return redirect('home_page')  # Or wherever you want
+            return redirect('clara_home_page')  # Or wherever you want
     else:
         form = CreateCommunityForm()
 
@@ -3349,7 +3349,7 @@ def assign_coordinator_to_community(request):
             membership.save()
 
             # Redirect or show success message
-            return redirect('home_page')  # adapt as needed
+            return redirect('clara_home_page')  # adapt as needed
     else:
         form = UserAndCommunityForm()
 
@@ -3393,7 +3393,7 @@ def assign_member_to_community(request):
                 request,
                 f"Assigned {the_user.username} as a MEMBER in {the_community.name}."
             )
-            return redirect('home_page')  # or wherever you want
+            return redirect('clara_home_page')  # or wherever you want
     else:
         # GET: just show the form
         form = AssignMemberForm(coordinator_user=request.user)
