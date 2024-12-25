@@ -1,0 +1,7 @@
+<h2>Choose Where To Go</h2>
+<ul>
+  <li><a href="{% url 'home_page' %}">Normal C-LARA home page</a></li>
+  {% for m in memberships %}
+  <li><a href="{% url 'community_home' m.community.id %}">{{ m.community.name }}</a></li>
+  {% endfor %}
+</ul>

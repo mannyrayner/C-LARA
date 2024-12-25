@@ -1,0 +1,25 @@
+{% if user_role == "COORDINATOR" %}
+    <h2>Welcome, Coordinator of {{ community.name }}!</h2>
+    <!-- Possibly link to membership management, or list all members. -->
+{% else %}
+    <h2>Welcome to the {{ community.name }} community!</h2>
+{% endif %}
+
+<p>{{ community.description }}</p>
+
+<h3>Projects</h3>
+<ul>
+  {% for project in projects %}
+    {% if user_role == "COORDINATOR" %}
+       <li><a href="{% url 'community_organiser_review_images' project.id %}">{{ project.title }}</a></li>
+    {% else %}
+       <li><a href="{% url 'community_review_images' project.id %}">{{ project.title }}</a></li>
+    {% endif %}
+  {% endfor %}
+</ul>
+
+{% if user_role == "CO" %}
+  <!-- Possibly also show membership info or links to manage invites. -->
+  <!-- <p><a href="{% url 'list_community_members' community.id %}">List/Manage Members</a></p> -->
+  <p><a href="{% url 'home_page' %}">C-LARA home page</a></p>
+{% endif %}
