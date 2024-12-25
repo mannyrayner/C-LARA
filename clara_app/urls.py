@@ -15,6 +15,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('home/', views.home, name='home'),
     path('home_page/', views.home_page, name='home_page'),
+    path('clara_home_page/', views.clara_home_page, name='clara_home_page'),
     # Password reset links (ref: https://github.com/django/django/blob/master/django/contrib/auth/urls.py)
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
@@ -112,6 +113,7 @@ urlpatterns = [
     path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
 
     path('create_community/', views.create_community, name='create_community'),
+    path('community_home/<int:community_id>/', views.community_home, name='community_home'),
     path('assign_coordinator_to_community/', views.assign_coordinator_to_community, name='assign_coordinator_to_community'),
     path('assign_member_to_community/', views.assign_member_to_community, name='assign_member_to_community'),
     path('project/<int:project_id>/project_community/', views.project_community, name='project_community'),

@@ -157,12 +157,32 @@ def register(request):
 
 # Welcome screen
 def home(request):
-    
-    #return HttpResponse("Welcome to C-LARA!")
     return redirect('home_page')
 
-@login_required
 def home_page(request):
+    user = request.user
+
+    # Find all communities the user belongs to
+    memberships = CommunityMembership.objects.filter(user=user)
+    
+    if not memberships.exists():
+        # Not a member of any community => go to normal C-LARA home page
+        return redirect('clara_home_page')
+
+    # If the user belongs to exactly one community, go straight there
+    if memberships.count() == 1:
+        membership = memberships.first()
+        return redirect('community_home', community_id=membership.community.id)
+
+    # Otherwise, present a small page letting the user pick which community or normal LARA home
+    return render(request, 'clara_app/select_community_or_home.html', {
+        'memberships': memberships,
+    })
+
+
+@login_required
+#def home_page(request):
+def clara_home_page(request):
     time_period = DEFAULT_RECENT_TIME_PERIOD
     search_form = UnifiedSearchForm(request.GET or None)
     time_period_query = Q()
@@ -3274,6 +3294,40 @@ def create_community(request):
     return render(request, 'clara_app/admin_create_community.html', {
         'form': form
     })
+
+@login_required
+def community_home(request, community_id):
+    user = request.user
+    community = get_object_or_404(Community, pk=community_id)
+
+    membership = CommunityMembership.objects.filter(
+        community=community, user=user
+    ).first()
+
+    if not membership:
+        # The user is not a member of this community
+        raise PermissionDenied
+
+    role = membership.role  # "COORDINATOR" or "MEMBER"
+    print(f'role = {role}')
+
+    # Build data to pass to the template
+    context = {
+        'community': community,
+        'user_role': role,
+    }
+
+    # Add relevant data, e.g. list of all community projects
+    projects = CLARAProject.objects.filter(community=community)
+    context['projects'] = projects
+
+    # Possibly link to membership views if user_role == 'CO'
+    if role == 'CO':
+        # e.g. context['members'] = ...
+        pass
+
+    return render(request, 'clara_app/community_home.html', context)
+
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)  
