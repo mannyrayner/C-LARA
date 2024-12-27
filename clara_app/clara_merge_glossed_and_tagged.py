@@ -99,3 +99,86 @@ def find_best_match(annotations2_element, annotations1_elements, dummy_annotatio
         best_match = ContentElement("Word", annotations2_element.content, dummy_annotations1)
 
     return best_match
+
+def merge_annotations_charwise(original_text: str, annotated_text: str, phase: str) -> str:
+    """
+    Merge GPT-4's newly inserted markup tokens into 'original_text',
+    preserving exactly the original text for all non-markup characters.
+
+    phase is either 'presegmentation' or 'segmentation'
+    """
+
+    if not phase in ( 'presegmentation', 'segmentation' ):
+        raise ValueError(f"Unknown third argument {phase} in call to merge_annotations_charwise. Must be 'presegmentation' or 'segmentation'")
+
+    original_chars = list(original_text)
+    annotated_chars = list(annotated_text)
+
+    matcher = difflib.SequenceMatcher(None, original_chars, annotated_chars)
+    merged_chars = []
+
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        # The slices:
+        #   original slice -> original_chars[i1:i2]
+        #   annotated slice -> annotated_chars[j1:j2]
+
+        if tag == "equal":
+            # Nothing has changed in this region => copy original
+            merged_chars.extend(original_chars[i1:i2])
+
+        elif tag == "delete":
+            # GPT removed something from the original.
+            # We keep the original text as is, so copy the "delete" region from the original.
+            merged_chars.extend(original_chars[i1:i2])
+
+        elif tag == "insert":
+            # GPT inserted something new. We ignore normal chars, only insert known markup.
+            to_insert = annotated_chars[j1:j2]
+            # We can parse these inserted chars to see if they contain tokens like "<page>" or "||"
+            # E.g. do a small while-loop scanning for markup tokens
+            merged_chars.extend(extract_markup_token(to_insert, phase))
+
+        elif tag == "replace":
+            # GPT replaced some region of original with something else.
+            # We want to preserve the original region plus any recognized markup from GPT's replacement.
+            # So we copy the original text:
+            merged_chars.extend(original_chars[i1:i2])
+
+            # Then also look for new markup tokens from the annotated region
+            to_insert = annotated_chars[j1:j2]
+            merged_chars.extend(extract_markup_token(to_insert, phase))
+
+    return "".join(merged_chars)
+
+
+def extract_markup_token(chars: list[str], phase: str) -> list[str]:
+    """
+    Extract a possible markup token, depending on the phase.
+
+    We exploit the structure of the markup: we only ever need one token, since consecutive tokens are never useful.
+    """
+
+    if not phase in ( 'presegmentation', 'segmentation' ):
+        raise ValueError(f"Unknown second argument {phase} in call to extract_markup_token. Must be 'presegmentation' or 'segmentation'")
+
+    marked_up_string = ''.join(chars)
+
+    # Default is no markup material to add.
+    token_string = ''
+    
+    if phase == 'presegmentation':
+        if '<page>' in marked_up_string:
+            # In presegmentation mode, if we have a <page>, then a preceding or following || is possible but irrelevant.
+            token_string = '<page>'
+        elif '||' in marked_up_string:
+            # In presegmentation mode, a || with no <page> cannot meaninfully be combined with other material.
+            token_string = '||'
+    elif phase == 'segmentation':
+        if '|' in marked_up_string:
+            # In segmentation mode, a | cannot meaninfully be combined with other material.
+            token_string = '|'
+
+    return list(token_string)
+
+
+

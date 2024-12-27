@@ -32,6 +32,7 @@ from . import clara_prompt_templates
 from . import clara_chatgpt4
 from . import clara_internalise
 
+from .clara_merge_glossed_and_tagged import merge_annotations_charwise
 from .clara_mwe import find_mwe_positions_for_content_elements, find_mwe_positions_for_content_string_list, check_mwes_are_consistently_annotated
 from .clara_utils import get_config, post_task_update, post_task_update_async, is_list_of_lists_of_strings, find_between_tags
 from .clara_classes import *
@@ -175,6 +176,9 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
                 print(f'presegmented_text0:\n{presegmented_text0}')
                 # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>", but sometimes these don't come out quite right
                 presegmented_text = find_between_tags(presegmented_text0, "text", "text")
+                # Try to correct if we have a mismatch
+                if presegmented_text != text.replace('||', '').replace('<page>', ''):
+                    presegmented_text = merge_annotations_charwise(text, presegmented_text, 'presegmentation')
                 valid_presegmentation_found = True
                 all_api_calls.append(presegment_api_call)
             except ValueError as e:
@@ -691,9 +695,9 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 segmented_text0 = api_call.response
                 # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>", but sometimes these don't come out quite right
                 segmented_text = find_between_tags(segmented_text0, "text", "text")
-                # Do not fail because of a mismatch, but try to correct if we have tries left 
-                if text_to_annotate != segmented_text.replace('|', '') and n_attempts < limit:
-                    raise ChatGPTError( message = f'Segmented text "{segmented_text}" does not match original text "{text_to_annotate}"' )
+                # Try to correct if we have a mismatch 
+                if text_to_annotate != segmented_text.replace('|', ''):
+                    segmented_text = merge_annotations_charwise(text_to_annotate, segmented_text, 'segmentation')
                 return ( segmented_text, api_calls )
             elif processing_phase == 'translated':
                 translation_annotations = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
