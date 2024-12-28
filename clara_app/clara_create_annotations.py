@@ -39,6 +39,7 @@ from .clara_classes import *
 
 import asyncio
 import json
+import re
 import regex
 import difflib
 import traceback
@@ -179,6 +180,7 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
                 # Try to correct if we have a mismatch
                 if presegmented_text != text.replace('||', '').replace('<page>', ''):
                     presegmented_text = merge_annotations_charwise(text, presegmented_text, 'presegmentation')
+                presegmented_text = ensure_segment_break_before_page(presegmented_text)
                 valid_presegmentation_found = True
                 all_api_calls.append(presegment_api_call)
             except ValueError as e:
@@ -194,6 +196,46 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
                                                                                 previous_version='presegmented', config_info=config_info, callback=callback)
     all_api_calls.extend(segmented_api_calls)
     return ( segmented_text, all_api_calls )
+
+def ensure_segment_break_before_page(text: str) -> str:
+    """
+    Insert '||' before <page> whenever <page> is preceded by whitespace
+    that does not already have '||' immediately before it.
+
+    Args:
+        text (str): The input text to process.
+
+    Returns:
+        str: The processed text with '||' inserted appropriately.
+    """
+    # Pattern to match one or more whitespace characters followed by '<page>'
+    pattern = r'([ \t\r\n]+)(<page>)'
+    
+    # Find all matches of the pattern in the text
+    matches = list(re.finditer(pattern, text))
+    
+    # Process matches from end to start to avoid index shifting
+    for match in reversed(matches):
+        start, end = match.span()
+        whitespace = match.group(1)
+        page_tag = match.group(2)
+        
+        # Determine the position just before the whitespace starts
+        preceding_text_end = start
+        preceding_text_start = max(start - 2, 0)  # Ensure we don't go below index 0
+        preceding_text = text[preceding_text_start:preceding_text_end]
+        
+        # Check if '||' is immediately before the whitespace
+        if preceding_text.endswith('||'):
+            # '||' is already present; do nothing
+            continue
+        else:
+            # Insert '||' before the whitespace
+            # This preserves existing whitespace and adds '||' before it
+            insertion = '||' + whitespace
+            text = text[:start] + insertion + page_tag + text[end:]
+    
+    return text
 
 def generate_or_improve_annotated_version(annotate_or_improve, processing_phase, annotated_text, l1_language, l2_language,
                                           previous_version='default', mwe=False,
