@@ -39,6 +39,7 @@ from .clara_chatgpt4 import (
     )
 
 from .clara_coherent_images_utils import (
+    project_params_for_simple_clara,
     get_project_params,
     set_project_params,
     set_story_data_from_numbered_page_list,
@@ -911,6 +912,17 @@ async def execute_community_requests_list(project_dir, requests, callback=None):
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     return total_cost_dict
 
+async def execute_simple_clara_image_requests(project_dir, requests, callback=None):
+    project_params = project_params_for_simple_clara
+    params = get_page_params_from_project_params(project_params)
+    params['project_dir'] = project_dir
+    
+    total_cost_dict = {}
+    for request in requests:
+        cost_dict = await execute_simple_clara_image_request(params, request, callback=callback)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+    return total_cost_dict
+
 async def execute_community_request(params, request, callback=None):
     project_dir = params['project_dir']
     params1 = copy.copy(params)
@@ -937,6 +949,26 @@ async def execute_community_request(params, request, callback=None):
         raise ValueError(f'Unknown request type in {request}')
 
     remove_cm_request(project_dir, request)
+    return cost_dict
+
+async def execute_simple_clara_image_request(params, request, callback=None):
+    project_dir = params['project_dir']
+    params1 = copy.copy(params)
+    
+    request_type = request['request_type']
+    page_number = request['page']
+    if request_type == 'image_with_advice':
+        advice_text = request['advice_text']
+        set_page_advice(advice_text, page_number, params1)
+        params1['pages_to_generate'] = [ page_number ]
+        cost_dict = await process_pages(params1, callback=callback)
+    elif request_type == 'variants_requests':
+        description_index = request['description_index']
+        alternate_image_id = await alternate_image_id_for_description_index(project_dir, page_number, description_index)
+        cost_dict = await create_variant_images_for_page(params1, page_number, alternate_image_id, callback=callback)
+    else:
+        raise ValueError(f'Unknown request type in {request}')
+
     return cost_dict
 
 # -----------------------------------------------

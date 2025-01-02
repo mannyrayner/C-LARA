@@ -128,9 +128,9 @@ class CLARADependencies:
 
             "v2_style_image": [ "segmented", "segmented_title" ],
 
-            "v2_element_images": [ "segmented", "segmented_title", "v2_style_image" ],
+            "v2_element_images": [ "v2_style_image" ],
 
-            "v2_page_images": [ "segmented", "segmented_title", "v2_element_images" ],
+            "v2_page_images": [ "v2_element_images" ],
             
             "phonetic": [ "segmented", "segmented_title" ],
             
@@ -148,11 +148,9 @@ class CLARADependencies:
 
             "acknowledgements": [],
             
-            "render": [ "title", "gloss", "lemma", "pinyin", "images", "v2_page_images", "audio",
-                        "format_preferences", "acknowledgements" ],
+            "render": [ "gloss", "lemma", "v2_page_images" ],
 
-            "render_phonetic": [ "phonetic", "images", "v2_page_images", "audio_phonetic",
-                                 "format_preferences", "acknowledgements" ],
+            "render_phonetic": [ "phonetic", "v2_page_images" ],
             
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
 

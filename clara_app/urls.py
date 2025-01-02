@@ -124,8 +124,15 @@ urlpatterns = [
     path('project/<int:project_id>/simple_clara_review_v2_images_for_page/<int:page_number>/<str:status>/', views.simple_clara_review_v2_images_for_page,
          name='simple_clara_review_v2_images_for_page'),
 
-    path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', views.execute_community_requests_for_page_monitor, name='execute_community_requests_for_page_monitor'),
-    path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', views.execute_community_requests_for_page_status, name='execute_community_requests_for_page_status'),
+    path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', views.execute_community_requests_for_page_monitor,
+         name='execute_community_requests_for_page_monitor'),
+    path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', views.execute_community_requests_for_page_status,
+         name='execute_community_requests_for_page_status'),
+
+    path('project/<int:project_id>/execute_simple_clara_image_requests_monitor/<str:report_id>/<int:page_number>/', views.execute_simple_clara_image_requests_monitor,
+         name='execute_simple_clara_image_requests_monitor'),
+    path('project/<int:project_id>/execute_simple_clara_image_requests_status/<str:report_id>/', views.execute_simple_clara_image_requests_status,
+         name='execute_simple_clara_image_requests_status'),
     
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
     path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 

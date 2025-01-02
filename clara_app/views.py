@@ -2293,9 +2293,13 @@ def simple_clara(request, project_id, last_operation_status):
                 elif action == 'regenerate_image':
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
-                elif action == 'create_v2_images':
+                elif action == 'create_v2_style':
                     style_advice = form.cleaned_data['style_advice']
-                    simple_clara_action = { 'action': 'create_v2_images', 'style_advice': style_advice, 'up_to_date_dict': up_to_date_dict }
+                    simple_clara_action = { 'action': 'create_v2_style', 'style_advice': style_advice, 'up_to_date_dict': up_to_date_dict }
+                elif action == 'create_v2_elements':
+                    simple_clara_action = { 'action': 'create_v2_elements', 'up_to_date_dict': up_to_date_dict }
+                elif action == 'create_v2_pages':
+                    simple_clara_action = { 'action': 'create_v2_pages', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'create_segmented_text':
                     simple_clara_action = { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'save_preferred_tts_engine':
@@ -2341,7 +2345,8 @@ def simple_clara(request, project_id, last_operation_status):
     
     clara_version = get_user_config(request.user)['clara_version']
 
-    pprint.pprint(resources['v2_images_dict'])
+##    if 'v2_images_dict' in resources:
+##        pprint.pprint(resources['v2_images_dict'])
     
     return render(request, 'clara_app/simple_clara.html', {
         'project_id': project_id,
@@ -2410,9 +2415,15 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'create_segmented_text':
             # simple_clara_action should be of form { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
-        elif action_type == 'create_v2_images':
-            #simple_clara_action should be of the form { 'action': 'create_v2_images', 'style_advice':style_advice, 'up_to_date_dict': up_to_date_dict }
-            result = simple_clara_create_v2_images_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_v2_style':
+            #simple_clara_action should be of the form { 'action': 'create_v2_style', 'style_advice':style_advice, 'up_to_date_dict': up_to_date_dict }
+            result = simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_v2_elements':
+            #simple_clara_action should be of the form { 'action': 'create_v2_elements', 'up_to_date_dict': up_to_date_dict }
+            result = simple_clara_create_v2_elements_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_v2_pages':
+            #simple_clara_action should be of the form { 'action': 'create_v2_pages', 'up_to_date_dict': up_to_date_dict }
+            result = simple_clara_create_v2_pages_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'save_preferred_tts_engine':
             # simple_clara_action should be of form { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
             result = simple_clara_save_preferred_tts_engine_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2803,7 +2814,7 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
         return { 'status': 'error',
                  'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
-def simple_clara_create_v2_images_helper(username, project_id, simple_clara_action, callback=None):
+def simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=None):
     style_advice = simple_clara_action['style_advice']
     up_to_date_dict = simple_clara_action['up_to_date_dict']
     
@@ -2824,6 +2835,17 @@ def simple_clara_create_v2_images_helper(username, project_id, simple_clara_acti
         store_cost_dict(style_cost_dict, project, project.user)
         post_task_update(callback, f"ENDED TASK: create image style information")
 
+    return { 'status': 'finished',
+             'message': 'Created the images' }
+
+def simple_clara_create_v2_elements_helper(username, project_id, simple_clara_action, callback=None):
+    up_to_date_dict = simple_clara_action['up_to_date_dict']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+
     # Create the elements
     if not up_to_date_dict['v2_element_images']:
         elements_params = get_element_descriptions_params_from_project_params(params)
@@ -2836,6 +2858,17 @@ def simple_clara_create_v2_images_helper(username, project_id, simple_clara_acti
         element_descriptions_cost_dict = clara_project_internal.create_element_descriptions_and_images_v2(elements_params, callback=callback)
         store_cost_dict(element_descriptions_cost_dict, project, project.user)
         post_task_update(callback, f"ENDED TASK: create element descriptions and images")
+
+    return { 'status': 'finished',
+             'message': 'Created the images' }
+
+def simple_clara_create_v2_pages_helper(username, project_id, simple_clara_action, callback=None):
+    up_to_date_dict = simple_clara_action['up_to_date_dict']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    params = clara_project_internal.get_v2_project_params_for_simple_clara()
 
     # Create the page images
     if not up_to_date_dict['v2_page_images']:
@@ -5945,20 +5978,27 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
             if action in ( 'variants_requests', 'images_with_advice' ):
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
-                    return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co, status='none')
+                    return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, status='none')
 
                 if action == 'variants_requests':
-                    requests = create_variants_requests(project_dir, page_number, description_index)
-                elif action == 'create_images_with_advice':
+                    requests = [ { 'request_type': 'variants_requests',
+                                   'page': page_number,
+                                   'description_index': description_index } ]
+                elif action == 'images_with_advice':
                     advice_text = request.POST.get('advice_text', '').strip()
                     if advice_text:
-                        requests = create_advice_requests(page_number, advice_text)
+                        requests = [ { 'request_type': 'image_with_advice',
+                                       'page': page_number,
+                                       'advice_text': advice_text } ]
+                else:
+                    messages.error(request, f"Unknown request type '{action}'")
+                    return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, status='none')
 
                 callback, report_id = make_asynch_callback_and_report_id(request, 'execute_image_requests')
 
-                async_task(execute_community_requests, project, clara_project_internal, requests, callback=callback)
+                async_task(execute_simple_clara_image_requests, project, clara_project_internal, requests, callback=callback)
 
-                return redirect('execute_community_requests_for_page_monitor', project_id, report_id, page_number)
+                return redirect('execute_simple_clara_image_requests_monitor', project_id, report_id, page_number)
                 
             elif action == 'vote':
                 vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
@@ -6020,9 +6060,33 @@ def execute_community_requests(project, clara_project_internal, requests, callba
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
 
+def execute_simple_clara_image_requests(project, clara_project_internal, requests, callback=None):
+    try:
+        cost_dict = clara_project_internal.execute_simple_clara_image_requests_v2(requests, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        post_task_update(callback, f'--- Executed community requests')
+        post_task_update(callback, f"finished")
+
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
 @login_required
 @user_has_a_project_role
 def execute_community_requests_for_page_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_has_a_project_role
+def execute_simple_clara_image_requests_status(request, project_id, report_id):
     messages = get_task_updates(report_id)
     print(f'{len(messages)} messages received')
     if 'error' in messages:
@@ -6039,6 +6103,14 @@ def execute_community_requests_for_page_monitor(request, project_id, report_id, 
     project = get_object_or_404(CLARAProject, pk=project_id)
     
     return render(request, 'clara_app/execute_community_requests_for_page_monitor.html',
+                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'page_number': page_number})
+
+@login_required
+@user_has_a_project_role
+def execute_simple_clara_image_requests_monitor(request, project_id, report_id, page_number):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    
+    return render(request, 'clara_app/execute_simple_clara_image_requests_monitor.html',
                   {'project_id': project_id, 'project': project, 'report_id': report_id, 'page_number': page_number})
 
 # Async function

@@ -160,7 +160,8 @@ from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
-from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page, execute_community_requests_list
+from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page
+from .clara_coherent_images import execute_community_requests_list, execute_simple_clara_image_requests
 from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
 from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image
@@ -592,8 +593,8 @@ class CLARAProjectInternal:
         if text_title != '':
             # We need to put segment breaks around the text_title to get the right interaction with segment audio
             # and if the main text doesn't start with a <page> tag we need to add one.
-            separating_page_tag = '' if segmented_with_images_text.startswith('<page') else '<page>'
-            segmented_with_title_text = f'<h1>||{text_title}||</h1><page>{separating_page_tag}\n' + segmented_text
+            separating_page_tag = '' if segmented_text.startswith('<page') else '<page>'
+            segmented_with_title_text = f'<h1>||{text_title}||</h1>{separating_page_tag}\n' + segmented_text
         else:
             segmented_with_title_text = segmented_text
         return segmented_with_title_text
@@ -1862,6 +1863,10 @@ class CLARAProjectInternal:
         cost_dict = asyncio.run(execute_community_requests_list(project_dir, requests, callback=callback))
         return cost_dict
 
+    def execute_simple_clara_image_requests_v2(self, requests, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        cost_dict = asyncio.run(execute_simple_clara_image_requests(project_dir, requests, callback=callback))
+        return cost_dict
 
     # Render the text as an optionally self-contained directory of HTML pages
     # "Self-contained" means that it includes all the multimedia files referenced.
