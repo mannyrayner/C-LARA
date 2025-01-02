@@ -65,10 +65,12 @@
 	     <button type="submit" name="action" value="save_text_to_annotate">Save Text</button></p>
 	{% endif %}
 	
-	{% if status != 'No project' and status != 'No prompt' and status != 'No image prompt' and status != 'No text' %}
+	{% if up_to_date_dict.title and not up_to_date_dict.segmented_title %}
 	  <h3>Generated text title</h3>
 	  <p>{{ form.text_title }}
 	     <button type="submit" name="action" value="save_text_title">Save Edited Text Title</button></p>
+	{% endif %}
+	{% if up_to_date_dict.plain and not up_to_date_dict.segmented %}
 	  <h3>Generated text</h3>
 	  <p>{{ form.plain_text }}
 	     <button type="submit" name="action" value="save_text">Save Edited Text</button>
@@ -77,6 +79,10 @@
 		 {% endif %}
 	  <br>
     {% endif %}
+	
+	{% if not up_to_date_dict.segmented and up_to_date_dict.plain %}
+		<p><button type="submit" name="action" value="create_segmented_text">Create Segmented Text</button></p>
+	{% endif %}
 	
 	{% if simple_clara_type != 'create_text_from_image' and simple_clara_type != 'create_text_and_multiple_images' %}
 		{% if status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Posted' %}
@@ -95,7 +101,7 @@
 		{% endif %}
 	{% endif %}
   
-    {% if form.segmented_text.value %}
+    {% if up_to_date_dict.segmented %}
 	    <h3>Segmented title</h3>
 		<p>{{ form.segmented_title }}
 	    <button type="submit" name="action" value="save_segmented_title">Save Edited Segmented Title</button></p>
@@ -105,15 +111,24 @@
 	    <button type="submit" name="action" value="save_segmented_text">Save Edited Segmented Text</button></p>
 		<br>	  
 	  {% if simple_clara_type == 'create_text_and_multiple_images' %}
-	    <h3>Style</h3>
-		<p>Briefly describe the style you want to use for the images.</p>
-		<p>{{ form.style_advice }}
-		<button type="submit" name="action" value="create_v2_images">Create Images</button></p>
+	    <h3>Image Style</h3>
+		{% if not up_to_date_dict.v2_style_image %}
+			<p>Briefly describe the style you want to use for the images.</p>
+			<p>{{ form.style_advice }}
+			<button type="submit" name="action" value="create_v2_style">Generate Style</button></p>
+		{% endif %}
 		{% if up_to_date_dict.v2_style_image %}
 			<p><img src="{% url 'serve_coherent_images_v2_file' project_id resources.v2_images_dict.style.relative_file_path %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">)</p>
+			<p>Briefly describe the style you want to use for the images.</p>
+			<p>{{ form.style_advice }}
+			<button type="submit" name="action" value="create_v2_style">Regenerate Style</button></p>
+		{% endif %}
+		{% if up_to_date_dict.v2_style_image and not up_to_date_dict.v2_element_images %}
+			<h3>Image Elements</h3>
+			<button type="submit" name="action" value="create_v2_elements">Generate Image Elements</button></p>
 		{% endif %}
 		{% if up_to_date_dict.v2_element_images %}
-			<h3>Elements</h3>
+			<h3>Image Elements</h3>
 			<table class="table">
 			  <thead>
 				<tr>
@@ -137,65 +152,69 @@
 			  </tbody>
 			</table>
 		{% endif %}
+		{% if up_to_date_dict.v2_element_images and not up_to_date_dict.v2_page_images %}
+			<h3>Page Images</h3>
+			<p><button type="submit" name="action" value="create_v2_pages">Generate Page Images</button></p>
+		{% endif %}
 		{% if up_to_date_dict.v2_page_images %}
+			<h3>Page Images</h3>
 			<table class="table">
-			<thead>
-				<tr>
-					<th>Page Number</th>
-					<th>Text</th>
-					<th>Image</th>
-					<th>Links</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for page in resources.v2_pages_overview_info %}
-				<tr>
-					<td>{{ page.page_number }}</td>
-					<td><pre>{{ page.excerpt }}<br>{{ page.original_text_excerpt }}</pre></td>
-					<td>
-						{% if page.relative_page_image_path %}
-							<img src="{% url 'serve_coherent_images_v2_file' project_id page.relative_page_image_path %}" alt="Page {{ page.page_number }} image" style="max-width:100px; max-height:100px;">
-						{% else %}
-							<em>No image</em>
-						{% endif %}
-					<td>
-						<a href="{% url 'simple_clara_review_v2_images_for_page' project_id page.page_number 'init' %}">Review this Page</a>
-					</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
+				<thead>
+					<tr>
+						<th>Page Number</th>
+						<th>Text</th>
+						<th>Image</th>
+						<th>Links</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for page in resources.v2_pages_overview_info %}
+					<tr>
+						<td>{{ page.page_number }}</td>
+						<td><pre>{{ page.excerpt }}<br>{{ page.original_text_excerpt }}</pre></td>
+						<td>
+							{% if page.relative_page_image_path %}
+								<img src="{% url 'serve_coherent_images_v2_file' project_id page.relative_page_image_path %}" alt="Page {{ page.page_number }} image" style="max-width:100px; max-height:100px;">
+							{% else %}
+								<em>No image</em>
+							{% endif %}
+						</td>
+						<td>
+							<a href="{% url 'simple_clara_review_v2_images_for_page' project_id page.page_number 'init' %}">Review this Page</a>
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
 		{% endif %}
 	  {% endif %}
-	  <h3>Multimedia text</h3>
-	  {% if status != 'No image' and status != 'No multimedia' and status != 'No segmented text' %}
-	    <p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Multimedia Text</a></p>
-	  {% endif %}
-	  {% if status == 'No segmented text' %}
-        <button type="submit" name="action" value="create_segmented_text">Generate Segmented Text</button>
-	  {% elif status == 'No image' or status == 'No multimedia' %}
-	    <p>{{ form.preferred_tts_engine }}
+	{% endif %}
+	{% if up_to_date_dict.segmented and up_to_date_dict.segmented_title %}
+		<h3>Multimedia text</h3>
+		{% if up_to_date_dict.render %}
+			<p><a href="{% url 'serve_rendered_text' project_id 'normal' 'page_1.html' %}" target="_blank">View Multimedia Text</a></p>
+		{% endif %}
+		<p>{{ form.preferred_tts_engine }}
 		<button type="submit" name="action" value="save_preferred_tts_engine">Save preferred TTS engine</button></p>
-        <p><button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button></p>
-	  {% else %}
-	    <p>{{ form.preferred_tts_engine }}
-		<button type="submit" name="action" value="save_preferred_tts_engine">Save preferred TTS engine</button></p>
-        <p><button type="submit" name="action" value="create_rendered_text">Regenerate Multimedia Text</button><p>
-	  {% endif %}
-    {% endif %}
-	
-	{% if status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
-	  <h3>C-LARA Social Network</h3>
-	  {% if status == 'Everything available' or status == 'Everything available except image' %}
-        <button type="submit" name="action" value="post_rendered_text">Post to Social Network</button>
-	  {% else %}
-	    <p><a href="{{ content.get_absolute_url }}" target="_blank">View Social Network Page</a></p>
-	  {% endif %}
-	  <br>
-	  <h3>Satisfaction questionnaire</h3>
-	  <p><a href="{% url 'satisfaction_questionnaire' project_id %}" target="_blank">Go to Questionnaire</a></p>
-    {% endif %}
-  </form>
+		{% if not up_to_date_dict.render %}
+			<p><button type="submit" name="action" value="create_rendered_text">Generate Multimedia Text</button></p>
+		{% else %}
+			<p><button type="submit" name="action" value="create_rendered_text">Regenerate Multimedia Text</button><p>
+		{% endif %}
+
+		{% if up_to_date_dict.render %}
+			<h3>C-LARA Social Network</h3>
+			{% if not up_to_date_dict.social_network %}
+				<button type="submit" name="action" value="post_rendered_text">Post to Social Network</button>
+			{% else %}
+				<p><a href="{{ content.get_absolute_url }}" target="_blank">View Social Network Page</a></p>
+			{% endif %}
+			<br>
+			<h3>Satisfaction questionnaire</h3>
+			<p><a href="{% url 'satisfaction_questionnaire' project_id %}" target="_blank">Go to Questionnaire</a></p>
+		{% endif %}
+	{% endif %}
+	  
   {% if status != 'No project' %}
     <br>
     <p><a href="{% url 'project_detail' project_id %}"><strong>[View project in full C-LARA]</strong></a></p>
