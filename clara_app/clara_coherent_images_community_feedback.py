@@ -6,7 +6,90 @@ from pathlib import Path
 from datetime import datetime
 
 from .clara_coherent_images_alternate import get_alternate_images_json
-from .clara_coherent_images_utils import score_for_image_dir, get_pages
+from .clara_coherent_images_utils import score_for_image_dir, get_pages, project_pathname, read_project_json_file
+from .clara_utils import file_exists
+
+def get_page_overview_info_for_cm_reviewing(project_dir):
+    # Load story data
+    story_data = read_project_json_file(project_dir, 'story.json')
+    pages_info = []
+
+    if story_data:
+        for page in story_data:
+            page_number = page['page_number']
+            page_text = page.get('text', '').strip()
+            original_page_text = page.get('original_page_text', '').strip()
+
+            # Take a short excerpt of page_text for display
+            excerpt_length = 100
+            excerpt = (page_text[:excerpt_length] + '...') if len(page_text) > excerpt_length else page_text
+            original_text_excerpt = (original_page_text[:excerpt_length] + '...') if len(original_page_text) > excerpt_length else original_page_text
+
+            # Make sure the preferred image is up to date
+##            content_dir = project_pathname(project_dir, f'pages/page{page_number}')
+##            preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
+##            if preferred_image_id is not None:
+##                clara_project_internal.promote_v2_page_image(page_number, preferred_image_id)
+
+            # Try to find a main image for the page
+            relative_page_image_path = f'pages/page{page_number}/image.jpg'
+            page_image_path = project_pathname(project_dir, relative_page_image_path)
+            page_image_exists = file_exists(page_image_path)
+
+            requests_for_page = get_all_cm_requests_for_page(project_dir, page_number)
+            requests_exist_for_page = ( len([ request for request in requests_for_page if request['status'] == 'submitted' ]) != 0 )
+
+            pages_info.append({
+                'page_number': page_number,
+                'excerpt': excerpt,
+                'original_text_excerpt': original_text_excerpt,
+                'relative_page_image_path': ( relative_page_image_path if page_image_exists else None ),
+                'requests_exist_for_page': requests_exist_for_page,
+            })
+    else:
+        # No story data means no pages
+        pass
+
+    return pages_info
+
+def get_page_description_info_for_cm_reviewing(cm_or_co, alternate_images, page_number, project_dir):
+    content_dir = project_pathname(project_dir, f"pages/page{page_number}")
+
+    preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
+
+    # Group images by description_index
+    images_by_description = {}
+    for img in alternate_images:
+        d_idx = img['description_index']
+        if d_idx not in images_by_description:
+            images_by_description[d_idx] = []
+        images_by_description[d_idx].append(img)
+
+    # For each description, get variants requests, and votes
+    descriptions_info = {}
+    for d_idx, imgs in images_by_description.items():
+        desc_info = get_cm_description_info(project_dir, page_number, d_idx)
+        # If we're in the CO view, we show the hidden images with a red border
+        non_hidden_imgs = [ img for img in imgs if not img['hidden'] ] if cm_or_co == 'cm' else imgs
+        if non_hidden_imgs:
+            for img_info in non_hidden_imgs:
+                i_idx = img_info['image_index']
+                img_feedback = get_cm_image_info(project_dir, page_number, d_idx, i_idx)
+                img_info['votes'] = img_feedback['votes']
+                upvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'upvote')
+                downvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'downvote')
+                img_info['upvotes_count'] = upvotes
+                img_info['downvotes_count'] = downvotes
+
+                # Determine if this is the preferred image
+                img_info['preferred'] = img_info['id'] == preferred_image_id
+                
+            descriptions_info[d_idx] = {
+                'variants_requests': desc_info['variants_requests'],
+                'images': non_hidden_imgs
+            }
+            
+    return descriptions_info, preferred_image_id
 
 def community_feedback_path(project_dir, page):
     return os.path.join(project_dir, "pages", f"page{page}", "community_feedback.json")

@@ -82,7 +82,8 @@ from .clara_coherent_images_alternate import get_alternate_images_json, set_alte
 
 from .clara_coherent_images_community_feedback import (load_community_feedback, save_community_feedback,
                                                        register_cm_image_vote, register_cm_image_variants_request,
-                                                       register_cm_page_advice, get_cm_page_advice, get_cm_image_info, get_cm_description_info,
+                                                       register_cm_page_advice,  get_cm_page_advice,
+                                                       get_page_overview_info_for_cm_reviewing, get_page_description_info_for_cm_reviewing,
                                                        update_ai_votes_in_feedback, determine_preferred_image,
                                                        get_all_cm_requests_for_page, set_cm_request_status,
                                                        get_all_cm_requests)
@@ -2075,8 +2076,9 @@ def get_simple_clara_resources_helper(project_id, user):
         resources_available['internal_title'] = clara_project_internal.id
         resources_available['up_to_date_dict'] = up_to_date_dict
 
-        # In the create_text_and_image version, we start with a prompt and create a plain_text and image
-        if project.simple_clara_type == 'create_text_and_image':
+        # In the create_text_and_image and create_text_and_multiple_images versions, we start with a prompt and create a plain_text
+        # In the create_text_and_image version we also create an image at once
+        if project.simple_clara_type in ( 'create_text_and_image', 'create_text_and_multiple_images' ):
             if not clara_project_internal.text_versions['prompt']:
                 # We have a project, but no prompt
                 resources_available['status'] = 'No prompt'
@@ -2097,7 +2099,15 @@ def get_simple_clara_resources_helper(project_id, user):
                 resources_available['image_basename'] = basename(image.image_file_path) if image.image_file_path else None
 
             # For uploaded image, in case we want to use one
-            resources_available['image_file_path'] = None
+            if project.simple_clara_type == 'create_text_and_image':
+                resources_available['image_file_path'] = None
+
+        # In the create_text_and_multiple_images, we are creating the images using the V2 infrastructure
+        if project.simple_clara_type == 'create_text_and_multiple_images':
+            resources_available['style_advice'] = clara_project_internal.get_style_advice_v2()
+            resources_available['v2_images_dict'] = clara_project_internal.get_project_images_dict_v2()
+            if resources_available['v2_images_dict']['pages']:
+                resources_available['v2_pages_overview_info'] = clara_project_internal.get_page_overview_info_for_cm_reviewing()
 
         # In the create_text_from_image version, we start with an image and possibly a prompt and create a plain_text
         elif project.simple_clara_type == 'create_text_from_image':
@@ -2232,6 +2242,9 @@ def simple_clara(request, project_id, last_operation_status):
                 elif action == 'change_title':
                     title = form.cleaned_data['title']
                     simple_clara_action = { 'action': 'change_title', 'title': title }
+                elif action == 'create_text':
+                    prompt = form.cleaned_data['prompt']
+                    simple_clara_action = { 'action': 'create_text', 'prompt': prompt }
                 elif action == 'create_text_and_image':
                     prompt = form.cleaned_data['prompt']
                     simple_clara_action = { 'action': 'create_text_and_image', 'prompt': prompt }
@@ -2280,6 +2293,9 @@ def simple_clara(request, project_id, last_operation_status):
                 elif action == 'regenerate_image':
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
+                elif action == 'create_v2_images':
+                    style_advice = form.cleaned_data['style_advice']
+                    simple_clara_action = { 'action': 'create_v2_images', 'style_advice': style_advice, 'up_to_date_dict': up_to_date_dict }
                 elif action == 'create_segmented_text':
                     simple_clara_action = { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'save_preferred_tts_engine':
@@ -2324,10 +2340,14 @@ def simple_clara(request, project_id, last_operation_status):
                         return redirect('simple_clara_monitor', project_id, report_id)
     
     clara_version = get_user_config(request.user)['clara_version']
+
+    pprint.pprint(resources['v2_images_dict'])
     
     return render(request, 'clara_app/simple_clara.html', {
         'project_id': project_id,
         'form': form,
+        'resources': resources,
+        'up_to_date_dict': up_to_date_dict,
         'content': content,
         'status': status,
         'simple_clara_type': simple_clara_type,
@@ -2351,6 +2371,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'change_title':
             # simple_clara_action should be of form { 'action': 'create_project', 'l2': text_language, 'l1': annotation_language, 'title': title }
             result = simple_clara_change_title_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_text':
+            # simple_clara_action should be of form { 'action': 'create_text', 'prompt': prompt }
+            result = simple_clara_create_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_text_and_image':
             # simple_clara_action should be of form { 'action': 'create_text_and_image', 'prompt': prompt }
             result = simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2387,6 +2410,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'create_segmented_text':
             # simple_clara_action should be of form { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'create_v2_images':
+            #simple_clara_action should be of the form { 'action': 'create_v2_images', 'style_advice':style_advice, 'up_to_date_dict': up_to_date_dict }
+            result = simple_clara_create_v2_images_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'save_preferred_tts_engine':
             # simple_clara_action should be of form { 'action': 'save_preferred_tts_engine', 'preferred_tts_engine': preferred_tts_engine }
             result = simple_clara_save_preferred_tts_engine_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2446,7 +2472,8 @@ def simple_clara_create_project_helper(username, simple_clara_action, callback=N
     simple_clara_type = simple_clara_action['simple_clara_type']
     # Create a new project in Django's database, associated with the current user
     user = User.objects.get(username=username)
-    clara_project = CLARAProject(title=title, user=user, l2=l2_language, l1=l1_language)
+    uses_coherent_image_set_v2 = ( simple_clara_type == 'create_text_and_multiple_images' )
+    clara_project = CLARAProject(title=title, user=user, l2=l2_language, l1=l1_language, uses_coherent_image_set_v2=uses_coherent_image_set_v2)
     clara_project.save()
     internal_id = create_internal_project_id(title, clara_project.id)
     # Update the Django project with the internal_id and simple_clara_type
@@ -2471,6 +2498,31 @@ def simple_clara_change_title_helper(username, project_id, simple_clara_action, 
     return { 'status': 'finished',
              'message': 'Title updated',
              'project_id': project_id }
+
+def simple_clara_create_text_helper(username, project_id, simple_clara_action, callback=None):
+    prompt = simple_clara_action['prompt']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    title = project.title
+    user = project.user
+    config_info = get_user_config(user)
+
+    # Create the text
+    post_task_update(callback, f"STARTED TASK: create plain text")
+    api_calls = clara_project_internal.create_plain_text(prompt=prompt, user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'plain')
+    post_task_update(callback, f"ENDED TASK: create plain text")
+
+    # Create the title
+    post_task_update(callback, f"STARTED TASK: create text title")
+    api_calls = clara_project_internal.create_title(user=username, config_info=config_info, callback=callback)
+    store_api_calls(api_calls, project, user, 'text_title')
+    post_task_update(callback, f"ENDED TASK: create text title")
+
+    return { 'status': 'finished',
+             'message': 'Created text and title.' }
 
 def simple_clara_create_text_and_image_helper(username, project_id, simple_clara_action, callback=None):
     prompt = simple_clara_action['prompt']
@@ -2750,6 +2802,51 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
     else:
         return { 'status': 'error',
                  'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
+
+def simple_clara_create_v2_images_helper(username, project_id, simple_clara_action, callback=None):
+    style_advice = simple_clara_action['style_advice']
+    up_to_date_dict = simple_clara_action['up_to_date_dict']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+    
+    numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
+    clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
+
+    # Create the style
+    if not up_to_date_dict['v2_style_image']:
+        post_task_update(callback, f"STARTED TASK: create image style information")
+        clara_project_internal.set_style_advice_v2(style_advice)
+        style_params = get_style_params_from_project_params(params)
+        style_cost_dict = clara_project_internal.create_style_description_and_image_v2(style_params, callback=callback)
+        store_cost_dict(style_cost_dict, project, project.user)
+        post_task_update(callback, f"ENDED TASK: create image style information")
+
+    # Create the elements
+    if not up_to_date_dict['v2_element_images']:
+        elements_params = get_element_descriptions_params_from_project_params(params)
+        post_task_update(callback, f"STARTED TASK: create element names")
+        element_names_cost_dict = clara_project_internal.create_element_names_v2(elements_params, callback=callback)
+        store_cost_dict(element_names_cost_dict, project, project.user)
+        post_task_update(callback, f"ENDED TASK: create element names")
+    
+        post_task_update(callback, f"STARTED TASK: create element descriptions and images")
+        element_descriptions_cost_dict = clara_project_internal.create_element_descriptions_and_images_v2(elements_params, callback=callback)
+        store_cost_dict(element_descriptions_cost_dict, project, project.user)
+        post_task_update(callback, f"ENDED TASK: create element descriptions and images")
+
+    # Create the page images
+    if not up_to_date_dict['v2_page_images']:
+        post_task_update(callback, f"STARTED TASK: create page images")
+        page_params = get_page_params_from_project_params(params)
+        pages_cost_dict = clara_project_internal.create_page_descriptions_and_images_v2(page_params, callback=callback)
+        store_cost_dict(pages_cost_dict, project, project.user)
+        post_task_update(callback, f"ENDED TASK: create page images")
+
+    return { 'status': 'finished',
+             'message': 'Created the images' }  
 
 def simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=None):
     project = get_object_or_404(CLARAProject, pk=project_id)
@@ -5652,45 +5749,7 @@ def community_review_images_cm_or_co(request, project_id, cm_or_co):
     clara_version = get_user_config(request.user)['clara_version']
     project_dir = clara_project_internal.coherent_images_v2_project_dir
 
-    # Load story data
-    story_data = read_project_json_file(project_dir, 'story.json')
-    pages_info = []
-
-    if story_data:
-        for page in story_data:
-            page_number = page['page_number']
-            page_text = page.get('text', '').strip()
-            original_page_text = page.get('original_page_text', '').strip()
-
-            # Take a short excerpt of page_text for display
-            excerpt_length = 100
-            excerpt = (page_text[:excerpt_length] + '...') if len(page_text) > excerpt_length else page_text
-            original_text_excerpt = (original_page_text[:excerpt_length] + '...') if len(original_page_text) > excerpt_length else original_page_text
-
-            # Make sure the preferred image is up to date
-            content_dir = project_pathname(project_dir, f'pages/page{page_number}')
-            preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
-            if preferred_image_id is not None:
-                clara_project_internal.promote_v2_page_image(page_number, preferred_image_id)
-
-            # Try to find a main image for the page
-            relative_page_image_path = f'pages/page{page_number}/image.jpg'
-            page_image_path = project_pathname(project_dir, relative_page_image_path)
-            page_image_exists = file_exists(page_image_path)
-
-            requests_for_page = get_all_cm_requests_for_page(project_dir, page_number)
-            requests_exist_for_page = ( len([ request for request in requests_for_page if request['status'] == 'submitted' ]) != 0 )
-
-            pages_info.append({
-                'page_number': page_number,
-                'excerpt': excerpt,
-                'original_text_excerpt': original_text_excerpt,
-                'relative_page_image_path': ( relative_page_image_path if page_image_exists else None ),
-                'requests_exist_for_page': requests_exist_for_page,
-            })
-    else:
-        # No story data means no pages
-        pass
+    pages_info = get_page_overview_info_for_cm_reviewing(project_dir)
 
     #pprint.pprint(pages_info)
 
@@ -5808,53 +5867,19 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co,
                 if advice_text.strip():
                     register_cm_page_advice(project_dir, page_number, advice_text.strip(), userid)
 
-            # Recalculate and promote the preferred image
-            preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
-            if preferred_image_id is not None:
-                clara_project_internal.promote_v2_page_image(page_number, preferred_image_id)
-
         except Exception as e:
             messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
 
         return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co, status='none')
 
+    # GET
     advice = get_cm_page_advice(project_dir, page_number)
 
-    preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
+    descriptions_info, preferred_image_id = get_page_description_info_for_cm_reviewing(cm_or_co, alternate_images, page_number, project_dir)
+
+    # In case the preferred image has changed from last time promote it
     if preferred_image_id is not None:
         clara_project_internal.promote_v2_page_image(page_number, preferred_image_id)
-
-    # Group images by description_index
-    images_by_description = {}
-    for img in alternate_images:
-        d_idx = img['description_index']
-        if d_idx not in images_by_description:
-            images_by_description[d_idx] = []
-        images_by_description[d_idx].append(img)
-
-    # For each description, get variants requests, and votes
-    descriptions_info = {}
-    for d_idx, imgs in images_by_description.items():
-        desc_info = get_cm_description_info(project_dir, page_number, d_idx)
-        # If we're in the CO view, we show the hidden images with a red border
-        non_hidden_imgs = [ img for img in imgs if not img['hidden'] ] if cm_or_co == 'cm' else imgs
-        if non_hidden_imgs:
-            for img_info in non_hidden_imgs:
-                i_idx = img_info['image_index']
-                img_feedback = get_cm_image_info(project_dir, page_number, d_idx, i_idx)
-                img_info['votes'] = img_feedback['votes']
-                upvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'upvote')
-                downvotes = sum(1 for v in img_feedback['votes'] if v['vote_type'] == 'downvote')
-                img_info['upvotes_count'] = upvotes
-                img_info['downvotes_count'] = downvotes
-
-                # Determine if this is the preferred image
-                img_info['preferred'] = img_info['id'] == preferred_image_id
-                
-            descriptions_info[d_idx] = {
-                'variants_requests': desc_info['variants_requests'],
-                'images': non_hidden_imgs
-            }
 
     # If 'status' is something we got after returning from an async call, display a suitable message
     if status == 'finished':
@@ -5876,6 +5901,112 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co,
     #pprint.pprint(rendering_parameters)
 
     return render(request, 'clara_app/community_review_images_for_page.html', rendering_parameters)
+
+@login_required
+def simple_clara_review_v2_images_for_page(request, project_id, page_number, status):
+    user = request.user
+    can_use_ai = user_has_open_ai_key_or_credit(user)
+    config_info = get_user_config(user)
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    project_dir = clara_project_internal.coherent_images_v2_project_dir
+    
+    story_data = read_project_json_file(project_dir, 'story.json')
+    page = story_data[page_number - 1]
+    page_text = page.get('text', '').strip()
+    original_page_text = page.get('original_page_text', '').strip()
+
+    # Update AI votes
+    try:
+        update_ai_votes_in_feedback(project_dir, page_number)
+    except Exception as e:
+        messages.error(request, f"Error updating AI votes: {e}")
+
+    # Load alternate images
+    content_dir = project_pathname(project_dir, f"pages/page{page_number}")
+    alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
+
+    # Process form submissions
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        description_index = request.POST.get('description_index', '')
+        image_index = request.POST.get('image_index', '')
+        userid = request.user.username
+
+        if description_index is not None and description_index != '':
+            description_index = int(description_index)
+        if image_index is not None and image_index != '':
+            image_index = int(image_index)
+        else:
+            image_index = None
+
+        try:
+            #print(f'action = {action}')
+            if action in ( 'variants_requests', 'images_with_advice' ):
+                if not can_use_ai:
+                    messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('community_review_images_for_page', project_id=project_id, page_number=page_number, cm_or_co=cm_or_co, status='none')
+
+                if action == 'variants_requests':
+                    requests = create_variants_requests(project_dir, page_number, description_index)
+                elif action == 'create_images_with_advice':
+                    advice_text = request.POST.get('advice_text', '').strip()
+                    if advice_text:
+                        requests = create_advice_requests(page_number, advice_text)
+
+                callback, report_id = make_asynch_callback_and_report_id(request, 'execute_image_requests')
+
+                async_task(execute_community_requests, project, clara_project_internal, requests, callback=callback)
+
+                return redirect('execute_community_requests_for_page_monitor', project_id, report_id, page_number)
+                
+            elif action == 'vote':
+                vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
+                if vote_type in ['upvote', 'downvote'] and image_index is not None:
+                    register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid)
+
+            elif action == 'upload_image':
+                # The user is uploading a new image
+                if 'uploaded_image_file_path' in request.FILES:
+                    # Convert the in-memory file object to a local file path
+                    uploaded_file_obj = request.FILES['uploaded_image_file_path']
+                    real_image_file_path = uploaded_file_to_file(uploaded_file_obj)
+
+                    clara_project_internal.add_uploaded_page_image_v2(real_image_file_path, page_number)
+                    messages.success(request, "Your image was uploaded.")
+                else:
+                    messages.error(request, "No file found for the upload_image action.")
+
+        except Exception as e:
+            messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
+
+        return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, status='none')
+
+    # GET
+
+    descriptions_info, preferred_image_id = get_page_description_info_for_cm_reviewing('simple_clara', alternate_images, page_number, project_dir)
+
+    # In case the preferred image has changed from last time promote it
+    if preferred_image_id is not None:
+        clara_project_internal.promote_v2_page_image(page_number, preferred_image_id)
+
+    # If 'status' is something we got after returning from an async call, display a suitable message
+    if status == 'finished':
+        messages.success(request, "Image task successfully completed")
+    elif status == 'error':
+        messages.error(request, "Something went wrong when performing this image task. Look at the 'Recent task updates' view for further information.")
+
+    rendering_parameters = {
+        'project': project,
+        'page_number': page_number,
+        'page_text': page_text,
+        'original_page_text': original_page_text,
+        'descriptions_info': descriptions_info
+    }
+
+    #pprint.pprint(rendering_parameters)
+
+    return render(request, 'clara_app/simple_clara_review_v2_images_for_page.html', rendering_parameters)
 
 # Async function
 def execute_community_requests(project, clara_project_internal, requests, callback=None):

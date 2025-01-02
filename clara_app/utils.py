@@ -439,13 +439,14 @@ def get_phase_up_to_date_dict(project, clara_project_internal, user):
     acknowledgements = Acknowledgements.objects.filter(project=project).first()
     content_object = Content.objects.filter(project=project).first()
     questionnaire = SatisfactionQuestionnaire.objects.filter(project=project, user=user).first() 
-    clara_dependencies = CLARADependencies(clara_project_internal, project.id,
+    clara_dependencies = CLARADependencies(clara_project_internal, project,
                                            human_audio_info=human_audio_info, phonetic_human_audio_info=phonetic_human_audio_info,
                                            format_preferences=format_preferences,
                                            acknowledgements=acknowledgements,
                                            content_object=content_object,
                                            questionnaire=questionnaire)
     return clara_dependencies.up_to_date_dict(debug=False)
+    #return clara_dependencies.up_to_date_dict(debug=True)
 
 def send_mail_or_print_trace(subject, body, from_address, to_addresses, fail_silently=False):
     if os.getenv('CLARA_ENVIRONMENT') == 'unisa':

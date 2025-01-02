@@ -247,6 +247,7 @@ async def get_project_images_dict(project_dir):
             alternate_images = await get_alternate_images_info_for_get_project_images_dict(element_dir, project_dir)
 
             element_data = {
+                'element_text': element_text,
                 'relative_file_path': str(image_path.relative_to(project_dir).as_posix()) if image_path.exists() else None,
                 'advice': advice,
                 'alternate_images': alternate_images

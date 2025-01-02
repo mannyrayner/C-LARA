@@ -6,7 +6,8 @@ TEXT_TYPE_CHOICES = [
 ]
 
 SIMPLE_CLARA_TYPES = [
-        ('create_text_and_image', 'Use the AI to create text and an image based on your instructions'),
+        ('create_text_and_image', 'Use the AI to create text and a single image based on your instructions'),
+        ('create_text_and_multiple_images', 'Use the AI to create text and an image for each page based on your instructions'),
         ('create_text_from_image', 'Upload an image and use the AI to create text from it'),
         ('annotate_existing_text', 'Paste in your own text and use the AI to convert it to multimodal form'),        
     ]

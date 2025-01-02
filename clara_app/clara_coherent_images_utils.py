@@ -48,6 +48,18 @@ default_params = { 'n_expanded_descriptions': 1,
                    'generate_description_model': 'gpt-4o',
                    'example_evaluation_model': 'gpt-4o' }
 
+project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
+                   'n_images_per_description': 3,
+                   'n_previous_pages': 0,
+                   'max_description_generation_rounds': 1,
+                   
+                   'page_interpretation_prompt': 'with_context_v3_objective',
+                   'page_evaluation_prompt': 'with_context_lenient',
+                   
+                   'default_model': 'gpt-4o',
+                   'generate_description_model': 'gpt-4o',
+                   'example_evaluation_model': 'gpt-4o' }
+
 def get_project_params(project_dir):
     params_file = project_params_file(project_dir)
     try:
@@ -127,7 +139,6 @@ def get_element_descriptions_params_from_project_params(params, elements_to_gene
 
 def get_page_params_from_project_params(params, pages_to_generate=None):
     page_params = {
-        'pages_to_generate': pages_to_generate,
         'n_expanded_descriptions': params['n_expanded_descriptions'],
         'n_images_per_description': params['n_images_per_description'],
         'n_previous_pages': params['n_previous_pages'],
@@ -277,6 +288,11 @@ def get_element_image(element_text, params):
     name = element_text_to_element_name(element_text, params)
     return f'elements/{name}/image.jpg'
 
+def get_all_element_images(params):
+    element_texts = get_all_element_texts(params)
+
+    return [ get_element_image(element_text, params) for element_text in element_texts ]
+
 def remove_top_level_element_directory(params):
     project_dir = params['project_dir']
     
@@ -341,6 +357,11 @@ def get_page_image(page_number, params):
     project_dir = params['project_dir']
     
     return project_pathname(project_dir, f'pages/page{page_number}/image.jpg')
+
+def get_all_page_images(params):
+    page_numbers = get_pages(params)
+
+    return [ get_page_image(page_number, params) for page_number in page_numbers ]
 
 def remove_page_directory(page_number, params):
     project_dir = params['project_dir']

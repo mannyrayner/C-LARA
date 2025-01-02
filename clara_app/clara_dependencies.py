@@ -1,5 +1,5 @@
 
-
+from .clara_coherent_images_utils import project_pathname
 from .clara_utils import absolute_file_name, remove_duplicates_from_list_of_hashable_items, is_chinese_language
 from .clara_utils import get_file_time, convert_to_timezone_aware
 from .clara_classes import InternalCLARAError
@@ -12,14 +12,15 @@ import pprint
 class CLARADependencies:
 
     # Initialise with the information needed to calculate whether processing phases are up to date.
-    def __init__(self, clara_project_internal, project_id,
+    def __init__(self, clara_project_internal, project,
                  human_audio_info=None, phonetic_human_audio_info=None,
                  format_preferences=None, acknowledgements=None,
                  content_object=None, questionnaire=None,
                  callback=None):
         self.clara_project_internal = clara_project_internal
         self.l2 = clara_project_internal.l2_language
-        self.project_id = project_id
+        self.v2_images = project.uses_coherent_image_set_v2
+        self.project_id = project.id
         self.human_audio_info = human_audio_info
         self.phonetic_human_audio_info = phonetic_human_audio_info
         self.format_preferences = format_preferences
@@ -55,6 +56,15 @@ class CLARADependencies:
             
             "images",               # Typically AI-generated images
                                     # Accessible from CLARAProjectInternal object
+
+            "v2_style_image",       # AI-generated image
+                                    # Accessible from CLARAProjectInternal object
+
+            "v2_element_images",    # Typically AI-generated images
+                                    # Accessible from CLARAProjectInternal object
+
+            "v2_page_images",       # Typically AI-generated images
+                                    # Accessible from CLARAProjectInternal object 
             
             "phonetic",             # Typically AI-generated phonetic version of text
                                     # Only possible for languages with phonetic lexicon resources
@@ -114,13 +124,19 @@ class CLARADependencies:
 
             "mwe": [ "segmented", "segmented_title" ],
             
-            "images": [ "plain" ],
+            "images": [ "segmented", "segmented_title" ],
+
+            "v2_style_image": [ "segmented", "segmented_title" ],
+
+            "v2_element_images": [ "segmented", "segmented_title", "v2_style_image" ],
+
+            "v2_page_images": [ "segmented", "segmented_title", "v2_element_images" ],
             
             "phonetic": [ "segmented", "segmented_title" ],
             
-            "gloss": [ "segmented", "segmented_title" ],
+            "gloss": [ "segmented", "segmented_title", "mwe" ],
             
-            "lemma": [ "segmented", "segmented_title" ],
+            "lemma": [ "segmented", "segmented_title", "mwe" ],
 
             "pinyin": [ "segmented", "segmented_title" ],
             
@@ -132,10 +148,10 @@ class CLARADependencies:
 
             "acknowledgements": [],
             
-            "render": [ "title", "gloss", "lemma", "pinyin", "images", "audio",
+            "render": [ "title", "gloss", "lemma", "pinyin", "images", "v2_page_images", "audio",
                         "format_preferences", "acknowledgements" ],
 
-            "render_phonetic": [ "phonetic", "images", "audio_phonetic",
+            "render_phonetic": [ "phonetic", "images", "v2_page_images", "audio_phonetic",
                                  "format_preferences", "acknowledgements" ],
             
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
@@ -144,8 +160,18 @@ class CLARADependencies:
 
             }
 
+    def v2_file(self, rel_image):
+        if not rel_image:
+            return None
+        else:
+            return project_pathname(self.clara_project_internal.coherent_images_v2_project_dir, rel_image)
+
     def irrelevant_processing_phase(self, processing_phase_id):
         if processing_phase_id == 'pinyin' and not is_chinese_language(self.l2):
+            return True
+        if processing_phase_id in ( 'v2_style_image', 'v2_element_images', 'v2_page_images' ) and self.v2_images:
+            return True
+        if processing_phase_id == 'images' and not self.v2_images:
             return True
         else:
             return False
@@ -188,10 +214,39 @@ class CLARADependencies:
                 return None
             
         elif processing_phase_id == 'images':
+            try:
                 images = self.clara_project_internal.get_all_project_images()
                 timestamps = [ get_file_time(image.image_file_path, time_format='timestamp')
                                for image in images ]
                 return latest_timestamp(timestamps, debug=False)
+            except FileNotFoundError:
+                return None
+
+        elif processing_phase_id == 'v2_style_image':
+            try:
+                rel_image = self.clara_project_internal.get_style_image_v2()
+                timestamp = get_file_time(self.v2_file(rel_image), time_format='timestamp')
+                return timestamp
+            except FileNotFoundError:
+                return None
+
+        elif processing_phase_id == 'v2_element_images':
+            try:
+                rel_images = self.clara_project_internal.get_all_element_images_v2()
+                timestamps = [ get_file_time(self.v2_file(rel_image), time_format='timestamp')
+                               for rel_image in rel_images ]
+                return latest_timestamp(timestamps, debug=False)
+            except FileNotFoundError:
+                return None
+
+        elif processing_phase_id == 'v2_page_images':
+            try:
+                rel_images = self.clara_project_internal.get_all_page_images_v2()
+                timestamps = [ get_file_time(self.v2_file(rel_image), time_format='timestamp')
+                               for rel_image in rel_images ]
+                return latest_timestamp(timestamps, debug=False)
+            except FileNotFoundError:
+                return None
             
         elif processing_phase_id == 'audio':
             if not self.human_audio_info:

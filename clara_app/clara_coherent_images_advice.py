@@ -34,9 +34,12 @@ import traceback
 import pprint
 
 def get_style_advice(params):
-    project_dir = params['project_dir']
-    
-    return read_project_txt_file(project_dir, f'style_description.txt')
+    try:
+        project_dir = params['project_dir']
+        
+        return read_project_txt_file(project_dir, f'style_description.txt')
+    except Exception as e:
+        return ''
 
 def set_style_advice(text, project_dir):
     make_root_project_dir(project_dir)

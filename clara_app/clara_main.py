@@ -161,14 +161,17 @@ from .clara_export_import import create_export_zipfile, change_project_id_in_imp
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
 from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page, execute_community_requests_list
-from .clara_coherent_images_utils import get_project_params, set_project_params, project_pathname, get_pages, make_project_dir
-from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, remove_top_level_element_directory
-from .clara_coherent_images_utils import get_style_description, get_all_element_texts
-from .clara_coherent_images_utils import get_element_description, get_element_image, get_page_description, get_style_image, get_page_image
-from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name, overview_file
-from .clara_coherent_images_utils import style_directory, element_directory, page_directory
+from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
 from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image
+from .clara_coherent_images_utils import get_project_params, set_project_params, project_params_for_simple_clara
+from .clara_coherent_images_utils import project_pathname, get_pages, make_project_dir
+from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, remove_top_level_element_directory
+from .clara_coherent_images_utils import get_style_description, get_all_element_texts
+from .clara_coherent_images_utils import get_element_description, get_page_description
+from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name, overview_file
+from .clara_coherent_images_utils import style_directory, element_directory, page_directory
+from .clara_coherent_images_utils import get_style_image, get_page_image, get_element_image, get_all_page_images, get_all_element_images
 from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text
 from .clara_utils import absolute_file_name, absolute_local_file_name
 from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
@@ -588,7 +591,9 @@ class CLARAProjectInternal:
         text_title = self.load_text_version_or_null("segmented_title")
         if text_title != '':
             # We need to put segment breaks around the text_title to get the right interaction with segment audio
-            segmented_with_title_text = f'<h1>||{text_title}||</h1><page>\n' + segmented_text
+            # and if the main text doesn't start with a <page> tag we need to add one.
+            separating_page_tag = '' if segmented_with_images_text.startswith('<page') else '<page>'
+            segmented_with_title_text = f'<h1>||{text_title}||</h1><page>{separating_page_tag}\n' + segmented_text
         else:
             segmented_with_title_text = segmented_text
         return segmented_with_title_text
@@ -1627,9 +1632,21 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         return asyncio.run(get_project_images_dict(project_dir))
 
+    def get_page_overview_info_for_cm_reviewing(self):
+        project_dir = self.coherent_images_v2_project_dir
+        return get_page_overview_info_for_cm_reviewing(project_dir)
+
     def get_coherent_images_v2_params(self):
         project_dir = self.coherent_images_v2_project_dir
         return get_project_params(project_dir)
+
+    def get_v2_project_params_for_simple_clara(self):
+        project_dir = self.coherent_images_v2_project_dir
+
+        params = project_params_for_simple_clara
+        params['project_dir'] = project_dir
+
+        return params
 
     def save_coherent_images_v2_params(self, params):
         project_dir = self.coherent_images_v2_project_dir
@@ -1639,12 +1656,40 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         set_story_data_from_numbered_page_list(numbered_page_list, project_dir)
 
+    def get_style_image_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+
+        print(f'get_style_image(params) = {get_style_image(params)}')
+        return get_style_image(params)
+
+    def get_all_element_images_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+
+        print(f'get_all_element_images(params) = {get_all_element_images(params)}')
+        return get_all_element_images(params)
+
+    def get_all_page_images_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+
+        print(f'get_all_page_images(params) = {get_all_page_images(params)}')
+        return get_all_page_images(params)
+
     def set_style_advice_v2(self, advice):
         project_dir = self.coherent_images_v2_project_dir
         set_style_advice(advice, project_dir)
 
         image_name = style_image_name()
         self.store_image_advice(image_name, advice, 'style')
+
+    def get_style_advice_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        
+        advice = get_style_advice(params)
+        return advice
 
     def set_element_advice_v2(self, advice, element_name):
         project_dir = self.coherent_images_v2_project_dir
@@ -1733,7 +1778,7 @@ class CLARAProjectInternal:
     def store_v2_page_data(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
 
-        pages_numbers = params['pages_to_generate'] if 'pages_to_generate' in params else get_pages(params)
+        pages_numbers = params['pages_to_generate'] if 'pages_to_generate' in params and params['pages_to_generate'] else get_pages(params)
         image_type = 'page'
         for page_number in pages_numbers:
             image_name = f'page_{page_number}'
