@@ -1,0 +1,84 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+
+<div class="main-content">
+<h2>Simple C-LARA Review Page Images ({{ project.title }}, Page {{ page_number }})</h2>
+
+<h3>Text used to create images</h3> 
+<p>{{ page_text }}</p>
+
+{% if original_page_text %}
+  <h3>Original text</h3>
+  <p>{{ original_page_text }}</p>
+{% endif %}
+
+{% for d_idx, dinfo in descriptions_info.items %}
+
+  <div class="description-group">
+  <div class="image-row">
+  {% for img in dinfo.images %}
+    {% if img.preferred %}
+	<div class="image-container preferred-image">
+	{% elif img.hidden %}
+	<div class="image-container hidden-image">
+	{% else %}
+	<div class="image-container non-preferred-image">
+	{% endif %}
+        <img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:200px;"/><br/>
+        Upvotes: {{ img.upvotes_count }} Downvotes: {{ img.downvotes_count }}
+
+      <form method="post" style="display:inline-block;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="vote">
+        <input type="hidden" name="description_index" value="{{ d_idx }}">
+        <input type="hidden" name="image_index" value="{{ img.image_index }}">
+        <input type="hidden" name="vote_type" value="upvote">
+        <button type="submit">👍</button>
+      </form>
+
+      <form method="post" style="display:inline-block;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="vote">
+        <input type="hidden" name="description_index" value="{{ d_idx }}">
+        <input type="hidden" name="image_index" value="{{ img.image_index }}">
+        <input type="hidden" name="vote_type" value="downvote">
+        <button type="submit">👎</button>
+      </form>
+	  
+    </div>
+  {% endfor %}
+  </div>
+  <form method="post" style="display:inline-block;">
+	{% csrf_token %}
+	<input type="hidden" name="action" value="variants_requests">
+	<input type="hidden" name="description_index" value="{{ d_idx }}">
+	<button type="submit">Create similar images</button>
+  </form>
+  </div>
+{% endfor %}
+
+<!-- Upload a user image for the page -->
+<h3>Upload Your Own Image</h3>
+
+<form method="post" enctype="multipart/form-data" style="margin-bottom:1em;">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="upload_image">
+  <label for="uploaded_image_file_path">Choose an image file:</label>
+  <input type="file" name="uploaded_image_file_path" required>
+  <button type="submit">Upload</button>
+</form>
+
+<h3>Create new images</h3>
+<form method="post" style="margin-bottom:1em;">
+{% csrf_token %}
+<input type="hidden" name="action" value="images_with_advice">
+<textarea name="advice_text" placeholder="Add advice (optional)" rows="4" cols="80"></textarea>
+<button type="submit">Create</button>
+</form>
+
+</div>
+
+<div class="sticky-footer">
+<a href="{% url 'simple_clara' project.id 'init' %}">Back to main Simple C-LARA page</a>
+</div>
+{% endblock %}

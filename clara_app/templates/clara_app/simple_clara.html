@@ -27,7 +27,7 @@
       <button type="submit" name="action" value="create_project">Create Project</button>
     {% endif %}
 	
-	{% if simple_clara_type == 'create_text_and_image' and status != 'No project' %}
+	{% if simple_clara_type != 'create_text_from_image' and simple_clara_type != 'annotate_existing_text' and status != 'No project' %}
 	   <h3>Prompt</h3>
 	   <p>{{ form.prompt }}</p>
 	{% endif %}
@@ -35,6 +35,12 @@
 	{% if simple_clara_type == 'create_text_and_image' %}
 		{% if status == 'No prompt' or status == 'No text' %}
 			<button type="submit" name="action" value="create_text_and_image">Create Text and Image</button>
+		{% endif %}
+    {% endif %}
+	
+	{% if simple_clara_type == 'create_text_and_multiple_images' %}
+		{% if status == 'No prompt' or status == 'No text' %}
+			<button type="submit" name="action" value="create_text">Create Text</button>
 		{% endif %}
     {% endif %}
 	
@@ -72,7 +78,7 @@
 	  <br>
     {% endif %}
 	
-	{% if simple_clara_type != 'create_text_from_image' %}
+	{% if simple_clara_type != 'create_text_from_image' and simple_clara_type != 'create_text_and_multiple_images' %}
 		{% if status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Posted' %}
 		  <h3>Image</h3>
 		  <p><img src="{% url 'serve_project_image' form.internal_title.value form.image_basename.value %}" alt="Generated Image" style="max-width: 300px; max-height: 300px;"></p>
@@ -89,8 +95,7 @@
 		{% endif %}
 	{% endif %}
   
-    {% if status == 'No image' or status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
-	  {% if status == 'No multimedia' or status == 'Everything available' or status == 'Everything available except image' or status == 'Posted' or status == 'Posted without image' %}
+    {% if form.segmented_text.value %}
 	    <h3>Segmented title</h3>
 		<p>{{ form.segmented_title }}
 	    <button type="submit" name="action" value="save_segmented_title">Save Edited Segmented Title</button></p>
@@ -98,7 +103,69 @@
 	    <h3>Segmented text</h3>
 		<p>{{ form.segmented_text }}
 	    <button type="submit" name="action" value="save_segmented_text">Save Edited Segmented Text</button></p>
-		<br>
+		<br>	  
+	  {% if simple_clara_type == 'create_text_and_multiple_images' %}
+	    <h3>Style</h3>
+		<p>Briefly describe the style you want to use for the images.</p>
+		<p>{{ form.style_advice }}
+		<button type="submit" name="action" value="create_v2_images">Create Images</button></p>
+		{% if up_to_date_dict.v2_style_image %}
+			<p><img src="{% url 'serve_coherent_images_v2_file' project_id resources.v2_images_dict.style.relative_file_path %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">)</p>
+		{% endif %}
+		{% if up_to_date_dict.v2_element_images %}
+			<h3>Elements</h3>
+			<table class="table">
+			  <thead>
+				<tr>
+				  <th>Element Name</th>
+				  <th>Image</th>
+				</tr>
+			  </thead>
+			  <tbody>
+				{% for key, element_item in resources.v2_images_dict.elements.items %}
+					  <tr>
+						<td>{{ element_item.element_text }}</td>
+						<td>
+						  {% if element_item.relative_file_path %}
+							<img src="{% url 'serve_coherent_images_v2_file' project_id element_item.relative_file_path %}" alt="{{ element_item.element_text }}" style="max-width: 200px; max-height: 200px;">
+						  {% else %}
+							<p>No image.</p>
+						  {% endif %}
+						</td>
+					  </tr>
+				{% endfor %}
+			  </tbody>
+			</table>
+		{% endif %}
+		{% if up_to_date_dict.v2_page_images %}
+			<table class="table">
+			<thead>
+				<tr>
+					<th>Page Number</th>
+					<th>Text</th>
+					<th>Image</th>
+					<th>Links</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for page in resources.v2_pages_overview_info %}
+				<tr>
+					<td>{{ page.page_number }}</td>
+					<td><pre>{{ page.excerpt }}<br>{{ page.original_text_excerpt }}</pre></td>
+					<td>
+						{% if page.relative_page_image_path %}
+							<img src="{% url 'serve_coherent_images_v2_file' project_id page.relative_page_image_path %}" alt="Page {{ page.page_number }} image" style="max-width:100px; max-height:100px;">
+						{% else %}
+							<em>No image</em>
+						{% endif %}
+					<td>
+						<a href="{% url 'simple_clara_review_v2_images_for_page' project_id page.page_number 'init' %}">Review this Page</a>
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
 	  {% endif %}
 	  <h3>Multimedia text</h3>
 	  {% if status != 'No image' and status != 'No multimedia' and status != 'No segmented text' %}
