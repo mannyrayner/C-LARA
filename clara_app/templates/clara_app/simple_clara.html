@@ -80,10 +80,6 @@
 	  <br>
     {% endif %}
 	
-	{% if not up_to_date_dict.segmented and up_to_date_dict.plain %}
-		<p><button type="submit" name="action" value="create_segmented_text">Create Segmented Text</button></p>
-	{% endif %}
-	
 	{% if simple_clara_type != 'create_text_from_image' and simple_clara_type != 'create_text_and_multiple_images' %}
 		{% if status == 'No multimedia' or status == 'No segmented text' or status == 'Everything available' or status == 'Posted' %}
 		  <h3>Image</h3>
@@ -99,6 +95,11 @@
 		   <h3>Uploaded image (alternative to AI-generated image)</h3>
 		   <p>{{ form.image_file_path }} <button type="submit" name="action" value="save_uploaded_image">Save Uploaded Image</button><p>
 		{% endif %}
+	{% endif %}
+	
+	{% if not up_to_date_dict.segmented and up_to_date_dict.plain %}
+		<h3>Multimedia text</h3>
+		<p><button type="submit" name="action" value="create_segmented_text">Create Segmented Text</button></p>
 	{% endif %}
   
     {% if up_to_date_dict.segmented %}
