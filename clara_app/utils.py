@@ -445,8 +445,8 @@ def get_phase_up_to_date_dict(project, clara_project_internal, user):
                                            acknowledgements=acknowledgements,
                                            content_object=content_object,
                                            questionnaire=questionnaire)
-##    return clara_dependencies.up_to_date_dict(debug=False)
-    return clara_dependencies.up_to_date_dict(debug=True)
+    return clara_dependencies.up_to_date_dict(debug=False)
+##    return clara_dependencies.up_to_date_dict(debug=True)
 
 def send_mail_or_print_trace(subject, body, from_address, to_addresses, fail_silently=False):
     if os.getenv('CLARA_ENVIRONMENT') == 'unisa':

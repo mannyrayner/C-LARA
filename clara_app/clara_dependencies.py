@@ -148,9 +148,9 @@ class CLARADependencies:
 
             "acknowledgements": [],
             
-            "render": [ "gloss", "lemma", "v2_page_images" ],
+            "render": [ "gloss", "lemma", "pinyin", "v2_page_images", "images", "v2_page_images" ],
 
-            "render_phonetic": [ "phonetic", "v2_page_images" ],
+            "render_phonetic": [ "phonetic", "pinyin", "v2_page_images", "images" ],
             
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
 
@@ -167,9 +167,9 @@ class CLARADependencies:
     def irrelevant_processing_phase(self, processing_phase_id):
         if processing_phase_id == 'pinyin' and not is_chinese_language(self.l2):
             return True
-        if processing_phase_id in ( 'v2_style_image', 'v2_element_images', 'v2_page_images' ) and self.v2_images:
+        if processing_phase_id in ( 'v2_style_image', 'v2_element_images', 'v2_page_images' ) and not self.v2_images:
             return True
-        if processing_phase_id == 'images' and not self.v2_images:
+        if processing_phase_id == 'images' and self.v2_images:
             return True
         else:
             return False
@@ -195,11 +195,11 @@ class CLARADependencies:
         return remove_duplicates_from_list_of_hashable_items(all_dependencies)
 
     # Get the latest timestamp for files and database records associated with a processing phase
-    def timestamp_for_phase(self, processing_phase_id):
+    def timestamp_for_phase(self, processing_phase_id, debug=False):
         #return convert_to_timezone_aware(self.timestamp_for_phase_main(processing_phase_id))
-        return self.timestamp_for_phase_main(processing_phase_id)
+        return self.timestamp_for_phase_main(processing_phase_id, debug=debug)
         
-    def timestamp_for_phase_main(self, processing_phase_id):
+    def timestamp_for_phase_main(self, processing_phase_id, debug=False):
         if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title", "mwe",
                                     "segmented", "translated", "phonetic", "gloss", "lemma", "pinyin" ]:
             try:
@@ -216,7 +216,7 @@ class CLARADependencies:
                 images = self.clara_project_internal.get_all_project_images()
                 timestamps = [ get_file_time(image.image_file_path, time_format='timestamp')
                                for image in images ]
-                return latest_timestamp(timestamps, debug=False)
+                return latest_timestamp(timestamps, debug=debug)
             except FileNotFoundError:
                 return None
 
@@ -325,21 +325,21 @@ class CLARADependencies:
             raise InternalCLARAError(message=f'Unknown processing phase id {processing_phase_id}')
 
     # Get the latest timestamp associated with all the phases
-    def timestamps_for_all_phases(self):
-        return { processing_phase_id: self.timestamp_for_phase(processing_phase_id)
+    def timestamps_for_all_phases(self, debug=False):
+        return { processing_phase_id: self.timestamp_for_phase(processing_phase_id, debug=debug)
                  for processing_phase_id in self._processing_phases }
 
     # Print ages of timestamps for all phases. Use for debugging
-    def print_ages_for_all_phase_timestamps(self):
-        processing_phase_timestamp_dict = self.timestamps_for_all_phases()
+    def print_ages_for_all_phase_timestamps(self, debug=False):
+        processing_phase_timestamp_dict = self.timestamps_for_all_phases(debug=debug)
         ages_dict = { processing_phase_id: timestamp_to_age_in_seconds(processing_phase_timestamp_dict[processing_phase_id])
                       for processing_phase_id in self._processing_phases }
         print(f'Ages for processing phases')
         pprint.pprint(ages_dict)        
 
     # Use timestamps_for_all_phases to get the latest timestamp for all the phases on which each phase depends
-    def timestamp_for_all_phase_dependencies(self):
-        processing_phase_timestamp_dict = self.timestamps_for_all_phases()
+    def timestamp_for_all_phase_dependencies(self, debug=False):
+        processing_phase_timestamp_dict = self.timestamps_for_all_phases(debug=debug)
         result = {}
         
         for processing_phase_id in self._processing_phases:
@@ -353,10 +353,11 @@ class CLARADependencies:
     # Use the timestamps for phases and dependencies to determine whether the resources for each phase are up to date
     def up_to_date_dict(self, debug=False):
         processing_phase_timestamp_dict = self.timestamps_for_all_phases()
-        processing_phase_dependency_timestamp_dict = self.timestamp_for_all_phase_dependencies()
+        processing_phase_dependency_timestamp_dict = self.timestamp_for_all_phase_dependencies(debug=debug)
         result = {}
         
         for processing_phase in self._processing_phases:
+            dependencies = self.get_dependencies(processing_phase)
             processing_phase_timestamp = processing_phase_timestamp_dict[processing_phase]
             processing_phase_dependency_timestamp = processing_phase_dependency_timestamp_dict[processing_phase]
             
@@ -377,6 +378,7 @@ class CLARADependencies:
             if debug:
                 print(f'---------------------')
                 print(f'Processing phase: {processing_phase}:')
+                print(f'Dependencies: {dependencies}:')
                 print(f'Timestamp: {processing_phase_timestamp}')
                 print(f'Age in seconds: {timestamp_to_age_in_seconds(processing_phase_timestamp)}')
                 print(f'Dependencies timestamp: {processing_phase_dependency_timestamp}')
