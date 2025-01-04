@@ -157,6 +157,32 @@ def promote_alternate_image(content_dir, project_dir, alternate_image_id):
 
     return False  # Indicate failure if ID not found
 
+def promote_alternate_element_description(content_dir, project_dir, preferred_description_id):
+    """
+    Promote an alternate description to be the primary description.
+
+    Args:
+        content_dir (str or Path): The path to the content directory.
+        project_dir (str or Path): The path to the project directory.
+        alternate_description_id (int): The ID of the alternate description to promote.
+    """
+    content_dir = Path(content_dir)
+    project_dir = Path(project_dir)
+    
+    # Get the preferred_description_dir
+    preferred_description_dir = content_dir / f'description_v{preferred_description_id}'
+
+    if not directory_exists(preferred_description_dir):
+        raise ValueError(f'Directory {preferred_description_dir} not found in promote_alternate_element_description')
+
+    # Copy the relevant files to the top-level content directory
+    copy_file(preferred_description_dir / 'image.jpg', content_dir / 'image.jpg')
+    copy_file(preferred_description_dir / 'expanded_description.txt', content_dir / 'expanded_description.txt')
+    copy_file(preferred_description_dir / 'interpretation.txt', content_dir / 'interpretation.txt')
+    copy_file(preferred_description_dir / 'evaluation.txt', content_dir / 'evaluation.txt')
+
+    return True  # Indicate success
+
 def set_alternate_image_hidden_status(content_dir, description_index, image_index, hidden=True):
     """
     Set the hidden status of an alternate image by creating or removing a 'hidden' marker file.
@@ -247,6 +273,7 @@ async def get_project_images_dict(project_dir):
             alternate_images = await get_alternate_images_info_for_get_project_images_dict(element_dir, project_dir)
 
             element_data = {
+                'element_name': element_name,
                 'element_text': element_text,
                 'relative_file_path': str(image_path.relative_to(project_dir).as_posix()) if image_path.exists() else None,
                 'advice': advice,

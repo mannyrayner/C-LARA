@@ -201,6 +201,14 @@ def existing_description_version_directories_and_first_unused_number_for_page(pa
 def score_for_image_dir(image_dir, params):
     return score_for_evaluation_file(f'{image_dir}/evaluation.txt', params)
 
+def element_score_for_description_dir(description_dir, params):
+    project_dir = params['project_dir']
+    image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
+    if file_exists(image_info_file):
+        return read_json_file(image_info_file)['av_score']
+    else:
+        return 0.0
+
 def score_for_evaluation_file(project_file, params):
     project_dir = params['project_dir']
     
@@ -320,6 +328,10 @@ def style_directory(params):
 def element_directory(element_text, params):
     project_dir = params['project_dir']
     element_name = element_text_to_element_name(element_text, params)
+    return project_pathname(project_dir, f'elements/{element_name}')
+
+def element_directory_for_element_name(element_name, params):
+    project_dir = params['project_dir']
     return project_pathname(project_dir, f'elements/{element_name}')
 
 def page_directory(page_number, params):

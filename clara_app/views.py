@@ -81,10 +81,12 @@ from .clara_coherent_images_utils import read_project_json_file
 from .clara_coherent_images_alternate import get_alternate_images_json, set_alternate_image_hidden_status
 
 from .clara_coherent_images_community_feedback import (load_community_feedback, save_community_feedback,
-                                                       register_cm_image_vote, register_cm_image_variants_request,
+                                                       register_cm_image_vote, register_cm_element_vote,
+                                                       register_cm_image_variants_request,
                                                        register_cm_page_advice,  get_cm_page_advice,
                                                        get_page_overview_info_for_cm_reviewing, get_page_description_info_for_cm_reviewing,
-                                                       update_ai_votes_in_feedback, determine_preferred_image,
+                                                       get_element_description_info_for_cm_reviewing,
+                                                       update_ai_votes_in_feedback, update_ai_votes_for_element_in_feedback, determine_preferred_image,
                                                        get_all_cm_requests_for_page, set_cm_request_status,
                                                        get_all_cm_requests)
 
@@ -2345,8 +2347,8 @@ def simple_clara(request, project_id, last_operation_status):
     
     clara_version = get_user_config(request.user)['clara_version']
 
-##    if 'v2_images_dict' in resources:
-##        pprint.pprint(resources['v2_images_dict'])
+    if 'v2_images_dict' in resources:
+        pprint.pprint(resources['v2_images_dict'])
     
     return render(request, 'clara_app/simple_clara.html', {
         'project_id': project_id,
@@ -5481,6 +5483,7 @@ def edit_images_v2(request, project_id, status):
                 try:
                     content_type = request.POST.get('content_type')
                     content_identifier = request.POST.get('content_identifier')
+                    alternate_description_id = int(request.POST.get('alternate_description_id', ''))
                     alternate_image_id = int(request.POST.get('alternate_image_id'))
                     #print(f'promote_alternate_image: content_type={content_type}, content_identifier={content_identifier}, alternate_image_id={alternate_image_id}')
 
@@ -5488,7 +5491,7 @@ def edit_images_v2(request, project_id, status):
                         clara_project_internal.promote_v2_style_image(alternate_image_id)
                     elif content_type == 'element':
                         element_name = content_identifier
-                        clara_project_internal.promote_v2_element_image(element_name, alternate_image_id)
+                        clara_project_internal.promote_v2_element_description(element_name, alternate_description_id)
                     elif content_type == 'page':
                         page_number = int(content_identifier)
                         clara_project_internal.promote_v2_page_image(page_number, alternate_image_id)
@@ -5953,7 +5956,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
     try:
         update_ai_votes_in_feedback(project_dir, page_number)
     except Exception as e:
-        messages.error(request, f"Error updating AI votes: {e}")
+        messages.error(request, f"Error updating AI votes: {e}\n{traceback.format_exc()}")
 
     # Load alternate images
     content_dir = project_pathname(project_dir, f"pages/page{page_number}")
@@ -6048,6 +6051,100 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
 
     return render(request, 'clara_app/simple_clara_review_v2_images_for_page.html', rendering_parameters)
 
+@login_required
+def simple_clara_review_v2_images_for_element(request, project_id, element_name, status):
+    user = request.user
+    can_use_ai = user_has_open_ai_key_or_credit(user)
+    config_info = get_user_config(user)
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    project_dir = clara_project_internal.coherent_images_v2_project_dir
+    
+    story_data = read_project_json_file(project_dir, 'story.json')
+
+    # Update AI votes
+    try:
+        # Adapt update_ai_votes_for_element_in_feedback from:
+        # clara_coherent_images_community_feedback.update_ai_votes_in_feedback
+        update_ai_votes_for_element_in_feedback(project_dir, element_name)
+    except Exception as e:
+        messages.error(request, f"Error updating AI votes for element {element_name}: {e}\n{traceback.format_exc()}")
+
+    # Load alternate images
+    content_dir = project_pathname(project_dir, f"elements/{element_name}")
+    alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
+
+    # Process form submissions
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        description_index = request.POST.get('description_index', '')
+        userid = request.user.username
+
+        if description_index is not None and description_index != '':
+            description_index = int(description_index)
+
+        try:
+            #print(f'action = {action}')
+            if action == 'images_with_advice':
+                if not can_use_ai:
+                    messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, status='none')
+
+                advice_text = request.POST.get('advice_text', '').strip()
+                
+                requests = [ { 'request_type': 'new_element_description_and_images',
+                               'element_name': element_name,
+                               'advice_text': advice_text } ]
+
+                callback, report_id = make_asynch_callback_and_report_id(request, 'execute_image_requests')
+
+                # Adapt execute_simple_clara_element_requests from:
+                # views.execute_simple_clara_image_requests
+                async_task(execute_simple_clara_element_requests, project, clara_project_internal, requests, callback=callback)
+
+                return redirect('execute_simple_clara_element_requests_monitor', project_id, report_id, element_name)
+                
+            elif action == 'vote':
+                vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
+                if vote_type in ['upvote', 'downvote']:
+                    # Adapt register_cm_element_vote from:
+                    # clara_coherent_images_community_feedback.register_cm_image_vote
+                    register_cm_element_vote(project_dir, element_name, description_index, vote_type, userid)
+
+        except Exception as e:
+            messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
+
+        return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, status='none')
+
+    # GET
+
+    # Adapt get_element_description_info_for_cm_reviewing from:
+    # clara_coherent_images_community_feedback.get_page_description_info_for_cm_reviewing
+    descriptions_info, preferred_description_id = get_element_description_info_for_cm_reviewing(alternate_images, element_name, project_dir)
+
+    # In case the preferred description has changed from last time promote it
+    if preferred_description_id is not None:
+        # Adapt promote_v2_element_description from:
+        # clara_main.promote_v2_page_image
+        clara_project_internal.promote_v2_element_description(element_name, preferred_description_id)
+
+    # If 'status' is something we got after returning from an async call, display a suitable message
+    if status == 'finished':
+        messages.success(request, "Image task successfully completed")
+    elif status == 'error':
+        messages.error(request, "Something went wrong when performing this image task. Look at the 'Recent task updates' view for further information.")
+
+    rendering_parameters = {
+        'project': project,
+        'element_name': element_name,
+        'descriptions_info': descriptions_info
+    }
+
+    print(f'simple_clara_review_v2_images_for_element')
+    pprint.pprint(rendering_parameters)
+
+    return render(request, 'clara_app/simple_clara_review_v2_images_for_element.html', rendering_parameters)
+
 # Async function
 def execute_community_requests(project, clara_project_internal, requests, callback=None):
     try:
@@ -6065,6 +6162,19 @@ def execute_simple_clara_image_requests(project, clara_project_internal, request
         cost_dict = clara_project_internal.execute_simple_clara_image_requests_v2(requests, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
         post_task_update(callback, f'--- Executed community requests')
+        post_task_update(callback, f"finished")
+
+    except Exception as e:
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+def execute_simple_clara_element_requests(project, clara_project_internal, requests, callback=None):
+    try:
+        # Adapt execute_simple_clara_element_requests_v2
+        # from execute_simple_clara_image_requests_v2
+        cost_dict = clara_project_internal.execute_simple_clara_element_requests_v2(requests, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        post_task_update(callback, f'--- Executed Simple C-LARA requests')
         post_task_update(callback, f"finished")
 
     except Exception as e:
@@ -6099,6 +6209,19 @@ def execute_simple_clara_image_requests_status(request, project_id, report_id):
 
 @login_required
 @user_has_a_project_role
+def execute_simple_clara_element_requests_status(request, project_id, report_id):
+    messages = get_task_updates(report_id)
+    print(f'{len(messages)} messages received')
+    if 'error' in messages:
+        status = 'error'
+    elif 'finished' in messages:
+        status = 'finished'  
+    else:
+        status = 'unknown'    
+    return JsonResponse({'messages': messages, 'status': status})
+
+@login_required
+@user_has_a_project_role
 def execute_community_requests_for_page_monitor(request, project_id, report_id, page_number):
     project = get_object_or_404(CLARAProject, pk=project_id)
     
@@ -6112,6 +6235,14 @@ def execute_simple_clara_image_requests_monitor(request, project_id, report_id, 
     
     return render(request, 'clara_app/execute_simple_clara_image_requests_monitor.html',
                   {'project_id': project_id, 'project': project, 'report_id': report_id, 'page_number': page_number})
+
+@login_required
+@user_has_a_project_role
+def execute_simple_clara_element_requests_monitor(request, project_id, report_id, element_name):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    
+    return render(request, 'clara_app/execute_simple_clara_element_requests_monitor.html',
+                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'element_name': element_name})
 
 # Async function
 def save_page_texts_multiple(project, clara_project_internal, types_and_texts, username, config_info={}, callback=None):

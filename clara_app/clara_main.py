@@ -161,17 +161,17 @@ from .clara_export_import import create_export_zipfile, change_project_id_in_imp
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
 from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page
-from .clara_coherent_images import execute_community_requests_list, execute_simple_clara_image_requests
+from .clara_coherent_images import execute_community_requests_list, execute_simple_clara_image_requests, execute_simple_clara_element_requests
 from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
-from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image
+from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image, promote_alternate_element_description
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_params_for_simple_clara
 from .clara_coherent_images_utils import project_pathname, get_pages, make_project_dir
 from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, remove_top_level_element_directory
 from .clara_coherent_images_utils import get_style_description, get_all_element_texts
 from .clara_coherent_images_utils import get_element_description, get_page_description
 from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name, overview_file
-from .clara_coherent_images_utils import style_directory, element_directory, page_directory
+from .clara_coherent_images_utils import style_directory, element_directory, element_directory_for_element_name, page_directory
 from .clara_coherent_images_utils import get_style_image, get_page_image, get_element_image, get_all_page_images, get_all_element_images
 from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text
 from .clara_utils import absolute_file_name, absolute_local_file_name
@@ -1741,13 +1741,22 @@ class CLARAProjectInternal:
             element_directory = f'elements/{element_name}'
             make_project_dir(project_dir, element_directory)
 
-    def promote_v2_element_image(self, element_name, alternate_image_id, callback=None):
+    def promote_v2_element_description(self, element_name, preferred_description_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir,
                    'elements_to_generate': [element_name] }
-        content_dir = element_directory(element_name, params)
-        promote_alternate_image(content_dir, project_dir, alternate_image_id)
-        self.store_v2_element_data(params, callback=callback)
+        content_dir = element_directory_for_element_name(element_name, params)
+        # Adapt promote_alternate_element_description
+        # from promote_alternate_image
+        promote_alternate_element_description(content_dir, project_dir, preferred_description_id)
+
+##    def promote_v2_element_image(self, element_name, alternate_image_id, callback=None):
+##        project_dir = self.coherent_images_v2_project_dir
+##        params = { 'project_dir': project_dir,
+##                   'elements_to_generate': [element_name] }
+##        content_dir = element_directory(element_name, params)
+##        promote_alternate_image(content_dir, project_dir, alternate_image_id)
+##        self.store_v2_element_data(params, callback=callback)
 
     def store_v2_element_data(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
@@ -1866,6 +1875,13 @@ class CLARAProjectInternal:
     def execute_simple_clara_image_requests_v2(self, requests, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         cost_dict = asyncio.run(execute_simple_clara_image_requests(project_dir, requests, callback=callback))
+        return cost_dict
+
+    def execute_simple_clara_element_requests_v2(self, requests, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        # Adapt execute_simple_clara_element_requests
+        # from execute_simple_clara_image_requests_v2
+        cost_dict = asyncio.run(execute_simple_clara_element_requests(project_dir, requests, callback=callback))
         return cost_dict
 
     # Render the text as an optionally self-contained directory of HTML pages

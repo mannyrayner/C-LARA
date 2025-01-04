@@ -923,6 +923,17 @@ async def execute_simple_clara_image_requests(project_dir, requests, callback=No
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     return total_cost_dict
 
+async def execute_simple_clara_element_requests(project_dir, requests, callback=None):
+    project_params = project_params_for_simple_clara
+    params = get_element_descriptions_params_from_project_params(project_params)
+    params['project_dir'] = project_dir
+    
+    total_cost_dict = {}
+    for request in requests:
+        cost_dict = await execute_simple_clara_element_request(params, request, callback=callback)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+    return total_cost_dict
+
 async def execute_community_request(params, request, callback=None):
     project_dir = params['project_dir']
     params1 = copy.copy(params)
@@ -966,6 +977,22 @@ async def execute_simple_clara_image_request(params, request, callback=None):
         description_index = request['description_index']
         alternate_image_id = await alternate_image_id_for_description_index(project_dir, page_number, description_index)
         cost_dict = await create_variant_images_for_page(params1, page_number, alternate_image_id, callback=callback)
+    else:
+        raise ValueError(f'Unknown request type in {request}')
+
+    return cost_dict
+
+async def execute_simple_clara_element_request(params, request, callback=None):
+    project_dir = params['project_dir']
+    params1 = copy.copy(params)
+    
+    request_type = request['request_type']
+    element_name = request['element_name']
+    if request_type == 'new_element_description_and_images':
+        advice_text = request['advice_text']
+        set_element_advice(advice_text, element_name, params1)
+        params1['elements_to_generate'] = [ element_name ]
+        cost_dict = await process_elements(params1, callback=callback)
     else:
         raise ValueError(f'Unknown request type in {request}')
 
