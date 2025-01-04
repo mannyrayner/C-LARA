@@ -119,7 +119,7 @@
 			<button type="submit" name="action" value="create_v2_style">Generate Style</button></p>
 		{% endif %}
 		{% if up_to_date_dict.v2_style_image %}
-			<p><img src="{% url 'serve_coherent_images_v2_file' project_id resources.v2_images_dict.style.relative_file_path %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">)</p>
+			<p><img src="{% url 'serve_coherent_images_v2_file' project_id resources.v2_images_dict.style.relative_file_path %}" alt="Style Image" style="max-width: 200px; max-height: 200px;">)</p>
 			<p>Briefly describe the style you want to use for the images.</p>
 			<p>{{ form.style_advice }}
 			<button type="submit" name="action" value="create_v2_style">Regenerate Style</button></p>
@@ -135,6 +135,7 @@
 				<tr>
 				  <th>Element Name</th>
 				  <th>Image</th>
+				  <th>Links</th>
 				</tr>
 			  </thead>
 			  <tbody>
@@ -143,10 +144,13 @@
 						<td>{{ element_item.element_text }}</td>
 						<td>
 						  {% if element_item.relative_file_path %}
-							<img src="{% url 'serve_coherent_images_v2_file' project_id element_item.relative_file_path %}" alt="{{ element_item.element_text }}" style="max-width: 200px; max-height: 200px;">
+							<img src="{% url 'serve_coherent_images_v2_file' project_id element_item.relative_file_path %}" alt="{{ element_item.element_text }}" style="max-width: 100px; max-height: 100px;">
 						  {% else %}
 							<p>No image.</p>
 						  {% endif %}
+						</td>
+						<td>
+							<a href="{% url 'simple_clara_review_v2_images_for_element' project_id element_item.element_name 'init' %}">Review this Element</a>
 						</td>
 					  </tr>
 				{% endfor %}

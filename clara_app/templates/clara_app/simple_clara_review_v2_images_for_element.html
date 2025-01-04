@@ -1,0 +1,54 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+
+<div class="main-content">
+<h2>Simple C-LARA Review Element Images ({{ project.title }}, Element "{{ element_name }}")</h2>
+
+{% for d_idx, dinfo in descriptions_info.items %}
+
+  {% if dinfo.preferred %}
+  <div class="description-group-preferred">
+  {% else %}
+  <div class="description-group">
+  {% endif %}
+  <div class="image-row">
+  {% for img in dinfo.images %}
+	<div class="image-container non-preferred-image">
+        <img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:200px;"/>
+    </div>
+  {% endfor %}
+  </div>
+  Upvotes: {{ dinfo.upvotes_count }} Downvotes: {{ dinfo.downvotes_count }}
+
+      <form method="post" style="display:inline-block;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="vote">
+        <input type="hidden" name="description_index" value="{{ d_idx }}">
+        <input type="hidden" name="vote_type" value="upvote">
+        <button type="submit">👍</button>
+      </form>
+
+      <form method="post" style="display:inline-block;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="vote">
+        <input type="hidden" name="description_index" value="{{ d_idx }}">
+        <input type="hidden" name="vote_type" value="downvote">
+        <button type="submit">👎</button>
+      </form>
+  </div>
+{% endfor %}
+
+<h3>Create new element descriptions and images</h3>
+<form method="post" style="margin-bottom:1em;">
+{% csrf_token %}
+<input type="hidden" name="action" value="images_with_advice">
+<textarea name="advice_text" placeholder="Add advice (optional)" rows="4" cols="80"></textarea>
+<button type="submit">Create</button>
+</form>
+
+</div>
+
+<div class="sticky-footer">
+<a href="{% url 'simple_clara' project.id 'init' %}">Back to main Simple C-LARA page</a>
+</div>
+{% endblock %}
