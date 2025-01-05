@@ -95,33 +95,35 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
                     image_index = int(image_dir.name.split('_v')[-1]) 
                     image_path = image_dir / 'image.jpg'
                     image_interpretation_path = image_dir / 'image_interpretation.txt'
-                    image_evaluation_path = image_dir / 'evaluation.txt'  
+                    image_evaluation_path = image_dir / 'evaluation.txt'
 
-                    # Build the relative paths (relative to the content directory)
-                    relative_image_path = image_path.relative_to(project_dir).as_posix()
-                    relative_expanded_description_path = expanded_description_path.relative_to(project_dir) if expanded_description_path.exists() else None
-                    relative_interpretation_path = interpretation_path.relative_to(project_dir) if interpretation_path.exists() else None
-                    relative_evaluation_path = evaluation_path.relative_to(project_dir) if evaluation_path.exists() else None
-                    relative_image_interpretation_path = image_interpretation_path.relative_to(project_dir) if image_interpretation_path.exists() else None
-                    relative_image_evaluation_path = image_evaluation_path.relative_to(project_dir) if image_evaluation_path.exists() else None
+                    if file_exists(image_path):
+                        
+                        # Build the relative paths (relative to the content directory)
+                        relative_image_path = image_path.relative_to(project_dir).as_posix()
+                        relative_expanded_description_path = expanded_description_path.relative_to(project_dir) if expanded_description_path.exists() else None
+                        relative_interpretation_path = interpretation_path.relative_to(project_dir) if interpretation_path.exists() else None
+                        relative_evaluation_path = evaluation_path.relative_to(project_dir) if evaluation_path.exists() else None
+                        relative_image_interpretation_path = image_interpretation_path.relative_to(project_dir) if image_interpretation_path.exists() else None
+                        relative_image_evaluation_path = image_evaluation_path.relative_to(project_dir) if image_evaluation_path.exists() else None
 
-                    # Get the hidden status
-                    hidden_status = get_alternate_image_hidden_status(content_dir, description_index, image_index)
+                        # Get the hidden status
+                        hidden_status = get_alternate_image_hidden_status(content_dir, description_index, image_index)
 
-                    # Create the alternate image record
-                    alternate_image = {
-                        'id': id_counter,
-                        'description_index': description_index,
-                        'image_index': image_index,
-                        'image_path': str(relative_image_path),
-                        'expanded_description_path': str(relative_expanded_description_path) if relative_expanded_description_path else None,
-                        'image_interpretation_path': str(relative_image_interpretation_path) if relative_image_interpretation_path else None,
-                        'image_evaluation_path': str(relative_image_evaluation_path) if relative_image_evaluation_path else None,
-                        'hidden': hidden_status,
-                    }
+                        # Create the alternate image record
+                        alternate_image = {
+                            'id': id_counter,
+                            'description_index': description_index,
+                            'image_index': image_index,
+                            'image_path': str(relative_image_path),
+                            'expanded_description_path': str(relative_expanded_description_path) if relative_expanded_description_path else None,
+                            'image_interpretation_path': str(relative_image_interpretation_path) if relative_image_interpretation_path else None,
+                            'image_evaluation_path': str(relative_image_evaluation_path) if relative_image_evaluation_path else None,
+                            'hidden': hidden_status,
+                        }
 
-                    alternate_images.append(alternate_image)
-                    id_counter += 1
+                        alternate_images.append(alternate_image)
+                        id_counter += 1
 
     # Write the alternate_images.json file
     alternate_images_json_path = content_dir / 'alternate_images.json'

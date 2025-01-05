@@ -1480,6 +1480,9 @@ async def generate_and_rate_page_images(page_number, expanded_description, descr
         all_image_dirs.append(image_dir)
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
 
+    # If all the image creation tasks failed because of content_policy_violation errors, as found in the error.txt files,
+    # call the AI to modify the description, saving the previous one, and try again up to some limit.
+
     score_description_dir_best(description_dir, all_image_dirs, params)
         
     return total_cost_dict
