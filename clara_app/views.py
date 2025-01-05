@@ -5483,9 +5483,8 @@ def edit_images_v2(request, project_id, status):
                 try:
                     content_type = request.POST.get('content_type')
                     content_identifier = request.POST.get('content_identifier')
-                    alternate_description_id = int(request.POST.get('alternate_description_id', ''))
+                    #alternate_description_id = int(request.POST.get('alternate_description_id'))
                     alternate_image_id = int(request.POST.get('alternate_image_id'))
-                    #print(f'promote_alternate_image: content_type={content_type}, content_identifier={content_identifier}, alternate_image_id={alternate_image_id}')
 
                     if content_type == 'style':
                         clara_project_internal.promote_v2_style_image(alternate_image_id)
