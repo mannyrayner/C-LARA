@@ -11,6 +11,7 @@ known_prompt_template_types = [ 'generate_style_description',
                                 'get_relevant_previous_pages',
                                 'get_relevant_elements',
                                 'generate_page_description',
+                                'correct_page_description',
                                 'generate_page_description_for_uploaded_image',
                                 'page_interpretation',
                                 'page_evaluation',
@@ -50,6 +51,8 @@ def get_prompt_template(prompt_id, prompt_type):
         return get_relevant_elements_prompt_templates[prompt_id]
     elif prompt_type == 'generate_page_description' and prompt_id in generate_page_description_prompt_templates:
         return generate_page_description_prompt_templates[prompt_id]
+    elif prompt_type == 'correct_page_description' and prompt_id in correct_page_description_prompt_templates:
+        return correct_page_description_prompt_templates[prompt_id]
     elif prompt_type == 'generate_page_description_for_uploaded_image' and prompt_id in generate_page_description_for_uploaded_image_prompt_templates:
         return generate_page_description_for_uploaded_image_prompt_templates[prompt_id]
     elif prompt_type == 'page_interpretation' and prompt_id in page_interpretation_prompt_templates:
@@ -430,6 +433,35 @@ in this section which is genuinely essential, as opposed to just desirable.
 - Take account of the following advice from the user about how to realise the image:
 
 {advice_text}
+"""
+    }
+
+correct_page_description_prompt_templates = {
+    'default': """We are using DALL-E-3 to generate a set of images to illustrate the following text, which has been divided into numbered pages:
+
+{formatted_story_data}
+
+We tried to generate an image for page {page_number}, whose text is
+
+{page_text}
+
+but when the prompt was passed to DALL-E-3 it produced a content policy violation.
+It may well be the case that the prompt is essentially innocuous (it was produced by an OpenAI model),
+but the content policy filter is oversensitive.
+
+Your task is to rewrite the prompt in a way that will not trigger the content policy filter,
+while making as few changes as possible.
+
+The current text of the prompt is:
+
+{expanded_description}
+
+*IMPORTANT*:
+
+- The prompt you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+
+- The prompt must start with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
+idea of the image and then list the aspects of the image which are essential to the text and must be represented.
 """
     }
 

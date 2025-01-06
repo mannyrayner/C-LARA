@@ -51,6 +51,7 @@ from .clara_coherent_images_utils import (
     existing_description_version_directories_and_first_unused_number_for_element,
     existing_description_version_directories_and_first_unused_number_for_page,
     score_for_image_dir,
+    image_dir_shows_content_policy_violation,
     score_for_evaluation_file,
     parse_image_evaluation_response,
     get_story_data,
@@ -1451,7 +1452,11 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
         return description_directory, {}   
 
 async def generate_and_rate_page_images(page_number, expanded_description, description_version_number, params,
-                                        keep_existing_images=False, callback=None):
+                                        keep_existing_images=False, callback=None, correction_tries_left=3, total_cost_dict={}):
+    if correction_tries_left <= 0:
+        await post_task_update_async(callback, f'Unable to correct page prompt after content policy violation, giving up')
+        return total_cost_dict
+    
     project_dir = params['project_dir']
     n_images_per_description = params['n_images_per_description']
                             
@@ -1459,7 +1464,6 @@ async def generate_and_rate_page_images(page_number, expanded_description, descr
     make_project_dir(project_dir, description_dir)
     
     tasks = []
-    total_cost_dict = {}
     
     if keep_existing_images:
         abs_description_dir = project_pathname(project_dir, description_dir)
@@ -1483,9 +1487,67 @@ async def generate_and_rate_page_images(page_number, expanded_description, descr
     # If all the image creation tasks failed because of content_policy_violation errors, as found in the error.txt files,
     # call the AI to modify the description, saving the previous one, and try again up to some limit.
 
+    if all([ image_dir_shows_content_policy_violation(image_dir, params) for image_dir in all_image_dirs ]):
+        expanded_description1, cost_dict = await correct_expanded_description_after_content_policy_failure(expanded_description,
+                                                                                                           description_dir,
+                                                                                                           page_number,
+                                                                                                           params,
+                                                                                                           callback=callback)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+        total_cost_dict = generate_and_rate_page_images(page_number, expanded_description1, description_version_number, params,
+                                                        keep_existing_images=False, callback=None,
+                                                        correction_tries_left=correction_tries_left-1, total_cost_dict=total_cost_dict)
+        
     score_description_dir_best(description_dir, all_image_dirs, params)
         
     return total_cost_dict
+
+async def correct_expanded_description_after_content_policy_failure(expanded_description_old, description_dir, page_number, params, callback=None):
+    total_cost_dict = {}
+    
+    # Get the text of the story
+    story_data = get_story_data(params)
+    formatted_story_data = json.dumps(story_data, indent=4)
+
+    # Create the prompt
+    prompt_template = get_prompt_template('default', 'correct_page_description')
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                    page_number=page_number,
+                                    page_text=page_text,
+                                    expanded_description=expanded_description_old)
+    
+    # Get the expanded description from the AI
+    try:
+        valid_expanded_description_produced = False
+        tries_left = 5
+        #tries_left = 1
+        max_dall_e_3_prompt_length = 4000
+        
+        while not valid_expanded_description_produced and tries_left:
+            description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_page_description', params, callback=callback)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_page_description': description_api_call.cost })
+
+            # Save the expanded description
+            expanded_description = description_api_call.response
+            if len(expanded_description) < max_dall_e_3_prompt_length and "essential aspects" in expanded_description.lower():
+                valid_expanded_description_produced = True
+            else:
+                tries_left -= 1
+
+        write_project_txt_file(expanded_description_old, project_dir, f'pages/page{page_number}/description_v{description_version_number}/expanded_description_old.txt')
+        write_project_txt_file(expanded_description, project_dir, f'pages/page{page_number}/description_v{description_version_number}/expanded_description.txt')
+
+        if not valid_expanded_description_produced:   
+            error_message = f"Unable to correct prompt after content policy violation: no valid description was produced."
+            write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
+            expanded_description = None
+            
+        return expanded_description, total_cost_dict
+
+    except Exception as e:
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
+        return description_directory, {}   
 
 async def generate_and_rate_page_image(page_number, description, description_version_number, image_version_number, params, callback=None):
 ##    print(f'Generating and rating image for page {page_number}, description_version_number = {description_version_number} image_version_number = {image_version_number}')

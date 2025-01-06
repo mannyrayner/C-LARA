@@ -201,6 +201,18 @@ def existing_description_version_directories_and_first_unused_number_for_page(pa
 def score_for_image_dir(image_dir, params):
     return score_for_evaluation_file(f'{image_dir}/evaluation.txt', params)
 
+def image_dir_shows_content_policy_violation(image_dir, params):
+    project_dir = params['project_dir']
+    
+    error_file = project_pathname(project_dir, f'{image_dir}')
+    
+    if not file_exists(error_file):
+        return False
+
+    error_file_content = read_project_txt_file(error_file)
+    
+    return ( 'content_policy_violation' in error_file_content )
+
 def element_score_for_description_dir(description_dir, params):
     project_dir = params['project_dir']
     image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')

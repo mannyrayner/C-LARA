@@ -5988,10 +5988,9 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
                                    'description_index': description_index } ]
                 elif action == 'images_with_advice':
                     advice_text = request.POST.get('advice_text', '').strip()
-                    if advice_text:
-                        requests = [ { 'request_type': 'image_with_advice',
-                                       'page': page_number,
-                                       'advice_text': advice_text } ]
+                    requests = [ { 'request_type': 'image_with_advice',
+                                   'page': page_number,
+                                   'advice_text': advice_text } ]
                 else:
                     messages.error(request, f"Unknown request type '{action}'")
                     return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, status='none')
