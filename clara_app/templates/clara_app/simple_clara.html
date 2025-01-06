@@ -157,11 +157,11 @@
 			  </tbody>
 			</table>
 		{% endif %}
-		{% if up_to_date_dict.v2_element_images and not resources.v2_pages_overview_info %}
+		{% if resources.v2_images_dict.elements and not resources.v2_pages_overview_info %}
 			<h3>Page Images</h3>
 			<p><button type="submit" name="action" value="create_v2_pages">Generate Page Images</button></p>
 		{% endif %}
-		{% if up_to_date_dict.v2_element_images and resources.v2_pages_overview_info %}
+		{% if resources.v2_images_dict.elements and resources.v2_pages_overview_info %}
 			<h3>Page Images</h3>
 			<table class="table">
 				<thead>
