@@ -113,22 +113,22 @@
 		<br>	  
 	  {% if simple_clara_type == 'create_text_and_multiple_images' %}
 	    <h3>Image Style</h3>
-		{% if not up_to_date_dict.v2_style_image %}
+		{% if not resources.v2_images_dict.style %}
 			<p>Briefly describe the style you want to use for the images.</p>
 			<p>{{ form.style_advice }}
 			<button type="submit" name="action" value="create_v2_style">Generate Style</button></p>
 		{% endif %}
-		{% if up_to_date_dict.v2_style_image %}
+		{% if resources.v2_images_dict.style %}
 			<p><img src="{% url 'serve_coherent_images_v2_file' project_id resources.v2_images_dict.style.relative_file_path %}" alt="Style Image" style="max-width: 200px; max-height: 200px;">)</p>
 			<p>Briefly describe the style you want to use for the images.</p>
 			<p>{{ form.style_advice }}
 			<button type="submit" name="action" value="create_v2_style">Regenerate Style</button></p>
 		{% endif %}
-		{% if up_to_date_dict.v2_style_image and not up_to_date_dict.v2_element_images %}
+		{% if not resources.v2_images_dict.elements %}
 			<h3>Image Elements</h3>
 			<button type="submit" name="action" value="create_v2_elements">Generate Image Elements</button></p>
 		{% endif %}
-		{% if up_to_date_dict.v2_element_images %}
+		{% if resources.v2_images_dict.elements %}
 			<h3>Image Elements</h3>
 			<table class="table">
 			  <thead>
