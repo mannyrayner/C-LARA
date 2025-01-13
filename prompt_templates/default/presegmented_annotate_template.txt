@@ -4,7 +4,7 @@ Pages are separated using instances of the <page> tag.
 
 Segments are separated using instances of a double bar, ||.
 
-The way in which you divide up the text depends on the type of text it appears to be. For example, if the text appears to be a story, a natural segment might be a sentence, and a natural page might be one to three paragraphs. If the text appears to be a poem, a natural segment might be a line, and a natural page might be one to three verses. If the text appears to be a picture dictionary, a natural segment might be an entry word or example, and a natural page might be an entry with an accompanying example.
+The way in which you divide up the text depends on the type of text it appears to be. For example, if the text appears to be a story, a natural segment will be a sentence, and a natural page might be one to three paragraphs. If the text appears to be a poem, a natural segment will be a line, and a natural page might be one to three verses. If the text appears to be a picture dictionary, a natural segment will be an entry word or example, and a natural page will be an entry with an accompanying example.
 
 If there is a choice between putting a segment break immediately before a newline or immediately after a newline, put it immediately before the newline. 
 
