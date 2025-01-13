@@ -158,8 +158,8 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
     l1_language = 'irrelevant'
     l2_language = l2_language.capitalize()
     
-    if len(text.split('\n')) < 2:
-        #If we only have one line, the AI may be confused by a presegmentation request              
+    if len(text.split('\n')) < 2 and len(text) < 100:
+        #If we only have one shortish line, the AI may be confused by a presegmentation request              
         presegmented_text = text
     else:
         presegment_prompt =  presegmentation_prompt(annotate_or_improve, text, l2_language)
