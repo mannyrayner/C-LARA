@@ -36,18 +36,6 @@ from PIL import Image
 
 # Params files
 
-default_params = { 'n_expanded_descriptions': 1,
-                   'n_images_per_description': 1,
-                   'n_previous_pages': 1,
-                   'max_description_generation_rounds': 1,
-                   
-                   'page_interpretation_prompt': 'default',
-                   'page_evaluation_prompt': 'default',
-                   
-                   'default_model': 'gpt-4o',
-                   'generate_description_model': 'gpt-4o',
-                   'example_evaluation_model': 'gpt-4o' }
-
 project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                    'n_images_per_description': 3,
                    'n_previous_pages': 0,
@@ -59,6 +47,20 @@ project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                    'default_model': 'gpt-4o',
                    'generate_description_model': 'gpt-4o',
                    'example_evaluation_model': 'gpt-4o' }
+
+##default_params = { 'n_expanded_descriptions': 1,
+##                   'n_images_per_description': 1,
+##                   'n_previous_pages': 1,
+##                   'max_description_generation_rounds': 1,
+##                   
+##                   'page_interpretation_prompt': 'default',
+##                   'page_evaluation_prompt': 'default',
+##                   
+##                   'default_model': 'gpt-4o',
+##                   'generate_description_model': 'gpt-4o',
+##                   'example_evaluation_model': 'gpt-4o' }
+
+default_params = project_params_for_simple_clara
 
 def get_project_params(project_dir):
     params_file = project_params_file(project_dir)
