@@ -1223,7 +1223,9 @@ async def find_relevant_elements_for_page(page_number, params, callback=None):
             else:
                 error_message = f'{list_object} contains element name not in {all_element_texts}'
                 all_error_messages += f'\n-------------------------------\n{error_message}'
-                tries_left -= 1
+                #tries_left -= 1
+                usable_part_of_list_object = [ item for item in list_object if item in all_element_texts ]
+                return usable_part_of_list_object, total_cost_dict
             
         except Exception as e:
             error_message = f'"{str(e)}"\n{traceback.format_exc()}'

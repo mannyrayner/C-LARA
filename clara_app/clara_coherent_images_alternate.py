@@ -150,10 +150,14 @@ def promote_alternate_image(content_dir, project_dir, alternate_image_id):
     for alt_image in alternate_images:
         if alt_image['id'] == alternate_image_id:
             # Copy the relevant files to the top-level content directory
-            copy_file(project_dir / alt_image['image_path'], content_dir / 'image.jpg')
-            copy_file(project_dir / alt_image['expanded_description_path'], content_dir / 'expanded_description.txt')
-            copy_file(project_dir / alt_image['image_interpretation_path'], content_dir / 'interpretation.txt')
-            copy_file(project_dir / alt_image['image_evaluation_path'], content_dir / 'evaluation.txt')
+            if alt_image['image_path']:
+                copy_file(project_dir / alt_image['image_path'], content_dir / 'image.jpg')
+            if alt_image['expanded_description_path']:
+                copy_file(project_dir / alt_image['expanded_description_path'], content_dir / 'expanded_description.txt')
+            if alt_image['image_interpretation_path']:           
+                copy_file(project_dir / alt_image['image_interpretation_path'], content_dir / 'interpretation.txt')
+            if alt_image['image_evaluation_path']:
+                copy_file(project_dir / alt_image['image_evaluation_path'], content_dir / 'evaluation.txt')
 
             return True  # Indicate success
 
@@ -178,10 +182,14 @@ def promote_alternate_element_description(content_dir, project_dir, preferred_de
         raise ValueError(f'Directory {preferred_description_dir} not found in promote_alternate_element_description')
 
     # Copy the relevant files to the top-level content directory
-    copy_file(preferred_description_dir / 'image.jpg', content_dir / 'image.jpg')
-    copy_file(preferred_description_dir / 'expanded_description.txt', content_dir / 'expanded_description.txt')
-    copy_file(preferred_description_dir / 'interpretation.txt', content_dir / 'interpretation.txt')
-    copy_file(preferred_description_dir / 'evaluation.txt', content_dir / 'evaluation.txt')
+    if alt_image['image_path']:
+        copy_file(project_dir / alt_image['image_path'], content_dir / 'image.jpg')
+    if alt_image['expanded_description_path']:
+        copy_file(project_dir / alt_image['expanded_description_path'], content_dir / 'expanded_description.txt')
+    if alt_image['image_interpretation_path']:           
+        copy_file(project_dir / alt_image['image_interpretation_path'], content_dir / 'interpretation.txt')
+    if alt_image['image_evaluation_path']:
+        copy_file(project_dir / alt_image['image_evaluation_path'], content_dir / 'evaluation.txt')
 
     return True  # Indicate success
 
