@@ -890,9 +890,10 @@ class CLARAProjectInternal:
             return []
 
     # Call ChatGPT-4 to create versions of the text and title (if available) with segmentation annotations
-    def create_segmented_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+    def create_segmented_text(self, text_type=None, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         plain_text = self.load_text_version("plain")
-        segmented_text, api_calls = generate_segmented_version(plain_text, self.l2_language, config_info=config_info, callback=callback)
+        segmented_text, api_calls = generate_segmented_version(plain_text, self.l2_language,
+                                                               text_type=text_type, config_info=config_info, callback=callback)
         self.save_text_version("segmented", segmented_text, user=user, label=label, source='ai_generated')
 
         # If we have a title, which is a separate piece of text, segment that too and save it as "segmented_title"
@@ -911,7 +912,7 @@ class CLARAProjectInternal:
             while n_tries < max_tries:
                 try:
                     segmented_title_text, api_calls = generate_segmented_version(title_text, self.l2_language,
-                                                                                 config_info=config_info, callback=callback)
+                                                                                 text_type='title', config_info=config_info, callback=callback)
                     all_api_calls += api_calls
                     # We want the title to be a single segment
                     segmented_title_text_cleaned = segmented_title_text.replace('<page>', '').replace('||', '').strip()
@@ -951,7 +952,7 @@ class CLARAProjectInternal:
 ##        self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')
 ##        return api_calls
 
-    def improve_segmented_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
+    def improve_segmented_text(self, text_type=None, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
         segmented_text = self.load_text_version("segmented")
         new_segmented_text, api_calls = improve_morphology_in_segmented_version(segmented_text, self.l2_language, config_info=config_info, callback=callback)
         self.save_text_version("segmented", new_segmented_text, user=user, label=label, source='ai_revised')

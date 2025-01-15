@@ -77,14 +77,14 @@ def invoke_templates_on_trivial_text(annotate_or_improve, version, l1_language, 
         return joint_tagging_and_glossing_prompt(simplified_elements_json, l1_language, l2_language)
     
 # Annotate the text with pages and segments
-def generate_segmented_version(text, l2_language, config_info={}, callback=None):
+def generate_segmented_version(text, l2_language, text_type=None, config_info={}, callback=None):
     #return generate_or_improve_segmented_version('annotate', text, l2_language, config_info=config_info, callback=callback)
-    return generate_or_improve_segmented_version_two_phase('annotate', text, l2_language, config_info=config_info, callback=callback)
+    return generate_or_improve_segmented_version_two_phase('annotate', text, l2_language, text_type=text_type, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with pages and segments
-def improve_segmented_version(text, l2_language, config_info={}, callback=None):
+def improve_segmented_version(text, l2_language, text_type=None, config_info={}, callback=None):
     #return generate_or_improve_segmented_version('improve', text, l2_language, config_info=config_info, callback=callback)
-    return generate_or_improve_segmented_version_two_phase('improve', text, l2_language, config_info=config_info, callback=callback)
+    return generate_or_improve_segmented_version_two_phase('improve', text, l2_language, text_type=text_type, config_info=config_info, callback=callback)
 
 # Improve annotation of the text with pages and segments
 def improve_morphology_in_segmented_version(text, l2_language, config_info={}, callback=None):
@@ -151,7 +151,7 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
     return ( api_call.response, [ api_call ] )
 
 def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l2_language,
-                                                    config_info={}, callback=None):
+                                                    text_type=None, config_info={}, callback=None):
     if annotate_or_improve != 'annotate':
         raise ValueError('Improvement of segmented text not currently supported')
     all_api_calls = []
@@ -162,7 +162,7 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
         #If we only have one shortish line, the AI may be confused by a presegmentation request              
         presegmented_text = text
     else:
-        presegment_prompt =  presegmentation_prompt(annotate_or_improve, text, l2_language)
+        presegment_prompt =  presegmentation_prompt(annotate_or_improve, text, l2_language, text_type=text_type)
         n_attempts = 0
         valid_presegmentation_found = False
         limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
@@ -414,11 +414,10 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     for page in internalised_annotated_text.pages:
         for segment in page.segments:
             # If we are doing segmentation, the "annotations" are the segmented_text
-            # We create a segment with one ContentElement holding the segmented_text.
-            # This is okay, since we're immediately after going to convert the internalised text to surface text.
             if processing_phase == 'segmented':
                 segmented_text = annotations_for_segments[index]
-                segment.content_elements = [ ContentElement('Word', segmented_text) ]
+                segment.content_elements = clara_internalise.parse_segment_text(segmented_text, 'segmented').content_elements
+                #segment.content_elements = [ ContentElement('Word', segmented_text) ]
                 index += 1
             # If we are doing MWE, add the annotations to the segment
             elif processing_phase == 'mwe':
@@ -436,11 +435,12 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                 segment.content_elements = annotated_elements[index:index+n_elements_in_segment]
                 index += n_elements_in_segment
 
-    #print(f'internalised_annotated_text: {internalised_annotated_text}')
+    print(f'internalised_annotated_text: {internalised_annotated_text}')
 
-    processing_phase1 = 'presegmented' if processing_phase == 'segmented' else processing_phase
-    human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase1)
-    #print(f'generate_or_improve_annotated_version: total cost = {sum([ api_call.cost for api_call in all_api_calls ])}')
+    #processing_phase1 = 'presegmented' if processing_phase == 'segmented' else processing_phase
+    #human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase1)
+    human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase)
+    
     return ( human_readable_text, all_api_calls )
 
 def call_process_annotations_async(chunks, process_segments_singly,
@@ -738,7 +738,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>", but sometimes these don't come out quite right
                 segmented_text = find_between_tags(segmented_text0, "text", "text")
                 # Try to correct if we have a mismatch 
-                if text_to_annotate != segmented_text.replace('|', ''):
+                if text_to_annotate != segmented_text.replace('|', '').replace('@', ''):
                     segmented_text = merge_annotations_charwise(text_to_annotate, segmented_text, 'segmentation')
                 return ( segmented_text, api_calls )
             elif processing_phase == 'translated':
@@ -811,14 +811,26 @@ def segmentation_prompt(annotate_or_improve, text, l2_language):
                             examples=examples,
                             text=text )
 
-def presegmentation_prompt(annotate_or_improve, text, l2_language):
+def presegmentation_prompt(annotate_or_improve, text, l2_language, text_type=None):
     if annotate_or_improve != 'annotate':
         raise ValueError('Cannot currently improve presegmentation')
     template, annotated_example_list = get_template_and_annotated_example_list(annotate_or_improve, 'presegmented', l2_language)
     examples = segmentation_examples_to_text(annotated_example_list)
+    text_type_advice = make_text_type_advice(text_type)
     return template.format( l2_language=l2_language,
                             examples=examples,
-                            text=text )
+                            text=text,
+                            text_type_advice=text_type_advice )
+
+def make_text_type_advice(text_type):
+    if text_type == 'prose':
+        return 'The text is probably a piece of prose like a story or essay'
+    if text_type == 'poem':
+        return 'The text is probably a poem or song'
+    if text_type == 'dictionary':
+        return 'The text is probably some kind of dictionary'
+    else:
+        return ''
 
 def morphology_prompt(simplified_elements_json, l2_language):
     template, annotated_example_list = get_template_and_example_list(annotate_or_improve, 'morphology', l2_language)

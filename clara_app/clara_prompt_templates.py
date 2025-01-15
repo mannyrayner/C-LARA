@@ -339,42 +339,55 @@ def check_validity_of_template_and_annotated_example_list(template, annotated_ex
     check_validity_of_template(template, annotation_type)
 
 def check_validity_of_template(template, annotation_type):
+    #print(f'check_validity_of_template: annotation_type = {annotation_type}')
     if not template:
         raise TemplateError(message = 'Unable to find template')
-    if annotation_type in ( 'presegmented', 'segmented' ):
+    if annotation_type == 'presegmented':
         try:
             result = template.format( l2_language='***l2_language***',
                                       examples='***examples***',
-                                      text='***text***' )
-            if not '***examples***' in result or not '***text***' in result:
-                raise TemplateError(message = """Error in template.
-Template must contain the substitution elements {examples} and {text}""")
+                                      text='***text***',
+                                      text_type_advice='***text_type_advice***')
         except:
             raise TemplateError(message = """Error in template.
 Template may not contain any substitution elements except {l2_language}, {examples} and {text}""")
+        if not '***examples***' in result or not '***text***' in result or not '***text_type_advice***' in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {examples}, {text} and {text_type_advice}""")
+    elif annotation_type == 'segmented':
+        try:
+            result = template.format( l2_language='***l2_language***',
+                                      examples='***examples***',
+                                      text='***text***')
+        except:
+            raise TemplateError(message = """Error in template.
+Template may not contain any substitution elements except {l2_language}, {examples} and {text}""")
+        if not '***examples***' in result or not '***text***' in result in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {examples} and {text}""")
     elif annotation_type in ('morphology', 'lemma', 'mwe' ) :
         try:
             result = template.format( l2_language='***l2_language***',
                                       examples='***examples***',
                                       simplified_elements_json='***simplified_elements_json***' )
-            if not '***l2_language***' in result or not '***examples***' in result or not '***simplified_elements_json***' in result:
-                raise TemplateError(message = """Error in template.
-Template must contain the substitution elements {l2_language}, {examples} and {simplified_elements_json}""")
         except Exception:
             raise TemplateError(message = """Error in template.
 Template may not contain any substitution elements except {l2_language}, {examples} and {simplified_elements_json}""")
+        if not '***l2_language***' in result or not '***examples***' in result or not '***simplified_elements_json***' in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {l2_language}, {examples} and {simplified_elements_json}""")
     elif annotation_type == 'translated':
         try:
             result = template.format( l1_language='***l1_language***',
                                       l2_language='***l2_language***',
                                       examples='***examples***',
                                       simplified_elements_json='***simplified_elements_json***' )
-            if not '***examples***' in result or not '***simplified_elements_json***' in result or not '***l1_language***' in result or not '***l2_language***' in result:
-                raise TemplateError(message = """Error in template.
-Template must contain the substitution elements {l1_language}, {l2_language}, {examples} and {simplified_elements_json}""")
         except:
             raise TemplateError(message = """Error in template.
 Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples} and {simplified_elements_json}""")
+        if not '***examples***' in result or not '***simplified_elements_json***' in result or not '***l1_language***' in result or not '***l2_language***' in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {l1_language}, {l2_language}, {examples} and {simplified_elements_json}""")
     elif annotation_type == 'gloss_with_mwe':
         try:
             result = template.format( l1_language='***l1_language***',
@@ -382,36 +395,36 @@ Template may not contain any substitution elements except {l1_language}, {l2_lan
                                       examples='***examples***',
                                       simplified_elements_json='***simplified_elements_json***',
                                       mwes='***mwes***' )
-            if not '***examples***' in result or not '***simplified_elements_json***' or not '***mwes***' in result:
-                raise TemplateError(message = """Error in template.
-Template must contain the substitution elements {examples}, {simplified_elements_json} and {mwes}""")
         except:
             raise TemplateError(message = """Error in template.
 Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples}, {simplified_elements_json} and {mwes}""")
+        if not '***examples***' in result or not '***simplified_elements_json***' or not '***mwes***' in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {examples}, {simplified_elements_json} and {mwes}""")
     elif annotation_type == 'lemma_with_mwe':
         try:
             result = template.format( l2_language='***l2_language***',
                                       examples='***examples***',
                                       simplified_elements_json='***simplified_elements_json***',
                                       mwes='***mwes***' )
-            if not '***examples***' in result or not '***simplified_elements_json***' or not '***mwes***' in result:
-                raise TemplateError(message = """Error in template.
-Template must contain the substitution elements {examples}, {simplified_elements_json} and {mwes}""")
         except:
             raise TemplateError(message = """Error in template.
 Template may not contain any substitution elements except {l2_language}, {examples}, {simplified_elements_json} and {mwes}""")
+        if not '***examples***' in result or not '***simplified_elements_json***' or not '***mwes***' in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {examples}, {simplified_elements_json} and {mwes}""")
     else:
         try:
             result = template.format( l1_language='***l1_language***',
                                       l2_language='***l2_language***',
                                       examples='***examples***',
                                       simplified_elements_json='***simplified_elements_json***' )
-            if not '***examples***' in result or not '***simplified_elements_json***' in result:
-                raise TemplateError(message = """Error in template.
-Template must contain the substitution elements {examples} and {simplified_elements_json}""")
         except:
             raise TemplateError(message = """Error in template.
-Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples} and {simplified_elements_json}""")        
+Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples} and {simplified_elements_json}""")
+        if not '***examples***' in result or not '***simplified_elements_json***' in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {examples} and {simplified_elements_json}""")
 
 def string_to_list_of_content_elements(string, annotation_type):
     ( l2_language, l1_language ) = ( 'irrelevant', 'irrelevant' )

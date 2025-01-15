@@ -174,9 +174,13 @@ def extract_markup_token(chars: list[str], phase: str) -> list[str]:
             # In presegmentation mode, a || with no <page> cannot meaninfully be combined with other material.
             token_string = '||'
     elif phase == 'segmentation':
-        if '|' in marked_up_string:
-            # In segmentation mode, a | cannot meaninfully be combined with other material.
+        if '@' in marked_up_string:
+            # In segmentation mode, if we have a @, then a preceding or following | is possible but irrelevant.
+            token_string = '@'
+        elif '|' in marked_up_string:
+            # In segmentation mode, a | with no @ cannot meaninfully be combined with other material.
             token_string = '|'
+        
 
     return list(token_string)
 

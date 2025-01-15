@@ -405,12 +405,24 @@ class CreateSegmentedTextForm(CreateAnnotatedTextForm):
             ('manual', 'Manually enter/edit segmented text'),
             ('load_archived', 'Load archived version')
         ]
+    text_type = forms.ChoiceField(
+        choices=[
+            ('not_specified', 'Not specified'), 
+            ('prose', 'Story, essay or similar'),
+            ('poetry', 'Poem or song'),
+            ('dictionary', 'Dictionary, alphabet book or similar')
+        ],
+        widget=forms.RadioSelect,
+        initial='not_specified'
+    )
 
-    def __init__(self, *args, prompt=None, jieba_supported=False, previous_version='default', **kwargs):
+    def __init__(self, *args, text_type=None, jieba_supported=False, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES if jieba_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'jieba'
             ]
+        if text_type:
+            self.fields['text_type'].initial = text_type
 
 class CreateSegmentedTitleTextForm(CreateAnnotatedTextForm):
     TEXT_CHOICES = [

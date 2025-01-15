@@ -4282,6 +4282,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
             username = request.user.username
             # We have an optional prompt when creating or improving the initial text.
             prompt = form.cleaned_data['prompt'] if this_version == 'plain' else None
+            text_type = form.cleaned_data['text_type'] if this_version == 'segmented' else None
             if not text_choice in ( 'manual', 'load_archived', 'correct', 'generate', 'improve', 'trivial', 'placeholders', 'mwe_simplify',
                                     'tree_tagger', 'jieba', 'pypinyin', 'delete' ):
                 raise InternalCLARAError(message = f'Unknown text_choice type in create_annotated_text_of_right_type: {text_choice}')
@@ -4359,7 +4360,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('annotate', this_version)
                         async_task(perform_generate_operation_and_store_api_calls, this_version, project, clara_project_internal,
-                                   request.user, label, previous_version=previous_version, prompt=prompt, callback=callback)
+                                   request.user, label, previous_version=previous_version, prompt=prompt, text_type=text_type, callback=callback)
                         print(f'--- Started generation task, callback = {callback}')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
@@ -4368,7 +4369,7 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                         # We want to get a possible template error here rather than in the asynch process
                         clara_project_internal.try_to_use_templates('improve', this_version)
                         async_task(perform_improve_operation_and_store_api_calls, this_version, project, clara_project_internal,
-                                   request.user, label, prompt=prompt, callback=callback)
+                                   request.user, label, prompt=prompt, text_type=text_type, callback=callback)
                         print(f'--- Started improvement task')
                         #Redirect to the monitor view, passing the task ID and report ID as parameters
                         return redirect('generate_text_monitor', project_id, this_version, report_id)
@@ -4604,12 +4605,12 @@ def perform_correct_operation(annotated_text, version, clara_project_internal, u
                                                                        config_info=config_info, callback=callback) )
 
 def perform_generate_operation_and_store_api_calls(version, project, clara_project_internal,
-                                                   user_object, label, previous_version='default', prompt=None, callback=None):
+                                                   user_object, label, previous_version='default', prompt=None, text_type=None, callback=None):
     #post_task_update(callback, f'perform_generate_operation_and_store_api_calls({version}, {project}, {clara_project_internal}, {user_object}, {label}, {previous_version}, {prompt}, {callback})')
     try:
         config_info = get_user_config(user_object)
         operation, api_calls = perform_generate_operation(version, clara_project_internal, user_object.username, label,
-                                                          previous_version=previous_version, prompt=prompt,
+                                                          previous_version=previous_version, prompt=prompt, text_type=text_type, 
                                                           config_info=config_info, callback=callback)
         #print(f'perform_generate_operation_and_store_api_calls: total cost = {sum([ api_call.cost for api_call in api_calls ])}')
         store_api_calls(api_calls, project, user_object, version)
@@ -4618,7 +4619,7 @@ def perform_generate_operation_and_store_api_calls(version, project, clara_proje
         post_task_update(callback, f"Exception in perform_generate_operation_and_store_api_calls({version}, ...): {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
     
-def perform_generate_operation(version, clara_project_internal, user, label, previous_version=None, prompt=None, config_info={}, callback=None):
+def perform_generate_operation(version, clara_project_internal, user, label, previous_version=None, prompt=None, text_type=None, config_info={}, callback=None):
     if version == 'plain':
         return ( 'generate', clara_project_internal.create_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'title':
@@ -4630,7 +4631,7 @@ def perform_generate_operation(version, clara_project_internal, user, label, pre
     elif version == 'cefr_level':
         return ( 'generate', clara_project_internal.get_cefr_level(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
-        return ( 'generate', clara_project_internal.create_segmented_text(user=user, label=label, config_info=config_info, callback=callback) )
+        return ( 'generate', clara_project_internal.create_segmented_text(text_type=text_type, user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'translated':
         return ( 'generate', clara_project_internal.create_translated_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'phonetic':
@@ -4649,18 +4650,18 @@ def perform_generate_operation(version, clara_project_internal, user, label, pre
         raise InternalCLARAError(message = f'Unknown first argument in perform_generate_operation: {version}')
 
 def perform_improve_operation_and_store_api_calls(version, project, clara_project_internal,
-                                                   user_object, label, prompt=None, callback=None):
+                                                   user_object, label, prompt=None, text_type=None, callback=None):
     try:
         config_info = get_user_config(user_object)
         operation, api_calls = perform_improve_operation(version, clara_project_internal, user_object.username, label,
-                                                         prompt=prompt, config_info=config_info, callback=callback)
+                                                         prompt=prompt, text_type=text_type, config_info=config_info, callback=callback)
         store_api_calls(api_calls, project, user_object, version)
         post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Exception in perform_improve_operation_and_store_api_calls({version},...): {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
  
-def perform_improve_operation(version, clara_project_internal, user, label, prompt=None, config_info={}, callback=None):
+def perform_improve_operation(version, clara_project_internal, user, label, prompt=None, text_type=None, config_info={}, callback=None):
     if version == 'plain':
         return ( 'generate', clara_project_internal.improve_plain_text(prompt=prompt, user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'title':
@@ -4668,7 +4669,7 @@ def perform_improve_operation(version, clara_project_internal, user, label, prom
     elif version == 'summary':
         return ( 'generate', clara_project_internal.improve_summary(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'segmented':
-        return ( 'generate', clara_project_internal.improve_segmented_text(user=user, label=label, config_info=config_info, callback=callback) )
+        return ( 'generate', clara_project_internal.improve_segmented_text(text_type=text_type, user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'gloss':
         return ( 'generate', clara_project_internal.improve_glossed_text(user=user, label=label, config_info=config_info, callback=callback) )
     elif version == 'lemma':
@@ -5490,7 +5491,7 @@ def edit_images_v2(request, project_id, status):
                         clara_project_internal.promote_v2_style_image(alternate_image_id)
                     elif content_type == 'element':
                         element_name = content_identifier
-                        clara_project_internal.promote_v2_element_description(element_name, alternate_description_id)
+                        clara_project_internal.promote_v2_element_description(element_name, alternate_image_id)
                     elif content_type == 'page':
                         page_number = int(content_identifier)
                         clara_project_internal.promote_v2_page_image(page_number, alternate_image_id)

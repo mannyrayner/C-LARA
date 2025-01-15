@@ -181,17 +181,23 @@ def promote_alternate_element_description(content_dir, project_dir, preferred_de
     if not directory_exists(preferred_description_dir):
         raise ValueError(f'Directory {preferred_description_dir} not found in promote_alternate_element_description')
 
-    # Copy the relevant files to the top-level content directory
-    if alt_image['image_path']:
-        copy_file(project_dir / alt_image['image_path'], content_dir / 'image.jpg')
-    if alt_image['expanded_description_path']:
-        copy_file(project_dir / alt_image['expanded_description_path'], content_dir / 'expanded_description.txt')
-    if alt_image['image_interpretation_path']:           
-        copy_file(project_dir / alt_image['image_interpretation_path'], content_dir / 'interpretation.txt')
-    if alt_image['image_evaluation_path']:
-        copy_file(project_dir / alt_image['image_evaluation_path'], content_dir / 'evaluation.txt')
+    # Read the alternate_images.json file
+    alternate_images = read_json_file(content_dir / 'alternate_images.json')
 
-    return True  # Indicate success
+    # Find the alternate image with the given ID
+    for alt_image in alternate_images:
+        if alt_image['description_index'] == preferred_description_id:
+            # Copy the relevant files to the top-level content directory
+            if alt_image['image_path']:
+                copy_file(project_dir / alt_image['image_path'], content_dir / 'image.jpg')
+            if alt_image['expanded_description_path']:
+                copy_file(project_dir / alt_image['expanded_description_path'], content_dir / 'expanded_description.txt')
+            if alt_image['image_interpretation_path']:           
+                copy_file(project_dir / alt_image['image_interpretation_path'], content_dir / 'interpretation.txt')
+            if alt_image['image_evaluation_path']:
+                copy_file(project_dir / alt_image['image_evaluation_path'], content_dir / 'evaluation.txt')
+
+            return True  # Indicate success
 
 def set_alternate_image_hidden_status(content_dir, description_index, image_index, hidden=True):
     """
