@@ -8,8 +8,14 @@
   <div class="main-content">
   <h2>Create Segmented Text ("{{ project.title }}")</h2>
   <form method="post" id="create-segmented-text-form">
-    {% csrf_token %}
-    {{ form.as_p }}
+	{% csrf_token %}
+    <p>{{ form.text_choice.label_tag }} {{ form.text_choice }}</p>
+	<p>{{ form.text_type.label_tag }} {{ form.text_type }}</p>
+    <p>{{ form.archived_version.label_tag }} {{ form.archived_version }}</p>
+	<p>{{ form.current_version.label_tag }} {{ form.current_version }}</p>
+    <p>{{ form.text.label_tag }} {{ form.text }}</p>
+    <p>{{ form.label.label_tag }} {{ form.label }}</p>
+	<p>{{ form.gold_standard.label_tag }} {{ form.gold_standard }}</p>
     <button type="submit" id="submit-button">Create</button>
   </form>
   </div>
