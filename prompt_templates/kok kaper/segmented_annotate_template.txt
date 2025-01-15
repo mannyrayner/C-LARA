@@ -1,0 +1,11 @@
+Annotate the following {l2_language} text in the following way, so that it can be passed to the next stage in an annotation pipeline: if a word in the text contains hyphens or apostrophes, add @ characters at the beginning and end of the word. Do not make any other changes.
+
+Here are some examples:
+
+{examples}
+
+Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. This may include linebreaks or other whitespace characters, which must be kept unchanged. 
+
+<startoftext>{text}<endoftext>
+
+The output will be read by a Python script, which will expect the annotated output text also to be enclosed within the tags <startoftext> and <endoftext>.
