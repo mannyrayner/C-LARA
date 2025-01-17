@@ -23,19 +23,19 @@
             <form method="post" prefix="image_set">
                 {% csrf_token %}
                 <table>
-                    <tr>
-                        <td>Use coherent AI-generated image set (V1):</td>
-                        <td>{{ image_set_form.uses_coherent_image_set }}</td>
-					</tr>
 					<tr>
-                        <td>Use coherent AI-generated image set (V2):</td>
+                        <td>Use coherent AI-generated image set:</td>
                         <td>{{ image_set_form.uses_coherent_image_set_v2 }}</td>
+					</tr>
+                    <tr>
+                        <td>Use coherent AI-generated image set (legacy version - do not use for new projects):</td>
+                        <td>{{ image_set_form.uses_coherent_image_set }}</td>
 					</tr>
 					<tr>
 						<td>Base image set on translations:</td>
 						<td>{{ image_set_form.use_translation_for_images }}</td>
 					<tr>
-                        <td><button type="submit">Update Coherent Image Set</button></td>
+                        <td><button type="submit">Update Coherent Image Settings</button></td>
                     </tr>
                 </table>
             </form>
@@ -77,6 +77,7 @@
 		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
 		  Create/Edit Segmented Title</a>
 		  {% if up_to_date_dict.segmented_title %}✓{% endif %}</p>
+	{% if ai_enabled_l2 %}
 	<p><a href="{% url 'create_translated_text' project.id %}" 
 	      data-tooltip="Tell the AI to add a translation annotation to each segment."
 		  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
@@ -87,17 +88,18 @@
 		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
 		  Create/Edit MWE-tagged Text</a>
 		  {% if up_to_date_dict.mwe %}✓{% endif %}</p>
+	{% endif %}
 	{% if project.uses_coherent_image_set_v2 %}
 		  <p><a href="{% url 'edit_images_v2' project.id 'none' %}" 
-			  data-tooltip="Create/edit coherent images, V2." 
+			  data-tooltip="Edit images and different annotated versions of the text, split up by page." 
 			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
-			  Create/Edit Coherent Images V2</a>
+			  Pages and Images</a>
 			  {% if up_to_date_dict.images %}✓{% endif %}</p>
 	{% else %}
 		  <p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image' %}" 
-			  data-tooltip="Upload, replace or remove images to include in the text." 
+			  data-tooltip="Edit images and different annotated versions of the text, split up by page." 
 			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
-			  Add/Remove Images</a>
+			  Pages and Images</a>
 			  {% if up_to_date_dict.images %}✓{% endif %}</p>
 	{% endif %}
 	{% if project.uses_coherent_image_set_v2 and project.community %}
@@ -117,6 +119,7 @@
 	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Phonetic Text</a>
 		  {% if up_to_date_dict.phonetic %}✓{% endif %}</p>
+	{% if ai_enabled_l2 %}
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add lemma and part-of-speech tags to the words in the text. Alternately, edit the result or add your own tags." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">
@@ -132,6 +135,7 @@
 	      {% if not can_create_pinyin_text %}class="disabled-link{% endif %}">
 		  Create/Edit Pinyin Tagged Text</a>
 		  {% if up_to_date_dict.pinyin %}✓{% endif %}</p>
+	{% endif %}
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->
 	<p><a href="{% url 'human_audio_processing' project.id %}" 
 	      data-tooltip="Specify audio options for normal text. If you are using human-recorded audio, upload it." 
