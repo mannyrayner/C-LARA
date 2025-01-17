@@ -57,6 +57,7 @@ from .utils import post_task_update_in_db, get_task_updates, has_saved_internali
 from .utils import uploaded_file_to_file, create_update, current_friends_of_user, get_phase_up_to_date_dict
 from .utils import send_mail_or_print_trace, get_zoom_meeting_start_date, get_previous_week_start_date
 from .utils import user_is_community_member, user_is_community_coordinator, community_role_required, user_is_coordinator_of_some_community
+from .utils import is_ai_enabled_language
 
 from .clara_main import CLARAProjectInternal
 #from .clara_audio_repository import AudioRepository
@@ -3350,6 +3351,8 @@ def delete_project(request, project_id):
 def project_detail(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    ai_enabled_l2 = is_ai_enabled_language(project.l2)
+    ai_enabled_l1 = is_ai_enabled_language(project.l1)
     text_versions = clara_project_internal.text_versions
     up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal, request.user)
 
@@ -3388,6 +3391,8 @@ def project_detail(request, project_id):
     
     return render(request, 'clara_app/project_detail.html', 
                   { 'project': project,
+                    'ai_enabled_l2': ai_enabled_l2,
+                    'ai_enabled_l1': ai_enabled_l1,
                     'title_form': title_form,
                     'image_set_form': image_set_form,
                     'api_cost': api_cost,

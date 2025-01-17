@@ -18,6 +18,8 @@ from .clara_dependencies import CLARADependencies
 
 from .clara_utils import write_json_to_file_plain_utf8, read_json_file
 
+from .constants import SUPPORTED_LANGUAGES_AI_ENABLED_DICT
+
 from functools import wraps
 from decimal import Decimal
 import re
@@ -29,6 +31,12 @@ import pytz
 import tempfile
 import hashlib
 import uuid
+
+def is_ai_enabled_language(language):
+    if language in SUPPORTED_LANGUAGES_AI_ENABLED_DICT and SUPPORTED_LANGUAGES_AI_ENABLED_DICT[language]:
+        return True
+    else:
+        return False
 
 def get_user_config(user):
     """

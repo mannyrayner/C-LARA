@@ -416,7 +416,7 @@ class CreateSegmentedTextForm(CreateAnnotatedTextForm):
         initial='not_specified'
     )
 
-    def __init__(self, *args, text_type=None, jieba_supported=False, previous_version='default', **kwargs):
+    def __init__(self, *args, text_type='not_specified', jieba_supported=False, previous_version='default', **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['text_choice'].choices = self.TEXT_CHOICES if jieba_supported else [
             choice for choice in self.TEXT_CHOICES if choice[0] != 'jieba'
