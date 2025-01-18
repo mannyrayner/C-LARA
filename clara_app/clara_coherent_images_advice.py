@@ -109,7 +109,7 @@ def advice_dir(advice_id, element_or_page, params):
         raise ValueError(f'Unknown first argument "{element_or_page}" in advice_dir, must be one of {valid_types}')
 
     if element_or_page == 'element':
-        element_name = element_text_to_element_name(advice_id, params)
+        element_name = element_text_to_element_name(advice_id)
         return f'elements/{element_name}'
     elif element_or_page == 'page':
         return f'pages/page{advice_id}'

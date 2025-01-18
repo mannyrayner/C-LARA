@@ -280,6 +280,34 @@ def get_style_image(params):
 def overview_file(project_dir):
     return project_pathname(project_dir, 'overview.html')
 
+def element_text_to_element_name(element_text):
+    out_str = ''
+    for char in element_text:
+        out_str += '_' if char.isspace() or unicodedata.category(char).startswith('P') else char
+    return out_str
+
+##def element_text_to_element_name(element_text, params):
+##    project_dir = params['project_dir']
+##    
+##    element_list = read_project_json_file(project_dir, f'elements/elements.json')
+##    for item in element_list:
+##        text = item['text']
+##        if text == element_text:
+##            name = item['name']
+##            return name
+##    raise ImageGenerationError(message=f'Unable to find element "{element_text}"')
+
+def element_name_to_element_text(element_name, params):
+    project_dir = params['project_dir']
+    
+    element_list = read_project_json_file(project_dir, f'elements/elements.json')
+    for item in element_list:
+        name = item['name']
+        if name == element_name:
+            text = item['text']
+            return text
+    raise ImageGenerationError(message=f'Unable to find element with name "{element_name}"')
+    
 def get_all_element_names_and_texts(params):
     project_dir = params['project_dir']
     
@@ -291,23 +319,33 @@ def get_all_element_names_and_texts(params):
 def get_all_element_texts(params):
     return [ item['text'] for item in get_all_element_names_and_texts(params) ]
 
-def remove_element_name_from_list_of_elements(element_name, params):
+def remove_element_name_from_list_of_elements(element_text, params):
     project_dir = params['project_dir']
     
     element_list = read_project_json_file(project_dir, f'elements/elements.json')
-    element_list1 = [ item for item in element_list if item['text'] != element_name ]
+    element_list1 = [ item for item in element_list if item['text'] != element_text ]
     write_project_json_file(element_list1, project_dir, f'elements/elements.json')
+
+def add_element_name_to_list_of_elements(element_text, params):
+    project_dir = params['project_dir']
+    element_name = element_text_to_element_name(element_text)
+    
+    element_list = read_project_json_file(project_dir, f'elements/elements.json')
+    element_list.append({ 'text': element_text, 'name': element_name })
+    write_project_json_file(element_list, project_dir, f'elements/elements.json')
 
 def get_element_description(element_text, params):
     project_dir = params['project_dir']
     
-    name = element_text_to_element_name(element_text, params)
+    #name = element_text_to_element_name(element_text, params)
+    name = element_text_to_element_name(element_text)
     return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
 
 def get_element_image(element_text, params):
     project_dir = params['project_dir']
     
-    name = element_text_to_element_name(element_text, params)
+    #name = element_text_to_element_name(element_text, params)
+    name = element_text_to_element_name(element_text)
     return f'elements/{name}/image.jpg'
 
 def get_all_element_images(params):
@@ -323,7 +361,8 @@ def remove_top_level_element_directory(params):
 def remove_element_directory(element_text, params):
     project_dir = params['project_dir']
     
-    name = element_text_to_element_name(element_text, params)
+    #name = element_text_to_element_name(element_text, params)
+    name = element_text_to_element_name(element_text)
     remove_project_dir(project_dir, f'elements/{name}')
 
 def style_image_name():
@@ -341,7 +380,8 @@ def style_directory(params):
 
 def element_directory(element_text, params):
     project_dir = params['project_dir']
-    element_name = element_text_to_element_name(element_text, params)
+    #element_name = element_text_to_element_name(element_text, params)
+    element_name = element_text_to_element_name(element_text)
     return project_pathname(project_dir, f'elements/{element_name}')
 
 def element_directory_for_element_name(element_name, params):
@@ -351,17 +391,6 @@ def element_directory_for_element_name(element_name, params):
 def page_directory(page_number, params):
     project_dir = params['project_dir']
     return project_pathname(project_dir, f'pages/page{page_number}')
-
-def element_text_to_element_name(element_text, params):
-    project_dir = params['project_dir']
-    
-    element_list = read_project_json_file(project_dir, f'elements/elements.json')
-    for item in element_list:
-        text = item['text']
-        if text == element_text:
-            name = item['name']
-            return name
-    raise ImageGenerationError(message=f'Unable to find element "{element_text}"')
 
 def get_page_text(page_number, params):
     story_data = get_story_data(params)

@@ -59,6 +59,10 @@ from .clara_coherent_images_utils import (
     get_text,
     get_style_description,
     get_all_element_texts,
+    element_text_to_element_name,
+    element_name_to_element_text,
+    remove_element_name_from_list_of_elements,
+    add_element_name_to_list_of_elements,
     get_element_description,
     get_page_text,
     get_page_description,
@@ -89,6 +93,7 @@ from .clara_utils import (
     read_json_file,
     write_json_to_file,
     make_directory,
+    remove_directory,
     absolute_file_name,
     file_exists,
     directory_exists,
@@ -685,13 +690,30 @@ async def generate_element_names(params, callback=None):
     return [], total_cost_dict
 
 def add_names_to_element_list(element_list):
-    return [ { 'name': element_phrase_to_name(element), 'text': element } for element in element_list ]
+    return [ { 'name': element_text_to_element_name(element), 'text': element } for element in element_list ]
 
-def element_phrase_to_name(element):
-    out_str = ''
-    for char in element:
-        out_str += '_' if char.isspace() or unicodedata.category(char).startswith('P') else char
-    return out_str
+def delete_element(element_text, params):
+    project_dir = params['project_dir']
+    
+    all_element_texts = get_all_element_texts(params)
+    if not element_text in all_element_texts:
+        raise ValueError(f'Unable to delete unknown element "{element_text}"')
+    remove_element_name_from_list_of_elements(element_text, params)
+    element_name = element_text_to_element_name(element_text)
+    element_dir = project_pathname(project_dir, f'elements/{element_name}')
+    remove_directory(element_dir)
+
+async def add_element(element_text, params, callback=None):
+    project_dir = params['project_dir']
+    
+    all_element_texts = get_all_element_texts(params)
+    if element_text in all_element_texts:
+        raise ValueError(f'Element "{element_text}" already exists')
+    add_element_name_to_list_of_elements(element_text, params)
+    element_name = element_text_to_element_name(element_text)
+    element_dir = project_pathname(project_dir, f'elements/{element_name}')
+    make_directory(element_dir)
+    return await process_single_element(element_name, element_text, params, callback=callback)
 
 async def process_single_element(element_name, element_text, params, callback=None):
     project_dir = params['project_dir']
@@ -989,10 +1011,11 @@ async def execute_simple_clara_element_request(params, request, callback=None):
     
     request_type = request['request_type']
     element_name = request['element_name']
+    element_text = element_name_to_element_text(element_name, params)
     if request_type == 'new_element_description_and_images':
         advice_text = request['advice_text']
-        set_element_advice(advice_text, element_name, params1)
-        params1['elements_to_generate'] = [ element_name ]
+        set_element_advice(advice_text, element_text, params1)
+        params1['elements_to_generate'] = [ element_text ]
         cost_dict = await process_elements(params1, callback=callback)
     else:
         raise ValueError(f'Unknown request type in {request}')

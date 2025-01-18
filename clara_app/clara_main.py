@@ -162,6 +162,7 @@ from .clara_export_import import get_global_metadata, rename_files_in_project_di
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
 from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page
 from .clara_coherent_images import execute_community_requests_list, execute_simple_clara_image_requests, execute_simple_clara_element_requests
+from .clara_coherent_images import delete_element, add_element
 from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
 from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image, promote_alternate_element_description
@@ -1839,6 +1840,19 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
         cost_dict = asyncio.run(process_elements(params, callback=callback))
+        self.store_v2_element_data(params, callback=callback)
+        return cost_dict
+
+    def delete_element_v2(self, params, deleted_element_text):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        delete_element(deleted_element_text, params)
+
+    # add_element_v2(elements_params, new_element_text, callback=callback)
+    def add_element_v2(self, params, new_element_text, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        cost_dict = asyncio.run(add_element(new_element_text, params, callback=None))
         self.store_v2_element_data(params, callback=callback)
         return cost_dict
 

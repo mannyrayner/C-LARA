@@ -2301,6 +2301,12 @@ def simple_clara(request, project_id, last_operation_status):
                     simple_clara_action = { 'action': 'create_v2_style', 'style_advice': style_advice, 'up_to_date_dict': up_to_date_dict }
                 elif action == 'create_v2_elements':
                     simple_clara_action = { 'action': 'create_v2_elements', 'up_to_date_dict': up_to_date_dict }
+                elif action == 'delete_v2_element':
+                    deleted_element_text = request.POST.get('deleted_element_text')
+                    simple_clara_action = { 'action': 'delete_v2_element', 'deleted_element_text': deleted_element_text }
+                elif action == 'add_v2_element':
+                    new_element_text = request.POST.get('new_element_text')
+                    simple_clara_action = { 'action': 'add_v2_element', 'new_element_text': new_element_text }
                 elif action == 'create_v2_pages':
                     simple_clara_action = { 'action': 'create_v2_pages', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'create_segmented_text':
@@ -2317,7 +2323,8 @@ def simple_clara(request, project_id, last_operation_status):
                     return redirect('simple_clara', project_id, 'error')
 
                 _simple_clara_actions_to_execute_locally = ( 'create_project', 'change_title', 'save_text', 'save_segmented_text', 'save_segmented_title',
-                                                             'save_text_title', 'save_uploaded_image', 'save_preferred_tts_engine', 'post_rendered_text' )
+                                                             'save_text_title', 'save_uploaded_image', 'delete_v2_element',
+                                                             'save_preferred_tts_engine', 'post_rendered_text' )
                 
                 if action in _simple_clara_actions_to_execute_locally:
                     result = perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None)
@@ -2348,7 +2355,7 @@ def simple_clara(request, project_id, last_operation_status):
     
     clara_version = get_user_config(request.user)['clara_version']
 
-    if 'v2_images_dict' in resources:
+    if _simple_clara_trace and 'v2_images_dict' in resources:
         pprint.pprint(resources['v2_images_dict'])
     
     return render(request, 'clara_app/simple_clara.html', {
@@ -2424,6 +2431,12 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'create_v2_elements':
             #simple_clara_action should be of the form { 'action': 'create_v2_elements', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_v2_elements_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'delete_v2_element':
+            #simple_clara_action should be of the form { 'action': 'delete_v2_element', 'deleted_element_text': deleted_element_text }
+            result = simple_clara_delete_v2_element_helper(username, project_id, simple_clara_action, callback=callback)
+        elif action_type == 'add_v2_element':
+            #simple_clara_action should be of the form { 'action': 'add_v2_element', 'new_element_text': new_element_text }
+            result = simple_clara_add_v2_element_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_v2_pages':
             #simple_clara_action should be of the form { 'action': 'create_v2_pages', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_v2_pages_helper(username, project_id, simple_clara_action, callback=callback)
@@ -2864,6 +2877,41 @@ def simple_clara_create_v2_elements_helper(username, project_id, simple_clara_ac
 
     return { 'status': 'finished',
              'message': 'Created the images' }
+
+#simple_clara_action should be of the form { 'action': 'delete_v2_element', 'deleted_element_text': deleted_element_text }
+def simple_clara_delete_v2_element_helper(username, project_id, simple_clara_action, callback=None):
+    deleted_element_text = simple_clara_action['deleted_element_text']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+
+    # Delete the element
+    elements_params = get_element_descriptions_params_from_project_params(params)
+    clara_project_internal.delete_element_v2(elements_params, deleted_element_text)
+
+    return { 'status': 'finished',
+             'message': f'Deleted element: "{deleted_element_text}"' }
+
+#simple_clara_action should be of the form { 'action': 'add_v2_element', 'new_element_text': new_element_text }
+def simple_clara_add_v2_element_helper(username, project_id, simple_clara_action, callback=None):
+    new_element_text = simple_clara_action['new_element_text']
+    
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+
+    # Add the elements
+    elements_params = get_element_descriptions_params_from_project_params(params)
+    post_task_update(callback, f"STARTED TASK: Adding element")
+    element_names_cost_dict = clara_project_internal.add_element_v2(elements_params, new_element_text, callback=callback)
+    store_cost_dict(element_names_cost_dict, project, project.user)
+    post_task_update(callback, f"ENDED TASK: Added element")
+
+    return { 'status': 'finished',
+             'message': f'Added element: "{new_element_text}"' }
 
 def simple_clara_create_v2_pages_helper(username, project_id, simple_clara_action, callback=None):
     up_to_date_dict = simple_clara_action['up_to_date_dict']
