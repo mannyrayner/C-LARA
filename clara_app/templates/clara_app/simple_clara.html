@@ -135,7 +135,7 @@
 				<tr>
 				  <th>Element Name</th>
 				  <th>Image</th>
-				  <th>Links</th>
+				  <th>Actions</th>
 				</tr>
 			  </thead>
 			  <tbody>
@@ -150,11 +150,32 @@
 						  {% endif %}
 						</td>
 						<td>
-							<a href="{% url 'simple_clara_review_v2_images_for_element' project_id element_item.element_name 'init' %}">Review this Element</a>
+							<a href="{% url 'simple_clara_review_v2_images_for_element' project_id element_item.element_name 'init' %}">Review Element</a><br>
+							<form method="post" style="display:inline-block;">
+							{% csrf_token %}
+							<input type="hidden" name="action" value="delete_v2_element">
+							<input type="hidden" name="deleted_element_text" value="{{ element_item.element_text }}">
+							<button type="submit">Delete Element</button>
+						  </form>
 						</td>
 					  </tr>
 				{% endfor %}
 			  </tbody>
+			  <!-- Add a row for adding new elements -->
+				<tfoot>
+				  <tr>
+					<td colspan="3">
+					  <form method="post" style="display:inline-block;">
+						{% csrf_token %}
+						<input type="hidden" name="action" value="add_v2_element">
+						<label for="new_element_name">New Element:</label>
+						<input type="text" name="new_element_text" id="new_element_text"
+							   placeholder="Enter the name of the new element...">
+						<button type="submit">Add Element</button>
+					  </form>
+					</td>
+				  </tr>
+				</tfoot>
 			</table>
 		{% endif %}
 		{% if resources.v2_images_dict.elements and not resources.v2_pages_overview_info %}
