@@ -2068,6 +2068,12 @@ def get_simple_clara_resources_helper(project_id, user):
 
         # We have a project, add the L2, L1, title and simple_clara_type to available resources
         project = get_object_or_404(CLARAProject, pk=project_id)
+
+        # There is an issue where we can lose the simple_clara_type information. Do this to try and recover
+        if project.uses_coherent_image_set_v2 or project.uses_coherent_image_set:
+            project.simple_clara_type = 'create_text_and_multiple_images'
+            project.save()
+    
         clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
         up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal, user)
 
@@ -2078,6 +2084,8 @@ def get_simple_clara_resources_helper(project_id, user):
         resources_available['simple_clara_type'] = project.simple_clara_type
         resources_available['internal_title'] = clara_project_internal.id
         resources_available['up_to_date_dict'] = up_to_date_dict
+
+        image = None
 
         # In the create_text_and_image and create_text_and_multiple_images versions, we start with a prompt and create a plain_text
         # In the create_text_and_image version we also create an image at once
@@ -2196,8 +2204,8 @@ def get_simple_clara_resources_helper(project_id, user):
     except Exception as e:
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
-_simple_clara_trace = False
-#_simple_clara_trace = True
+#_simple_clara_trace = False
+_simple_clara_trace = True
 
 @login_required
 def simple_clara(request, project_id, last_operation_status):
@@ -5436,9 +5444,10 @@ def edit_images_v2(request, project_id, status):
     element_data = []
     try:
         indexed_element_data = images['elements']
-        for element_name in indexed_element_data:
-            item = indexed_element_data[element_name]
-            element_data.append({ 'element_name': element_name,
+        for element_text in indexed_element_data:
+            item = indexed_element_data[element_text]
+            element_data.append({ 'element_text': element_text,
+                                  'element_name': item['element_name'],
                                   'relative_file_path': item['relative_file_path'],
                                   'advice': item['advice'],
                                   'alternate_images': item['alternate_images'] })
@@ -5992,7 +6001,7 @@ def community_review_images_for_page(request, project_id, page_number, cm_or_co,
     return render(request, 'clara_app/community_review_images_for_page.html', rendering_parameters)
 
 @login_required
-def simple_clara_review_v2_images_for_page(request, project_id, page_number, status):
+def simple_clara_review_v2_images_for_page(request, project_id, page_number, from_view, status):
     user = request.user
     can_use_ai = user_has_open_ai_key_or_credit(user)
     config_info = get_user_config(user)
@@ -6034,7 +6043,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
             if action in ( 'variants_requests', 'images_with_advice' ):
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
-                    return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, status='none')
+                    return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
 
                 if action == 'variants_requests':
                     requests = [ { 'request_type': 'variants_requests',
@@ -6053,7 +6062,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
 
                 async_task(execute_simple_clara_image_requests, project, clara_project_internal, requests, callback=callback)
 
-                return redirect('execute_simple_clara_image_requests_monitor', project_id, report_id, page_number)
+                return redirect('execute_simple_clara_image_requests_monitor', project_id, report_id, page_number, from_view)
                 
             elif action == 'vote':
                 vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
@@ -6075,7 +6084,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
         except Exception as e:
             messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
 
-        return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, status='none')
+        return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
 
     # GET
 
@@ -6096,7 +6105,8 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
         'page_number': page_number,
         'page_text': page_text,
         'original_page_text': original_page_text,
-        'descriptions_info': descriptions_info
+        'descriptions_info': descriptions_info,
+        'from_view': from_view,
     }
 
     #pprint.pprint(rendering_parameters)
@@ -6104,7 +6114,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, sta
     return render(request, 'clara_app/simple_clara_review_v2_images_for_page.html', rendering_parameters)
 
 @login_required
-def simple_clara_review_v2_images_for_element(request, project_id, element_name, status):
+def simple_clara_review_v2_images_for_element(request, project_id, element_name, from_view, status):
     user = request.user
     can_use_ai = user_has_open_ai_key_or_credit(user)
     config_info = get_user_config(user)
@@ -6140,7 +6150,7 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
             if action == 'images_with_advice':
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
-                    return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, status='none')
+                    return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, from_view=from_view, status='none')
 
                 advice_text = request.POST.get('advice_text', '').strip()
                 
@@ -6154,7 +6164,7 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
                 # views.execute_simple_clara_image_requests
                 async_task(execute_simple_clara_element_requests, project, clara_project_internal, requests, callback=callback)
 
-                return redirect('execute_simple_clara_element_requests_monitor', project_id, report_id, element_name)
+                return redirect('execute_simple_clara_element_requests_monitor', project_id, report_id, element_name, from_view)
                 
             elif action == 'vote':
                 vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
@@ -6166,7 +6176,7 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
         except Exception as e:
             messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
 
-        return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, status='none')
+        return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, from_view=from_view, status='none')
 
     # GET
 
@@ -6189,11 +6199,12 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
     rendering_parameters = {
         'project': project,
         'element_name': element_name,
-        'descriptions_info': descriptions_info
+        'descriptions_info': descriptions_info,
+        'from_view': from_view,
     }
 
-    print(f'simple_clara_review_v2_images_for_element')
-    pprint.pprint(rendering_parameters)
+    #print(f'simple_clara_review_v2_images_for_element')
+    #pprint.pprint(rendering_parameters)
 
     return render(request, 'clara_app/simple_clara_review_v2_images_for_element.html', rendering_parameters)
 
@@ -6282,19 +6293,19 @@ def execute_community_requests_for_page_monitor(request, project_id, report_id, 
 
 @login_required
 @user_has_a_project_role
-def execute_simple_clara_image_requests_monitor(request, project_id, report_id, page_number):
+def execute_simple_clara_image_requests_monitor(request, project_id, report_id, page_number, from_view):
     project = get_object_or_404(CLARAProject, pk=project_id)
     
     return render(request, 'clara_app/execute_simple_clara_image_requests_monitor.html',
-                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'page_number': page_number})
+                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'page_number': page_number, 'from_view': from_view})
 
 @login_required
 @user_has_a_project_role
-def execute_simple_clara_element_requests_monitor(request, project_id, report_id, element_name):
+def execute_simple_clara_element_requests_monitor(request, project_id, report_id, element_name, from_view):
     project = get_object_or_404(CLARAProject, pk=project_id)
     
     return render(request, 'clara_app/execute_simple_clara_element_requests_monitor.html',
-                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'element_name': element_name})
+                  {'project_id': project_id, 'project': project, 'report_id': report_id, 'element_name': element_name, 'from_view': from_view})
 
 # Async function
 def save_page_texts_multiple(project, clara_project_internal, types_and_texts, username, config_info={}, callback=None):

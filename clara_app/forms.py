@@ -929,6 +929,7 @@ class ImageFormV2(forms.Form):
                                 required=False)
     page = forms.IntegerField(label='Page Number', min_value=1, required=False)
     element_name = forms.CharField(label='Element name', max_length=100, required=False)
+    element_text = forms.CharField(label='Element text', max_length=100, required=False)
     generate = forms.BooleanField(label='Generate Image', required=False)
     delete = forms.BooleanField(label='Delete Image', required=False)
 
