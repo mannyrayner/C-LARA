@@ -33,10 +33,10 @@
 					// If the task is finished, stop polling the server and redirect to the 'complete' view
 					if (response.status == 'finished') {
 						clearInterval(interval_id);
-						window.location = "{% url 'simple_clara_review_v2_images_for_page' project_id page_number 'finished' %}";
+						window.location = "{% url 'simple_clara_review_v2_images_for_page' project_id page_number from_view 'finished' %}";
 					} else if (response.status == 'error') {
 						clearInterval(interval_id);
-						window.location = "{% url 'simple_clara_review_v2_images_for_page' project_id page_number 'error' %}";
+						window.location = "{% url 'simple_clara_review_v2_images_for_page' project_id page_number from_view 'error' %}";
 					}
 				}
 			});

@@ -49,6 +49,10 @@
 </div>
 
 <div class="sticky-footer">
-<a href="{% url 'simple_clara' project.id 'init' %}">Back to main Simple C-LARA page</a>
+{% if from_view == 'simple_clara' %}
+	<a href="{% url 'simple_clara' project.id 'init' %}">Back to main Simple C-LARA page</a>
+{% else %}
+	<a href="{% url 'edit_images_v2' project.id 'init' %}">Back to main Edit Images page</a>
+{% endif %}
 </div>
 {% endblock %}

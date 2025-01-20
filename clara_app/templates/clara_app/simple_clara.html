@@ -111,7 +111,7 @@
 		<p>{{ form.segmented_text }}
 	    <button type="submit" name="action" value="save_segmented_text">Save Edited Segmented Text</button></p>
 		<br>	  
-	  {% if simple_clara_type == 'create_text_and_multiple_images' %}
+	  {% if simple_clara_type == 'create_text_and_multiple_images' or form.style_advice.value %}
 	    <h3>Image Style</h3>
 		{% if not resources.v2_images_dict.style %}
 			<p>Briefly describe the style you want to use for the images.</p>
@@ -150,13 +150,13 @@
 						  {% endif %}
 						</td>
 						<td>
-							<a href="{% url 'simple_clara_review_v2_images_for_element' project_id element_item.element_name 'init' %}">Review Element</a><br>
+							<a href="{% url 'simple_clara_review_v2_images_for_element' project_id element_item.element_name 'simple_clara' 'init' %}">Review Element</a><br>
 							<form method="post" style="display:inline-block;">
 							{% csrf_token %}
 							<input type="hidden" name="action" value="delete_v2_element">
 							<input type="hidden" name="deleted_element_text" value="{{ element_item.element_text }}">
 							<button type="submit">Delete Element</button>
-						  </form>
+						    </form>
 						</td>
 					  </tr>
 				{% endfor %}
@@ -206,7 +206,7 @@
 							{% endif %}
 						</td>
 						<td>
-							<a href="{% url 'simple_clara_review_v2_images_for_page' project_id page.page_number 'init' %}">Review this Page</a>
+							<a href="{% url 'simple_clara_review_v2_images_for_page' project_id page.page_number 'simple_clara' 'init' %}">Review this Page</a>
 						</td>
 					</tr>
 					{% endfor %}
