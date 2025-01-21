@@ -2204,8 +2204,8 @@ def get_simple_clara_resources_helper(project_id, user):
     except Exception as e:
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
-#_simple_clara_trace = False
-_simple_clara_trace = True
+_simple_clara_trace = False
+#_simple_clara_trace = True
 
 @login_required
 def simple_clara(request, project_id, last_operation_status):
