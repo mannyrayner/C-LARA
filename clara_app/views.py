@@ -5489,6 +5489,16 @@ def edit_images_v2(request, project_id, status):
         page_data = []
         inconsistent = True
 
+    try:
+        element_names_exist = len(clara_project_internal.get_all_element_texts_v2()) != 0
+        elements_exist = len(clara_project_internal.get_all_element_images_v2()) != 0
+        pages_exist = len(clara_project_internal.get_all_page_images_v2()) != 0
+    except Exception as e:
+        messages.error(request, f"Unable to get information about existence of element names, elements and page images")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        page_data = []
+        inconsistent = True
+
     if inconsistent:
         return render(request, 'clara_app/edit_images_v2.html', { 'params_form': None,
                                                                   'style_formset': None,
@@ -5497,6 +5507,9 @@ def edit_images_v2(request, project_id, status):
                                                                   'project': project,
                                                                   'clara_version': clara_version,
                                                                   'overview_file_exists': overview_file_exists,
+                                                                  'element_names_exist': element_names_exist,
+                                                                  'elements_exist': elements_exist,
+                                                                  'pages_exist': pages_exist,
                                                                   'errors': None,
                                                                   })
     
@@ -5568,47 +5581,47 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project.id, status='none')
 
-            elif action == 'hide_alternate_image':
-                try:
-                    content_type = request.POST.get('content_type')
-                    content_identifier = request.POST.get('content_identifier')
-                    alternate_image_id = int(request.POST.get('alternate_image_id'))
-                    hidden_status = request.POST.get('hidden_status') == 'true'
-
-                    # Determine page/element/style context
-                    if content_type == 'page':
-                        page_number = int(content_identifier)
-                        content_dir = f'{project_dir}/pages/page{page_number}'
-                        #print(f'alternate_images for page {page_number}')
-                        #pprint.pprint(indexed_page_data[page_number]['alternate_images'])
-                        for img in indexed_page_data[page_number]['alternate_images']:
-                            if img['id'] == alternate_image_id:
-                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
-                                break
-                    elif content_type == 'element':
-                        element_name = content_identifier
-                        content_dir = f'{project_dir}/elements/{element_name}'
-                        for img in indexed_element_data[element_name]['alternate_images']:
-                            if img['id'] == alternate_image_id:
-                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
-                                break
-                    elif content_type == 'style':
-                        content_dir = f'{project_dir}/style'
-                        for img in style_data[0]['alternate_images']:
-                            if img['id'] == alternate_image_id:
-                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
-                                break
-                    else:
-                        messages.error(request, f"Invalid content type '{content_type}' for hiding/unhiding.")
-                        return redirect('edit_images_v2', project_id=project_id, status=status)
-
-                    messages.success(request, f"Image hidden/unhidden successfully.")
-                    return redirect('edit_images_v2', project_id=project_id, status='none')
-
-                except Exception as e:
-                    messages.error(request, f"Error when trying to hide/unhide image.")
-                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-                    return redirect('edit_images_v2', project_id=project_id, status='none')
+##            elif action == 'hide_alternate_image':
+##                try:
+##                    content_type = request.POST.get('content_type')
+##                    content_identifier = request.POST.get('content_identifier')
+##                    alternate_image_id = int(request.POST.get('alternate_image_id'))
+##                    hidden_status = request.POST.get('hidden_status') == 'true'
+##
+##                    # Determine page/element/style context
+##                    if content_type == 'page':
+##                        page_number = int(content_identifier)
+##                        content_dir = f'{project_dir}/pages/page{page_number}'
+##                        #print(f'alternate_images for page {page_number}')
+##                        #pprint.pprint(indexed_page_data[page_number]['alternate_images'])
+##                        for img in indexed_page_data[page_number]['alternate_images']:
+##                            if img['id'] == alternate_image_id:
+##                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
+##                                break
+##                    elif content_type == 'element':
+##                        element_name = content_identifier
+##                        content_dir = f'{project_dir}/elements/{element_name}'
+##                        for img in indexed_element_data[element_name]['alternate_images']:
+##                            if img['id'] == alternate_image_id:
+##                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
+##                                break
+##                    elif content_type == 'style':
+##                        content_dir = f'{project_dir}/style'
+##                        for img in style_data[0]['alternate_images']:
+##                            if img['id'] == alternate_image_id:
+##                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
+##                                break
+##                    else:
+##                        messages.error(request, f"Invalid content type '{content_type}' for hiding/unhiding.")
+##                        return redirect('edit_images_v2', project_id=project_id, status=status)
+##
+##                    messages.success(request, f"Image hidden/unhidden successfully.")
+##                    return redirect('edit_images_v2', project_id=project_id, status='none')
+##
+##                except Exception as e:
+##                    messages.error(request, f"Error when trying to hide/unhide image.")
+##                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+##                    return redirect('edit_images_v2', project_id=project_id, status='none')
 
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
@@ -5620,38 +5633,36 @@ def edit_images_v2(request, project_id, status):
                         form = style_formset[0]
                         style_advice = form.cleaned_data.get('advice')
                         clara_project_internal.set_style_advice_v2(style_advice)
-            elif action in ( 'save_element_advice', 'create_element_descriptions_and_images'):
-                element_formset = ImageFormSetV2(request.POST, request.FILES, prefix='elements')
-                if not element_formset.is_valid():
-                    errors = element_formset.errors
-                else:
-                    # Go through the element items in the form.
-                    # Collect material to save and items where we want to delete or (re-)generate the image.
-                    elements_to_generate = []
-                    elements_to_delete = []
-                    
-                    for i in range(0, len(element_formset)):
-                        form = element_formset[i]
-                                
-                        element_name = form.cleaned_data.get('element_name')
-                        advice = form.cleaned_data.get('advice')
-                        generate = form.cleaned_data.get('generate')
-                        delete = form.cleaned_data.get('delete')
-
-                        clara_project_internal.set_element_advice_v2(advice, element_name)
-                        if delete:
-                            elements_to_delete.append(element_name)
-                        if generate:
-                            elements_to_generate.append(element_name)
-            elif action in ( 'save_page_advice', 'create_page_descriptions_and_images'):
+##            elif action in ( 'save_element_advice', 'create_element_descriptions_and_images'):
+##                element_formset = ImageFormSetV2(request.POST, request.FILES, prefix='elements')
+##                if not element_formset.is_valid():
+##                    errors = element_formset.errors
+##                else:
+##                    # Go through the element items in the form.
+##                    # Collect material to save and items where we want to delete or (re-)generate the image.
+##                    elements_to_generate = []
+##                    elements_to_delete = []
+##                    
+##                    for i in range(0, len(element_formset)):
+##                        form = element_formset[i]
+##                                
+##                        element_name = form.cleaned_data.get('element_name')
+##                        advice = form.cleaned_data.get('advice')
+##                        generate = form.cleaned_data.get('generate')
+##                        delete = form.cleaned_data.get('delete')
+##
+##                        clara_project_internal.set_element_advice_v2(advice, element_name)
+##                        if delete:
+##                            elements_to_delete.append(element_name)
+##                        if generate:
+##                            elements_to_generate.append(element_name)
+            elif action in ( 'save_page_texts'):
                 page_formset = ImageFormSetV2(request.POST, request.FILES, prefix='pages')
                 if not page_formset.is_valid():
                     errors = page_formset.errors
                 else:
                     # Go through the page items in the form.
-                    # Collect material to save and items where we want to (re-)generate the image.
-                    pages_to_generate = []
-                    pages_to_delete = []
+                    # Collect material to save 
                     
                     new_plain_texts = []
                     new_segmented_texts = []
@@ -5669,27 +5680,6 @@ def edit_images_v2(request, project_id, status):
                         new_mwe_texts.append(form.cleaned_data['mwe_text'])
                         new_lemma_texts.append(form.cleaned_data['lemma_text'])
                         new_gloss_texts.append(form.cleaned_data['gloss_text'])
-                            
-                        page = int(form.cleaned_data.get('page', 1))
-                        advice = form.cleaned_data.get('advice')
-                        generate = form.cleaned_data.get('generate')
-                        delete = form.cleaned_data.get('delete')
-
-                        try:
-                            clara_project_internal.set_page_advice_v2(advice, page)
-                        except Exception as e:
-                            messages.error(request, f"Warning: error when trying to save advice '{advice}' for page {page}. Advice not saved.")
-                            messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-
-                        if form.cleaned_data.get('uploaded_image_file_path'):
-                            uploaded_image_file_path = form.cleaned_data.get('uploaded_image_file_path') 
-                            real_image_file_path = uploaded_file_to_file(uploaded_image_file_path)
-                            clara_project_internal.add_uploaded_page_image_v2(real_image_file_path, page)
-
-                        if delete:
-                            pages_to_delete.append(page)
-                        if generate:
-                            pages_to_generate.append(page)
                                     
                     # Save the texts back to the project
                     try:
@@ -5732,6 +5722,9 @@ def edit_images_v2(request, project_id, status):
                     'project': project,
                     'clara_version': clara_version,
                     'overview_file_exists': overview_file_exists,
+                    'element_names_exist': element_names_exist,
+                    'elements_exist': elements_exist,
+                    'pages_exist': pages_exist,
                     'errors': errors,
                 })
 
@@ -5755,11 +5748,6 @@ def edit_images_v2(request, project_id, status):
                     async_task(create_element_descriptions_and_images, project, clara_project_internal, params, elements_to_generate, callback=callback)
                 elif action == 'create_page_descriptions_and_images':
                     async_task(create_page_descriptions_and_images, project, clara_project_internal, params, pages_to_generate, callback=callback)
-                elif action == 'generate_variant_images':
-                    content_type = request.POST.get('content_type')
-                    content_identifier = int(request.POST.get('content_identifier'))
-                    alternate_image_id = int(request.POST.get('alternate_image_id'))
-                    async_task(create_variant_images, project, clara_project_internal, params, content_type, content_identifier, alternate_image_id, callback=callback)
 
                 print(f'--- Started async "{action}" task')
                 #Redirect to the monitor view, passing the task ID and report ID as parameters
@@ -5771,33 +5759,8 @@ def edit_images_v2(request, project_id, status):
                     messages.success(request, "Parameter data updated")
                 elif action == 'save_style_advice':
                     messages.success(request, "Style advice updated")
-                elif action == 'save_element_advice':
-                    if elements_to_delete:
-                        try:
-                            for element_name in elements_to_delete:
-                                image_name = element_image_name(element_name)
-                                clara_project_internal.remove_project_image(image_name)
-                                remove_element_directory(element_name, params_for_project_dir)
-                                remove_element_name_from_list_of_elements(element_name, params_for_project_dir)
-                            all_deleted_elements_string = ", ".join(elements_to_delete)
-                            messages.success(request, f"Element deleted: '{all_deleted_elements_string}'")
-                        except Exception as e:
-                            messages.error(request, f"Error when trying to delete elements")
-                            messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-                    messages.success(request, "Element advice updated")
-                elif action == 'save_page_advice':
-                    if pages_to_delete:
-                        try:
-                            for page_number in pages_to_delete:
-                                remove_page_directory(page_number, params_for_project_dir)
-                                image_name = page_image_name(page_number)
-                                clara_project_internal.remove_project_image(image_name)
-                            all_deleted_pages_string = ", ".join([str(page_number) for page_number in pages_to_delete])
-                            messages.success(request, f"Page images deleted: '{all_deleted_pages_string}'")
-                        except Exception as e:
-                            messages.error(request, f"Error when trying to delete page images")
-                            messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-                    messages.success(request, "Page advice updated")
+                elif action == 'save_page_texts':
+                    messages.success(request, "Page text updated")
                 return redirect('edit_images_v2', project_id=project_id, status='none')
             
     else:
@@ -5826,6 +5789,9 @@ def edit_images_v2(request, project_id, status):
                                                              'project': project,
                                                              'clara_version': clara_version,
                                                              'overview_file_exists': overview_file_exists,
+                                                             'element_names_exist': element_names_exist,
+                                                             'elements_exist': elements_exist,
+                                                             'pages_exist': pages_exist,
                                                              'errors': []})
 
 @login_required

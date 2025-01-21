@@ -1663,21 +1663,28 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir }
 
-        print(f'get_style_image(params) = {get_style_image(params)}')
+        #print(f'get_style_image(params) = {get_style_image(params)}')
         return get_style_image(params)
+
+    def get_all_element_texts_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+
+        #print(f'get_all_element_images(params) = {get_all_element_images(params)}')
+        return get_all_element_texts(params)
 
     def get_all_element_images_v2(self):
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir }
 
-        print(f'get_all_element_images(params) = {get_all_element_images(params)}')
+        #print(f'get_all_element_images(params) = {get_all_element_images(params)}')
         return get_all_element_images(params)
 
     def get_all_page_images_v2(self):
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir }
 
-        print(f'get_all_page_images(params) = {get_all_page_images(params)}')
+        #print(f'get_all_page_images(params) = {get_all_page_images(params)}')
         return get_all_page_images(params)
 
     def set_style_advice_v2(self, advice):
