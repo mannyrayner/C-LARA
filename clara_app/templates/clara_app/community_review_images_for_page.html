@@ -178,9 +178,9 @@
 
 <div class="sticky-footer">
 {% if cm_or_co == 'cm' %}
-	<a href="{% url 'community_review_images' project.id %}">Back to Overview</a>
+	<a href="{% url 'community_review_images' project.id %}#page-{{ page_number }}">Back to Overview</a>
 {% else %}
-	<a href="{% url 'community_organiser_review_images' project.id %}">Back to Overview</a>
+	<a href="{% url 'community_organiser_review_images' project.id %}#page-{{ page_number }}">Back to Overview</a>
 {% endif %}
 </div>
 {% endblock %}

@@ -140,7 +140,7 @@
 			  </thead>
 			  <tbody>
 				{% for key, element_item in resources.v2_images_dict.elements.items %}
-					  <tr>
+					  <tr id="element-{{ element_item.element_name }}">
 						<td>{{ element_item.element_text }}</td>
 						<td>
 						  {% if element_item.relative_file_path %}
@@ -195,7 +195,7 @@
 				</thead>
 				<tbody>
 					{% for page in resources.v2_pages_overview_info %}
-					<tr>
+					<tr id="page-{{ page.page_number }}">
 						<td>{{ page.page_number }}</td>
 						<td><pre>{{ page.excerpt }}<br>{{ page.original_text_excerpt }}</pre></td>
 						<td>

@@ -23,7 +23,7 @@
     </thead>
     <tbody>
         {% for page in pages_info %}
-        <tr>
+        <tr id="page-{{ page.page_number }}">
             <td>{{ page.page_number }}</td>
             <td><pre>{{ page.excerpt }}<br>{{ page.original_text_excerpt }}</pre></td>
             <td>

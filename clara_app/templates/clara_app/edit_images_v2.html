@@ -106,7 +106,7 @@
       </thead>
       <tbody>
         {% for form in element_formset %}
-			  <tr>
+			  <tr id="element-{{ form.element_name.value }}">
 				<td>{{ form.element_text }}</td>
 				<td>
 				  {% if form.relative_file_path.value %}
@@ -185,7 +185,7 @@
 			  <th><b>Image</b></th>
 			  <th><b>Links</b></th>
           </tr>
-          <tr>
+          <tr id="page-{{ form.page.value }}">
             <td>{{ form.page }}</td>
             <td>
               {% if form.relative_file_path.value %}
