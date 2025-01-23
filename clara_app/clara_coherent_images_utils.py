@@ -246,8 +246,12 @@ def parse_image_evaluation_response(response):
 
 def get_story_data(params):
     project_dir = params['project_dir']
-    
-    return read_project_json_file(project_dir, f'story.json')
+
+    try:
+        return read_project_json_file(project_dir, f'story.json')
+    except Exception as e:
+        return []
+
 
 def set_story_data_from_numbered_page_list(numbered_page_list, project_dir):
     make_root_project_dir(project_dir)
@@ -256,25 +260,31 @@ def set_story_data_from_numbered_page_list(numbered_page_list, project_dir):
 def get_pages(params):
     story_data = get_story_data(params)
 
-    pages = [ item['page_number'] for item in story_data ]
-               
-    return pages
+    try:
+        pages = [ item['page_number'] for item in story_data ]   
+        return pages
+    except Exception as e:
+        return []
 
 def get_text(params):
-    story_data = get_story_data(params)
-
-    text_content = [ item['text'] for item in story_data ]
-               
-    return '\n'.join(text_content)
+    try:
+        story_data = get_story_data(params)
+        text_content = [ item['text'] for item in story_data ]      
+        return '\n'.join(text_content)
+    except Exception as e:
+        return ''
 
 def get_style_description(params):
     project_dir = params['project_dir']
-    
-    return read_project_txt_file(project_dir, f'style/expanded_description.txt')
+
+    try:
+        return read_project_txt_file(project_dir, f'style/expanded_description.txt')
+    except Exception as e:
+        return ''
 
 def get_style_image(params):
     project_dir = params['project_dir']
-    
+
     return f'style/image.jpg'
 
 def overview_file(project_dir):

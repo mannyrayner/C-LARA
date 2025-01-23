@@ -2029,24 +2029,32 @@ def edit_acknowledgements(request, project_id):
 
 # Get summary tables for projects and content, broken down by language
 def language_statistics(request):
-    # Aggregate project counts by l2 language
+    # Aggregate project counts by l2 language, forcing lowercase
     project_stats = (
-        CLARAProject.objects.values('l2')
-        .annotate(total=Count('id'))
-        .order_by('-total')
+        CLARAProject.objects
+            .annotate(l2_lower=Lower('l2'))
+            .values('l2_lower')
+            .annotate(total=Count('id'))
+            .order_by('-total')
     )
 
-    # Aggregate content counts by l2 language, including total unique_access_count
+    # Aggregate content counts by l2 language, forcing lowercase
     content_stats = (
-        Content.objects.values('l2')
-        .annotate(total=Count('id'), total_access=Sum('unique_access_count'))
-        .order_by('-total')
+        Content.objects
+            .annotate(l2_lower=Lower('l2'))
+            .values('l2_lower')
+            .annotate(total=Count('id'), total_access=Sum('unique_access_count'))
+            .order_by('-total')
     )
 
     # Calculate the totals
     total_projects = sum(stat['total'] for stat in project_stats)
     total_contents = sum(stat['total'] for stat in content_stats)
-    total_accesses = sum(stat['total_access'] for stat in content_stats if stat['total_access'] is not None)
+    total_accesses = sum(
+        stat['total_access']
+        for stat in content_stats
+        if stat['total_access'] is not None
+    )
 
     return render(request, 'clara_app/language_statistics.html', {
         'project_stats': project_stats,
@@ -5365,6 +5373,9 @@ def edit_images_v2(request, project_id, status):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     clara_version = get_user_config(request.user)['clara_version']
     inconsistent = False
+    element_names_exist = False
+    elements_exist = False
+    pages_exist = False
 
     if project.use_translation_for_images and not clara_project_internal.load_text_version("translated"):
         messages.error(request, f"Project is marked as using translations to create images, but there are no translations yet")
