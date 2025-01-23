@@ -1330,20 +1330,42 @@ def content_list(request):
         if title:
             query &= Q(title__icontains=title)
         if time_period:
-            # Calculate the date offset based on the selected time period
             days_ago = timezone.now() - timedelta(days=int(time_period))
             query &= Q(updated_at__gte=days_ago)
 
-    content_list = Content.objects.filter(query).order_by(Lower('title'))
-    paginator = Paginator(content_list, 10)  # Show 10 content items per page
+    content_list = Content.objects.filter(query)
 
+    # Figure out how the user wants to sort:
+    order_by = request.GET.get('order_by')
+    if order_by == 'title':
+        # Order ascending by title
+        content_list = content_list.order_by(Lower('title'))
+    elif order_by == 'age':
+        # "Newest first" or "oldest first"? 
+        # If you want newest first, just do '-updated_at'
+        content_list = content_list.order_by('-updated_at')
+    elif order_by == 'accesses':
+        # Sort by number of accesses, largest first
+        content_list = content_list.order_by('-unique_access_count')
+    else:
+        # Default to alphabetical
+        content_list = content_list.order_by(Lower('title'))
+
+    paginator = Paginator(content_list, 10)  # Show 10 content items per page
     page = request.GET.get('page')
     contents = paginator.get_page(page)
 
     clara_version = get_user_config(request.user)['clara_version']
 
-    return render(request, 'clara_app/content_list.html', {'contents': contents, 'search_form': search_form, 'clara_version': clara_version})
-
+    return render(
+        request,
+        'clara_app/content_list.html',
+        {
+            'contents': contents,
+            'search_form': search_form,
+            'clara_version': clara_version
+        }
+    )
 
 def public_content_list(request):
     search_form = ContentSearchForm(request.GET or None)
@@ -1362,13 +1384,28 @@ def public_content_list(request):
         if title:
             query &= Q(title__icontains=title)
         if time_period:
-            # Calculate the date offset based on the selected time period
             days_ago = timezone.now() - timedelta(days=int(time_period))
             query &= Q(updated_at__gte=days_ago)
 
-    content_list = Content.objects.filter(query).order_by(Lower('title'))
-    paginator = Paginator(content_list, 10)  # Show 10 content items per page
+    content_list = Content.objects.filter(query)
 
+    # Figure out how the user wants to sort:
+    order_by = request.GET.get('order_by')
+    if order_by == 'title':
+        # Order ascending by title
+        content_list = content_list.order_by(Lower('title'))
+    elif order_by == 'age':
+        # "Newest first" or "oldest first"? 
+        # If you want newest first, just do '-updated_at'
+        content_list = content_list.order_by('-updated_at')
+    elif order_by == 'accesses':
+        # Sort by number of accesses, largest first
+        content_list = content_list.order_by('-unique_access_count')
+    else:
+        # Default to alphabetical
+        content_list = content_list.order_by(Lower('title'))
+
+    paginator = Paginator(content_list, 10)  # Show 10 content items per page
     page = request.GET.get('page')
     contents = paginator.get_page(page)
 
