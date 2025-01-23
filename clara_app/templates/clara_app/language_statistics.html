@@ -16,7 +16,7 @@
     <tbody>
         {% for stat in project_stats %}
         <tr>
-            <td>{{ stat.l2|titlecase }}</td>
+            <td>{{ stat.l2_lower|titlecase }}</td>
             <td>{{ stat.total }}</td>
         </tr>
         {% endfor %}
@@ -39,7 +39,7 @@
     <tbody>
         {% for stat in content_stats %}
         <tr>
-            <td>{{ stat.l2|titlecase }}</td>
+            <td>{{ stat.l2_lower|titlecase }}</td>
             <td>{{ stat.total }}</td>
             <td>{{ stat.total_access }}</td>
         </tr>
