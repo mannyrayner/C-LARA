@@ -5,56 +5,90 @@
   <br>
   <p><b>Filter using any combination of the search boxes below</b></p>
   <form method="get" action="{% url 'public_content_list' %}">
-	  <table>
-		<tr>
-		  <td><label for="title">Content title:</label></td>
-		  <td>{{ search_form.title }}</td>
-		</tr>
-		<tr>
-		  <td><label for="l2">Content language:</label></td>
-		  <td>{{ search_form.l2 }}</td>
-		</tr>
-		<tr>
-		  <td><label for="l1">Translation language:</label></td>
-		  <td>{{ search_form.l1 }}</td>
-		</tr>
-		<tr>
-		  <td><label for="time_period">Published during:</label></td>
-		  <td>{{ search_form.time_period }}</td>
-		</tr>
-		<tr>
-		  <td></td>
-		  <td><button type="submit">Search</button></td>
-		</tr>
-	  </table>
+    <table>
+      <tr>
+        <td><label for="title">Content title:</label></td>
+        <td>{{ search_form.title }}</td>
+      </tr>
+      <tr>
+        <td><label for="l2">Content language:</label></td>
+        <td>{{ search_form.l2 }}</td>
+      </tr>
+      <tr>
+        <td><label for="l1">Translation language:</label></td>
+        <td>{{ search_form.l1 }}</td>
+      </tr>
+      <tr>
+        <td><label for="time_period">Published during:</label></td>
+        <td>{{ search_form.time_period }}</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><button type="submit">Search</button></td>
+      </tr>
+    </table>
+
+    <!-- Add sorting controls here if you like (see next section) -->
+    <label>Sort by:</label>
+    <select name="order_by">
+      <option value="">-- Choose --</option>
+      <option value="title" {% if request.GET.order_by == "title" %}selected{% endif %}>Title (A–Z)</option>
+      <option value="age" {% if request.GET.order_by == "age" %}selected{% endif %}>Age (newest first)</option>
+      <option value="accesses" {% if request.GET.order_by == "accesses" %}selected{% endif %}>Number of Accesses</option>
+    </select>
+    <button type="submit">Go</button>
   </form>
+
   <br>
   <b>Content found</b>
-  <ul>
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>L2</th>
+        <th>Age</th>
+        <th># Accesses</th>
+      </tr>
+    </thead>
+    <tbody>
     {% for content in contents %}
-      <li><a href="{{ content.get_public_absolute_url }}">{% if content.title %} {{ content.title }} {% else %} (No title) {% endif %}</a></li>
+      <tr>
+        <td>
+          <a href="{{ content.get_public_absolute_url }}">
+            {% if content.title %}{{ content.title }}{% else %}(No title){% endif %}
+          </a>
+        </td>
+        <td>{{ content.l2 }}</td>
+        <td>{{ content.updated_at|timesince }} ago</td>
+        <td>{{ content.unique_access_count|default_if_none:"0" }}</td>
+      </tr>
     {% empty %}
-      <li>No content has been posted yet.</li>
+      <tr>
+        <td colspan="4">No content has been posted yet.</td>
+      </tr>
     {% endfor %}
-  </ul>
-  
+    </tbody>
+  </table>
+
+  <!-- Keep the pagination controls below -->
   <div class="pagination">
     <span class="step-links">
-		{% with request.GET.urlencode as params %}
-			{% if contents.has_previous %}
-				<a href="?{{ params }}&page=1">&laquo; first</a>
-				<a href="?{{ params }}&page={{ contents.previous_page_number }}">previous</a>
-			{% endif %}
+      {% with request.GET.urlencode as params %}
+        {% if contents.has_previous %}
+          <a href="?{{ params }}&page=1">&laquo; first</a>
+          <a href="?{{ params }}&page={{ contents.previous_page_number }}">previous</a>
+        {% endif %}
 
-			<span class="current">
-				Page {{ contents.number }} of {{ contents.paginator.num_pages }}.
-			</span>
+        <span class="current">
+          Page {{ contents.number }} of {{ contents.paginator.num_pages }}.
+        </span>
 
-			{% if contents.has_next %}
-				<a href="?{{ params }}&page={{ contents.next_page_number }}">next</a>
-				<a href="?{{ params }}&page={{ contents.paginator.num_pages }}">last &raquo;</a>
-			{% endif %}
-		{% endwith %}
+        {% if contents.has_next %}
+          <a href="?{{ params }}&page={{ contents.next_page_number }}">next</a>
+          <a href="?{{ params }}&page={{ contents.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      {% endwith %}
     </span>
   </div>
+
 {% endblock %}
