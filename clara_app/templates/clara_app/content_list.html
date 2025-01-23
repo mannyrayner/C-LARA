@@ -1,5 +1,7 @@
 {% extends 'clara_app/base.html' %}
 
+{% load clara_tags %}
+
 {% block content %}
   <h2>Published Content</h2>
   <br>
@@ -58,7 +60,7 @@
             {% if content.title %}{{ content.title }}{% else %}(No title){% endif %}
           </a>
         </td>
-        <td>{{ content.l2 }}</td>
+        <td>{{ content.l2|titlecase }}</td>
         <td>{{ content.updated_at|timesince }} ago</td>
         <td>{{ content.unique_access_count|default_if_none:"0" }}</td>
       </tr>
