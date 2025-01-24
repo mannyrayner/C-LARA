@@ -149,7 +149,7 @@
 	{% if not element_names_exist %}
 		<button type="submit" name="action" value="create_element_names">Generate All Element Names</button>
 	{% endif %}
-	{% if not elements_exist %}
+	{% if element_names_exist %}
 		<button type="submit" name="action" value="create_element_descriptions_and_images">Generate All Elements</button>
 	{% endif %}
   </form>
