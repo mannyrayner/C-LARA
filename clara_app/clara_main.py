@@ -168,7 +168,7 @@ from .clara_coherent_images_advice import set_style_advice, get_style_advice, ge
 from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image, promote_alternate_element_description
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_params_for_simple_clara
 from .clara_coherent_images_utils import project_pathname, get_pages, make_project_dir
-from .clara_coherent_images_utils import set_story_data_from_numbered_page_list, remove_top_level_element_directory
+from .clara_coherent_images_utils import get_story_data, set_story_data_from_numbered_page_list, remove_top_level_element_directory
 from .clara_coherent_images_utils import get_style_description, get_all_element_texts
 from .clara_coherent_images_utils import get_element_description, get_page_description
 from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name, overview_file
@@ -1659,12 +1659,24 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         set_story_data_from_numbered_page_list(numbered_page_list, project_dir)
 
+    def get_story_data_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        
+        return get_story_data(params)
+
     def get_style_image_v2(self):
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir }
 
         #print(f'get_style_image(params) = {get_style_image(params)}')
         return get_style_image(params)
+
+    def get_style_description_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        
+        return get_style_description(params)
 
     def get_all_element_texts_v2(self):
         project_dir = self.coherent_images_v2_project_dir

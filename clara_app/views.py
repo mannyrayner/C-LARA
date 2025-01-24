@@ -5393,6 +5393,9 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                           'clara_version': clara_version,
                                                           'errors': []})
 
+#_edit_images_v2_trace = True
+_edit_images_v2_trace = False
+
 # Version of edit_images for uses_coherent_image_set_v2
 @login_required
 @user_has_a_project_role
@@ -5410,13 +5413,10 @@ def edit_images_v2(request, project_id, status):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     clara_version = get_user_config(request.user)['clara_version']
     inconsistent = False
+    style_exists = False
     element_names_exist = False
     elements_exist = False
     pages_exist = False
-
-    if project.use_translation_for_images and not clara_project_internal.load_text_version("translated"):
-        messages.error(request, f"Project is marked as using translations to create images, but there are no translations yet")
-        inconsistent = True
 
     try:
         project_dir = clara_project_internal.coherent_images_v2_project_dir
@@ -5437,7 +5437,9 @@ def edit_images_v2(request, project_id, status):
     try:
         # Don't try to correct syntax errors here, there should not be any.
         all_page_texts = clara_project_internal.get_page_texts()
-        #pprint.pprint(all_page_texts)
+        if _edit_images_v2_trace:
+            print(f'all_page_texts:')
+            pprint.pprint(all_page_texts)
         page_texts = all_page_texts['plain']
         segmented_texts = all_page_texts['segmented']
         translated_texts = all_page_texts['translated']
@@ -5466,7 +5468,9 @@ def edit_images_v2(request, project_id, status):
     # Retrieve existing images for pages, elements and style
     try:
         images = clara_project_internal.get_project_images_dict_v2()
-        #pprint.pprint(images)
+        if _edit_images_v2_trace:
+            print(f'images:')
+            pprint.pprint(images)
     except Exception as e:
         messages.error(request, f"Unable to retrieve image information")
         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
@@ -5538,6 +5542,7 @@ def edit_images_v2(request, project_id, status):
         inconsistent = True
 
     try:
+        style_exists = len(clara_project_internal.get_style_description_v2()) != 0
         element_names_exist = len(clara_project_internal.get_all_element_texts_v2()) != 0
         elements_exist = len(clara_project_internal.get_all_element_images_v2()) != 0
         pages_exist = len(clara_project_internal.get_all_page_images_v2()) != 0
@@ -5555,6 +5560,7 @@ def edit_images_v2(request, project_id, status):
                                                                   'project': project,
                                                                   'clara_version': clara_version,
                                                                   'overview_file_exists': overview_file_exists,
+                                                                  'style_exists': style_exists,
                                                                   'element_names_exist': element_names_exist,
                                                                   'elements_exist': elements_exist,
                                                                   'pages_exist': pages_exist,
@@ -5629,48 +5635,6 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project.id, status='none')
 
-##            elif action == 'hide_alternate_image':
-##                try:
-##                    content_type = request.POST.get('content_type')
-##                    content_identifier = request.POST.get('content_identifier')
-##                    alternate_image_id = int(request.POST.get('alternate_image_id'))
-##                    hidden_status = request.POST.get('hidden_status') == 'true'
-##
-##                    # Determine page/element/style context
-##                    if content_type == 'page':
-##                        page_number = int(content_identifier)
-##                        content_dir = f'{project_dir}/pages/page{page_number}'
-##                        #print(f'alternate_images for page {page_number}')
-##                        #pprint.pprint(indexed_page_data[page_number]['alternate_images'])
-##                        for img in indexed_page_data[page_number]['alternate_images']:
-##                            if img['id'] == alternate_image_id:
-##                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
-##                                break
-##                    elif content_type == 'element':
-##                        element_name = content_identifier
-##                        content_dir = f'{project_dir}/elements/{element_name}'
-##                        for img in indexed_element_data[element_name]['alternate_images']:
-##                            if img['id'] == alternate_image_id:
-##                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
-##                                break
-##                    elif content_type == 'style':
-##                        content_dir = f'{project_dir}/style'
-##                        for img in style_data[0]['alternate_images']:
-##                            if img['id'] == alternate_image_id:
-##                                set_alternate_image_hidden_status(content_dir, img['description_index'], img['image_index'], hidden_status)
-##                                break
-##                    else:
-##                        messages.error(request, f"Invalid content type '{content_type}' for hiding/unhiding.")
-##                        return redirect('edit_images_v2', project_id=project_id, status=status)
-##
-##                    messages.success(request, f"Image hidden/unhidden successfully.")
-##                    return redirect('edit_images_v2', project_id=project_id, status='none')
-##
-##                except Exception as e:
-##                    messages.error(request, f"Error when trying to hide/unhide image.")
-##                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-##                    return redirect('edit_images_v2', project_id=project_id, status='none')
-
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
                 if not style_formset.is_valid():
@@ -5681,29 +5645,6 @@ def edit_images_v2(request, project_id, status):
                         form = style_formset[0]
                         style_advice = form.cleaned_data.get('advice')
                         clara_project_internal.set_style_advice_v2(style_advice)
-##            elif action in ( 'save_element_advice', 'create_element_descriptions_and_images'):
-##                element_formset = ImageFormSetV2(request.POST, request.FILES, prefix='elements')
-##                if not element_formset.is_valid():
-##                    errors = element_formset.errors
-##                else:
-##                    # Go through the element items in the form.
-##                    # Collect material to save and items where we want to delete or (re-)generate the image.
-##                    elements_to_generate = []
-##                    elements_to_delete = []
-##                    
-##                    for i in range(0, len(element_formset)):
-##                        form = element_formset[i]
-##                                
-##                        element_name = form.cleaned_data.get('element_name')
-##                        advice = form.cleaned_data.get('advice')
-##                        generate = form.cleaned_data.get('generate')
-##                        delete = form.cleaned_data.get('delete')
-##
-##                        clara_project_internal.set_element_advice_v2(advice, element_name)
-##                        if delete:
-##                            elements_to_delete.append(element_name)
-##                        if generate:
-##                            elements_to_generate.append(element_name)
             elif action in ( 'save_page_texts'):
                 page_formset = ImageFormSetV2(request.POST, request.FILES, prefix='pages')
                 if not page_formset.is_valid():
@@ -5770,6 +5711,7 @@ def edit_images_v2(request, project_id, status):
                     'project': project,
                     'clara_version': clara_version,
                     'overview_file_exists': overview_file_exists,
+                    'style_exists': style_exists,
                     'element_names_exist': element_names_exist,
                     'elements_exist': elements_exist,
                     'pages_exist': pages_exist,
@@ -5784,6 +5726,11 @@ def edit_images_v2(request, project_id, status):
             if action in actions_requiring_openai:
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('edit_images_v2', project_id=project_id, status='none')
+
+                if action == 'create_page_descriptions_and_images' and \
+                   project.use_translation_for_images and not clara_project_internal.load_text_version_or_null("translated"):
+                    messages.error(request, f"Unable to create page images: project is marked as using translations to create images, but there are no translations yet")
                     return redirect('edit_images_v2', project_id=project_id, status='none')
 
                 callback, report_id = make_asynch_callback_and_report_id(request, action)
@@ -5837,6 +5784,7 @@ def edit_images_v2(request, project_id, status):
                                                              'project': project,
                                                              'clara_version': clara_version,
                                                              'overview_file_exists': overview_file_exists,
+                                                             'style_exists': style_exists,
                                                              'element_names_exist': element_names_exist,
                                                              'elements_exist': elements_exist,
                                                              'pages_exist': pages_exist,
