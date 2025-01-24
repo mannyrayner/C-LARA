@@ -92,6 +92,7 @@
   </form>
 
   <!-- Elements Section -->
+  {% if style_exists %}
   <h3>Elements</h3>
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
@@ -152,6 +153,7 @@
 		<button type="submit" name="action" value="create_element_descriptions_and_images">Generate All Elements</button>
 	{% endif %}
   </form>
+  {% endif %}
 
   <!-- Pages Section -->
   <h3>Pages</h3>
