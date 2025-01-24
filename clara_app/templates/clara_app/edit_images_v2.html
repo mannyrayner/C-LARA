@@ -146,19 +146,19 @@
 		</tfoot>
       </tbody>
     </table>
-	{% if not element_names_exist %}
+	{% if style_exists and not element_names_exist %}
 		<button type="submit" name="action" value="create_element_names">Generate All Element Names</button>
 	{% endif %}
-	{% if element_names_exist %}
-		<button type="submit" name="action" value="create_element_descriptions_and_images">Generate All Elements</button>
+	{% if style_exists and element_names_exist %}
+		<button type="submit" name="action" value="create_element_descriptions_and_images">Generate Missing Element Images</button>
 	{% endif %}
   </form>
   {% endif %}
 
   <!-- Pages Section -->
   <h3>Pages</h3>
-  {% if not pages_exist %}
-		<button type="submit" name="action" value="create_page_descriptions_and_images">Generate All Page Images</button>
+  {% if style_exists %}
+		<button type="submit" name="action" value="create_page_descriptions_and_images">Generate Missing Page Images</button>
   {% endif %}
   <form id="display-options-form">
     <label><input type="checkbox" id="show-segmented" checked> Display Segmented Text</label>
