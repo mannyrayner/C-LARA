@@ -5393,8 +5393,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                           'clara_version': clara_version,
                                                           'errors': []})
 
-#_edit_images_v2_trace = True
-_edit_images_v2_trace = False
+_edit_images_v2_trace = True
+#_edit_images_v2_trace = False
 
 # Version of edit_images for uses_coherent_image_set_v2
 @login_required
@@ -5608,7 +5608,6 @@ def edit_images_v2(request, project_id, status):
                         messages.error(request, f"Error when trying to create overview")
                         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                 return redirect('edit_images_v2', project_id=project_id, status='none')
-            
             elif action == 'promote_alternate_image':
                 try:
                     content_type = request.POST.get('content_type')
@@ -5634,6 +5633,34 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Error when trying to promote alternate image")
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project.id, status='none')
+            elif action == 'delete_v2_element':
+                try:
+                    deleted_element_text = request.POST.get('deleted_element_text')
+                    if _edit_images_v2_trace:
+                        print(f'Deleting element: {deleted_element_text}')
+                    # Delete the element
+                    elements_params = get_element_descriptions_params_from_project_params(params)
+                    clara_project_internal.delete_element_v2(elements_params, deleted_element_text)
+                    messages.success(request, f'Deleted element: {deleted_element_text}')
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+                except Exception as e:
+                    messages.error(request, f"Error when trying to delete element")
+                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+            elif action == 'add_v2_element':
+                try:
+                    new_element_text = request.POST.get('new_element_text')
+                    if _edit_images_v2_trace:
+                        print(f'Added element: {new_element_text}')
+                    # Delete the element
+                    elements_params = get_element_descriptions_params_from_project_params(params)
+                    clara_project_internal.add_element_v2(elements_params, new_element_text)
+                    messages.success(request, f'Added element: {new_element_text}')
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+                except Exception as e:
+                    messages.error(request, f"Error when trying to add element")
+                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
 
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
@@ -5645,7 +5672,7 @@ def edit_images_v2(request, project_id, status):
                         form = style_formset[0]
                         style_advice = form.cleaned_data.get('advice')
                         clara_project_internal.set_style_advice_v2(style_advice)
-            elif action in ( 'save_page_texts'):
+            elif action == 'save_page_texts':
                 page_formset = ImageFormSetV2(request.POST, request.FILES, prefix='pages')
                 if not page_formset.is_valid():
                     errors = page_formset.errors
@@ -5740,8 +5767,14 @@ def edit_images_v2(request, project_id, status):
                 elif action == 'create_element_names':
                     async_task(create_element_names, project, clara_project_internal, params, callback=callback)
                 elif action == 'create_element_descriptions_and_images':
+                    elements_to_generate = clara_project_internal.get_elements_texts_with_no_image_v2()
+                    if _edit_images_v2_trace:
+                        print(f'Generating images for elements: {elements_to_generate}')
                     async_task(create_element_descriptions_and_images, project, clara_project_internal, params, elements_to_generate, callback=callback)
                 elif action == 'create_page_descriptions_and_images':
+                    pages_to_generate = clara_project_internal.get_pages_with_no_image_v2()
+                    if _edit_images_v2_trace:
+                        print(f'Generating images for pages: {pages_to_generate}')
                     async_task(create_page_descriptions_and_images, project, clara_project_internal, params, pages_to_generate, callback=callback)
 
                 print(f'--- Started async "{action}" task')

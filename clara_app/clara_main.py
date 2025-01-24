@@ -1685,6 +1685,19 @@ class CLARAProjectInternal:
         #print(f'get_all_element_images(params) = {get_all_element_images(params)}')
         return get_all_element_texts(params)
 
+    def get_elements_texts_with_no_image_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        
+        all_element_texts = get_all_element_texts(params)
+        output = []
+        for element_text in all_element_texts:
+            element_image = project_pathname(project_dir, get_element_image(element_text, params))
+            if not file_exists(element_image):
+                output.append(element_text)
+
+        return output
+
     def get_all_element_images_v2(self):
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir }
@@ -1698,6 +1711,19 @@ class CLARAProjectInternal:
 
         #print(f'get_all_page_images(params) = {get_all_page_images(params)}')
         return get_all_page_images(params)
+
+    def get_pages_with_no_image_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        
+        all_page_numbers = get_pages(params)
+        output = []
+        for page_number in all_page_numbers:
+            page_image = project_pathname(project_dir, get_page_image(page_number, params))
+            if not file_exists(page_image):
+                output.append(page_number)
+
+        return output
 
     def set_style_advice_v2(self, advice):
         project_dir = self.coherent_images_v2_project_dir
@@ -1859,7 +1885,7 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
         cost_dict = asyncio.run(process_elements(params, callback=callback))
-        self.store_v2_element_data(params, callback=callback)
+        #self.store_v2_element_data(params, callback=callback)
         return cost_dict
 
     def delete_element_v2(self, params, deleted_element_text):
@@ -1872,7 +1898,7 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
         cost_dict = asyncio.run(add_element(new_element_text, params, callback=None))
-        self.store_v2_element_data(params, callback=callback)
+        #self.store_v2_element_data(params, callback=callback)
         return cost_dict
 
     def create_page_descriptions_and_images_v2(self, params, callback=None):
