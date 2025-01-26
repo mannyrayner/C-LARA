@@ -13,6 +13,8 @@
 
 </div>
 ## Documents
+- <a href="https://www.researchgate.net/publication/387962116_ChatGPT_is_Bullshit_is_Bullshit_A_Coauthored_Rebuttal_by_Human_LLM" target="_blank">"ChatGPT is Bullshit" is Bullshit: A Coauthored Rebuttal by Human & LLM</a>. A rebuttal of the high-profile paper <i>ChatGPT is bullshit</i> entirely written by the o1 model, together with a full trace of how it was created. o1, unprompted, identifies the critical error in <i>ChatGPT is bullshit</i> within a few seconds.
+
 - <a href="https://www.researchgate.net/publication/384217262_Echoes_of_Solitude_a_short_story_by_o1-preview" target="_blank">Echoes of Solitude: a short story by o1-preview</a>. A 3100 word science-fiction story entirely written by the o1-preview model, together with a full trace of how it was created.
 
 - <a href="https://www.researchgate.net/publication/383776754_Generative_AI_in_CALL_A_September_2024_perspectivet" target="_blank">Generative AI in CALL: A September 2024 perspective)</a>. We briefly survey the state of the art in using Generative AI for CALL, and argue that we are only a few years away from a human-level AI CALL tutor.
