@@ -81,6 +81,8 @@ from .clara_coherent_images_utils import read_project_json_file
 
 from .clara_coherent_images_alternate import get_alternate_images_json, set_alternate_image_hidden_status
 
+from .clara_coherent_images_export import create_images_zipfile
+
 from .clara_coherent_images_community_feedback import (load_community_feedback, save_community_feedback,
                                                        register_cm_image_vote, register_cm_element_vote,
                                                        register_cm_image_variants_request,
@@ -5608,6 +5610,24 @@ def edit_images_v2(request, project_id, status):
                         messages.error(request, f"Error when trying to create overview")
                         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                 return redirect('edit_images_v2', project_id=project_id, status='none')
+            elif action == 'download_images_zip':
+                try:
+                    params = {
+                        'project_dir': clara_project_internal.coherent_images_v2_project_dir,
+                        'title': project.title
+                    }
+                    zip_bytes = create_images_zipfile(params)
+
+                    # Create an HttpResponse to return the in-memory zip as a download
+                    response = HttpResponse(zip_bytes, content_type='application/zip')
+                    # You can customize the downloaded filename as you like:
+                    filename = f"{project.title}_images.zip".replace(' ', '_')
+                    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                    return response
+                except Exception as e:
+                    messages.error(request, f"Error when trying to create images ZIP")
+                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('edit_images_v2', project_id=project_id, status='none')
             elif action == 'promote_alternate_image':
                 try:
                     content_type = request.POST.get('content_type')

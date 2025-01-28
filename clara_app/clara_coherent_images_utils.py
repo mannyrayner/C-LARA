@@ -354,7 +354,6 @@ def get_element_description(element_text, params):
 def get_element_image(element_text, params):
     project_dir = params['project_dir']
     
-    #name = element_text_to_element_name(element_text, params)
     name = element_text_to_element_name(element_text)
     return f'elements/{name}/image.jpg'
 
@@ -427,6 +426,14 @@ def get_all_page_images(params):
     page_numbers = get_pages(params)
 
     return [ get_page_image(page_number, params) for page_number in page_numbers ]
+
+def get_relative_page_image(page_number):    
+    return f'pages/page{page_number}/image.jpg'
+
+def get_all_relative_page_images(params):
+    page_numbers = get_pages(params)
+
+    return [ get_relative_page_image(page_number) for page_number in page_numbers ]
 
 def remove_page_directory(page_number, params):
     project_dir = params['project_dir']
