@@ -136,7 +136,7 @@ urlpatterns = [
     path('project/<int:project_id>/execute_simple_clara_image_requests_status/<str:report_id>/', views.execute_simple_clara_image_requests_status,
          name='execute_simple_clara_image_requests_status'),
 
-    path('project/<int:project_id>/execute_simple_clara_element_requests_monitor/<str:report_id>/<str:element_name>/', views.execute_simple_clara_element_requests_monitor,
+    path('project/<int:project_id>/execute_simple_clara_element_requests_monitor/<str:report_id>/<str:element_name>/<str:from_view>/', views.execute_simple_clara_element_requests_monitor,
          name='execute_simple_clara_element_requests_monitor'),
     path('project/<int:project_id>/execute_simple_clara_element_requests_status/<str:report_id>/', views.execute_simple_clara_element_requests_status,
          name='execute_simple_clara_element_requests_status'),
