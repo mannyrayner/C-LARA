@@ -5802,6 +5802,12 @@ def edit_images_v2(request, project_id, status):
             else:
                 # We had a save action
                 params_for_project_dir = { 'project_dir': project_dir }
+
+                # Unless we're missing required translations, save the possibly updated story data from the project
+                if not ( project.use_translation_for_images and not clara_project_internal.load_text_version_or_null("translated") ):
+                    numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
+                    clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
+                    
                 if action == 'save_params':
                     messages.success(request, "Parameter data updated")
                 elif action == 'save_style_advice':
