@@ -5764,10 +5764,6 @@ def edit_images_v2(request, project_id, status):
                     'pages_exist': pages_exist,
                     'errors': errors,
                 })
-
-            # We should have saved everything, so we can get the story data from the project
-            numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
-            clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
                                                                                      
             # If we've got one of the AI actions, again we should have everything saved so we can execute it as an async and return
             if action in actions_requiring_openai:
@@ -5775,10 +5771,13 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                     return redirect('edit_images_v2', project_id=project_id, status='none')
 
-                if action == 'create_page_descriptions_and_images' and \
-                   project.use_translation_for_images and not clara_project_internal.load_text_version_or_null("translated"):
-                    messages.error(request, f"Unable to create page images: project is marked as using translations to create images, but there are no translations yet")
+                if project.use_translation_for_images and not clara_project_internal.load_text_version_or_null("translated"):
+                    messages.error(request, f"Unable to create images: project is marked as using translations to create images, but there are no translations yet")
                     return redirect('edit_images_v2', project_id=project_id, status='none')
+                else:
+                    # We should have saved everything and have translations, so we can get the story data from the project
+                    numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
+                    clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
 
                 callback, report_id = make_asynch_callback_and_report_id(request, action)
 
