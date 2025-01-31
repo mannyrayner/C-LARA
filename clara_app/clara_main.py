@@ -1665,6 +1665,10 @@ class CLARAProjectInternal:
         
         return get_story_data(params)
 
+    def pages_with_missing_story_text_v2(self):
+        story_data = self.get_story_data_v2()
+        return [ item['page_number'] for item in story_data if 'page_number' in item and 'text' in item and item['text'] == '' ]
+
     def get_style_image_v2(self):
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir }

@@ -4998,10 +4998,11 @@ def edit_images(request, project_id, dall_e_3_image_status):
         lemma_texts = all_page_texts['lemma']
         gloss_texts = all_page_texts['gloss']
         try:
-            mwe_text = clara_project_internal.load_text_version("mwe")
-            internalised_mwe_text = clara_project_internal.internalize_text(mwe_text, "mwe")
-            # Do this so that we get an exception we can report if the MWEs don't match the text
-            annotate_mwes_in_text(internalised_mwe_text)
+            mwe_text = clara_project_internal.load_text_version_or_null("mwe")
+            if mwe_text:
+                internalised_mwe_text = clara_project_internal.internalize_text(mwe_text, "mwe")
+                # Do this so that we get an exception we can report if the MWEs don't match the text
+                annotate_mwes_in_text(internalised_mwe_text)
         except MWEError as e:
              messages.error(request, f"{e.message}")
     except InternalisationError as e:
@@ -5764,6 +5765,15 @@ def edit_images_v2(request, project_id, status):
                     'pages_exist': pages_exist,
                     'errors': errors,
                 })
+
+            # We should have saved everything and have translations, so we can get the story data from the project
+            try:
+                numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
+                clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
+            except Exception as e:
+                messages.error(request, f"Error when trying to update story data")
+                messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                return redirect('edit_images_v2', project_id=project.id, status='none')
                                                                                      
             # If we've got one of the AI actions, again we should have everything saved so we can execute it as an async and return
             if action in actions_requiring_openai:
@@ -5771,13 +5781,13 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                     return redirect('edit_images_v2', project_id=project_id, status='none')
 
-                if project.use_translation_for_images and not clara_project_internal.load_text_version_or_null("translated"):
-                    messages.error(request, f"Unable to create images: project is marked as using translations to create images, but there are no translations yet")
-                    return redirect('edit_images_v2', project_id=project_id, status='none')
-                else:
-                    # We should have saved everything and have translations, so we can get the story data from the project
-                    numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
-                    clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
+                if project.use_translation_for_images:
+                    pages_with_missing_text = clara_project_internal.pages_with_missing_story_text_v2()
+                    if pages_with_missing_text:
+                        pages_with_missing_text_str = ', '.join([str(page_number) for page_number in pages_with_missing_text])
+                        messages.error(request, f"Cannot create images.")
+                        messages.error(request, f"Project is marked as using translations to create images, but pages are missing translations: {pages_with_missing_text_str}")
+                        return redirect('edit_images_v2', project_id=project_id, status='none')
 
                 callback, report_id = make_asynch_callback_and_report_id(request, action)
 
@@ -5802,12 +5812,7 @@ def edit_images_v2(request, project_id, status):
             else:
                 # We had a save action
                 params_for_project_dir = { 'project_dir': project_dir }
-
-                # Unless we're missing required translations, save the possibly updated story data from the project
-                if not ( project.use_translation_for_images and not clara_project_internal.load_text_version_or_null("translated") ):
-                    numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
-                    clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
-                    
+     
                 if action == 'save_params':
                     messages.success(request, "Parameter data updated")
                 elif action == 'save_style_advice':
@@ -6063,6 +6068,10 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
             if action in ( 'variants_requests', 'images_with_advice' ):
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
+                    return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
+
+                if project.use_translation_for_images and page_number in clara_project_internal.pages_with_missing_story_text_v2():
+                    messages.error(request, f"Cannot create images. Project is marked as using translations to create images, but page {page_number} has no translation yet.")
                     return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
 
                 if action == 'variants_requests':
@@ -6565,13 +6574,22 @@ so it is important to focus on the style, not describing the content more than a
 
 def numbered_page_list_for_coherent_images(project, clara_project_internal):
     if project.use_translation_for_images:
-        translated_text = clara_project_internal.load_text_version("translated")
-        translated_text_object = internalize_text(translated_text, project.l2, project.l1, "translated")
-        numbered_page_list = translated_text_object.to_numbered_page_list(translated=True)
+        translated_text = clara_project_internal.load_text_version_or_null("translated")
+        if translated_text:
+            translated_text_object = internalize_text(translated_text, project.l2, project.l1, "translated")
+            numbered_page_list = translated_text_object.to_numbered_page_list(translated=True)
+        else:
+            segmented_text = clara_project_internal.load_text_version("segmented_with_title")
+            segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
+            numbered_page_list = segmented_text_object.to_numbered_page_list()
+            for item in numbered_page_list:
+                item['original_page_text'] = item['text']
+                item['text'] = ''
     else:
         segmented_text = clara_project_internal.load_text_version("segmented_with_title")
         segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
         numbered_page_list = segmented_text_object.to_numbered_page_list()
+        
     return numbered_page_list
 
 # Create the description variables for the text
