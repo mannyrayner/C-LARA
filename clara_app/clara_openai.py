@@ -38,21 +38,24 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o', reasoni
     # Relevant for CoT models like o1-preview
     n_reasoning_tokens = reasoning_tokens / 1000.0
 
-    if gpt_model in ( 'gpt-4o' ):
+    if gpt_model == 'gpt-4o':
         message_rate = float(config.get('chatgpt4_o_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('chatgpt4_o_costs', 'response_per_thousand_tokens'))
-    elif gpt_model in ( 'gpt-4o-2024-08-06' ):
-        message_rate = float(config.get('gpt-4o-2024-08-06_costs', 'prompt_per_thousand_tokens')) 
-        response_rate = float(config.get('gpt-4o-2024-08-06_costs', 'response_per_thousand_tokens'))
-    elif gpt_model in ( 'gpt-4-1106-preview', 'gpt-4-turbo' ):
+    elif gpt_model == 'gpt-4-turbo':
         message_rate = float(config.get('chatgpt4_turbo_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('chatgpt4_turbo_costs', 'response_per_thousand_tokens'))
-    elif gpt_model in ( 'o1-preview' ):
-        message_rate = float(config.get('o1_preview_costs', 'prompt_per_thousand_tokens')) 
-        response_rate = float(config.get('o1_preview_costs', 'response_per_thousand_tokens'))
-    elif gpt_model in ( 'o1-mini' ):
+    elif gpt_model == 'gpt-4':
+        message_rate = float(config.get('chatgpt4_turbo_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('chatgpt4_turbo_costs', 'response_per_thousand_tokens'))
+    elif gpt_model == 'o1':
+        message_rate = float(config.get('o1_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('o1_costs', 'response_per_thousand_tokens'))
+    elif gpt_model == 'o1-mini':
         message_rate = float(config.get('o1_mini_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('o1_mini_costs', 'response_per_thousand_tokens'))
+    elif gpt_model == 'o3-mini':
+        message_rate = float(config.get('o3_mini_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('o3_mini_costs', 'response_per_thousand_tokens'))
     # Default is gpt-4
     else:
         message_rate = float(config.get('chatgpt4_costs', 'prompt_per_thousand_tokens')) 
