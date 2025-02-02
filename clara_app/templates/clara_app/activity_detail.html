@@ -3,14 +3,6 @@
 {% block content %}
     <h2>{{ activity.title }} (Activity #{{ activity.id }})</h2>
     <p>{{ activity.description|linebreaksbr }}</p>
-	{% if voting_users %}
-    <h3>Voters this week</h3>
-		<ul>
-			{% for voter in voting_users %}
-				<li><a href="{% url 'external_profile' user_id=voter.id %}">{{ voter.username }}</a></li>
-			{% endfor %}
-		</ul>
-	{% endif %}
 	<h3>Following</h3>
     <form method="post">
         {% csrf_token %}
@@ -39,12 +31,6 @@
 			<button type="submit" name="update_resolution">Update Resolution</button>
 		</form>
     {% endif %}
-	<h3>Voting</h3>
-	<form method="post">
-        {% csrf_token %}
-        {{ vote_form.as_p }}
-        <button type="submit" name="vote">Vote for this activity</button>
-    </form>
 	<h3>Comments</h3>
 	{% for comment in comments %}
 		<p>

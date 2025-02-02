@@ -32,7 +32,6 @@
     </tr>
   </table>
 <b>Activities found</b>
-<p>Scores refer to this week's voting on priorities: top priority = 10, second = 7, third = 5</p>
 <a href="{% url 'create_activity' %}">Create a new activity</a>
 <table border="2">
     <thead>
@@ -42,7 +41,6 @@
             <th>Category</th>
             <th>Status</th>
             <th>Resolution</th>
-            <th>Score</th>
         </tr>
     </thead>
     <tbody>
@@ -53,7 +51,6 @@
             <td>{{ activity.get_category_display }}</td>
             <td>{{ activity.get_status_display }}</td>
             <td>{{ activity.get_resolution_display }}</td>
-            <td>{{ activity.vote_score|default_if_none:"0" }}</td>
         </tr>
         {% empty %}
         <tr>
