@@ -1820,7 +1820,7 @@ def annotate_and_order_activities_for_display(activities):
     )
 
     # Order by vote score, custom status order, and then by creation date
-    return activities.order_by('-vote_score', 'status_order', '-created_at')
+    return activities.order_by('status_order', '-created_at')
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
