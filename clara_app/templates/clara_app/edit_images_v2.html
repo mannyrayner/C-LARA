@@ -42,6 +42,20 @@
     {{ params_form.as_p }}
     <button type="submit" name="action" value="save_params">Save Parameters</button>
   </form>
+  
+  <!-- Background Information Section -->
+  <h3>Background information</h3>
+	<form method="post" style="margin-bottom:1em;">
+	{% csrf_token %}
+	<input type="hidden" name="action" value="save_background_advice">
+	{% if background_advice %}
+		<textarea name="background_advice_text" rows="4" cols="80">{{ background_advice }}</textarea><br>
+	{% else %}
+		<textarea name="background_advice_text" placeholder="Add background information about the text here (optional)" rows="4" cols="80"></textarea><br>
+	{% endif %}
+	
+	<button type="submit">Save background information</button>
+	</form>
 
   <!-- Style Section -->
   <h3>Style</h3>

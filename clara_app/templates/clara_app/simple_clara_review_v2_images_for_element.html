@@ -42,7 +42,11 @@
 <form method="post" style="margin-bottom:1em;">
 {% csrf_token %}
 <input type="hidden" name="action" value="images_with_advice">
-<textarea name="advice_text" placeholder="{{ advice }}" rows="4" cols="80"></textarea>
+{% if advice %}
+  <textarea name="advice_text" rows="4" cols="80">{{ advice }}</textarea>
+{% else %}
+  <textarea name="advice_text" placeholder="Add advice here (optional)" rows="4" cols="80"></textarea>
+{% endif %}
 <button type="submit">Create</button>
 </form>
 
