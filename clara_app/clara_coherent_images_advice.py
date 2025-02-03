@@ -45,9 +45,9 @@ def set_style_advice(text, project_dir):
     make_root_project_dir(project_dir)
     return write_project_txt_file(text, project_dir, f'style_description.txt')
 
-def get_element_advice(element_name, params):
-    check_valid_element_name(element_name, params)
-    return get_advice_text('element', element_name, params)
+def get_element_advice(element_text, params):
+    check_valid_element_name(element_text, params)
+    return get_advice_text('element', element_text, params)
 
 def get_page_advice(page_number, params):
     # If we have just added new pages to a text, the story data may not be saved yet
@@ -56,9 +56,9 @@ def get_page_advice(page_number, params):
     result = get_advice_text('page', page_number, params)
     return result
 
-def set_element_advice(advice_text, element_name, params):
-    check_valid_element_name(element_name, params)
-    set_advice_text(advice_text, 'element', element_name, params)
+def set_element_advice(advice_text, element_text, params):
+    check_valid_element_name(element_text, params)
+    set_advice_text(advice_text, 'element', element_text, params)
 
 def set_page_advice(advice_text, page_number, params):
     page_number = int(page_number)

@@ -75,7 +75,7 @@ from .clara_community import assign_project_to_community
 
 from .clara_coherent_images_utils import get_style_params_from_project_params, get_element_names_params_from_project_params
 from .clara_coherent_images_utils import get_element_names_params_from_project_params, get_element_descriptions_params_from_project_params
-from .clara_coherent_images_utils import get_page_params_from_project_params, default_params, style_image_name, element_image_name, page_image_name
+from .clara_coherent_images_utils import get_page_params_from_project_params, default_params, style_image_name, element_image_name, page_image_name, get_element_image
 from .clara_coherent_images_utils import remove_element_directory, remove_page_directory, remove_element_name_from_list_of_elements, project_pathname
 from .clara_coherent_images_utils import read_project_json_file
 
@@ -5405,6 +5405,7 @@ _edit_images_v2_trace = True
 def edit_images_v2(request, project_id, status):
     actions_requiring_openai = ( 'create_style_description_and_image',
                                  'create_element_names',
+                                 'add_v2_element',
                                  'create_element_descriptions_and_images',
                                  'create_page_descriptions_and_images',
                                  'generate_variant_images' )
@@ -5668,21 +5669,6 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Error when trying to delete element")
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project.id, status='none')
-            elif action == 'add_v2_element':
-                try:
-                    new_element_text = request.POST.get('new_element_text')
-                    if _edit_images_v2_trace:
-                        print(f'Added element: {new_element_text}')
-                    # Delete the element
-                    elements_params = get_element_descriptions_params_from_project_params(params)
-                    clara_project_internal.add_element_v2(elements_params, new_element_text)
-                    messages.success(request, f'Added element: {new_element_text}')
-                    return redirect('edit_images_v2', project_id=project.id, status='none')
-                except Exception as e:
-                    messages.error(request, f"Error when trying to add element")
-                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-                    return redirect('edit_images_v2', project_id=project.id, status='none')
-
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
                 if not style_formset.is_valid():
@@ -5692,7 +5678,20 @@ def edit_images_v2(request, project_id, status):
                     if len(style_formset) != 0:
                         form = style_formset[0]
                         style_advice = form.cleaned_data.get('advice')
+                        style_data[0]['advice'] = style_advice
                         clara_project_internal.set_style_advice_v2(style_advice)
+            elif action in ( 'save_element_advice', 'create_element_descriptions_and_images'):
+                element_formset = ImageFormSetV2(request.POST, prefix='elements')
+                if not element_formset.is_valid():
+                    errors = element_formset.errors
+                else:
+                    # Go through the element items in the form.
+                    # Collect material to save
+                    for i in range(0, len(element_formset)):
+                        form = element_formset[i]
+                        element_text = form.cleaned_data['element_text']
+                        advice = form.cleaned_data['advice']
+                        clara_project_internal.set_element_advice_v2(advice, element_text)
             elif action == 'save_page_texts':
                 page_formset = ImageFormSetV2(request.POST, request.FILES, prefix='pages')
                 if not page_formset.is_valid():
@@ -5710,6 +5709,9 @@ def edit_images_v2(request, project_id, status):
                     
                     for i in range(0, len(page_formset)):
                         form = page_formset[i]
+                        page_number = i + 1
+                        advice = form.cleaned_data['advice']
+                        clara_project_internal.set_page_advice_v2(advice, page_number)
 
                         new_plain_texts.append(form.cleaned_data['page_text'])
                         new_segmented_texts.append(form.cleaned_data['segmented_text'])
@@ -5793,6 +5795,17 @@ def edit_images_v2(request, project_id, status):
 
                 if action == 'create_style_description_and_image':
                     async_task(create_style_description_and_image, project, clara_project_internal, params, callback=callback)
+                elif action == 'add_v2_element':
+                    try:
+                        new_element_text = request.POST.get('new_element_text').strip()
+                    except Exception as e:
+                        messages.error(request, f"Error when trying to get new element name")
+                        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                        return redirect('edit_images_v2', project_id=project.id, status='none')
+                    if not new_element_text:
+                        messages.error(request, f"Error, new element name not provided")
+                        return redirect('edit_images_v2', project_id=project.id, status='none')
+                    async_task(add_v2_element, new_element_text, project, clara_project_internal, params, callback=callback)
                 elif action == 'create_element_names':
                     async_task(create_element_names, project, clara_project_internal, params, callback=callback)
                 elif action == 'create_element_descriptions_and_images':
@@ -5817,6 +5830,8 @@ def edit_images_v2(request, project_id, status):
                     messages.success(request, "Parameter data updated")
                 elif action == 'save_style_advice':
                     messages.success(request, "Style advice updated")
+                elif action == 'save_element_advice':
+                    messages.success(request, "Element advice updated")
                 elif action == 'save_page_texts':
                     messages.success(request, "Page text updated")
                 return redirect('edit_images_v2', project_id=project_id, status='none')
@@ -6039,6 +6054,13 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
     page_text = page.get('text', '').strip()
     original_page_text = page.get('original_page_text', '').strip()
 
+    try:
+        advice = clara_project_internal.get_page_advice_v2(page_number)
+        print(f'advice = {advice}')
+    except Exception as e:
+        print(f"Error getting element advice for page {page_number}: {e}\n{traceback.format_exc()}")
+        advice = ''
+
     # Update AI votes
     try:
         update_ai_votes_in_feedback(project_dir, page_number)
@@ -6080,6 +6102,8 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
                                    'description_index': description_index } ]
                 elif action == 'images_with_advice':
                     advice_text = request.POST.get('advice_text', '').strip()
+                    if not advice_text:
+                        advice_text = advice
                     requests = [ { 'request_type': 'image_with_advice',
                                    'page': page_number,
                                    'advice_text': advice_text } ]
@@ -6133,6 +6157,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
         'project': project,
         'page_number': page_number,
         'page_text': page_text,
+        'advice': advice,
         'original_page_text': original_page_text,
         'descriptions_info': descriptions_info,
         'from_view': from_view,
@@ -6152,6 +6177,15 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
     project_dir = clara_project_internal.coherent_images_v2_project_dir
     
     story_data = read_project_json_file(project_dir, 'story.json')
+
+    try:
+        element_text = clara_project_internal.element_name_to_element_text(element_name)
+        print(f'element_text = {element_text}')
+        advice = clara_project_internal.get_element_advice_v2(element_text)
+        print(f'advice = {advice}')
+    except Exception as e:
+        print(f"Error getting element advice for {element_name}: {e}\n{traceback.format_exc()}")
+        advice = ''
 
     # Update AI votes
     try:
@@ -6182,6 +6216,8 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
                     return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, from_view=from_view, status='none')
 
                 advice_text = request.POST.get('advice_text', '').strip()
+                if not advice_text:
+                    advice_text = advice
                 
                 requests = [ { 'request_type': 'new_element_description_and_images',
                                'element_name': element_name,
@@ -6229,11 +6265,12 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
         'project': project,
         'element_name': element_name,
         'descriptions_info': descriptions_info,
+        'advice': advice,
         'from_view': from_view,
     }
 
-    #print(f'simple_clara_review_v2_images_for_element')
-    #pprint.pprint(rendering_parameters)
+    print(f'simple_clara_review_v2_images_for_element')
+    pprint.pprint(rendering_parameters)
 
     return render(request, 'clara_app/simple_clara_review_v2_images_for_element.html', rendering_parameters)
 
@@ -6391,6 +6428,22 @@ def create_element_names(project, clara_project_internal, params, callback=None)
         post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Error when creating element names")
+        post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        post_task_update(callback, f"error")
+
+def add_v2_element(new_element_text, project, clara_project_internal, params, callback=None):
+    try:
+        elements_params = get_element_descriptions_params_from_project_params(params)
+        cost_dict = clara_project_internal.add_element_v2(elements_params, new_element_text, callback=callback)
+        store_cost_dict(cost_dict, project, project.user)
+        if file_exists(project_pathname(get_element_image(new_element_text, params))):
+            post_task_update(callback, f"Created description and image for '{new_element_text}'")
+            post_task_update(callback, f"finished")
+        else:
+            post_task_update(callback, f"Something went wrong when creating description and image for '{new_element_text}'")
+            post_task_update(callback, f"error")                   
+    except Exception as e:
+        post_task_update(callback, f"Error when trying to add element")
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
 

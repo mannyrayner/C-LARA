@@ -167,7 +167,7 @@ from .clara_coherent_images_community_feedback import get_page_overview_info_for
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
 from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image, promote_alternate_element_description
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_params_for_simple_clara
-from .clara_coherent_images_utils import project_pathname, get_pages, make_project_dir
+from .clara_coherent_images_utils import project_pathname, get_pages, make_project_dir, element_name_to_element_text
 from .clara_coherent_images_utils import get_story_data, set_story_data_from_numbered_page_list, remove_top_level_element_directory
 from .clara_coherent_images_utils import get_style_description, get_all_element_texts
 from .clara_coherent_images_utils import get_element_description, get_page_description
@@ -1743,13 +1743,22 @@ class CLARAProjectInternal:
         advice = get_style_advice(params)
         return advice
 
-    def set_element_advice_v2(self, advice, element_name):
+    def set_element_advice_v2(self, advice, element_text):
         project_dir = self.coherent_images_v2_project_dir
         params = { 'project_dir': project_dir }
-        set_element_advice(advice, element_name, params)
+        set_element_advice(advice, element_text, params)
+##        image_name = element_image_name(element_text)
+##        self.store_image_advice(image_name, advice, 'element')
 
-        image_name = element_image_name(element_name)
-        self.store_image_advice(image_name, advice, 'element')
+    def element_name_to_element_text(self, element_name):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        return element_name_to_element_text(element_name, params)
+    
+    def get_element_advice_v2(self, element_text):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        return get_element_advice(element_text, params)
 
     def set_page_advice_v2(self, advice, page_number):
         project_dir = self.coherent_images_v2_project_dir
@@ -1758,6 +1767,11 @@ class CLARAProjectInternal:
 
         image_name = page_image_name(page_number)
         self.store_image_advice(image_name, advice, 'page')
+
+    def get_page_advice_v2(self, page_number):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        return get_page_advice(page_number, params)
 
     def promote_v2_style_image(self, alternate_image_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir
@@ -1901,7 +1915,7 @@ class CLARAProjectInternal:
     def add_element_v2(self, params, new_element_text, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
-        cost_dict = asyncio.run(add_element(new_element_text, params, callback=None))
+        cost_dict = asyncio.run(add_element(new_element_text, params, callback=callback))
         #self.store_v2_element_data(params, callback=callback)
         return cost_dict
 
