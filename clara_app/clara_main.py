@@ -164,6 +164,7 @@ from .clara_coherent_images import generate_overview_html, add_uploaded_page_ima
 from .clara_coherent_images import execute_community_requests_list, execute_simple_clara_image_requests, execute_simple_clara_element_requests
 from .clara_coherent_images import delete_element, add_element
 from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
+from .clara_coherent_images_advice import set_background_advice, get_background_advice
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
 from .clara_coherent_images_alternate import get_project_images_dict, promote_alternate_image, promote_alternate_element_description
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_params_for_simple_clara
@@ -1728,6 +1729,19 @@ class CLARAProjectInternal:
                 output.append(page_number)
 
         return output
+
+    def set_background_advice_v2(self, advice):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        
+        set_background_advice(advice, params)
+
+    def get_background_advice_v2(self):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        
+        advice = get_background_advice(params)
+        return advice
 
     def set_style_advice_v2(self, advice):
         project_dir = self.coherent_images_v2_project_dir

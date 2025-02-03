@@ -33,6 +33,20 @@ import sys
 import traceback
 import pprint
 
+
+def get_background_advice(params):
+    try:
+        project_dir = params['project_dir']
+        
+        return read_project_txt_file(project_dir, f'background_advice.txt')
+    except Exception as e:
+        return ''
+
+def set_background_advice(text, params):
+    project_dir = params['project_dir']
+    
+    return write_project_txt_file(text, project_dir, f'background_advice.txt')    
+
 def get_style_advice(params):
     try:
         project_dir = params['project_dir']

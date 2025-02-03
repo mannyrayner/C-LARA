@@ -8,11 +8,13 @@ from .clara_coherent_images_prompt_templates import (
     )
 
 from .clara_coherent_images_advice import (
+    get_background_advice,
+    set_background_advice,
     get_style_advice,
     set_style_advice,
     get_element_advice,
-    get_page_advice,
     set_element_advice,
+    get_page_advice,
     set_page_advice,
     )
 
@@ -447,12 +449,18 @@ async def generate_expanded_style_description(description_version_number, params
     # Read the base style description
     base_description = read_project_txt_file(project_dir, f'style_description.txt')
 
+    # Get the background if there is any
+    background_advice = get_background_advice(params)
+    background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
+
     # Get the text of the story
     text = get_text(params)
 
     # Create the prompt to expand the style description
     prompt_template = get_prompt_template('default', 'generate_style_description')
-    prompt = prompt_template.format(text=text, base_description=base_description)
+    prompt = prompt_template.format(text=text,
+                                    base_description=base_description,
+                                    background_text=background_text)
 
     # Get the expanded description from the AI
     expanded_description = None
@@ -786,9 +794,14 @@ async def generate_expanded_element_description_and_images(element_name, element
     description_directory = f'elements/{element_name}/description_v{description_version_number}'
     make_project_dir(project_dir, description_directory)
     
-    # Get the text of the story, the style description, and the advice if there is any
+    # Get the text of the story, the background, the style description, and the advice if there is any
     text = get_text(params)
     style_description = get_style_description(params)
+
+    # Get the background if there is any
+    background_advice = get_background_advice(params)
+    background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
+    
     advice = get_element_advice(element_text, params)
     if advice:
         advice_text = f"""
@@ -803,7 +816,11 @@ async def generate_expanded_element_description_and_images(element_name, element
 
     # Create the prompt to expand the element description
     prompt_template = get_prompt_template('default', 'generate_element_description')
-    prompt = prompt_template.format(text=text, style_description=style_description, element_text=element_text, advice_text=advice_text)
+    prompt = prompt_template.format(text=text,
+                                    background_text=background_text,
+                                    style_description=style_description,
+                                    element_text=element_text,
+                                    advice_text=advice_text)
 
     # Get the expanded description from the AI
     try:
@@ -1397,6 +1414,10 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     page_text = get_page_text(page_number, params)
     style_description = get_style_description(params)
 
+    # Get the background if there is any
+    background_advice = get_background_advice(params)
+    background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
+
     #Get the advice if there is any
     advice = get_page_advice(page_number, params)
     if advice:
@@ -1430,6 +1451,7 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     # Create the prompt
     prompt_template = get_prompt_template('default', 'generate_page_description')
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                    background_text=background_text,
                                     style_description=style_description,
                                     page_number=page_number,
                                     page_text=page_text,

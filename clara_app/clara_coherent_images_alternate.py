@@ -4,6 +4,7 @@ from .clara_coherent_images_utils import (
     )
 
 from .clara_coherent_images_advice import (
+    get_background_advice,
     get_style_advice,
     get_element_advice,
     get_page_advice,
@@ -256,10 +257,15 @@ async def get_project_images_dict(project_dir):
     project_dir = Path(absolute_file_name(project_dir))
     params = { 'project_dir': project_dir }
     images_dict = {
+        'background': '',
         'style': None,
         'elements': {},
         'pages': {}
     }
+
+    # Background
+    background = get_background_advice(params)
+    images_dict['background'] = background
 
     # Style Image
     style_dir = project_dir / 'style'

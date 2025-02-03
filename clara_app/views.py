@@ -5483,6 +5483,8 @@ def edit_images_v2(request, project_id, status):
         indexed_page_data = []
         inconsistent = True
 
+    background_advice = images['background']
+
     try:    
         style_data = [ images['style'] ] if images['style'] else []
 
@@ -5669,6 +5671,14 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Error when trying to delete element")
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project.id, status='none')
+            elif action == 'save_background_advice':
+                background_advice_text = request.POST.get('background_advice_text', '').strip()
+                print(f'background_advice_text read = "{background_advice_text}"')
+##                if not background_advice_text:
+##                    background_advice_text = background_advice
+                clara_project_internal.set_background_advice_v2(background_advice_text)
+                messages.success(request, f'Saved background advice')
+                return redirect('edit_images_v2', project_id=project.id, status='none')
             elif action in ( 'save_style_advice', 'create_style_description_and_image'):
                 style_formset = ImageFormSetV2(request.POST, request.FILES, prefix='style')
                 if not style_formset.is_valid():
@@ -5755,6 +5765,7 @@ def edit_images_v2(request, project_id, status):
                 style_formset = ImageFormSetV2(initial=style_data, prefix='style')
                 return render(request, 'clara_app/edit_images_v2.html', {
                     'params_form': params_form,
+                    'background_advice': background_advice,
                     'page_formset': page_formset,
                     'element_formset': element_formset,
                     'style_formset': style_formset,
@@ -5856,6 +5867,7 @@ def edit_images_v2(request, project_id, status):
             messages.error(request, "There was an error in the syntax, and something went wrong when trying to fix it. Look at the 'Recent task updates' view for further information.")
 
     return render(request, 'clara_app/edit_images_v2.html', {'params_form': params_form,
+                                                             'background_advice': background_advice,
                                                              'style_formset': style_formset,
                                                              'element_formset': element_formset,
                                                              'page_formset': page_formset,
@@ -6102,8 +6114,6 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
                                    'description_index': description_index } ]
                 elif action == 'images_with_advice':
                     advice_text = request.POST.get('advice_text', '').strip()
-                    if not advice_text:
-                        advice_text = advice
                     requests = [ { 'request_type': 'image_with_advice',
                                    'page': page_number,
                                    'advice_text': advice_text } ]
@@ -6216,8 +6226,6 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
                     return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, from_view=from_view, status='none')
 
                 advice_text = request.POST.get('advice_text', '').strip()
-                if not advice_text:
-                    advice_text = advice
                 
                 requests = [ { 'request_type': 'new_element_description_and_images',
                                'element_name': element_name,

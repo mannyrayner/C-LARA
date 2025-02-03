@@ -85,6 +85,8 @@ The intended style in which the images will be produced is briefly described as 
 
 {base_description}
 
+{background_text}
+
 For now, please expand the brief style description into a detailed specification that can be used as
 part of the prompts later passed to DALL-E-3 to create illustrations for this story and enforce
 a uniform appearance.
@@ -176,6 +178,8 @@ generate_element_description_prompt_templates = {
     'default': """We are going to create a set of images to illustrate the following text:
 
 {text}
+
+{background_text}
 
 The intended style in which the images will be produced is described as follows:
 
@@ -381,6 +385,8 @@ generate_page_description_prompt_templates = {
     'default': """We are generating a set of images to illustrate the following text, which has been divided into numbered pages:
 
 {formatted_story_data}
+
+{background_text}
 
 The intended style in which the images will be produced is described as follows:
 
