@@ -107,6 +107,7 @@
       <thead>
         <tr>
           <th>Element Name</th>
+		  <th>Advice</th>
           <th>Image</th>
           <th>Actions</th>
         </tr>
@@ -115,6 +116,7 @@
         {% for form in element_formset %}
 			  <tr id="element-{{ form.element_name.value }}">
 				<td>{{ form.element_text }}</td>
+				<td>{{ form.advice }}</td>
 				<td>
 				  {% if form.relative_file_path.value %}
 					<img src="{% url 'serve_coherent_images_v2_file' project.id form.relative_file_path.value %}" alt="{{ form.element_text.value }}" style="max-width: 200px; max-height: 200px;">
@@ -125,13 +127,13 @@
 				<td>
 					{% if form.relative_file_path.value %}
 						<a href="{% url 'simple_clara_review_v2_images_for_element' project.id form.element_name.value 'edit_images_v2' 'init' %}">Review Element</a><br>
-						<form method="post" style="display:inline-block;">
-						{% csrf_token %}
-						<input type="hidden" name="action" value="delete_v2_element">
-						<input type="hidden" name="deleted_element_text" value="{{ form.element_text.value }}">
-						<button type="submit">Delete Element</button>
-						</form>
 					{% endif %}
+					<form method="post" style="display:inline-block;">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="delete_v2_element">
+					<input type="hidden" name="deleted_element_text" value="{{ form.element_text.value }}">
+					<button type="submit">Delete Element</button>
+					</form>
 				</td>
 			  </tr>
         {% endfor %}
@@ -156,6 +158,7 @@
 		<button type="submit" name="action" value="create_element_names">Generate All Element Names</button>
 	{% endif %}
 	{% if style_exists and element_names_exist %}
+		<button type="submit" name="action" value="save_element_advice">Save All Element Advice</button>
 		<button type="submit" name="action" value="create_element_descriptions_and_images">Generate Missing Element Images</button>
 	{% endif %}
   </form>
@@ -181,11 +184,13 @@
         {% for form in page_formset %}
 		  <tr>
 			  <th><b>Page Number</b></th>
+			  <th><b>Advice</b></th>
 			  <th><b>Image</b></th>
 			  <th><b>Links</b></th>
           </tr>
           <tr id="page-{{ form.page.value }}">
             <td>{{ form.page }}</td>
+			<td>{{ form.advice }}</td>
             <td>
               {% if form.relative_file_path.value %}
                 <img src="{% url 'serve_coherent_images_v2_file' project.id form.relative_file_path.value %}" alt="Page {{ form.page.value }}" style="max-width: 200px; max-height: 200px;">
