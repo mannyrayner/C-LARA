@@ -154,6 +154,8 @@ generate_element_names_prompt_templates = {
 
 {text}
 
+{background_text}
+
 As part of the process, we need to identify visual elements that occur multiple times in the text,
 e.g. characters, objects and locations. In this step, please write out a JSON-formatted list of these
 elements. For example, if the text were the traditional nursery rhyme

@@ -24,6 +24,7 @@ from .clara_utils import (
     absolute_file_name,
     file_exists,
     directory_exists,
+    make_directory,
     copy_file,
     )
 
@@ -57,6 +58,9 @@ def get_style_advice(params):
 
 def set_style_advice(text, project_dir):
     make_root_project_dir(project_dir)
+    style_directory = project_pathname(project_dir, 'style')
+    make_directory(style_directory, exist_ok=True)
+    
     return write_project_txt_file(text, project_dir, f'style_description.txt')
 
 def get_element_advice(element_text, params):

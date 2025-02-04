@@ -6444,7 +6444,7 @@ def add_v2_element(new_element_text, project, clara_project_internal, params, ca
         elements_params = get_element_descriptions_params_from_project_params(params)
         cost_dict = clara_project_internal.add_element_v2(elements_params, new_element_text, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
-        if file_exists(project_pathname(get_element_image(new_element_text, params))):
+        if file_exists(project_pathname(clara_project_internal.coherent_images_v2_project_dir, get_element_image(new_element_text, elements_params))):
             post_task_update(callback, f"Created description and image for '{new_element_text}'")
             post_task_update(callback, f"finished")
         else:

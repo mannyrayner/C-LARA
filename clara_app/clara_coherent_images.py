@@ -666,11 +666,16 @@ async def generate_element_names(params, callback=None):
     # Get the text of the story
     text = get_text(params)
 
+    # Get the background if there is any
+    background_advice = get_background_advice(params)
+    background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
+
     total_cost_dict = {}
 
     # Create the prompt to find the elements
     prompt_template = get_prompt_template('default', 'generate_element_names')
-    prompt = prompt_template.format(text=text)
+    prompt = prompt_template.format(text=text,
+                                    background_text=background_text)
 
     # Get the expanded description from the AI
     error_messages = ''
@@ -1767,7 +1772,18 @@ async def generate_overview_html(params, mode='plain', project_id=None):
     
     html_content += f"<h1>{title} - Image Generation Overview</h1>"
 
+    # Background Section
+
+    html_content += "<h2>Background</h2>"
+    
+    background_advice = get_background_advice(params)
+    if background_advice:
+        html_content += f"<pre class='wrapped-pre'>{background_advice}</pre>"
+    else:
+        html_content += f"<em>Background information text not found.</em>"
+    
     # Style Section
+    
     html_content += "<h2>Style</h2>"
 
     # Display the style image
