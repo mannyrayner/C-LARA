@@ -16,6 +16,7 @@ ACTIVITY_CATEGORY_CHOICES = [
     ('human_ai_interaction', 'Analysis of human/AI collaboration'),
     ('annotation', 'Annotation of texts by AI'),
     ('classroom', 'Classroom experiments'),
+    ('creating_images', 'Creating images'),
     ('creating_texts', 'Creation of texts by AI'),
     ('design', 'Design issues for C-LARA platform'),
     ('multimodal_formatting', 'Formatting/behaviour of multimodal texts'),
@@ -23,12 +24,14 @@ ACTIVITY_CATEGORY_CHOICES = [
     ('languages_not_covered_by_ai', 'Languages not covered by AI'),
     ('legacy_content', 'Legacy content'),
     ('legacy_software', 'Legacy software'),
+    ('mwes', 'Multi-Word Expressions'),
     ('new_functionality', 'New C-LARA functionality not in other categories'),
     ('phonetic_texts', 'Phonetic texts'),
     ('publications_and_conferences', 'Publications, conferences and workshops'),
     ('refactoring', 'Refactoring software'),
     ('simple_clara', 'Simple C-LARA'),
     ('social_network', 'Social network'),
+    ('ukrainian', 'Ukrainian learners'),
     ('other', 'Other'),
     ]
 
