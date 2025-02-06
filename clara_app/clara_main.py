@@ -1867,7 +1867,8 @@ class CLARAProjectInternal:
     def store_v2_page_data(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
 
-        pages_numbers = params['pages_to_generate'] if 'pages_to_generate' in params and params['pages_to_generate'] else get_pages(params)
+        #pages_numbers = params['pages_to_generate'] if 'pages_to_generate' in params and params['pages_to_generate'] else get_pages(params)
+        pages_numbers = get_pages(params)
         image_type = 'page'
         for page_number in pages_numbers:
             image_name = f'page_{page_number}'

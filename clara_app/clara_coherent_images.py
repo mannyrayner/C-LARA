@@ -49,11 +49,16 @@ from .clara_coherent_images_utils import (
     get_element_names_params_from_project_params,
     get_element_descriptions_params_from_project_params,
     get_page_params_from_project_params,
+    no_ai_checking_of_images,
+    NULL_IMAGE_INTERPRETATION,
+    NULL_IMAGE_EVALUATION,
     existing_description_version_directories_and_first_unused_number_for_style,
     existing_description_version_directories_and_first_unused_number_for_element,
     existing_description_version_directories_and_first_unused_number_for_page,
     score_for_image_dir,
     image_dir_shows_content_policy_violation,
+    description_dir_shows_only_content_policy_violations,
+    content_dir_shows_only_content_policy_violations,
     score_for_evaluation_file,
     parse_image_evaluation_response,
     get_story_data,
@@ -378,7 +383,7 @@ async def select_best_expanded_style_description_and_image(all_description_dirs,
     try:
         project_dir = params['project_dir']
         
-        best_score = 0.0
+        best_score = -1
         best_description_file = None
         typical_image_file = None
 
@@ -596,29 +601,39 @@ async def generate_style_image(image_dir, description, params, callback=None):
 async def interpret_style_image(image_dir, image_file, params, callback=None):
     project_dir = params['project_dir']
 
-    prompt_template = get_prompt_template('default', 'style_example_interpretation')
-    prompt = prompt_template.format()
+    if no_ai_checking_of_images(params):
+        image_interpretation = NULL_IMAGE_INTERPRETATION
+        cost = 0.0
+    else:
+        prompt_template = get_prompt_template('default', 'style_example_interpretation')
+        prompt = prompt_template.format()
 
-    api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_style_image', params, callback=callback)
+        api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_style_image', params, callback=callback)
+        cost = api_call.cost
 
-    image_interpretation = api_call.response
+        image_interpretation = api_call.response
     write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
 
-    return image_interpretation, { 'interpret_style_image': api_call.cost }
+    return image_interpretation, { 'interpret_style_image': cost }
 
 async def evaluate_style_fit(image_dir, expanded_description, image_description, params, callback=None):
     project_dir = params['project_dir']
 
-    prompt_template = get_prompt_template('default', 'style_example_evaluation')
-    prompt = prompt_template.format(expanded_description=expanded_description, image_description=image_description)
-    
-    api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_style_image', params, callback=callback)
+    if no_ai_checking_of_images(params):
+        evaluation = NULL_IMAGE_EVALUATION
+        cost = 0.0
+    else:
+        prompt_template = get_prompt_template('default', 'style_example_evaluation')
+        prompt = prompt_template.format(expanded_description=expanded_description, image_description=image_description)
+        
+        api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_style_image', params, callback=callback)
+        cost = api_call.cost
 
-    evaluation = api_call.response
+        evaluation = api_call.response
 
     write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
     
-    return evaluation, { 'evaluate_style_image': api_call.cost }
+    return evaluation, { 'evaluate_style_image': cost }
 
 # -----------------------------------------------
 
@@ -628,6 +643,9 @@ async def process_elements(params, callback=None):
     project_dir = params['project_dir']
     n_elements_to_expand = params['n_elements_to_expand'] if 'n_elements_to_expand' in params else 'all'
     elements_to_generate = params['elements_to_generate'] if 'elements_to_generate' in params else None
+
+##    pprint.pprint(params)
+##    print(f'n_elements_to_expand = {n_elements_to_expand}, elements_to_generate = {elements_to_generate}')
     
     total_cost_dict = {}
 
@@ -638,11 +656,13 @@ async def process_elements(params, callback=None):
         total_cost_dict = combine_cost_dicts(total_cost_dict, element_names_cost_dict)
 
     # We can give a specific list of elements to generate
-    if elements_to_generate:
+    if elements_to_generate != None:
         element_list_with_names = [ item for item in element_list_with_names if item['text'] in elements_to_generate ]
     # Or say to do the first n
     elif n_elements_to_expand != 'all':
         element_list_with_names = element_list_with_names[:n_elements_to_expand]
+
+##    print(f'element_list_with_names = {element_list_with_names}')
 
     tasks = []
     for item in element_list_with_names:
@@ -765,7 +785,7 @@ async def select_best_expanded_element_description_and_image(element_name, all_d
     try:
         project_dir = params['project_dir']
         
-        best_score = 0.0
+        best_score = -1
         best_description_file = None
         typical_image_file = None
 
@@ -919,29 +939,40 @@ async def generate_element_image(image_dir, description, params, callback=None):
 async def interpret_element_image(image_dir, image_file, params, callback=None):
     project_dir = params['project_dir']
 
-    prompt_template = get_prompt_template('default', 'element_interpretation')
-    prompt = prompt_template.format()
+    if no_ai_checking_of_images(params):
+        image_interpretation = NULL_IMAGE_INTERPRETATION
+        cost = 0.0
+    else:
+        prompt_template = get_prompt_template('default', 'element_interpretation')
+        prompt = prompt_template.format()
 
-    api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_element_image', params, callback=callback)
+        api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_element_image', params, callback=callback)
 
-    image_interpretation = api_call.response
+        image_interpretation = api_call.response
+        cost = api_call.cost
+        
     write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
 
-    return image_interpretation, { 'interpret_element_image': api_call.cost }
+    return image_interpretation, { 'interpret_element_image': cost }
 
 async def evaluate_element_fit(image_dir, expanded_description, image_description, params, callback=None):
     project_dir = params['project_dir']
 
-    prompt_template = get_prompt_template('default', 'element_evaluation')
-    prompt = prompt_template.format(expanded_description=expanded_description, image_description=image_description, callback=callback)
+    if no_ai_checking_of_images(params):
+        evaluation = NULL_IMAGE_EVALUATION
+        cost = 0.0
+    else:
+        prompt_template = get_prompt_template('default', 'element_evaluation')
+        prompt = prompt_template.format(expanded_description=expanded_description, image_description=image_description, callback=callback)
 
-    api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_element_image', params)
+        api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_element_image', params)
+        cost = api_call.cost
 
-    evaluation = api_call.response
+        evaluation = api_call.response
 
     write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
     
-    return evaluation, { 'evaluate_element_image': api_call.cost }
+    return evaluation, { 'evaluate_element_image': cost }
 
 # -----------------------------------------------
 # Community requests
@@ -1055,7 +1086,7 @@ async def process_pages(params, callback=None):
     n_previous_pages = params['n_previous_pages'] if 'n_previous_pages' in params else 0
     
     total_cost_dict = {}
-    if pages_to_generate:
+    if pages_to_generate != None:
         page_numbers = pages_to_generate
     else:
         page_numbers = get_pages(params)
@@ -1327,6 +1358,8 @@ def acceptable_page_image_exists(page_number, params):
 
     if image_file_exists and score >= 3:  # 3 = "good"
         return True
+    elif no_ai_checking_of_images(params):
+        return True
     else:
         return False
     
@@ -1334,7 +1367,7 @@ async def select_best_expanded_page_description_and_image(page_number, all_descr
     try:
         project_dir = params['project_dir']
               
-        best_score = 0.0
+        best_score = -1
         best_description_file = None
         best_image_file = None
         best_interpretation_file = None
@@ -1618,10 +1651,12 @@ async def generate_and_rate_page_image(page_number, description, description_ver
         total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
         if file_exists(image_file):
-            #image_interpretation, interpret_cost_dict = await interpret_page_image(image_dir, image_file, page_number, params)
-            interpretation_prompt_id = params['interpretation_prompt_id'] if 'interpretation_prompt_id' in params else 'default'
-            image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_image_with_prompt(image_file, description, page_number,
-                                                                                                                 interpretation_prompt_id, params)
+            if no_ai_checking_of_images(params):
+                image_interpretation, interpretation_errors, interpret_cost_dict = ( NULL_IMAGE_INTERPRETATION, None, {} )
+            else:
+                interpretation_prompt_id = params['interpretation_prompt_id'] if 'interpretation_prompt_id' in params else 'default'
+                image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_image_with_prompt(image_file, description, page_number,
+                                                                                                                     interpretation_prompt_id, params)
             if image_interpretation:
                 write_project_txt_file(image_interpretation, project_dir, f'{image_dir}/image_interpretation.txt')
             else:
@@ -1631,10 +1666,12 @@ async def generate_and_rate_page_image(page_number, description, description_ver
             image_interpretation = None
 
         if image_interpretation:
-            #evaluation, evaluation_cost_dict = await evaluate_page_fit(image_dir, description, image_interpretation, page_number, params)
-            evaluation_prompt_id = params['evaluation_prompt_id'] if 'evaluation_prompt_id' in params else 'default' 
-            evaluation, evaluation_errors, evaluation_cost_dict = await evaluate_fit_with_prompt(description, image_interpretation,
-                                                                                                 evaluation_prompt_id, page_number, params, callback=callback)
+            if no_ai_checking_of_images(params):
+                evaluation, evaluation_errors, evaluation_cost_dic = ( NULL_IMAGE_EVALUATION, None, {} )
+            else:
+                evaluation_prompt_id = params['evaluation_prompt_id'] if 'evaluation_prompt_id' in params else 'default' 
+                evaluation, evaluation_errors, evaluation_cost_dict = await evaluate_fit_with_prompt(description, image_interpretation,
+                                                                                                     evaluation_prompt_id, page_number, params, callback=callback)
             if evaluation:
                 write_project_txt_file(evaluation, project_dir, f'{image_dir}/evaluation.txt')
             else:
@@ -2081,7 +2118,7 @@ def score_description_dir_best(description_dir, image_dirs, params):
 
     # Find the image with the best fit
 
-    best_score = 0
+    best_score = -1
     best_image_file = None
     best_interpretation_file = None
     best_evaluation_file = None

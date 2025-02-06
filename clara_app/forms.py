@@ -20,6 +20,7 @@ from .constants import (
     RECENT_TIME_PERIOD_CHOICES,
     DEFAULT_RECENT_TIME_PERIOD,
     TTS_CHOICES,
+    AI_CHECKING_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
@@ -958,7 +959,10 @@ class CoherentImagesV2ParamsForm(forms.Form):
     n_images_per_description = forms.IntegerField(label="Number of images to create per description")
     n_previous_pages = forms.IntegerField(label="Number of previous pages to use as context when creating a page image")
     max_description_generation_rounds = forms.IntegerField(label="Maximum number of rounds of generation to try when creating a page image")
-    
+
+    ai_checking_of_images = forms.ChoiceField(choices=AI_CHECKING_FOR_COHERENT_IMAGES_V2,
+                                              label="Use AI to check images")
+
     page_interpretation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
                                                    label="Method to use for interpreting page images")
     page_evaluation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,

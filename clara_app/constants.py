@@ -140,6 +140,11 @@ SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2 = [
     ( 'o1-mini', 'o1-mini' )
     ]
 
+AI_CHECKING_FOR_COHERENT_IMAGES_V2 = [
+    ( 'on', 'Use AI to check images' ),
+    ( 'off', 'Only review images manually' )
+    ]
+
 SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2 = [
     ( 'default', 'Default' ),
     ( 'with_context', 'With context' ),

@@ -78,6 +78,11 @@ from .clara_coherent_images_utils import get_element_names_params_from_project_p
 from .clara_coherent_images_utils import get_page_params_from_project_params, default_params, style_image_name, element_image_name, page_image_name, get_element_image
 from .clara_coherent_images_utils import remove_element_directory, remove_page_directory, remove_element_name_from_list_of_elements, project_pathname
 from .clara_coherent_images_utils import read_project_json_file
+from .clara_coherent_images_utils import image_dir_shows_content_policy_violation
+from .clara_coherent_images_utils import description_dir_shows_only_content_policy_violations
+from .clara_coherent_images_utils import content_dir_shows_only_content_policy_violations
+from .clara_coherent_images_utils import style_directory, element_directory, page_directory
+from .clara_coherent_images_utils import relative_style_directory, relative_element_directory, relative_page_directory
 
 from .clara_coherent_images_alternate import get_alternate_images_json, set_alternate_image_hidden_status
 
@@ -101,7 +106,7 @@ from .clara_mwe import annotate_mwes_in_text
 from .clara_annotated_images import make_uninstantiated_annotated_image_structure
 from .clara_tts_api import tts_engine_type_supports_language
 from .clara_chatgpt4 import call_chat_gpt4, interpret_chat_gpt4_response_as_json, call_chat_gpt4_image, call_chat_gpt4_interpret_image
-from .clara_classes import TemplateError, InternalCLARAError, InternalisationError, MWEError
+from .clara_classes import TemplateError, InternalCLARAError, InternalisationError, MWEError, ImageGenerationError
 from .clara_utils import _s3_storage, _s3_bucket, s3_file_name, get_config, absolute_file_name, file_exists, local_file_exists, read_txt_file, remove_file, basename
 from .clara_utils import copy_local_file_to_s3, copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary, generate_s3_presigned_url
 from .clara_utils import robust_read_local_txt_file, read_json_or_txt_file, check_if_file_can_be_read
@@ -5589,6 +5594,8 @@ def edit_images_v2(request, project_id, status):
                                'n_previous_pages': params_form.cleaned_data['n_previous_pages'],
                                'max_description_generation_rounds': params_form.cleaned_data['max_description_generation_rounds'],
 
+                               'ai_checking_of_images': params_form.cleaned_data['ai_checking_of_images'],
+
                                'page_interpretation_prompt': params_form.cleaned_data['page_interpretation_prompt'],
                                'page_evaluation_prompt': params_form.cleaned_data['page_evaluation_prompt'],
 
@@ -6410,19 +6417,21 @@ def save_page_texts_multiple_status(request, project_id, report_id):
 @user_has_a_project_role
 def save_page_texts_multiple_monitor(request, project_id, report_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
-    
+
     return render(request, 'clara_app/save_page_texts_multiple_monitor.html',
                   {'project_id': project_id, 'project': project, 'report_id': report_id})
-
-
-# Async functions for coherent images v2
 
 def create_style_description_and_image(project, clara_project_internal, params, callback=None):
     try:
         style_params = get_style_params_from_project_params(params)
         cost_dict = clara_project_internal.create_style_description_and_image_v2(style_params, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
-        post_task_update(callback, f"finished")
+        content_dir = relative_style_directory(style_params)
+        if content_dir_shows_only_content_policy_violations(content_dir, style_params):
+            post_task_update(callback, f"Error: policy content violation when creating style")
+            post_task_update(callback, f"error")
+        else:
+            post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Error when creating style")
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
@@ -6444,9 +6453,13 @@ def add_v2_element(new_element_text, project, clara_project_internal, params, ca
         elements_params = get_element_descriptions_params_from_project_params(params)
         cost_dict = clara_project_internal.add_element_v2(elements_params, new_element_text, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
+        content_dir = relative_element_directory(new_element_text, elements_params)
         if file_exists(project_pathname(clara_project_internal.coherent_images_v2_project_dir, get_element_image(new_element_text, elements_params))):
             post_task_update(callback, f"Created description and image for '{new_element_text}'")
             post_task_update(callback, f"finished")
+        elif content_dir_shows_only_content_policy_violations(content_dir, elements_params):
+            post_task_update(callback, f"Error: policy content violation when creating new element")
+            post_task_update(callback, f"error")
         else:
             post_task_update(callback, f"Something went wrong when creating description and image for '{new_element_text}'")
             post_task_update(callback, f"error")                   
@@ -6455,17 +6468,33 @@ def add_v2_element(new_element_text, project, clara_project_internal, params, ca
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
 
+# Async functions for coherent images v2
+
 def create_element_descriptions_and_images(project, clara_project_internal, params, elements_to_generate, callback=None):
     try:
         element_params = get_element_descriptions_params_from_project_params(params)
         element_params['elements_to_generate'] = elements_to_generate
         cost_dict = clara_project_internal.create_element_descriptions_and_images_v2(element_params, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
-        post_task_update(callback, f"finished")
+        bad_elements = get_elements_with_content_violations(elements_to_generate, element_params)
+        if bad_elements:
+            bad_elements_str = ", ".join(bad_elements)
+            post_task_update(callback, f"Error: policy content violation when creating elements: {bad_elements_str}")
+            post_task_update(callback, f"error")
+        else:
+            post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Error when creating element descriptions and images")
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
+
+def get_elements_with_content_violations(element_texts, params):
+    bad_elements = []
+    for element_text in element_texts:
+        content_dir = relative_element_directory(element_text, params)
+        if content_dir_shows_only_content_policy_violations(content_dir, params):
+            bad_elements.append(element_text)
+    return bad_elements
 
 def create_page_descriptions_and_images(project, clara_project_internal, params, pages_to_generate, callback=None):
     try:
@@ -6473,11 +6502,25 @@ def create_page_descriptions_and_images(project, clara_project_internal, params,
         page_params['pages_to_generate'] = pages_to_generate
         cost_dict = clara_project_internal.create_page_descriptions_and_images_v2(page_params, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
-        post_task_update(callback, f"finished")
+        bad_pages = get_pages_with_content_violations(pages_to_generate, page_params)
+        if bad_pages:
+            bad_pages_str = ", ".join([ str(bad_page) for bad_page in bad_pages ])
+            post_task_update(callback, f"Error: policy content violation when creating page: {bad_pages_str}")
+            post_task_update(callback, f"error")
+        else:
+            post_task_update(callback, f"finished")
     except Exception as e:
         post_task_update(callback, f"Error when creating page images")
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
+
+def get_pages_with_content_violations(page_numbers, params):
+    bad_pages = []
+    for page_number in page_numbers:
+        content_dir = relative_page_directory(page_number, params)
+        if content_dir_shows_only_content_policy_violations(content_dir, params):
+            bad_pages.append(page_number)
+    return bad_pages
 
 def create_variant_images(project, clara_project_internal, params, content_type, content_identifier, alternate_image_id, callback=None):
     if content_type != 'page':

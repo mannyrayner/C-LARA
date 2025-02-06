@@ -19,6 +19,10 @@ from .clara_utils import (
     get_immediate_subdirectories_in_local_directory,
     )
 
+from .clara_classes import (
+    ImageGenerationError,
+    )
+
 from .constants import (
     SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
@@ -27,6 +31,7 @@ from .constants import (
 
 import json
 import os
+import glob
 import sys
 import asyncio
 import traceback
@@ -40,6 +45,8 @@ project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                    'n_images_per_description': 3,
                    'n_previous_pages': 0,
                    'max_description_generation_rounds': 1,
+                                    
+                   'ai_checking_of_images': True,
                    
                    'page_interpretation_prompt': 'with_context_v3_objective',
                    'page_evaluation_prompt': 'with_context_lenient',
@@ -47,18 +54,6 @@ project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                    'default_model': 'gpt-4o',
                    'generate_description_model': 'gpt-4o',
                    'example_evaluation_model': 'gpt-4o' }
-
-##default_params = { 'n_expanded_descriptions': 1,
-##                   'n_images_per_description': 1,
-##                   'n_previous_pages': 1,
-##                   'max_description_generation_rounds': 1,
-##                   
-##                   'page_interpretation_prompt': 'default',
-##                   'page_evaluation_prompt': 'default',
-##                   
-##                   'default_model': 'gpt-4o',
-##                   'generate_description_model': 'gpt-4o',
-##                   'example_evaluation_model': 'gpt-4o' }
 
 default_params = project_params_for_simple_clara
 
@@ -97,6 +92,9 @@ def check_valid_project_params(params):
     if not 'max_description_generation_rounds' in params or not isinstance(params['max_description_generation_rounds'], (int)):
         raise ImageGenerationError(message=f'bad params {params}: max_description_generation_rounds')
 
+    if not 'ai_checking_of_images' in params or not params['ai_checking_of_images'] in ( 'on', 'off' ):
+        raise ImageGenerationError(message=f'bad params {params}: ai_checking_of_images')
+
     if not 'page_interpretation_prompt' in params or not params['page_interpretation_prompt'] in supported_page_interpretation_prompts:
         raise ImageGenerationError(message=f'bad params {params}: page_interpretation_prompt')
     if not 'page_evaluation_prompt' in params or not params['page_evaluation_prompt'] in supported_page_evaluation_prompts:
@@ -113,6 +111,7 @@ def get_style_params_from_project_params(params):
     style_params = {
         'n_expanded_descriptions': params['n_expanded_descriptions'],
         'n_images_per_description': params['n_images_per_description'],
+        'ai_checking_of_images': params['ai_checking_of_images'],
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_style_description': params['generate_description_model'],
                               'style_example_evaluation': params['example_evaluation_model']}
@@ -129,6 +128,7 @@ def get_element_descriptions_params_from_project_params(params, elements_to_gene
     element_params = {
         'n_expanded_descriptions': params['n_expanded_descriptions'],
         'n_images_per_description': params['n_images_per_description'],
+        'ai_checking_of_images': params['ai_checking_of_images'],
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_element_description': params['generate_description_model'],
                               'evaluate_element_image': params['example_evaluation_model']}
@@ -145,6 +145,8 @@ def get_page_params_from_project_params(params, pages_to_generate=None):
         'n_images_per_description': params['n_images_per_description'],
         'n_previous_pages': params['n_previous_pages'],
         'max_description_generation_rounds': params['max_description_generation_rounds'],
+
+        'ai_checking_of_images': params['ai_checking_of_images'],
         
         'page_interpretation_prompt': params['page_interpretation_prompt'],
         'page_evaluation_prompt': params['page_evaluation_prompt'],
@@ -157,6 +159,16 @@ def get_page_params_from_project_params(params, pages_to_generate=None):
         page_params['pages_to_generate'] = pages_to_generate
     
     return page_params
+
+def no_ai_checking_of_images(params):
+    return 'ai_checking_of_images' in params and params['ai_checking_of_images'] == 'off'
+
+NULL_IMAGE_INTERPRETATION = """No image interpretation produced, AI checking is switched off.
+"""
+
+NULL_IMAGE_EVALUATION = """1
+No image evaluation produced, AI checking is switched off.
+"""
 
 def existing_description_version_directories_and_first_unused_number_for_style(params):
     project_dir = params['project_dir']
@@ -214,6 +226,68 @@ def image_dir_shows_content_policy_violation(image_dir, params):
     error_file_content = read_project_txt_file(error_file)
     
     return ( 'content_policy_violation' in error_file_content )
+
+def description_dir_shows_only_content_policy_violations(description_dir, params):
+    """
+    Returns True if *every* image_v* subdirectory under `description_dir`
+    indicates a content policy violation. If at least one subdirectory
+    does not show a violation (or if there are no image_v* directories),
+    returns False.
+    """
+    project_dir = params['project_dir']
+
+    # Find all subdirectories named image_v*
+    # e.g. pages/page3/image_v2, elements/cat/image_v3, etc.
+    pattern = os.path.join(project_dir, description_dir, "image_v*")
+    candidate_dirs = glob.glob(pattern)
+
+    # If there aren't any image_v* subdirectories at all, we can decide:
+    # - Return False, meaning "not purely policy-violating," or
+    # - Return True. Usually it's more helpful to say False in that case,
+    #   since "no images" is different from "images exist but are all violating."
+    if not candidate_dirs:
+        return False
+
+    for subdir in candidate_dirs:
+        if os.path.isdir(subdir):
+            # Convert absolute path back to a project-relative path
+            rel_subdir = os.path.relpath(subdir, project_dir)
+            # If ANY subdir does NOT show a violation => overall return False
+            if not image_dir_shows_content_policy_violation(rel_subdir, params):
+                return False
+
+    # If we get here, all image_v* subdirs existed and show violation
+    return True
+
+def content_dir_shows_only_content_policy_violations(content_dir, params):
+    """
+    For a given content directory (e.g. pages/page2 or elements/The_virtuous_narrator),
+    check if every 'description_v*' subdirectory there is flagged as showing
+    content policy violations. If all of them show policy violations, return True;
+    otherwise, return False.
+
+    If there are no 'description_v*' subdirectories at all, return False.
+    """
+    project_dir = params['project_dir']
+    
+    # Find subdirectories named description_v*
+    pattern = os.path.join(project_dir, content_dir, "description_v*")
+    candidate_dirs = glob.glob(pattern)
+
+    # If no description_v* subdirectories exist, decide how to handle
+    if not candidate_dirs:
+        return False  # By default, "no subdirs" is not "all are violating."
+
+    for subdir in candidate_dirs:
+        if os.path.isdir(subdir):
+            # Convert absolute path to relative for your existing function
+            rel_subdir = os.path.relpath(subdir, project_dir)
+            if not description_dir_shows_only_content_policy_violations(rel_subdir, params):
+                # If any subdir is NOT purely policy-violating => overall False
+                return False
+
+    # If all description_v* subdirs exist and show policy violations, return True
+    return True
 
 def element_score_for_description_dir(description_dir, params):
     project_dir = params['project_dir']
@@ -387,11 +461,18 @@ def style_directory(params):
     project_dir = params['project_dir']
     return project_pathname(project_dir, 'style')
 
+def relative_style_directory(params):
+    return 'style'
+
 def element_directory(element_text, params):
     project_dir = params['project_dir']
     #element_name = element_text_to_element_name(element_text, params)
     element_name = element_text_to_element_name(element_text)
     return project_pathname(project_dir, f'elements/{element_name}')
+
+def relative_element_directory(element_text):
+    element_name = element_text_to_element_name(element_text)
+    return f'elements/{element_name}'
 
 def element_directory_for_element_name(element_name, params):
     project_dir = params['project_dir']
@@ -400,6 +481,9 @@ def element_directory_for_element_name(element_name, params):
 def page_directory(page_number, params):
     project_dir = params['project_dir']
     return project_pathname(project_dir, f'pages/page{page_number}')
+
+def relative_page_directory(page_number, params):
+    return f'pages/page{page_number}'
 
 def get_page_text(page_number, params):
     story_data = get_story_data(params)
