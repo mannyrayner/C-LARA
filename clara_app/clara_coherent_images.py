@@ -393,7 +393,7 @@ async def select_best_expanded_style_description_and_image(all_description_dirs,
 
             if file_exists(image_info_file) and file_exists(description_file):
                 image_info = read_json_file(image_info_file)
-                if image_info['av_score'] > best_score:
+                if image_info['av_score'] > best_score and image_info['image'] and image_info['interpretation'] and image_info['evaluation']:
                     best_description_file = f'{description_dir}/expanded_description.txt'
                     typical_image_file = sanitize_path(project_dir, image_info['image'])
                     typical_image_interpretation = sanitize_path(project_dir, image_info['interpretation'])
@@ -795,7 +795,7 @@ async def select_best_expanded_element_description_and_image(element_name, all_d
 
             if file_exists(image_info_file) and file_exists(description_file):
                 image_info = read_json_file(image_info_file)
-                if image_info['av_score'] > best_score:
+                if image_info['av_score'] > best_score and image_info['image'] and image_info['interpretation'] and image_info['evaluation']:
                     best_description_file = f'{description_dir}/expanded_description.txt'
                     typical_image_file = sanitize_path(project_dir, image_info['image'])
                     typical_image_interpretation = sanitize_path(project_dir, image_info['interpretation'])
@@ -1379,7 +1379,7 @@ async def select_best_expanded_page_description_and_image(page_number, all_descr
 
             if file_exists(image_info_file) and file_exists(description_file):
                 image_info = read_json_file(image_info_file)
-                if image_info['best_score'] > best_score:
+                if image_info['best_score'] > best_score and image_info['image'] and image_info['interpretation'] and image_info['evaluation']:
                     best_score = image_info['best_score']
                     best_description_file = f'{description_dir}/expanded_description.txt'
                     best_image_file = sanitize_path(project_dir, image_info['image'])

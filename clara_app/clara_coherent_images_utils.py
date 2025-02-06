@@ -218,14 +218,14 @@ def score_for_image_dir(image_dir, params):
 def image_dir_shows_content_policy_violation(image_dir, params):
     project_dir = params['project_dir']
     
-    error_file = project_pathname(project_dir, f'{image_dir}')
+    error_file = project_pathname(project_dir, f'{image_dir}/error.txt')
     
     if not file_exists(error_file):
         return False
 
-    error_file_content = read_project_txt_file(error_file)
-    
-    return ( 'content_policy_violation' in error_file_content )
+    error_file_content = read_project_txt_file(project_dir, error_file)
+
+    return 'content_policy_violation' in error_file_content
 
 def description_dir_shows_only_content_policy_violations(description_dir, params):
     """
@@ -241,6 +241,8 @@ def description_dir_shows_only_content_policy_violations(description_dir, params
     pattern = os.path.join(project_dir, description_dir, "image_v*")
     candidate_dirs = glob.glob(pattern)
 
+##    print(f'{description_dir}: candidate_dirs: {candidate_dirs}')
+
     # If there aren't any image_v* subdirectories at all, we can decide:
     # - Return False, meaning "not purely policy-violating," or
     # - Return True. Usually it's more helpful to say False in that case,
@@ -254,7 +256,10 @@ def description_dir_shows_only_content_policy_violations(description_dir, params
             rel_subdir = os.path.relpath(subdir, project_dir)
             # If ANY subdir does NOT show a violation => overall return False
             if not image_dir_shows_content_policy_violation(rel_subdir, params):
+##                print(f'{rel_subdir}: no content policy violation')
                 return False
+##            else:
+##                print(f'{rel_subdir}: content policy violation')
 
     # If we get here, all image_v* subdirs existed and show violation
     return True
