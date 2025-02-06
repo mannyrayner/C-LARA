@@ -470,7 +470,7 @@ def element_directory(element_text, params):
     element_name = element_text_to_element_name(element_text)
     return project_pathname(project_dir, f'elements/{element_name}')
 
-def relative_element_directory(element_text):
+def relative_element_directory(element_text, params):
     element_name = element_text_to_element_name(element_text)
     return f'elements/{element_name}'
 
