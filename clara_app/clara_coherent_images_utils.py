@@ -66,6 +66,7 @@ def get_project_params(project_dir):
 
 def set_project_params(params, project_dir):
     check_valid_project_params(params)
+    params['project_dir'] = absolute_file_name(project_dir)
     params_file = project_params_file(project_dir)
     make_root_project_dir(project_dir)
     write_json_to_file(params, params_file)
@@ -461,6 +462,13 @@ def element_image_name(element_name):
 
 def page_image_name(page_number):
     return f'page_{page_number}'
+
+def get_expanded_description_text_for_page_version(project_dir, page_number, d_idx):
+    rel_pathname = f'pages/page{page_number}/description_v{d_idx}/expanded_description.txt'
+    try:
+        return read_project_txt_file(project_dir, rel_pathname)
+    except Exception as e:
+        return ''
 
 def style_directory(params):
     project_dir = params['project_dir']

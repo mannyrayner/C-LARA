@@ -435,7 +435,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                 segment.content_elements = annotated_elements[index:index+n_elements_in_segment]
                 index += n_elements_in_segment
 
-    print(f'internalised_annotated_text: {internalised_annotated_text}')
+    #print(f'internalised_annotated_text: {internalised_annotated_text}')
 
     #processing_phase1 = 'presegmented' if processing_phase == 'segmented' else processing_phase
     #human_readable_text = internalised_annotated_text.to_text(annotation_type=processing_phase1)

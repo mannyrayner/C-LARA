@@ -989,7 +989,8 @@ async def execute_community_requests_list(project_dir, requests, callback=None):
     return total_cost_dict
 
 async def execute_simple_clara_image_requests(project_dir, requests, callback=None):
-    project_params = project_params_for_simple_clara
+    #project_params = project_params_for_simple_clara
+    project_params = get_project_params(project_dir)
     params = get_page_params_from_project_params(project_params)
     params['project_dir'] = project_dir
     
@@ -1000,7 +1001,8 @@ async def execute_simple_clara_image_requests(project_dir, requests, callback=No
     return total_cost_dict
 
 async def execute_simple_clara_element_requests(project_dir, requests, callback=None):
-    project_params = project_params_for_simple_clara
+    #project_params = project_params_for_simple_clara
+    project_params = get_project_params(project_dir)
     params = get_element_descriptions_params_from_project_params(project_params)
     params['project_dir'] = project_dir
     
@@ -1049,12 +1051,15 @@ async def execute_simple_clara_image_request(params, request, callback=None):
         set_page_advice(advice_text, page_number, params1)
         params1['pages_to_generate'] = [ page_number ]
         cost_dict = await process_pages(params1, callback=callback)
+    elif request_type == 'image_with_description':
+        description_text = request['description_text']
+        cost_dict = await generate_page_image_from_expanded_description(description_text, page_number, params, callback=callback)
     elif request_type == 'variants_requests':
         description_index = request['description_index']
         alternate_image_id = await alternate_image_id_for_description_index(project_dir, page_number, description_index)
         cost_dict = await create_variant_images_for_page(params1, page_number, alternate_image_id, callback=callback)
     else:
-        raise ValueError(f'Unknown request type in {request}')
+        raise ValueError(f'Unknown request type {request_type} in {request}')
 
     return cost_dict
 
@@ -1349,6 +1354,28 @@ async def generate_image_for_page_and_context(page_number, previous_pages, eleme
 
     # None of the descriptions produced an acceptable image and we're out of lives. Give up.
     return total_cost_dict
+
+async def generate_page_image_from_expanded_description(expanded_description, page_number, params, callback=None):
+    project_dir = params['project_dir']
+    page_dir = f'pages/page{page_number}'
+    
+    all_description_dirs, description_version_number = existing_description_version_directories_and_first_unused_number_for_page(page_number, params)
+    description_dir = f'{page_dir}/description_v{description_version_number}'
+    make_directory(project_pathname(project_dir, description_dir))
+
+    try:
+        write_project_txt_file(expanded_description, project_dir, f'{description_dir}/expanded_description.txt')
+        
+        cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_version_number, params)
+
+        await create_alternate_images_json(page_dir, project_dir)
+        write_project_cost_file(cost_dict, project_dir, f'{description_dir}/cost.json')
+        return cost_dict
+
+    except Exception as e:
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        write_project_txt_file(error_message, project_dir, f'{description_directory}/error.txt')
+        return description_directory, {}   
                                 
 def acceptable_page_image_exists(page_number, params):
     project_dir = params['project_dir']

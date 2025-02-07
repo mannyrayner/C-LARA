@@ -2570,6 +2570,8 @@ def simple_clara_create_project_helper(username, simple_clara_action, callback=N
     # Create a new internal project in the C-LARA framework
     clara_project_internal = CLARAProjectInternal(internal_id, l2_language, l1_language)
     post_task_update(callback, f"--- Created project '{title}'")
+    if uses_coherent_image_set_v2:
+        clara_project_internal.save_coherent_images_v2_params(project_params_for_simple_clara)
     return { 'status': 'finished',
              'message': 'Project created',
              'project_id': clara_project.id }
@@ -6120,13 +6122,22 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
                                    'page': page_number,
                                    'description_index': description_index } ]
                 elif action == 'images_with_advice':
-                    advice_text = request.POST.get('advice_text', '').strip()
-                    requests = [ { 'request_type': 'image_with_advice',
-                                   'page': page_number,
-                                   'advice_text': advice_text } ]
+                    mode = request.POST.get('mode')
+                    advice_or_description_text = request.POST.get('advice_or_description_text', '').strip()
+                    if mode == 'advice':
+                        requests = [ { 'request_type': 'image_with_advice',
+                                       'page': page_number,
+                                       'advice_text': advice_or_description_text } ]
+                    elif mode == 'expanded_description':
+                        requests = [ { 'request_type': 'image_with_description',
+                                       'page': page_number,
+                                       'description_text': advice_or_description_text } ]
+                    else:
+                        messages.error(request, f"Unknown mode '{mode}'")
+                        return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
                 else:
                     messages.error(request, f"Unknown request type '{action}'")
-                    return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, status='none')
+                    return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
 
                 callback, report_id = make_asynch_callback_and_report_id(request, 'execute_image_requests')
 

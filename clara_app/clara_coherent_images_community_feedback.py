@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 
 from .clara_coherent_images_alternate import get_alternate_images_json
-from .clara_coherent_images_utils import score_for_image_dir, element_score_for_description_dir
+from .clara_coherent_images_utils import score_for_image_dir, element_score_for_description_dir, get_expanded_description_text_for_page_version
 from .clara_coherent_images_utils import get_pages, project_pathname, read_project_json_file
 from .clara_utils import file_exists
 
@@ -69,6 +69,7 @@ def get_page_description_info_for_cm_reviewing(cm_or_co, alternate_images, page_
     # For each description, get variants requests, and votes
     descriptions_info = {}
     for d_idx, imgs in images_by_description.items():
+        expanded_description = get_expanded_description_text_for_page_version(project_dir, page_number, d_idx)
         desc_info = get_cm_description_info(project_dir, page_number, d_idx)
         # If we're in the CO view, we show the hidden images with a red border
         non_hidden_imgs = [ img for img in imgs if not img['hidden'] ] if cm_or_co == 'cm' else imgs
@@ -86,6 +87,7 @@ def get_page_description_info_for_cm_reviewing(cm_or_co, alternate_images, page_
                 img_info['preferred'] = img_info['id'] == preferred_image_id
                 
             descriptions_info[d_idx] = {
+                'expanded_description': expanded_description,
                 'variants_requests': desc_info['variants_requests'],
                 'images': non_hidden_imgs
             }
