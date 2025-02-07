@@ -46,7 +46,7 @@ project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                    'n_previous_pages': 0,
                    'max_description_generation_rounds': 1,
                                     
-                   'ai_checking_of_images': True,
+                   'ai_checking_of_images': 'on',
                    
                    'page_interpretation_prompt': 'with_context_v3_objective',
                    'page_evaluation_prompt': 'with_context_lenient',

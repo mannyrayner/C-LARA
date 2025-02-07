@@ -73,7 +73,7 @@ from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository
 
 from .clara_community import assign_project_to_community
 
-from .clara_coherent_images_utils import get_style_params_from_project_params, get_element_names_params_from_project_params
+from .clara_coherent_images_utils import get_style_params_from_project_params, get_element_names_params_from_project_params, project_params_for_simple_clara
 from .clara_coherent_images_utils import get_element_names_params_from_project_params, get_element_descriptions_params_from_project_params
 from .clara_coherent_images_utils import get_page_params_from_project_params, default_params, style_image_name, element_image_name, page_image_name, get_element_image
 from .clara_coherent_images_utils import remove_element_directory, remove_page_directory, remove_element_name_from_list_of_elements, project_pathname
@@ -2393,7 +2393,9 @@ def simple_clara(request, project_id, last_operation_status):
                     new_project_id = result['project_id'] if 'project_id' in result else project_id
                     new_status = result['status']
                     if new_status == 'error':
-                        messages.error(request, f"Something went wrong. Try looking at the 'Recent task updates' view")
+                        #messages.error(request, f"Something went wrong. Try looking at the 'Recent task updates' view")
+                        error_message = result['error']
+                        messages.error(request, f"Something went wrong: {error_message}")
                     else:
                         success_message = result['message'] if 'message' in result else f'Simple C-LARA operation succeeded'
                         messages.success(request, success_message)
@@ -2513,7 +2515,7 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
             result = { 'status': 'error',
                        'error': f'Unknown simple_clara action type in: {simple_clara_action}' }
     except Exception as e:
-        result = { 'status': 'failed',
+        result = { 'status': 'error',
                    'error': f'Exception when executing simple_clara action {simple_clara_action}: {str(e)}\n{traceback.format_exc()}' }
 
     if result['status'] == 'finished':

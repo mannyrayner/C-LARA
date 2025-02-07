@@ -149,6 +149,7 @@ SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2 = [
     ( 'default', 'Default' ),
     ( 'with_context', 'With context' ),
     ( 'with_context_v2',  'With context v2' ),
+    ( 'with_context_v3_objective',  'With context v3 objective' ),
     ( 'multiple_questions', 'Multiple questions' )
     ]
 
