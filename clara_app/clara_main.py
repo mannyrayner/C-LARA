@@ -160,7 +160,7 @@ from .clara_acknowledgements import add_acknowledgements_to_text_object
 from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
-from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, create_variant_images_for_page
+from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, add_uploaded_element_image, create_variant_images_for_page
 from .clara_coherent_images import execute_community_requests_list, execute_simple_clara_image_requests, execute_simple_clara_element_requests
 from .clara_coherent_images import delete_element, add_element
 from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
@@ -170,7 +170,7 @@ from .clara_coherent_images_alternate import get_project_images_dict, promote_al
 from .clara_coherent_images_utils import get_project_params, set_project_params, project_params_for_simple_clara
 from .clara_coherent_images_utils import project_pathname, get_pages, make_project_dir, element_name_to_element_text
 from .clara_coherent_images_utils import get_story_data, set_story_data_from_numbered_page_list, remove_top_level_element_directory
-from .clara_coherent_images_utils import get_style_description, get_all_element_texts
+from .clara_coherent_images_utils import get_style_description, get_all_element_texts, element_text_to_element_name
 from .clara_coherent_images_utils import get_element_description, get_page_description
 from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name, overview_file
 from .clara_coherent_images_utils import style_directory, element_directory, element_directory_for_element_name, page_directory
@@ -1863,6 +1863,14 @@ class CLARAProjectInternal:
         alternate_image_id = add_uploaded_page_image(image_file_path, page_number, params, callback=callback)
         # Assume that an uploaded image will by default be preferred
         self.promote_v2_page_image(page_number, alternate_image_id, callback=callback)
+
+    def add_uploaded_element_image_v2(self, image_file_path, element_text, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        description_id = add_uploaded_element_image(image_file_path, element_text, params, callback=callback)
+        # Assume that an uploaded image will by default be preferred
+        element_name = element_text_to_element_name(element_text)
+        self.promote_v2_element_description(element_name, description_id, callback=callback)
 
     def store_v2_page_data(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir

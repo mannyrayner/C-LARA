@@ -13,8 +13,10 @@ known_prompt_template_types = [ 'generate_style_description',
                                 'generate_page_description',
                                 'correct_page_description',
                                 'generate_page_description_for_uploaded_image',
+                                'generate_description_for_uploaded_element_image',
                                 'page_interpretation',
                                 'page_evaluation',
+                                'element_image_interpretation',
 
                                 'get_elements_shown_in_image',
                                 'get_important_pairs_in_image',
@@ -55,8 +57,12 @@ def get_prompt_template(prompt_id, prompt_type):
         return correct_page_description_prompt_templates[prompt_id]
     elif prompt_type == 'generate_page_description_for_uploaded_image' and prompt_id in generate_page_description_for_uploaded_image_prompt_templates:
         return generate_page_description_for_uploaded_image_prompt_templates[prompt_id]
+    elif prompt_type == 'generate_description_for_uploaded_element_image' and prompt_id in generate_description_for_uploaded_element_image_prompt_templates:
+        return generate_description_for_uploaded_element_image_prompt_templates[prompt_id]
     elif prompt_type == 'page_interpretation' and prompt_id in page_interpretation_prompt_templates:
         return page_interpretation_prompt_templates[prompt_id]
+    elif prompt_type == 'element_image_interpretation' and prompt_id in element_image_interpretation_prompt_templates:
+        return element_image_interpretation_prompt_templates[prompt_id]
     elif prompt_type == 'page_evaluation' and prompt_id in page_evaluation_prompt_templates:
         return page_evaluation_prompt_templates[prompt_id]
 
@@ -507,6 +513,68 @@ The specification you write out must be at most 2000 characters long to conform 
 
 """
     }
+
+generate_description_for_uploaded_element_image_prompt_templates = {
+    'default': """We are generating a set of images to illustrate the following text, which has been divided into numbered pages:
+
+{formatted_story_data}
+
+The intended style in which the images will be produced is described as follows:
+
+{style_description}
+
+As part of this process, we are creating detailed specifications for various elements (characters, locations, etc) that occur on more than one page.
+
+The user has uploaded an image which they wish to use as inspiration for the element "{element_text}", suitably adapting it by taking
+account of the style description. Here is a description of the uploaded image produced by gpt-4o:
+
+{image_interpretation}
+
+In this step, please create a detailed specification of the image for the element "{element_text}", based on the user
+uploaded image, and in the intended style. This will later be used in prompts submitted to DALL-E-3.
+
+*IMPORTANT*:
+
+The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+
+"""
+    }
+
+element_image_interpretation_prompt_templates = {
+   'interpret_uploaded_element_image': """Please provide a description of this image.
+The image has been uploaded by the user to provide information that will later help DALL-E-3
+create images to illustrate the following text:
+
+{formatted_story_data}
+
+The image is meant to depict the element "{element_text}".
+
+In this step, your task is to create a text description of the image, interpreting it as meaning "{element_text}" from the text.
+The description you provide will later be combined with other information to create prompts for DALL-E-3.
+
+**Please ensure that the description includes specific physical characteristics.
+For a human character, these would include:**
+- **Apparent age**
+- **Gender**
+- **Ethnicity**
+- **Hair color and style**
+- **Eye color**
+- **Height and build**
+- **Clothing and accessories**
+- **Distinctive features or expressions**
+- **General demeanour**
+
+**Similarly, for an animal we would require characteristics like:**
+
+- **Size and shape**
+- **Colour of fur/scales, markings**
+- **Eye color**
+- **Distinctive features like wings, tail, horns**
+- **General demeanour**
+
+**Be as precise and detailed as possible.**
+"""
+   }
 
 page_interpretation_prompt_templates = {
     'default': """Please provide a description of this image.

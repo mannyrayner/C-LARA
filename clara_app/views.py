@@ -6258,6 +6258,29 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
                 async_task(execute_simple_clara_element_requests, project, clara_project_internal, requests, callback=callback)
 
                 return redirect('execute_simple_clara_element_requests_monitor', project_id, report_id, element_name, from_view)
+
+            elif action == 'upload_image':
+                # The user is uploading a new image
+                if not can_use_ai:
+                    messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to analyse images")
+                    return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, from_view=from_view, status='none')
+
+                if 'uploaded_image_file_path' in request.FILES:
+                    # Convert the in-memory file object to a local file path
+                    uploaded_file_obj = request.FILES['uploaded_image_file_path']
+                    real_image_file_path = uploaded_file_to_file(uploaded_file_obj)
+
+                    requests = [ { 'request_type': 'add_uploaded_element_image',
+                                   'element_name': element_name,
+                                   'image_file_path': real_image_file_path } ]
+
+                    callback, report_id = make_asynch_callback_and_report_id(request, 'execute_image_requests')
+
+                    async_task(execute_simple_clara_element_requests, project, clara_project_internal, requests, callback=callback)
+
+                    return redirect('execute_simple_clara_element_requests_monitor', project_id, report_id, element_name, from_view)
+                else:
+                    messages.error(request, "No file found for the upload_image action.")
                 
             elif action == 'vote':
                 vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"

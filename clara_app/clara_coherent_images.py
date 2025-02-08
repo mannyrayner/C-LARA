@@ -1,5 +1,6 @@
 from .clara_coherent_images_evaluate_image import (
     interpret_image_with_prompt,
+    interpret_element_image_with_prompt,
     evaluate_fit_with_prompt
     )
 
@@ -29,6 +30,7 @@ from .clara_coherent_images_alternate import (
     get_alternate_images_json,
     create_alternate_images_json,
     alternate_image_id_for_description_index,
+    promote_alternate_element_description,
     )
 
 from .clara_coherent_images_community_feedback import (
@@ -55,6 +57,8 @@ from .clara_coherent_images_utils import (
     existing_description_version_directories_and_first_unused_number_for_style,
     existing_description_version_directories_and_first_unused_number_for_element,
     existing_description_version_directories_and_first_unused_number_for_page,
+    score_description_dir_representative,
+    score_description_dir_best,
     score_for_image_dir,
     image_dir_shows_content_policy_violation,
     description_dir_shows_only_content_policy_violations,
@@ -68,6 +72,7 @@ from .clara_coherent_images_utils import (
     get_all_element_texts,
     element_text_to_element_name,
     element_name_to_element_text,
+    element_directory,
     remove_element_name_from_list_of_elements,
     add_element_name_to_list_of_elements,
     get_element_description,
@@ -1075,6 +1080,9 @@ async def execute_simple_clara_element_request(params, request, callback=None):
         set_element_advice(advice_text, element_text, params1)
         params1['elements_to_generate'] = [ element_text ]
         cost_dict = await process_elements(params1, callback=callback)
+    if request_type == 'add_uploaded_element_image':
+        image_file_path = request['image_file_path']
+        cost_dict = await add_uploaded_element_image(image_file_path, element_text, params, callback=callback)
     else:
         raise ValueError(f'Unknown request type in {request}')
 
@@ -1140,6 +1148,66 @@ async def generate_image_for_page(page_number, params, callback=None):
     await create_alternate_images_json(project_pathname(project_dir, page_number_directory), project_dir, callback=callback)
     write_project_cost_file(total_cost_dict, project_dir, f'pages/page{page_number}/cost.json')
     return total_cost_dict
+
+async def add_uploaded_element_image(image_file_path, element_text, params, callback=None):
+    """
+    Add an uploaded image to the V2 data structure for the specified element.
+
+    Args:
+        image_full_path (str): The full path to the uploaded image.
+        element_text (str): The element to associate the image with.
+        params: project params, defining 'project_dir'
+    """
+    
+    project_dir = params['project_dir']
+
+    rel_element_dir = element_directory(element_text, params)
+    element_dir = project_pathname(project_dir, rel_element_dir)
+    make_project_dir(project_dir, rel_element_dir)
+    
+    # Find the next available description index
+    existing_descriptions = [d for d in Path(element_dir).glob('description_v*') if d.is_dir()]
+    description_indices = [int(d.name.split('_v')[-1]) for d in existing_descriptions]
+    next_description_index = max(description_indices, default=-1) + 1
+    rel_description_dir = f'{rel_element_dir}/description_v{next_description_index}'
+    make_project_dir(project_dir, rel_description_dir)
+    
+    # Create image_v0 directory
+    rel_image_dir = f'{rel_description_dir}/image_v0'
+    make_project_dir(project_dir, rel_image_dir)
+    
+    # Move the uploaded image to the image directory
+    rel_image_path = f'{rel_image_dir}/image.jpg'
+    destination_image_path_image = project_pathname(project_dir, rel_image_path)
+    destination_image_path_description = project_pathname(project_dir, f'{rel_description_dir}/image.jpg')
+    #move_file(image_file_path, destination_image_path)
+    copy_file(image_file_path, destination_image_path_image)
+    copy_file(image_file_path, destination_image_path_description)
+    #print(f'copy_file({image_file_path}, {destination_image_path})')
+    
+    # Create placeholder files first.
+    # We will use these to create scores, since we don't know how to evaluate fit on an uploaded image.
+    rel_expanded_description_path = f'{rel_description_dir}/expanded_description.txt'
+    write_project_txt_file("User uploaded image", project_dir, rel_expanded_description_path)
+    
+    rel_evaluation_path = f'{rel_image_dir}/evaluation.txt'
+    write_project_txt_file("4\nAssume perfect fit since uploaded", project_dir, rel_evaluation_path)
+
+    rel_interpretation_path = f'{rel_image_dir}/image_interpretation.txt'
+    write_project_txt_file("So far no interpretation", project_dir, rel_interpretation_path)
+
+    image_dirs = [ rel_image_dir ]
+    score_description_dir_representative(rel_description_dir, image_dirs, params)
+
+    # Create and store the real description
+    cost_dict = await create_and_store_expanded_description_for_uploaded_element_image(rel_image_path, element_text, next_description_index, params, callback=callback)
+
+    # Update alternate_images.json
+    await create_alternate_images_json(element_dir, project_dir)
+
+    promote_alternate_element_description(rel_element_dir, project_dir, next_description_index)
+
+    return cost_dict
 
 def add_uploaded_page_image(image_file_path, page_number, params, callback=None):
     """
@@ -1801,6 +1869,69 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         await post_task_update_async(callback, error_message)
         raise ImageGenerationError(message = f'Exception when creating description of uploaded image')
 
+async def create_and_store_expanded_description_for_uploaded_element_image(rel_image_path, element_text, description_version_number, params, callback=None):
+    try:
+        project_dir = params['project_dir']
+
+        element_name = element_text_to_element_name(element_text)
+
+        image_path = project_pathname(project_dir, rel_image_path)
+        style_description = get_style_description(params)
+
+        total_cost_dict = {}
+        total_errors = ''
+        
+        interpretation_prompt_id = 'interpret_uploaded_element_image'
+        description = 'irrelevant'
+        image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_element_image_with_prompt(image_path, description, element_text,
+                                                                                                                     interpretation_prompt_id, params, callback=callback)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
+        total_errors += interpretation_errors
+
+        # Get the text of the story and the style description
+        story_data = get_story_data(params)
+        formatted_story_data = json.dumps(story_data, indent=4)
+        
+        style_description = get_style_description(params)
+
+        # Create the prompt
+        prompt_template = get_prompt_template('default', 'generate_description_for_uploaded_element_image')
+        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                        style_description=style_description,
+                                        element_text=element_text,
+                                        image_interpretation=image_interpretation)
+
+        valid_expanded_description_produced = False
+        tries_left = 5
+        #tries_left = 1
+        max_dall_e_3_prompt_length = 2000
+        
+        while not valid_expanded_description_produced and tries_left:
+            description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_element_description', params, callback=callback)
+            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_element_description': description_api_call.cost })
+
+            # Save the expanded description
+            expanded_description = description_api_call.response
+            if len(expanded_description) < max_dall_e_3_prompt_length:
+                valid_expanded_description_produced = True
+            else:
+                print(f'Length of description = {len(expanded_description)}')
+                tries_left -= 1
+
+        if valid_expanded_description_produced:   
+        # Write out description
+            write_project_txt_file(expanded_description, project_dir, f'elements/{element_name}/description_v{description_version_number}/expanded_description.txt')
+            return total_cost_dict
+        else:
+            error_message = f"Error when creating description of uploaded image. No generated description was less than {max_dall_e_3_prompt_length} characters long"
+            await post_task_update_async(callback, error_message)
+            raise ImageGenerationError(message = error_message)
+        
+    except Exception as e:
+        error_message = f'Exception when creating description of uploaded image. {str(e)}"\n{traceback.format_exc()}'
+        await post_task_update_async(callback, error_message)
+        raise ImageGenerationError(message = f'Exception when creating description of uploaded image')
+
 # -----------------------------------------------
 
 async def generate_overview_html(params, mode='plain', project_id=None):
@@ -2095,85 +2226,6 @@ def format_overview_image_path(relative_path, mode, project_id):
 ##    else:
 ##        return f'/accounts/projects/serve_coherent_images_v2_page_image/{project_id}/{page_number}'
 
-# -----------------------------------------------
-
-def score_description_dir_representative(description_dir, image_dirs, params):
-    project_dir = params['project_dir']
-    
-    scores_and_images_dirs = [ ( score_for_image_dir(image_dir, params)[0], image_dir )
-                               for image_dir in image_dirs ]
-    scores = [ item[0] for item in scores_and_images_dirs ]
-    av_score = sum(scores) / len(scores)
-
-    # Find the image most representative of the average score
-
-    closest_match = 10.0
-    closest_image_file = None
-    closest_interpretation_file = None
-    closest_evaluation_file = None
-
-    for score, image_dir in scores_and_images_dirs:
-        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
-        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
-        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
-        if abs(score - av_score ) < closest_match and file_exists(image_file) and file_exists(evaluation_file):
-            closest_match = abs(score - av_score )
-##            closest_image_file = image_file
-##            closest_interpretation_file = interpretation_file
-##            closest_evaluation_file = evaluation_file
-            closest_image_file = f'{image_dir}/image.jpg'
-            closest_interpretation_file = f'{image_dir}/image_interpretation.txt'
-            closest_evaluation_file = f'{image_dir}/evaluation.txt'
-
-    description_dir_info = { 'av_score': av_score,
-                             'image': closest_image_file,
-                             'interpretation': closest_interpretation_file,
-                             'evaluation': closest_evaluation_file}
-                                                                   
-    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
-
-    if closest_image_file and closest_interpretation_file and closest_evaluation_file:
-        copy_file(project_pathname(project_dir, closest_image_file), project_pathname(project_dir, f'{description_dir}/image.jpg'))
-        copy_file(project_pathname(project_dir, closest_interpretation_file), project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
-        copy_file(project_pathname(project_dir, closest_evaluation_file), project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
-
-def score_description_dir_best(description_dir, image_dirs, params):
-    project_dir = params['project_dir']
-    
-    scores_and_images_dirs = [ ( score_for_image_dir(image_dir, params)[0], image_dir )
-                               for image_dir in image_dirs ]
-
-    # Find the image with the best fit
-
-    best_score = -1
-    best_image_file = None
-    best_interpretation_file = None
-    best_evaluation_file = None
-
-    for score, image_dir in scores_and_images_dirs:
-        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
-        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
-        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
-        if score > best_score and file_exists(image_file):
-            best_score = score
-##            best_image_file = image_file
-##            best_interpretation_file = interpretation_file
-##            best_evaluation_file = evaluation_file
-            best_image_file = image_file
-            best_interpretation_file = interpretation_file
-            best_evaluation_file = evaluation_file
-
-    description_dir_info = { 'best_score': best_score,
-                             'image': best_image_file,
-                             'interpretation': best_interpretation_file,
-                             'evaluation': best_evaluation_file }
-                                                                   
-    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
-
-    if best_image_file and best_interpretation_file and best_evaluation_file:
-        copy_file(project_pathname(project_dir, best_image_file), project_pathname(project_dir, f'{description_dir}/image.jpg'))
-        copy_file(project_pathname(project_dir, best_interpretation_file), project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
-        copy_file(project_pathname(project_dir, best_evaluation_file), project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
 
 # -----------------------------------------------
 

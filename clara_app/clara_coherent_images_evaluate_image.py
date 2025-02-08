@@ -56,6 +56,44 @@ import asyncio
 import traceback
 import unicodedata
 
+async def interpret_element_image_with_prompt(image_path, description, element_text, prompt_id, params, callback=None):
+    # Retrieve the prompt template based on prompt_id
+    prompt_template = get_prompt_template(prompt_id, 'element_image_interpretation')
+
+    story_data = get_story_data(params)
+    formatted_story_data = json.dumps(story_data, indent=4)
+
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                    element_text=element_text)
+
+    # Perform the API call
+    tries_left = params['n_retries'] if 'n_retries' in params else 5
+    total_cost = 0
+    errors = ''
+
+    while tries_left:
+        try:
+            api_call = await get_api_chatgpt4_interpret_image_response_for_task(
+                prompt,
+                image_path,
+                'evaluate_page_image',
+                params,
+                callback=callback
+            )
+            image_interpretation = api_call.response
+            total_cost += api_call.cost
+            return image_interpretation, errors, {'interpret_image': total_cost}
+        
+        except Exception as e:
+            error = f'"{str(e)}"\n{traceback.format_exc()}'
+            errors += f"""{error}
+------------------
+"""
+            tries_left -= 1
+
+    # We failed
+    return None, errors, {'interpret_image': total_cost}
+
 async def interpret_image_with_prompt(image_path, expanded_description, page_number, prompt_id, params, callback=None):
     if prompt_id == 'multiple_questions':
         return await interpret_image_with_prompt_multiple_questions(image_path, expanded_description, page_number, params, callback=callback)

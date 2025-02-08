@@ -295,6 +295,88 @@ def content_dir_shows_only_content_policy_violations(content_dir, params):
     # If all description_v* subdirs exist and show policy violations, return True
     return True
 
+# -----------------------------------------------
+
+def score_description_dir_representative(description_dir, image_dirs, params):
+    project_dir = params['project_dir']
+    
+    scores_and_images_dirs = [ ( score_for_image_dir(image_dir, params)[0], image_dir )
+                               for image_dir in image_dirs ]
+    scores = [ item[0] for item in scores_and_images_dirs ]
+    av_score = sum(scores) / len(scores)
+
+    # Find the image most representative of the average score
+
+    closest_match = 10.0
+    closest_image_file = None
+    closest_interpretation_file = None
+    closest_evaluation_file = None
+
+    for score, image_dir in scores_and_images_dirs:
+        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
+        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
+        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
+        if abs(score - av_score ) < closest_match and file_exists(image_file) and file_exists(evaluation_file):
+            closest_match = abs(score - av_score )
+##            closest_image_file = image_file
+##            closest_interpretation_file = interpretation_file
+##            closest_evaluation_file = evaluation_file
+            closest_image_file = f'{image_dir}/image.jpg'
+            closest_interpretation_file = f'{image_dir}/image_interpretation.txt'
+            closest_evaluation_file = f'{image_dir}/evaluation.txt'
+
+    description_dir_info = { 'av_score': av_score,
+                             'image': closest_image_file,
+                             'interpretation': closest_interpretation_file,
+                             'evaluation': closest_evaluation_file}
+                                                                   
+    image_info_file = f'{description_dir}/image_info.json'
+    write_project_json_file(description_dir_info, project_dir, image_info_file)
+    #print(f"write_project_json_file({description_dir_info}, {project_dir}, {image_info_file})")
+
+    if closest_image_file and closest_interpretation_file and closest_evaluation_file:
+        copy_file(project_pathname(project_dir, closest_image_file), project_pathname(project_dir, f'{description_dir}/image.jpg'))
+        copy_file(project_pathname(project_dir, closest_interpretation_file), project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
+        copy_file(project_pathname(project_dir, closest_evaluation_file), project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
+
+def score_description_dir_best(description_dir, image_dirs, params):
+    project_dir = params['project_dir']
+    
+    scores_and_images_dirs = [ ( score_for_image_dir(image_dir, params)[0], image_dir )
+                               for image_dir in image_dirs ]
+
+    # Find the image with the best fit
+
+    best_score = -1
+    best_image_file = None
+    best_interpretation_file = None
+    best_evaluation_file = None
+
+    for score, image_dir in scores_and_images_dirs:
+        image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
+        interpretation_file = project_pathname(project_dir, f'{image_dir}/image_interpretation.txt')
+        evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
+        if score > best_score and file_exists(image_file):
+            best_score = score
+##            best_image_file = image_file
+##            best_interpretation_file = interpretation_file
+##            best_evaluation_file = evaluation_file
+            best_image_file = image_file
+            best_interpretation_file = interpretation_file
+            best_evaluation_file = evaluation_file
+
+    description_dir_info = { 'best_score': best_score,
+                             'image': best_image_file,
+                             'interpretation': best_interpretation_file,
+                             'evaluation': best_evaluation_file }
+                                                                   
+    write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
+
+    if best_image_file and best_interpretation_file and best_evaluation_file:
+        copy_file(project_pathname(project_dir, best_image_file), project_pathname(project_dir, f'{description_dir}/image.jpg'))
+        copy_file(project_pathname(project_dir, best_interpretation_file), project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
+        copy_file(project_pathname(project_dir, best_evaluation_file), project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
+
 def element_score_for_description_dir(description_dir, params):
     project_dir = params['project_dir']
     image_info_file = project_pathname(project_dir, f'{description_dir}/image_info.json')
