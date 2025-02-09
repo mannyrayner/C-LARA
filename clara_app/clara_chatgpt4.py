@@ -38,6 +38,20 @@ config = get_config()
 
 DEFAULT_GPT_4_MODEL = 'gpt-4o'
 
+def get_api_key_and_provider_for_config(config_info):
+    model = config_info['gpt_model'] if 'gpt_model' in config_info else DEFAULT_GPT_4_MODEL
+    
+    provider = provider_for_model(model)
+    if not provider:
+        raise ValueError(f'Unable to find provider for model: {model}')
+
+    if provider == openai:
+        return get_open_ai_api_key(config_info), provider
+    elif provider == deep_seek:
+        return get_deep_seek_api_key(config_info), provider
+    else:
+        raise ValueError(f'Unknown provider declared for model "{model}": {provider}')
+            
 def get_open_ai_api_key(config_info):
     if 'open_ai_api_key' in config_info and config_info['open_ai_api_key'] and config_info['open_ai_api_key'] != 'None':
         key = config_info['open_ai_api_key']
@@ -47,6 +61,17 @@ def get_open_ai_api_key(config_info):
         source = 'env variable OPENAI_API_KEY'
         
     #print(f'open_ai_api_key = "{key}" (from {source})')
+    return key
+
+def get_deep_seek_api_key(config_info):
+    if 'deep_seek_api_key' in config_info and config_info['deep_seek_api_key'] and config_info['deep_seek_api_key'] != 'None':
+        key = config_info['deep_seek_api_key']
+        source = 'C-LARA config'
+    else:
+        key = os.environ.get("DEEP_SEEK_API_KEY")
+        source = 'env variable DEEP_SEEK_API_KEY'
+        
+    print(f'deep_seek_api_key = "{key}" (from {source})')
     return key
 
 def call_chat_gpt4(prompt, config_info={}, callback=None):

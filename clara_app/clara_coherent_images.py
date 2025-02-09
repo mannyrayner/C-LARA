@@ -885,6 +885,29 @@ async def generate_expanded_element_description_and_images(element_name, element
     write_project_cost_file(total_cost_dict, project_dir, f'{description_directory}/cost.json')
     return description_directory, {}
 
+async def generate_element_image_from_expanded_description(description, element_text, params, callback=None):
+    element_name = element_text_to_element_name(element_text)
+    project_dir = params['project_dir']
+    element_dir = f'elements/{element_name}'
+    
+    all_description_dirs, description_version_number = existing_description_version_directories_and_first_unused_number_for_element(element_name, params)
+    description_dir = f'{element_dir}/description_v{description_version_number}'
+    make_directory(project_pathname(project_dir, description_dir))
+
+    try:
+        write_project_txt_file(description, project_dir, f'{description_dir}/expanded_description.txt')
+        
+        cost_dict = await generate_and_rate_element_images(element_name, description, description_version_number, params, callback=callback)
+
+        await create_alternate_images_json(element_dir, project_dir)
+        write_project_cost_file(cost_dict, project_dir, f'{description_dir}/cost.json')
+        return cost_dict
+
+    except Exception as e:
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        write_project_txt_file(error_message, project_dir, f'{description_dir}/error.txt')
+        return description_directory, {}   
+
 async def generate_and_rate_element_images(element_name, description, description_version_number, params, callback=None):
     project_dir = params['project_dir']
     n_images_per_description = params['n_images_per_description']
@@ -904,7 +927,7 @@ async def generate_and_rate_element_images(element_name, description, descriptio
 
     score_description_dir_representative(description_dir, all_image_dirs, params)
         
-    return total_cost_dict
+    return total_cost_dict    
 
 async def generate_and_rate_element_image(element_name, description, description_version_number, image_version_number, params, callback=None):
     project_dir = params['project_dir']
@@ -1069,18 +1092,23 @@ async def execute_simple_clara_image_request(params, request, callback=None):
     return cost_dict
 
 async def execute_simple_clara_element_request(params, request, callback=None):
+    print(f'execute_simple_clara_element_request(params, {request}, callback=None)')
+          
     project_dir = params['project_dir']
     params1 = copy.copy(params)
     
     request_type = request['request_type']
     element_name = request['element_name']
     element_text = element_name_to_element_text(element_name, params)
-    if request_type == 'new_element_description_and_images':
+    if request_type == 'new_element_description_and_images_from_advice':
         advice_text = request['advice_text']
         set_element_advice(advice_text, element_text, params1)
         params1['elements_to_generate'] = [ element_text ]
         cost_dict = await process_elements(params1, callback=callback)
-    if request_type == 'add_uploaded_element_image':
+    if request_type == 'new_element_images_from_description':
+        description_text = request['description_text']
+        cost_dict = await generate_element_image_from_expanded_description(description_text, element_text, params, callback=callback)
+    elif request_type == 'add_uploaded_element_image':
         image_file_path = request['image_file_path']
         cost_dict = await add_uploaded_element_image(image_file_path, element_text, params, callback=callback)
     else:
@@ -1869,6 +1897,69 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         await post_task_update_async(callback, error_message)
         raise ImageGenerationError(message = f'Exception when creating description of uploaded image')
 
+##async def create_and_store_expanded_description_for_uploaded_element_image(rel_image_path, element_text, description_version_number, params, callback=None):
+##    try:
+##        project_dir = params['project_dir']
+##
+##        element_name = element_text_to_element_name(element_text)
+##
+##        image_path = project_pathname(project_dir, rel_image_path)
+##        style_description = get_style_description(params)
+##
+##        total_cost_dict = {}
+##        total_errors = ''
+##        
+##        interpretation_prompt_id = 'interpret_uploaded_element_image'
+##        description = 'irrelevant'
+##        image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_element_image_with_prompt(image_path, description, element_text,
+##                                                                                                                     interpretation_prompt_id, params, callback=callback)
+##        total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
+##        total_errors += interpretation_errors
+##
+##        # Get the text of the story and the style description
+##        story_data = get_story_data(params)
+##        formatted_story_data = json.dumps(story_data, indent=4)
+##        
+##        style_description = get_style_description(params)
+##
+##        # Create the prompt
+##        prompt_template = get_prompt_template('default', 'generate_description_for_uploaded_element_image')
+##        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+##                                        style_description=style_description,
+##                                        element_text=element_text,
+##                                        image_interpretation=image_interpretation)
+##
+##        valid_expanded_description_produced = False
+##        tries_left = 5
+##        #tries_left = 1
+##        max_dall_e_3_prompt_length = 2000
+##        
+##        while not valid_expanded_description_produced and tries_left:
+##            description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_element_description', params, callback=callback)
+##            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_element_description': description_api_call.cost })
+##
+##            # Save the expanded description
+##            expanded_description = description_api_call.response
+##            if len(expanded_description) < max_dall_e_3_prompt_length:
+##                valid_expanded_description_produced = True
+##            else:
+##                print(f'Length of description = {len(expanded_description)}')
+##                tries_left -= 1
+##
+##        if valid_expanded_description_produced:   
+##        # Write out description
+##            write_project_txt_file(expanded_description, project_dir, f'elements/{element_name}/description_v{description_version_number}/expanded_description.txt')
+##            return total_cost_dict
+##        else:
+##            error_message = f"Error when creating description of uploaded image. No generated description was less than {max_dall_e_3_prompt_length} characters long"
+##            await post_task_update_async(callback, error_message)
+##            raise ImageGenerationError(message = error_message)
+##        
+##    except Exception as e:
+##        error_message = f'Exception when creating description of uploaded image. {str(e)}"\n{traceback.format_exc()}'
+##        await post_task_update_async(callback, error_message)
+##        raise ImageGenerationError(message = f'Exception when creating description of uploaded image')
+
 async def create_and_store_expanded_description_for_uploaded_element_image(rel_image_path, element_text, description_version_number, params, callback=None):
     try:
         project_dir = params['project_dir']
@@ -1876,57 +1967,30 @@ async def create_and_store_expanded_description_for_uploaded_element_image(rel_i
         element_name = element_text_to_element_name(element_text)
 
         image_path = project_pathname(project_dir, rel_image_path)
-        style_description = get_style_description(params)
+
+        # Get the text of the story and the style description
+        story_data = get_story_data(params)
+        formatted_story_data = json.dumps(story_data, indent=4)
 
         total_cost_dict = {}
         total_errors = ''
         
         interpretation_prompt_id = 'interpret_uploaded_element_image'
         description = 'irrelevant'
-        image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_element_image_with_prompt(image_path, description, element_text,
+        image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_element_image_with_prompt(image_path, description, element_text, formatted_story_data,
                                                                                                                      interpretation_prompt_id, params, callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
-        total_errors += interpretation_errors
 
-        # Get the text of the story and the style description
-        story_data = get_story_data(params)
-        formatted_story_data = json.dumps(story_data, indent=4)
-        
-        style_description = get_style_description(params)
-
-        # Create the prompt
-        prompt_template = get_prompt_template('default', 'generate_description_for_uploaded_element_image')
-        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
-                                        style_description=style_description,
-                                        element_text=element_text,
-                                        image_interpretation=image_interpretation)
-
-        valid_expanded_description_produced = False
-        tries_left = 5
-        #tries_left = 1
-        max_dall_e_3_prompt_length = 2000
-        
-        while not valid_expanded_description_produced and tries_left:
-            description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_element_description', params, callback=callback)
-            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_element_description': description_api_call.cost })
-
-            # Save the expanded description
-            expanded_description = description_api_call.response
-            if len(expanded_description) < max_dall_e_3_prompt_length:
-                valid_expanded_description_produced = True
-            else:
-                print(f'Length of description = {len(expanded_description)}')
-                tries_left -= 1
-
-        if valid_expanded_description_produced:   
         # Write out description
-            write_project_txt_file(expanded_description, project_dir, f'elements/{element_name}/description_v{description_version_number}/expanded_description.txt')
+        if image_interpretation:
+            write_project_txt_file(image_interpretation, project_dir, f'elements/{element_name}/description_v{description_version_number}/expanded_description.txt')
             return total_cost_dict
         else:
-            error_message = f"Error when creating description of uploaded image. No generated description was less than {max_dall_e_3_prompt_length} characters long"
-            await post_task_update_async(callback, error_message)
-            raise ImageGenerationError(message = error_message)
-        
+            await post_task_update_async(callback, interpretation_errors)
+            raise ImageGenerationError(message = interpretation_errors)
+
+    except ImageGenerationError as e:
+        raise ImageGenerationError(message = e.message)
     except Exception as e:
         error_message = f'Exception when creating description of uploaded image. {str(e)}"\n{traceback.format_exc()}'
         await post_task_update_async(callback, error_message)

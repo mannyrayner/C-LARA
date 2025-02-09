@@ -56,12 +56,9 @@ import asyncio
 import traceback
 import unicodedata
 
-async def interpret_element_image_with_prompt(image_path, description, element_text, prompt_id, params, callback=None):
+async def interpret_element_image_with_prompt(image_path, description, element_text, formatted_story_data, prompt_id, params, callback=None):
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template(prompt_id, 'element_image_interpretation')
-
-    story_data = get_story_data(params)
-    formatted_story_data = json.dumps(story_data, indent=4)
 
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
                                     element_text=element_text)

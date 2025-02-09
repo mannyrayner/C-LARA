@@ -8,7 +8,7 @@ from datetime import datetime
 from .clara_coherent_images_alternate import get_alternate_images_json
 from .clara_coherent_images_utils import score_for_image_dir, element_score_for_description_dir, get_expanded_description_text_for_page_version
 from .clara_coherent_images_utils import get_pages, project_pathname, read_project_json_file
-from .clara_utils import file_exists
+from .clara_utils import file_exists, read_txt_file
 
 def get_page_overview_info_for_cm_reviewing(project_dir):
     # Load story data
@@ -115,6 +115,7 @@ def get_element_description_info_for_cm_reviewing(alternate_images, element_name
         desc_info = get_cm_description_info_for_element(project_dir, element_name, d_idx)
         upvotes = sum(1 for v in desc_info['votes'] if v['vote_type'] == 'upvote')
         downvotes = sum(1 for v in desc_info['votes'] if v['vote_type'] == 'downvote')
+        expanded_description = read_txt_file(project_pathname(project_dir, imgs[0]['expanded_description_path']))
 
         # Determine if this is the preferred description
         preferred = ( d_idx == preferred_description_id )
@@ -124,6 +125,7 @@ def get_element_description_info_for_cm_reviewing(alternate_images, element_name
             'downvotes_count': downvotes,
             'preferred': preferred,
             'images': imgs,
+            'expanded_description': expanded_description,
         }
             
     return descriptions_info, preferred_description_id

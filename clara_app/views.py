@@ -6232,6 +6232,7 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
     # Process form submissions
     if request.method == 'POST':
         action = request.POST.get('action', '')
+        print(f'action = {action}')
         description_index = request.POST.get('description_index', '')
         userid = request.user.username
 
@@ -6240,21 +6241,28 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
 
         try:
             #print(f'action = {action}')
-            if action == 'images_with_advice':
+            if action == 'images_with_advice_or_description':
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                     return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, from_view=from_view, status='none')
 
-                advice_text = request.POST.get('advice_text', '').strip()
+                mode = request.POST.get('mode')
+                advice_or_description_text = request.POST.get('advice_or_description_text', '').strip()
                 
-                requests = [ { 'request_type': 'new_element_description_and_images',
-                               'element_name': element_name,
-                               'advice_text': advice_text } ]
+                if mode == 'advice':
+                    requests = [ { 'request_type': 'new_element_description_and_images_from_advice',
+                                   'element_name': element_name,
+                                   'advice_text': advice_or_description_text } ]
+                elif mode == 'expanded_description':
+                    requests = [ { 'request_type': 'new_element_images_from_description',
+                                   'element_name': element_name,
+                                   'description_text': advice_or_description_text } ]
+                else:
+                    messages.error(request, f"Unknown mode '{mode}'")
+                    return redirect('simple_clara_review_v2_images_for_element', project_id=project_id, element_name=element_name, from_view=from_view, status='none')
 
                 callback, report_id = make_asynch_callback_and_report_id(request, 'execute_image_requests')
 
-                # Adapt execute_simple_clara_element_requests from:
-                # views.execute_simple_clara_image_requests
                 async_task(execute_simple_clara_element_requests, project, clara_project_internal, requests, callback=callback)
 
                 return redirect('execute_simple_clara_element_requests_monitor', project_id, report_id, element_name, from_view)
