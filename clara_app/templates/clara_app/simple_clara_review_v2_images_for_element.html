@@ -18,6 +18,9 @@
     </div>
   {% endfor %}
   </div>
+  <!-- Show the existing expanded description -->
+  <textarea readonly rows="8" cols="100">{{ dinfo.expanded_description }}</textarea><br>
+  
   Upvotes: {{ dinfo.upvotes_count }} Downvotes: {{ dinfo.downvotes_count }}
 
       <form method="post" style="display:inline-block;">
@@ -35,17 +38,22 @@
         <input type="hidden" name="vote_type" value="downvote">
         <button type="submit">👎</button>
       </form>
-  </div>
+   </div>
 {% endfor %}
 
 <h3>Create new element descriptions and images</h3>
 <form method="post" style="margin-bottom:1em;">
 {% csrf_token %}
-<input type="hidden" name="action" value="images_with_advice">
+<input type="hidden" name="action" value="images_with_advice_or_description">
+<input type="hidden" name="action" value="images_with_advice_or_description">
+<select name="mode">
+  <option value="advice">Generate using advice (creates description and images)</option>
+  <option value="expanded_description">Provide full description (only creates images)</option>
+</select><br>
 {% if advice %}
-  <textarea name="advice_text" rows="4" cols="80">{{ advice }}</textarea>
+  <textarea name="advice_or_description_text" rows="8" cols="80">{{ advice }}</textarea>
 {% else %}
-  <textarea name="advice_text" placeholder="Add advice here (optional)" rows="4" cols="80"></textarea>
+  <textarea name="advice_or_description_text" placeholder="Add advice or description here (advice optional)" rows="8" cols="100"></textarea>
 {% endif %}
 <button type="submit">Create</button>
 </form>
