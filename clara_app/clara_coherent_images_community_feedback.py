@@ -176,7 +176,7 @@ def save_community_feedback_for_element(project_dir, element_name, data):
 def current_timestamp():
     return datetime.utcnow().isoformat()
 
-def register_cm_image_vote(project_dir, page, description_index, image_index, vote_type, userid):
+def register_cm_image_vote(project_dir, page, description_index, image_index, vote_type, userid, override_ai_vote=False):
     """
     vote_type: "upvote" or "downvote"
     """
@@ -207,9 +207,24 @@ def register_cm_image_vote(project_dir, page, description_index, image_index, vo
         }
         data["votes"].append(new_vote)
 
+    if override_ai_vote and userid != 'AI':
+        existing_ai_vote = None
+        for vote in data["votes"]:
+            if (vote["user_id"] == 'AI' and 
+                vote["description_index"] == description_index and 
+                vote["image_index"] == image_index):
+                existing_ai_vote = vote
+                break
+
+        if existing_vote:
+            # If already voted, update the vote_type if different
+            if existing_ai_vote["vote_type"] != vote_type:
+                existing_ai_vote["vote_type"] = vote_type
+                existing_ai_vote["timestamp"] = current_timestamp()
+
     save_community_feedback(project_dir, page, data)
 
-def register_cm_element_vote(project_dir, element_name, description_index, vote_type, userid):
+def register_cm_element_vote(project_dir, element_name, description_index, vote_type, userid, override_ai_vote=False):
     """
     vote_type: "upvote" or "downvote"
     """
@@ -237,6 +252,20 @@ def register_cm_element_vote(project_dir, element_name, description_index, vote_
             "timestamp": current_timestamp()
         }
         data["votes"].append(new_vote)
+
+    if override_ai_vote and userid != 'AI':
+        existing_ai_vote = None
+        for vote in data["votes"]:
+            if (vote["user_id"] == 'AI' and 
+                vote["description_index"] == description_index):
+                existing_ai_vote = vote
+                break
+
+        if existing_vote:
+            # If already voted, update the vote_type if different
+            if existing_ai_vote["vote_type"] != vote_type:
+                existing_ai_vote["vote_type"] = vote_type
+                existing_ai_vote["timestamp"] = current_timestamp()
 
     save_community_feedback_for_element(project_dir, element_name, data)
     

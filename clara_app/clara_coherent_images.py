@@ -1105,7 +1105,7 @@ async def execute_simple_clara_element_request(params, request, callback=None):
         set_element_advice(advice_text, element_text, params1)
         params1['elements_to_generate'] = [ element_text ]
         cost_dict = await process_elements(params1, callback=callback)
-    if request_type == 'new_element_images_from_description':
+    elif request_type == 'new_element_images_from_description':
         description_text = request['description_text']
         cost_dict = await generate_element_image_from_expanded_description(description_text, element_text, params, callback=callback)
     elif request_type == 'add_uploaded_element_image':
