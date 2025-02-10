@@ -6150,7 +6150,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
             elif action == 'vote':
                 vote_type = request.POST.get('vote_type')  # "upvote" or "downvote"
                 if vote_type in ['upvote', 'downvote'] and image_index is not None:
-                    register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid)
+                    register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid, override_ai_vote=True)
 
             elif action == 'upload_image':
                 # The user is uploading a new image
@@ -6295,7 +6295,7 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
                 if vote_type in ['upvote', 'downvote']:
                     # Adapt register_cm_element_vote from:
                     # clara_coherent_images_community_feedback.register_cm_image_vote
-                    register_cm_element_vote(project_dir, element_name, description_index, vote_type, userid)
+                    register_cm_element_vote(project_dir, element_name, description_index, vote_type, userid, override_ai_vote=True)
 
         except Exception as e:
             messages.error(request, f"Error processing your request: {str(e)}\n{traceback.format_exc()}")
