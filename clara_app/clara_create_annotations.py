@@ -324,89 +324,20 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
             
     else:
         current_segmented_elements_dict = None
-
-    #print(f'current_segmented_elements_dict:')
-    #pprint.pprint(current_segmented_elements_dict)
-    
-    if not ASYNC and few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, mwe, config_info):
-        # We're reusing the saved annotations and only redoing the new segments
-        print(f'--- Redoing {processing_phase}, trying to reuse material from previous version')
-        for elements in segmented_elements:
-            key = key_for_segment_elements(elements)
-            if key in current_segmented_elements_dict:
-                if processing_phase in ( 'mwe', 'translated' ):
-                    old_annotations = current_segmented_elements_dict[key]
-                    annotations_for_segments.append(old_annotations)
-                else:
-                    #print(f'--- Found material for {key} in previous version')
-                    old_annotated_segment = current_segmented_elements_dict[key]
-                    annotated_elements += old_annotated_segment
-            else:
-                # In the worst case, the segment is too long and needs to be split up
-                # Usually, chunks is the same as [ elements ]
-                #print(f'--- Annotating material for {key}')
-                chunks = split_elements_by_segments([ elements ], max_elements, processing_phase) if not mwe and not processing_phase in ( 'mwe', 'translated' ) else [ elements ]
-                for chunk in chunks:
-                    key = key_for_segment_elements(chunk)
-                    mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
-                    translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
-                    annotated_chunk_or_segment_annotation, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
-                                                                                                                     l1_language, l2_language,
-                                                                                                                     previous_version=previous_version,
-                                                                                                                     mwe=mwe, mwes=mwes_for_segment,
-                                                                                                                     translation=translation_for_segment,
-                                                                                                                     config_info=config_info, callback=callback)
-                    if processing_phase in ( 'mwe', 'translated' ):
-                        annotations_for_segments.append(annotated_chunk_or_segment_annotation)
-                    else:
-                        annotated_elements += annotated_chunk_or_segment_annotation
-                    all_api_calls += api_calls
-
+   
+    if processing_phase == 'mwe' or mwe or ( processing_phase == 'gloss' and previous_version == 'lemma' ) or \
+       processing_phase == 'segmented' and previous_version in ( 'presegmented', 'segmented'):
+        # Do tagging involving MWEs, gloss-from-lemma, segmentation and morphology improvement one segment at a time
+        chunks = segmented_elements
+        process_segments_singly = True
     else:
-        # We're doing everything from scratch
-        #print(f'--- Doing {processing_phase} element by element')
-        if processing_phase == 'mwe' or mwe or ( processing_phase == 'gloss' and previous_version == 'lemma' ) or \
-           processing_phase == 'segmented' and previous_version in ( 'presegmented', 'segmented'):
-            # Do tagging involving MWEs, gloss-from-lemma, segmentation and morphology improvement one segment at a time
-            chunks = segmented_elements
-            process_segments_singly = True
-        else:
-            chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
-            process_segments_singly = False
+        chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
+        process_segments_singly = False
 
-        if ASYNC:
-            annotations_for_segments, annotated_elements, all_api_calls = call_process_annotations_async(chunks, process_segments_singly,
-                                                                                                         segmented_elements_mwe_dict, segmented_elements_translations_dict,
-                                                                                                         annotate_or_improve, processing_phase, l1_language, l2_language,
-                                                                                                         previous_version, mwe, config_info, callback)
-        else:
-            for chunk in chunks:
-                #print(f'chunk = {chunk}')
-                if process_segments_singly:
-                    key = key_for_segment_elements(chunk)
-                    mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
-                    translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
-                else:
-                    mwes_for_segment = []
-                    translation_for_segment = None
-                annotated_chunk_or_segment_annotation, api_calls = call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processing_phase, chunk,
-                                                                                                                 l1_language, l2_language,
-                                                                                                                 previous_version=previous_version,
-                                                                                                                 mwe=mwe,
-                                                                                                                 mwes=mwes_for_segment,
-                                                                                                                 translation=translation_for_segment,
-                                                                                                                 config_info=config_info, callback=callback)
-                if processing_phase == 'segmented':
-                    annotations_for_segments.append(annotated_chunk_or_segment_annotation)
-                elif processing_phase == 'mwe':
-                    annotations_for_segments.append(annotated_chunk_or_segment_annotation)
-                elif processing_phase == 'translated':
-                    annotations_for_segments += annotated_chunk_or_segment_annotation
-                else:
-                    annotated_elements += annotated_chunk_or_segment_annotation
-                all_api_calls += api_calls
-
-    #print(f': annotations_for_segments: {annotations_for_segments}')
+    annotations_for_segments, annotated_elements, all_api_calls = call_process_annotations_async(chunks, process_segments_singly,
+                                                                                                 segmented_elements_mwe_dict, segmented_elements_translations_dict,
+                                                                                                 annotate_or_improve, processing_phase, l1_language, l2_language,
+                                                                                                 previous_version, mwe, config_info, callback)
     
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
