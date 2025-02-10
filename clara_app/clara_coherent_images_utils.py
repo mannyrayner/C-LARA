@@ -112,7 +112,7 @@ def get_style_params_from_project_params(params):
     style_params = {
         'n_expanded_descriptions': params['n_expanded_descriptions'],
         'n_images_per_description': params['n_images_per_description'],
-        'ai_checking_of_images': params['ai_checking_of_images'],
+        'ai_checking_of_images': params['ai_checking_of_images'] if 'ai_checking_of_images' else 'on',
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_style_description': params['generate_description_model'],
                               'style_example_evaluation': params['example_evaluation_model']}
@@ -129,7 +129,7 @@ def get_element_descriptions_params_from_project_params(params, elements_to_gene
     element_params = {
         'n_expanded_descriptions': params['n_expanded_descriptions'],
         'n_images_per_description': params['n_images_per_description'],
-        'ai_checking_of_images': params['ai_checking_of_images'],
+        'ai_checking_of_images': params['ai_checking_of_images'] if 'ai_checking_of_images' else 'on',
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_element_description': params['generate_description_model'],
                               'evaluate_element_image': params['example_evaluation_model']}
@@ -147,7 +147,7 @@ def get_page_params_from_project_params(params, pages_to_generate=None):
         'n_previous_pages': params['n_previous_pages'],
         'max_description_generation_rounds': params['max_description_generation_rounds'],
 
-        'ai_checking_of_images': params['ai_checking_of_images'],
+        'ai_checking_of_images': params['ai_checking_of_images'] if 'ai_checking_of_images' else 'on',
         
         'page_interpretation_prompt': params['page_interpretation_prompt'],
         'page_evaluation_prompt': params['page_evaluation_prompt'],
