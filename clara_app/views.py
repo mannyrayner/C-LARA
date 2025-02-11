@@ -6110,7 +6110,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
 
         try:
             #print(f'action = {action}')
-            if action in ( 'variants_requests', 'images_with_advice' ):
+            if action in ( 'variants_requests', 'images_with_advice', 'upload_image' ):
                 if not can_use_ai:
                     messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to create images")
                     return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
@@ -6137,6 +6137,21 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
                     else:
                         messages.error(request, f"Unknown mode '{mode}'")
                         return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
+                elif action == 'upload_image':
+                    # The user is uploading a new image
+                    if 'uploaded_image_file_path' in request.FILES:
+                        # Convert the in-memory file object to a local file path
+                        uploaded_file_obj = request.FILES['uploaded_image_file_path']
+                        real_image_file_path = uploaded_file_to_file(uploaded_file_obj)
+
+                        requests = [ { 'request_type': 'add_uploaded_page_image',
+                                       'page': page_number,
+                                       'image_file_path': real_image_file_path } ]
+
+                    else:
+                        messages.error(request, "No file found for the upload_image action.")
+                        return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
+
                 else:
                     messages.error(request, f"Unknown request type '{action}'")
                     return redirect('simple_clara_review_v2_images_for_page', project_id=project_id, page_number=page_number, from_view=from_view, status='none')
@@ -6152,15 +6167,15 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
                 if vote_type in ['upvote', 'downvote'] and image_index is not None:
                     register_cm_image_vote(project_dir, page_number, description_index, image_index, vote_type, userid, override_ai_vote=True)
 
-            elif action == 'upload_image':
-                # The user is uploading a new image
-                if 'uploaded_image_file_path' in request.FILES:
-                    # Convert the in-memory file object to a local file path
-                    uploaded_file_obj = request.FILES['uploaded_image_file_path']
-                    real_image_file_path = uploaded_file_to_file(uploaded_file_obj)
-
-                    clara_project_internal.add_uploaded_page_image_v2(real_image_file_path, page_number)
-                    messages.success(request, "Your image was uploaded.")
+##            elif action == 'upload_image':
+##                # The user is uploading a new image
+##                if 'uploaded_image_file_path' in request.FILES:
+##                    # Convert the in-memory file object to a local file path
+##                    uploaded_file_obj = request.FILES['uploaded_image_file_path']
+##                    real_image_file_path = uploaded_file_to_file(uploaded_file_obj)
+##
+##                    clara_project_internal.add_uploaded_page_image_v2(real_image_file_path, page_number)
+##                    messages.success(request, "Your image was uploaded.")
                 else:
                     messages.error(request, "No file found for the upload_image action.")
 

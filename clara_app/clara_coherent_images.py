@@ -1086,6 +1086,9 @@ async def execute_simple_clara_image_request(params, request, callback=None):
         description_index = request['description_index']
         alternate_image_id = await alternate_image_id_for_description_index(project_dir, page_number, description_index)
         cost_dict = await create_variant_images_for_page(params1, page_number, alternate_image_id, callback=callback)
+    elif request_type == 'add_uploaded_page_image':
+        image_file_path = request['image_file_path']
+        cost_dict = await add_uploaded_page_image(image_file_path, page_number, params, callback=callback)
     else:
         raise ValueError(f'Unknown request type {request_type} in {request}')
 
@@ -1237,7 +1240,7 @@ async def add_uploaded_element_image(image_file_path, element_text, params, call
 
     return cost_dict
 
-def add_uploaded_page_image(image_file_path, page_number, params, callback=None):
+async def add_uploaded_page_image(image_file_path, page_number, params, callback=None):
     """
     Add an uploaded image to the V2 data structure for the specified page.
 
@@ -1263,31 +1266,35 @@ def add_uploaded_page_image(image_file_path, page_number, params, callback=None)
     # Create image_v0 directory
     rel_image_dir = f'{rel_description_dir}/image_v0'
     make_project_dir(project_dir, rel_image_dir)
+    rel_image_path = f'{rel_image_dir}/image.jpg'
     
     # Move the uploaded image to the image directory
-    destination_image_path_image = project_pathname(project_dir, f'{rel_image_dir}/image.jpg')
+    destination_image_path_image = project_pathname(project_dir, rel_image_path)
     destination_image_path_description = project_pathname(project_dir, f'{rel_description_dir}/image.jpg')
-    #move_file(image_file_path, destination_image_path)
     copy_file(image_file_path, destination_image_path_image)
     copy_file(image_file_path, destination_image_path_description)
-    #print(f'copy_file({image_file_path}, {destination_image_path})')
-    
-    # Create placeholder files
+
+    # Create placeholder files first.
+    # We will use these to create scores, since we don't know how to evaluate fit on an uploaded image.
     rel_expanded_description_path = f'{rel_description_dir}/expanded_description.txt'
     write_project_txt_file("User uploaded image", project_dir, rel_expanded_description_path)
     
-    rel_evaluation_path_image = f'{rel_image_dir}/evaluation.txt'
-    rel_evaluation_path_description = f'{rel_description_dir}/evaluation.txt'
-    write_project_txt_file("4\nAssume perfect fit since uploaded", project_dir, rel_evaluation_path_image)
-    write_project_txt_file("4\nAssume perfect fit since uploaded", project_dir, rel_evaluation_path_description)
+    rel_evaluation_path = f'{rel_image_dir}/evaluation.txt'
+    write_project_txt_file("4\nAssume perfect fit since uploaded", project_dir, rel_evaluation_path)
 
-    rel_interpretation_path_image = f'{rel_image_dir}/image_interpretation.txt'
-    rel_interpretation_path_description = f'{rel_description_dir}/interpretation.txt'
-    write_project_txt_file("So far no interpretation", project_dir, rel_interpretation_path_image)
-    write_project_txt_file("So far no interpretation", project_dir, rel_interpretation_path_description)
-    
+    rel_interpretation_path = f'{rel_image_dir}/image_interpretation.txt'
+    write_project_txt_file("So far no interpretation", project_dir, rel_interpretation_path)
+
+    image_dirs = [ rel_image_dir ]
+    score_description_dir_representative(rel_description_dir, image_dirs, params)
+
+    # Create and store the real description
+    cost_dict = await create_and_store_expanded_description_for_uploaded_image(rel_image_path, page_number, next_description_index, params, callback=callback)
+
     # Update alternate_images.json
-    asyncio.run(create_alternate_images_json(page_dir, project_dir))
+    await create_alternate_images_json(page_dir, project_dir)
+
+    return cost_dict
     
 
 async def find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=None):
@@ -1532,11 +1539,11 @@ async def create_variant_images_for_page(params, page_number, alternate_image_id
     alternate_images_info = get_alternate_image_info_for_index(all_alternate_images_info, alternate_image_id)
     description_index = int(alternate_images_info['description_index'])
     expanded_description = read_project_txt_file(project_dir, alternate_images_info['expanded_description_path'])
-    if uploaded_image_description(expanded_description):
-        image_path = alternate_images_info['image_path']
-        expanded_description, description_cost_dict = await create_and_store_expanded_description_for_uploaded_image(image_path, page_number, description_index,
-                                                                                                                     params, callback=callback)
-        combine_cost_dicts(total_cost_dict, description_cost_dict)
+##    if uploaded_image_description(expanded_description):
+##        image_path = alternate_images_info['image_path']
+##        expanded_description, description_cost_dict = await create_and_store_expanded_description_for_uploaded_image(image_path, page_number, description_index,
+##                                                                                                                     params, callback=callback)
+##        combine_cost_dicts(total_cost_dict, description_cost_dict)
         
     await post_task_update_async(callback, f'Generating pages images for description_version_number = {description_index}')
     images_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_index,
@@ -1848,23 +1855,29 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, context_cost_dict)
 
-        element_description_with_element_texts = [ ( element_text, get_element_description(element_text, params) )
-                                                   for element_text in elements ]
-        if not element_description_with_element_texts:
-            element_descriptions_text = f'(No specifications of elements)'
-        else:
-            element_descriptions_text = f'Specifications of relevant elements:\n'
-            for element_text, element_description in element_description_with_element_texts:
-                element_descriptions_text += f'\nElement "{element_text}":\n{element_description}'
+##        element_description_with_element_texts = [ ( element_text, get_element_description(element_text, params) )
+##                                                   for element_text in elements ]
+##        if not element_description_with_element_texts:
+##            element_descriptions_text = f'(No specifications of elements)'
+##        else:
+##            element_descriptions_text = f'Specifications of relevant elements:\n'
+##            for element_text, element_description in element_description_with_element_texts:
+##                element_descriptions_text += f'\nElement "{element_text}":\n{element_description}'
+##
+##        # Create the prompt
+##        prompt_template = get_prompt_template('default', 'generate_page_description_for_uploaded_image')
+##        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+##                                        style_description=style_description,
+##                                        page_number=page_number,
+##                                        page_text=page_text,
+##                                        image_interpretation=image_interpretation,
+##                                        element_descriptions_text=element_descriptions_text)
 
         # Create the prompt
-        prompt_template = get_prompt_template('default', 'generate_page_description_for_uploaded_image')
-        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+        prompt_template = get_prompt_template('just_style', 'generate_page_description_for_uploaded_image')
+        prompt = prompt_template.format(page_text=page_text,
                                         style_description=style_description,
-                                        page_number=page_number,
-                                        page_text=page_text,
-                                        image_interpretation=image_interpretation,
-                                        element_descriptions_text=element_descriptions_text)
+                                        image_interpretation=image_interpretation)
 
         valid_expanded_description_produced = False
         tries_left = 5
@@ -1886,7 +1899,7 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         if valid_expanded_description_produced:   
         # Write out description
             write_project_txt_file(expanded_description, project_dir, f'pages/page{page_number}/description_v{description_version_number}/expanded_description.txt')
-            return expanded_description, total_cost_dict
+            return total_cost_dict
         else:
             error_message = f"Error when creating description of uploaded image. No generated description was less than {max_dall_e_3_prompt_length} characters long"
             await post_task_update_async(callback, error_message)
@@ -1897,68 +1910,6 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         await post_task_update_async(callback, error_message)
         raise ImageGenerationError(message = f'Exception when creating description of uploaded image')
 
-##async def create_and_store_expanded_description_for_uploaded_element_image(rel_image_path, element_text, description_version_number, params, callback=None):
-##    try:
-##        project_dir = params['project_dir']
-##
-##        element_name = element_text_to_element_name(element_text)
-##
-##        image_path = project_pathname(project_dir, rel_image_path)
-##        style_description = get_style_description(params)
-##
-##        total_cost_dict = {}
-##        total_errors = ''
-##        
-##        interpretation_prompt_id = 'interpret_uploaded_element_image'
-##        description = 'irrelevant'
-##        image_interpretation, interpretation_errors, interpret_cost_dict = await interpret_element_image_with_prompt(image_path, description, element_text,
-##                                                                                                                     interpretation_prompt_id, params, callback=callback)
-##        total_cost_dict = combine_cost_dicts(total_cost_dict, interpret_cost_dict)
-##        total_errors += interpretation_errors
-##
-##        # Get the text of the story and the style description
-##        story_data = get_story_data(params)
-##        formatted_story_data = json.dumps(story_data, indent=4)
-##        
-##        style_description = get_style_description(params)
-##
-##        # Create the prompt
-##        prompt_template = get_prompt_template('default', 'generate_description_for_uploaded_element_image')
-##        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
-##                                        style_description=style_description,
-##                                        element_text=element_text,
-##                                        image_interpretation=image_interpretation)
-##
-##        valid_expanded_description_produced = False
-##        tries_left = 5
-##        #tries_left = 1
-##        max_dall_e_3_prompt_length = 2000
-##        
-##        while not valid_expanded_description_produced and tries_left:
-##            description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_element_description', params, callback=callback)
-##            total_cost_dict = combine_cost_dicts(total_cost_dict, { 'generate_element_description': description_api_call.cost })
-##
-##            # Save the expanded description
-##            expanded_description = description_api_call.response
-##            if len(expanded_description) < max_dall_e_3_prompt_length:
-##                valid_expanded_description_produced = True
-##            else:
-##                print(f'Length of description = {len(expanded_description)}')
-##                tries_left -= 1
-##
-##        if valid_expanded_description_produced:   
-##        # Write out description
-##            write_project_txt_file(expanded_description, project_dir, f'elements/{element_name}/description_v{description_version_number}/expanded_description.txt')
-##            return total_cost_dict
-##        else:
-##            error_message = f"Error when creating description of uploaded image. No generated description was less than {max_dall_e_3_prompt_length} characters long"
-##            await post_task_update_async(callback, error_message)
-##            raise ImageGenerationError(message = error_message)
-##        
-##    except Exception as e:
-##        error_message = f'Exception when creating description of uploaded image. {str(e)}"\n{traceback.format_exc()}'
-##        await post_task_update_async(callback, error_message)
-##        raise ImageGenerationError(message = f'Exception when creating description of uploaded image')
 
 async def create_and_store_expanded_description_for_uploaded_element_image(rel_image_path, element_text, description_version_number, params, callback=None):
     try:

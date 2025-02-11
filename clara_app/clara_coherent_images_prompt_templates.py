@@ -511,6 +511,31 @@ generate a single image for page {page_number}.
 
 The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
 
+""",
+
+    'just_style': """We are generating a set of images to illustrate a text.
+
+The intended style in which the images will be produced is described as follows:
+
+{style_description}
+
+We are about to generate the image for a page whose text is
+
+{page_text}
+
+The user has uploaded an image which they wish to use as inspiration for this one, suitably adapting it by taking
+account of the style description. Here is a description of the uploaded image produced by gpt-4o:
+
+{image_interpretation}
+
+In this step, please create a detailed specification of the image on this page, based on the user
+uploaded image, in the intended style, and consistent with the text, that can be passed to DALL-E-3 to
+generate a single image for the page.
+
+*IMPORTANT*:
+
+The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+
 """
     }
 
