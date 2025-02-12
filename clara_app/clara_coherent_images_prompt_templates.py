@@ -536,6 +536,34 @@ generate a single image for the page.
 
 The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
 
+""",
+
+'style_and_background': """We are generating a set of images to illustrate a text.
+
+The intended style in which the images will be produced is described as follows:
+
+{style_description}
+
+We are about to generate the image for a page whose text is
+
+{page_text}
+
+Here is some background information:
+
+{background_advice}
+
+The user has uploaded an image which they wish to use as inspiration for this one.
+Here is a description of the uploaded image produced by gpt-4o:
+
+{image_interpretation}
+
+Your task is to create a detailed specification of the image on this page, based on the user uploaded image and the page text,
+in the intended style and taking account of the background, that can be passed to DALL-E-3 to generate a single image for the page.
+
+*IMPORTANT*:
+
+The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+
 """
     }
 

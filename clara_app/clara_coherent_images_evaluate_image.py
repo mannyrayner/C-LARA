@@ -103,7 +103,9 @@ async def interpret_image_with_prompt(image_path, expanded_description, page_num
     
     page_text = get_page_text(page_number, params)
 
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text)
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                    page_number=page_number,
+                                    page_text=page_text)
 
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5

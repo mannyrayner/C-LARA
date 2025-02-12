@@ -1910,29 +1910,20 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, context_cost_dict)
 
-##        element_description_with_element_texts = [ ( element_text, get_element_description(element_text, params) )
-##                                                   for element_text in elements ]
-##        if not element_description_with_element_texts:
-##            element_descriptions_text = f'(No specifications of elements)'
-##        else:
-##            element_descriptions_text = f'Specifications of relevant elements:\n'
-##            for element_text, element_description in element_description_with_element_texts:
-##                element_descriptions_text += f'\nElement "{element_text}":\n{element_description}'
-##
-##        # Create the prompt
-##        prompt_template = get_prompt_template('default', 'generate_page_description_for_uploaded_image')
-##        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
-##                                        style_description=style_description,
-##                                        page_number=page_number,
-##                                        page_text=page_text,
-##                                        image_interpretation=image_interpretation,
-##                                        element_descriptions_text=element_descriptions_text)
-
         # Create the prompt
-        prompt_template = get_prompt_template('just_style', 'generate_page_description_for_uploaded_image')
-        prompt = prompt_template.format(page_text=page_text,
-                                        style_description=style_description,
-                                        image_interpretation=image_interpretation)
+        background_advice = get_background_advice(params)
+
+        if background_advice:
+            prompt_template = get_prompt_template('style_and_background', 'generate_page_description_for_uploaded_image')
+            prompt = prompt_template.format(page_text=page_text,
+                                            background_advice=background_advice,
+                                            style_description=style_description,
+                                            image_interpretation=image_interpretation)
+        else:
+            prompt_template = get_prompt_template('just_style', 'generate_page_description_for_uploaded_image')
+            prompt = prompt_template.format(page_text=page_text,
+                                            style_description=style_description,
+                                            image_interpretation=image_interpretation)
 
         valid_expanded_description_produced = False
         tries_left = 5
