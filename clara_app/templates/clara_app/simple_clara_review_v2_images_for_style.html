@@ -1,0 +1,70 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+
+<div class="main-content">
+<h2>Simple C-LARA Review Style ({{ project.title }})</h2>
+
+{% for d_idx, dinfo in descriptions_info.items %}
+
+  {% if dinfo.preferred %}
+  <div class="description-group-preferred">
+  {% else %}
+  <div class="description-group">
+  {% endif %}
+  <div class="image-row">
+  {% for img in dinfo.images %}
+	<div class="image-container non-preferred-image">
+        <img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:200px;"/>
+    </div>
+  {% endfor %}
+  </div>
+  <!-- Show the existing expanded description -->
+  <textarea readonly rows="8" cols="100">{{ dinfo.expanded_description }}</textarea><br>
+  
+  Upvotes: {{ dinfo.upvotes_count }} Downvotes: {{ dinfo.downvotes_count }}
+
+      <form method="post" style="display:inline-block;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="vote">
+        <input type="hidden" name="description_index" value="{{ d_idx }}">
+        <input type="hidden" name="vote_type" value="upvote">
+        <button type="submit">👍</button>
+      </form>
+
+      <form method="post" style="display:inline-block;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="vote">
+        <input type="hidden" name="description_index" value="{{ d_idx }}">
+        <input type="hidden" name="vote_type" value="downvote">
+        <button type="submit">👎</button>
+      </form>
+   </div>
+{% endfor %}
+
+<h3>Create style descriptions and images</h3>
+<form method="post" style="margin-bottom:1em;">
+{% csrf_token %}
+<input type="hidden" name="action" value="images_with_advice_or_description">
+<input type="hidden" name="action" value="images_with_advice_or_description">
+<select name="mode">
+  <option value="advice">Generate using advice (creates description and images)</option>
+  <option value="expanded_description">Provide full description (only creates images)</option>
+</select><br>
+{% if advice %}
+  <textarea name="advice_or_description_text" rows="8" cols="80">{{ advice }}</textarea>
+{% else %}
+  <textarea name="advice_or_description_text" placeholder="Add advice or description here (advice optional)" rows="8" cols="100"></textarea>
+{% endif %}
+<button type="submit">Create</button>
+</form>
+
+</div>
+
+<div class="sticky-footer">
+{% if from_view == 'simple_clara' %}
+	<a href="{% url 'simple_clara' project.id 'init' %}#style">Back to main Simple C-LARA page</a>
+{% else %}
+	<a href="{% url 'edit_images_v2' project.id 'init' %}#style">Back to main Edit Images page</a>
+{% endif %}
+</div>
+{% endblock %}

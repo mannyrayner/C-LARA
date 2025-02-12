@@ -67,11 +67,12 @@
         <tr>
           <th>Advice</th>
           <th>Image</th>
+		  <th>Actions</th>
         </tr>
       </thead>
 	  <tbody>
       {% for form in style_formset %}
-			<tr>
+			<tr id="style">
 				<td>{{ form.advice }}</td>
 				<td>{% if form.relative_file_path.value %}
 					<img src="{% url 'serve_coherent_images_v2_file' project.id form.relative_file_path.value %}" alt="Style Image" style="max-width: 300px; max-height: 300px;">
@@ -80,34 +81,20 @@
 					No style image currently stored.
 					{% endif %}
 				</td>
+				<td>
+					{% if form.relative_file_path.value %}
+						<a href="{% url 'simple_clara_review_v2_images_for_style' project.id 'edit_images_v2' 'init' %}">Review Style</a><br>
+					{% endif %}
+				</td>
 			</tr>
-		<!-- Display alternate images -->
-			{% if form.initial.alternate_images %}
-			<tr>
-				<div class="alternate-images">
-					<td colspan="2">
-					{% for alt_image in form.initial.alternate_images %}
-						<img src="{% url 'serve_coherent_images_v2_file' project.id alt_image.relative_file_path %}" alt="Alternate Image" style="max-width: 100px; max-height: 100px;">
-						<!-- Promote Button -->
-						<form method="post" style="display:inline;">
-							{% csrf_token %}
-							<input type="hidden" name="action" value="promote_alternate_image">
-							<input type="hidden" name="content_type" value="style">
-							<input type="hidden" name="content_identifier" value="style">
-							<input type="hidden" name="alternate_image_id" value="{{ alt_image.id }}">
-							<button type="submit">Promote</button>
-						</form>
-					{% endfor %}
-					</td>
-				</div>
-			</tr>
-			{% endif %}
 		{% endfor %}
 		</tr>
 	  </tbody>
     </table>
 		<button type="submit" name="action" value="save_style_advice">Save Style Advice</button>
-        <button type="submit" name="action" value="create_style_description_and_image">Generate Style Image</button>
+		{% if not style_exists %}
+			<button type="submit" name="action" value="create_style_description_and_image">Generate Style Image</button>
+		{% endif %}
  
   </form>
 
