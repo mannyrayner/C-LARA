@@ -889,6 +889,7 @@ async def generate_element_image_from_expanded_description(description, element_
     element_name = element_text_to_element_name(element_text)
     project_dir = params['project_dir']
     element_dir = f'elements/{element_name}'
+    cost_dict = {}
     
     all_description_dirs, description_version_number = existing_description_version_directories_and_first_unused_number_for_element(element_name, params)
     description_dir = f'{element_dir}/description_v{description_version_number}'
@@ -906,7 +907,30 @@ async def generate_element_image_from_expanded_description(description, element_
     except Exception as e:
         error_message = f'"{str(e)}"\n{traceback.format_exc()}'
         write_project_txt_file(error_message, project_dir, f'{description_dir}/error.txt')
-        return description_directory, {}   
+        return cost_dict
+
+async def generate_style_image_from_expanded_description(description, params, callback=None):
+    project_dir = params['project_dir']
+    style_dir = f'style'
+    cost_dict = {}
+    
+    all_description_dirs, description_version_number = existing_description_version_directories_and_first_unused_number_for_style(params)
+    description_dir = f'{style_dir}/description_v{description_version_number}'
+    make_directory(project_pathname(project_dir, description_dir))
+
+    try:
+        write_project_txt_file(description, project_dir, f'{description_dir}/expanded_description.txt')
+        
+        cost_dict = await generate_and_rate_style_images(description, description_version_number, params, callback=callback)
+
+        await create_alternate_images_json(style_dir, project_dir)
+        write_project_cost_file(cost_dict, project_dir, f'{description_dir}/cost.json')
+        return cost_dict
+
+    except Exception as e:
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        write_project_txt_file(error_message, project_dir, f'{description_dir}/error.txt')
+        return cost_dict
 
 async def generate_and_rate_element_images(element_name, description, description_version_number, params, callback=None):
     project_dir = params['project_dir']
@@ -1040,6 +1064,18 @@ async def execute_simple_clara_element_requests(project_dir, requests, callback=
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     return total_cost_dict
 
+async def execute_simple_clara_style_requests(project_dir, requests, callback=None):
+    #project_params = project_params_for_simple_clara
+    project_params = get_project_params(project_dir)
+    params = get_style_params_from_project_params(project_params)
+    params['project_dir'] = project_dir
+    
+    total_cost_dict = {}
+    for request in requests:
+        cost_dict = await execute_simple_clara_style_request(params, request, callback=callback)
+        total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
+    return total_cost_dict
+
 async def execute_community_request(params, request, callback=None):
     project_dir = params['project_dir']
     params1 = copy.copy(params)
@@ -1114,6 +1150,25 @@ async def execute_simple_clara_element_request(params, request, callback=None):
     elif request_type == 'add_uploaded_element_image':
         image_file_path = request['image_file_path']
         cost_dict = await add_uploaded_element_image(image_file_path, element_text, params, callback=callback)
+    else:
+        raise ValueError(f'Unknown request type in {request}')
+
+    return cost_dict
+
+async def execute_simple_clara_style_request(params, request, callback=None):
+    print(f'execute_simple_clara_style_request(params, {request}, callback=None)')
+          
+    project_dir = params['project_dir']
+    params1 = copy.copy(params)
+    
+    request_type = request['request_type']
+    if request_type == 'new_style_description_and_images_from_advice':
+        advice_text = request['advice_text']
+        set_style_advice(advice_text, project_dir)
+        cost_dict = await process_style(params1, callback=callback)
+    elif request_type == 'new_style_images_from_description':
+        description_text = request['description_text']
+        cost_dict = await generate_style_image_from_expanded_description(description_text, params, callback=callback)
     else:
         raise ValueError(f'Unknown request type in {request}')
 

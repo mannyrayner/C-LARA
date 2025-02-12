@@ -130,11 +130,48 @@ def get_element_description_info_for_cm_reviewing(alternate_images, element_name
             
     return descriptions_info, preferred_description_id
 
+def get_style_description_info_for_cm_reviewing(alternate_images, project_dir):
+    content_dir = project_pathname(project_dir, f"style")
+
+    preferred_description_id = determine_preferred_style_description(content_dir, project_dir)
+
+    # Group images by description_index
+    images_by_description = {}
+    for img in alternate_images:
+        d_idx = img['description_index']
+        if d_idx not in images_by_description:
+            images_by_description[d_idx] = []
+        images_by_description[d_idx].append(img)
+
+    # For each description, get variants requests, and votes
+    descriptions_info = {}
+    for d_idx, imgs in images_by_description.items():
+        desc_info = get_cm_description_info_for_style(project_dir, d_idx)
+        upvotes = sum(1 for v in desc_info['votes'] if v['vote_type'] == 'upvote')
+        downvotes = sum(1 for v in desc_info['votes'] if v['vote_type'] == 'downvote')
+        expanded_description = read_txt_file(project_pathname(project_dir, imgs[0]['expanded_description_path']))
+
+        # Determine if this is the preferred description
+        preferred = ( d_idx == preferred_description_id )
+            
+        descriptions_info[d_idx] = {
+            'upvotes_count': upvotes,
+            'downvotes_count': downvotes,
+            'preferred': preferred,
+            'images': imgs,
+            'expanded_description': expanded_description,
+        }
+            
+    return descriptions_info, preferred_description_id
+
 def community_feedback_path(project_dir, page):
     return os.path.join(project_dir, "pages", f"page{page}", "community_feedback.json")
 
 def community_feedback_path_for_element(project_dir, element_name):
     return os.path.join(project_dir, "elements", f"{element_name}", "community_feedback.json")
+
+def community_feedback_path_for_style(project_dir):
+    return os.path.join(project_dir, "style", "community_feedback.json")
 
 def load_community_feedback(project_dir, page):
     path = community_feedback_path(project_dir, page)
@@ -163,6 +200,19 @@ def load_community_feedback_for_element(project_dir, element_name):
             "comments": []
         }
 
+def load_community_feedback_for_style(project_dir):
+    path = community_feedback_path_for_style(project_dir)
+    if os.path.exists(path):
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    else:
+        # If no file exists, return an empty structure
+        return {
+            "votes": [],
+            "advice": [],
+            "comments": []
+        }
+
 def save_community_feedback(project_dir, page, data):
     path = community_feedback_path(project_dir, page)
     with open(path, 'w', encoding='utf-8') as f:
@@ -170,6 +220,11 @@ def save_community_feedback(project_dir, page, data):
 
 def save_community_feedback_for_element(project_dir, element_name, data):
     path = community_feedback_path_for_element(project_dir, element_name)
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+def save_community_feedback_for_style(project_dir, data):
+    path = community_feedback_path_for_style(project_dir)
     with open(path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -268,6 +323,51 @@ def register_cm_element_vote(project_dir, element_name, description_index, vote_
                 existing_ai_vote["timestamp"] = current_timestamp()
 
     save_community_feedback_for_element(project_dir, element_name, data)
+
+def register_cm_style_vote(project_dir, description_index, vote_type, userid, override_ai_vote=False):
+    """
+    vote_type: "upvote" or "downvote"
+    """
+    data = load_community_feedback_for_style(project_dir)
+
+    # Check if user already voted for this image
+    existing_vote = None
+    for vote in data["votes"]:
+        if (vote["user_id"] == userid and 
+            vote["description_index"] == description_index): 
+            existing_vote = vote
+            break
+
+    if existing_vote:
+        # If already voted, update the vote_type if different
+        if existing_vote["vote_type"] != vote_type:
+            existing_vote["vote_type"] = vote_type
+            existing_vote["timestamp"] = current_timestamp()
+    else:
+        # No previous vote, append a new record
+        new_vote = {
+            "user_id": userid,
+            "description_index": description_index,
+            "vote_type": vote_type,
+            "timestamp": current_timestamp()
+        }
+        data["votes"].append(new_vote)
+
+    if override_ai_vote and userid != 'AI':
+        existing_ai_vote = None
+        for vote in data["votes"]:
+            if (vote["user_id"] == 'AI' and 
+                vote["description_index"] == description_index):
+                existing_ai_vote = vote
+                break
+
+        if existing_vote:
+            # If already voted, update the vote_type if different
+            if existing_ai_vote["vote_type"] != vote_type:
+                existing_ai_vote["vote_type"] = vote_type
+                existing_ai_vote["timestamp"] = current_timestamp()
+
+    save_community_feedback_for_style(project_dir, data)
     
 
 def register_cm_image_variants_request(project_dir, page, description_index, userid):
@@ -347,6 +447,19 @@ def get_cm_description_info_for_element(project_dir, element_name, description_i
     description_index = int(description_index)
     
     data = load_community_feedback_for_element(project_dir, element_name)
+
+    votes = [r for r in data["votes"]
+             if r["description_index"] == description_index]
+
+    return { "votes": votes }
+
+def get_cm_description_info_for_style(project_dir, description_index):
+    """
+    Returns all votes related to a particular description.
+    """
+    description_index = int(description_index)
+    
+    data = load_community_feedback_for_style(project_dir)
 
     votes = [r for r in data["votes"]
              if r["description_index"] == description_index]
@@ -478,6 +591,63 @@ def update_ai_votes_for_element_in_feedback(project_dir, element_name):
     # Adapt save_community_feedback_for_element
     # from save_community_feedback
     save_community_feedback_for_element(project_dir, element_name, feedback_data)
+
+def update_ai_votes_for_style_in_feedback(project_dir):
+    """
+    Update AI votes in the community_feedback.json for the style.
+
+    Args:
+        project_dir (str): The project directory.
+
+    Returns:
+        None
+    """
+    params =  { 'project_dir': project_dir }
+    content_dir = Path(project_dir) / f"style"
+    alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
+
+    # Load existing feedback
+    # Adapt load_community_feedback_for_element from
+    # load_community_feedback
+    feedback_data = load_community_feedback_for_style(project_dir)
+
+    votes = feedback_data.get('votes', [])
+
+    for img in alternate_images:
+        description_index = int(img['description_index'])
+
+        # Check if AI vote is already recorded
+        ai_votes = [v for v in votes if v['description_index'] == description_index and v['user_id'] == 'AI']
+        if ai_votes:
+            continue  # AI vote already recorded, skip
+
+        # Get AI score for the image
+        description_dir = content_dir / f"description_v{description_index}"
+        # Adapt element_score_for_description_dir
+        # from clara_coherent_images_utils.score_for_image_dir
+        ai_score = element_score_for_description_dir(description_dir, params)
+
+        # Map AI score to vote type
+        if ai_score >= 2.5:
+            vote_type = 'upvote'
+        elif ai_score < 2.0:
+            vote_type = 'downvote'
+        else:
+            vote_type = 'neutral'
+
+        # Add AI vote to feedback
+        if vote_type != 'neutral':
+            ai_vote_record = { "user_id": "AI",
+                               "description_index": description_index,
+                               "vote_type": vote_type,
+                               "timestamp": current_timestamp()
+                               }
+            votes.append(ai_vote_record)
+
+    # Write updated feedback to file
+    # Adapt save_community_feedback_for_element
+    # from save_community_feedback
+    save_community_feedback_for_style(project_dir, feedback_data)
     
 def determine_preferred_image(content_dir, project_dir, page_number):
     """
@@ -526,6 +696,38 @@ def determine_preferred_element_description(content_dir, project_dir, element_na
         int: The index of the preferred description directory, or None if no description directories exist.
     """
     feedback_data = load_community_feedback_for_element(project_dir, element_name)
+    votes = feedback_data.get('votes', [])
+    alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
+
+    # Tally votes for each image
+    vote_counts = {}
+    for img in alternate_images:
+        description_index = int(img['description_index'])
+        if not description_index in vote_counts:
+            # Only count a description index once
+            relevant_votes = [v for v in votes if v['description_index'] == description_index]
+
+            upvotes = sum(1 for v in relevant_votes if v['vote_type'] == 'upvote')
+            downvotes = sum(1 for v in relevant_votes if v['vote_type'] == 'downvote')
+            vote_counts[description_index] = upvotes - downvotes  # Net score
+
+    # Find the description index with the highest net score
+    preferred_description_index = max(vote_counts, key=vote_counts.get, default=None)
+
+    return preferred_description_index
+
+def determine_preferred_style_description(content_dir, project_dir):
+    """
+    Determine the preferred description index for the style based on combined AI and human votes.
+
+    Args:
+        content_dir (Path): Path to the content directory.
+        project_dir (str): Path to the project directory.
+
+    Returns:
+        int: The index of the preferred description directory, or None if no description directories exist.
+    """
+    feedback_data = load_community_feedback_for_style(project_dir)
     votes = feedback_data.get('votes', [])
     alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
 

@@ -50,10 +50,6 @@ urlpatterns = [
     path('delete_tts_data_status/<str:report_id>/', views.delete_tts_data_status, name='delete_tts_data_status'),
     path('delete_tts_data_monitor/<str:language>/<str:report_id>/', views.delete_tts_data_monitor, name='delete_tts_data_monitor'),
     path('delete_tts_data_complete/<str:language>/<str:status>/', views.delete_tts_data_complete, name='delete_tts_data_complete'),
-##    path('initialise_orm_repositories/', views.initialise_orm_repositories, name='initialise_orm_repositories'),
-##    path('initialise_orm_repositories_status/<str:report_id>/', views.initialise_orm_repositories_status, name='initialise_orm_repositories_status'),
-##    path('initialise_orm_repositories_monitor/<str:report_id>/', views.initialise_orm_repositories_monitor, name='initialise_orm_repositories_monitor'),
-##    path('initialise_orm_repositories_complete/<str:status>/', views.initialise_orm_repositories_complete, name='initialise_orm_repositories_complete'),
     path('manage_language_masters/', views.manage_language_masters, name='manage_language_masters'),
     path('remove_language_master/<int:pk>/', views.remove_language_master, name='remove_language_master'),
     path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
@@ -125,6 +121,8 @@ urlpatterns = [
          name='simple_clara_review_v2_images_for_page'),
     path('project/<int:project_id>/simple_clara_review_v2_images_for_element/<str:element_name>/<str:from_view>/<str:status>/', views.simple_clara_review_v2_images_for_element,
          name='simple_clara_review_v2_images_for_element'),
+    path('project/<int:project_id>/simple_clara_review_v2_images_for_style/<str:from_view>/<str:status>/', views.simple_clara_review_v2_images_for_style,
+         name='simple_clara_review_v2_images_for_style'),
 
     path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', views.execute_community_requests_for_page_monitor,
          name='execute_community_requests_for_page_monitor'),
@@ -140,6 +138,11 @@ urlpatterns = [
          name='execute_simple_clara_element_requests_monitor'),
     path('project/<int:project_id>/execute_simple_clara_element_requests_status/<str:report_id>/', views.execute_simple_clara_element_requests_status,
          name='execute_simple_clara_element_requests_status'),
+
+    path('project/<int:project_id>/execute_simple_clara_style_requests_monitor/<str:report_id>/<str:from_view>/', views.execute_simple_clara_style_requests_monitor,
+         name='execute_simple_clara_style_requests_monitor'),
+    path('project/<int:project_id>/execute_simple_clara_style_requests_status/<str:report_id>/', views.execute_simple_clara_style_requests_status,
+         name='execute_simple_clara_style_requests_status'),
     
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
     path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 

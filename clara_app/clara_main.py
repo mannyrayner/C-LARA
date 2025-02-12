@@ -161,7 +161,8 @@ from .clara_export_import import create_export_zipfile, change_project_id_in_imp
 from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
 from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, add_uploaded_element_image, create_variant_images_for_page
-from .clara_coherent_images import execute_community_requests_list, execute_simple_clara_image_requests, execute_simple_clara_element_requests
+from .clara_coherent_images import execute_community_requests_list
+from .clara_coherent_images import execute_simple_clara_image_requests, execute_simple_clara_element_requests, execute_simple_clara_style_requests
 from .clara_coherent_images import delete_element, add_element
 from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
 from .clara_coherent_images_advice import set_background_advice, get_background_advice
@@ -1787,13 +1788,6 @@ class CLARAProjectInternal:
         params = { 'project_dir': project_dir }
         return get_page_advice(page_number, params)
 
-    def promote_v2_style_image(self, alternate_image_id, callback=None):
-        project_dir = self.coherent_images_v2_project_dir
-        params = { 'project_dir': project_dir }
-        content_dir = style_directory(params)
-        promote_alternate_image(content_dir, project_dir, alternate_image_id)
-        self.store_v2_style_data(params, callback=callback)
-
     def store_v2_style_data(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         
@@ -1825,6 +1819,21 @@ class CLARAProjectInternal:
         params = { 'project_dir': project_dir,
                    'elements_to_generate': [element_name] }
         content_dir = element_directory_for_element_name(element_name, params)
+        # Adapt promote_alternate_element_description
+        # from promote_alternate_image
+        promote_alternate_element_description(content_dir, project_dir, preferred_description_id)
+
+##    def promote_v2_style_image(self, alternate_image_id, callback=None):
+##        project_dir = self.coherent_images_v2_project_dir
+##        params = { 'project_dir': project_dir }
+##        content_dir = style_directory(params)
+##        promote_alternate_image(content_dir, project_dir, alternate_image_id)
+##        self.store_v2_style_data(params, callback=callback)
+
+    def promote_v2_style_description(self, preferred_description_id, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params = { 'project_dir': project_dir }
+        content_dir = style_directory(params)
         # Adapt promote_alternate_element_description
         # from promote_alternate_image
         promote_alternate_element_description(content_dir, project_dir, preferred_description_id)
@@ -1983,6 +1992,13 @@ class CLARAProjectInternal:
         # Adapt execute_simple_clara_element_requests
         # from execute_simple_clara_image_requests_v2
         cost_dict = asyncio.run(execute_simple_clara_element_requests(project_dir, requests, callback=callback))
+        return cost_dict
+
+    def execute_simple_clara_style_requests_v2(self, requests, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        # Adapt execute_simple_clara_element_requests
+        # from execute_simple_clara_image_requests_v2
+        cost_dict = asyncio.run(execute_simple_clara_style_requests(project_dir, requests, callback=callback))
         return cost_dict
 
     # Render the text as an optionally self-contained directory of HTML pages

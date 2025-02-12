@@ -321,7 +321,6 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         else:
             current_segmented_elements = internalised_current_annotated_text.segmented_elements() if internalised_current_annotated_text else None
             current_segmented_elements_dict = segmented_elements_to_dict(current_segmented_elements)
-            
     else:
         current_segmented_elements_dict = None
    
@@ -337,7 +336,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     annotations_for_segments, annotated_elements, all_api_calls = call_process_annotations_async(chunks, process_segments_singly,
                                                                                                  segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                                                                                  annotate_or_improve, processing_phase, l1_language, l2_language,
-                                                                                                 previous_version, mwe, config_info, callback)
+                                                                                                 previous_version, mwe,
+                                                                                                 config_info=config_info, callback=callback)
     
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
@@ -377,7 +377,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
 def call_process_annotations_async(chunks, process_segments_singly,
                                    segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                    annotate_or_improve, processing_phase, l1_language, l2_language,
-                                   previous_version, mwe, config_info, callback):
+                                   previous_version, mwe,
+                                   config_info={}, callback=None):
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:  # No event loop running
@@ -388,17 +389,20 @@ def call_process_annotations_async(chunks, process_segments_singly,
         return asyncio.ensure_future(process_annotations_async(chunks, process_segments_singly,
                                                                segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                                                annotate_or_improve, processing_phase, l1_language, l2_language,
-                                                               previous_version, mwe, config_info, callback))
+                                                               previous_version, mwe,
+                                                               config_info=config_info, callback=callback))
     else:
         # If not in an event loop, we can use asyncio.run
         return asyncio.run(process_annotations_async(chunks, process_segments_singly,
                                                      segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                                      annotate_or_improve, processing_phase, l1_language, l2_language,
-                                                     previous_version, mwe, config_info, callback))
+                                                     previous_version, mwe,
+                                                     config_info=config_info, callback=callback))
     
 async def process_annotations_async(chunks, process_segments_singly, segmented_elements_mwe_dict,
                                     segmented_elements_translations_dict, annotate_or_improve, processing_phase,
-                                    l1_language, l2_language, previous_version, mwe, config_info, callback):
+                                    l1_language, l2_language, previous_version, mwe,
+                                    config_info={}, callback=None):
     tasks = []
     for chunk in chunks:
         if process_segments_singly:
@@ -466,22 +470,22 @@ def segments_to_annotations_dict(segments):
     
     return { key_for_segment_elements(segment.content_elements): segment.annotations for segment in segments }
 
-# Find how many segments aren't in the previous version and compare with the limit
-def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, mwe, config_info):
-    if not current_segmented_elements_dict:
-        return False
-
-    # If MWE tagging is involved, we do it one segment at a time, so always reuse saved annotations if possible
-    if processing_phase == 'mwe' or mwe:
-        return True
-    
-    limit = int(config.get('chatgpt4_annotation', 'max_segments_to_reannotate_separately'))
-    new_segments = [ key_for_segment_elements(elements) for elements in segmented_elements
-                     if not key_for_segment_elements(elements) in current_segmented_elements_dict \
-                     and len(word_items_in_element_list(elements)) > 0 ]
-    #print(f'--- Limit = {limit}. {len(new_segments)} new segments:')
-    #pprint.pprint(new_segments)
-    return len(new_segments) <= limit
+### Find how many segments aren't in the previous version and compare with the limit
+##def few_enough_segments_changed_to_use_saved_annotations(segmented_elements, current_segmented_elements_dict, processing_phase, mwe, config_info):
+##    if not current_segmented_elements_dict:
+##        return False
+##
+##    # If MWE tagging is involved, we do it one segment at a time, so always reuse saved annotations if possible
+##    if processing_phase == 'mwe' or mwe:
+##        return True
+##    
+##    limit = int(config.get('chatgpt4_annotation', 'max_segments_to_reannotate_separately'))
+##    new_segments = [ key_for_segment_elements(elements) for elements in segmented_elements
+##                     if not key_for_segment_elements(elements) in current_segmented_elements_dict \
+##                     and len(word_items_in_element_list(elements)) > 0 ]
+##    #print(f'--- Limit = {limit}. {len(new_segments)} new segments:')
+##    #pprint.pprint(new_segments)
+##    return len(new_segments) <= limit
 
 def word_and_non_word_text_items_in_element_list(elements):
     return [ element for element in elements if element.type in ( 'Word', 'NonWordText' ) ]
