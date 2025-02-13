@@ -19,6 +19,9 @@
   {% endfor %}
   </div>
   <!-- Show the existing expanded description -->
+  <p class="text-muted">
+  <strong>Note:</strong> This is the exact text that was sent to DALL-E-3 to generate the images above.
+  </p>
   <textarea readonly rows="8" cols="100">{{ dinfo.expanded_description }}</textarea><br>
   
   Upvotes: {{ dinfo.upvotes_count }} Downvotes: {{ dinfo.downvotes_count }}
@@ -44,6 +47,10 @@
 <h3>Create style descriptions and images</h3>
 <form method="post" style="margin-bottom:1em;">
 {% csrf_token %}
+<p>
+  <strong>Advice Mode:</strong> The AI combines your “advice” with the current  background to create new style description text, and create example images.
+  <br>
+  <strong>Full Description Mode:</strong> The AI will associate the exact text you provide below with the style, assuming you have already included background info, and create example images.
 <input type="hidden" name="action" value="images_with_advice_or_description">
 <input type="hidden" name="action" value="images_with_advice_or_description">
 <select name="mode">
