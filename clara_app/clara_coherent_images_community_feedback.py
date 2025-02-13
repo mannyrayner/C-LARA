@@ -271,7 +271,7 @@ def register_cm_image_vote(project_dir, page, description_index, image_index, vo
                 existing_ai_vote = vote
                 break
 
-        if existing_vote:
+        if existing_vote and existing_ai_vote:
             # If already voted, update the vote_type if different
             if existing_ai_vote["vote_type"] != vote_type:
                 existing_ai_vote["vote_type"] = vote_type
@@ -316,7 +316,7 @@ def register_cm_element_vote(project_dir, element_name, description_index, vote_
                 existing_ai_vote = vote
                 break
 
-        if existing_vote:
+        if existing_vote and existing_ai_vote:
             # If already voted, update the vote_type if different
             if existing_ai_vote["vote_type"] != vote_type:
                 existing_ai_vote["vote_type"] = vote_type
@@ -361,7 +361,7 @@ def register_cm_style_vote(project_dir, description_index, vote_type, userid, ov
                 existing_ai_vote = vote
                 break
 
-        if existing_vote:
+        if existing_vote and existing_ai_vote:
             # If already voted, update the vote_type if different
             if existing_ai_vote["vote_type"] != vote_type:
                 existing_ai_vote["vote_type"] = vote_type
