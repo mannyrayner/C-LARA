@@ -93,7 +93,7 @@
 		  <p><a href="{% url 'edit_images_v2' project.id 'none' %}" 
 			  data-tooltip="Edit images and different annotated versions of the text, split up by page." 
 			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
-			  Pages and Images</a>
+			  Edit Images and Pages</a>
 			  {% if up_to_date_dict.images %}✓{% endif %}</p>
 	{% else %}
 		  <p><a href="{% url 'edit_images' project.id 'no_dall_e_3_image' %}" 
