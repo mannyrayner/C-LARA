@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="main-content">
-<h2>Simple C-LARA Review Element Images ({{ project.title }}, Element "{{ element_name }}")</h2>
+<h2>Edit Image Element ({{ project.title }}, Element "{{ element_name }}")</h2>
 
 {% for d_idx, dinfo in descriptions_info.items %}
 
@@ -50,7 +50,7 @@
 <p>
   <strong>Advice Mode:</strong> The AI combines your “advice” with the current style and background to create new description text for this element, and create example images.
   <br>
-  <strong>Full Description Mode:</strong> The AI will associate the exact text you provide below with this element, assuming you have already included style and background info, and create example images.
+  <strong>Full Description Mode:</strong> The AI will associate the exact text you provide below with this element, and create example images. Usually you will copy and paste the instructions from another element description and then edit it.
 </p>
 <input type="hidden" name="action" value="images_with_advice_or_description">
 <input type="hidden" name="action" value="images_with_advice_or_description">
@@ -83,7 +83,7 @@
 {% if from_view == 'simple_clara' %}
 	<a href="{% url 'simple_clara' project.id 'init' %}#element-{{ element_name }}">Back to main Simple C-LARA page</a>
 {% else %}
-	<a href="{% url 'edit_images_v2' project.id 'init' %}#element-{{ element_name }}">Back to main Edit Images page</a>
+	<a href="{% url 'edit_images_v2' project.id 'init' %}#element-{{ element_name }}">Back to Edit Images and Pages</a>
 {% endif %}
 </div>
 {% endblock %}

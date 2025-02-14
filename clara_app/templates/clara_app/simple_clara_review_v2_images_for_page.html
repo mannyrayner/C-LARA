@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="main-content">
-<h2>Simple C-LARA Review Page Images ({{ project.title }}, Page {{ page_number }})</h2>
+<h2>Edit Image for Page ({{ project.title }}, Page {{ page_number }})</h2>
 
 <h3>Text used to create images</h3> 
 <p>{{ page_text }}</p>
@@ -69,9 +69,9 @@
 {% csrf_token %}
 <input type="hidden" name="action" value="images_with_advice">
 <p>
-  <strong>Advice Mode:</strong> The AI combines your “advice” with the current style, background, and page text to create new instructions for DALL-E-3.
+  <strong>Advice Mode:</strong> The AI combines your “advice” with the current style, background, and page text to create new instructions for DALL-E-3 image generation.
   <br>
-  <strong>Full Description Mode:</strong> The AI passes DALL-E-3 the exact text you provide below, assuming you have already included style and background info.
+  <strong>Full Description Mode:</strong> The AI passes DALL-E-3 image generation the exact text you provide below. Usually you will copy and paste the instructions from another version of the image and then edit it.
 </p>
 <select name="mode">
   <option value="advice">Generate using advice</option>
@@ -102,7 +102,7 @@
 {% if from_view == 'simple_clara' %}
 	<a href="{% url 'simple_clara' project.id 'init' %}#page-{{ page_number }}">Back to main Simple C-LARA page</a>
 {% else %}
-	<a href="{% url 'edit_images_v2' project.id 'init' %}#page-{{ page_number }}">Back to main Edit Images page</a>
+	<a href="{% url 'edit_images_v2' project.id 'init' %}#page-{{ page_number }}">Back to Edit Images and Pages</a>
 {% endif %}
 </div>
 {% endblock %}

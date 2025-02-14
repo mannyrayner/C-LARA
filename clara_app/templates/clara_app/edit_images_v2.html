@@ -1,6 +1,6 @@
 {% extends "clara_app/base.html" %}
 
-{% block title %}Pages and Images{% endblock %}
+{% block title %}Edit Images and Pages{% endblock %}
 
 {% block content %}
 <div class="main-content">
@@ -17,7 +17,7 @@
     </div>
   {% endif %}
 
-  <h2>Pages and Images ("{{ project.title }}")</h2>
+  <h2>Edit Images and Pages ("{{ project.title }}")</h2>
   
     <!-- Overview Section -->
 	<h3>Overview Document</h3>
@@ -83,7 +83,7 @@
 				</td>
 				<td>
 					{% if form.relative_file_path.value %}
-						<a href="{% url 'simple_clara_review_v2_images_for_style' project.id 'edit_images_v2' 'init' %}">Review Style</a><br>
+						<a href="{% url 'simple_clara_review_v2_images_for_style' project.id 'edit_images_v2' 'init' %}">Edit Image Style</a><br>
 					{% endif %}
 				</td>
 			</tr>
@@ -127,7 +127,7 @@
 				</td>
 				<td>
 					{% if form.relative_file_path.value %}
-						<a href="{% url 'simple_clara_review_v2_images_for_element' project.id form.element_name.value 'edit_images_v2' 'init' %}">Review Element</a><br>
+						<a href="{% url 'simple_clara_review_v2_images_for_element' project.id form.element_name.value 'edit_images_v2' 'init' %}">Edit Image Element</a><br>
 					{% endif %}
 					<form method="post" style="display:inline-block;">
 					{% csrf_token %}
@@ -201,7 +201,7 @@
             </td>
             <td>
 				{% if form.relative_file_path.value %}
-					<a href="{% url 'simple_clara_review_v2_images_for_page' project.id form.page.value 'edit_images_v2' 'init' %}">Review Page Images</a>
+					<a href="{% url 'simple_clara_review_v2_images_for_page' project.id form.page.value 'edit_images_v2' 'init' %}">Edit Image for Page</a>
 				{% endif %}
 			</td>
           </tr>
