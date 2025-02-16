@@ -156,20 +156,35 @@ The response will be read by a Python script, so write only the single evaluatio
 # Elements
 
 generate_element_names_prompt_templates = {
-    'default': """We are later going to create a set of images to illustrate the following text:
+    'default': """We are later going to create a set of images, one per page, to illustrate the following text,
+which has been divided into numbered pages:
 
-{text}
+{formatted_story_data}
 
 {background_text}
 
-As part of the process, we need to identify visual elements that occur multiple times in the text,
+As part of the process, we need to identify visual elements that would occur on more than one page of the text,
 e.g. characters, objects and locations. In this step, please write out a JSON-formatted list of these
 elements. For example, if the text were the traditional nursery rhyme
 
-Humpty Dumpty sat on a wall
-Humpty Dumpty had a great fall
-All the King's horses and all the King's men
-Couldn't put Humpty Dumpty together again
+[
+    {{
+        "page_number": 1,
+        "text": "Humpty Dumpty sat on a wall"
+    }},
+    {{
+        "page_number": 2,
+        "text": "Humpty Dumpty had a great fall"
+    }},
+    {{
+        "page_number": 3,
+        "text": "All the King's horses and all the King's men"
+    }},
+    {{
+        "page_number": 3,
+        "text": "Couldn't put Humpty Dumpty together again"
+    }}
+]
 
 then a plausible list might be
 
@@ -178,6 +193,60 @@ then a plausible list might be
   "the King's horses",
   "the King's men"
 ]
+
+since "Humpty Dumpty" and "the wall" would probably occur in the illustrations for all the pages,
+and "the King's horses" and "the King's men" for in the illustrations for pages 3 and 4.
+
+Please write out only the JSON-formatted list, since it will be read by a Python script.""",
+
+'add_names': """We are later going to create a set of images, one per page, to illustrate the following text,
+which has been divided into numbered pages:
+
+{formatted_story_data}
+
+{background_text}
+
+As part of the process, we need to identify visual elements that would occur on more than one page of the text,
+e.g. characters, objects and locations. Some of these elements have already been identified:
+
+{current_elements_text}
+
+In this step, extend this to a full set of elements and write them out in JSON-formatted form.
+For example, if the text were the traditional nursery rhyme
+
+[
+    {{
+        "page_number": 1,
+        "text": "Humpty Dumpty sat on a wall"
+    }},
+    {{
+        "page_number": 2,
+        "text": "Humpty Dumpty had a great fall"
+    }},
+    {{
+        "page_number": 3,
+        "text": "All the King's horses and all the King's men"
+    }},
+    {{
+        "page_number": 3,
+        "text": "Couldn't put Humpty Dumpty together again"
+    }}
+]
+
+and we already had the partial list
+
+[ "Humpty Dumpty" ]
+
+then a plausible full list might be
+
+[ "Humpty Dumpty",
+  "the wall",
+  "the King's horses",
+  "the King's men"
+]
+
+since "Humpty Dumpty" and "the wall" would probably occur in the illustrations for all the pages,
+and "the King's horses" and "the King's men" for in the illustrations for pages 3 and 4.
 
 Please write out only the JSON-formatted list, since it will be read by a Python script."""
     }

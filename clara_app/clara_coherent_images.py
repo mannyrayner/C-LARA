@@ -683,13 +683,18 @@ async def process_elements(params, callback=None):
 
 async def generate_element_names(params, callback=None):
     project_dir = params['project_dir']
-    
-    # Make directory if necessary
-    elements_directory = f'elements'
-    make_project_dir(project_dir, elements_directory)
-    
+
+    if file_exists(project_pathname(project_dir, f'elements/elements.json')):
+        current_element_list_with_names = read_project_json_file(project_dir, f'elements/elements.json')
+        current_elements = [ item['text'] for item in current_element_list_with_names ]
+    else:
+        elements_directory = f'elements'
+        make_project_dir(project_dir, elements_directory)
+        current_elements = []
+       
     # Get the text of the story
-    text = get_text(params)
+    story_data = get_story_data(params)
+    formatted_story_data = json.dumps(story_data, indent=4)
 
     # Get the background if there is any
     background_advice = get_background_advice(params)
@@ -698,9 +703,16 @@ async def generate_element_names(params, callback=None):
     total_cost_dict = {}
 
     # Create the prompt to find the elements
-    prompt_template = get_prompt_template('default', 'generate_element_names')
-    prompt = prompt_template.format(text=text,
-                                    background_text=background_text)
+    if current_elements:
+        current_elements_text = json.dumps(current_elements, indent=4)
+        prompt_template = get_prompt_template('add_names', 'generate_element_names')
+        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                        current_elements_text=current_elements_text,
+                                        background_text=background_text)
+    else:
+        prompt_template = get_prompt_template('default', 'generate_element_names')
+        prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                        background_text=background_text)
 
     # Get the expanded description from the AI
     error_messages = ''
@@ -716,7 +728,9 @@ async def generate_element_names(params, callback=None):
             element_list_txt = api_call.response
             element_list = interpret_chat_gpt4_response_as_json(element_list_txt, object_type='list')
             valid_list_produced = True
-            element_list_with_names = add_names_to_element_list(element_list)
+            new_elements_list = [ element for element in element_list if not element in current_elements ]
+            updated_elements_list = current_elements + new_elements_list
+            element_list_with_names = add_names_to_element_list(updated_elements_list)
             write_project_json_file(element_list_with_names, project_dir, f'elements/elements.json')
             return element_list_with_names, total_cost_dict
         except Exception as e:

@@ -394,13 +394,27 @@ Template must contain the substitution elements {l1_language}, {l2_language}, {e
                                       l2_language='***l2_language***',
                                       examples='***examples***',
                                       simplified_elements_json='***simplified_elements_json***',
-                                      mwes='***mwes***' )
+                                      mwes='***mwes***',
+                                      context_text='***context_text***')
         except:
             raise TemplateError(message = """Error in template.
-Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples}, {simplified_elements_json} and {mwes}""")
-        if not '***examples***' in result or not '***simplified_elements_json***' or not '***mwes***' in result:
+Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples}, {simplified_elements_json}, {mwes} and {context_text}""")
+        if not '***examples***' in result or not '***simplified_elements_json***' in result or not '***context_text***' in result or not '***mwes***' in result:
             raise TemplateError(message = """Error in template.
-Template must contain the substitution elements {examples}, {simplified_elements_json} and {mwes}""")
+Template must contain the substitution elements {examples}, {simplified_elements_json}, {context_text} and {mwes}""")
+    elif annotation_type == 'gloss':
+        try:
+            result = template.format( l1_language='***l1_language***',
+                                      l2_language='***l2_language***',
+                                      examples='***examples***',
+                                      simplified_elements_json='***simplified_elements_json***',
+                                      context_text='***context_text***')
+        except:
+            raise TemplateError(message = """Error in template.
+Template may not contain any substitution elements except {l1_language}, {l2_language}, {examples}, {simplified_elements_json} and {context_text}""")
+        if not '***examples***' in result or not '***simplified_elements_json***' in result or not '***context_text***' in result:
+            raise TemplateError(message = """Error in template.
+Template must contain the substitution elements {examples}, {simplified_elements_json} and {context_text}""")
     elif annotation_type == 'lemma_with_mwe':
         try:
             result = template.format( l2_language='***l2_language***',

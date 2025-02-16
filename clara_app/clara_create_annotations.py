@@ -267,6 +267,11 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
 
     #pprint.pprint(internalised_annotated_text)
+
+    if processing_phase == 'gloss':
+        context = internalised_annotated_text.to_text(annotation_type='plain')
+    else:
+        context = None
         
     if current_annotated_text and annotate_or_improve == 'annotate' and processing_phase == 'gloss':
         internalised_current_annotated_text = clara_internalise.internalize_text(current_annotated_text, l2_language, l1_language, 'gloss')
@@ -337,7 +342,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                                                                                                  segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                                                                                  annotate_or_improve, processing_phase, l1_language, l2_language,
                                                                                                  previous_version, mwe,
-                                                                                                 config_info=config_info, callback=callback)
+                                                                                                 context=context, config_info=config_info, callback=callback)
     
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
@@ -378,7 +383,7 @@ def call_process_annotations_async(chunks, process_segments_singly,
                                    segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                    annotate_or_improve, processing_phase, l1_language, l2_language,
                                    previous_version, mwe,
-                                   config_info={}, callback=None):
+                                   context=None, config_info={}, callback=None):
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:  # No event loop running
@@ -390,19 +395,19 @@ def call_process_annotations_async(chunks, process_segments_singly,
                                                                segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                                                annotate_or_improve, processing_phase, l1_language, l2_language,
                                                                previous_version, mwe,
-                                                               config_info=config_info, callback=callback))
+                                                               context=context, config_info=config_info, callback=callback))
     else:
         # If not in an event loop, we can use asyncio.run
         return asyncio.run(process_annotations_async(chunks, process_segments_singly,
                                                      segmented_elements_mwe_dict, segmented_elements_translations_dict,
                                                      annotate_or_improve, processing_phase, l1_language, l2_language,
                                                      previous_version, mwe,
-                                                     config_info=config_info, callback=callback))
+                                                     context=context, config_info=config_info, callback=callback))
     
 async def process_annotations_async(chunks, process_segments_singly, segmented_elements_mwe_dict,
                                     segmented_elements_translations_dict, annotate_or_improve, processing_phase,
                                     l1_language, l2_language, previous_version, mwe,
-                                    config_info={}, callback=None):
+                                    context=None, config_info={}, callback=None):
     tasks = []
     for chunk in chunks:
         if process_segments_singly:
@@ -417,7 +422,7 @@ async def process_annotations_async(chunks, process_segments_singly, segmented_e
             call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase, chunk,
                                                                 l1_language, l2_language, previous_version,
                                                                 mwe, mwes_for_segment, translation_for_segment,
-                                                                config_info=config_info, callback=callback)
+                                                                context=context, config_info=config_info, callback=callback)
         ))
 
     await post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
@@ -538,7 +543,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
                                                   l1_language, l2_language,
                                                   previous_version='default',
                                                   mwe=False, mwes=[], translation=None,
-                                                  config_info={}, callback=None):
+                                                  context=None, config_info={}, callback=None):
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:  # No event loop running
@@ -550,7 +555,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
             annotate_or_improve, processing_phase, elements,
             l1_language, l2_language,
             previous_version, mwe, mwes, translation,
-            config_info=config_info, callback=callback
+            context=context, config_info=config_info, callback=callback
         ))
     else:
         # If not in an event loop, we can use asyncio.run
@@ -558,7 +563,7 @@ def call_chatgpt4_to_annotate_or_improve_elements(annotate_or_improve, processin
             annotate_or_improve, processing_phase, elements,
             l1_language, l2_language,
             previous_version, mwe, mwes, translation,
-            config_info=config_info, callback=callback
+            context=context, config_info=config_info, callback=callback
         ))
 
 
@@ -567,6 +572,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                                                               previous_version='default',
                                                               mwe=False, mwes=[], translation=None,
                                                               few_shot_examples=[],
+                                                              context=None,
                                                               config_info={},
                                                               always_succeed=False,
                                                               callback=None):
@@ -621,7 +627,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
         elif processing_phase == 'gloss':
             # Note that in this case we pass simplified_elements rather than simplified_elements_json, since we need to manipulate the elements
             annotation_prompt = glossing_prompt(annotate_or_improve, simplified_elements, l1_language, l2_language,
-                                                previous_version=previous_version, mwe=mwe, mwes=mwes, translation=translation)
+                                                previous_version=previous_version, mwe=mwe, mwes=mwes, translation=translation, context=context)
         elif processing_phase == 'lemma':
             # Note that in this case we pass simplified_elements rather than simplified_elements_json, since we need to manipulate the elements
             annotation_prompt = tagging_prompt(annotate_or_improve, simplified_elements, l2_language, mwe=mwe, mwes=mwes)
@@ -791,7 +797,7 @@ def translation_prompt(annotate_or_improve, simplified_elements_json, l1_languag
 
 
 def glossing_prompt(annotate_or_improve, simplified_elements, l1_language, l2_language,
-                    previous_version='segmented_with_images', mwe=False, mwes=[], translation=None):
+                    previous_version='segmented_with_images', mwe=False, mwes=[], translation=None, context=None):
     if previous_version == 'lemma':
         template_and_examples_version = 'gloss_with_lemma'
         simplified_elements_to_show = simplified_elements
@@ -811,11 +817,13 @@ def glossing_prompt(annotate_or_improve, simplified_elements, l1_language, l2_la
 
     simplified_elements_json = json.dumps(simplified_elements_to_show)
     mwes_json = json.dumps(mwes)
+    context_text = f'The text to gloss occurs in the context of the following piece of text: "{context}"' if context else ''
     return template.format( l1_language=l1_language,
                             l2_language=l2_language,
                             examples=examples,
                             simplified_elements_json=simplified_elements_json,
-                            mwes=mwes_json
+                            mwes=mwes_json,
+                            context_text=context_text
                             )
 
 def tagging_prompt(annotate_or_improve, simplified_elements, l2_language, mwe=False, mwes=[]):

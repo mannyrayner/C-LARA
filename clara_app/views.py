@@ -5596,6 +5596,12 @@ def edit_images_v2(request, project_id, status):
                     errors = params_form.errors
                 else:
                     # Get the params from the params_form and save them
+                    default_model = params_form.cleaned_data['default_model']
+                    params_form.cleaned_data['generate_description_model']
+                    generate_description_model0 = params_form.cleaned_data['generate_description_model']
+                    example_evaluation_model0 = params_form.cleaned_data['example_evaluation_model']
+                    generate_element_names_model0 = params_form.cleaned_data['generate_element_names_model']
+                    
                     params = { 'n_expanded_descriptions': params_form.cleaned_data['n_expanded_descriptions'],
                                'n_images_per_description': params_form.cleaned_data['n_images_per_description'],
                                'n_previous_pages': params_form.cleaned_data['n_previous_pages'],
@@ -5606,9 +5612,10 @@ def edit_images_v2(request, project_id, status):
                                'page_interpretation_prompt': params_form.cleaned_data['page_interpretation_prompt'],
                                'page_evaluation_prompt': params_form.cleaned_data['page_evaluation_prompt'],
 
-                               'default_model': params_form.cleaned_data['default_model'],
-                               'generate_description_model': params_form.cleaned_data['generate_description_model'],
-                               'example_evaluation_model': params_form.cleaned_data['example_evaluation_model'],
+                               'default_model': default_model,
+                               'generate_element_names_model': default_model if generate_element_names_model0 == 'default' else generate_element_names_model0,
+                               'generate_description_model': default_model if generate_description_model0 == 'default' else generate_description_model0,
+                               'example_evaluation_model': default_model if example_evaluation_model0 == 'default' else example_evaluation_model0,
                                }
                     try:
                         clara_project_internal.save_coherent_images_v2_params(params)

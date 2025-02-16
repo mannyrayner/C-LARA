@@ -22,6 +22,7 @@ from .constants import (
     TTS_CHOICES,
     AI_CHECKING_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+    SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT,
     SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
     )
@@ -970,9 +971,11 @@ class CoherentImagesV2ParamsForm(forms.Form):
     
     default_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
                                       label="Default AI model")
-    generate_description_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+    generate_element_names_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT,
+                                                     label="AI model to use for generating element names")
+    generate_description_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT,
                                                    label="AI model to use for generating image prompts")
-    example_evaluation_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+    example_evaluation_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT,
                                                  label="AI model to use for checking descriptions")
     
 

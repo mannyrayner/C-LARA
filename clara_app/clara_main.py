@@ -1802,15 +1802,15 @@ class CLARAProjectInternal:
     def store_v2_element_name_data(self, element_list_with_names, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         
-        image_type = 'element'
-        advice = ''
-        image_file_path = None
+##        image_type = 'element'
+##        advice = ''
+##        image_file_path = None
         for item in element_list_with_names:
-            element_text = item['text']
+##            element_text = item['text']
             element_name = item['name']
-            image_name = f'element_{element_text}'
-            self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, element_name=element_name,
-                                   keep_file_name=False, archive=False, callback=callback)
+##            image_name = f'element_{element_text}'
+##            self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, element_name=element_name,
+##                                   keep_file_name=False, archive=False, callback=callback)
             element_directory = f'elements/{element_name}'
             make_project_dir(project_dir, element_directory)
 
@@ -1906,7 +1906,7 @@ class CLARAProjectInternal:
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
 
-        self.remove_all_element_information_v2(params)
+        #self.remove_all_element_information_v2(params)
         element_list_with_names, cost_dict = asyncio.run(generate_element_names(params, callback=callback))
         self.store_v2_element_name_data(element_list_with_names, params, callback=callback)
         return cost_dict

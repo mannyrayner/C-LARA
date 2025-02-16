@@ -137,12 +137,15 @@ TTS_CHOICES = [
 
 SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2 = [
     ( 'gpt-4o', 'gpt-4o' ),
+    ( 'o3-mini', 'o3-mini' ),
     ( 'o1-mini', 'o1-mini' )
     ]
 
+SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT = [ ( 'default', 'Default' ) ] + SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2
+
 AI_CHECKING_FOR_COHERENT_IMAGES_V2 = [
-    ( 'on', 'Use AI to check images' ),
-    ( 'off', 'Only review images manually' )
+    ( 'off', 'Only review images manually' ),
+    ( 'on', 'Use AI to check images' )
     ]
 
 SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2 = [

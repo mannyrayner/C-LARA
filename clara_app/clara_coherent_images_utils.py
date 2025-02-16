@@ -25,6 +25,7 @@ from .clara_classes import (
 
 from .constants import (
     SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
+    SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT,
     SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
     )
@@ -42,18 +43,19 @@ from PIL import Image
 # Params files
 
 project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
-                   'n_images_per_description': 3,
-                   'n_previous_pages': 0,
-                   'max_description_generation_rounds': 1,
-                                    
-                   'ai_checking_of_images': 'on',
-                   
-                   'page_interpretation_prompt': 'with_context_v3_objective',
-                   'page_evaluation_prompt': 'with_context_lenient',
-                   
-                   'default_model': 'gpt-4o',
-                   'generate_description_model': 'gpt-4o',
-                   'example_evaluation_model': 'gpt-4o' }
+                                    'n_images_per_description': 3,
+                                    'n_previous_pages': 0,
+                                    'max_description_generation_rounds': 1,
+
+                                    'ai_checking_of_images': 'off',
+
+                                    'page_interpretation_prompt': 'with_context_v3_objective',
+                                    'page_evaluation_prompt': 'with_context_lenient',
+
+                                    'default_model': 'gpt-4o',
+                                    'generate_element_names_model': 'gpt-4o',
+                                    'generate_description_model': 'gpt-4o',
+                                    'example_evaluation_model': 'gpt-4o' }
 
 default_params = project_params_for_simple_clara
 
@@ -103,6 +105,8 @@ def check_valid_project_params(params):
 
     if not 'default_model' in params or not params['default_model'] in supported_models:
         raise ImageGenerationError(message=f'bad params {params}: default_model')
+    if not 'generate_element_names_model' in params or not params['generate_element_names_model'] in supported_models:
+        raise ImageGenerationError(message=f'bad params {params}: generate_element_names_model')
     if not 'generate_description_model' in params or not params['generate_description_model'] in supported_models:
         raise ImageGenerationError(message=f'bad params {params}: generate_description_model')
     if not 'example_evaluation_model' in params or not params['example_evaluation_model'] in supported_models:
@@ -120,8 +124,13 @@ def get_style_params_from_project_params(params):
     return style_params
 
 def get_element_names_params_from_project_params(params):
+    if 'generate_element_names_model' in params:
+        generate_element_names_model = params['generate_element_names_model']
+    else:
+        generate_element_names_model = default_params['generate_element_names_model']
     element_params = {
-        'models_for_tasks': { 'default': params['default_model']}
+        'models_for_tasks': { 'default': params['default_model'],
+                              'generate_element_names':generate_element_names_model}
         }
     return element_params
 
@@ -131,6 +140,7 @@ def get_element_descriptions_params_from_project_params(params, elements_to_gene
         'n_images_per_description': params['n_images_per_description'],
         'ai_checking_of_images': params['ai_checking_of_images'] if 'ai_checking_of_images' in params else 'on',
         'models_for_tasks': { 'default': params['default_model'],
+                              'generate_element_names': params['generate_element_names_model'],
                               'generate_element_description': params['generate_description_model'],
                               'evaluate_element_image': params['example_evaluation_model']}
         }
