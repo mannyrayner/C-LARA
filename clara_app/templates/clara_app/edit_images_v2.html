@@ -155,8 +155,8 @@
 		</tfoot>
       </tbody>
     </table>
-	{% if style_exists and not element_names_exist %}
-		<button type="submit" name="action" value="create_element_names">Generate All Element Names</button>
+	{% if style_exists %}
+		<button type="submit" name="action" value="create_element_names">Generate Missing Element Names</button>
 	{% endif %}
 	{% if style_exists and element_names_exist %}
 		<button type="submit" name="action" value="save_element_advice">Save All Element Advice</button>
