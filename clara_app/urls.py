@@ -6,13 +6,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from . import views
+from . import accounts_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
     path('login/', auth_views.LoginView.as_view(template_name='clara_app/login.html'), name='login'),
-    #path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/accounts/login/'), name='logout'),
-    path('register/', views.register, name='register'),
+    path('register/', accounts_views.register, name='register'),
+    path('profile/', accounts_views.profile, name='profile'),
     path('home/', views.home, name='home'),
     path('home_page/', views.home_page, name='home_page'),
     path('clara_home_page/', views.clara_home_page, name='clara_home_page'),
@@ -21,7 +22,7 @@ urlpatterns = [
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
-    path('profile/', views.profile, name='profile'),
+    
     path('list_users/', views.list_users, name='list_users'),
     path('friends/', views.friends, name='friends'),
     path('update_feed/', views.update_feed, name='update_feed'),
@@ -186,11 +187,6 @@ urlpatterns = [
     path('serve_zipfile/<int:project_id>/', views.serve_zipfile, name='serve_zipfile'),
     path('serve_export_zipfile/<int:project_id>/', views.serve_export_zipfile, name='serve_export_zipfile'),
     path('projects/serve_project_image/<str:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
-##    path('projects/serve_coherent_images_v2_style_image/<int:project_id>', views.serve_coherent_images_v2_style_image, name='serve_coherent_images_v2_style_image'),
-##    path('projects/serve_coherent_images_v2_element_image/<int:project_id>/<str:element_name>', views.serve_coherent_images_v2_element_image,
-##         name='serve_coherent_images_v2_element_image'),
-##    path('projects/serve_coherent_images_v2_page_image/<int:project_id>/<int:page_number>', views.serve_coherent_images_v2_page_image,
-##         name='serve_coherent_images_v2_page_image'),
     path(
         'accounts/projects/serve_coherent_images_v2_file/<int:project_id>/<path:relative_path>/',
         views.serve_coherent_images_v2_file,

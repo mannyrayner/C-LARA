@@ -145,28 +145,37 @@ logger = logging.getLogger(__name__)
 
 def redirect_login(request):
     return redirect('login')
+##
+### Create a new account    
+##def register(request):
+##    if request.method == 'POST':
+##        form = RegistrationForm(request.POST)
+##        if form.is_valid():
+##            user = form.save()  # This will save username and password.
+##            user.email = form.cleaned_data.get('email')  # This will save email.
+##            user.save()  # Save the user object again.
+##            
+##            # Create the UserProfile instance
+##            UserProfile.objects.create(user=user)
+##
+##            # Create the UserConfiguration instance
+##            UserConfiguration.objects.create(user=user)
+##
+##            username = form.cleaned_data.get('username')
+##            messages.success(request, f'Account created for {username}!')
+##            return redirect('login')
+##    else:
+##        form = RegistrationForm()
+##    return render(request, 'clara_app/register.html', {'form': form})
 
-# Create a new account    
-def register(request):
-    if request.method == 'POST':
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()  # This will save username and password.
-            user.email = form.cleaned_data.get('email')  # This will save email.
-            user.save()  # Save the user object again.
-            
-            # Create the UserProfile instance
-            UserProfile.objects.create(user=user)
-
-            # Create the UserConfiguration instance
-            UserConfiguration.objects.create(user=user)
-
-            username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}!')
-            return redirect('login')
-    else:
-        form = RegistrationForm()
-    return render(request, 'clara_app/register.html', {'form': form})
+# Show user profile
+##@login_required
+##def profile(request):
+##    profile, created = UserProfile.objects.get_or_create(user=request.user)
+##
+##    clara_version = get_user_config(request.user)['clara_version']
+##    
+##    return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email, 'clara_version': clara_version})
 
 
 # Welcome screen
@@ -233,14 +242,6 @@ def annotate_and_order_activities_for_home_page(activities):
     # Order by vote score, custom status order, and then by creation date
     return activities.order_by('status_order', '-created_at')
 
-# Show user profile
-@login_required
-def profile(request):
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-
-    clara_version = get_user_config(request.user)['clara_version']
-    
-    return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email, 'clara_version': clara_version})
 
 # Edit user profile
 @login_required
