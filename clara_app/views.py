@@ -143,8 +143,6 @@ import asyncio
 config = get_config()
 logger = logging.getLogger(__name__)
 
-def redirect_login(request):
-    return redirect('login')
 ##
 ### Create a new account    
 ##def register(request):
@@ -177,6 +175,8 @@ def redirect_login(request):
 ##    
 ##    return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email, 'clara_version': clara_version})
 
+def redirect_login(request):
+    return redirect('login')
 
 # Welcome screen
 def home(request):
@@ -202,9 +202,7 @@ def home_page(request):
         'memberships': memberships,
     })
 
-
 @login_required
-#def home_page(request):
 def clara_home_page(request):
     time_period = DEFAULT_RECENT_TIME_PERIOD
     search_form = UnifiedSearchForm(request.GET or None)

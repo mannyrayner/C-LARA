@@ -12,10 +12,6 @@ from .utils import get_user_config
 # Django’s built-in auth views are used for login/logout, so we typically
 # only need explicit views for register, redirect_login, profile, etc.
 
-def redirect_login(request):
-    return redirect('login')
-
-
 def register(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
@@ -34,7 +30,6 @@ def register(request):
     else:
         form = RegistrationForm()
     return render(request, 'clara_app/register.html', {'form': form})
-
 
 @login_required
 def profile(request):
