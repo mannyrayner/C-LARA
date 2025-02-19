@@ -6,6 +6,14 @@ from .clara_utils import (
     absolute_file_name
     )
 
+from .refactor_utils import (
+    get_function_names_from_file,
+    get_imports_from_file,
+    get_functions_called_by_function,
+    get_functions_called_in_file,
+    get_view_functions_from_urls
+    )
+
 import os
 import re
 import shutil
@@ -14,7 +22,7 @@ def test(id):
     if id == 1:
         urls_path = '$CLARA/clara_app/urls.py'
         views_path = '$CLARA/clara_app/views.py'
-        new_module_name = 'home'
+        new_module_name = 'home_views'
         url_patterns_to_move = 'home,home_page,clara_home_page'
         output_dir = '$CLARA/clara_app'
         modularize_views(
@@ -23,6 +31,16 @@ def test(id):
             new_module_name,
             url_patterns_to_move,
             output_dir)
+    elif id == 2:
+        print(get_function_names_from_file('$CLARA/clara_app/refactor_utils.py'))
+    elif id == 3:
+        print(get_functions_called_in_file('$CLARA/clara_app/views.py', 'clara_home_page'))
+    elif id == 4:
+        print(get_function_names_from_file('$CLARA/clara_app/views.py'))
+    elif id == 5:
+        print(get_view_functions_from_urls('$CLARA/clara_app/urls.py'))
+
+    
 
 def modularize_views(
     urls_path,
@@ -40,12 +58,8 @@ def modularize_views(
 
     # 1. Read in the original files
     urls_content = read_txt_file(urls_path)
-##    with open(urls_path, 'r', encoding='utf-8') as f:
-##        urls_content = f.read()
 
     views_content = read_txt_file(views_path)
-##    with open(views_path, 'r', encoding='utf-8') as f:
-##        views_content = f.read()
 
     # 2. Build a dictionary of { view_function_name: regex_pattern_to_match }
     #    We'll search for lines in urls.py that look like: path('...', views.my_function, ...)
@@ -58,14 +72,14 @@ def modularize_views(
         # This is simplified: it won't catch multi-line path definitions or very unusual spacing.
         pattern_dict[fn] = r'(path|re_path)\([^)]*views\.' + re.escape(fn) + r'[^)]*\)'
 
-    # 3. In urls.py: replace references from 'views.fn_name' to 'new_module_name.fn_name'
+    # 3. In urls.py: replace references from 'views.fn_name,' to 'new_module_name.fn_name,'
     new_urls_content = urls_content
     for fn_name, pattern in pattern_dict.items():
         # For each line matching the pattern, we do a second pass to replace
         # "views.fn_name" with "new_module_name.fn_name"
         new_urls_content = re.sub(
-            r'(views\.' + re.escape(fn_name) + r')',
-            new_module_name + r'.' + fn_name,
+            r'(views\.' + re.escape(fn_name) + ',' + r')',
+            new_module_name + r'.' + fn_name + ',',
             new_urls_content
         )
 
@@ -129,45 +143,17 @@ def modularize_views(
 
     # 8. Write out the new files
     new_module_path = os.path.join(output_dir, f"{new_module_name}.py")
-    modified_urls_path = os.path.join(output_dir, os.path.basename(urls_path))
-    modified_views_path = os.path.join(output_dir, os.path.basename(views_path))
+    modified_urls_path = os.path.join(output_dir, f"modified_{os.path.basename(urls_path)}")
+    modified_views_path = os.path.join(output_dir, f"modified_{os.path.basename(views_path)}")
 
     write_txt_file(new_views_module_str, new_module_path)
-##    with open(new_module_path, 'w', encoding='utf-8') as f:
-##        f.write(new_views_module_str)
 
     write_txt_file(new_urls_content, modified_urls_path)
-##    with open(modified_urls_path, 'w', encoding='utf-8') as f:
-##        f.write(new_urls_content)
 
     write_txt_file(commented_views_content, modified_views_path)
-##    with open(modified_views_path, 'w', encoding='utf-8') as f:
-##        f.write(commented_views_content)
 
+    print(f"Functions: {url_patterns_to_move}")
     print(f"Created new module: {new_module_path}")
     print(f"Modified urls.py -> {modified_urls_path}")
     print(f"Modified views.py -> {modified_views_path}")
 
-##if __name__ == "__main__":
-##    # Example usage:
-##    # python modularize_views.py /path/to/urls.py /path/to/views.py accounts_views "redirect_login,register,profile"
-##    import sys
-##
-##    if len(sys.argv) != 5:
-##        print("Usage: python modularize_views.py <urls_path> <views_path> <new_module_name> <comma_separated_view_functions>")
-##        sys.exit(1)
-##
-##    urls_path_arg = sys.argv[1]
-##    views_path_arg = sys.argv[2]
-##    new_module_name_arg = sys.argv[3]
-##    view_functions_arg = sys.argv[4]
-##
-##    view_functions = [fn.strip() for fn in view_functions_arg.split(",")]
-##
-##    modularize_views(
-##        urls_path=urls_path_arg,
-##        views_path=views_path_arg,
-##        new_module_name=new_module_name_arg,
-##        url_patterns_to_move=view_functions,
-##        output_dir='.'
-##    )
