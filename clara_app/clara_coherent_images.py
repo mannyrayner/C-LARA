@@ -758,6 +758,9 @@ def delete_element(element_text, params):
 async def add_element(element_text, params, callback=None):
     project_dir = params['project_dir']
     
+    elements_directory = f'elements'
+    make_project_dir(project_dir, elements_directory)
+    
     all_element_texts = get_all_element_texts(params)
     if element_text in all_element_texts:
         raise ValueError(f'Element "{element_text}" already exists')

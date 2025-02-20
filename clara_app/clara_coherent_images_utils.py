@@ -511,15 +511,14 @@ def remove_element_name_from_list_of_elements(element_text, params):
 def add_element_name_to_list_of_elements(element_text, params):
     project_dir = params['project_dir']
     element_name = element_text_to_element_name(element_text)
-    
-    element_list = read_project_json_file(project_dir, f'elements/elements.json')
+
+    element_list = get_all_element_names_and_texts(params)
     element_list.append({ 'text': element_text, 'name': element_name })
     write_project_json_file(element_list, project_dir, f'elements/elements.json')
 
 def get_element_description(element_text, params):
     project_dir = params['project_dir']
     
-    #name = element_text_to_element_name(element_text, params)
     name = element_text_to_element_name(element_text)
     return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
 
