@@ -30,6 +30,10 @@ class ContentElement:
 
     def to_text(self, annotation_type='plain'):
         def escape_special_chars(text):
+            if text == '':
+                return ''
+            if not text:
+                return '-'
             if not isinstance(text, (str)):
                 raise ValueError(f'Non-string argument to escape_special_chars: {text}') 
             return text.replace("#", r"\#").replace("@", r"\@").replace("<", r"\<").replace(">", r"\>")
@@ -37,6 +41,10 @@ class ContentElement:
         # If a Word element contains spaces or punctuation, we need to add @ signs around it
         # for the annotated text to be well-formed
         def put_at_signs_around_text_if_necessary(text, annotation_type):
+            if text == '':
+                return ''
+            if not text:
+                return '-'
             if not isinstance(text, (str)):
                 raise ValueError(f'Non-string argument to put_at_signs_around_text_if_necessary: {text}') 
             # Check if text contains spaces or any Unicode punctuation
