@@ -12,4 +12,6 @@ Here are the items to gloss:
 
 {simplified_elements_json}
 
+{context_text}
+
 Write out just the annotated JSON with no introduction, since it will be processed by a Python script.

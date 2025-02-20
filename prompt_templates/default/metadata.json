@@ -1024,7 +1024,7 @@
         "timestamp": "20250113020816"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_with_mwe_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_with_mwe_annotate_template_20250212100307.txt",
         "annotation_type": "gloss_with_mwe",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -1032,7 +1032,7 @@
         "timestamp": "20250113025734"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\archive\\gloss_annotate_template_20250212103446.txt",
         "annotation_type": "gloss",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -1046,5 +1046,21 @@
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20250115085801"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_with_mwe_annotate_template.txt",
+        "annotation_type": "gloss_with_mwe",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20250212100307"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\default\\gloss_annotate_template.txt",
+        "annotation_type": "gloss",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20250212103446"
     }
 ]

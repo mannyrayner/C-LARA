@@ -10,13 +10,15 @@ Your task is to replace the second element in each pair with a gloss in {l1_lang
 
 3. If the second element is null, and there  is no sensible way to gloss the first element in {l1_language}, the gloss should be specifically '-'. 
 
-Do not add or remove any elements or alter the structure of the JSON list provided in the input.
-
 {examples}
 
 Here are the items to gloss:
 
 {simplified_elements_json}
 MWEs: {mwes}
+
+{context_text}
+
+Do not add or remove any elements or alter the structure of the JSON list provided in the input.
 
 Write out just the annotated JSON with no introduction, since it will be processed by a Python script.
