@@ -45,6 +45,7 @@ def get_background_advice(params):
 
 def set_background_advice(text, params):
     project_dir = params['project_dir']
+    make_root_project_dir(project_dir)
     
     return write_project_txt_file(text, project_dir, f'background_advice.txt')    
 
