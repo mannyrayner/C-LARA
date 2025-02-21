@@ -117,6 +117,13 @@ from .clara_utils import (
     post_task_update,
     )
 
+from .constants import (
+    PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_DESCRIPTION,
+    PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_EVALUATION,
+    PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_INTERPRETATION,
+    )
+
+
 from django.urls import reverse
 
 import json
@@ -1352,13 +1359,13 @@ async def add_uploaded_page_image(image_file_path, page_number, params, callback
     # Create placeholder files first.
     # We will use these to create scores, since we don't know how to evaluate fit on an uploaded image.
     rel_expanded_description_path = f'{rel_description_dir}/expanded_description.txt'
-    write_project_txt_file("User uploaded image", project_dir, rel_expanded_description_path)
+    write_project_txt_file(PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_DESCRIPTION, project_dir, rel_expanded_description_path)
     
     rel_evaluation_path = f'{rel_image_dir}/evaluation.txt'
-    write_project_txt_file("4\nAssume perfect fit since uploaded", project_dir, rel_evaluation_path)
+    write_project_txt_file(PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_EVALUATION, project_dir, rel_evaluation_path)
 
     rel_interpretation_path = f'{rel_image_dir}/image_interpretation.txt'
-    write_project_txt_file("So far no interpretation", project_dir, rel_interpretation_path)
+    write_project_txt_file(PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_INTERPRETATION, project_dir, rel_interpretation_path)
 
     image_dirs = [ rel_image_dir ]
     score_description_dir_representative(rel_description_dir, image_dirs, params)

@@ -10,6 +10,12 @@ from .clara_coherent_images_utils import score_for_image_dir, element_score_for_
 from .clara_coherent_images_utils import get_pages, project_pathname, read_project_json_file
 from .clara_utils import file_exists, read_txt_file
 
+from .constants import (
+    PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_DESCRIPTION,
+    PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_EVALUATION,
+    PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_INTERPRETATION,
+    )
+
 def get_page_overview_info_for_cm_reviewing(project_dir):
     # Load story data
     story_data = read_project_json_file(project_dir, 'story.json')
@@ -648,7 +654,27 @@ def update_ai_votes_for_style_in_feedback(project_dir):
     # Adapt save_community_feedback_for_element
     # from save_community_feedback
     save_community_feedback_for_style(project_dir, feedback_data)
-    
+
+def preferred_page_image_is_uploaded(project_dir, page_number):
+    try:
+        content_dir = project_pathname(project_dir, f'pages/page{page_number}')
+        alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
+        preferred_image_id = determine_preferred_image(content_dir, project_dir, page_number)
+        #print(f'{preferred_image_id} = determine_preferred_image({content_dir}, {project_dir}, {page_number})')
+        preferred_description_index = None
+        preferred_image_index = None
+        for record in alternate_images:
+            if record['id'] == preferred_image_id:
+                preferred_description_index = record['description_index']
+                preferred_image_index = record['image_index']
+                image_dir = f'{content_dir}/description_v{preferred_description_index}/image_v{preferred_image_index}'
+                evaluation_file = project_pathname(project_dir, f'{image_dir}/evaluation.txt')
+                if read_txt_file(evaluation_file) == PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_EVALUATION:
+                    return True
+        return False
+    except Exception as e:
+        return False
+                                               
 def determine_preferred_image(content_dir, project_dir, page_number):
     """
     Determine the preferred image for a page based on combined AI and human votes.

@@ -1,8 +1,13 @@
+from .clara_coherent_images_community_feedback import (
+    preferred_page_image_is_uploaded,
+    )
+
 from .clara_coherent_images_utils import (
     get_all_element_images,
     get_all_relative_page_images,
     project_pathname,
     )
+
 
 from .clara_utils import (
     absolute_file_name,
@@ -29,6 +34,9 @@ def create_images_zipfile(params):
     watermark_path = absolute_file_name('$CLARA/logo/logo.jpg')
     watermark = Image.open(watermark_path).convert("RGBA")
 
+    uploaded_image_watermark_path = absolute_file_name('$CLARA/logo/uploaded_image_logo.jpg')
+    uploaded_image_watermark = Image.open(uploaded_image_watermark_path).convert("RGBA")
+
     # 3. Create in-memory ZIP
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -39,10 +47,13 @@ def create_images_zipfile(params):
 
             # Load the image
             try:
+                is_uploaded = image_relpath_is_uploaded(image_relpath, params)
+                #print(f'{is_uploaded} = image_relpath_is_uploaded("{image_relpath}", {params})')
+                watermark_to_use = watermark if not image_relpath_is_uploaded(image_relpath, params) else uploaded_image_watermark
                 with Image.open(full_path) as base_img:
                     base_img = base_img.convert("RGBA")  # So we can handle alpha if needed
                     # Compose watermark onto the base image
-                    watermarked_img = add_watermark(base_img, watermark)
+                    watermarked_img = add_watermark(base_img, watermark_to_use)
 
                     # Write the watermarked image as JPG (or PNG) into an in-memory buffer
                     img_buffer = io.BytesIO()
@@ -82,3 +93,19 @@ def add_watermark(base_img, watermark):
     # Paste the watermark image (with alpha) onto the base image
     watermarked.alpha_composite(watermark, dest=(x_pos, y_pos))
     return watermarked
+
+def image_relpath_is_uploaded(image_relpath, params):
+    try:
+        project_dir = params['project_dir']
+        
+        components = image_relpath.split('/')
+        page_dir_name = components[1]
+        if not page_dir_name.startswith('page'):
+            return False
+        page_number = int(page_dir_name[4:])
+        is_uploaded = preferred_page_image_is_uploaded(project_dir, page_number)
+        #print(f'{is_uploaded} = preferred_page_image_is_uploaded({project_dir}, {page_number})')
+        return is_uploaded
+    except Exception:
+        return False
+    
