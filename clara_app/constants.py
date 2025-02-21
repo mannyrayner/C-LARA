@@ -161,3 +161,8 @@ SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2 = [
     ( 'with_context_lenient', 'With context, lenient' )
     ]
 
+PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_DESCRIPTION = "User uploaded image"
+
+PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_EVALUATION = "4\nAssume perfect fit since uploaded"
+
+PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_INTERPRETATION = "So far no interpretation"
