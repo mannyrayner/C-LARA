@@ -100,6 +100,7 @@ from .clara_coherent_images_utils import (
     )
 
 from .clara_utils import (
+    get_config,
     read_txt_file,
     write_txt_file,
     read_json_file,
@@ -128,6 +129,8 @@ import pprint
 import copy
 from pathlib import Path
 from PIL import Image
+
+config = get_config()
 
 # Test with 'Boy meets girl' (minimal toy text)
 

@@ -1,3 +1,13 @@
+from .clara_utils import (
+    get_config,
+    )
+
+config = get_config()
+
+# Ask for descriptions shorter than the maximum length to leave some slack
+max_element_description_length = int(config.get('v2_image_generation', 'max_element_description_length')) - 500
+max_page_description_length = int(config.get('v2_image_generation', 'max_page_description_length')) - 500
+
 known_prompt_template_types = [ 'generate_style_description',
                                 'generate_style_description_example',
                                 'style_example_interpretation',
@@ -23,6 +33,8 @@ known_prompt_template_types = [ 'generate_style_description',
                                 'get_elements_descriptions_and_style_in_image',
                                 'get_relationship_of_element_pair_in_image',
                                 ]
+
+
 
 def get_prompt_template(prompt_id, prompt_type):
     
@@ -252,21 +264,21 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     }
 
 generate_element_description_prompt_templates = {
-    'default': """We are going to create a set of images to illustrate the following text:
+    'default': f"""We are going to create a set of images to illustrate the following text:
 
-{text}
+{{text}}
 
-{background_text}
+{{background_text}}
 
 The intended style in which the images will be produced is described as follows:
 
-{style_description}
+{{style_description}}
 
 As part of this process, we are first creating detailed descriptions of visual elements that occur multiple times in the text,
 such as characters, objects, and locations.
 
-**Your task is to create a detailed specification of the element "{element_text}", in the intended style,
-to be passed to DALL-E-3 to generate a single image showing how "{element_text}" will be realized.**
+**Your task is to create a detailed specification of the element "{{element_text}}", in the intended style,
+to be passed to DALL-E-3 to generate a single image showing how "{{element_text}}" will be realized.**
 
 **Please ensure that the specification includes specific physical characteristics. For a human character, these would include:**
 - **Apparent age**
@@ -291,11 +303,13 @@ to be passed to DALL-E-3 to generate a single image showing how "{element_text}"
 
 - Be as precise and detailed as possible to ensure consistency in the generated images.**
 
-- The description should be at most 1000 characters long, as it will later be combined with other descriptions.
+- The description should be at most {max_element_description_length} characters long, as it will later be combined with other descriptions.
+
+- DALL-E-3 will only receive this text when generating the image, so it is essential to include the style information.
 
 - Take account of the following advice from the user about how to realise the image:
 
-{advice_text}"""
+{{advice_text}}"""
     }
 
 element_interpretation_prompt_templates= {
@@ -459,35 +473,35 @@ Please write out only the JSON-formatted list, since it will be read by a Python
     }
 
 generate_page_description_prompt_templates = {
-    'default': """We are generating a set of images to illustrate the following text, which has been divided into numbered pages:
+    'default': f"""We are generating a set of images to illustrate the following text, which has been divided into numbered pages:
 
-{formatted_story_data}
+{{formatted_story_data}}
 
-{background_text}
+{{background_text}}
 
 The intended style in which the images will be produced is described as follows:
 
-{style_description}
+{{style_description}}
 
-We are about to generate the image for page {page_number}, whose text is
+We are about to generate the image for page {{page_number}}, whose text is
 
-{page_text}
+{{page_text}}
 
 We have already generated detailed specifications for the images on the previous pages and also
 for various elements (characters, locations, etc) that occur on more than one page.
 Here are the specifications of relevant previous pages and elements:
 
-{previous_page_descriptions_text}
+{{previous_page_descriptions_text}}
 
-{element_descriptions_text}
+{{element_descriptions_text}}
 
-In this step, please create a detailed specification of the image on page {page_number}, in the intended style
+In this step, please create a detailed specification of the image on page {{page_number}}, in the intended style
 and also consistent with the relevant previous pages and relevant elements, that can be passed to DALL-E-3 to
-generate a single image for page {page_number}.
+generate a single image for page {{page_number}}.
 
 *IMPORTANT*:
 
-- The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+- The specification you write out must be at most {max_page_description_length} characters long to conform with DALL-E-3's constraints.
 
 - Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
 idea of the image and then list the aspects of the image which are essential to the text and must be represented.
@@ -496,10 +510,10 @@ and must be inferred from text on the other pages or from other background knowl
 
 For example, if the text were the traditional nursery rhyme
 
-[ {{ "page_number": 1, "text": "Humpty Dumpty sat on a wall" }},
-  {{ "page_number": 2, "text": "Humpty Dumpty had a great fall" }},
-  {{ "page_number": 3, "text": "All the King's horses and all the King's men" }},
-  {{ "page_number": 4, "text": "Couldn't put Humpty Dumpty together again" }}
+[ {{{{ "page_number": 1, "text": "Humpty Dumpty sat on a wall" }}}},
+  {{{{ "page_number": 2, "text": "Humpty Dumpty had a great fall" }}}},
+  {{{{ "page_number": 3, "text": "All the King's horses and all the King's men" }}}},
+  {{{{ "page_number": 4, "text": "Couldn't put Humpty Dumpty together again" }}}}
   ]
 
 then the "Essential aspects" section for page 2 might read:
@@ -513,9 +527,11 @@ The "Essential aspects" section will be used to check the correctness of the gen
 If any item listed there fails to match, the image will be rejected, so only include material
 in this section which is genuinely essential, as opposed to just desirable.
 
+- DALL-E-3 will only receive this text when generating the image, so it is essential to include the style information.
+
 - Take account of the following advice from the user about how to realise the image:
 
-{advice_text}
+{{advice_text}}
 """
     }
 
