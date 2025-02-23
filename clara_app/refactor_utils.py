@@ -17,7 +17,7 @@ def get_function_names_from_file(filepath):
     function_nodes = red.find_all("def")  # All function definitions
 
     # Collect the 'name' attribute of each function node.
-    return [fn.name for fn in function_nodes]
+    return [fn.name for fn in function_nodes] 
 
 def get_imports_from_file(filepath):
     """
