@@ -19,10 +19,6 @@ def get_function_names_from_file(filepath):
     # Collect the 'name' attribute of each function node.
     return [fn.name for fn in function_nodes]
 
-# Example usage
-# print(get_function_names_from_file("views.py"))
-
-
 def get_imports_from_file(filepath):
     """
     Parse a .py file and return a list of all import statements (both 'import' and 'from import').
@@ -45,89 +41,78 @@ def get_imports_from_file(filepath):
 
     return import_nodes + from_import_nodes
 
-# Example usage
-# print(get_imports_from_file("views.py"))
-
-def get_functions_called_by_function(function_node):
+def get_functions_called_by_function(function_node, skip_method_calls=True):
     """
     Given a RedBaron function node, return the names of all functions it calls.
+
+    This handles cases like:
+      bar.baz()
+      get_user_config(request.user)['clara_version']
+      MyClass().some_method().another_method()
+
+    By default (skip_method_calls=True), we skip any call that includes a dot in the chain,
+    i.e. 'bar.baz()' won't appear in the results. If skip_method_calls=False, we include them.
+
+    We also store results in a set to remove duplicates.
     """
-    # Find all 'call' nodes within this function
-    call_nodes = function_node.find_all("call")
-    called_functions = []
+    called_functions = set()
 
-    for call in call_nodes:
-        # call.value might be:
-        #   - a NameNode e.g. "my_helper"
-        #   - a DotNode e.g. "module.my_helper"
-        #   - a complex expression e.g. "some_list[0]" or "getattr(...)"
-        if call.value.type == "name":
-            # The simplest case: direct call to my_helper(...)
-            called_functions.append(call.value.value)
-        elif call.value.type == "dot":
-            # A dotted name e.g. module.my_helper
-            # Typically the last part is the function name
-            called_functions.append(call.value[-1].value)
-        # else: Could add more logic for subscripts, etc.
+    # 1. Find all "atomtrailers" in the function body
+    atom_nodes = function_node.find_all("atomtrailers")
 
-    return called_functions
+    for atom in atom_nodes:
+        trailer_list = atom.value  # e.g. [NameNode('bar'), DotNode('.'), NameNode('baz'), CallNode(...)]
+        
+        # We'll walk the chain looking for CallNodes
+        trailer_list_fst = trailer_list.fst()
+        for i, node in enumerate(trailer_list_fst):
+            if node['type'] == "call":
+                # We found a function invocation
+                # Now let's look backward to find:
+                #   (a) The function name (the last NameNode before this CallNode)
+                #   (b) Whether there was a DotNode before that NameNode
+                fn_name = None
+                dot_found = False
 
-def get_functions_called_in_file(filepath, function_name):
+                # We'll search from i-1 down to 0
+                j = i - 1
+                while j >= 0:
+                    t = trailer_list_fst[j]
+                    #print(t)
+                    if t['type'] == "dot":
+                        dot_found = True
+                    elif t['type'] == "name" and fn_name is None:
+                        # Record the first name we find going backward
+                        fn_name = t['value']
+                    j -= 1
+
+                # If we found a function name
+                if fn_name:
+                    # If skip_method_calls is True and we encountered a dot, skip
+                    if skip_method_calls and dot_found:
+                        continue
+
+                    # Otherwise add it
+                    called_functions.add(fn_name)
+
+    return list(called_functions)
+
+def get_functions_called_in_file(filepath, function_name, skip_method_calls=True):
     """
-    Parse a file, find a specific function definition,
-    then return all functions it calls.
+    Parse a file with RedBaron, find `function_name`, then call
+    get_functions_called_by_function on it.
+
+    skip_method_calls determines whether we exclude object.method() calls.
     """
     source_code = read_txt_file(filepath)
 
     red = RedBaron(source_code)
     fn_node = red.find("def", name=function_name)
     if not fn_node:
-        print(f"No function named '{function_name}' found.")
+        print(f"No function named '{function_name}' in {filepath}")
         return []
 
-    return get_functions_called_by_function(fn_node)
-
-##def get_view_functions_from_urls(filepath):
-##    """
-##    Parse urls.py and return the function names referenced, e.g. if it has:
-##        path('...', views.some_view, name='...'),
-##    we capture "some_view".
-##    """
-##    source_code = read_txt_file(filepath)
-##
-##    red = RedBaron(source_code)
-##
-##    # Find all calls (any node of type 'call')
-##    calls = red.find_all("call")
-##    function_names = []
-##
-##    print(f'{len(calls)} calls found')
-##
-##    for call_node in calls:
-##        print(call_node.dumps())
-##        # call_node.value is what’s being called, e.g. "path" or "re_path".
-##        if call_node.value and call_node.value.dumps() in ["path", "re_path"]:
-##            # Typically, the function reference is in call_node.arguments[1]
-##            #  e.g. path('route/', views.some_view, name='whatever')
-##            # This can vary if you use named arguments.
-##            if len(call_node.arguments) >= 2:
-##                second_arg = call_node.arguments[1]
-##
-##                # Sometimes it's "views.some_view" or "views.something_else()"
-##                # RedBaron calls it a 'dot' node or a 'name' node, etc.
-##                # We'll assume it's a dot node: "views.some_view"
-##                if second_arg.type == 'dot':
-##                    # The last part is the actual function name, e.g. "some_view"
-##                    fn_name = second_arg.value[-1].value
-##                    function_names.append(fn_name)
-##
-##                # Or it might be just a name node: e.g. some_view
-##                elif second_arg.type == 'name':
-##                    function_names.append(second_arg.value)
-##
-##                # If there’s a different structure (like a lambda), you need more logic.
-##    
-##    return function_names
+    return get_functions_called_by_function(fn_node, skip_method_calls=skip_method_calls)
 
 def get_view_functions_from_urls(filepath):
     """

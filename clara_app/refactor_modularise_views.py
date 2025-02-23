@@ -17,6 +17,8 @@ from .refactor_utils import (
 import os
 import re
 import shutil
+from pathlib import Path
+from redbaron import RedBaron
 
 def test(id):
     if id == 1:
@@ -35,124 +37,120 @@ def test(id):
         print(get_function_names_from_file('$CLARA/clara_app/refactor_utils.py'))
     elif id == 3:
         print(get_functions_called_in_file('$CLARA/clara_app/views.py', 'clara_home_page'))
+    elif id == '3a':
+        print(get_functions_called_in_file('$CLARA/clara_app/accounts_views.py', 'profile'))
     elif id == 4:
         print(get_function_names_from_file('$CLARA/clara_app/views.py'))
     elif id == 5:
         print(get_view_functions_from_urls('$CLARA/clara_app/urls.py'))
 
     
-
 def modularize_views(
     urls_path,
     views_path,
     new_module_name,
     url_patterns_to_move,
-    output_dir):
+    output_dir
+):
     """
-    A simple script to move certain views from views.py into a new module,
-    and update urls.py accordingly.
+    Moves a set of view functions from views.py into a new module and updates
+    urls.py accordingly, using RedBaron-based helpers for parsing.
+
+    :param urls_path: Path to the Django urls.py file
+    :param views_path: Path to the current views.py file
+    :param new_module_name: Name of the new .py file (without extension) for the moved views
+    :param url_patterns_to_move: A list of view function names or the unique identifiers
+                                 used in urls.py (i.e., the function part of 'views.some_view')
+    :param output_dir: Where to place the newly created module and updated files
     """
 
-    output_dir = absolute_file_name(output_dir)
-    url_patterns_to_move = [ item.strip() for item in url_patterns_to_move.split(',') ]
+    # 1. Read and parse the source code for urls.py and views.py
+    urls_abs = Path(urls_path).resolve()
+    views_abs = Path(views_path).resolve()
+    output_dir_abs = Path(output_dir).resolve()
 
-    # 1. Read in the original files
-    urls_content = read_txt_file(urls_path)
+    with open(urls_abs, "r", encoding="utf-8") as f:
+        urls_source = f.read()
+    with open(views_abs, "r", encoding="utf-8") as f:
+        views_source = f.read()
 
-    views_content = read_txt_file(views_path)
+    urls_red = RedBaron(urls_source)
+    views_red = RedBaron(views_source)
 
-    # 2. Build a dictionary of { view_function_name: regex_pattern_to_match }
-    #    We'll search for lines in urls.py that look like: path('...', views.my_function, ...)
-    #    or re_path(...) or anything referencing "views.some_function".
-    #    You can adapt to your actual code style if it differs.
-    pattern_dict = {}
-    for fn in url_patterns_to_move:
-        # We'll store the function name, e.g. 'my_function'
-        # We'll also create a regex that tries to capture a line referencing: views.my_function
-        # This is simplified: it won't catch multi-line path definitions or very unusual spacing.
-        pattern_dict[fn] = r'(path|re_path)\([^)]*views\.' + re.escape(fn) + r'[^)]*\)'
+    # 2. Create the new module file in memory (a RedBaron object to store imports + defs)
+    new_module = RedBaron("")
+    new_module_node_list = new_module.node_list
 
-    # 3. In urls.py: replace references from 'views.fn_name,' to 'new_module_name.fn_name,'
-    new_urls_content = urls_content
-    for fn_name, pattern in pattern_dict.items():
-        # For each line matching the pattern, we do a second pass to replace
-        # "views.fn_name" with "new_module_name.fn_name"
-        new_urls_content = re.sub(
-            r'(views\.' + re.escape(fn_name) + ',' + r')',
-            new_module_name + r'.' + fn_name + ',',
-            new_urls_content
-        )
+    # Grab top-level imports from the old views.py to seed the new module
+    # (You may want something more refined, e.g., only copying imports if needed.)
+    top_imports = []
+    for node in views_red.node_list:
+        if node.type in ("import", "from_import"):
+            top_imports.append(node.copy())
 
-    # 4. Extract the code for each function from views.py
-    #    We do a naive parse: find "def fn_name(" and then capture until next "def " at the same indent or EOF.
-    moved_functions = {}
-    for fn_name in url_patterns_to_move:
-        # Regex approach for function start:
-        # We'll look for something like:  ^def fn_name(
-        # Then capture everything until we hit ^def or EOF.
-        # This is also a naive approach that may break if your code has nested defs or decorators spread across lines.
-        func_pattern = re.compile(
-            rf"(\n?def\s+{re.escape(fn_name)}\([^\n]*\n(?:[ \t].*\n)*)",
-            re.MULTILINE
-        )
-        matches = func_pattern.findall(views_content)
-        if matches:
-            # If there's more than one match, we take the first, but typically you'd only have one definition.
-            moved_functions[fn_name] = matches[0]
-        else:
-            print(f"Warning: function {fn_name} not found in {views_path}")
+    # Insert those import statements into the new module
+    for imp_node in top_imports:
+        new_module_node_list.append(imp_node)
 
-    # 5. Build the content for the new module
-    #    We'll try to guess the necessary imports by scanning for "import" and "from x import y" lines
-    #    from the top of views.py. In reality, you'd want to parse more thoroughly or track usage.
-    #    We'll just copy all the import lines from the top of views.py for simplicity.
-    #    You can refine by checking references within the extracted functions.
-    import_lines = []
-    lines = views_content.splitlines(True)  # Keep line endings
-    for line in lines:
-        if line.strip().startswith('import ') or line.strip().startswith('from '):
-            import_lines.append(line)
-        else:
-            # Once we reach a non-import line, stop. This assumes all imports are top-level.
-            pass
+    # Add a comment header
+    new_module_node_list.append(new_module._convert_input_to_node(
+        f"# Auto-generated by modularize_views\n"
+    ))
 
-    # De-duplicate import lines
-    import_lines = list(dict.fromkeys(import_lines))
-
-    # 6. Construct the new module content
-    new_views_module = []
-    new_views_module.append(f"# {new_module_name}.py\n")
-    new_views_module.append("# Auto-generated by modularize_views\n\n")
-    new_views_module.extend(import_lines)
-    new_views_module.append("\n\n# Moved functions:\n")
+    # 3. For each function name in url_patterns_to_move, move it to the new module
+    #    and update references in urls.py from 'views.fn_name' to 'new_module_name.fn_name'
+    moved_functions = []
 
     for fn_name in url_patterns_to_move:
-        fn_code = moved_functions.get(fn_name, "")
-        new_views_module.append(fn_code)
-        new_views_module.append("\n")
+        # (a) Find the function in views_red
+        fn_node = views_red.find("def", name=fn_name)
+        if not fn_node:
+            print(f"Warning: function '{fn_name}' not found in {views_path}")
+            continue
 
-    new_views_module_str = "".join(new_views_module)
+        # (b) Copy the function node and append to the new module
+        fn_copy = fn_node.copy()
+        new_module_node_list.append(fn_copy)
 
-    # 7. In views.py, comment out the functions that were moved
-    commented_views_content = views_content
-    for fn_name, fn_code in moved_functions.items():
-        # We'll replace the exact code with a commented version
-        # We'll take each line of fn_code and prepend "# ".
-        commented_code = "\n".join(["# " + l for l in fn_code.splitlines()])
-        commented_views_content = commented_views_content.replace(fn_code, commented_code, 1)
+        # (c) Remove the original from views_red
+        fn_node.remove()
+        moved_functions.append(fn_name)
 
-    # 8. Write out the new files
-    new_module_path = os.path.join(output_dir, f"{new_module_name}.py")
-    modified_urls_path = os.path.join(output_dir, f"modified_{os.path.basename(urls_path)}")
-    modified_views_path = os.path.join(output_dir, f"modified_{os.path.basename(views_path)}")
+        # (d) In urls_red, update references from 'views.fn_name' or 'views.fn_name(...)'
+        #     to 'new_module_name.fn_name'
+        #     We'll look for atomtrailers referencing 'views.fn_name' specifically.
+        #     (We assume standard usage: "views.fn_name")
+        for atom in urls_red.find_all("atomtrailers"):
+            # If the chain is something like [NameNode('views'), DotNode('.'), NameNode(fn_name)]
+            if len(atom.value) == 3:
+                if (
+                    atom.value[0].type == "name"
+                    and atom.value[0].value == "views"
+                    and atom.value[1].type == "dot"
+                    and atom.value[2].type == "name"
+                    and atom.value[2].value == fn_name
+                ):
+                    # Replace with [NameNode(new_module_name), DotNode('.'), NameNode(fn_name)]
+                    atom.value[0].value = new_module_name
 
-    write_txt_file(new_views_module_str, new_module_path)
+    # 4. Write the new module to disk
+    new_module_filename = f"{new_module_name}.py"
+    new_module_path = output_dir_abs / new_module_filename
+    with open(new_module_path, "w", encoding="utf-8") as f:
+        f.write(new_module.dumps())
 
-    write_txt_file(new_urls_content, modified_urls_path)
+    # 5. Write out the modified urls.py and views.py
+    modified_urls_path = output_dir_abs / f"modified_{urls_abs.name}"
+    modified_views_path = output_dir_abs / f"modified_{views_abs.name}"
 
-    write_txt_file(commented_views_content, modified_views_path)
+    with open(modified_urls_path, "w", encoding="utf-8") as f:
+        f.write(urls_red.dumps())
 
-    print(f"Functions: {url_patterns_to_move}")
+    with open(modified_views_path, "w", encoding="utf-8") as f:
+        f.write(views_red.dumps())
+
+    # 6. Summary
+    print(f"Moved functions: {moved_functions}")
     print(f"Created new module: {new_module_path}")
     print(f"Modified urls.py -> {modified_urls_path}")
     print(f"Modified views.py -> {modified_views_path}")
