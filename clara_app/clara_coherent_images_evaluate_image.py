@@ -13,6 +13,7 @@ from .clara_coherent_images_utils import (
     get_story_data,
     get_pages,
     get_text,
+    get_text_language,
     get_style_description,
     get_all_element_texts,
     get_element_description,
@@ -57,10 +58,14 @@ import traceback
 import unicodedata
 
 async def interpret_element_image_with_prompt(image_path, description, element_text, formatted_story_data, prompt_id, params, callback=None):
+    # Get text language
+    text_language = get_text_language(params)
+    
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template(prompt_id, 'element_image_interpretation')
 
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+    prompt = prompt_template.format(text_language=text_language,
+                                    formatted_story_data=formatted_story_data,
                                     element_text=element_text)
 
     # Perform the API call
@@ -105,7 +110,8 @@ async def interpret_image_with_prompt(image_path, expanded_description, page_num
 
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
                                     page_number=page_number,
-                                    page_text=page_text)
+                                    page_text=page_text,
+                                    text_language=text_language)
 
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
@@ -184,6 +190,9 @@ async def interpret_image_with_prompt_multiple_questions(image_path, expanded_de
         return None, errors, {'interpret_image': total_cost}
         
 async def get_elements_shown_in_image(image_path, params, callback=None):
+    # Get text language
+    text_language = get_text_language(params)
+    
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template('default', 'get_elements_shown_in_image')
 
@@ -191,7 +200,9 @@ async def get_elements_shown_in_image(image_path, params, callback=None):
 
     elements = get_all_element_texts(params)
 
-    prompt = prompt_template.format(text=text, elements=elements)
+    prompt = prompt_template.format(text=text,
+                                    text_language=text_language,
+                                    elements=elements)
 
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
@@ -229,11 +240,15 @@ Not all elements in {elements_present} are in {elements}
     return None, errors, total_cost
 
 async def get_important_pairs_in_image(elements_in_image, expanded_description, params, callback=None):
+    # Get text language
+    text_language = get_text_language(params)
+    
     prompt_template = get_prompt_template('default', 'get_important_pairs_in_image')
 
     text = get_text(params)
 
-    prompt = prompt_template.format(text=text, 
+    prompt = prompt_template.format(text=text,
+                                    text_language=text_language,
                                     expanded_description=expanded_description,
                                     elements_in_image=elements_in_image)
 
@@ -271,11 +286,16 @@ Not all elements in {important_pairs} are in {elements_in_image}
     return None, errors, total_cost
 
 async def get_elements_descriptions_and_style_in_image(image_path, elements_in_image, params, callback=None):
+    # Get text language
+    text_language = get_text_language(params)
+    
     prompt_template = get_prompt_template('default', 'get_elements_descriptions_and_style_in_image')
 
     text = get_text(params)
 
-    prompt = prompt_template.format(text=text, elements_in_image=elements_in_image)
+    prompt = prompt_template.format(text=text,
+                                    text_language=text_language,
+                                    elements_in_image=elements_in_image)
 
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
@@ -305,13 +325,18 @@ async def get_elements_descriptions_and_style_in_image(image_path, elements_in_i
     return None, total_cost
 
 async def get_relationship_of_element_pair_in_image(pair, image_path, params, callback=None):
+    # Get text language
+    text_language = get_text_language(params)
+    
     prompt_template = get_prompt_template('default', 'get_relationship_of_element_pair_in_image')
 
     element1, element2 = pair
 
     text = get_text(params)
     
-    prompt = prompt_template.format(text=text, element1=element1, element2=element2)
+    prompt = prompt_template.format(text=text,
+                                    text_language=text_language,
+                                    element1=element1, element2=element2)
 
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5
@@ -364,6 +389,9 @@ The following elements were found in the image: {elements_in_image}
     return text
 
 async def evaluate_fit_with_prompt(expanded_description, image_description, prompt_id, page_number, params, callback=None):
+    # Get text language
+    text_language = get_text_language(params)
+    
     # Retrieve the prompt template based on prompt_id
     prompt_template = get_prompt_template(prompt_id, 'page_evaluation')
 
@@ -372,8 +400,12 @@ async def evaluate_fit_with_prompt(expanded_description, image_description, prom
     
     page_text = get_page_text(page_number, params)
 
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text,
-                                    expanded_description=expanded_description, image_description=image_description)
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                    page_number=page_number,
+                                    page_text=page_text,
+                                    text_language=text_language,
+                                    expanded_description=expanded_description,
+                                    image_description=image_description)
 
     # Perform the API call
     tries_left = params['n_retries'] if 'n_retries' in params else 5

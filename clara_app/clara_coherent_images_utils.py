@@ -52,6 +52,7 @@ project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                                     'max_description_generation_rounds': 1,
 
                                     'ai_checking_of_images': 'off',
+                                    'text_language': 'english',
 
                                     'page_interpretation_prompt': 'with_context_v3_objective',
                                     'page_evaluation_prompt': 'with_context_lenient',
@@ -121,6 +122,7 @@ def get_style_params_from_project_params(params):
         'n_expanded_descriptions': params['n_expanded_descriptions'],
         'n_images_per_description': params['n_images_per_description'],
         'ai_checking_of_images': params['ai_checking_of_images'] if 'ai_checking_of_images' in params else 'on',
+        'text_language': params['text_language'] if 'text_language' in params else 'english',
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_style_description': params['generate_description_model'],
                               'style_example_evaluation': params['example_evaluation_model']}
@@ -143,6 +145,7 @@ def get_element_descriptions_params_from_project_params(params, elements_to_gene
         'n_expanded_descriptions': params['n_expanded_descriptions'],
         'n_images_per_description': params['n_images_per_description'],
         'ai_checking_of_images': params['ai_checking_of_images'] if 'ai_checking_of_images' in params else 'on',
+        'text_language': params['text_language'] if 'text_language' in params else 'english',
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_element_names': params['generate_element_names_model'],
                               'generate_element_description': params['generate_description_model'],
@@ -162,6 +165,7 @@ def get_page_params_from_project_params(params, pages_to_generate=None):
         'max_description_generation_rounds': params['max_description_generation_rounds'],
 
         'ai_checking_of_images': params['ai_checking_of_images'] if 'ai_checking_of_images' in params else 'on',
+        'text_language': params['text_language'] if 'text_language' in params else 'english',
         
         'page_interpretation_prompt': params['page_interpretation_prompt'],
         'page_evaluation_prompt': params['page_evaluation_prompt'],
@@ -449,6 +453,9 @@ def get_text(params):
         return '\n'.join(text_content)
     except Exception as e:
         return ''
+
+def get_text_language(params):
+    return params['text_language'] if 'text_language' in params else 'english'
 
 def get_style_description(params):
     project_dir = params['project_dir']
