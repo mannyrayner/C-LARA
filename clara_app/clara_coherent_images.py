@@ -68,6 +68,7 @@ from .clara_coherent_images_utils import (
     get_story_data,
     get_pages,
     get_text,
+    get_text_language,
     get_style_description,
     get_all_element_texts,
     element_text_to_element_name,
@@ -476,9 +477,13 @@ async def generate_expanded_style_description(description_version_number, params
     # Get the text of the story
     text = get_text(params)
 
+    # Get text language
+    text_language = get_text_language(params)
+
     # Create the prompt to expand the style description
     prompt_template = get_prompt_template('default', 'generate_style_description')
     prompt = prompt_template.format(text=text,
+                                    text_language=text_language,
                                     base_description=base_description,
                                     background_text=background_text)
 
@@ -521,9 +526,14 @@ async def generate_style_description_example(description_version_number, expande
     # Get the text of the story
     text = get_text(params)
 
+    # Get text language
+    text_language = get_text_language(params)
+
     # Create the prompt to expand the style description
     prompt_template = get_prompt_template('default', 'generate_style_description_example')
-    prompt = prompt_template.format(text=text, expanded_style_description=expanded_style_description)
+    prompt = prompt_template.format(text=text,
+                                    text_language=text_language,
+                                    expanded_style_description=expanded_style_description)
 
     # Get the expanded description from the AI
     image_description = None
@@ -616,12 +626,15 @@ async def generate_style_image(image_dir, description, params, callback=None):
 async def interpret_style_image(image_dir, image_file, params, callback=None):
     project_dir = params['project_dir']
 
+    # Get text language
+    text_language = get_text_language(params)
+
     if no_ai_checking_of_images(params):
         image_interpretation = NULL_IMAGE_INTERPRETATION
         cost = 0.0
     else:
         prompt_template = get_prompt_template('default', 'style_example_interpretation')
-        prompt = prompt_template.format()
+        prompt = prompt_template.format(text_language=text_language)
 
         api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_style_image', params, callback=callback)
         cost = api_call.cost
@@ -634,12 +647,17 @@ async def interpret_style_image(image_dir, image_file, params, callback=None):
 async def evaluate_style_fit(image_dir, expanded_description, image_description, params, callback=None):
     project_dir = params['project_dir']
 
+    # Get text language
+    text_language = get_text_language(params)
+
     if no_ai_checking_of_images(params):
         evaluation = NULL_IMAGE_EVALUATION
         cost = 0.0
     else:
         prompt_template = get_prompt_template('default', 'style_example_evaluation')
-        prompt = prompt_template.format(expanded_description=expanded_description, image_description=image_description)
+        prompt = prompt_template.format(text_language=text_language,
+                                        expanded_description=expanded_description,
+                                        image_description=image_description)
         
         api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_style_image', params, callback=callback)
         cost = api_call.cost
@@ -706,6 +724,9 @@ async def generate_element_names(params, callback=None):
     story_data = get_story_data(params)
     formatted_story_data = json.dumps(story_data, indent=4)
 
+    # Get text language
+    text_language = get_text_language(params)
+
     # Get the background if there is any
     background_advice = get_background_advice(params)
     background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
@@ -717,11 +738,13 @@ async def generate_element_names(params, callback=None):
         current_elements_text = json.dumps(current_elements, indent=4)
         prompt_template = get_prompt_template('add_names', 'generate_element_names')
         prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                        text_language=text_language,
                                         current_elements_text=current_elements_text,
                                         background_text=background_text)
     else:
         prompt_template = get_prompt_template('default', 'generate_element_names')
         prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                        text_language=text_language,
                                         background_text=background_text)
 
     # Get the expanded description from the AI
@@ -855,6 +878,9 @@ async def generate_expanded_element_description_and_images(element_name, element
     text = get_text(params)
     style_description = get_style_description(params)
 
+    # Get text language
+    text_language = get_text_language(params)
+
     # Get the background if there is any
     background_advice = get_background_advice(params)
     background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
@@ -874,6 +900,7 @@ async def generate_expanded_element_description_and_images(element_name, element
     # Create the prompt to expand the element description
     prompt_template = get_prompt_template('default', 'generate_element_description')
     prompt = prompt_template.format(text=text,
+                                    text_language=text_language,
                                     background_text=background_text,
                                     style_description=style_description,
                                     element_text=element_text,
@@ -1022,8 +1049,11 @@ async def interpret_element_image(image_dir, image_file, params, callback=None):
         image_interpretation = NULL_IMAGE_INTERPRETATION
         cost = 0.0
     else:
+        # Get text language
+        text_language = get_text_language(params)
+    
         prompt_template = get_prompt_template('default', 'element_interpretation')
-        prompt = prompt_template.format()
+        prompt = prompt_template.format(text_language=text_language)
 
         api_call = await get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, 'interpret_element_image', params, callback=callback)
 
@@ -1041,8 +1071,13 @@ async def evaluate_element_fit(image_dir, expanded_description, image_descriptio
         evaluation = NULL_IMAGE_EVALUATION
         cost = 0.0
     else:
+        # Get text language
+        text_language = get_text_language(params)
+        
         prompt_template = get_prompt_template('default', 'element_evaluation')
-        prompt = prompt_template.format(expanded_description=expanded_description, image_description=image_description, callback=callback)
+        prompt = prompt_template.format(text_language=text_language,
+                                        expanded_description=expanded_description,
+                                        image_description=image_description)
 
         api_call = await get_api_chatgpt4_response_for_task(prompt, 'evaluate_element_image', params)
         cost = api_call.cost
@@ -1664,6 +1699,9 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     page_text = get_page_text(page_number, params)
     style_description = get_style_description(params)
 
+    # Get text language
+    text_language = get_text_language(params)
+
     # Get the background if there is any
     background_advice = get_background_advice(params)
     background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
@@ -1705,6 +1743,7 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
                                     style_description=style_description,
                                     page_number=page_number,
                                     page_text=page_text,
+                                    text_language=text_language,
                                     advice_text=advice_text,
                                     element_descriptions_text=element_descriptions_text,
                                     previous_page_descriptions_text=previous_page_descriptions_text)
@@ -1806,11 +1845,15 @@ async def correct_expanded_description_after_content_policy_failure(expanded_des
     story_data = get_story_data(params)
     formatted_story_data = json.dumps(story_data, indent=4)
 
+    # Get text language
+    text_language = get_text_language(params)
+
     # Create the prompt
     prompt_template = get_prompt_template('default', 'correct_page_description')
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
                                     page_number=page_number,
                                     page_text=page_text,
+                                    text_language=text_language,
                                     expanded_description=expanded_description_old)
     
     # Get the expanded description from the AI
@@ -1934,6 +1977,9 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         page_text = get_page_text(page_number, params)
         style_description = get_style_description(params)
 
+        # Get text language
+        text_language = get_text_language(params)
+
         previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, context_cost_dict)
 
@@ -1943,12 +1989,14 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         if background_advice:
             prompt_template = get_prompt_template('style_and_background', 'generate_page_description_for_uploaded_image')
             prompt = prompt_template.format(page_text=page_text,
+                                            text_language=text_language,
                                             background_advice=background_advice,
                                             style_description=style_description,
                                             image_interpretation=image_interpretation)
         else:
             prompt_template = get_prompt_template('just_style', 'generate_page_description_for_uploaded_image')
             prompt = prompt_template.format(page_text=page_text,
+                                            text_language=text_language,
                                             style_description=style_description,
                                             image_interpretation=image_interpretation)
 
