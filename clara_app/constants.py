@@ -121,6 +121,11 @@ SUPPORTED_LANGUAGES_WITH_AI_ENABLED_STATUS = [
 
 SUPPORTED_LANGUAGES = [ ( item[0], item[1] ) for item in SUPPORTED_LANGUAGES_WITH_AI_ENABLED_STATUS ]
 
+SUPPORTED_AI_ENABLED_LANGUAGES_ENGLISH_AND_FRENCH_FIRST = [ ('english', 'English'), ('french', 'French') ] + \
+                                                          [ ( item[0], item[1] )
+                                                            for item in SUPPORTED_LANGUAGES_WITH_AI_ENABLED_STATUS
+                                                            if item[2] and not item[0] in ('english', 'french') ]
+
 SUPPORTED_LANGUAGES_AI_ENABLED_DICT = { item[0]: item[2] for item in SUPPORTED_LANGUAGES_WITH_AI_ENABLED_STATUS }
 
 SUPPORTED_LANGUAGES_AND_DEFAULT = [ ('default', 'Default') ] + SUPPORTED_LANGUAGES

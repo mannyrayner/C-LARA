@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 
 from .constants import (
     SUPPORTED_LANGUAGES,
+    SUPPORTED_AI_ENABLED_LANGUAGES_ENGLISH_AND_FRENCH_FIRST,
     SUPPORTED_LANGUAGES_AND_DEFAULT,
     SUPPORTED_LANGUAGES_AND_OTHER,
     SIMPLE_CLARA_TYPES,
@@ -963,6 +964,8 @@ class CoherentImagesV2ParamsForm(forms.Form):
 
     ai_checking_of_images = forms.ChoiceField(choices=AI_CHECKING_FOR_COHERENT_IMAGES_V2,
                                               label="Use AI to check images")
+    text_language = forms.ChoiceField(choices=SUPPORTED_AI_ENABLED_LANGUAGES_ENGLISH_AND_FRENCH_FIRST,
+                                      label="Language to use for writing prompts")
 
     page_interpretation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
                                                    label="Method to use for interpreting page images")
