@@ -78,7 +78,6 @@ def get_functions_called_by_function(function_node, skip_method_calls=True):
                 j = i - 1
                 while j >= 0:
                     t = trailer_list_fst[j]
-                    #print(t)
                     if t['type'] == "dot":
                         dot_found = True
                     elif t['type'] == "name" and fn_name is None:

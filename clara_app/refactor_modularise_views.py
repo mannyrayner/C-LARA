@@ -65,14 +65,10 @@ def modularize_views(
     """
 
     # 1. Read and parse the source code for urls.py and views.py
-    urls_abs = Path(urls_path).resolve()
-    views_abs = Path(views_path).resolve()
-    output_dir_abs = Path(output_dir).resolve()
+    output_dir_abs = absolute_file_name(output_dir)
 
-    with open(urls_abs, "r", encoding="utf-8") as f:
-        urls_source = f.read()
-    with open(views_abs, "r", encoding="utf-8") as f:
-        views_source = f.read()
+    urls_source = read_txt_file(urls_path)
+    views_source = read_txt_file(views_path)
 
     urls_red = RedBaron(urls_source)
     views_red = RedBaron(views_source)
