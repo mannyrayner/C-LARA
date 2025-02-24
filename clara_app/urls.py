@@ -12,16 +12,19 @@ urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
     path('login/', auth_views.LoginView.as_view(template_name='clara_app/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/accounts/login/'), name='logout'),
-    path('register/', accounts_views.register, name='register'),
-    path('profile/', accounts_views.profile, name='profile'),
-    path('home/', views.home, name='home'),
-    path('home_page/', views.home_page, name='home_page'),
-    path('clara_home_page/', views.clara_home_page, name='clara_home_page'),
+
     # Password reset links (ref: https://github.com/django/django/blob/master/django/contrib/auth/urls.py)
     path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
+    
+    path('register/', accounts_views.register, name='register'),
+    path('profile/', accounts_views.profile, name='profile'),
+    
+    path('home/', views.home, name='home'),
+    path('home_page/', views.home_page, name='home_page'),
+    path('clara_home_page/', views.clara_home_page, name='clara_home_page'),
     
     path('list_users/', views.list_users, name='list_users'),
     path('friends/', views.friends, name='friends'),
