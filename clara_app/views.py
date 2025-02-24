@@ -143,40 +143,14 @@ import asyncio
 config = get_config()
 logger = logging.getLogger(__name__)
 
-##
-### Create a new account    
-##def register(request):
-##    if request.method == 'POST':
-##        form = RegistrationForm(request.POST)
-##        if form.is_valid():
-##            user = form.save()  # This will save username and password.
-##            user.email = form.cleaned_data.get('email')  # This will save email.
-##            user.save()  # Save the user object again.
-##            
-##            # Create the UserProfile instance
-##            UserProfile.objects.create(user=user)
-##
-##            # Create the UserConfiguration instance
-##            UserConfiguration.objects.create(user=user)
-##
-##            username = form.cleaned_data.get('username')
-##            messages.success(request, f'Account created for {username}!')
-##            return redirect('login')
-##    else:
-##        form = RegistrationForm()
-##    return render(request, 'clara_app/register.html', {'form': form})
-
-# Show user profile
-##@login_required
-##def profile(request):
-##    profile, created = UserProfile.objects.get_or_create(user=request.user)
-##
-##    clara_version = get_user_config(request.user)['clara_version']
-##    
-##    return render(request, 'clara_app/profile.html', {'profile': profile, 'email': request.user.email, 'clara_version': clara_version})
-
 def redirect_login(request):
     return redirect('login')
+
+# Moved to account_views.py
+##def register(request):
+
+##@login_required
+##def profile(request):
 
 # Welcome screen
 def home(request):
@@ -237,7 +211,7 @@ def annotate_and_order_activities_for_home_page(activities):
         )
     )
 
-    # Order by vote score, custom status order, and then by creation date
+    # Order by custom status order, and then by creation date
     return activities.order_by('status_order', '-created_at')
 
 
@@ -389,35 +363,18 @@ def update_feed(request):
 
 # Check that the updates are such that we can render them in the template
 def valid_update_for_update_feed(update):
-##              {% if update.update_type == 'FRIEND' %}
-##		   <a href="{% url 'external_profile' update.content_object.sender.id %}">{{ update.content_object.sender.username }}</a>
-##                   is now friends with 
-##                   <a href="{% url 'external_profile' update.content_object.receiver.id %}">{{ update.content_object.receiver.username }}</a>
     if update.update_type == 'FRIEND':
         return isinstance(update.content_object, FriendRequest) and \
                isinstance(update.content_object.sender, User) and \
                isinstance(update.content_object.receiver, User)
-##		{% elif update.update_type == 'RATE' %}
-##		   <a href="{% url 'external_profile' update.content_object.user.id %}">{{ update.content_object.user.username }}</a>
-##		   gave {{ update.content_object.rating }} stars to 
-##		   <a href="{% url 'content_detail' update.content_object.content.id %}">{{ update.content_object.content.title }}</a>
     elif update.update_type == 'RATE':
         return isinstance(update.content_object, Rating) and \
                isinstance(update.content_object.user, User) and \
                isinstance(update.content_object.content, Content)
-##		{% elif update.update_type == 'COMMENT' %}
-##		   <a href="{% url 'external_profile' update.content_object.user.id %}">{{ update.content_object.user.username }}</a>
-##		   posted a comment on 
-##		   <a href="{% url 'content_detail' update.content_object.content.id %}">{{ update.content_object.content.title }}</a>:</br>
-##		   "{{ update.content_object.comment }}"
     elif update.update_type == 'COMMENT':
         return isinstance(update.content_object, Comment) and \
                isinstance(update.content_object.user, User) and \
                isinstance(update.content_object.content, Content)
-##		{% elif update.update_type == 'PUBLISH' %}
-##		   <a href="{% url 'external_profile' update.user.id %}">{{ update.user.username }}</a>
-##		   published 
-##		   <a href="{% url 'content_detail' update.content_object.id %}">{{ update.content_object.title }}</a>
     elif update.update_type == 'PUBLISH':
         return isinstance(update.content_object, Comment) and \
                isinstance(update.user, User) and \
@@ -615,101 +572,6 @@ def confirm_transfer(request):
     clara_version = get_user_config(request.user)['clara_version']
 
     return render(request, 'clara_app/confirm_transfer.html', {'form': form, 'clara_version': clara_version})
-
-##def initialise_orm_repositories_from_non_orm(callback=None):
-##    try:
-##        post_task_update(callback, f"--- Initialising ORM repositories from non-ORM repositories")
-##        
-##        post_task_update(callback, f"--- Initialising ORM audio repository")
-##        tts_repo = AudioRepositoryORM(initialise_from_non_orm=True, callback=callback)
-##        
-##        post_task_update(callback, f"--- Initialising ORM image repository")
-##        image_repo = ImageRepositoryORM(initialise_from_non_orm=True, callback=callback)
-##
-##        post_task_update(callback, f"--- Initialising phonetic lexicon repository")
-##        phonetic_lexicon_repo = PhoneticLexiconRepositoryORM(initialise_from_non_orm=True, callback=callback)
-##        
-##        post_task_update(callback, f"finished")
-##    except Exception as e:
-##        post_task_update(callback, f'Error initialising from non-ORM repositories: "{str(e)}"\n{traceback.format_exc()}')
-##        post_task_update(callback, f"error")
-    
-# Delete cached TTS data for language   
-##@login_required
-##@user_passes_test(lambda u: u.userprofile)
-##def initialise_orm_repositories(request):
-##    if request.method == 'POST':
-##        form = InitialiseORMRepositoriesForm(request.POST)
-##        if form.is_valid():
-##            
-##            # Create a unique ID to tag messages posted by this task and a callback
-##            task_type = f'initialise_orm_repositories'
-##            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
-##
-##            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
-##            print(f'--- Started initialise task')
-##            #Redirect to the monitor view, passing report ID as parameter
-##            return redirect('initialise_orm_repositories_monitor', report_id)
-##
-##    else:
-##        form = InitialiseORMRepositoriesForm()
-##
-##    clara_version = get_user_config(request.user)['clara_version']
-##    
-##    return render(request, 'clara_app/initialise_orm_repositories.html', {
-##        'form': form, 'clara_version': clara_version
-##    })
-
-# This is the API endpoint that the JavaScript will poll
-##@login_required
-##@user_passes_test(lambda u: u.userprofile.is_admin)
-##def initialise_orm_repositories_status(request, report_id):
-##    messages = get_task_updates(report_id)
-##    print(f'{len(messages)} messages received')
-##    if 'error' in messages:
-##        status = 'error'
-##    elif 'finished' in messages:
-##        status = 'finished'  
-##    else:
-##        status = 'unknown'    
-##    return JsonResponse({'messages': messages, 'status': status})
-
-##@login_required
-##@user_passes_test(lambda u: u.userprofile.is_admin)
-##def initialise_orm_repositories_monitor(request, report_id):
-##
-##    clara_version = get_user_config(request.user)['clara_version']
-##    
-##    return render(request, 'clara_app/initialise_orm_repositories_monitor.html',
-##                  {'report_id': report_id, 'clara_version': clara_version})
-##
-##@login_required
-##@user_passes_test(lambda u: u.userprofile.is_admin)
-##def initialise_orm_repositories_complete(request, status):
-##    if request.method == 'POST':
-##        form = InitialiseORMRepositoriesForm(request.POST)
-##        if form.is_valid():
-##            
-##            task_type = f'initialise_orm_repositories'
-##            callback, report_id = make_asynch_callback_and_report_id(request, task_type)
-##
-##            async_task(initialise_orm_repositories_from_non_orm, callback=callback)
-##            print(f'--- Started initialise task')
-##            #Redirect to the monitor view, passing the task ID and report ID as parameters
-##            return redirect('initialise_orm_repositories_monitor', report_id)
-##    else:
-##        if status == 'error':
-##            messages.error(request, f"Something went wrong when initialising the ORM repositories. Try looking at the 'Recent task updates' view")
-##        else:
-##            messages.success(request, f'Initialised ORM repositories')
-##
-##        form = InitialiseORMRepositoriesForm()
-##
-##        clara_version = get_user_config(request.user)['clara_version']
-##
-##        return render(request, 'clara_app/initialise_orm_repositories.html',
-##                      { 'form': form, 'clara_version': clara_version, } )
-
 
 def delete_tts_data_for_language(language, callback=None):
     post_task_update(callback, f"--- Starting delete task for language {language}")
@@ -1538,13 +1400,6 @@ def public_content_detail(request, content_id):
 
     # Print out all request headers for debugging
     headers = request.META
-##    for header, value in headers.items():
-##       logger.debug(f'header {header}: {value}')
-##    for header in ['HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR', 'HTTP_X_REAL_IP']:
-##        value = headers.get(header, 'NOT FOUND')
-##        messages.success(request, f'Header {header}: "{value}"')
-##    for header, value in headers.items():
-##        messages.success(request, f'Header {header}: "{value}"')
 
     # Get the client's IP address
     #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
@@ -1554,8 +1409,6 @@ def public_content_detail(request, content_id):
     
     if client_ip is None:
         client_ip = '0.0.0.0'  # Fallback IP if detection fails
-        
-##    messages.success(request, f'Accessed content from IP = {client_ip}')
     
     # Check if this IP has accessed this content before
     #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
@@ -5156,7 +5009,6 @@ def edit_images(request, project_id, dall_e_3_image_status):
                 elif action == 'create_dalle_style_image':
                     style_image_form = StyleImageForm(request.POST)
                     if not style_image_form.is_valid():
-    ##                    print(f'--- Invalid form data (form #{i}): {form}')
                         messages.error(request, "Invalid form data (form #{i}): {form}")
                         return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                     if not style_image_form.cleaned_data.get('user_prompt'):
@@ -5235,10 +5087,6 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
                     #print(f"--- form #{i}: form.changed_data = {form.changed_data}")
                     if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data and not 'user_prompt' in form.changed_data ):
-##                        if not form.is_valid():
-##                            print(f'--- Invalid form data (form #{i}): {form}')
-##                            errors.append(f"Invalid form data (form #{i}): {form.errors}")
-##                            messages.error(request, f"Invalid form data (form #{i}).")
 
                         # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
                         # If there is no file upload, the value is null
@@ -5322,12 +5170,6 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                      archive=False
                                                                      )
                         elif ( ( image_name and real_image_file_path ) or user_prompt ) and not errors:
-                           # We are uploading an image or changing a generation/understanding line
-    ##                        if not associated_areas and associated_text and image_name:  
-    ##                            # Generate the uninstantiated annotated image structure
-    ##                            structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
-    ##                            # Convert the structure to a string and store it in 'associated_areas'
-    ##                            associated_areas = json.dumps(structure)
 
                             clara_project_internal.add_project_image(image_name, real_image_file_path,
                                                                      associated_text=associated_text,
@@ -5607,6 +5449,7 @@ def edit_images_v2(request, project_id, status):
                                'max_description_generation_rounds': params_form.cleaned_data['max_description_generation_rounds'],
 
                                'ai_checking_of_images': params_form.cleaned_data['ai_checking_of_images'],
+                               'text_language': params_form.cleaned_data['text_language'],
 
                                'page_interpretation_prompt': params_form.cleaned_data['page_interpretation_prompt'],
                                'page_evaluation_prompt': params_form.cleaned_data['page_evaluation_prompt'],
@@ -5652,31 +5495,6 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Error when trying to create images ZIP")
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project_id, status='none')
-##            elif action == 'promote_alternate_image':
-##                try:
-##                    content_type = request.POST.get('content_type')
-##                    content_identifier = request.POST.get('content_identifier')
-##                    #alternate_description_id = int(request.POST.get('alternate_description_id'))
-##                    alternate_image_id = int(request.POST.get('alternate_image_id'))
-##
-##                    if content_type == 'style':
-##                        clara_project_internal.promote_v2_style_image(alternate_image_id)
-##                    elif content_type == 'element':
-##                        element_name = content_identifier
-##                        clara_project_internal.promote_v2_element_description(element_name, alternate_image_id)
-##                    elif content_type == 'page':
-##                        page_number = int(content_identifier)
-##                        clara_project_internal.promote_v2_page_image(page_number, alternate_image_id)
-##                    else:
-##                        messages.error(request, f"Invalid content type, '{content_type}'")
-##                        return redirect('edit_images_v2', project_id=project.id, status=status)
-##
-##                    messages.success(request, f"Alternate {content_type} image promoted successfully.")
-##                    return redirect('edit_images_v2', project_id=project.id, status='none')
-##                except Exception as e:
-##                    messages.error(request, f"Error when trying to promote alternate image")
-##                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
-##                    return redirect('edit_images_v2', project_id=project.id, status='none')
             elif action == 'delete_v2_element':
                 try:
                     deleted_element_text = request.POST.get('deleted_element_text')
@@ -5694,8 +5512,6 @@ def edit_images_v2(request, project_id, status):
             elif action == 'save_background_advice':
                 background_advice_text = request.POST.get('background_advice_text', '').strip()
                 print(f'background_advice_text read = "{background_advice_text}"')
-##                if not background_advice_text:
-##                    background_advice_text = background_advice
                 clara_project_internal.set_background_advice_v2(background_advice_text)
                 messages.success(request, f'Saved background advice')
                 return redirect('edit_images_v2', project_id=project.id, status='none')
@@ -7207,14 +7023,6 @@ def create_image_request_sequence(project_id, callback=None):
         post_task_update(callback, "error")
         return False
 
-##          {
-##            "request_type": "image-generation",
-##            "page": 3,
-##            "prompt": "An image of Princess Elara and the dragon Ember in the forest. They have just met. Ember looks sad and lost, Elara looks kind
-##            and sympathetic.",
-##            "description_variables": [ "Elara-description", "forest-description" ]
-##          }
-
 def check_well_formed_image_request_sequence(requests, numbered_page_list, callback=None):
     if not isinstance(requests, list):
         post_task_update(callback, f'Image request sequence is not a list: {requests}')
@@ -7273,16 +7081,6 @@ def check_and_correct_initialization_in_image_request_sequence(sequence, project
     return corrected_sequence
 
 # Go through the generation requests, creating and storing the images.
-#
-# Generation requests have this format:
-# { 'image_name': image_name,
-#   'page': page,
-#   'position': position,
-#   'user_prompt': user_prompt,
-#   'style_description': style_description,
-#   'current_image': image_file_path
-#  }
-# current_image may be null
 
 def create_and_add_coherent_dall_e_3_images(project_id, requests, callback=None):
     try:
@@ -8137,22 +7935,6 @@ def show_questionnaire(request, project_id, user_id):
 
     return render(request, 'clara_app/show_questionnaire.html', {'questionnaire': questionnaire, 'project': project})
 
-# Show all questionnaires
-##@login_required
-##@user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
-##def manage_questionnaires(request):
-##    if request.method == 'POST':
-##        # Handle the deletion of selected questionnaire responses
-##        selected_ids = request.POST.getlist('selected_responses')
-##        if selected_ids:
-##            SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
-##            messages.success(request, "Selected responses have been deleted.")
-##            return redirect('manage_questionnaires')
-##    
-##    # Display all questionnaire responses
-##    questionnaires = SatisfactionQuestionnaire.objects.all()
-##    return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
-
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
 def manage_questionnaires(request):
@@ -8508,37 +8290,6 @@ def serve_coherent_images_v2_file(request, project_id, relative_path):
             return HttpResponse(f.read(), content_type=content_type)
     else:
         raise Http404("File not found.")
-
-##def serve_coherent_images_v2_style_image(request, project_id):
-##    project = get_object_or_404(CLARAProject, pk=project_id)
-##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'style/image.jpg' ))
-##    if file_exists(file_path):
-##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-##    else:
-##        raise Http404
-##
-##def serve_coherent_images_v2_element_image(request, project_id, element_name):
-##    project = get_object_or_404(CLARAProject, pk=project_id)
-##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'elements/{element_name}/image.jpg' ))
-##    if file_exists(file_path):
-##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-##    else:
-##        raise Http404
-##
-##def serve_coherent_images_v2_page_image(request, project_id, page_number):
-##    project = get_object_or_404(CLARAProject, pk=project_id)
-##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'pages/page{page_number}/image.jpg' ))
-##    if file_exists(file_path):
-##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
-##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
-##    else:
-##        raise Http404
-
 
 @login_required
 def serve_audio_file(request, engine_id, l2, voice_id, base_filename):
