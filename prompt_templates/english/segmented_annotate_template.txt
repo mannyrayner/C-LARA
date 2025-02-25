@@ -4,6 +4,8 @@ Similarly, if a surface word contains a reduced auxiliary, possessive marker or 
 
 Do NOT split up words in other ways. In particular, do not split off inflectional or derivational affixes. For example, words like "lasting", "untainted" or "breezy" should be left as they are.
 
+Finally, if a surface word contains one or more apostrophes, and it is lexically a single unit, enclose it in @ signs.
+
 Here are some examples:
 
 {examples}

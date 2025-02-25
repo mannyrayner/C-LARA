@@ -208,7 +208,7 @@
         "timestamp": "20241213054545"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\segmented_annotate_template.txt",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\segmented_annotate_template_20250225111841.txt",
         "annotation_type": "segmented",
         "template_or_examples": "template",
         "operation": "annotate",
@@ -232,11 +232,35 @@
         "timestamp": "20241213063103"
     },
     {
-        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\segmented_annotate_examples.json",
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\segmented_annotate_examples_20250225111927.json",
         "annotation_type": "segmented",
         "template_or_examples": "examples",
         "operation": "annotate",
         "user": "mannyrayner",
         "timestamp": "20241213193941"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\segmented_annotate_template.txt",
+        "annotation_type": "segmented",
+        "template_or_examples": "template",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20250225111841"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\archive\\segmented_annotate_examples_20250225112540.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20250225111927"
+    },
+    {
+        "file": "C:\\cygwin64\\home\\github\\c-lara\\prompt_templates\\english\\segmented_annotate_examples.json",
+        "annotation_type": "segmented",
+        "template_or_examples": "examples",
+        "operation": "annotate",
+        "user": "mannyrayner",
+        "timestamp": "20250225112540"
     }
 ]
