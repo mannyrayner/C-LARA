@@ -180,7 +180,7 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
                 # Try to correct if we have a mismatch
                 if presegmented_text != text.replace('||', '').replace('<page>', ''):
                     presegmented_text = merge_annotations_charwise(text, presegmented_text, 'presegmentation')
-                presegmented_text = ensure_segment_break_before_page(presegmented_text)
+                presegmented_text = clean_up_segment_breaks_in_text(presegmented_text)
                 valid_presegmentation_found = True
                 all_api_calls.append(presegment_api_call)
             except ValueError as e:
@@ -194,10 +194,15 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
 
     segmented_text, segmented_api_calls = generate_or_improve_annotated_version('annotate', 'segmented', presegmented_text, l1_language, l2_language,
                                                                                 previous_version='presegmented', config_info=config_info, callback=callback)
+    segmented_text = clean_up_segment_breaks_in_text(segmented_text)
     all_api_calls.extend(segmented_api_calls)
     return ( segmented_text, all_api_calls )
 
-def ensure_segment_break_before_page(text: str) -> str:
+def clean_up_segment_breaks_in_text(text: str) -> str:
+    text1 = add_segment_break_before_page(text)
+    return move_segment_break_before_line_break(text1)
+
+def add_segment_break_before_page(text: str) -> str:
     """
     Insert '||' before <page> whenever <page> is preceded by whitespace
     that does not already have '||' immediately before it.
@@ -236,6 +241,9 @@ def ensure_segment_break_before_page(text: str) -> str:
             text = text[:start] + insertion + page_tag + text[end:]
     
     return text
+
+def move_segment_break_before_line_break(text: str) -> str:
+    return text.replace('\n||', '||\n')
 
 def generate_or_improve_annotated_version(annotate_or_improve, processing_phase, annotated_text, l1_language, l2_language,
                                           previous_version='default', mwe=False,
