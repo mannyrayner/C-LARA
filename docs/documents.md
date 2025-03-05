@@ -13,6 +13,7 @@
 
 </div>
 ## Documents
+- <a href="https://www.researchgate.net/publication/389545354_Building_culturally_relevant_multimedia_resources_for_Indigenous_languages_using_AI_tools_and_collaborative_development_extended_abstract" target="_blank">"Building culturally relevant multimedia resources for Indigenous languages using AI tools and collaborative development (extended abstract)</a>. Paper presented at ComputEL-8. We describe how we have adapted C-LARA for use with Indigenous languages, in particular for generation of images. The Powerpoint, which is more up-to-date, is <a href="https://c-lara.unisa.edu.au/clara_working_docs/ComputEL-8PresentationV06.pptx">here</a>
 - <a href="https://www.researchgate.net/publication/387962116_ChatGPT_is_Bullshit_is_Bullshit_A_Coauthored_Rebuttal_by_Human_LLM" target="_blank">"ChatGPT is Bullshit" is Bullshit: A Coauthored Rebuttal by Human & LLM</a>. A rebuttal of the high-profile paper <i>ChatGPT is bullshit</i> written by the o1 model under human supervision, together with a full trace of how it was created. o1, unprompted, identifies the critical error in <i>ChatGPT is bullshit</i> within a few seconds.
 
 - <a href="https://www.researchgate.net/publication/384217262_Echoes_of_Solitude_a_short_story_by_o1-preview" target="_blank">Echoes of Solitude: a short story by o1-preview</a>. A 3100 word science-fiction story entirely written by the o1-preview model, together with a full trace of how it was created.
