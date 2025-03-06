@@ -113,6 +113,11 @@
 			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
 			  Review images as community organiser</a>
 			  {% if up_to_date_dict.images %}✓{% endif %}</p>
+		  <p><a href="{% url 'community_review_images_external' project.id %}" 
+			  data-tooltip="Public view of community reviewing results: cannot vote or make suggestions." 
+			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+			  Review images as non-community member</a>
+			  {% if up_to_date_dict.images %}✓{% endif %}</p>		   
 	{% endif %}
 	<p><a href="{% url 'create_phonetic_text' project.id %}"
 	      data-tooltip="If a phonetic lexicon has been uploaded for this language, create a version of the text divided into phonetic units."

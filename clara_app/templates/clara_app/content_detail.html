@@ -4,6 +4,9 @@
 {% block content %}
   <h2>{{ content.title }}</h2>
   <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  {% if content.project.community %}
+	<p>Link to community image review data: <a href="{% url 'community_review_images_external' content.project.id %}" target="_blank" rel="noopener">here</a></p>
+  {% endif %}
   <p>Access count: {{ content.unique_access_count }}</p>
   {% if average_rating %}
     <p>Average Rating: {{ average_rating }}</p>

@@ -1,0 +1,43 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+
+<div class="main-content">
+<h2>Summary of Community Reviewing ({{ project.title }})</h2>
+
+{% for page_info in descriptions_info %}
+
+	<hr style="height:2px;border-width:0;color:gray;background-color:gray">
+	<h3>Page number {{ page_info.page_number }}</h3> 
+	
+	<h4>Text used to create images</h3> 
+	<p>{{ page_info.page_text }}</p>
+	{% if page_info.original_page_text %}
+	  <h4>Original text</h3>
+	  <p>{{ page_info.original_page_text }}</p>
+	{% endif %}
+
+	{% for d_idx, dinfo in page_info.page_description_info.items %}
+
+	  <div class="description-group">
+		  <div class="image-row">
+		  {% for img in dinfo.images %}
+			{% if img.preferred %}
+			<div class="image-container preferred-image">
+			{% elif img.hidden %}
+			<div class="image-container hidden-image">
+			{% else %}
+			<div class="image-container non-preferred-image">
+			{% endif %}
+				<img src="{% url 'serve_coherent_images_v2_file' project.id img.image_path %}" style="max-width:100px;"/><br/>
+				Upvotes: {{ img.upvotes_count }} Downvotes: {{ img.downvotes_count }}
+			</div>
+		  {% endfor %}
+		  </div>
+	  </div>
+	  
+	{% endfor %}
+
+{% endfor %}
+</div>
+
+{% endblock %}
