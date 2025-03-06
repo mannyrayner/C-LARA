@@ -5726,6 +5726,52 @@ def community_review_images(request, project_id):
 def community_organiser_review_images(request, project_id):
     return community_review_images_cm_or_co(request, project_id, 'co')
 
+@login_required
+def community_review_images_external(request, project_id):
+    user = request.user
+    config_info = get_user_config(user)
+    username = user.username
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    clara_version = get_user_config(request.user)['clara_version']
+    project_dir = clara_project_internal.coherent_images_v2_project_dir
+
+    story_data = read_project_json_file(project_dir, 'story.json')
+    descriptions_info = []
+
+    for page in story_data:
+        page_number = page.get('page_number')
+        page_text = page.get('text', '').strip()
+        original_page_text = page.get('original_page_text', '').strip()
+
+        # Update AI votes
+        try:
+            update_ai_votes_in_feedback(project_dir, page_number)
+        except Exception as e:
+            messages.error(request, f"Error updating AI votes: {e}")
+
+        # Load alternate images
+        content_dir = project_pathname(project_dir, f"pages/page{page_number}")
+        alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
+
+        page_descriptions_info, preferred_image_id = get_page_description_info_for_cm_reviewing('cm', alternate_images, page_number, project_dir)
+
+        page_item = { 'page_number': page_number,
+                      'page_text': page_text,
+                      'original_page_text': original_page_text,
+                      'page_description_info': page_descriptions_info
+                      }
+        descriptions_info.append(page_item)
+
+    rendering_parameters = {
+        'project': project,
+        'descriptions_info': descriptions_info,
+    }
+
+    #pprint.pprint(descriptions_info[:2])
+
+    return render(request, 'clara_app/community_review_images_external.html', rendering_parameters)
+
 def community_review_images_cm_or_co(request, project_id, cm_or_co):
     user = request.user
     config_info = get_user_config(user)
@@ -5745,6 +5791,7 @@ def community_review_images_cm_or_co(request, project_id, cm_or_co):
         'pages_info': pages_info,
         'clara_version': clara_version,
     })
+
 
 @login_required
 @community_role_required

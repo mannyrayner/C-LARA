@@ -6,8 +6,18 @@ from pathlib import Path
 from datetime import datetime
 
 from .clara_coherent_images_alternate import get_alternate_images_json
-from .clara_coherent_images_utils import score_for_image_dir, element_score_for_description_dir, get_expanded_description_text_for_page_version
-from .clara_coherent_images_utils import get_pages, project_pathname, read_project_json_file
+from .clara_coherent_images_utils import (
+    score_for_image_dir,
+    element_score_for_description_dir,
+    get_expanded_description_text_for_page_version,
+    get_pages,
+    project_pathname,
+    read_project_json_file,
+    get_project_params,
+    no_ai_checking_of_images
+    )
+    
+    
 from .clara_utils import file_exists, read_txt_file
 
 from .constants import (
@@ -183,7 +193,8 @@ def load_community_feedback(project_dir, page):
     path = community_feedback_path(project_dir, page)
     if os.path.exists(path):
         with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            feedback = json.load(f)
+            return remove_ai_votes_if_no_ai_checking(project_dir, feedback)
     else:
         # If no file exists, return an empty structure
         return {
@@ -197,7 +208,8 @@ def load_community_feedback_for_element(project_dir, element_name):
     path = community_feedback_path_for_element(project_dir, element_name)
     if os.path.exists(path):
         with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            feedback = json.load(f)
+            return remove_ai_votes_if_no_ai_checking(project_dir, feedback)
     else:
         # If no file exists, return an empty structure
         return {
@@ -210,7 +222,8 @@ def load_community_feedback_for_style(project_dir):
     path = community_feedback_path_for_style(project_dir)
     if os.path.exists(path):
         with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            feedback = json.load(f)
+            return remove_ai_votes_if_no_ai_checking(project_dir, feedback)
     else:
         # If no file exists, return an empty structure
         return {
@@ -218,6 +231,13 @@ def load_community_feedback_for_style(project_dir):
             "advice": [],
             "comments": []
         }
+
+def remove_ai_votes_if_no_ai_checking(project_dir, feedback):
+    params = get_project_params(project_dir)
+    # If we're not doing AI checking, remove the AI votes since they're only placeholders
+    if no_ai_checking_of_images(params) and 'votes' in feedback:
+        feedback['votes'] = [ v for v in feedback['votes'] if not ( 'user_id' in v and v['user_id'] == 'AI' ) ]
+    return feedback
 
 def save_community_feedback(project_dir, page, data):
     path = community_feedback_path(project_dir, page)

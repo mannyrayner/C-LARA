@@ -119,6 +119,7 @@ urlpatterns = [
     path('project/<int:project_id>/project_community/', views.project_community, name='project_community'),
     path('project/<int:project_id>/community_review_images/', views.community_review_images, name='community_review_images'),
     path('project/<int:project_id>/community_organiser_review_images/', views.community_organiser_review_images, name='community_organiser_review_images'),
+    path('project/<int:project_id>/community_review_images_external/', views.community_review_images_external, name='community_review_images_external'),
     path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/<str:status>/', views.community_review_images_for_page,
          name='community_review_images_for_page'),
     path('project/<int:project_id>/simple_clara_review_v2_images_for_page/<int:page_number>/<str:from_view>/<str:status>/', views.simple_clara_review_v2_images_for_page,

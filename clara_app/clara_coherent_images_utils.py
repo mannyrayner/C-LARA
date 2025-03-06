@@ -180,7 +180,7 @@ def get_page_params_from_project_params(params, pages_to_generate=None):
     return page_params
 
 def no_ai_checking_of_images(params):
-    return 'ai_checking_of_images' in params and params['ai_checking_of_images'] == 'off'
+    return not 'ai_checking_of_images' in params or params['ai_checking_of_images'] == 'off'
 
 NULL_IMAGE_INTERPRETATION = """No image interpretation produced, AI checking is switched off.
 """
