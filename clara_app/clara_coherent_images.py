@@ -1269,6 +1269,12 @@ async def process_pages(params, callback=None):
     write_project_cost_file(total_cost_dict, project_dir, f'pages/cost.json')
     return total_cost_dict
 
+def delete_page_image(page_number, params):
+    project_dir = params['project_dir']
+    
+    page_dir = project_pathname(project_dir, f'pages/page{page_number}')
+    remove_directory(page_dir)
+
 async def generate_image_for_page(page_number, params, callback=None):
     project_dir = params['project_dir']
     keep_existing_pages = params['keep_existing_pages'] if 'keep_existing_pages' in params else False

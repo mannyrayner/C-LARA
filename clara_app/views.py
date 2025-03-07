@@ -5306,8 +5306,8 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                           'clara_version': clara_version,
                                                           'errors': []})
 
-_edit_images_v2_trace = True
-#_edit_images_v2_trace = False
+#_edit_images_v2_trace = True
+_edit_images_v2_trace = False
 
 # Version of edit_images for uses_coherent_image_set_v2
 @login_required
@@ -5566,6 +5566,32 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Error when trying to delete element")
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project.id, status='none')
+            elif action == 'delete_v2_page':
+                try:
+                    deleted_page_number = int(request.POST.get('deleted_page_number'))
+                    if _edit_images_v2_trace:
+                        print(f'Deleting image information for page: {deleted_page_number}')
+                    # Delete 
+                    page_params = get_page_params_from_project_params(params)
+                    clara_project_internal.delete_page_image_v2(page_params, deleted_page_number)
+                    messages.success(request, f'Deleted images and descriptions for page {deleted_page_number}')
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+                except Exception as e:
+                    messages.error(request, f"Error when trying to delete page images")
+                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+            elif action == 'delete_all_page_descriptions_and_images':
+                print('Deleting all page images (views)') 
+                try:
+                    # Delete 
+                    page_params = get_page_params_from_project_params(params)
+                    clara_project_internal.delete_all_page_images_v2(page_params)
+                    messages.success(request, f'Deleted images and descriptions for all pages')
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
+                except Exception as e:
+                    messages.error(request, f"Error when trying to delete all page images")
+                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+                    return redirect('edit_images_v2', project_id=project.id, status='none')
             elif action == 'save_background_advice':
                 background_advice_text = request.POST.get('background_advice_text', '').strip()
                 print(f'background_advice_text read = "{background_advice_text}"')
@@ -5719,6 +5745,12 @@ def edit_images_v2(request, project_id, status):
                     async_task(create_element_descriptions_and_images, project, clara_project_internal, params, elements_to_generate, callback=callback)
                 elif action == 'create_page_descriptions_and_images':
                     pages_to_generate = clara_project_internal.get_pages_with_no_image_v2()
+                    try:
+                        number_of_pages = int(request.POST.get('number_of_pages_to_generate'))
+                    except Exception:
+                        number_of_pages = 'all'
+                    if number_of_pages != 'all':
+                        pages_to_generate = pages_to_generate[:number_of_pages]
                     if _edit_images_v2_trace:
                         print(f'Generating images for pages: {pages_to_generate}')
                     async_task(create_page_descriptions_and_images, project, clara_project_internal, params, pages_to_generate, callback=callback)

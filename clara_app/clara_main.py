@@ -163,7 +163,7 @@ from .clara_coherent_images import process_style, generate_element_names, proces
 from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, add_uploaded_element_image, create_variant_images_for_page
 from .clara_coherent_images import execute_community_requests_list
 from .clara_coherent_images import execute_simple_clara_image_requests, execute_simple_clara_element_requests, execute_simple_clara_style_requests
-from .clara_coherent_images import delete_element, add_element
+from .clara_coherent_images import delete_element, add_element, delete_page_image
 from .clara_coherent_images_community_feedback import get_page_overview_info_for_cm_reviewing
 from .clara_coherent_images_advice import set_background_advice, get_background_advice
 from .clara_coherent_images_advice import set_style_advice, get_style_advice, get_element_advice, get_page_advice, set_page_advice, set_element_advice
@@ -1895,6 +1895,14 @@ class CLARAProjectInternal:
             self.add_project_image(image_name, image_file_path, image_type=image_type, advice=advice, page=page_number,
                                    keep_file_name=False, archive=False, callback=callback)
 
+    def delete_v2_page_data(self, page_number, params, callback=None):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+
+        set_page_advice('', page_number, params)
+        image_name = f'page_{page_number}'
+        self.remove_project_image(self, image_name, callback=callback)
+
     def create_style_description_and_image_v2(self, params, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
@@ -1965,6 +1973,20 @@ class CLARAProjectInternal:
         cost_dict = asyncio.run(create_variant_images_for_page(params, page, alternate_image_id, callback=callback))
         self.store_v2_page_data(params, callback=callback)
         return cost_dict
+
+    def delete_page_image_v2(self, params, deleted_page_number):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        delete_page_image(deleted_page_number, params)
+        image_name = page_image_name(deleted_page_number)
+        self.remove_project_image(image_name, callback=None)
+
+    def delete_all_page_images_v2(self, params):
+        project_dir = self.coherent_images_v2_project_dir
+        params['project_dir'] = project_dir
+        all_page_numbers = get_pages(params)
+        for page_number in all_page_numbers:
+            self.delete_page_image_v2(params, page_number)
 
     def create_overview_document_v2(self, project):
         project_dir = self.coherent_images_v2_project_dir
