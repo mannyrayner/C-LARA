@@ -168,7 +168,18 @@
   <!-- Pages Section -->
   <h3>Pages</h3>
   {% if style_exists %}
-		<button type="submit" name="action" value="create_page_descriptions_and_images">Generate Missing Page Images</button>
+	  <form method="post" style="display:inline-block;">
+		{% csrf_token %}
+		<input type="hidden" name="action" value="create_page_descriptions_and_images">
+		<button type="submit">Generate Missing Page Images</button>
+		<label for="number_of_pages_to_generate">Number of pages to generate:</label>
+		<input type="int" name="number_of_pages_to_generate" id="number_of_pages_to_generate"
+			   placeholder="Leave blank for 'all'">
+	  </form>
+	  <form method="post" style="display:inline-block;" onsubmit="return confirm('Are you sure you want to delete all page images and descriptions?');">
+		  {% csrf_token %}
+		  <button type="submit" name="action" value="delete_all_page_descriptions_and_images">Delete All Page Images</button>
+      </form>
   {% endif %}
   <form id="display-options-form">
     <label><input type="checkbox" id="show-segmented" checked> Display Segmented Text</label>
@@ -187,7 +198,7 @@
 			  <th><b>Page Number</b></th>
 			  <th><b>Advice</b></th>
 			  <th><b>Image</b></th>
-			  <th><b>Links</b></th>
+			  <th><b>Actions</b></th>
           </tr>
           <tr id="page-{{ form.page.value }}">
             <td>{{ form.page }}</td>
@@ -201,7 +212,13 @@
             </td>
             <td>
 				{% if form.relative_file_path.value %}
-					<a href="{% url 'simple_clara_review_v2_images_for_page' project.id form.page.value 'edit_images_v2' 'init' %}">Edit Image for Page</a>
+					<a href="{% url 'simple_clara_review_v2_images_for_page' project.id form.page.value 'edit_images_v2' 'init' %}">Edit Image for Page</a><br>
+					<form method="post" style="display:inline-block;">
+					{% csrf_token %}
+					<input type="hidden" name="action" value="delete_v2_page">
+					<input type="hidden" name="deleted_page_number" value="{{ form.page.value }}">
+					<button type="submit" onclick="return confirm('Are you sure you want to delete images and descriptions for this page?');">Delete Page Image and Descriptions</button>
+					</form>
 				{% endif %}
 			</td>
           </tr>
