@@ -1,0 +1,16 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+
+<h2>Confirm Deletion</h2>
+
+<p>Are you sure you want to delete the community "<strong>{{ community.name }}</strong>"?</p>
+<form method="post" action="">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="confirm_delete">
+  <input type="hidden" name="community_id" value="{{ community.id }}">
+  
+  <button type="submit">Yes, Delete</button>
+  <a href="{% url 'delete_community_menu' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+{% endblock %}

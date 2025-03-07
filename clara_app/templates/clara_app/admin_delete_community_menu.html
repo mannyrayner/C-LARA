@@ -1,0 +1,22 @@
+{% extends "clara_app/base.html" %}
+{% load static %}
+{% block content %}
+
+<h2>Delete Community</h2>
+
+<form method="post" action="">
+  {% csrf_token %}
+  <input type="hidden" name="action" value="choose_community">
+  
+  <p>Select a community to delete:</p>
+  <select name="community_id">
+    <option value="">-- Select --</option>
+    {% for c in communities %}
+      <option value="{{ c.id }}">{{ c.name }} ({{ c.language }})</option>
+    {% endfor %}
+  </select>
+  <br><br>
+  <button type="submit">Next</button>
+</form>
+
+{% endblock %}
