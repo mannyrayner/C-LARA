@@ -18,7 +18,7 @@ from .clara_coherent_images_utils import (
     )
     
     
-from .clara_utils import file_exists, read_txt_file
+from .clara_utils import file_exists, read_txt_file, directory_exists
 
 from .constants import (
     PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_DESCRIPTION,
@@ -519,6 +519,10 @@ def update_ai_votes_in_feedback(project_dir, page_number):
     """
     params =  { 'project_dir': project_dir }
     content_dir = Path(project_dir) / f"pages/page{page_number}"
+
+    if not directory_exists(content_dir):
+        return
+    
     alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
 
     # Load existing feedback
@@ -573,6 +577,10 @@ def update_ai_votes_for_element_in_feedback(project_dir, element_name):
     """
     params =  { 'project_dir': project_dir }
     content_dir = Path(project_dir) / f"elements/{element_name}"
+
+    if not directory_exists(content_dir):
+        return
+    
     alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
 
     # Load existing feedback
@@ -630,6 +638,10 @@ def update_ai_votes_for_style_in_feedback(project_dir):
     """
     params =  { 'project_dir': project_dir }
     content_dir = Path(project_dir) / f"style"
+
+    if not directory_exists(content_dir):
+        return
+    
     alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
 
     # Load existing feedback
