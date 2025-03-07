@@ -214,6 +214,15 @@ class CreateCommunityForm(forms.ModelForm):
         model = Community
         fields = ['name', 'language', 'description']
 
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        # Check for an existing community with the same name
+        # If you want to factor in language as well, do:
+        #   Community.objects.filter(name=name, language=language).exists()
+        if Community.objects.filter(name=name).exists():
+            raise forms.ValidationError("A community with that name already exists.")
+        return name
+
 class ProjectCommunityForm(forms.Form):
     """
     A simple form that lets the user pick among communities whose language matches

@@ -152,13 +152,11 @@ def redirect_login(request):
 ##@login_required
 ##def profile(request):
 
-# Welcome screen
-def home(request):
-    return redirect('home_page')
-
-def home_page(request):
-    user = request.user
-
+# Welcome screen# 
+# def home(request):
+#     return redirect('home_page')# 
+# def home_page(request):
+#     user = request.user
     # Find all communities the user belongs to
     memberships = CommunityMembership.objects.filter(user=user)
     
@@ -176,12 +174,11 @@ def home_page(request):
         'memberships': memberships,
     })
 
-@login_required
-def clara_home_page(request):
-    time_period = DEFAULT_RECENT_TIME_PERIOD
-    search_form = UnifiedSearchForm(request.GET or None)
-    time_period_query = Q()
-
+@login_required# 
+# def clara_home_page(request):
+#     time_period = DEFAULT_RECENT_TIME_PERIOD
+#     search_form = UnifiedSearchForm(request.GET or None)
+#     time_period_query = Q()
     if search_form.is_valid() and search_form.cleaned_data.get('time_period'):
         time_period = int(search_form.cleaned_data['time_period'])
 
@@ -363,18 +360,35 @@ def update_feed(request):
 
 # Check that the updates are such that we can render them in the template
 def valid_update_for_update_feed(update):
+##              {% if update.update_type == 'FRIEND' %}
+##		   <a href="{% url 'external_profile' update.content_object.sender.id %}">{{ update.content_object.sender.username }}</a>
+##                   is now friends with 
+##                   <a href="{% url 'external_profile' update.content_object.receiver.id %}">{{ update.content_object.receiver.username }}</a>
     if update.update_type == 'FRIEND':
         return isinstance(update.content_object, FriendRequest) and \
                isinstance(update.content_object.sender, User) and \
                isinstance(update.content_object.receiver, User)
+##		{% elif update.update_type == 'RATE' %}
+##		   <a href="{% url 'external_profile' update.content_object.user.id %}">{{ update.content_object.user.username }}</a>
+##		   gave {{ update.content_object.rating }} stars to 
+##		   <a href="{% url 'content_detail' update.content_object.content.id %}">{{ update.content_object.content.title }}</a>
     elif update.update_type == 'RATE':
         return isinstance(update.content_object, Rating) and \
                isinstance(update.content_object.user, User) and \
                isinstance(update.content_object.content, Content)
+##		{% elif update.update_type == 'COMMENT' %}
+##		   <a href="{% url 'external_profile' update.content_object.user.id %}">{{ update.content_object.user.username }}</a>
+##		   posted a comment on 
+##		   <a href="{% url 'content_detail' update.content_object.content.id %}">{{ update.content_object.content.title }}</a>:</br>
+##		   "{{ update.content_object.comment }}"
     elif update.update_type == 'COMMENT':
         return isinstance(update.content_object, Comment) and \
                isinstance(update.content_object.user, User) and \
                isinstance(update.content_object.content, Content)
+##		{% elif update.update_type == 'PUBLISH' %}
+##		   <a href="{% url 'external_profile' update.user.id %}">{{ update.user.username }}</a>
+##		   published 
+##		   <a href="{% url 'content_detail' update.content_object.id %}">{{ update.content_object.title }}</a>
     elif update.update_type == 'PUBLISH':
         return isinstance(update.content_object, Comment) and \
                isinstance(update.user, User) and \
@@ -1400,6 +1414,13 @@ def public_content_detail(request, content_id):
 
     # Print out all request headers for debugging
     headers = request.META
+##    for header, value in headers.items():
+##       logger.debug(f'header {header}: {value}')
+##    for header in ['HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR', 'HTTP_X_REAL_IP']:
+##        value = headers.get(header, 'NOT FOUND')
+##        messages.success(request, f'Header {header}: "{value}"')
+##    for header, value in headers.items():
+##        messages.success(request, f'Header {header}: "{value}"')
 
     # Get the client's IP address
     #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
@@ -1409,6 +1430,8 @@ def public_content_detail(request, content_id):
     
     if client_ip is None:
         client_ip = '0.0.0.0'  # Fallback IP if detection fails
+        
+##    messages.success(request, f'Accessed content from IP = {client_ip}')
     
     # Check if this IP has accessed this content before
     #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
@@ -3400,63 +3423,6 @@ def create_community(request):
     })
 
 @login_required
-@user_passes_test(lambda u: u.userprofile.is_admin)
-def delete_community_menu(request):
-    """
-    Admin-only view that lists all communities and allows for a two-step
-    (dropdown -> confirmation) delete process.
-    """
-    if request.method == 'POST':
-        # Distinguish which form step we're on:
-        action = request.POST.get('action')
-
-        if action == 'choose_community':
-            # The admin selected a community from the dropdown.
-            community_id = request.POST.get('community_id')
-            if not community_id:
-                messages.error(request, "No community selected.")
-                return redirect('delete_community_menu')
-            
-            try:
-                community = Community.objects.get(pk=community_id)
-            except Community.DoesNotExist:
-                messages.error(request, "Selected community does not exist.")
-                return redirect('delete_community_menu')
-
-            # Render a confirmation page, passing the selected community
-            return render(request, 'clara_app/admin_delete_community_confirm.html', {
-                'community': community
-            })
-
-        elif action == 'confirm_delete':
-            # The admin confirmed deletion
-            community_id = request.POST.get('community_id')
-            if not community_id:
-                messages.error(request, "No community to delete.")
-                return redirect('delete_community_menu')
-
-            try:
-                community = Community.objects.get(pk=community_id)
-                community.delete()
-                messages.success(request, f"Community '{community.name}' deleted successfully.")
-            except Community.DoesNotExist:
-                messages.error(request, "Community does not exist.")
-            
-            return redirect('delete_community_menu')
-
-        else:
-            # Unknown action, just redirect
-            return redirect('delete_community_menu')
-
-    else:
-        # GET request: show the dropdown of all communities
-        communities = Community.objects.order_by('name')
-        return render(request, 'clara_app/admin_delete_community_menu.html', {
-            'communities': communities
-        })
-
-
-@login_required
 def community_home(request, community_id):
     user = request.user
     community = get_object_or_404(Community, pk=community_id)
@@ -5066,6 +5032,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                 elif action == 'create_dalle_style_image':
                     style_image_form = StyleImageForm(request.POST)
                     if not style_image_form.is_valid():
+    ##                    print(f'--- Invalid form data (form #{i}): {form}')
                         messages.error(request, "Invalid form data (form #{i}): {form}")
                         return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                     if not style_image_form.cleaned_data.get('user_prompt'):
@@ -5144,6 +5111,10 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     # Ignore the last (extra) form if image_file_path has not been changed, i.e. we are not uploading a file
                     #print(f"--- form #{i}: form.changed_data = {form.changed_data}")
                     if not ( i == len(formset) - 1 and not 'image_file_path' in form.changed_data and not 'user_prompt' in form.changed_data ):
+##                        if not form.is_valid():
+##                            print(f'--- Invalid form data (form #{i}): {form}')
+##                            errors.append(f"Invalid form data (form #{i}): {form.errors}")
+##                            messages.error(request, f"Invalid form data (form #{i}).")
 
                         # form.cleaned_data.get('image_file_path') is special, since we get it from uploading a file.
                         # If there is no file upload, the value is null
@@ -5227,6 +5198,12 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                                                      archive=False
                                                                      )
                         elif ( ( image_name and real_image_file_path ) or user_prompt ) and not errors:
+                           # We are uploading an image or changing a generation/understanding line
+    ##                        if not associated_areas and associated_text and image_name:  
+    ##                            # Generate the uninstantiated annotated image structure
+    ##                            structure = make_uninstantiated_annotated_image_structure(image_name, associated_text)
+    ##                            # Convert the structure to a string and store it in 'associated_areas'
+    ##                            associated_areas = json.dumps(structure)
 
                             clara_project_internal.add_project_image(image_name, real_image_file_path,
                                                                      associated_text=associated_text,
@@ -5506,7 +5483,6 @@ def edit_images_v2(request, project_id, status):
                                'max_description_generation_rounds': params_form.cleaned_data['max_description_generation_rounds'],
 
                                'ai_checking_of_images': params_form.cleaned_data['ai_checking_of_images'],
-                               'text_language': params_form.cleaned_data['text_language'],
 
                                'page_interpretation_prompt': params_form.cleaned_data['page_interpretation_prompt'],
                                'page_evaluation_prompt': params_form.cleaned_data['page_evaluation_prompt'],
@@ -5552,6 +5528,31 @@ def edit_images_v2(request, project_id, status):
                     messages.error(request, f"Error when trying to create images ZIP")
                     messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
                     return redirect('edit_images_v2', project_id=project_id, status='none')
+##            elif action == 'promote_alternate_image':
+##                try:
+##                    content_type = request.POST.get('content_type')
+##                    content_identifier = request.POST.get('content_identifier')
+##                    #alternate_description_id = int(request.POST.get('alternate_description_id'))
+##                    alternate_image_id = int(request.POST.get('alternate_image_id'))
+##
+##                    if content_type == 'style':
+##                        clara_project_internal.promote_v2_style_image(alternate_image_id)
+##                    elif content_type == 'element':
+##                        element_name = content_identifier
+##                        clara_project_internal.promote_v2_element_description(element_name, alternate_image_id)
+##                    elif content_type == 'page':
+##                        page_number = int(content_identifier)
+##                        clara_project_internal.promote_v2_page_image(page_number, alternate_image_id)
+##                    else:
+##                        messages.error(request, f"Invalid content type, '{content_type}'")
+##                        return redirect('edit_images_v2', project_id=project.id, status=status)
+##
+##                    messages.success(request, f"Alternate {content_type} image promoted successfully.")
+##                    return redirect('edit_images_v2', project_id=project.id, status='none')
+##                except Exception as e:
+##                    messages.error(request, f"Error when trying to promote alternate image")
+##                    messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+##                    return redirect('edit_images_v2', project_id=project.id, status='none')
             elif action == 'delete_v2_element':
                 try:
                     deleted_element_text = request.POST.get('deleted_element_text')
@@ -5569,6 +5570,8 @@ def edit_images_v2(request, project_id, status):
             elif action == 'save_background_advice':
                 background_advice_text = request.POST.get('background_advice_text', '').strip()
                 print(f'background_advice_text read = "{background_advice_text}"')
+##                if not background_advice_text:
+##                    background_advice_text = background_advice
                 clara_project_internal.set_background_advice_v2(background_advice_text)
                 messages.success(request, f'Saved background advice')
                 return redirect('edit_images_v2', project_id=project.id, status='none')
@@ -5783,52 +5786,6 @@ def community_review_images(request, project_id):
 def community_organiser_review_images(request, project_id):
     return community_review_images_cm_or_co(request, project_id, 'co')
 
-@login_required
-def community_review_images_external(request, project_id):
-    user = request.user
-    config_info = get_user_config(user)
-    username = user.username
-    project = get_object_or_404(CLARAProject, pk=project_id)
-    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    clara_version = get_user_config(request.user)['clara_version']
-    project_dir = clara_project_internal.coherent_images_v2_project_dir
-
-    story_data = read_project_json_file(project_dir, 'story.json')
-    descriptions_info = []
-
-    for page in story_data:
-        page_number = page.get('page_number')
-        page_text = page.get('text', '').strip()
-        original_page_text = page.get('original_page_text', '').strip()
-
-        # Update AI votes
-        try:
-            update_ai_votes_in_feedback(project_dir, page_number)
-        except Exception as e:
-            messages.error(request, f"Error updating AI votes: {e}")
-
-        # Load alternate images
-        content_dir = project_pathname(project_dir, f"pages/page{page_number}")
-        alternate_images = asyncio.run(get_alternate_images_json(content_dir, project_dir))
-
-        page_descriptions_info, preferred_image_id = get_page_description_info_for_cm_reviewing('cm', alternate_images, page_number, project_dir)
-
-        page_item = { 'page_number': page_number,
-                      'page_text': page_text,
-                      'original_page_text': original_page_text,
-                      'page_description_info': page_descriptions_info
-                      }
-        descriptions_info.append(page_item)
-
-    rendering_parameters = {
-        'project': project,
-        'descriptions_info': descriptions_info,
-    }
-
-    #pprint.pprint(descriptions_info[:2])
-
-    return render(request, 'clara_app/community_review_images_external.html', rendering_parameters)
-
 def community_review_images_cm_or_co(request, project_id, cm_or_co):
     user = request.user
     config_info = get_user_config(user)
@@ -5848,7 +5805,6 @@ def community_review_images_cm_or_co(request, project_id, cm_or_co):
         'pages_info': pages_info,
         'clara_version': clara_version,
     })
-
 
 @login_required
 @community_role_required
@@ -7127,6 +7083,14 @@ def create_image_request_sequence(project_id, callback=None):
         post_task_update(callback, "error")
         return False
 
+##          {
+##            "request_type": "image-generation",
+##            "page": 3,
+##            "prompt": "An image of Princess Elara and the dragon Ember in the forest. They have just met. Ember looks sad and lost, Elara looks kind
+##            and sympathetic.",
+##            "description_variables": [ "Elara-description", "forest-description" ]
+##          }
+
 def check_well_formed_image_request_sequence(requests, numbered_page_list, callback=None):
     if not isinstance(requests, list):
         post_task_update(callback, f'Image request sequence is not a list: {requests}')
@@ -7185,6 +7149,16 @@ def check_and_correct_initialization_in_image_request_sequence(sequence, project
     return corrected_sequence
 
 # Go through the generation requests, creating and storing the images.
+#
+# Generation requests have this format:
+# { 'image_name': image_name,
+#   'page': page,
+#   'position': position,
+#   'user_prompt': user_prompt,
+#   'style_description': style_description,
+#   'current_image': image_file_path
+#  }
+# current_image may be null
 
 def create_and_add_coherent_dall_e_3_images(project_id, requests, callback=None):
     try:
@@ -8039,6 +8013,22 @@ def show_questionnaire(request, project_id, user_id):
 
     return render(request, 'clara_app/show_questionnaire.html', {'questionnaire': questionnaire, 'project': project})
 
+# Show all questionnaires
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
+##def manage_questionnaires(request):
+##    if request.method == 'POST':
+##        # Handle the deletion of selected questionnaire responses
+##        selected_ids = request.POST.getlist('selected_responses')
+##        if selected_ids:
+##            SatisfactionQuestionnaire.objects.filter(id__in=selected_ids).delete()
+##            messages.success(request, "Selected responses have been deleted.")
+##            return redirect('manage_questionnaires')
+##    
+##    # Display all questionnaire responses
+##    questionnaires = SatisfactionQuestionnaire.objects.all()
+##    return render(request, 'clara_app/manage_questionnaires.html', {'questionnaires': questionnaires})
+
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_questionnaire_reviewer)
 def manage_questionnaires(request):
@@ -8394,6 +8384,37 @@ def serve_coherent_images_v2_file(request, project_id, relative_path):
             return HttpResponse(f.read(), content_type=content_type)
     else:
         raise Http404("File not found.")
+
+##def serve_coherent_images_v2_style_image(request, project_id):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'style/image.jpg' ))
+##    if file_exists(file_path):
+##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+##    else:
+##        raise Http404
+##
+##def serve_coherent_images_v2_element_image(request, project_id, element_name):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'elements/{element_name}/image.jpg' ))
+##    if file_exists(file_path):
+##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+##    else:
+##        raise Http404
+##
+##def serve_coherent_images_v2_page_image(request, project_id, page_number):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+##    file_path = absolute_file_name(Path(clara_project_internal.coherent_images_v2_project_dir / f'pages/page{page_number}/image.jpg' ))
+##    if file_exists(file_path):
+##        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+##        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+##    else:
+##        raise Http404
+
 
 @login_required
 def serve_audio_file(request, engine_id, l2, voice_id, base_filename):

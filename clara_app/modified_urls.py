@@ -22,9 +22,9 @@ urlpatterns = [
     path('register/', accounts_views.register, name='register'),
     path('profile/', accounts_views.profile, name='profile'),
     
-    path('home/', views.home, name='home'),
-    path('home_page/', views.home_page, name='home_page'),
-    path('clara_home_page/', views.clara_home_page, name='clara_home_page'),
+    path('home/', home_views.home, name='home'),
+    path('home_page/', home_views.home_page, name='home_page'),
+    path('clara_home_page/', home_views.clara_home_page, name='clara_home_page'),
     
     path('list_users/', views.list_users, name='list_users'),
     path('friends/', views.friends, name='friends'),
@@ -113,14 +113,12 @@ urlpatterns = [
     path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
 
     path('create_community/', views.create_community, name='create_community'),
-    path('delete_community_menu/', views.delete_community_menu, name='delete_community_menu'),
     path('community_home/<int:community_id>/', views.community_home, name='community_home'),
     path('assign_coordinator_to_community/', views.assign_coordinator_to_community, name='assign_coordinator_to_community'),
     path('assign_member_to_community/', views.assign_member_to_community, name='assign_member_to_community'),
     path('project/<int:project_id>/project_community/', views.project_community, name='project_community'),
     path('project/<int:project_id>/community_review_images/', views.community_review_images, name='community_review_images'),
     path('project/<int:project_id>/community_organiser_review_images/', views.community_organiser_review_images, name='community_organiser_review_images'),
-    path('project/<int:project_id>/community_review_images_external/', views.community_review_images_external, name='community_review_images_external'),
     path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/<str:status>/', views.community_review_images_for_page,
          name='community_review_images_for_page'),
     path('project/<int:project_id>/simple_clara_review_v2_images_for_page/<int:page_number>/<str:from_view>/<str:status>/', views.simple_clara_review_v2_images_for_page,
