@@ -2111,8 +2111,8 @@ def get_simple_clara_resources_helper(project_id, user):
     except Exception as e:
         return { 'error': f'Exception: {str(e)}\n{traceback.format_exc()}' }
 
-_simple_clara_trace = False
-#_simple_clara_trace = True
+#_simple_clara_trace = False
+_simple_clara_trace = True
 
 @login_required
 def simple_clara(request, project_id, last_operation_status):
@@ -2212,8 +2212,10 @@ def simple_clara(request, project_id, last_operation_status):
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
                 elif action == 'create_v2_style':
+                    description_language = form.cleaned_data['description_language']
                     style_advice = form.cleaned_data['style_advice']
-                    simple_clara_action = { 'action': 'create_v2_style', 'style_advice': style_advice, 'up_to_date_dict': up_to_date_dict }
+                    simple_clara_action = { 'action': 'create_v2_style', 'description_language': description_language,
+                                            'style_advice': style_advice, 'up_to_date_dict': up_to_date_dict }
                 elif action == 'create_v2_elements':
                     simple_clara_action = { 'action': 'create_v2_elements', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'delete_v2_element':
@@ -2294,6 +2296,8 @@ def simple_clara(request, project_id, last_operation_status):
 #
 # If it fails, it returns a dict of the form { 'status': 'error', 'error': error_message }
 def perform_simple_clara_action_helper(username, project_id, simple_clara_action, callback=None):
+    if _simple_clara_trace:
+        print(f'perform_simple_clara_action_helper({username}, {project_id}, {simple_clara_action}, callback={callback}')
     try:
         action_type = simple_clara_action['action']
         if action_type == 'create_project':
@@ -2343,7 +2347,8 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
             # simple_clara_action should be of form { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_v2_style':
-            #simple_clara_action should be of the form { 'action': 'create_v2_style', 'style_advice':style_advice, 'up_to_date_dict': up_to_date_dict }
+            #simple_clara_action should be of the form { 'action': 'create_v2_style', 'description_language': description_language,
+            #                                            'style_advice':style_advice, 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_v2_elements':
             #simple_clara_action should be of the form { 'action': 'create_v2_elements', 'up_to_date_dict': up_to_date_dict }
@@ -2410,6 +2415,8 @@ def simple_clara_monitor(request, project_id, report_id):
                   {'project_id': project_id, 'project': project, 'report_id': report_id, 'clara_version':clara_version})
 
 def simple_clara_create_project_helper(username, simple_clara_action, callback=None):
+    if _simple_clara_trace:
+        print(f'Calling simple_clara_create_project_helper')
     l2_language = simple_clara_action['l2']
     l1_language = simple_clara_action['l1']
     title = simple_clara_action['title']
@@ -2750,6 +2757,7 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
                  'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
 def simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=None):
+    description_language = simple_clara_action['description_language']
     style_advice = simple_clara_action['style_advice']
     up_to_date_dict = simple_clara_action['up_to_date_dict']
     
@@ -2757,6 +2765,8 @@ def simple_clara_create_v2_style_helper(username, project_id, simple_clara_actio
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     params = clara_project_internal.get_v2_project_params_for_simple_clara()
+    params['text_language'] = description_language
+    clara_project_internal.save_coherent_images_v2_params(params)
     
     numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
     clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
@@ -2779,7 +2789,7 @@ def simple_clara_create_v2_elements_helper(username, project_id, simple_clara_ac
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+    params = clara_project_internal.get_coherent_images_v2_params()
 
     # Create the elements
     if not up_to_date_dict['v2_element_images']:
@@ -2804,7 +2814,7 @@ def simple_clara_delete_v2_element_helper(username, project_id, simple_clara_act
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+    params = clara_project_internal.get_coherent_images_v2_params()
 
     # Delete the element
     elements_params = get_element_descriptions_params_from_project_params(params)
@@ -2820,7 +2830,7 @@ def simple_clara_add_v2_element_helper(username, project_id, simple_clara_action
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+    params = clara_project_internal.get_coherent_images_v2_params()
 
     # Add the elements
     elements_params = get_element_descriptions_params_from_project_params(params)
@@ -2838,7 +2848,7 @@ def simple_clara_create_v2_pages_helper(username, project_id, simple_clara_actio
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    params = clara_project_internal.get_v2_project_params_for_simple_clara()
+    params = clara_project_internal.get_coherent_images_v2_params()
 
     # Create the page images
     if not up_to_date_dict['v2_page_images']:

@@ -184,6 +184,9 @@ class SimpleClaraForm(forms.Form):
         required=False,
         initial='' )
     image_basename = forms.CharField(required=False)
+    description_language = forms.ChoiceField(choices=SUPPORTED_AI_ENABLED_LANGUAGES_ENGLISH_AND_FRENCH_FIRST,
+                                             label="Language to use for writing image descriptions",
+                                             required=False)
     style_advice = forms.CharField(label='Style advice', widget=forms.Textarea, required=False)
     preferred_tts_engine = forms.ChoiceField(label='Preferred TTS engine', choices=TTS_CHOICES, required=False)
     rendered_text_available = forms.BooleanField(label='Rendered text available', required=False)
