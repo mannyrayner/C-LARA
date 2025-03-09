@@ -1966,6 +1966,9 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         image_path = project_pathname(project_dir, rel_image_path)
         style_description = get_style_description(params)
 
+        # Get text language
+        text_language = get_text_language(params)
+
         total_cost_dict = {}
         total_errors = ''
         
@@ -1982,9 +1985,6 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         
         page_text = get_page_text(page_number, params)
         style_description = get_style_description(params)
-
-        # Get text language
-        text_language = get_text_language(params)
 
         previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, context_cost_dict)

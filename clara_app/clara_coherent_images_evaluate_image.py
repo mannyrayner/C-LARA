@@ -108,6 +108,8 @@ async def interpret_image_with_prompt(image_path, expanded_description, page_num
     
     page_text = get_page_text(page_number, params)
 
+    text_language = get_text_language(params)
+
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
                                     page_number=page_number,
                                     page_text=page_text,
