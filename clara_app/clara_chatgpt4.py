@@ -19,7 +19,7 @@ in prompt, and returns an APICall object including the response
 
 from .clara_classes import *
 from . import clara_openai
-from .clara_utils import get_config, post_task_update, post_task_update_async, print_and_flush, absolute_local_file_name
+from .clara_utils import get_config, post_task_update, post_task_update_async, print_and_flush, absolute_file_name, absolute_local_file_name
 
 import asyncio
 import os
@@ -31,8 +31,30 @@ import traceback
 import pprint
 
 from openai import OpenAI
+from google import genai
+from google.genai import types
+
 from PIL import Image
 from io import BytesIO
+
+# --------------------------------
+
+def test_imagen(test_id):
+    if test_id == 1:
+        prompt = 'Create an image of a tabby cat sitting on top of a garden shed.'
+        file_name = 'cat_on_shed'
+    else:
+        raise ValueError('Unknow test_id: {test_id}')
+
+    image_file = absolute_file_name(f'$CLARA/tmp/imagen_3/{file_name}.jpg')
+
+    call_chat_gpt4_image(prompt,
+                         image_file,
+                         config_info={ 'gpt_model': 'imagen_3' },
+                         callback=None)
+
+
+# --------------------------------
 
 config = get_config()
 
@@ -63,6 +85,14 @@ def get_open_ai_api_key(config_info):
     #print(f'open_ai_api_key = "{key}" (from {source})')
     return key
 
+def get_gemini_api_key(config_info):
+    """
+    Either read from config_info or fallback to environment variable
+    """
+    if 'gemini_api_key' in config_info and config_info['gemini_api_key']:
+        return config_info['gemini_api_key']
+    return os.environ.get('GEMINI_API_KEY', None)
+
 def get_deep_seek_api_key(config_info):
     if 'deep_seek_api_key' in config_info and config_info['deep_seek_api_key'] and config_info['deep_seek_api_key'] != 'None':
         key = config_info['deep_seek_api_key']
@@ -78,17 +108,37 @@ def call_chat_gpt4(prompt, config_info={}, callback=None):
     return asyncio.run(get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback))
 
 def call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None):
-    shortening_api_calls, prompt = shorten_dall_e_3_prompt_if_necessary(prompt, config_info=config_info, callback=callback)
-    image_api_call = asyncio.run(get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback))
+    if 'gpt_model' in config_info and config_info['gpt_model'] == 'imagen_3':
+        shortening_api_calls, prompt = shorten_imagen_3_prompt_if_necessary(prompt, config_info=config_info, callback=callback)
+        image_api_call = asyncio.run(get_api_gemini_image_response(prompt, image_file, config_info=config_info, callback=callback))
+    else:
+        shortening_api_calls, prompt = shorten_dall_e_3_prompt_if_necessary(prompt, config_info=config_info, callback=callback)
+        image_api_call = asyncio.run(get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback))
+
     return shortening_api_calls + [ image_api_call ]
 
 def shorten_dall_e_3_prompt_if_necessary(prompt, config_info={}, callback=None):
-    prompt_length = len(prompt)
-    max_prompt_length = int(config.get('dall_e_3', 'max_prompt_length'))
+    return shorten_image_generation_prompt_if_necessary(prompt, 'dall_e_3', config_info={}, callback=None)
+
+def shorten_imagen_3_prompt_if_necessary(prompt, config_info={}, callback=None):
+    return shorten_image_generation_prompt_if_necessary(prompt, 'imagen_3', config_info={}, callback=None)
+
+def shorten_image_generation_prompt_if_necessary(prompt, image_generation_model, config_info={}, callback=None):
     api_calls = []
-    if prompt_length > max_prompt_length:
-        shortening_prompt = f"""The following DALL-E-3 prompt, currently {prompt_length} characters long, exceeds the maximum
-permitted DALL-E-3 prompt length of {max_prompt_length} characters. Please shorten it to under {max_prompt_length} characters
+    prompt_length = len(prompt)
+    if image_generation_model == 'dall_e_3':
+        max_prompt_length = int(config.get('dall_e_3', 'max_prompt_length'))
+        prompt_is_too_long = ( prompt_length > max_prompt_length )
+    elif image_generation_model == 'imagen_3':
+        estimated_prompt_length_in_tokens = int(prompt_length / 0.75 )
+        max_prompt_length = int(config.get('imagen_3', 'max_prompt_length'))
+        prompt_is_too_long = ( estimated_prompt_length_in_tokens > max_prompt_length )
+    else:
+        raise ValueError(f'Unknow image generation model name: {image_generation_model}')
+    
+    if prompt_is_too_long:
+        shortening_prompt = f"""The following image generation prompt, currently {prompt_length} characters long, exceeds the maximum
+permitted prompt length of {max_prompt_length} characters. Please shorten it to under {max_prompt_length} characters
 while retaining the essential details. Ensure the prompt is still clear and provides enough information for an artist to
 create a detailed image.
 
@@ -136,6 +186,27 @@ def call_openai_api_image(prompt, gpt_model, size, config_info):
         n=1,
         )
     return response
+
+def call_google_gemini_image(prompt, gemini_model, number_of_images, config_info):
+    """
+    Synchronous function that calls Gemini with the given prompt.
+    Returns a list of raw image bytes or some structured info.
+    """
+    gemini_api_key = get_gemini_api_key(config_info)
+    client = genai.Client(api_key=gemini_api_key)
+
+    # Make the call
+    response = client.models.generate_images(
+        model=gemini_model,
+        prompt=prompt,
+        config=types.GenerateImagesConfig(
+            number_of_images=number_of_images,
+            # Possibly more config (dimensions, style, etc.) if available
+        )
+    )
+
+    # Return the images (or data) so the async wrapper can write them, etc.
+    return response.generated_images
 
 def call_openai_api_interpret_image_url(prompt, image_url, gpt_model, max_tokens, config_info):
     api_key = get_open_ai_api_key(config_info)
@@ -319,6 +390,90 @@ async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, ca
     )
     
     return api_call
+
+async def get_api_gemini_image_response(prompt, image_file, config_info={}, callback=None):
+    """
+    Async wrapper that calls Gemini in a run_in_executor, waits,
+    writes the image(s) to disk, returns an APICall-like object.
+    """
+    gemini_model = 'imagen-3.0-generate-002'
+    number_of_images = 1  # Create one image for now to make it like DALL-E-3
+    start_time = time.time()
+
+    loop = asyncio.get_event_loop()
+
+    # Possibly show a "Sending request" update:
+    truncated_prompt = (prompt[:100] + '...') if len(prompt) > 100 else prompt
+    await post_task_update_async(callback, f'--- Sending request to Gemini model={gemini_model}: "{truncated_prompt}"')
+
+    # Run the synchronous call in executor
+    api_task = loop.run_in_executor(
+        None,
+        call_google_gemini_image,
+        prompt,
+        gemini_model,
+        number_of_images,
+        config_info
+    )
+
+    time_waited = 0
+    while not api_task.done():
+        await post_task_update_async(callback, f"Waiting for Gemini response ({time_waited}s elapsed)...")
+        await asyncio.sleep(5)
+        time_waited += 5
+
+    generated_images = api_task.result()  # Should be a list of generated images
+
+    # If you requested multiple images, handle them in a loop
+    # If only one, just handle the single item
+    # We'll assume you only do n=1 for the example
+    if not generated_images:
+        # No images returned, handle gracefully
+        await post_task_update_async(callback, "--- No images returned by Gemini.")
+        # Optionally return an APICall with empty response
+        return APICall(
+            prompt=prompt,
+            response="",
+            cost=0.0,
+            duration=time.time() - start_time,
+            timestamp=start_time,
+            retries=0
+        )
+
+    generated_image = generated_images[0]
+    # The "image_bytes" from google.genai library
+    image_data = generated_image.image.image_bytes
+
+    # Save the image to disk at image_file
+    await save_gemini_response_image(image_data, image_file, callback=callback)
+
+    elapsed_time = time.time() - start_time
+    await post_task_update_async(callback, f'--- Done in {elapsed_time:.1f} secs')
+
+    cost = float(config.get('imagen_3_costs', 'image'))
+    
+    # Create an APICall object
+    api_call = APICall(
+        prompt=prompt,
+        response=image_file,  # Or some text for the image info
+        cost=cost,
+        duration=elapsed_time,
+        timestamp=start_time,
+        retries=0
+    )
+    return api_call
+
+async def save_gemini_response_image(image_data, image_file, callback=None):
+    """
+    Takes raw image bytes from Gemini, saves to disk as `image_file`.
+    """
+    # If you want user feedback:
+    await post_task_update_async(callback, f"Saving Gemini image to {image_file}...")
+
+    decoded_data = base64.b64decode(image_data)
+    # Save the image using PIL
+    img = Image.open(BytesIO(decoded_data))
+    img.save(image_file, format="JPEG")  # or PNG
 
 async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model='gpt-4o', config_info={}, callback=None):
     max_tokens = int(config.get('chatgpt4v', 'max_tokens_to_produce'))
