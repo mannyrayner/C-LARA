@@ -5521,6 +5521,8 @@ def edit_images_v2(request, project_id, status):
                                'page_interpretation_prompt': params_form.cleaned_data['page_interpretation_prompt'],
                                'page_evaluation_prompt': params_form.cleaned_data['page_evaluation_prompt'],
 
+                               'image_generation_model': params_form.cleaned_data['image_generation_model'],
+
                                'default_model': default_model,
                                'generate_element_names_model': default_model if generate_element_names_model0 == 'default' else generate_element_names_model0,
                                'generate_description_model': default_model if generate_description_model0 == 'default' else generate_description_model0,

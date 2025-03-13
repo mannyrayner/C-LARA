@@ -22,6 +22,7 @@ from .constants import (
     DEFAULT_RECENT_TIME_PERIOD,
     TTS_CHOICES,
     AI_CHECKING_FOR_COHERENT_IMAGES_V2,
+    SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT,
     SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
@@ -969,20 +970,13 @@ class ImageSequenceForm(forms.Form):
 
 # For coherent images v2
 class CoherentImagesV2ParamsForm(forms.Form):
-    n_expanded_descriptions = forms.IntegerField(label="Number of descriptions to create per item")
-    n_images_per_description = forms.IntegerField(label="Number of images to create per description")
-    n_previous_pages = forms.IntegerField(label="Number of previous pages to use as context when creating a page image")
-    max_description_generation_rounds = forms.IntegerField(label="Maximum number of rounds of generation to try when creating a page image")
+    image_generation_model = forms.ChoiceField(choices=SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2,
+                                               label="Image generation model")
 
     ai_checking_of_images = forms.ChoiceField(choices=AI_CHECKING_FOR_COHERENT_IMAGES_V2,
                                               label="Use AI to check images")
     text_language = forms.ChoiceField(choices=SUPPORTED_AI_ENABLED_LANGUAGES_ENGLISH_AND_FRENCH_FIRST,
                                       label="Language to use for writing prompts")
-
-    page_interpretation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
-                                                   label="Method to use for interpreting page images")
-    page_evaluation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
-                                               label="Method to use for comparing interpretation and prompt for page images")
     
     default_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2,
                                       label="Default AI model")
@@ -993,6 +987,16 @@ class CoherentImagesV2ParamsForm(forms.Form):
     example_evaluation_model = forms.ChoiceField(choices=SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2_WITH_DEFAULT,
                                                  label="AI model to use for checking descriptions")
     
+    n_expanded_descriptions = forms.IntegerField(label="Number of descriptions to create per item")
+    n_images_per_description = forms.IntegerField(label="Number of images to create per description")
+    n_previous_pages = forms.IntegerField(label="Number of previous pages to use as context when creating a page image")
+    max_description_generation_rounds = forms.IntegerField(label="Maximum number of rounds of generation to try when creating a page image")
+
+    page_interpretation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
+                                                   label="Method to use for interpreting page images")
+    page_evaluation_prompt = forms.ChoiceField(choices=SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
+                                               label="Method to use for comparing interpretation and prompt for page images")
+
 
 class HumanAudioInfoForm(forms.ModelForm):
     class Meta:

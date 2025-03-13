@@ -140,6 +140,12 @@ TTS_CHOICES = [
     ( 'abair', 'ABAIR' ),
     ]
 
+SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2 = [
+    ( 'dall_e_3', 'DALL-E-3' ),
+    ( 'imagen_3', 'Imagen 3' ),
+    ]
+
+
 SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2 = [
     ( 'gpt-4o', 'gpt-4o' ),
     ( 'o3-mini', 'o3-mini' ),

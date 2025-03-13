@@ -339,6 +339,12 @@ async def get_api_chatgpt4_response(prompt, config_info={}, callback=None):
     
     return api_call
 
+async def get_api_image_response(prompt, image_file, config_info={}, callback=None):
+    if 'image_model' in config_info and config_info['image_model'] == 'imagen_3':
+        return await get_api_gemini_image_response(prompt, image_file, config_info=config_info, callback=callback)
+    else:
+        return await get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback)
+
 # Version of get_api_chatgpt4_response for creating DALL-E-3 images
 async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, callback=None):
     gpt_model = 'dall-e-3'

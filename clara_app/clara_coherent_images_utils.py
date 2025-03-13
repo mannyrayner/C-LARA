@@ -1,5 +1,6 @@
 from .clara_chatgpt4 import (
     get_api_chatgpt4_response,
+    get_api_image_response,
     get_api_chatgpt4_image_response,
     get_api_chatgpt4_interpret_image_response,
     interpret_chat_gpt4_response_as_json,
@@ -29,6 +30,8 @@ from .constants import (
     SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2,
     SUPPORTED_PAGE_EVALUATION_PROMPTs_FOR_COHERENT_IMAGES_V2,
 
+    SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2,
+
     PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_DESCRIPTION,
     PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_EVALUATION,
     PLACEHOLDER_TEXT_FOR_UPLOADED_IMAGE_INTERPRETATION,
@@ -57,6 +60,8 @@ project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                                     'page_interpretation_prompt': 'with_context_v3_objective',
                                     'page_evaluation_prompt': 'with_context_lenient',
 
+                                    'image_generation_model': 'dall_e_3',
+
                                     'default_model': 'gpt-4o',
                                     'generate_element_names_model': 'gpt-4o',
                                     'generate_description_model': 'gpt-4o',
@@ -83,6 +88,8 @@ def project_params_file(project_dir):
 
 def check_valid_project_params(params):
     supported_models = [ item[0] for item in SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2 ]
+
+    supported_image_models = [ item[0] for item in SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2 ]
     
     supported_page_interpretation_prompts = [ item[0] for item in SUPPORTED_PAGE_INTERPRETATION_PROMPTS_FOR_COHERENT_IMAGES_V2 ]
     
@@ -108,6 +115,9 @@ def check_valid_project_params(params):
     if not 'page_evaluation_prompt' in params or not params['page_evaluation_prompt'] in supported_page_evaluation_prompts:
         raise ImageGenerationError(message=f'bad params {params}: page_evaluation_prompt')
 
+    if not 'image_generation_model' in params or not params['image_generation_model'] in supported_image_models:
+        raise ImageGenerationError(message=f'bad params {params}: image_generation_model')
+
     if not 'default_model' in params or not params['default_model'] in supported_models:
         raise ImageGenerationError(message=f'bad params {params}: default_model')
     if not 'generate_element_names_model' in params or not params['generate_element_names_model'] in supported_models:
@@ -125,7 +135,8 @@ def get_style_params_from_project_params(params):
         'text_language': params['text_language'] if 'text_language' in params else 'english',
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_style_description': params['generate_description_model'],
-                              'style_example_evaluation': params['example_evaluation_model']}
+                              'style_example_evaluation': params['example_evaluation_model']},
+        'image_models_for_tasks': { 'default': params['image_generation_model']}
                      }
     return style_params
 
@@ -149,7 +160,8 @@ def get_element_descriptions_params_from_project_params(params, elements_to_gene
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_element_names': params['generate_element_names_model'],
                               'generate_element_description': params['generate_description_model'],
-                              'evaluate_element_image': params['example_evaluation_model']}
+                              'evaluate_element_image': params['example_evaluation_model']},
+        'image_models_for_tasks': { 'default': params['image_generation_model']}
         }
 
     if elements_to_generate:
@@ -172,7 +184,9 @@ def get_page_params_from_project_params(params, pages_to_generate=None):
         
         'models_for_tasks': { 'default': params['default_model'],
                               'generate_page_description': params['generate_description_model'],
-                              'evaluate_page_image': params['example_evaluation_model']}
+                              'evaluate_page_image': params['example_evaluation_model']},
+        
+        'image_models_for_tasks': { 'default': params['image_generation_model']}
              }
     if pages_to_generate:
         page_params['pages_to_generate'] = pages_to_generate
@@ -647,7 +661,8 @@ async def get_api_chatgpt4_response_for_task(prompt, task_name, params, callback
 
 async def get_api_chatgpt4_image_response_for_task(description, image_file, task_name, params, callback=None):
     config_info = get_config_info_from_params(task_name, params)
-    return await get_api_chatgpt4_image_response(description, image_file, config_info=config_info, callback=callback)
+    # Might be DALL-E-4 or Imagen 3
+    return await get_api_image_response(description, image_file, config_info=config_info, callback=callback)
 
 async def get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, task_name, params, callback=None):
     config_info = get_config_info_from_params(task_name, params)
@@ -662,10 +677,20 @@ def get_config_info_from_params(task_name, params):
     else:
         model = None
 
+    if task_name in params['image_models_for_tasks']:
+        image_model = params['image_models_for_tasks'][task_name]
+    elif 'default' in params['image_models_for_tasks']:
+        image_model = params['image_models_for_tasks']['default']
+    else:
+        image_model = None
+
     config_info = params['config_info'] if 'config_info' in params else {}
 
     if model:
         config_info['gpt_model'] = model
+
+    if image_model:
+        config_info['image_model'] = image_model
 
     return config_info
 
