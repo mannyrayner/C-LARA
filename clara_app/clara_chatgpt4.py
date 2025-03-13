@@ -37,25 +37,6 @@ from google.genai import types
 from PIL import Image
 from io import BytesIO
 
-# --------------------------------
-
-def test_imagen(test_id):
-    if test_id == 1:
-        prompt = 'Create an image of a tabby cat sitting on top of a garden shed.'
-        file_name = 'cat_on_shed'
-    else:
-        raise ValueError('Unknow test_id: {test_id}')
-
-    image_file = absolute_file_name(f'$CLARA/tmp/imagen_3/{file_name}.jpg')
-
-    call_chat_gpt4_image(prompt,
-                         image_file,
-                         config_info={ 'gpt_model': 'imagen_3' },
-                         callback=None)
-
-
-# --------------------------------
-
 config = get_config()
 
 DEFAULT_GPT_4_MODEL = 'gpt-4o'
@@ -82,7 +63,7 @@ def get_open_ai_api_key(config_info):
         key = os.environ.get("OPENAI_API_KEY")
         source = 'env variable OPENAI_API_KEY'
         
-    #print(f'open_ai_api_key = "{key}" (from {source})')
+    #print(f'open_ai_api_key = "{key}" (from {source})\n')
     return key
 
 def get_gemini_api_key(config_info):
@@ -101,15 +82,15 @@ def get_deep_seek_api_key(config_info):
         key = os.environ.get("DEEP_SEEK_API_KEY")
         source = 'env variable DEEP_SEEK_API_KEY'
         
-    print(f'deep_seek_api_key = "{key}" (from {source})')
+    #print(f'deep_seek_api_key = "{key}" (from {source})')
     return key
 
 def call_chat_gpt4(prompt, config_info={}, callback=None):
     return asyncio.run(get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback))
 
 def call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None):
-    if 'gpt_model' in config_info and config_info['gpt_model'] == 'imagen_3':
-        shortening_api_calls, prompt = shorten_imagen_3_prompt_if_necessary(prompt, config_info=config_info, callback=callback)
+    if 'image_model' in config_info and config_info['image_model'] == 'imagen_3':
+        shortening_api_calls, prompt = shorten_imagen_3_prompt_if_necessary(prompt, config_info={'gpt_model': DEFAULT_GPT_4_MODEL}, callback=callback)
         image_api_call = asyncio.run(get_api_gemini_image_response(prompt, image_file, config_info=config_info, callback=callback))
     else:
         shortening_api_calls, prompt = shorten_dall_e_3_prompt_if_necessary(prompt, config_info=config_info, callback=callback)
@@ -125,20 +106,36 @@ def shorten_imagen_3_prompt_if_necessary(prompt, config_info={}, callback=None):
 
 def shorten_image_generation_prompt_if_necessary(prompt, image_generation_model, config_info={}, callback=None):
     api_calls = []
-    prompt_length = len(prompt)
     if image_generation_model == 'dall_e_3':
-        max_prompt_length = int(config.get('dall_e_3', 'max_prompt_length'))
-        prompt_is_too_long = ( prompt_length > max_prompt_length )
+        prompt_length_in_characters = len(prompt)
+        prompt_length = prompt_length_in_characters
+        max_prompt_length_in_characters = int(config.get('dall_e_3', 'max_prompt_length'))
+        
+        prompt_is_too_long = ( prompt_length_in_characters > max_prompt_length_in_characters )
+        
+        prompt_length_unit_for_shortening = 'characters'
+        prompt_length_for_shortening = prompt_length_in_characters
+        max_prompt_length_for_shortening = max_prompt_length_in_characters
     elif image_generation_model == 'imagen_3':
-        estimated_prompt_length_in_tokens = int(prompt_length / 0.75 )
-        max_prompt_length = int(config.get('imagen_3', 'max_prompt_length'))
-        prompt_is_too_long = ( estimated_prompt_length_in_tokens > max_prompt_length )
+        WORDS_TO_TOKENS_CONVERSION_FACTOR = 0.75
+        prompt_length_in_words = len(prompt.split())
+        prompt_length = prompt_length_in_words
+        estimated_prompt_length_in_tokens = int(prompt_length_in_words / WORDS_TO_TOKENS_CONVERSION_FACTOR )
+        max_prompt_length_in_tokens = int(config.get('imagen_3', 'max_prompt_length'))
+        max_prompt_length_in_words = max_prompt_length_in_tokens * WORDS_TO_TOKENS_CONVERSION_FACTOR
+        
+        prompt_is_too_long = ( estimated_prompt_length_in_tokens > max_prompt_length_in_tokens )
+        
+        prompt_length_unit_for_shortening = 'words'
+        prompt_length_for_shortening = prompt_length_in_words
+        max_prompt_length_for_shortening = max_prompt_length_in_words
     else:
         raise ValueError(f'Unknow image generation model name: {image_generation_model}')
     
     if prompt_is_too_long:
-        shortening_prompt = f"""The following image generation prompt, currently {prompt_length} characters long, exceeds the maximum
-permitted prompt length of {max_prompt_length} characters. Please shorten it to under {max_prompt_length} characters
+        shortening_prompt = f"""The following image generation prompt, currently {prompt_length_for_shortening}
+{prompt_length_unit_for_shortening} long, exceeds the maximum permitted prompt length of {max_prompt_length_for_shortening}
+{prompt_length_unit_for_shortening}. Please shorten it to under {max_prompt_length_for_shortening} {prompt_length_unit_for_shortening}
 while retaining the essential details. Ensure the prompt is still clear and provides enough information for an artist to
 create a detailed image.
 
