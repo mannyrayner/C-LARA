@@ -77,6 +77,7 @@ from .clara_coherent_images_utils import (
     remove_element_name_from_list_of_elements,
     add_element_name_to_list_of_elements,
     get_element_description,
+    elements_are_represented_as_images,
     get_page_text,
     get_page_description,
     get_page_image,
@@ -1273,7 +1274,8 @@ def delete_page_image(page_number, params):
     project_dir = params['project_dir']
     
     page_dir = project_pathname(project_dir, f'pages/page{page_number}')
-    remove_directory(page_dir)
+    if directory_exists(page_dir):
+        remove_directory(page_dir)
 
 async def generate_image_for_page(page_number, params, callback=None):
     project_dir = params['project_dir']
@@ -1733,17 +1735,22 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
             if previous_page_description:
                 previous_page_descriptions_text += f'\nPage {previous_page_number}:\n{previous_page_description}'
 
+    elements_as_images = elements_are_represented_as_images(params)
+
     element_description_with_element_texts = [ ( element_text, get_element_description(element_text, params) )
                                                for element_text in elements ]
     if not element_description_with_element_texts:
-        element_descriptions_text = f'(No specifications of elements)'
+        element_descriptions_text = f'(No relevant elements)'
     else:
-        element_descriptions_text = f'Specifications of relevant elements:\n'
+        element_descriptions_text = f'URLs of relevant element images:\n' if elements_as_images else f'Specifications of relevant elements:\n'
         for element_text, element_description in element_description_with_element_texts:
-            element_descriptions_text += f'\nElement "{element_text}":\n{element_description}'
+            element_descriptions_text += f'\nElement "{element_text}": {element_description}'
 
     # Create the prompt
-    prompt_template = get_prompt_template('default', 'generate_page_description')
+    if elements_as_images:
+        prompt_template = get_prompt_template('url_image_descriptions', 'generate_page_description')
+    else:
+        prompt_template = get_prompt_template('default', 'generate_page_description')
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
                                     background_text=background_text,
                                     style_description=style_description,

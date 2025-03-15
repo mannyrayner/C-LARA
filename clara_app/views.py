@@ -2854,7 +2854,7 @@ def simple_clara_create_v2_pages_helper(username, project_id, simple_clara_actio
     if not up_to_date_dict['v2_page_images']:
         post_task_update(callback, f"STARTED TASK: create page images")
         page_params = get_page_params_from_project_params(params)
-        pages_cost_dict = clara_project_internal.create_page_descriptions_and_images_v2(page_params, callback=callback)
+        pages_cost_dict = clara_project_internal.create_page_descriptions_and_images_v2(page_params, project_id, callback=callback)
         store_cost_dict(pages_cost_dict, project, project.user)
         post_task_update(callback, f"ENDED TASK: create page images")
 
@@ -6659,7 +6659,7 @@ def create_page_descriptions_and_images(project, clara_project_internal, params,
     try:
         page_params = get_page_params_from_project_params(params)
         page_params['pages_to_generate'] = pages_to_generate
-        cost_dict = clara_project_internal.create_page_descriptions_and_images_v2(page_params, callback=callback)
+        cost_dict = clara_project_internal.create_page_descriptions_and_images_v2(page_params, project.id, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
         bad_pages = get_pages_with_content_violations(pages_to_generate, page_params)
         if bad_pages:

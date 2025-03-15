@@ -7,6 +7,7 @@ config = get_config()
 # Ask for descriptions shorter than the maximum length to leave some slack
 max_element_description_length = int(config.get('v2_image_generation', 'max_element_description_length')) - 500
 max_page_description_length = int(config.get('v2_image_generation', 'max_page_description_length')) - 500
+max_page_description_length_imagen = int(config.get('v2_image_generation', 'max_page_description_length_imagen')) - 50  
 
 known_prompt_template_types = [ 'generate_style_description',
                                 'generate_style_description_example',
@@ -545,6 +546,82 @@ If any item listed there fails to match, the image will be rejected, so only inc
 in this section which is genuinely essential, as opposed to just desirable.
 
 - DALL-E-3 will only receive this text when generating the image, so it is essential to include the style information.
+
+- Take account of the following advice from the user about how to realise the image:
+
+{{advice_text}}
+""",
+
+    
+    'url_image_descriptions': f"""We are using Gemini Imagen 3 to generate a set of images to illustrate the following text,
+which has been divided into numbered pages:
+
+{{formatted_story_data}}
+
+{{background_text}}
+
+The intended style in which the images will be produced is described as follows:
+
+{{style_description}}
+
+We are about to generate the image for page {{page_number}}, whose text is
+
+{{page_text}}
+
+We have already generated detailed specifications for the images on the previous pages and also
+images of various elements (characters, locations, etc) that occur on more than one page.
+These have been posted on the Web and can be accessed by their URLs.
+
+Here are the specifications of relevant previous pages and URLs of relevant element images:
+
+{{previous_page_descriptions_text}}
+
+{{element_descriptions_text}}
+
+In this step, please create a detailed specification of the image on page {{page_number}}, in the intended style
+and also consistent with the relevant previous pages and relevant elements, that can be passed to Imagen 3 to
+generate a single image for page {{page_number}}.
+
+*IMPORTANT*:
+
+- Write the specification in {{text_language}}.
+
+- The specification you write out must be at most {max_page_description_length_imagen} words long to conform with Imagen 3's constraints.
+
+- Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
+idea of the image and then list the aspects of the image which are essential to the text and must be represented.
+This will often include material not mentioned in the text on the current page, which is necessary to maintain continuity,
+and must be inferred from text on the other pages or from other background knowledge. If URLs of relevant element images are given,
+then these must be included in the "Essential aspects" section.
+
+For example, if the text were the traditional nursery rhyme
+
+[ {{{{ "page_number": 1, "text": "Humpty Dumpty sat on a wall" }}}},
+  {{{{ "page_number": 2, "text": "Humpty Dumpty had a great fall" }}}},
+  {{{{ "page_number": 3, "text": "All the King's horses and all the King's men" }}}},
+  {{{{ "page_number": 4, "text": "Couldn't put Humpty Dumpty together again" }}}}
+  ]
+
+and we have
+
+URLs of relevant element images:
+
+Element "Humpty Dumpty": https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/Humpy_Dumpty/image.jpg/
+Element "the wall": https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/the_wall/image.jpg/
+
+then the "Essential aspects" section for page 2 (text: "Humpty Dumpty had a great fall") might read:
+
+"Humpy Dumpty (as in https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/Humpy_Dumpty/image.jpg/)
+is falling off the wall (as in https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/the_wall/image.jpg/).
+He looks surprised and frightened."
+
+despite the fact that there is no mention of the wall in the page 2 text.
+
+The "Essential aspects" section will be used to check the correctness of the generated image.
+If any item listed there fails to match, the image will be rejected, so only include material
+in this section which is genuinely essential, as opposed to just desirable.
+
+- Imagen 3 will only receive this text when generating the image, so it is essential to include the style information.
 
 - Take account of the following advice from the user about how to realise the image:
 

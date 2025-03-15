@@ -44,6 +44,7 @@ import sys
 import asyncio
 import traceback
 import unicodedata
+import pprint
 from pathlib import Path
 from PIL import Image
 
@@ -543,9 +544,28 @@ def add_element_name_to_list_of_elements(element_text, params):
 
 def get_element_description(element_text, params):
     project_dir = params['project_dir']
-    
-    name = element_text_to_element_name(element_text)
-    return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
+
+    if elements_are_represented_as_images(params):
+        rel_image = get_element_image(element_text, params)
+        return external_url_for_image(rel_image, params)
+    else:
+        name = element_text_to_element_name(element_text)
+        return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
+
+def elements_are_represented_as_images(params):
+    result = 'project_id' in params and \
+             'image_models_for_tasks' in params and \
+             'default' in params['image_models_for_tasks'] and \
+             params['image_models_for_tasks']['default'] == 'imagen_3'
+##    print(f'elements_are_represented_as_images: params:')
+##    pprint.pprint(params)
+##    print(f'elements_are_represented_as_images: {result}')
+    return result
+
+# This should be generalised, but okay while we only have one public server
+def external_url_for_image(rel_image, params):
+    project_id = params['project_id']
+    return f'https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/{project_id}/{rel_image}/'
 
 def get_element_image(element_text, params):
     project_dir = params['project_dir']

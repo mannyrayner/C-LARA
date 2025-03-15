@@ -1959,9 +1959,10 @@ class CLARAProjectInternal:
         #self.store_v2_element_data(params, callback=callback)
         return cost_dict
 
-    def create_page_descriptions_and_images_v2(self, params, callback=None):
+    def create_page_descriptions_and_images_v2(self, params, project_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir
         params['project_dir'] = project_dir
+        params['project_id'] = project_id
         cost_dict = asyncio.run(process_pages(params, callback=callback))
         self.store_v2_page_data(params, callback=callback)
         return cost_dict
