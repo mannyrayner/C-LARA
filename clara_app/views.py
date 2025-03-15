@@ -6431,7 +6431,7 @@ def execute_community_requests(project, clara_project_internal, requests, callba
 
 def execute_simple_clara_image_requests(project, clara_project_internal, requests, callback=None):
     try:
-        cost_dict = clara_project_internal.execute_simple_clara_image_requests_v2(requests, callback=callback)
+        cost_dict = clara_project_internal.execute_simple_clara_image_requests_v2(requests, project.id, callback=callback)
         store_cost_dict(cost_dict, project, project.user)
         post_task_update(callback, f'--- Executed community requests')
         post_task_update(callback, f"finished")

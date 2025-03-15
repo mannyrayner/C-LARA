@@ -2005,9 +2005,9 @@ class CLARAProjectInternal:
         cost_dict = asyncio.run(execute_community_requests_list(project_dir, requests, callback=callback))
         return cost_dict
 
-    def execute_simple_clara_image_requests_v2(self, requests, callback=None):
+    def execute_simple_clara_image_requests_v2(self, requests, project_id, callback=None):
         project_dir = self.coherent_images_v2_project_dir
-        cost_dict = asyncio.run(execute_simple_clara_image_requests(project_dir, requests, callback=callback))
+        cost_dict = asyncio.run(execute_simple_clara_image_requests(project_dir, requests, project_id, callback=callback))
         return cost_dict
 
     def execute_simple_clara_element_requests_v2(self, requests, callback=None):

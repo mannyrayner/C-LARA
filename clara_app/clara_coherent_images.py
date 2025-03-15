@@ -1103,11 +1103,12 @@ async def execute_community_requests_list(project_dir, requests, callback=None):
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
     return total_cost_dict
 
-async def execute_simple_clara_image_requests(project_dir, requests, callback=None):
+async def execute_simple_clara_image_requests(project_dir, requests, project_id, callback=None):
     #project_params = project_params_for_simple_clara
     project_params = get_project_params(project_dir)
     params = get_page_params_from_project_params(project_params)
     params['project_dir'] = project_dir
+    params['project_id'] = project_id
     
     total_cost_dict = {}
     for request in requests:
