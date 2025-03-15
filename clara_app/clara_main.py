@@ -1911,13 +1911,19 @@ class CLARAProjectInternal:
         return cost_dict
 
     def create_element_names_v2(self, params, callback=None):
-        project_dir = self.coherent_images_v2_project_dir
-        params['project_dir'] = project_dir
+        try:
+            project_dir = self.coherent_images_v2_project_dir
+            params['project_dir'] = project_dir
 
-        #self.remove_all_element_information_v2(params)
-        element_list_with_names, cost_dict = asyncio.run(generate_element_names(params, callback=callback))
-        self.store_v2_element_name_data(element_list_with_names, params, callback=callback)
-        return cost_dict
+            #self.remove_all_element_information_v2(params)
+            element_list_with_names, cost_dict = asyncio.run(generate_element_names(params, callback=callback))
+            self.store_v2_element_name_data(element_list_with_names, params, callback=callback)
+            return cost_dict
+        except Exception as e:
+            error_message = f'*** Error when creating element names: "{str(e)}"\n{traceback.format_exc()}'
+            post_task_update(callback, error_message)
+
+    # *** HERE
 
     def remove_all_element_information_v2(self, params, callback=None):
         try:

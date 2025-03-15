@@ -697,9 +697,9 @@ def get_config_info_from_params(task_name, params):
     else:
         model = None
 
-    if task_name in params['image_models_for_tasks']:
+    if 'image_models_for_tasks' in params and task_name in params['image_models_for_tasks']:
         image_model = params['image_models_for_tasks'][task_name]
-    elif 'default' in params['image_models_for_tasks']:
+    elif 'image_models_for_tasks' in params and 'default' in params['image_models_for_tasks']:
         image_model = params['image_models_for_tasks']['default']
     else:
         image_model = None
