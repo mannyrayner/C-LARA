@@ -29,11 +29,17 @@
     {{ form.as_p }}
     <button type="submit">Compare</button>
   </form>
+  
+  {% if diff_result.error_rate %}
+    <h3>Error Rate</h3>
+    <p>{{ diff_result.error_rate|floatformat:2 }}%</p>  
+  {% endif %}
 
   {% if diff_result.details %}
     <h3>Details</h3>
     <pre>{{ diff_result.details|safe }}</pre>
   {% endif %}
+  
   </div>
   <div class="sticky-footer">
     <a href="{% url 'project_detail' project.id %}">Back to Project</a>
