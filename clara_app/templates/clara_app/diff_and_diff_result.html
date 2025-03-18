@@ -32,7 +32,7 @@
   
   {% if diff_result.error_rate %}
     <h3>Error Rate</h3>
-    <p>{{ diff_result.error_rate|floatformat:2 }}%</p>  
+    <p>{{ diff_result.error_elements }}/{{ diff_result.total_elements }} ({{ diff_result.error_rate|floatformat:2 }}%)</p>  
   {% endif %}
 
   {% if diff_result.details %}
