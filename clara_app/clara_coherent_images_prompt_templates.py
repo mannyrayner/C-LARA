@@ -569,12 +569,14 @@ We are about to generate the image for page {{page_number}}, whose text is
 {{page_text}}
 
 We have already generated detailed specifications for the images on the previous pages and also
-images of various elements (characters, locations, etc) that occur on more than one page.
-These have been posted on the Web and can be accessed by their URLs.
+specification and images of various elements (characters, locations, etc) that occur on more than one page.
+The images have been posted on the Web and can be accessed by their URLs.
 
-Here are the specifications of relevant previous pages and URLs of relevant element images:
+Here are the specifications of relevant previous pages: 
 
 {{previous_page_descriptions_text}}
+
+Here are the specifications and URLs of relevant element images:
 
 {{element_descriptions_text}}
 
@@ -591,33 +593,44 @@ generate a single image for page {{page_number}}.
 - Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
 idea of the image and then list the aspects of the image which are essential to the text and must be represented.
 This will often include material not mentioned in the text on the current page, which is necessary to maintain continuity,
-and must be inferred from text on the other pages or from other background knowledge. If URLs of relevant element images are given,
-then these must be included in the "Essential aspects" section.
+and must be inferred from text on the other pages or from other background knowledge.
+
+If information about relevant element images is given, then this must be included in the "Essential aspects" section.
+Do so according to the following rules:
+
+1. If the element is a person, use the written specification, since Imagen 3 cannot use images of people.
+2. Otherwise, if the element is NOT a person, use the URL, since this is more informative than the written specification.
 
 For example, if the text were the traditional nursery rhyme
 
-[ {{{{ "page_number": 1, "text": "Humpty Dumpty sat on a wall" }}}},
-  {{{{ "page_number": 2, "text": "Humpty Dumpty had a great fall" }}}},
-  {{{{ "page_number": 3, "text": "All the King's horses and all the King's men" }}}},
-  {{{{ "page_number": 4, "text": "Couldn't put Humpty Dumpty together again" }}}}
+[ {{{{ "page_number": 1, "text": "Mary had a little lamb," }}}},
+  {{{{ "page_number": 2, "text": "Its fleece was white as snow;" }}}},
+  {{{{ "page_number": 3, "text": "And everywhere that Mary went, The lamb was sure to go." }}}}
   ]
 
-and we have
+and we have the following information about the elements:
 
-URLs of relevant element images:
+Specifications of relevant elements:
+"Mary":
+URL: https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/Mary/image.jpg/
+Description: Mary is a little girl who looks about eight years old. She has long dark hair almost down to her waist,
+blue eyes, and a fair complexion. She appears to be of Northern European ethnicity and is wearing a pale blue smock dress
+with a floral design and sturdy brown boots.
+"the little lamb":
+URL: https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/the_little_lamb/image.jpg/
+Description: The little lamb appears to be a few weeks old. It has blinding white fleece, large, expressive dark eyes, and is
+comically unsteady on its feet.
 
-Element "Humpty Dumpty": https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/Humpy_Dumpty/image.jpg/
-Element "the wall": https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/the_wall/image.jpg/
+then the "Essential aspects" section for page 3 (text: "And everywhere that Mary went, The lamb was sure to go.") might read:
 
-then the "Essential aspects" section for page 2 (text: "Humpty Dumpty had a great fall") might read:
+"Mary, a little girl of about eight, is walking down a picturesque country lane followed by her little lamb.
+They both appear happy and contented.
+Mary has long dark hair almost down to her waist, blue eyes, and a fair complexion. She appears to be of Northern European
+ethnicity and is wearing a pale blue smock dress with a floral design and sturdy brown boots.
+The little lamb is as shown in the image at
+https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/the_little_lamb/image.jpg/
 
-"Humpy Dumpty (as in https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/Humpy_Dumpty/image.jpg/)
-is falling off the wall (as in https://c-lara.unisa.edu.au/accounts/accounts/projects/serve_coherent_images_v2_file/123/elements/the_wall/image.jpg/).
-He looks surprised and frightened."
-
-despite the fact that there is no mention of the wall in the page 2 text.
-
-The "Essential aspects" section will be used to check the correctness of the generated image.
+The "Essential aspects" section may be used to check the correctness of the generated image.
 If any item listed there fails to match, the image will be rejected, so only include material
 in this section which is genuinely essential, as opposed to just desirable.
 

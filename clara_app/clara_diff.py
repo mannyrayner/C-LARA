@@ -127,7 +127,7 @@ def diff_elements_to_error_rate(diff_elements: List[DiffElement], version: str) 
                           if not diff_element_is_only_punctuation_spaces_and_separators(e) ]
     error_diff_elements = [ e for e in diff_elements
                             if e.type != 'ContentElement' and not e.content == '|' ]
-    print(error_diff_elements)
+    #print(error_diff_elements)
     total_elements = len(diff_elements)
     error_elements = len(error_diff_elements)
 

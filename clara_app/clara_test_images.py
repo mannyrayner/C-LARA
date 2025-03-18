@@ -107,6 +107,18 @@ night sky and garden. Ensure bold, black outlines define each segment, mimicking
 Incorporate intricate details like delicate textures in the cat's fur and the bat's wings. 
 """
         file_name = 'cat_and_bat_conference_v2'
+    elif test_id == 12:
+        prompt = """Create an image in a friendly cartoon style respectful to Australian Aboriginal culture
+and suitable for use in an Australian primary school classroom, showing an Aboriginal man wearing modern
+Australian clothes, e.g. T-shirt and shorts, standing on the shore and looking out to sea.
+"""
+        file_name = 'aboriginal_man_on_sea_shore'
+    elif test_id == 13:
+        prompt = """Create an image in a friendly cartoon style respectful to Australian Aboriginal culture
+and suitable for use in an Australian primary school classroom, showing an Aboriginal boy, about ten years
+old, wearing modern Australian clothes, e.g. T-shirt and shorts, standing on the shore and looking out to sea.
+"""
+        file_name = 'aboriginal_boy_on_sea_shore'
     else:
         raise ValueError('Unknow test_id: {test_id}')
 

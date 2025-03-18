@@ -197,7 +197,7 @@ def call_google_gemini_image(prompt, gemini_model, number_of_images, config_info
         model=gemini_model,
         prompt=prompt,
         config=types.GenerateImagesConfig(
-            number_of_images=number_of_images,
+            number_of_images=number_of_images
             # Possibly more config (dimensions, style, etc.) if available
         )
     )

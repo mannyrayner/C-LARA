@@ -545,12 +545,18 @@ def add_element_name_to_list_of_elements(element_text, params):
 def get_element_description(element_text, params):
     project_dir = params['project_dir']
 
+    name = element_text_to_element_name(element_text)
+    description = read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
+
+    rel_image = get_element_image(element_text, params)
+    url = external_url_for_image(rel_image, params)
+
     if elements_are_represented_as_images(params):
-        rel_image = get_element_image(element_text, params)
-        return external_url_for_image(rel_image, params)
+        return f"""URL: {url}
+Description: {description}"""
     else:
         name = element_text_to_element_name(element_text)
-        return read_project_txt_file(project_dir, f'elements/{name}/expanded_description.txt')
+        return f'Description: {description}'
 
 def elements_are_represented_as_images(params):
     result = 'project_id' in params and \

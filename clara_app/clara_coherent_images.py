@@ -1743,9 +1743,9 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     if not element_description_with_element_texts:
         element_descriptions_text = f'(No relevant elements)'
     else:
-        element_descriptions_text = f'URLs of relevant element images:\n' if elements_as_images else f'Specifications of relevant elements:\n'
+        element_descriptions_text = f'Specifications of relevant elements:\n'
         for element_text, element_description in element_description_with_element_texts:
-            element_descriptions_text += f'\nElement "{element_text}": {element_description}'
+            element_descriptions_text += f'\n"{element_text}":\n{element_description}'
 
     # Create the prompt
     if elements_as_images:
