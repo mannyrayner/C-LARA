@@ -28,7 +28,10 @@ def diff_text_objects(internalised_text1: Text, internalised_text2: Text, versio
 
     response = {}
     if 'error_rate' in required:
-        response['error_rate'] = diff_elements_to_error_rate(diff_elements, version)
+         error_rate_data = diff_elements_to_error_rate(diff_elements, version)
+         response['total_elements'] = error_rate_data['total_elements']
+         response['error_elements'] = error_rate_data['error_elements']
+         response['error_rate'] = error_rate_data['error_rate']
     if 'details' in required:
         response['details'] = diff_elements_to_details(diff_elements)
     return response
@@ -82,7 +85,7 @@ def diff_diff_elements(elements1: List[DiffElement], elements2: List[DiffElement
             for element in elements1[i1:i2]:
                 diff_elements.append(DiffElement('DeletedElement', element.content, element.annotations))
             for element in elements2[j1:j2]:
-                diff_elements.append(DiffElement('InsertedElement', element.content, element.annotations))
+                diff_elements.append(DiffElement('InsertedForReplaceElement', element.content, element.annotations))
         elif operation == 'delete':
             for element in elements1[i1:i2]:
                 diff_elements.append(DiffElement('DeletedElement', element.content, element.annotations))
@@ -117,11 +120,14 @@ def diff_element_for_replace(element1, element2):
 
 def diff_elements_to_error_rate(diff_elements: List[DiffElement], version: str) -> float:
     # Ignore whitespaces when calculating error rate. 
-    diff_elements = [ e for e in diff_elements if not e.content.isspace() or e.type == 'SubstitutedElement' ]
+    diff_elements = [ e for e in diff_elements if not ( e.content.isspace() or e.type == 'InsertedForReplaceElement' ) ]
     # Except in 'segmented' mode, we also ignore layout and punctuation.
     if version != 'segmented':
-        diff_elements = [ e for e in diff_elements if not diff_element_is_only_punctuation_spaces_and_separators(e) ]
-    error_diff_elements = [ e for e in diff_elements if e.type != 'ContentElement' ]
+        diff_elements = [ e for e in diff_elements
+                          if not diff_element_is_only_punctuation_spaces_and_separators(e) ]
+    error_diff_elements = [ e for e in diff_elements
+                            if e.type != 'ContentElement' and not e.content == '|' ]
+    print(error_diff_elements)
     total_elements = len(diff_elements)
     error_elements = len(error_diff_elements)
 
@@ -130,10 +136,15 @@ def diff_elements_to_error_rate(diff_elements: List[DiffElement], version: str) 
     #print(f'error elements: {[ e.content for e in error_diff_elements ]}')
 
     if total_elements == 0:
-        return 0.0
-
+        error_rate = 0.0
+    else:
     # Return a percentage
-    return 100.0 * error_elements / total_elements
+        error_rate = 100.0 * error_elements / total_elements
+
+    return { 'total_elements': total_elements,
+             'error_elements': error_elements,
+             'error_rate': error_rate
+             }
 
 def diff_element_is_only_punctuation_spaces_and_separators(e):
     if e.type == 'SubstitutedElement':
@@ -180,7 +191,7 @@ def single_diff_element_to_details(element: DiffElement) -> str:
             result = [ element_str ]
         elif element.type == 'DeletedElement':
             result = [ f'[deleted]{element_str}[/deleted]' ]
-        elif element.type == 'InsertedElement':
+        elif element.type in ( 'InsertedElement', 'InsertedForReplaceElement' ):
             result = [ f'[inserted]{element_str}[/inserted]' ]
     #print(f'--- Result: {result}')
     return result
