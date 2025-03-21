@@ -29,33 +29,9 @@ class ContentElement:
         self.annotations = annotations if annotations else {}
 
     def to_text(self, annotation_type='plain'):
-        def escape_special_chars(text):
-            if text == '':
-                return ''
-            if not text:
-                return '-'
-            if not isinstance(text, (str)):
-                raise ValueError(f'Non-string argument to escape_special_chars: {text}') 
-            return text.replace("#", r"\#").replace("@", r"\@").replace("<", r"\<").replace(">", r"\>")
-
-        # If a Word element contains spaces or punctuation, we need to add @ signs around it
-        # for the annotated text to be well-formed
-        def put_at_signs_around_text_if_necessary(text, annotation_type):
-            if text == '':
-                return ''
-            if not text:
-                return '-'
-            if not isinstance(text, (str)):
-                raise ValueError(f'Non-string argument to put_at_signs_around_text_if_necessary: {text}') 
-            # Check if text contains spaces or any Unicode punctuation
-            if any(unicodedata.category(char).startswith('P') for char in text) or ' ' in text:
-                if annotation_type in ('segmented', 'mwe', 'mwe_minimal', 'translated', 'gloss', 'lemma'):
-                    return f'@{text}@'
-            return text
         
         if self.type == "Word":
-            escaped_content = escape_special_chars(self.content)
-            escaped_content = put_at_signs_around_text_if_necessary(escaped_content, annotation_type)
+            escaped_content = escape_special_chars_and_put_at_signs_around_text_if_necessary(self.content, annotation_type)
             annotations = self.annotations
             # For texts tagged with lemma, POS and gloss, we have the special notation Word#Lemma/POS/Gloss#
             if annotation_type == 'lemma_and_gloss':
@@ -70,10 +46,11 @@ class ContentElement:
                 lemma, pos = ( annotations['lemma'], annotations['pos'] )
                 escaped_lemma = escape_special_chars(lemma)
                 return f"{escaped_content}#{escaped_lemma}/{pos}#"
-            elif annotation_type in ( 'plain' ):
+            elif annotation_type in ( 'plain', 'presegmented', 'segmented' ):
                 return self.content
-            elif annotation_type in ( 'presegmented', 'segmented', 'mwe', 'mwe_minimal', 'translated' ):
+            elif annotation_type in ( 'mwe', 'mwe_minimal', 'translated' ):
                 return escaped_content
+                #return self.content
             elif annotation_type and annotation_type in annotations:
                 escaped_annotation = escape_special_chars(annotations[annotation_type])
                 return f"{escaped_content}#{escaped_annotation}#"
@@ -117,14 +94,14 @@ class Segment:
                 analysis_text = annotations['analysis']
                 mwes = annotations['mwes']
                 #print(f'annotations["mwes"] = {mwes}')
-                mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+                mwes_text = ','.join([ ' '.join([ escape_special_chars(word) for word in mwe ]) for mwe in mwes ])
                 out_text += f"\n_analysis: {analysis_text}\n_MWEs: {mwes_text}"
         if annotation_type == 'mwe_minimal':
             annotations = self.annotations
             if 'mwes' in annotations:
                 mwes = annotations['mwes']
                 if mwes:
-                    mwes_text = ','.join([ ' '.join([ word for word in mwe ]) for mwe in mwes ])
+                    mwes_text = ','.join([ ' '.join([ escape_special_chars(word) for word in mwe ]) for mwe in mwes ])
                     out_text += f"#{mwes_text}#"
         if annotation_type == 'translated':
             annotations = self.annotations
@@ -132,7 +109,8 @@ class Segment:
 ##                translated = annotations['translated']
 ##                out_text += f"#{translated}#"
             translated = annotations['translated'] if 'translated' in annotations else ''
-            out_text += f"#{translated}#"
+            escaped_translated = escape_special_chars(translated)
+            out_text += f"#{escaped_translated}#"
             
         return out_text
 
@@ -311,6 +289,36 @@ class Text:
         text.pages = [Page.from_json(page_json) for page_json in data["pages"]]
         return text
 
+def escape_special_chars(text):
+    if text == '':
+        return ''
+    if not text:
+        return '-'
+    if not isinstance(text, (str)):
+        raise ValueError(f'Non-string argument to escape_special_chars: {text}') 
+    return text.replace("#", r"\#").replace("@", r"\@").replace("<", r"\<").replace(">", r"\>")
+
+# If a Word element contains spaces or punctuation, we need to add @ signs around it
+# for the annotated text to be well-formed
+def escape_special_chars_and_put_at_signs_around_text_if_necessary(text, annotation_type):
+    if not isinstance(text, (str)):
+        raise ValueError(f'Non-string argument to escape_special_chars_and_put_at_signs_around_text_if_necessary: {text}')
+    
+    put_at_signs = False
+    # Check if text contains spaces or any Unicode punctuation
+    if any( not char in "#@<>" and unicodedata.category(char).startswith('P') for char in text) or ' ' in text:
+        if annotation_type in ('segmented', 'mwe', 'mwe_minimal', 'translated', 'gloss', 'lemma'):
+            put_at_signs = True
+
+    escaped_text = escape_special_chars(text)
+            
+    if escaped_text == '':
+        return ''
+    elif not escaped_text:
+        return '-'
+    else:
+        return f'@{escaped_text}@' if put_at_signs else escaped_text
+
 class Image:
     def __init__(self, image_file_path, thumbnail_file_path, image_name,
                  associated_text, associated_areas,
@@ -439,3 +447,5 @@ def basename(pathname):
 
 def string_is_only_punctuation_spaces_and_separators(s):
     return all(regex.match(r"[\p{P} \n|]", c) for c in s)
+
+

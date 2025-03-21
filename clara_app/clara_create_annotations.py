@@ -174,7 +174,7 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
             try:
                 presegment_api_call = clara_chatgpt4.call_chat_gpt4(presegment_prompt, config_info=config_info, callback=callback)
                 presegmented_text0 = presegment_api_call.response
-                print(f'presegmented_text0:\n{presegmented_text0}')
+                #print(f'presegmented_text0:\n{presegmented_text0}')
                 # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>", but sometimes these don't come out quite right
                 presegmented_text = find_between_tags(presegmented_text0, "text", "text")
                 # Try to correct if we have a mismatch
@@ -274,6 +274,7 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     else:
         internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
 
+    #print(f'Internalised "{annotated_text}" as "{source_version}":')
     #pprint.pprint(internalised_annotated_text)
 
     if processing_phase == 'gloss':
@@ -719,9 +720,12 @@ def content_elements_to_segmentation_input(content_elements):
     return segment_text
 
 def segment_elements_to_segment_translation_input(segment_elements):
+    #print(f'segment_elements_to_segment_translation_input: input: {segment_elements}')
     word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(segment_elements)
     segment_text = ''.join([ element.content for element in word_and_non_word_text_elements if element.type in ( 'Word', 'NonWordText' ) ])
-    return segment_text.replace('\n', ' ').strip()
+    result = segment_text.replace('\n', ' ').strip()
+    #print(f'segment_elements_to_segment_translation_input: output: {result}')
+    return result
 
 def merge_elements_and_annotated_elements(elements, annotated_elements, processing_phase):
     #print(f'merge_elements_and_annotated_elements({elements}, {annotated_elements}, {processing_phase})')
@@ -903,7 +907,7 @@ def get_template_and_annotated_example_list(annotate_or_improve, annotation_type
             raise e
 
 def get_template_and_annotated_example_list_for_language(annotate_or_improve, annotation_type, l2_language):
-    print(f'get_template_and_annotated_example_list_for_language({annotate_or_improve}, {annotation_type}, {l2_language})')
+    #print(f'get_template_and_annotated_example_list_for_language({annotate_or_improve}, {annotation_type}, {l2_language})')
     prompt_repo = clara_prompt_templates.PromptTemplateRepository(l2_language)
     template = prompt_repo.load_template_or_examples('template', annotation_type, annotate_or_improve)
     annotated_example_list = prompt_repo.load_template_or_examples('examples', annotation_type, annotate_or_improve)

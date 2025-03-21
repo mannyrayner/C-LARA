@@ -140,7 +140,7 @@ def parse_segment_mwe_trivial(segment_text):
         no_minimal_analysis = True
 
     if no_full_analysis and no_minimal_analysis and n_components == 1:
-        content_elements = parse_content_elements_segmented(segment_text)
+        content_elements = parse_content_elements_translated_or_mwe(segment_text)
         return Segment(content_elements, annotations={'analysis': '', 'mwes': []})
     else:
         return False
@@ -170,7 +170,7 @@ def parse_segment_mwe_full(segment_text):
             mwes_found = True
             all_mwes_text = line[len(mwes_prefix):].strip()
             mwes_texts = [] if not all_mwes_text else all_mwes_text.split(',')
-            mwes = [mwe_text.split() for mwe_text in mwes_texts]
+            mwes = [mwe_text.replace('\\', '').split() for mwe_text in mwes_texts]
         else:
             if current_section == "main_text":
                 main_text_lines.append(line)
@@ -183,7 +183,7 @@ def parse_segment_mwe_full(segment_text):
     # Reconstruct main text and analysis
     main_text = '\n'.join(main_text_lines)
     analysis_text = '\n'.join(analysis_lines)
-    content_elements = parse_content_elements_segmented(main_text)
+    content_elements = parse_content_elements_translated_or_mwe(main_text)
 
     # Create and return the Segment object with the parsed annotations
     return Segment(content_elements, annotations={'analysis': analysis_text, 'mwes': mwes})
@@ -197,7 +197,7 @@ def parse_segment_mwe_minimal(segment_text):
     else:
         return False
 
-    content_elements = parse_content_elements_segmented(main_text)
+    content_elements = parse_content_elements_translated_or_mwe(main_text)
 
     # Create and return the Segment object with the parsed annotations
     if all_mwes_text in ( '', '-' ):
@@ -205,12 +205,14 @@ def parse_segment_mwe_minimal(segment_text):
         return Segment(content_elements, annotations={'analysis': '(removed)', 'mwes': []})
     else:
         mwes_texts = [] if not all_mwes_text else all_mwes_text.split(',')
-        mwes = [mwe_text.split() for mwe_text in mwes_texts]
+        mwes = [mwe_text.replace('\\', '').split() for mwe_text in mwes_texts]
         return Segment(content_elements, annotations={'analysis': '(removed)', 'mwes': mwes})
 
 def parse_segment_translated(segment_text):
     try:
+        print(f'parse_segment_translated: text: {segment_text}')
         components = split_escaped(segment_text, '#')
+        print(f'parse_segment_translated: components: {components}')
         n_components = len(components)
         if n_components == 3 and components[2].strip() == '':
             main_text = components[0]
@@ -221,7 +223,7 @@ def parse_segment_translated(segment_text):
         else:
             raise InternalisationError(message=f"Unable to internalise '{segment_text}' as a translated segment.")
 
-        content_elements = parse_content_elements_segmented(main_text)
+        content_elements = parse_content_elements_translated_or_mwe(main_text)
 
         # Create and return the Segment object with the parsed annotations
         if translated in ( '', '-' ):
@@ -232,6 +234,12 @@ def parse_segment_translated(segment_text):
 
     except Exception as e:
         raise InternalisationError(message=f"Unable to internalise '{segment_text}' as a translated segment. Error: {str(e)}")
+
+# In the translated and MWE versions, we have a hashtag annotation attached to the segment, so we need to escape hashtags in the body.
+# But we don't have hashtags on the words, so we can remove the hashtags in the body when parsing it.
+def parse_content_elements_translated_or_mwe(text):
+    text_without_backslashes = text.replace('\\', '')
+    return parse_content_elements_segmented(text_without_backslashes)
 
 def parse_content_elements_glossed_or_tagged(segment_text, text_type):
     #pattern = r"((?:<img[^>]*>|<audio[^>]*>|<\/?\w+>|@[^@]+@#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|(?:[^\s|#]|(?<=\\)#)*(?:\|[^\s|#]|(?<=\\)#)*#(?:[^#|]|(?<=\\)#)*(?:\|[^#|]|(?<=\\)#)*#|[\s\p{P}--[@#'\\]]+))"
@@ -329,6 +337,7 @@ def split_escaped(string, delimiter):
     escaped = False
 
     for char in string:
+        #print(f'char: {char}')
         if char == delimiter and not escaped:
             parts.append(''.join(current_part))
             current_part = []
