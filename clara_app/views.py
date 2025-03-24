@@ -8184,6 +8184,36 @@ IMAGE_QUESTIONNAIRE_QUESTIONS = [
 ]
 
 @login_required
+def image_questionnaire_project_list(request):
+    """
+    Lists all projects that have an image questionnaire, applying optional search/filter criteria.
+    Each project entry includes a link to start or continue the questionnaire for that project.
+    """
+
+    search_form = ProjectSearchForm(request.GET or None)
+    query = Q(has_image_questionnaire=True)
+
+    if search_form.is_valid():
+        title = search_form.cleaned_data.get('title')
+        l2 = search_form.cleaned_data.get('l2')
+        l1 = search_form.cleaned_data.get('l1')
+
+        if title:
+            query &= Q(title__icontains=title)
+        if l2:
+            query &= Q(l2__icontains=l2)
+        if l1:
+            query &= Q(l1__icontains=l1)
+
+    # Retrieve matching projects, order by title (case-insensitive)
+    projects = CLARAProject.objects.filter(query).order_by(Lower('title'))
+
+    return render(request, 'clara_app/image_questionnaire_project_list.html', {
+        'search_form': search_form,
+        'projects': projects,
+    })
+
+@login_required
 def image_questionnaire_start(request, project_id):
     """
     Entry point for the image questionnaire. 
@@ -8357,6 +8387,91 @@ def image_questionnaire_summary(request, project_id):
         "questions_answered": questions_answered,
     }
     return render(request, "clara_app/image_questionnaire_summary.html", context)
+
+@login_required
+def image_questionnaire_all_projects_summary(request):
+    """
+    Presents the aggregated questionnaire results (average ratings etc.) 
+    for *all* projects that have an image questionnaire enabled.
+    """
+    # Optionally restrict this to superusers or some special role
+    # if not request.user.is_superuser:
+    #     return HttpResponseForbidden("You do not have permission to view this summary.")
+
+    # Gather all projects that have an image questionnaire
+    search_form = ProjectSearchForm(request.GET or None)
+    query = Q(has_image_questionnaire=True)
+
+    if search_form.is_valid():
+        title = search_form.cleaned_data.get('title')
+        l2 = search_form.cleaned_data.get('l2')
+        l1 = search_form.cleaned_data.get('l1')
+
+        if title:
+            query &= Q(title__icontains=title)
+        if l2:
+            query &= Q(l2__icontains=l2)
+        if l1:
+            query &= Q(l1__icontains=l1)
+
+    projects = CLARAProject.objects.filter(query).order_by(Lower('title'))
+
+    # Prepare a list of summary data, one entry per project
+    all_project_summaries = []
+
+    # Pre-build a quick lookup from question_id to question_text
+    question_texts = {q["id"]: q["text"] for q in IMAGE_QUESTIONNAIRE_QUESTIONS}
+
+    for proj in projects:
+        # Retrieve all responses for this project
+        responses = ImageQuestionnaireResponse.objects.filter(project=proj)
+
+        if not responses.exists():
+            # No responses yet, just show zeros
+            all_project_summaries.append({
+                "search_form": search_form,
+                "project": proj,
+                "distinct_pages": 0,
+                "distinct_users": 0,
+                "aggregated_data": [],
+            })
+            continue
+
+        # Count distinct pages and users
+        distinct_pages = responses.values_list("page_number", flat=True).distinct().count()
+        distinct_users = responses.values_list("user_id", flat=True).distinct().count()
+
+        # Aggregate by question: average rating and how many total responses
+        agg_by_question = (
+            responses
+            .values("question_id")
+            .annotate(avg_rating=Avg("rating"), num_responses=Count("id"))
+            .order_by("question_id")
+        )
+
+        # Convert query results into a list of dicts with question text
+        aggregated_data = []
+        for row in agg_by_question:
+            q_id = row["question_id"]
+            aggregated_data.append({
+                "question_id": q_id,
+                "question_text": question_texts.get(q_id, f"Q{q_id}"),
+                "avg_rating": row["avg_rating"],
+                "num_responses": row["num_responses"],
+            })
+
+        all_project_summaries.append({
+            "project": proj,
+            "distinct_pages": distinct_pages,
+            "distinct_users": distinct_users,
+            "aggregated_data": aggregated_data,
+        })
+
+    # Pass everything to the template
+    return render(request, "clara_app/image_questionnaire_all_projects_summary.html", {
+        "search_form": search_form,
+        "all_project_summaries": all_project_summaries,
+    })
 
 def _get_relevant_elements(project_dir, page_number):
     """
