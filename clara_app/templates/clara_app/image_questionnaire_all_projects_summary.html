@@ -1,0 +1,61 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+
+<h2>All Projects - Image Questionnaire Summary</h2>
+
+<p><b>Filter using any combination of the search boxes below</b></p>
+	<form method="GET">
+	  <table>
+	    <tr>
+		  <td><label for="id_title">Title:</label></td>
+		  <td>{{ search_form.title }}</td>
+		</tr>
+		<tr>
+		  <td><label for="l2">Text language:</label></td>
+		  <td>{{ search_form.l2 }}</td>
+		</tr>
+		<tr>
+		  <td><label for="l1">Annotation language:</label></td>
+		  <td>{{ search_form.l1 }}</td>
+		</tr>
+		<tr>
+		  <td></td>
+		  <td><input type="submit" value="Search"></td>
+		</tr>
+	  </table>
+	</form>
+
+{% if all_project_summaries %}
+  {% for summary in all_project_summaries %}
+    <h3>{{ summary.project.title }}</h3>
+
+    {% if summary.aggregated_data %}
+      <p>Pages answered: {{ summary.distinct_pages }}<br>
+         Distinct users who contributed answers: {{ summary.distinct_users }}</p>
+
+      <table border="1" cellpadding="4" style="border-collapse: collapse; margin-bottom: 1em;">
+        <tr>
+          <th>Question ID</th>
+          <th>Question Text</th>
+          <th>Average Rating</th>
+          <th>Number of Responses</th>
+        </tr>
+        {% for row in summary.aggregated_data %}
+          <tr>
+            <td>{{ row.question_id }}</td>
+            <td>{{ row.question_text }}</td>
+            <td>{{ row.avg_rating|floatformat:2 }}</td>
+            <td>{{ row.num_responses }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p><em>No responses yet.</em></p>
+    {% endif %}
+    <hr>
+  {% endfor %}
+{% else %}
+  <p>No projects with questionnaires enabled.</p>
+{% endif %}
+
+{% endblock %}

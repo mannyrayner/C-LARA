@@ -1,0 +1,47 @@
+{% extends "clara_app/base.html" %}
+{% load static %}
+{% load clara_tags %}
+{% block content %}
+
+<h2>Image Questionnaire Projects</h2>
+
+<p><strong>Filter by any combination of title, text language, annotation language:</strong></p>
+<form method="GET">
+  <table>
+    <tr>
+      <td><label for="id_title">Title:</label></td>
+      <td>{{ search_form.title }}</td>
+    </tr>
+    <tr>
+      <td><label for="id_l2">Text language:</label></td>
+      <td>{{ search_form.l2 }}</td>
+    </tr>
+    <tr>
+      <td><label for="id_l1">Annotation language:</label></td>
+      <td>{{ search_form.l1 }}</td>
+    </tr>
+    <tr>
+      <td></td>
+      <td><input type="submit" value="Search"></td>
+    </tr>
+  </table>
+</form>
+
+<hr>
+
+{% if projects %}
+  <ul>
+    {% for project in projects %}
+      <li>
+        <strong>{{ project.title }}</strong> ({{ project.l2|titlecase }})
+        |
+        <a href="{% url 'image_questionnaire_start' project.id %}">Go to questionnaire</a>
+        <!-- or 'Continue questionnaire' if they might have partial answers -->
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No projects found matching your criteria.</p>
+{% endif %}
+
+{% endblock %}
