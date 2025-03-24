@@ -1,0 +1,18 @@
+{% extends "clara_app/base.html" %}
+{% load static %}
+{% block content %}
+
+<h2>Image Questionnaire Summary</h2>
+
+<p>Thank you for completing the questionnaire for <strong>{{ project.title }}</strong>!</p>
+
+<ul>
+    <li>Pages answered: {{ pages_answered }}</li>
+    <li>Total questions answered: {{ questions_answered }}</li>
+</ul>
+
+<p>
+  <a href="{% url 'clara_home_page' %}">Back to C-LARA home page</a>
+</p>
+
+{% endblock %}

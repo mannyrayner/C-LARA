@@ -35,6 +35,9 @@
 						<td>Base image set on translations:</td>
 						<td>{{ image_set_form.use_translation_for_images }}</td>
 					<tr>
+						<td>Make an image questionnaire available:</td>
+						<td>{{ image_set_form.has_image_questionnaire }}</td>
+					<tr>
                         <td><button type="submit">Update Coherent Image Settings</button></td>
                     </tr>
                 </table>
@@ -118,6 +121,13 @@
 			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
 			  Review images as non-community member</a>
 			  {% if up_to_date_dict.images %}✓{% endif %}</p>		   
+	{% endif %}
+	{% if project.uses_coherent_image_set_v2 and project.has_image_questionnaire %}
+		  <p><a href="{% url 'image_questionnaire_start' project.id %}" 
+			  data-tooltip="Answer questionnaire about quality and appropriateness of project images." 
+			  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
+			  Image questionnaire</a>
+			  {% if up_to_date_dict.images %}✓{% endif %}</p>   
 	{% endif %}
 	<p><a href="{% url 'create_phonetic_text' project.id %}"
 	      data-tooltip="If a phonetic lexicon has been uploaded for this language, create a version of the text divided into phonetic units."
