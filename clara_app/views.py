@@ -8332,7 +8332,7 @@ def image_questionnaire_item(request, project_id, index):
         "previous_page_number": prev_page_num,
         "previous_image_relpath": previous_image_relpath,
     }
-    pprint.pprint(context)
+    #pprint.pprint(context)
     return render(request, "clara_app/image_questionnaire_item.html", context)
 
 
