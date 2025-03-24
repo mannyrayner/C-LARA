@@ -3364,7 +3364,9 @@ def project_detail(request, project_id):
         image_set_form = UpdateCoherentImageSetForm(prefix="image_set",
                                                     initial={'uses_coherent_image_set': project.uses_coherent_image_set,
                                                              'uses_coherent_image_set_v2': project.uses_coherent_image_set_v2,
-                                                             'use_translation_for_images': project.use_translation_for_images})
+                                                             'use_translation_for_images': project.use_translation_for_images,
+                                                             'has_image_questionnaire': project.has_image_questionnaire
+                                                             })
 
     clara_version = get_user_config(request.user)['clara_version']
     
