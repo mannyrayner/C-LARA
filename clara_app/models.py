@@ -97,6 +97,7 @@ class CLARAProject(models.Model):
     uses_coherent_image_set = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set.")
     uses_coherent_image_set_v2 = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set (V2).")
     use_translation_for_images = models.BooleanField(default=False, help_text="Use translations for generating coherent image sets.")
+    has_image_questionnaire = models.BooleanField(default=False, help_text="Specify whether an image questionnaire is associated")
     community = models.ForeignKey(
         Community,
         on_delete=models.SET_NULL,
@@ -542,6 +543,30 @@ class SatisfactionQuestionnaire(models.Model):
 
     class Meta:
         unique_together = ("user", "project")
+
+class ImageQuestionnaireResponse(models.Model):
+    # Identify which project the response is for
+    project = models.ForeignKey('CLARAProject', on_delete=models.CASCADE)
+
+    # Identify who submitted the response
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    # Identify which image 
+    page_number = models.IntegerField(null=True, blank=True)
+    
+    # Which question ID was answered (1–5 in your plan)
+    question_id = models.IntegerField()
+
+    # The actual rating
+    rating = models.IntegerField()  # for a 1–5 Likert scale
+    # Optionally store textual comment (open-ended) in a text field
+    comment = models.TextField(null=True, blank=True)
+
+    # When it was submitted
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"QResponse (Proj={self.project_id}, Page={self.page_number}, User={self.user_id}, Q={self.question_id})"
 
 class FundingRequest(models.Model):
     CONTENT_TYPE_CHOICES = [

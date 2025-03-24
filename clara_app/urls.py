@@ -112,6 +112,10 @@ urlpatterns = [
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
     path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
 
+    path('project/<int:project_id>/image_questionnaire_start', views.image_questionnaire_start, name='image_questionnaire_start'),
+    path('project/<int:project_id>/image_questionnaire_item/<int:index>', views.image_questionnaire_item, name='image_questionnaire_item'),
+    path('project/<int:project_id>/image_questionnaire_summary', views.image_questionnaire_summary, name='image_questionnaire_summary'),
+
     path('create_community/', views.create_community, name='create_community'),
     path('delete_community_menu/', views.delete_community_menu, name='delete_community_menu'),
     path('community_home/<int:community_id>/', views.community_home, name='community_home'),

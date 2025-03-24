@@ -23,7 +23,7 @@ from django.urls import reverse
 from .models import UserProfile, FriendRequest, UserConfiguration, LanguageMaster, Content, ContentAccess, TaskUpdate, Update, ReadingHistory
 from .models import SatisfactionQuestionnaire, FundingRequest, Acknowledgements, Activity, ActivityRegistration, ActivityComment, ActivityVote, CurrentActivityVote
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo, ProjectPermissions, CLARAProjectAction, Comment, Rating, FormatPreferences
-from .models import Community, CommunityMembership
+from .models import Community, CommunityMembership, ImageQuestionnaireResponse
 from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
@@ -77,7 +77,7 @@ from .clara_coherent_images_utils import get_style_params_from_project_params, g
 from .clara_coherent_images_utils import get_element_names_params_from_project_params, get_element_descriptions_params_from_project_params
 from .clara_coherent_images_utils import get_page_params_from_project_params, default_params, style_image_name, element_image_name, page_image_name, get_element_image
 from .clara_coherent_images_utils import remove_element_directory, remove_page_directory, remove_element_name_from_list_of_elements, project_pathname
-from .clara_coherent_images_utils import read_project_json_file
+from .clara_coherent_images_utils import read_project_json_file, project_pathname
 from .clara_coherent_images_utils import image_dir_shows_content_policy_violation
 from .clara_coherent_images_utils import description_dir_shows_only_content_policy_violations
 from .clara_coherent_images_utils import content_dir_shows_only_content_policy_violations
@@ -3356,7 +3356,9 @@ def project_detail(request, project_id):
             project.uses_coherent_image_set = image_set_form.cleaned_data['uses_coherent_image_set']
             project.uses_coherent_image_set_v2 = image_set_form.cleaned_data['uses_coherent_image_set_v2']
             project.use_translation_for_images = image_set_form.cleaned_data['use_translation_for_images']
+            project.has_image_questionnaire = image_set_form.cleaned_data['has_image_questionnaire']
             project.save()
+        messages.success(request, f"Project information updated")
     else:
         title_form = UpdateProjectTitleForm(prefix="title")
         image_set_form = UpdateCoherentImageSetForm(prefix="image_set",
@@ -8157,6 +8159,237 @@ def aggregated_questionnaire_results(request):
     }
 
     return render(request, 'clara_app/aggregated_questionnaire_results.html', context)
+
+IMAGE_QUESTIONNAIRE_QUESTIONS = [
+    {
+        "id": 1,
+        "text": "How well does the image correspond to the page text?",
+    },
+    {
+        "id": 2,
+        "text": "How consistent is the style of the image with the overall style?",
+    },
+    {
+        "id": 3,
+        "text": "How consistent is the appearance of elements in the image with their previous appearance?",
+    },
+    {
+        "id": 4,
+        "text": "Is the image appropriate to the relevant culture?",
+    },
+    {
+        "id": 5,
+        "text": "How visually appealing do you find the image?",
+    },
+]
+
+@login_required
+def image_questionnaire_start(request, project_id):
+    """
+    Entry point for the image questionnaire. 
+    Retrieves the story pages, stores them in session (or you could do it in memory),
+    then redirects the user to the first page.
+    """
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    # Make sure the project actually has a questionnaire
+    if not project.has_image_questionnaire:
+        messages.error(request, 'This project does not have an image questionnaire enabled.')
+        return redirect('clara_home_page')
+
+    # Access the internal structure
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    project_dir = clara_project_internal.coherent_images_v2_project_dir
+
+    # Read the story data
+    story_data = read_project_json_file(project_dir, 'story.json') or []
+    # Filter out pages that don't have images, if you only want those
+    pages_with_images = []
+    for page in story_data:
+        page_number = page.get('page_number')
+        rel_img_path = f'pages/page{page_number}/image.jpg'
+        if file_exists(project_pathname(project_dir, rel_img_path)):
+            pages_with_images.append(page)
+
+    if not pages_with_images:
+        # No images => no questionnaire needed
+        messages.error(request, 'This project does not have any images to evaluate.')
+        return redirect('clara_home_page')
+
+    # Store the page list in session so we can reference it by index
+    request.session['image_questionnaire_pages'] = pages_with_images
+    return redirect('image_questionnaire_item', project_id=project.id, index=0)
+
+
+@login_required
+def image_questionnaire_item(request, project_id, index):
+    """
+    Shows a single page's image, text, and the relevant questions.
+    Handles form submission for each question, then goes forward or backward.
+    """
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    if not project.has_image_questionnaire:
+        messages.error(request, 'This project does not have an image questionnaire enabled.')
+        return redirect('clara_home_page')
+
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    project_dir = clara_project_internal.coherent_images_v2_project_dir
+
+    # Retrieve pages_with_images from session
+    pages_with_images = request.session.get('image_questionnaire_pages', [])
+    if not pages_with_images or index < 0 or index >= len(pages_with_images):
+        # Index out of range: go to a summary or fallback
+        return redirect('image_questionnaire_summary', project_id=project.id)
+
+    current_page = pages_with_images[index]
+    page_number = current_page.get('page_number')
+    page_text = current_page.get('text', '')
+    relative_page_image_path = f'pages/page{page_number}/image.jpg'
+
+    # Decide which questions to show
+    # For question #3, we see if there's a relevant previous page
+    # that shares an element with the current page
+    relevant_elements_current = _get_relevant_elements(project_dir, page_number)
+    has_prev_relevant_page, prev_page_num = _find_previous_relevant_page(
+        pages_with_images, index, project_dir, relevant_elements_current
+    )
+
+    questions_to_show = []
+    for q in IMAGE_QUESTIONNAIRE_QUESTIONS:
+        if q["id"] == 3 and not has_prev_relevant_page:
+            # skip question #3 if no relevant previous image
+            continue
+        questions_to_show.append(q)
+
+    if request.method == 'POST':
+        # Process the user's Likert-scale answers
+        for q in questions_to_show:
+            q_key = f"q_{q['id']}"
+            c_key = f"c_{q['id']}"
+
+            rating_str = request.POST.get(q_key)
+            comment = request.POST.get(c_key, '').strip()
+
+            if rating_str:
+                # Save or update the user’s response
+                rating = int(rating_str)
+                ImageQuestionnaireResponse.objects.update_or_create(
+                    project=project,
+                    user=request.user,
+                    page_number=page_number,
+                    question_id=q["id"],
+                    defaults={"rating": rating, "comment": comment},
+                )
+
+        if "previous" in request.POST:
+            return redirect('image_questionnaire_item', project_id=project.id, index=index - 1)
+        else:
+            # Next button or default
+            return redirect('image_questionnaire_item', project_id=project.id, index=index + 1)
+
+    # GET request: Load any existing answers for pre-fill
+    existing_answers_raw = ImageQuestionnaireResponse.objects.filter(
+    project=project,
+    user=request.user,
+    page_number=page_number
+    )
+    answers_by_id = {}
+    
+    for resp in existing_answers_raw:
+        answers_by_id[resp.question_id] = (resp.rating, resp.comment)
+
+    # Then build a structure that’s easy to iterate over in the template:
+    question_data_list = []
+    for q in questions_to_show:
+        q_id = q["id"]
+        rating_comment = answers_by_id.get(q_id, (None, ""))
+        question_data_list.append({
+            "id": q_id,
+            "text": q["text"],
+            "rating": str(rating_comment[0]),
+            "comment": rating_comment[1],
+        })
+
+    # If we want to show the previous image for question #3, fetch its path
+    previous_image_relpath = None
+    if has_prev_relevant_page and prev_page_num is not None:
+        previous_image_relpath = f'pages/page{prev_page_num}/image.jpg'
+        # You can pass this to the template to display side-by-side
+
+    context = {
+        "project": project,
+        "index": index,
+        "total_pages": len(pages_with_images),
+        "page_number": page_number,
+        "page_text": page_text,
+        "relative_image_path": relative_page_image_path,
+        "questions": questions_to_show,
+        "question_data_list": question_data_list,
+        "show_previous": index > 0,
+        "show_next": index < len(pages_with_images) - 1,
+        "has_prev_relevant_page": has_prev_relevant_page,
+        "previous_page_number": prev_page_num,
+        "previous_image_relpath": previous_image_relpath,
+    }
+    pprint.pprint(context)
+    return render(request, "clara_app/image_questionnaire_item.html", context)
+
+
+@login_required
+def image_questionnaire_summary(request, project_id):
+    """
+    Show a simple "thank you" and optional stats or final summary.
+    """
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    if not project.has_image_questionnaire:
+        messages.error(request, 'This project does not have an image questionnaire enabled.')
+        return redirect('clara_home_page')
+
+    # Example: let’s get how many total responses the user gave
+    user_responses = ImageQuestionnaireResponse.objects.filter(project=project, user=request.user)
+    pages_answered = user_responses.values_list('page_number', flat=True).distinct().count()
+    questions_answered = user_responses.count()
+
+    context = {
+        "project": project,
+        "pages_answered": pages_answered,
+        "questions_answered": questions_answered,
+    }
+    return render(request, "clara_app/image_questionnaire_summary.html", context)
+
+def _get_relevant_elements(project_dir, page_number):
+    """
+    Reads relevant_pages_and_elements.json for a given page, 
+    returns the list of relevant elements (could be characters, objects, etc.).
+    """
+
+    relevant_info_path = f'pages/page{page_number}/relevant_pages_and_elements.json'
+    full_path = project_pathname(project_dir, relevant_info_path)
+    if file_exists(full_path):
+        relevant_info = read_project_json_file(project_dir, relevant_info_path)
+        return set(relevant_info.get('relevant_elements', []))
+    else:
+        return set()
+
+def _find_previous_relevant_page(pages_with_images, current_index, project_dir, current_elems):
+    """
+    Searches backward for any page that shares at least one relevant element
+    with the current page. Returns (bool, page_number).
+      - bool: True if found a relevant page
+      - page_number: the first page_number that shares an element, or None if none
+    """
+    if not current_elems:
+        return (False, None)
+
+    for i in range(current_index - 1, -1, -1):
+        prev_page = pages_with_images[i]
+        prev_page_num = prev_page.get("page_number")
+        prev_elems = _get_relevant_elements(project_dir, prev_page_num)
+        if current_elems.intersection(prev_elems):
+            return (True, prev_page_num)
+
+    return (False, None)
 
 @login_required
 def funding_request(request):

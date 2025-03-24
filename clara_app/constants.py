@@ -57,6 +57,7 @@ RECENT_TIME_PERIOD_CHOICES = [
 
 DEFAULT_RECENT_TIME_PERIOD = 3
 
+
 SUPPORTED_LANGUAGES_WITH_AI_ENABLED_STATUS = [
     ('american english', 'American English', True),
     ('ancient egyptian', 'Ancient Egyptian', False), #Not AI-enabled

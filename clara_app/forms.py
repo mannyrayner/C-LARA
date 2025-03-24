@@ -342,6 +342,7 @@ class UpdateCoherentImageSetForm(forms.Form):
     uses_coherent_image_set = forms.BooleanField(required=False)
     uses_coherent_image_set_v2 = forms.BooleanField(required=False)
     use_translation_for_images = forms.BooleanField(required=False)
+    has_image_questionnaire = forms.BooleanField(required=False)
 
 class AddCreditForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'))
