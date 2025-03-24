@@ -11,7 +11,7 @@ def zip_lists(a, b):
 
 @register.filter(name='titlecase')
 def titlecase(value):
-    return value.title()  
+    return value.title()
 
 @register.filter(name='base_name')
 def base_name(file_path):
