@@ -35,6 +35,9 @@
   {% csrf_token %}
   {% for qdata in question_data_list %}
 	  <p><strong>Q{{ qdata.id }}: {{ qdata.text }}</strong></p>
+	  {% if qdata.id == 3 and not previous_image_relpath %}
+	   <p><strong>(It is not clear which preceding image(s) might be relevant, but maybe we missed them)</strong></p> 
+	  {% endif %}	   
 	  {% for val in "12345" %}
 		<label>
 		  <input type="radio" name="q_{{ qdata.id }}" value="{{ val }}"
