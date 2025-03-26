@@ -125,6 +125,7 @@ from decimal import Decimal
 from urllib.parse import unquote
 from datetime import timedelta
 from ipware import get_client_ip
+from collections import defaultdict
 
 import os
 import re
@@ -8235,6 +8236,10 @@ def image_questionnaire_start(request, project_id):
 
     # Read the story data
     story_data = read_project_json_file(project_dir, 'story.json') or []
+
+    # We’ll build a global frequency map of elements -> how many pages they appear in
+    element_page_count = defaultdict(int)
+    
     # Filter out pages that don't have images, if you only want those
     pages_with_images = []
     for page in story_data:
@@ -8243,13 +8248,30 @@ def image_questionnaire_start(request, project_id):
         if file_exists(project_pathname(project_dir, rel_img_path)):
             pages_with_images.append(page)
 
+            # read relevant elements for that page
+            relevant_info_path = f'pages/page{page_number}/relevant_pages_and_elements.json'
+            if file_exists(project_pathname(project_dir, relevant_info_path)):
+                relevant_info = read_project_json_file(project_dir, relevant_info_path)
+                relevant_elems = relevant_info.get('relevant_elements', [])
+                # Count how many pages each element appears in
+                # We can track if we haven't incremented for this page yet, but a simpler way is to do
+                # sets to avoid multiple increments for the same page.
+                for elem in set(relevant_elems):
+                    element_page_count[elem] += 1
+
     if not pages_with_images:
         # No images => no questionnaire needed
         messages.error(request, 'This project does not have any images to evaluate.')
         return redirect('clara_home_page')
 
-    # Store the page list in session so we can reference it by index
+    # now see if any element appears in a page
+    # that indicates there's a chance of continuity
+    has_any_relevant_elements = any(count > 0 for count in element_page_count.values())
+
+    # Store pages in session, plus the boolean
     request.session['image_questionnaire_pages'] = pages_with_images
+    request.session['has_any_relevant_elements'] = has_any_relevant_elements
+    
     return redirect('image_questionnaire_item', project_id=project.id, index=0)
 
 
@@ -8268,8 +8290,10 @@ def image_questionnaire_item(request, project_id, index):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     project_dir = clara_project_internal.coherent_images_v2_project_dir
 
-    # Retrieve pages_with_images from session
+    # Retrieve info from session
     pages_with_images = request.session.get('image_questionnaire_pages', [])
+    has_any_relevant_elements = request.session.get('has_any_relevant_elements', False)
+    
     if not pages_with_images or index < 0 or index >= len(pages_with_images):
         # Index out of range: go to a summary or fallback
         return redirect('image_questionnaire_summary', project_id=project.id)
@@ -8289,10 +8313,14 @@ def image_questionnaire_item(request, project_id, index):
 
     questions_to_show = []
     for q in IMAGE_QUESTIONNAIRE_QUESTIONS:
-        if q["id"] == 3 and not has_prev_relevant_page:
-            # skip question #3 if no relevant previous image
-            continue
-        questions_to_show.append(q)
+        if q["id"] == 3:
+            # Show Q3 only if:
+            #   (a) There's at least one recurring element in the entire text
+            #   (b) We are not on the first page
+            if has_any_relevant_elements and index > 0:
+                questions_to_show.append(q)
+        else:
+            questions_to_show.append(q)
 
     if request.method == 'POST':
         # Process the user's Likert-scale answers
