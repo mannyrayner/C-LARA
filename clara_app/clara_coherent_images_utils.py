@@ -73,7 +73,11 @@ default_params = project_params_for_simple_clara
 def get_project_params(project_dir):
     params_file = project_params_file(project_dir)
     try:
-        return read_json_file(params_file)
+        params = read_json_file(params_file)
+        for key in default_params:
+            if not key in params:
+                params[key] = default_params[key]
+        return params
     except Exception as e:
         return default_params
 

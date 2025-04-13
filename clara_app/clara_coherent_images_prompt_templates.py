@@ -598,8 +598,9 @@ and must be inferred from text on the other pages or from other background knowl
 If information about relevant element images is given, then this must be included in the "Essential aspects" section.
 Do so according to the following rules:
 
-1. If the element is a person, use the written specification, since Imagen 3 cannot use images of people.
-2. Otherwise, if the element is NOT a person, use the URL, since this is more informative than the written specification.
+1. If the element is a human being, use the written specification, since Imagen 3 cannot use images of human beings.
+2. Otherwise, if the element is NOT a human being, use the URL, since this is more informative than the written specification.
+3. Note that anthropomorphised animals, robots etc are not human beings for these purposes.
 
 For example, if the text were the traditional nursery rhyme
 
