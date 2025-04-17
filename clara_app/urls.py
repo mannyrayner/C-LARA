@@ -17,6 +17,7 @@ from . import admin_permission_views
 from . import credit_views
 from . import delete_tts_views
 from . import content_views
+from . import language_masters_views
 
 urlpatterns = [
     # Login
@@ -83,6 +84,10 @@ urlpatterns = [
     path('public_content/<int:content_id>/', content_views.public_content_detail, name='public_content_detail'),
     path('language_statistics/', content_views.language_statistics, name='language_statistics'),
 
+    # Managing language masters
+    path('manage_language_masters/', language_masters_views.manage_language_masters, name='manage_language_masters'),
+    path('remove_language_master/<int:pk>/', language_masters_views.remove_language_master, name='remove_language_master'),
+
     # Funding requests
     path('funding_request/', views.funding_request, name='funding_request'),
     path('review_funding_requests/', views.review_funding_requests, name='review_funding_requests'),
@@ -94,10 +99,6 @@ urlpatterns = [
     path('list_activities/', views.list_activities, name='list_activities'),
     path('list_activities_text/', views.list_activities_text, name='list_activities_text'),
     path('ai_activities_reply/', views.ai_activities_reply, name='ai_activities_reply'),
-
-    # Managing language masters
-    path('manage_language_masters/', views.manage_language_masters, name='manage_language_masters'),
-    path('remove_language_master/<int:pk>/', views.remove_language_master, name='remove_language_master'),
 
     # Editing annotation prompts templates and examples
     path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
