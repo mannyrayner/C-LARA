@@ -18,6 +18,7 @@ from . import credit_views
 from . import delete_tts_views
 from . import content_views
 from . import language_masters_views
+from . import funding_requests_views
 
 urlpatterns = [
     # Login
@@ -89,9 +90,9 @@ urlpatterns = [
     path('remove_language_master/<int:pk>/', language_masters_views.remove_language_master, name='remove_language_master'),
 
     # Funding requests
-    path('funding_request/', views.funding_request, name='funding_request'),
-    path('review_funding_requests/', views.review_funding_requests, name='review_funding_requests'),
-    path('confirm_funding_approvals/', views.confirm_funding_approvals, name='confirm_funding_approvals'),
+    path('funding_request/', funding_requests_views.funding_request, name='funding_request'),
+    path('review_funding_requests/', funding_requests_views.review_funding_requests, name='review_funding_requests'),
+    path('confirm_funding_approvals/', funding_requests_views.confirm_funding_approvals, name='confirm_funding_approvals'),
 
     # Activity tracker
     path('activity/<int:activity_id>/activity_detail/', views.activity_detail, name='activity_detail'),
@@ -100,7 +101,7 @@ urlpatterns = [
     path('list_activities_text/', views.list_activities_text, name='list_activities_text'),
     path('ai_activities_reply/', views.ai_activities_reply, name='ai_activities_reply'),
 
-    # Editing annotation prompts templates and examples
+    # Editing annotation prompt templates and examples
     path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
 
     # Phonetic lexica
