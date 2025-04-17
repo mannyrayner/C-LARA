@@ -19,6 +19,7 @@ from . import delete_tts_views
 from . import content_views
 from . import language_masters_views
 from . import funding_requests_views
+from . import activity_tracker_views
 
 urlpatterns = [
     # Login
@@ -95,11 +96,11 @@ urlpatterns = [
     path('confirm_funding_approvals/', funding_requests_views.confirm_funding_approvals, name='confirm_funding_approvals'),
 
     # Activity tracker
-    path('activity/<int:activity_id>/activity_detail/', views.activity_detail, name='activity_detail'),
-    path('create_activity/', views.create_activity, name='create_activity'),
-    path('list_activities/', views.list_activities, name='list_activities'),
-    path('list_activities_text/', views.list_activities_text, name='list_activities_text'),
-    path('ai_activities_reply/', views.ai_activities_reply, name='ai_activities_reply'),
+    path('activity/<int:activity_id>/activity_detail/', activity_tracker_views.activity_detail, name='activity_detail'),
+    path('create_activity/', activity_tracker_views.create_activity, name='create_activity'),
+    path('list_activities/', activity_tracker_views.list_activities, name='list_activities'),
+    path('list_activities_text/', activity_tracker_views.list_activities_text, name='list_activities_text'),
+    path('ai_activities_reply/', activity_tracker_views.ai_activities_reply, name='ai_activities_reply'),
 
     # Editing annotation prompt templates and examples
     path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
