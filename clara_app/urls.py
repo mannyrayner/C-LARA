@@ -8,6 +8,7 @@ from django.conf.urls.static import static
 from . import views
 from . import accounts_views
 from . import home_views
+from . import profile_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
@@ -26,13 +27,16 @@ urlpatterns = [
     path('home/', home_views.home, name='home'),
     path('home_page/', home_views.home_page, name='home_page'),
     path('clara_home_page/', home_views.clara_home_page, name='clara_home_page'),
+
+    path('external_profile/<int:user_id>/', profile_views.external_profile, name='external_profile'),
+    path('edit_profile/', profile_views.edit_profile, name='edit_profile'),
     
     path('list_users/', views.list_users, name='list_users'),
     path('friends/', views.friends, name='friends'),
+    
     path('update_feed/', views.update_feed, name='update_feed'),
     path('language_statistics/', views.language_statistics, name='language_statistics'),
-    path('external_profile/<int:user_id>/', views.external_profile, name='external_profile'),
-    path('edit_profile/', views.edit_profile, name='edit_profile'),
+    
     path('user_config/', views.user_config, name='user_config'),
     path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
     path('admin_project_ownership/', views.admin_project_ownership, name='admin_project_ownership'),
