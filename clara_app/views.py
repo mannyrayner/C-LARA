@@ -186,77 +186,20 @@ def redirect_login(request):
 ##def friends(request):
 
 #-------------------------------------------------------
+# Moved to update_feed_views.py
 
-# Show the update feed
-@login_required
-def update_feed(request):
-    # Retrieve updates related to the user's friends and their own actions
-    friends = current_friends_of_user(request.user)
-    #print(f'Friends: {friends}')
-    updates = Update.objects.filter(
-        Q(user__in=friends) | Q(user=request.user)
-    ).order_by('-timestamp')[:50]  # Get the latest 50 updates
+##@login_required
+##def update_feed(request):
+##
+##def valid_update_for_update_feed(update):
 
-    #print(f'Updates:')
-    #for update in updates:
-    #    print(update)
+#-------------------------------------------------------
+# Moved to user_config_views.py
 
-    valid_updates = [ update for update in updates if valid_update_for_update_feed(update) ]
+##@login_required
+##def user_config(request):
 
-    clara_version = get_user_config(request.user)['clara_version']
-
-    return render(request, 'clara_app/update_feed.html', {'updates': valid_updates, 'clara_version': clara_version})
-
-# Check that the updates are such that we can render them in the template
-def valid_update_for_update_feed(update):
-    if update.update_type == 'FRIEND':
-        return isinstance(update.content_object, FriendRequest) and \
-               isinstance(update.content_object.sender, User) and \
-               isinstance(update.content_object.receiver, User)
-    elif update.update_type == 'RATE':
-        return isinstance(update.content_object, Rating) and \
-               isinstance(update.content_object.user, User) and \
-               isinstance(update.content_object.content, Content)
-    elif update.update_type == 'COMMENT':
-        return isinstance(update.content_object, Comment) and \
-               isinstance(update.content_object.user, User) and \
-               isinstance(update.content_object.content, Content)
-    elif update.update_type == 'PUBLISH':
-        return isinstance(update.content_object, Comment) and \
-               isinstance(update.user, User) and \
-               isinstance(update.content_object, Content)
-    else:
-        print(f'Warning: bad update: {update}')
-        return False
-
-
-def user_config(request):
-    # In the legacy case, we won't have a UserConfiguration object yet, so create one if necessary
-    user_config, created = UserConfiguration.objects.get_or_create(user=request.user)
-    if request.method == 'POST':
-        form = UserConfigForm(request.POST, instance=user_config)
-        if form.is_valid():
-            #open_ai_api_key = form.cleaned_data['open_ai_api_key']
-            #print(f'open_ai_api_key = {open_ai_api_key}')
-            form.save()
-            messages.success(request, f'Configuration information has been updated')
-            return redirect('user_config')
-    else:
-        form = UserConfigForm(instance=user_config)
-
-    clara_version = get_user_config(request.user)['clara_version']
-    
-    return render(request, 'clara_app/user_config.html', {'form': form, 'clara_version': clara_version})
-
-# Credit balance for money spent on API calls
-
-@login_required
-def credit_balance(request):
-    credit_balance = request.user.userprofile.credit
-
-    clara_version = get_user_config(request.user)['clara_version']
-    
-    return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance, 'clara_version': clara_version})
+#-------------------------------------------------------
 
 # Allow an admin to manually reset the password on an account
 @login_required
@@ -309,6 +252,16 @@ def manage_user_permissions(request):
         'permissions_form': permissions_form,
         'selected_user_id': selected_user_id,  # Pass selected_user_id to the template
     })
+
+# Credit balance for money spent on API calls
+
+@login_required
+def credit_balance(request):
+    credit_balance = request.user.userprofile.credit
+
+    clara_version = get_user_config(request.user)['clara_version']
+    
+    return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance, 'clara_version': clara_version})
 
 
 # Add credit to account

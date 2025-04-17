@@ -10,6 +10,8 @@ from . import accounts_views
 from . import home_views
 from . import profile_views
 from . import users_and_friends_views
+from . import update_feed_views
+from . import user_config_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
@@ -35,47 +37,59 @@ urlpatterns = [
     path('list_users/', users_and_friends_views.list_users, name='list_users'),
     path('friends/', users_and_friends_views.friends, name='friends'),
     
-    path('update_feed/', views.update_feed, name='update_feed'),
+    path('update_feed/', update_feed_views.update_feed, name='update_feed'),
+
+    path('user_config/', user_config_views.user_config, name='user_config'),
     
-    path('language_statistics/', views.language_statistics, name='language_statistics'),
-    path('user_config/', views.user_config, name='user_config'),
     path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
     path('admin_project_ownership/', views.admin_project_ownership, name='admin_project_ownership'),
     path('manage_user_permissions/', views.manage_user_permissions, name='manage_user_permissions'),
+
+    path('view_task_updates/', views.view_task_updates, name='view_task_updates'),
+    path('delete_old_task_updates/', views.delete_old_task_updates, name='delete_old_task_updates'),
+
     path('add_credit/', views.add_credit, name='add_credit'),
-    path('funding_request/', views.funding_request, name='funding_request'),
-    path('review_funding_requests/', views.review_funding_requests, name='review_funding_requests'),
-    path('confirm_funding_approvals/', views.confirm_funding_approvals, name='confirm_funding_approvals'),
     path('transfer_credit/', views.transfer_credit, name='transfer_credit'),
     path('confirm_transfer/', views.confirm_transfer, name='confirm_transfer'),
     path('credit_balance/', views.credit_balance, name='credit_balance'),
-    path('view_task_updates/', views.view_task_updates, name='view_task_updates'),
-    path('delete_old_task_updates/', views.delete_old_task_updates, name='delete_old_task_updates'),
-    path('activity/<int:activity_id>/activity_detail/', views.activity_detail, name='activity_detail'),
-    path('create_activity/', views.create_activity, name='create_activity'),
-    path('list_activities/', views.list_activities, name='list_activities'),
-    path('list_activities_text/', views.list_activities_text, name='list_activities_text'),
-    path('ai_activities_reply/', views.ai_activities_reply, name='ai_activities_reply'),
-    path('delete_tts_data/', views.delete_tts_data, name='delete_tts_data'),
-    path('delete_tts_data_status/<str:report_id>/', views.delete_tts_data_status, name='delete_tts_data_status'),
-    path('delete_tts_data_monitor/<str:language>/<str:report_id>/', views.delete_tts_data_monitor, name='delete_tts_data_monitor'),
-    path('delete_tts_data_complete/<str:language>/<str:status>/', views.delete_tts_data_complete, name='delete_tts_data_complete'),
-    path('manage_language_masters/', views.manage_language_masters, name='manage_language_masters'),
-    path('remove_language_master/<int:pk>/', views.remove_language_master, name='remove_language_master'),
-    path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
-    path('edit_phonetic_lexicon/', views.edit_phonetic_lexicon, name='edit_phonetic_lexicon'),
-    path('import_phonetic_lexicon_status/<str:language>/<str:report_id>/', views.import_phonetic_lexicon_status, name='import_phonetic_lexicon_status'),
-    path('import_phonetic_lexicon_monitor/<str:language>/<str:report_id>/', views.import_phonetic_lexicon_monitor, name='import_phonetic_lexicon_monitor'),
-    path('import_phonetic_lexicon_complete/<str:language>/<str:status>/', views.import_phonetic_lexicon_complete, name='import_phonetic_lexicon_complete'),
-    path('project/<int:project_id>/simple_clara/<str:last_operation_status>/', views.simple_clara, name='simple_clara'),
-    path('project/<int:project_id>/simple_clara_status/<str:report_id>/', views.simple_clara_status, name='simple_clara_status'),
-    path('project/<int:project_id>/simple_clara_monitor/<str:report_id>/', views.simple_clara_monitor, name='simple_clara_monitor'), 
+
+    path('language_statistics/', views.language_statistics, name='language_statistics'),
     path('register_content/', views.register_content, name='register_content'),
     path('content_success/', views.content_success, name='content_success'),
     path('content_list/', views.content_list, name='content_list'),
     path('public_content_list/', views.public_content_list, name='public_content_list'),
     path('content/<int:content_id>/', views.content_detail, name='content_detail'),
     path('public_content/<int:content_id>/', views.public_content_detail, name='public_content_detail'),
+
+    path('funding_request/', views.funding_request, name='funding_request'),
+    path('review_funding_requests/', views.review_funding_requests, name='review_funding_requests'),
+    path('confirm_funding_approvals/', views.confirm_funding_approvals, name='confirm_funding_approvals'),
+        
+    path('activity/<int:activity_id>/activity_detail/', views.activity_detail, name='activity_detail'),
+    path('create_activity/', views.create_activity, name='create_activity'),
+    path('list_activities/', views.list_activities, name='list_activities'),
+    path('list_activities_text/', views.list_activities_text, name='list_activities_text'),
+    path('ai_activities_reply/', views.ai_activities_reply, name='ai_activities_reply'),
+    
+    path('delete_tts_data/', views.delete_tts_data, name='delete_tts_data'),
+    path('delete_tts_data_status/<str:report_id>/', views.delete_tts_data_status, name='delete_tts_data_status'),
+    path('delete_tts_data_monitor/<str:language>/<str:report_id>/', views.delete_tts_data_monitor, name='delete_tts_data_monitor'),
+    path('delete_tts_data_complete/<str:language>/<str:status>/', views.delete_tts_data_complete, name='delete_tts_data_complete'),
+
+    path('manage_language_masters/', views.manage_language_masters, name='manage_language_masters'),
+    path('remove_language_master/<int:pk>/', views.remove_language_master, name='remove_language_master'),
+
+    path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
+    
+    path('edit_phonetic_lexicon/', views.edit_phonetic_lexicon, name='edit_phonetic_lexicon'),
+    path('import_phonetic_lexicon_status/<str:language>/<str:report_id>/', views.import_phonetic_lexicon_status, name='import_phonetic_lexicon_status'),
+    path('import_phonetic_lexicon_monitor/<str:language>/<str:report_id>/', views.import_phonetic_lexicon_monitor, name='import_phonetic_lexicon_monitor'),
+    path('import_phonetic_lexicon_complete/<str:language>/<str:status>/', views.import_phonetic_lexicon_complete, name='import_phonetic_lexicon_complete'),
+
+    path('project/<int:project_id>/simple_clara/<str:last_operation_status>/', views.simple_clara, name='simple_clara'),
+    path('project/<int:project_id>/simple_clara_status/<str:report_id>/', views.simple_clara_status, name='simple_clara_status'),
+    path('project/<int:project_id>/simple_clara_monitor/<str:report_id>/', views.simple_clara_monitor, name='simple_clara_monitor'), 
+
     path('create_project/', views.create_project, name='create_project'),
     path('import_project/', views.import_project, name='import_project'),
     path('project/<int:project_id>/import_project_status/<str:report_id>/', views.import_project_status, name='import_project_status'),
