@@ -13,6 +13,7 @@ from . import users_and_friends_views
 from . import update_feed_views
 from . import user_config_views
 from . import task_update_views
+from . import admin_permission_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
@@ -45,9 +46,9 @@ urlpatterns = [
     path('view_task_updates/', task_update_views.view_task_updates, name='view_task_updates'),
     path('delete_old_task_updates/', task_update_views.delete_old_task_updates, name='delete_old_task_updates'),
 
-    path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
-    path('admin_project_ownership/', views.admin_project_ownership, name='admin_project_ownership'),
-    path('manage_user_permissions/', views.manage_user_permissions, name='manage_user_permissions'),
+    path('admin_password_reset/', admin_permission_views.admin_password_reset, name='admin_password_reset'),
+    path('admin_project_ownership/', admin_permission_views.admin_project_ownership, name='admin_project_ownership'),
+    path('manage_user_permissions/', admin_permission_views.manage_user_permissions, name='manage_user_permissions'),
 
     path('add_credit/', views.add_credit, name='add_credit'),
     path('transfer_credit/', views.transfer_credit, name='transfer_credit'),
