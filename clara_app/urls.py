@@ -16,6 +16,7 @@ from . import task_update_views
 from . import admin_permission_views
 from . import credit_views
 from . import delete_tts_views
+from . import content_views
 
 urlpatterns = [
     # Login
@@ -74,13 +75,13 @@ urlpatterns = [
     path('delete_tts_data_complete/<str:language>/<str:status>/', delete_tts_views.delete_tts_data_complete, name='delete_tts_data_complete'),
 
     # Registering and listing content
-    path('register_content/', views.register_content, name='register_content'),
-    path('content_success/', views.content_success, name='content_success'),
-    path('content_list/', views.content_list, name='content_list'),
-    path('public_content_list/', views.public_content_list, name='public_content_list'),
-    path('content/<int:content_id>/', views.content_detail, name='content_detail'),
-    path('public_content/<int:content_id>/', views.public_content_detail, name='public_content_detail'),
-    path('language_statistics/', views.language_statistics, name='language_statistics'),
+    path('register_content/', content_views.register_content, name='register_content'),
+    path('content_success/', content_views.content_success, name='content_success'),
+    path('content_list/', content_views.content_list, name='content_list'),
+    path('public_content_list/', content_views.public_content_list, name='public_content_list'),
+    path('content/<int:content_id>/', content_views.content_detail, name='content_detail'),
+    path('public_content/<int:content_id>/', content_views.public_content_detail, name='public_content_detail'),
+    path('language_statistics/', content_views.language_statistics, name='language_statistics'),
 
     # Funding requests
     path('funding_request/', views.funding_request, name='funding_request'),
