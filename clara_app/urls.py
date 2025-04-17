@@ -14,6 +14,7 @@ from . import update_feed_views
 from . import user_config_views
 from . import task_update_views
 from . import admin_permission_views
+from . import credit_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
@@ -50,18 +51,18 @@ urlpatterns = [
     path('admin_project_ownership/', admin_permission_views.admin_project_ownership, name='admin_project_ownership'),
     path('manage_user_permissions/', admin_permission_views.manage_user_permissions, name='manage_user_permissions'),
 
-    path('add_credit/', views.add_credit, name='add_credit'),
-    path('transfer_credit/', views.transfer_credit, name='transfer_credit'),
-    path('confirm_transfer/', views.confirm_transfer, name='confirm_transfer'),
-    path('credit_balance/', views.credit_balance, name='credit_balance'),
+    path('add_credit/', credit_views.add_credit, name='add_credit'),
+    path('transfer_credit/', credit_views.transfer_credit, name='transfer_credit'),
+    path('confirm_transfer/', credit_views.confirm_transfer, name='confirm_transfer'),
+    path('credit_balance/', credit_views.credit_balance, name='credit_balance'),
 
-    path('language_statistics/', views.language_statistics, name='language_statistics'),
     path('register_content/', views.register_content, name='register_content'),
     path('content_success/', views.content_success, name='content_success'),
     path('content_list/', views.content_list, name='content_list'),
     path('public_content_list/', views.public_content_list, name='public_content_list'),
     path('content/<int:content_id>/', views.content_detail, name='content_detail'),
     path('public_content/<int:content_id>/', views.public_content_detail, name='public_content_detail'),
+    path('language_statistics/', views.language_statistics, name='language_statistics'),
 
     path('funding_request/', views.funding_request, name='funding_request'),
     path('review_funding_requests/', views.review_funding_requests, name='review_funding_requests'),
@@ -97,14 +98,16 @@ urlpatterns = [
     path('project/<int:project_id>/import_project_status/<str:report_id>/', views.import_project_status, name='import_project_status'),
     path('project/<int:project_id>/import_project_monitor/<str:report_id>/', views.import_project_monitor, name='import_project_monitor'),
     path('project/<int:project_id>/import_project_complete/<str:status>/', views.import_project_complete, name='import_project_complete'),
+
     path('project_list/<str:clara_version>/', views.project_list, name='project_list'),
     path('project/<int:project_id>/', views.project_detail, name='project_detail'),
-    path('project/<int:project_id>/edit_acknowledgements/', views.edit_acknowledgements, name='edit_acknowledgements'),  
     path('project/<int:project_id>/manage_project_members/', views.manage_project_members, name='manage_project_members'),
     path('project/<int:permission_id>/remove_project_member/', views.remove_project_member, name='remove_project_member'),
     path('project/<int:project_id>/delete/', views.delete_project, name='delete_project'),  
     path('project/<int:project_id>/clone_project/', views.clone_project, name='clone_project'),
-    path('project/<int:project_id>/audio_metadata/', views.get_audio_metadata_view, name='get_audio_metadata'),
+    path('project/<int:project_id>/history/', views.project_history, name='project_history'),
+    
+    path('project/<int:project_id>/edit_acknowledgements/', views.edit_acknowledgements, name='edit_acknowledgements'),  
     path('project/<int:project_id>/create_plain_text/', views.create_plain_text, name='create_plain_text'),
     path('project/<int:project_id>/create_title/', views.create_title, name='create_title'),
     path('project/<int:project_id>/create_segmented_title/', views.create_segmented_title, name='create_segmented_title'),
@@ -119,7 +122,8 @@ urlpatterns = [
     path('project/<int:project_id>/create_mwe_tagged_text/', views.create_mwe_tagged_text, name='create_mwe_tagged_text'),
     path('project/<int:project_id>/create_pinyin_tagged_text/', views.create_pinyin_tagged_text, name='create_pinyin_tagged_text'),
     path('project/<int:project_id>/create_lemma_and_gloss_tagged_text/', views.create_lemma_and_gloss_tagged_text, name='create_lemma_and_gloss_tagged_text'),
-    path('project/<int:project_id>/history/', views.project_history, name='project_history'),
+
+    path('project/<int:project_id>/audio_metadata/', views.get_audio_metadata_view, name='get_audio_metadata'),
     path('project/<int:project_id>/human_audio_processing/', views.human_audio_processing, name='human_audio_processing'),
     path('project/<int:project_id>/human_audio_processing_phonetic/', views.human_audio_processing_phonetic, name='human_audio_processing_phonetic'),
     path('project/<int:project_id>/process_ldt_zipfile_status/<str:report_id>/', views.process_ldt_zipfile_status, name='process_ldt_zipfile_status'),
@@ -131,6 +135,7 @@ urlpatterns = [
     path('project/<int:project_id>/process_manual_alignment_monitor/<str:report_id>/', views.process_manual_alignment_monitor, name='process_manual_alignment_monitor'),
     path('project/<int:project_id>/process_manual_alignment_complete/<str:status>/', views.process_manual_alignment_complete, name='process_manual_alignment_complete'),
     path('project/<int:project_id>/generate_annotated_segmented_file/', views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
+
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
     path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
 
