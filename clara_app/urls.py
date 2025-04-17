@@ -7,6 +7,7 @@ from django.conf.urls.static import static
 
 from . import views
 from . import accounts_views
+from . import home_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
@@ -22,9 +23,9 @@ urlpatterns = [
     path('register/', accounts_views.register, name='register'),
     path('profile/', accounts_views.profile, name='profile'),
     
-    path('home/', views.home, name='home'),
-    path('home_page/', views.home_page, name='home_page'),
-    path('clara_home_page/', views.clara_home_page, name='clara_home_page'),
+    path('home/', home_views.home, name='home'),
+    path('home_page/', home_views.home_page, name='home_page'),
+    path('clara_home_page/', home_views.clara_home_page, name='clara_home_page'),
     
     path('list_users/', views.list_users, name='list_users'),
     path('friends/', views.friends, name='friends'),

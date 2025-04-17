@@ -344,8 +344,11 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         chunks = segmented_elements
         process_segments_singly = True
     else:
-        chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
-        process_segments_singly = False
+        #chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
+        #process_segments_singly = False
+        # Try always splitting elements by segments, since it seems to be the better strategy and isn't really very expensive
+        chunks = segmented_elements
+        process_segments_singly = True
 
     annotations_for_segments, annotated_elements, all_api_calls = call_process_annotations_async(chunks, process_segments_singly,
                                                                                                  segmented_elements_mwe_dict, segmented_elements_translations_dict,
