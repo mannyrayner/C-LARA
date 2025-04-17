@@ -200,6 +200,15 @@ def redirect_login(request):
 ##def user_config(request):
 
 #-------------------------------------------------------
+# Moved to task_update_views.py
+
+##@login_required
+##def view_task_updates(request):
+##
+##@login_required
+##@user_passes_test(lambda u: u.userprofile.is_admin)
+
+#-------------------------------------------------------
 
 # Allow an admin to manually reset the password on an account
 @login_required
@@ -536,26 +545,6 @@ def remove_language_master(request, pk):
         clara_version = get_user_config(request.user)['clara_version']
         
         return render(request, 'clara_app/remove_language_master_confirm.html', {'language_master': language_master, 'clara_version': clara_version})
-
-@login_required
-@user_passes_test(lambda u: u.userprofile.is_admin)
-def delete_old_task_updates(request):
-    threshold_date = timezone.now() - timedelta(days=30)
-    deleted_count, _ = TaskUpdate.objects.filter(timestamp__lt=threshold_date).delete()
-
-    messages.success(request, f"{deleted_count} old task updates were successfully deleted.")
-    return redirect('view_task_updates')
-
-# Display recent task update messages
-@login_required
-def view_task_updates(request):
-    time_threshold = timezone.now() - timedelta(minutes=60)
-    user_id = request.user.username
-    updates = TaskUpdate.objects.filter(timestamp__gte=time_threshold, user_id=user_id).order_by('-timestamp')
-
-    clara_version = get_user_config(request.user)['clara_version']
-    
-    return render(request, 'clara_app/view_task_updates.html', {'updates': updates, 'clara_version': clara_version})
 
 # Allow a language master to edit a phonetic lexicon
 @login_required

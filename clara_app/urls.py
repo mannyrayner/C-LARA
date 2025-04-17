@@ -12,6 +12,7 @@ from . import profile_views
 from . import users_and_friends_views
 from . import update_feed_views
 from . import user_config_views
+from . import task_update_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
@@ -33,20 +34,20 @@ urlpatterns = [
 
     path('external_profile/<int:user_id>/', profile_views.external_profile, name='external_profile'),
     path('edit_profile/', profile_views.edit_profile, name='edit_profile'),
+
+    path('user_config/', user_config_views.user_config, name='user_config'),
     
     path('list_users/', users_and_friends_views.list_users, name='list_users'),
     path('friends/', users_and_friends_views.friends, name='friends'),
     
     path('update_feed/', update_feed_views.update_feed, name='update_feed'),
 
-    path('user_config/', user_config_views.user_config, name='user_config'),
-    
+    path('view_task_updates/', task_update_views.view_task_updates, name='view_task_updates'),
+    path('delete_old_task_updates/', task_update_views.delete_old_task_updates, name='delete_old_task_updates'),
+
     path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
     path('admin_project_ownership/', views.admin_project_ownership, name='admin_project_ownership'),
     path('manage_user_permissions/', views.manage_user_permissions, name='manage_user_permissions'),
-
-    path('view_task_updates/', views.view_task_updates, name='view_task_updates'),
-    path('delete_old_task_updates/', views.delete_old_task_updates, name='delete_old_task_updates'),
 
     path('add_credit/', views.add_credit, name='add_credit'),
     path('transfer_credit/', views.transfer_credit, name='transfer_credit'),
