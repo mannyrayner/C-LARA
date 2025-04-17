@@ -9,6 +9,7 @@ from . import views
 from . import accounts_views
 from . import home_views
 from . import profile_views
+from . import users_and_friends_views
 
 urlpatterns = [
     path('', views.redirect_login, name='home-redirect'),
@@ -31,12 +32,12 @@ urlpatterns = [
     path('external_profile/<int:user_id>/', profile_views.external_profile, name='external_profile'),
     path('edit_profile/', profile_views.edit_profile, name='edit_profile'),
     
-    path('list_users/', views.list_users, name='list_users'),
-    path('friends/', views.friends, name='friends'),
+    path('list_users/', users_and_friends_views.list_users, name='list_users'),
+    path('friends/', users_and_friends_views.friends, name='friends'),
     
     path('update_feed/', views.update_feed, name='update_feed'),
-    path('language_statistics/', views.language_statistics, name='language_statistics'),
     
+    path('language_statistics/', views.language_statistics, name='language_statistics'),
     path('user_config/', views.user_config, name='user_config'),
     path('admin_password_reset/', views.admin_password_reset, name='admin_password_reset'),
     path('admin_project_ownership/', views.admin_project_ownership, name='admin_project_ownership'),
