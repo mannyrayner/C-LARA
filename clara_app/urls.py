@@ -20,6 +20,7 @@ from . import content_views
 from . import language_masters_views
 from . import funding_requests_views
 from . import activity_tracker_views
+from . import annotation_prompts_views
 
 urlpatterns = [
     # Login
@@ -103,7 +104,7 @@ urlpatterns = [
     path('ai_activities_reply/', activity_tracker_views.ai_activities_reply, name='ai_activities_reply'),
 
     # Editing annotation prompt templates and examples
-    path('edit_prompt/', views.edit_prompt, name='edit_prompt'),
+    path('edit_prompt/', annotation_prompts_views.edit_prompt, name='edit_prompt'),
 
     # Phonetic lexica
     path('edit_phonetic_lexicon/', views.edit_phonetic_lexicon, name='edit_phonetic_lexicon'),
