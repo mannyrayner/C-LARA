@@ -250,11 +250,11 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                                           current_annotated_text=None, current_translated_text=None,
                                           config_info={}, callback=None):
 
-##    print(f"""generate_or_improve_annotated_version({annotate_or_improve}, {processing_phase}, (annotated_text), {l1_language}, {l2_language},
-##                                          previous_version={previous_version}, mwe={mwe},
-##                                          current_annotated_text={current_annotated_text}, current_translated_text={current_translated_text},
-##                                          config_info={config_info}, callback=callback)
-##""")
+    print(f"""generate_or_improve_annotated_version({annotate_or_improve}, {processing_phase}, {annotated_text}, {l1_language}, {l2_language},
+                                          previous_version={previous_version}, mwe={mwe},
+                                          current_annotated_text={current_annotated_text}, current_translated_text={current_translated_text},
+                                          config_info={config_info}, callback=callback)
+""")
 
     if previous_version == 'presegmented':
         source_version = 'presegmented'
@@ -274,8 +274,8 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
     else:
         internalised_annotated_text = clara_internalise.internalize_text(annotated_text, l2_language, l1_language, source_version)
 
-    #print(f'Internalised "{annotated_text}" as "{source_version}":')
-    #pprint.pprint(internalised_annotated_text)
+    print(f'Internalised "{annotated_text}" as "{source_version}":')
+    pprint.pprint(internalised_annotated_text)
 
     if processing_phase == 'gloss':
         context = internalised_annotated_text.to_text(annotation_type='plain')
@@ -343,6 +343,9 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
         # Do tagging involving MWEs, gloss-from-lemma, segmentation and morphology improvement one segment at a time
         chunks = segmented_elements
         process_segments_singly = True
+    elif processing_phase == 'translated':
+        chunks = [ [ segment ] for segment in segmented_elements ]
+        process_segments_singly = False
     else:
         #chunks = split_elements_by_segments(segmented_elements, max_elements, processing_phase)
         #process_segments_singly = False
@@ -355,6 +358,12 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                                                                                                  annotate_or_improve, processing_phase, l1_language, l2_language,
                                                                                                  previous_version, mwe,
                                                                                                  context=context, config_info=config_info, callback=callback)
+
+    print(f'annotations_for_segments')
+    pprint.pprint(annotations_for_segments)
+
+    print(f'annotated_elements')
+    pprint.pprint(annotated_elements)
     
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
@@ -371,12 +380,15 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
             elif processing_phase == 'mwe':
                 segment.annotations = annotations_for_segments[index]
                 index += 1
-            # If we are doing segment translation, add the annotations to the segment
-            # but only if the translation input was non-null, since we are discarding the null inputs
+##            # If we are doing segment translation, add the annotations to the segment
+##            # but only if the translation input was non-null, since we are discarding the null inputs
+##            elif processing_phase == 'translated':
+##                if segment_elements_to_segment_translation_input(segment.content_elements):
+##                    segment.annotations = annotations_for_segments[index]
+##                    index += 1
             elif processing_phase == 'translated':
-                if segment_elements_to_segment_translation_input(segment.content_elements):
-                    segment.annotations = annotations_for_segments[index]
-                    index += 1
+                segment.annotations = annotations_for_segments[index]
+                index += 1
             # Otherwise, we replace elements with annotated elements
             else:
                 n_elements_in_segment = len(segment.content_elements)
@@ -439,6 +451,10 @@ async def process_annotations_async(chunks, process_segments_singly, segmented_e
 
     await post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
     results = await asyncio.gather(*tasks)
+
+    print(f'process_annotations_async: results')
+    pprint.pprint(results)
+        
     all_api_calls = []
     annotations_for_segments = []
     annotated_elements = []
@@ -723,7 +739,7 @@ def content_elements_to_segmentation_input(content_elements):
     return segment_text
 
 def segment_elements_to_segment_translation_input(segment_elements):
-    #print(f'segment_elements_to_segment_translation_input: input: {segment_elements}')
+    print(f'segment_elements_to_segment_translation_input: input: {segment_elements}')
     word_and_non_word_text_elements = word_and_non_word_text_items_in_element_list(segment_elements)
     segment_text = ''.join([ element.content for element in word_and_non_word_text_elements if element.type in ( 'Word', 'NonWordText' ) ])
     result = segment_text.replace('\n', ' ').strip()

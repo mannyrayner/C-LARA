@@ -22,6 +22,7 @@ from . import funding_requests_views
 from . import activity_tracker_views
 from . import annotation_prompts_views
 from . import phonetic_lexicon_views
+from . import simple_clara_views
 
 urlpatterns = [
     # Login
@@ -114,9 +115,30 @@ urlpatterns = [
     path('import_phonetic_lexicon_complete/<str:language>/<str:status>/', phonetic_lexicon_views.import_phonetic_lexicon_complete, name='import_phonetic_lexicon_complete'),
 
     # Simple C-LARA
-    path('project/<int:project_id>/simple_clara/<str:last_operation_status>/', views.simple_clara, name='simple_clara'),
-    path('project/<int:project_id>/simple_clara_status/<str:report_id>/', views.simple_clara_status, name='simple_clara_status'),
-    path('project/<int:project_id>/simple_clara_monitor/<str:report_id>/', views.simple_clara_monitor, name='simple_clara_monitor'), 
+    path('project/<int:project_id>/simple_clara/<str:last_operation_status>/', simple_clara_views.simple_clara, name='simple_clara'),
+    path('project/<int:project_id>/simple_clara_status/<str:report_id>/', simple_clara_views.simple_clara_status, name='simple_clara_status'),
+    path('project/<int:project_id>/simple_clara_monitor/<str:report_id>/', simple_clara_views.simple_clara_monitor, name='simple_clara_monitor'),
+    path('project/<int:project_id>/simple_clara_review_v2_images_for_page/<int:page_number>/<str:from_view>/<str:status>/', simple_clara_views.simple_clara_review_v2_images_for_page,
+         name='simple_clara_review_v2_images_for_page'),
+    path('project/<int:project_id>/simple_clara_review_v2_images_for_element/<str:element_name>/<str:from_view>/<str:status>/', simple_clara_views.simple_clara_review_v2_images_for_element,
+         name='simple_clara_review_v2_images_for_element'),
+    path('project/<int:project_id>/simple_clara_review_v2_images_for_style/<str:from_view>/<str:status>/', simple_clara_views.simple_clara_review_v2_images_for_style,
+         name='simple_clara_review_v2_images_for_style'),
+
+    path('project/<int:project_id>/execute_simple_clara_image_requests_monitor/<str:report_id>/<int:page_number>/<str:from_view>/', simple_clara_views.execute_simple_clara_image_requests_monitor,
+         name='execute_simple_clara_image_requests_monitor'),
+    path('project/<int:project_id>/execute_simple_clara_image_requests_status/<str:report_id>/', simple_clara_views.execute_simple_clara_image_requests_status,
+         name='execute_simple_clara_image_requests_status'),
+
+    path('project/<int:project_id>/execute_simple_clara_element_requests_monitor/<str:report_id>/<str:element_name>/<str:from_view>/', simple_clara_views.execute_simple_clara_element_requests_monitor,
+         name='execute_simple_clara_element_requests_monitor'),
+    path('project/<int:project_id>/execute_simple_clara_element_requests_status/<str:report_id>/', simple_clara_views.execute_simple_clara_element_requests_status,
+         name='execute_simple_clara_element_requests_status'),
+
+    path('project/<int:project_id>/execute_simple_clara_style_requests_monitor/<str:report_id>/<str:from_view>/', simple_clara_views.execute_simple_clara_style_requests_monitor,
+         name='execute_simple_clara_style_requests_monitor'),
+    path('project/<int:project_id>/execute_simple_clara_style_requests_status/<str:report_id>/', simple_clara_views.execute_simple_clara_style_requests_status,
+         name='execute_simple_clara_style_requests_status'),
 
     # Creating projects
     path('create_project/', views.create_project, name='create_project'),
@@ -203,32 +225,10 @@ urlpatterns = [
     path('project/<int:project_id>/community_review_images_external/', views.community_review_images_external, name='community_review_images_external'),
     path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/<str:status>/', views.community_review_images_for_page,
          name='community_review_images_for_page'),
-    path('project/<int:project_id>/simple_clara_review_v2_images_for_page/<int:page_number>/<str:from_view>/<str:status>/', views.simple_clara_review_v2_images_for_page,
-         name='simple_clara_review_v2_images_for_page'),
-    path('project/<int:project_id>/simple_clara_review_v2_images_for_element/<str:element_name>/<str:from_view>/<str:status>/', views.simple_clara_review_v2_images_for_element,
-         name='simple_clara_review_v2_images_for_element'),
-    path('project/<int:project_id>/simple_clara_review_v2_images_for_style/<str:from_view>/<str:status>/', views.simple_clara_review_v2_images_for_style,
-         name='simple_clara_review_v2_images_for_style'),
-
     path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', views.execute_community_requests_for_page_monitor,
          name='execute_community_requests_for_page_monitor'),
     path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', views.execute_community_requests_for_page_status,
          name='execute_community_requests_for_page_status'),
-
-    path('project/<int:project_id>/execute_simple_clara_image_requests_monitor/<str:report_id>/<int:page_number>/<str:from_view>/', views.execute_simple_clara_image_requests_monitor,
-         name='execute_simple_clara_image_requests_monitor'),
-    path('project/<int:project_id>/execute_simple_clara_image_requests_status/<str:report_id>/', views.execute_simple_clara_image_requests_status,
-         name='execute_simple_clara_image_requests_status'),
-
-    path('project/<int:project_id>/execute_simple_clara_element_requests_monitor/<str:report_id>/<str:element_name>/<str:from_view>/', views.execute_simple_clara_element_requests_monitor,
-         name='execute_simple_clara_element_requests_monitor'),
-    path('project/<int:project_id>/execute_simple_clara_element_requests_status/<str:report_id>/', views.execute_simple_clara_element_requests_status,
-         name='execute_simple_clara_element_requests_status'),
-
-    path('project/<int:project_id>/execute_simple_clara_style_requests_monitor/<str:report_id>/<str:from_view>/', views.execute_simple_clara_style_requests_monitor,
-         name='execute_simple_clara_style_requests_monitor'),
-    path('project/<int:project_id>/execute_simple_clara_style_requests_status/<str:report_id>/', views.execute_simple_clara_style_requests_status,
-         name='execute_simple_clara_style_requests_status'),
 
     # Saving page texts in pages and images view
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
