@@ -119,6 +119,8 @@ from .clara_coherent_images_community_feedback import (load_community_feedback, 
 from .clara_dall_e_3_image import ( create_and_add_dall_e_3_image_for_whole_text,
                                     create_and_add_dall_e_3_image_for_style )
 
+from .clara_images_utils import numbered_page_list_for_coherent_images
+
 from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
 from .clara_conventional_tagging import fully_supported_treetagger_language

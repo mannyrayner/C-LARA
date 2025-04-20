@@ -105,6 +105,8 @@ from .clara_coherent_images_community_feedback import (load_community_feedback, 
 from .clara_dall_e_3_image import ( create_and_add_dall_e_3_image_for_whole_text,
                                     create_and_add_dall_e_3_image_for_style )
 
+from .clara_images_utils import numbered_page_list_for_coherent_images
+
 from .clara_internalise import internalize_text
 from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
 from .clara_conventional_tagging import fully_supported_treetagger_language
@@ -3797,27 +3799,6 @@ def delete_archive_image(request, project_id, archived_image_id):
         return redirect('access_archived_images', project_id=project_id, image_name=request.POST.get('image_name'))
     else:
         return HttpResponseNotAllowed(['POST'])
-
-
-def numbered_page_list_for_coherent_images(project, clara_project_internal):
-    if project.use_translation_for_images:
-        translated_text = clara_project_internal.load_text_version_or_null("translated")
-        if translated_text:
-            translated_text_object = internalize_text(translated_text, project.l2, project.l1, "translated")
-            numbered_page_list = translated_text_object.to_numbered_page_list(translated=True)
-        else:
-            segmented_text = clara_project_internal.load_text_version("segmented_with_title")
-            segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
-            numbered_page_list = segmented_text_object.to_numbered_page_list()
-            for item in numbered_page_list:
-                item['original_page_text'] = item['text']
-                item['text'] = ''
-    else:
-        segmented_text = clara_project_internal.load_text_version("segmented_with_title")
-        segmented_text_object = internalize_text(segmented_text, project.l2, project.l1, "segmented")
-        numbered_page_list = segmented_text_object.to_numbered_page_list()
-        
-    return numbered_page_list
 
 # Create the description variables for the text
 def generate_image_descriptions(project_id, callback=None):
