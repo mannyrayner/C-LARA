@@ -84,6 +84,7 @@ from .clara_prompt_templates import PromptTemplateRepository
 from .clara_dependencies import CLARADependencies
 from .clara_reading_histories import ReadingHistoryInternal
 from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+from .clara_phonetic_utils import phonetic_resources_are_available
 
 from .clara_community import assign_project_to_community
 

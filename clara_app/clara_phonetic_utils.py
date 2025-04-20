@@ -1,0 +1,6 @@
+
+from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+from .clara_grapheme_phoneme_resources import grapheme_phoneme_resources_available
+
+def phonetic_resources_are_available(l2_language):
+    return phonetic_orthography_resources_available(l2_language) or grapheme_phoneme_resources_available(l2_language)

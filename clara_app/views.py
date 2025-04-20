@@ -70,6 +70,7 @@ from .clara_prompt_templates import PromptTemplateRepository
 from .clara_dependencies import CLARADependencies
 from .clara_reading_histories import ReadingHistoryInternal
 from .clara_phonetic_orthography_repository import PhoneticOrthographyRepository, phonetic_orthography_resources_available
+from .clara_phonetic_utils import phonetic_resources_are_available
 
 from .clara_community import assign_project_to_community
 
@@ -1138,8 +1139,6 @@ def project_community(request, project_id):
         'form': form,
     })
 
-def phonetic_resources_are_available(l2_language):
-    return phonetic_orthography_resources_available(l2_language) or grapheme_phoneme_resources_available(l2_language)
 
 @login_required
 @user_has_a_project_role
