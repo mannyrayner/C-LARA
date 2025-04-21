@@ -25,6 +25,7 @@ from . import phonetic_lexicon_views
 from . import simple_clara_views
 from . import create_project_views
 from . import manipulate_project_views
+from . import export_zipfile_views
 
 urlpatterns = [
     # Login
@@ -159,10 +160,10 @@ urlpatterns = [
     path('project/<int:project_id>/history/', manipulate_project_views.project_history, name='project_history'),
 
     # Making export zipfiles
-    path('project/<int:project_id>/make_export_zipfile/', views.make_export_zipfile, name='make_export_zipfile'),
-    path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', views.make_export_zipfile_status, name='make_export_zipfile_status'),
-    path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
-    path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
+    path('project/<int:project_id>/make_export_zipfile/', export_zipfile_views.make_export_zipfile, name='make_export_zipfile'),
+    path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', export_zipfile_views.make_export_zipfile_status, name='make_export_zipfile_status'),
+    path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', export_zipfile_views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
+    path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', export_zipfile_views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
 
     # Annotation
     path('project/<int:project_id>/edit_acknowledgements/', views.edit_acknowledgements, name='edit_acknowledgements'),
