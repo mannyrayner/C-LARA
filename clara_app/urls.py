@@ -26,6 +26,7 @@ from . import simple_clara_views
 from . import create_project_views
 from . import manipulate_project_views
 from . import export_zipfile_views
+from . import annotation_views
 
 urlpatterns = [
     # Login
@@ -166,25 +167,25 @@ urlpatterns = [
     path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', export_zipfile_views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
 
     # Annotation
-    path('project/<int:project_id>/edit_acknowledgements/', views.edit_acknowledgements, name='edit_acknowledgements'),
-    path('project/<int:project_id>/set_format_preferences/', views.set_format_preferences, name='set_format_preferences'),
-    path('project/<int:project_id>/create_plain_text/', views.create_plain_text, name='create_plain_text'),
-    path('project/<int:project_id>/create_title/', views.create_title, name='create_title'),
-    path('project/<int:project_id>/create_segmented_title/', views.create_segmented_title, name='create_segmented_title'),
-    path('project/<int:project_id>/create_summary/', views.create_summary, name='create_summary'),
-    path('project/<int:project_id>/create_cefr_level/', views.create_cefr_level, name='create_cefr_level'),
-    path('project/<int:project_id>/create_segmented_text/', views.create_segmented_text, name='create_segmented_text'),
-    path('project/<int:project_id>/create_translated_text/', views.create_translated_text, name='create_translated_text'),
-    path('project/<int:project_id>/create_phonetic_text/', views.create_phonetic_text, name='create_phonetic_text'),
-    path('project/<int:project_id>/create_glossed_text/', views.create_glossed_text, name='create_glossed_text'),
-    path('project/<int:project_id>/create_glossed_text_from_lemma/', views.create_glossed_text_from_lemma, name='create_glossed_text_from_lemma'),
-    path('project/<int:project_id>/create_lemma_tagged_text/', views.create_lemma_tagged_text, name='create_lemma_tagged_text'),
-    path('project/<int:project_id>/create_mwe_tagged_text/', views.create_mwe_tagged_text, name='create_mwe_tagged_text'),
-    path('project/<int:project_id>/create_pinyin_tagged_text/', views.create_pinyin_tagged_text, name='create_pinyin_tagged_text'),
-    path('project/<int:project_id>/create_lemma_and_gloss_tagged_text/', views.create_lemma_and_gloss_tagged_text, name='create_lemma_and_gloss_tagged_text'),
-    path('project/<int:project_id>/generate_text_status/<str:report_id>/', views.generate_text_status, name='generate_text_status'),
-    path('project/<int:project_id>/generate_text_monitor/<str:version>/<str:report_id>/', views.generate_text_monitor, name='generate_text_monitor'),
-    path('project/<int:project_id>/generate_text_complete/<str:version>/<str:status>/', views.generate_text_complete, name='generate_text_complete'),
+    path('project/<int:project_id>/create_plain_text/', annotation_views.create_plain_text, name='create_plain_text'),
+    path('project/<int:project_id>/create_title/', annotation_views.create_title, name='create_title'),
+    path('project/<int:project_id>/create_segmented_title/', annotation_views.create_segmented_title, name='create_segmented_title'),
+    path('project/<int:project_id>/create_summary/', annotation_views.create_summary, name='create_summary'),
+    path('project/<int:project_id>/create_cefr_level/', annotation_views.create_cefr_level, name='create_cefr_level'),
+    path('project/<int:project_id>/create_segmented_text/', annotation_views.create_segmented_text, name='create_segmented_text'),
+    path('project/<int:project_id>/create_translated_text/', annotation_views.create_translated_text, name='create_translated_text'),
+    path('project/<int:project_id>/create_phonetic_text/', annotation_views.create_phonetic_text, name='create_phonetic_text'),
+    path('project/<int:project_id>/create_glossed_text/', annotation_views.create_glossed_text, name='create_glossed_text'),
+    path('project/<int:project_id>/create_glossed_text_from_lemma/', annotation_views.create_glossed_text_from_lemma, name='create_glossed_text_from_lemma'),
+    path('project/<int:project_id>/create_lemma_tagged_text/', annotation_views.create_lemma_tagged_text, name='create_lemma_tagged_text'),
+    path('project/<int:project_id>/create_mwe_tagged_text/', annotation_views.create_mwe_tagged_text, name='create_mwe_tagged_text'),
+    path('project/<int:project_id>/create_pinyin_tagged_text/', annotation_views.create_pinyin_tagged_text, name='create_pinyin_tagged_text'),
+    path('project/<int:project_id>/create_lemma_and_gloss_tagged_text/', annotation_views.create_lemma_and_gloss_tagged_text, name='create_lemma_and_gloss_tagged_text'),
+    path('project/<int:project_id>/generate_text_status/<str:report_id>/', annotation_views.generate_text_status, name='generate_text_status'),
+    path('project/<int:project_id>/generate_text_monitor/<str:version>/<str:report_id>/', annotation_views.generate_text_monitor, name='generate_text_monitor'),
+    path('project/<int:project_id>/generate_text_complete/<str:version>/<str:status>/', annotation_views.generate_text_complete, name='generate_text_complete'),
+    path('project/<int:project_id>/edit_acknowledgements/', annotation_views.edit_acknowledgements, name='edit_acknowledgements'),
+    path('project/<int:project_id>/set_format_preferences/', annotation_views.set_format_preferences, name='set_format_preferences'),
 
     # Managing human-recorded audio
     path('project/<int:project_id>/audio_metadata/', views.get_audio_metadata_view, name='get_audio_metadata'),
