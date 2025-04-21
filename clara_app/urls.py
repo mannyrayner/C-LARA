@@ -24,6 +24,7 @@ from . import annotation_prompts_views
 from . import phonetic_lexicon_views
 from . import simple_clara_views
 from . import create_project_views
+from . import manipulate_project_views
 
 urlpatterns = [
     # Login
@@ -149,19 +150,19 @@ urlpatterns = [
     path('project/<int:project_id>/import_project_complete/<str:status>/', create_project_views.import_project_complete, name='import_project_complete'),
     path('project/<int:project_id>/clone_project/', create_project_views.clone_project, name='clone_project'),
 
+    # Manipulating projects
+    path('project_list/<str:clara_version>/', manipulate_project_views.project_list, name='project_list'),
+    path('project/<int:project_id>/', manipulate_project_views.project_detail, name='project_detail'),
+    path('project/<int:project_id>/manage_project_members/', manipulate_project_views.manage_project_members, name='manage_project_members'),
+    path('project/<int:permission_id>/remove_project_member/', manipulate_project_views.remove_project_member, name='remove_project_member'),
+    path('project/<int:project_id>/delete/', manipulate_project_views.delete_project, name='delete_project'),  
+    path('project/<int:project_id>/history/', manipulate_project_views.project_history, name='project_history'),
+
     # Making export zipfiles
     path('project/<int:project_id>/make_export_zipfile/', views.make_export_zipfile, name='make_export_zipfile'),
     path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', views.make_export_zipfile_status, name='make_export_zipfile_status'),
     path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
     path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
-
-    # Manipulating projects
-    path('project_list/<str:clara_version>/', views.project_list, name='project_list'),
-    path('project/<int:project_id>/', views.project_detail, name='project_detail'),
-    path('project/<int:project_id>/manage_project_members/', views.manage_project_members, name='manage_project_members'),
-    path('project/<int:permission_id>/remove_project_member/', views.remove_project_member, name='remove_project_member'),
-    path('project/<int:project_id>/delete/', views.delete_project, name='delete_project'),  
-    path('project/<int:project_id>/history/', views.project_history, name='project_history'),
 
     # Annotation
     path('project/<int:project_id>/edit_acknowledgements/', views.edit_acknowledgements, name='edit_acknowledgements'),
