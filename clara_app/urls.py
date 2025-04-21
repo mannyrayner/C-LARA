@@ -27,6 +27,7 @@ from . import create_project_views
 from . import manipulate_project_views
 from . import export_zipfile_views
 from . import annotation_views
+from . import human_audio_views
 
 urlpatterns = [
     # Login
@@ -188,18 +189,18 @@ urlpatterns = [
     path('project/<int:project_id>/set_format_preferences/', annotation_views.set_format_preferences, name='set_format_preferences'),
 
     # Managing human-recorded audio
-    path('project/<int:project_id>/audio_metadata/', views.get_audio_metadata_view, name='get_audio_metadata'),
-    path('project/<int:project_id>/human_audio_processing/', views.human_audio_processing, name='human_audio_processing'),
-    path('project/<int:project_id>/human_audio_processing_phonetic/', views.human_audio_processing_phonetic, name='human_audio_processing_phonetic'),
-    path('project/<int:project_id>/process_ldt_zipfile_status/<str:report_id>/', views.process_ldt_zipfile_status, name='process_ldt_zipfile_status'),
-    path('project/<int:project_id>/process_ldt_zipfile_monitor/<str:report_id>/', views.process_ldt_zipfile_monitor, name='process_ldt_zipfile_monitor'),
-    path('project/<int:project_id>/process_ldt_zipfile_complete/<str:status>/', views.process_ldt_zipfile_complete, name='process_ldt_zipfile_complete'),
-    path('project/<int:project_id>/generate_audio_metadata/<str:metadata_type>/<str:human_voice_id>/', views.generate_audio_metadata, name='generate_audio_metadata'),
-    path('project/<int:project_id>/generate_audio_metadata_phonetic/<str:metadata_type>/<str:human_voice_id>/', views.generate_audio_metadata_phonetic, name='generate_audio_metadata_phonetic'),
-    path('project/<int:project_id>/process_manual_alignment_status/<str:report_id>/', views.process_manual_alignment_status, name='process_manual_alignment_status'),
-    path('project/<int:project_id>/process_manual_alignment_monitor/<str:report_id>/', views.process_manual_alignment_monitor, name='process_manual_alignment_monitor'),
-    path('project/<int:project_id>/process_manual_alignment_complete/<str:status>/', views.process_manual_alignment_complete, name='process_manual_alignment_complete'),
-    path('project/<int:project_id>/generate_annotated_segmented_file/', views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
+    path('project/<int:project_id>/audio_metadata/', human_audio_views.get_audio_metadata_view, name='get_audio_metadata'),
+    path('project/<int:project_id>/human_audio_processing/', human_audio_views.human_audio_processing, name='human_audio_processing'),
+    path('project/<int:project_id>/human_audio_processing_phonetic/', human_audio_views.human_audio_processing_phonetic, name='human_audio_processing_phonetic'),
+    path('project/<int:project_id>/process_ldt_zipfile_status/<str:report_id>/', human_audio_views.process_ldt_zipfile_status, name='process_ldt_zipfile_status'),
+    path('project/<int:project_id>/process_ldt_zipfile_monitor/<str:report_id>/', human_audio_views.process_ldt_zipfile_monitor, name='process_ldt_zipfile_monitor'),
+    path('project/<int:project_id>/process_ldt_zipfile_complete/<str:status>/', human_audio_views.process_ldt_zipfile_complete, name='process_ldt_zipfile_complete'),
+    path('project/<int:project_id>/generate_audio_metadata/<str:metadata_type>/<str:human_voice_id>/', human_audio_views.generate_audio_metadata, name='generate_audio_metadata'),
+    path('project/<int:project_id>/generate_audio_metadata_phonetic/<str:metadata_type>/<str:human_voice_id>/', human_audio_views.generate_audio_metadata_phonetic, name='generate_audio_metadata_phonetic'),
+    path('project/<int:project_id>/process_manual_alignment_status/<str:report_id>/', human_audio_views.process_manual_alignment_status, name='process_manual_alignment_status'),
+    path('project/<int:project_id>/process_manual_alignment_monitor/<str:report_id>/', human_audio_views.process_manual_alignment_monitor, name='process_manual_alignment_monitor'),
+    path('project/<int:project_id>/process_manual_alignment_complete/<str:status>/', human_audio_views.process_manual_alignment_complete, name='process_manual_alignment_complete'),
+    path('project/<int:project_id>/generate_annotated_segmented_file/', human_audio_views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
 
     # Edit images, v1
     path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
@@ -213,6 +214,10 @@ urlpatterns = [
     path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
     path('project/<int:project_id>/coherent_images_v2_status/<str:report_id>/', views.coherent_images_v2_status, name='coherent_images_v2_status'),
     path('project/<int:project_id>/coherent_images_v2_monitor/<str:report_id>/', views.coherent_images_v2_monitor, name='coherent_images_v2_monitor'),
+
+    # Saving page texts in pages and images view
+    path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
+    path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 
 
     # Image questionnaires
     path('image_questionnaire_project_list/', views.image_questionnaire_project_list, name='image_questionnaire_project_list'),
@@ -239,10 +244,6 @@ urlpatterns = [
          name='execute_community_requests_for_page_monitor'),
     path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', views.execute_community_requests_for_page_status,
          name='execute_community_requests_for_page_status'),
-
-    # Saving page texts in pages and images view
-    path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
-    path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 
 
     # Rendering text
     path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
@@ -288,8 +289,8 @@ urlpatterns = [
     ),
     path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', views.serve_audio_file, name='serve_audio_file'),
 
-    path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
-    path('manual_audio_alignment_integration_endpoint2/', views.manual_audio_alignment_integration_endpoint2, name='manual_audio_alignment_integration_endpoint2'),
+##    path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
+##    path('manual_audio_alignment_integration_endpoint2/', views.manual_audio_alignment_integration_endpoint2, name='manual_audio_alignment_integration_endpoint2'),
 
 ]
 
