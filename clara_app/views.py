@@ -469,7 +469,33 @@ def redirect_login(request):
 ##def execute_simple_clara_style_requests_monitor(request, project_id, report_id, from_view):
 
 #-------------------------------------------------------
+# Moved to create_project_views.py
 
+##@login_required
+##def create_project(request):
+##
+##@login_required
+##def import_project(request):
+##
+##def import_project_from_zip_file(zip_file, project_id, internal_id, callback=None):
+##
+##@login_required
+##@user_has_a_project_role
+##def import_project_status(request, project_id, report_id):
+##
+##@login_required
+##@user_has_a_project_role
+##def import_project_monitor(request, project_id, report_id):
+##
+##@login_required
+##@user_has_a_project_role
+##def import_project_complete(request, project_id, status):
+##
+##@login_required
+##@user_has_a_project_role
+##def clone_project(request, project_id):
+    
+#-------------------------------------------------------
 
 def edit_acknowledgements(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
