@@ -23,6 +23,7 @@ from . import activity_tracker_views
 from . import annotation_prompts_views
 from . import phonetic_lexicon_views
 from . import simple_clara_views
+from . import create_project_views
 
 urlpatterns = [
     # Login
@@ -141,12 +142,18 @@ urlpatterns = [
          name='execute_simple_clara_style_requests_status'),
 
     # Creating projects
-    path('create_project/', views.create_project, name='create_project'),
-    path('import_project/', views.import_project, name='import_project'),
-    path('project/<int:project_id>/import_project_status/<str:report_id>/', views.import_project_status, name='import_project_status'),
-    path('project/<int:project_id>/import_project_monitor/<str:report_id>/', views.import_project_monitor, name='import_project_monitor'),
-    path('project/<int:project_id>/import_project_complete/<str:status>/', views.import_project_complete, name='import_project_complete'),
-    path('project/<int:project_id>/clone_project/', views.clone_project, name='clone_project'),
+    path('create_project/', create_project_views.create_project, name='create_project'),
+    path('import_project/', create_project_views.import_project, name='import_project'),
+    path('project/<int:project_id>/import_project_status/<str:report_id>/', create_project_views.import_project_status, name='import_project_status'),
+    path('project/<int:project_id>/import_project_monitor/<str:report_id>/', create_project_views.import_project_monitor, name='import_project_monitor'),
+    path('project/<int:project_id>/import_project_complete/<str:status>/', create_project_views.import_project_complete, name='import_project_complete'),
+    path('project/<int:project_id>/clone_project/', create_project_views.clone_project, name='clone_project'),
+
+    # Making export zipfiles
+    path('project/<int:project_id>/make_export_zipfile/', views.make_export_zipfile, name='make_export_zipfile'),
+    path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', views.make_export_zipfile_status, name='make_export_zipfile_status'),
+    path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
+    path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
 
     # Manipulating projects
     path('project_list/<str:clara_version>/', views.project_list, name='project_list'),
@@ -240,12 +247,6 @@ urlpatterns = [
     path('project/<int:project_id>/render_text_status/<str:report_id>/', views.render_text_status, name='render_text_status'),
     path('project/<int:project_id>/render_text_monitor/<str:phonetic_or_normal>/<str:report_id>/', views.render_text_monitor, name='render_text_monitor'),
     path('project/<int:project_id>/render_text_complete/<str:phonetic_or_normal>/<str:status>/', views.render_text_complete, name='render_text_complete'),
-
-    # Making export zipfiles
-    path('project/<int:project_id>/make_export_zipfile/', views.make_export_zipfile, name='make_export_zipfile'),
-    path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', views.make_export_zipfile_status, name='make_export_zipfile_status'),
-    path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
-    path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
 
     # Registering content
     path('project/<int:project_id>/offer_to_register_content_normal/', views.offer_to_register_content_normal, name='offer_to_register_content_normal'),
