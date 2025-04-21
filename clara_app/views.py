@@ -498,6 +498,28 @@ def redirect_login(request):
 #-------------------------------------------------------
 # Moved to manipulate_project_views.py
 
+##@login_required
+##def project_list(request, clara_version):
+##
+##@login_required
+##@user_has_a_project_role
+##def project_detail(request, project_id):
+##
+##@login_required
+##@user_is_project_owner
+##def manage_project_members(request, project_id):
+##
+##@login_required
+##def remove_project_member(request, permission_id):
+##
+##@login_required
+##@user_is_project_owner
+##def delete_project(request, project_id):
+##
+##@login_required
+##@user_has_a_project_role
+##def project_history(request, project_id):
+    
 #-------------------------------------------------------
 
 def edit_acknowledgements(request, project_id):
