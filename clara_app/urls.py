@@ -34,6 +34,7 @@ from . import save_page_texts_multiple_views
 from . import community_views
 from . import community_reviewing_views
 from . import image_questionnaire_views
+from . import comparing_views
 
 urlpatterns = [
     # Login
@@ -252,8 +253,8 @@ urlpatterns = [
     path('image_questionnaire_all_projects_summary/', image_questionnaire_views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
 
     # Compare versions of annotated text
-    path('projects/<int:project_id>/compare_versions/', views.compare_versions, name='compare_versions'),
-    path('projects/<int:project_id>/metadata/<str:version>/', views.get_metadata_for_version, name='get_metadata_for_version'),
+    path('projects/<int:project_id>/compare_versions/', comparing_views.compare_versions, name='compare_versions'),
+    path('projects/<int:project_id>/metadata/<str:version>/', comparing_views.get_metadata_for_version, name='get_metadata_for_version'),
     
     # Rendering text
     path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
