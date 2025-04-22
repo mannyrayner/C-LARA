@@ -33,6 +33,7 @@ from . import images_v2_views
 from . import save_page_texts_multiple_views
 from . import community_views
 from . import community_reviewing_views
+from . import image_questionnaire_views
 
 urlpatterns = [
     # Login
@@ -244,11 +245,11 @@ urlpatterns = [
          name='execute_community_requests_for_page_status'),
 
     # Image questionnaires
-    path('image_questionnaire_project_list/', views.image_questionnaire_project_list, name='image_questionnaire_project_list'),
-    path('project/<int:project_id>/image_questionnaire_start', views.image_questionnaire_start, name='image_questionnaire_start'),
-    path('project/<int:project_id>/image_questionnaire_item/<int:index>', views.image_questionnaire_item, name='image_questionnaire_item'),
-    path('project/<int:project_id>/image_questionnaire_summary', views.image_questionnaire_summary, name='image_questionnaire_summary'),
-    path('image_questionnaire_all_projects_summary/', views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
+    path('image_questionnaire_project_list/', image_questionnaire_views.image_questionnaire_project_list, name='image_questionnaire_project_list'),
+    path('project/<int:project_id>/image_questionnaire_start', image_questionnaire_views.image_questionnaire_start, name='image_questionnaire_start'),
+    path('project/<int:project_id>/image_questionnaire_item/<int:index>', image_questionnaire_views.image_questionnaire_item, name='image_questionnaire_item'),
+    path('project/<int:project_id>/image_questionnaire_summary', image_questionnaire_views.image_questionnaire_summary, name='image_questionnaire_summary'),
+    path('image_questionnaire_all_projects_summary/', image_questionnaire_views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
 
     # Compare versions of annotated text
     path('projects/<int:project_id>/compare_versions/', views.compare_versions, name='compare_versions'),
