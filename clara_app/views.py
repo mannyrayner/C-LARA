@@ -833,7 +833,33 @@ def redirect_login(request):
 ##def _get_relevant_elements(project_dir, page_number):
 ##
 ##def _find_previous_relevant_page(pages_with_images, current_index, project_dir, current_elems):
+#-------------------------------------------------------
+# Moved to rendering_views.py
 
+##def clara_project_internal_render_text(clara_project_internal, project_id,
+##                                       audio_type_for_words='tts', audio_type_for_segments='tts',
+##                                       preferred_tts_engine=None, preferred_tts_voice=None,
+##                                       human_voice_id=None,
+##                                       self_contained=False, phonetic=False, callback=None):
+##
+##@login_required
+##@user_has_a_project_role
+##def render_text_start_normal(request, project_id):
+##
+##@login_required
+##@user_has_a_project_role
+##def render_text_start_phonetic(request, project_id):
+##
+##def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal):
+##
+##@login_required
+##@user_has_a_project_role
+##def render_text_status(request, project_id, report_id):
+##
+##@login_required
+##@user_has_a_project_role
+##def render_text_monitor(request, project_id, phonetic_or_normal, report_id):
+    
 #-------------------------------------------------------
 
 @login_required
