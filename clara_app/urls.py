@@ -38,6 +38,7 @@ from . import comparing_views
 from . import rendering_views
 from . import registering_views
 from . import satisfaction_questionnaire_views
+from . import reading_histories_views
 
 urlpatterns = [
     # Login
@@ -278,9 +279,9 @@ urlpatterns = [
     path('project/manage_questionnaires/', satisfaction_questionnaire_views.manage_questionnaires, name='manage_questionnaires'),
 
     # Reading history
-    path('reading_history/<str:l2_language>/<str:status>/', views.reading_history, name='reading_history'),
-    path('update_reading_history_status/<str:l2_language>/<str:report_id>/', views.update_reading_history_status, name='update_reading_history_status'),
-    path('update_reading_history_monitor/<str:l2_language>/<str:report_id>/', views.update_reading_history_monitor, name='update_reading_history_monitor'),
+    path('reading_history/<str:l2_language>/<str:status>/', reading_histories_views.reading_history, name='reading_history'),
+    path('update_reading_history_status/<str:l2_language>/<str:report_id>/', reading_histories_views.update_reading_history_status, name='update_reading_history_status'),
+    path('update_reading_history_monitor/<str:l2_language>/<str:report_id>/', reading_histories_views.update_reading_history_monitor, name='update_reading_history_monitor'),
 
     # Serving content
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/static/<path:filename>', views.serve_rendered_text_static, name='serve_rendered_text'),
