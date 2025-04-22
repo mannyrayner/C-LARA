@@ -35,6 +35,7 @@ from . import community_views
 from . import community_reviewing_views
 from . import image_questionnaire_views
 from . import comparing_views
+from . import rendering_views
 
 urlpatterns = [
     # Login
@@ -257,11 +258,11 @@ urlpatterns = [
     path('projects/<int:project_id>/metadata/<str:version>/', comparing_views.get_metadata_for_version, name='get_metadata_for_version'),
     
     # Rendering text
-    path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
-    path('project/<int:project_id>/render_text_start_phonetic/', views.render_text_start_phonetic, name='render_text_start_phonetic'),
-    path('project/<int:project_id>/render_text_status/<str:report_id>/', views.render_text_status, name='render_text_status'),
-    path('project/<int:project_id>/render_text_monitor/<str:phonetic_or_normal>/<str:report_id>/', views.render_text_monitor, name='render_text_monitor'),
-    path('project/<int:project_id>/render_text_complete/<str:phonetic_or_normal>/<str:status>/', views.render_text_complete, name='render_text_complete'),
+    path('project/<int:project_id>/render_text_start_normal/', rendering_views.render_text_start_normal, name='render_text_start_normal'),
+    path('project/<int:project_id>/render_text_start_phonetic/', rendering_views.render_text_start_phonetic, name='render_text_start_phonetic'),
+    path('project/<int:project_id>/render_text_status/<str:report_id>/', rendering_views.render_text_status, name='render_text_status'),
+    path('project/<int:project_id>/render_text_monitor/<str:phonetic_or_normal>/<str:report_id>/', rendering_views.render_text_monitor, name='render_text_monitor'),
+    path('project/<int:project_id>/render_text_complete/<str:phonetic_or_normal>/<str:status>/', rendering_views.render_text_complete, name='render_text_complete'),
 
     # Registering content
     path('project/<int:project_id>/offer_to_register_content_normal/', views.offer_to_register_content_normal, name='offer_to_register_content_normal'),
