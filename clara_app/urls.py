@@ -36,6 +36,7 @@ from . import community_reviewing_views
 from . import image_questionnaire_views
 from . import comparing_views
 from . import rendering_views
+from . import registering_views
 
 urlpatterns = [
     # Login
@@ -265,9 +266,9 @@ urlpatterns = [
     path('project/<int:project_id>/render_text_complete/<str:phonetic_or_normal>/<str:status>/', rendering_views.render_text_complete, name='render_text_complete'),
 
     # Registering content
-    path('project/<int:project_id>/offer_to_register_content_normal/', views.offer_to_register_content_normal, name='offer_to_register_content_normal'),
-    path('project/<int:project_id>/offer_to_register_content_phonetic/', views.offer_to_register_content_phonetic, name='offer_to_register_content_phonetic'),
-    path('project/<int:project_id>/register_project_content/<str:phonetic_or_normal>/', views.register_project_content, name='register_project_content'),
+    path('project/<int:project_id>/offer_to_register_content_normal/', registering_views.offer_to_register_content_normal, name='offer_to_register_content_normal'),
+    path('project/<int:project_id>/offer_to_register_content_phonetic/', registering_views.offer_to_register_content_phonetic, name='offer_to_register_content_phonetic'),
+    path('project/<int:project_id>/register_project_content/<str:phonetic_or_normal>/', registering_views.register_project_content, name='register_project_content'),
 
     # Satisfaction questionnaire
     path('project/<int:project_id>/satisfaction_questionnaire/', views.satisfaction_questionnaire, name='satisfaction_questionnaire'),
