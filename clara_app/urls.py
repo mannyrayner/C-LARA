@@ -39,6 +39,7 @@ from . import rendering_views
 from . import registering_views
 from . import satisfaction_questionnaire_views
 from . import reading_histories_views
+from . import serving_content_views
 
 urlpatterns = [
     # Login
@@ -284,21 +285,21 @@ urlpatterns = [
     path('update_reading_history_monitor/<str:l2_language>/<str:report_id>/', reading_histories_views.update_reading_history_monitor, name='update_reading_history_monitor'),
 
     # Serving content
-    path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/static/<path:filename>', views.serve_rendered_text_static, name='serve_rendered_text'),
-    path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/multimedia/<path:filename>', views.serve_rendered_text_multimedia, name='serve_rendered_text'),
-    path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/<path:filename>', views.serve_rendered_text, name='serve_rendered_text'),
+    path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/static/<path:filename>', serving_content_views.serve_rendered_text_static, name='serve_rendered_text'),
+    path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/multimedia/<path:filename>', serving_content_views.serve_rendered_text_multimedia, name='serve_rendered_text'),
+    path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/<path:filename>', serving_content_views.serve_rendered_text, name='serve_rendered_text'),
 
-    path('serve_coherent_images_v2_overview/<int:project_id>/', views.serve_coherent_images_v2_overview, name='serve_coherent_images_v2_overview'),
-    path('serve_zipfile/<int:project_id>/', views.serve_zipfile, name='serve_zipfile'),
-    path('serve_export_zipfile/<int:project_id>/', views.serve_export_zipfile, name='serve_export_zipfile'),
+    path('serve_coherent_images_v2_overview/<int:project_id>/', serving_content_views.serve_coherent_images_v2_overview, name='serve_coherent_images_v2_overview'),
+    path('serve_zipfile/<int:project_id>/', serving_content_views.serve_zipfile, name='serve_zipfile'),
+    path('serve_export_zipfile/<int:project_id>/', serving_content_views.serve_export_zipfile, name='serve_export_zipfile'),
 
-    path('projects/serve_project_image/<str:project_id>/<path:base_filename>', views.serve_project_image, name='serve_project_image'),
+    path('projects/serve_project_image/<str:project_id>/<path:base_filename>', serving_content_views.serve_project_image, name='serve_project_image'),
     path(
         'accounts/projects/serve_coherent_images_v2_file/<int:project_id>/<path:relative_path>/',
-        views.serve_coherent_images_v2_file,
+        serving_content_views.serve_coherent_images_v2_file,
         name='serve_coherent_images_v2_file'
     ),
-    path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', views.serve_audio_file, name='serve_audio_file'),
+    path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', serving_content_views.serve_audio_file, name='serve_audio_file'),
 
 ##    path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
 ##    path('manual_audio_alignment_integration_endpoint2/', views.manual_audio_alignment_integration_endpoint2, name='manual_audio_alignment_integration_endpoint2'),
