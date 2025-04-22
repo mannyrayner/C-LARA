@@ -32,6 +32,7 @@ from . import images_v1_views
 from . import images_v2_views
 from . import save_page_texts_multiple_views
 from . import community_views
+from . import community_reviewing_views
 
 urlpatterns = [
     # Login
@@ -232,14 +233,14 @@ urlpatterns = [
     path('project/<int:project_id>/project_community/', community_views.project_community, name='project_community'),
 
     # Community reviewing of images
-    path('project/<int:project_id>/community_review_images/', views.community_review_images, name='community_review_images'),
-    path('project/<int:project_id>/community_organiser_review_images/', views.community_organiser_review_images, name='community_organiser_review_images'),
-    path('project/<int:project_id>/community_review_images_external/', views.community_review_images_external, name='community_review_images_external'),
-    path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/<str:status>/', views.community_review_images_for_page,
+    path('project/<int:project_id>/community_review_images/', community_reviewing_views.community_review_images, name='community_review_images'),
+    path('project/<int:project_id>/community_organiser_review_images/', community_reviewing_views.community_organiser_review_images, name='community_organiser_review_images'),
+    path('project/<int:project_id>/community_review_images_external/', community_reviewing_views.community_review_images_external, name='community_review_images_external'),
+    path('project/<int:project_id>/community_review_images_for_page/<int:page_number>/<str:cm_or_co>/<str:status>/', community_reviewing_views.community_review_images_for_page,
          name='community_review_images_for_page'),
-    path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', views.execute_community_requests_for_page_monitor,
+    path('project/<int:project_id>/execute_community_requests_for_page_monitor/<str:report_id>/<int:page_number>/', community_reviewing_views.execute_community_requests_for_page_monitor,
          name='execute_community_requests_for_page_monitor'),
-    path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', views.execute_community_requests_for_page_status,
+    path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', community_reviewing_views.execute_community_requests_for_page_status,
          name='execute_community_requests_for_page_status'),
 
     # Image questionnaires
@@ -249,6 +250,10 @@ urlpatterns = [
     path('project/<int:project_id>/image_questionnaire_summary', views.image_questionnaire_summary, name='image_questionnaire_summary'),
     path('image_questionnaire_all_projects_summary/', views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
 
+    # Compare versions of annotated text
+    path('projects/<int:project_id>/compare_versions/', views.compare_versions, name='compare_versions'),
+    path('projects/<int:project_id>/metadata/<str:version>/', views.get_metadata_for_version, name='get_metadata_for_version'),
+    
     # Rendering text
     path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
     path('project/<int:project_id>/render_text_start_phonetic/', views.render_text_start_phonetic, name='render_text_start_phonetic'),
@@ -272,11 +277,7 @@ urlpatterns = [
     path('update_reading_history_status/<str:l2_language>/<str:report_id>/', views.update_reading_history_status, name='update_reading_history_status'),
     path('update_reading_history_monitor/<str:l2_language>/<str:report_id>/', views.update_reading_history_monitor, name='update_reading_history_monitor'),
 
-    # Compare versions of annotated text
-    path('projects/<int:project_id>/compare_versions/', views.compare_versions, name='compare_versions'),
-
-    path('projects/<int:project_id>/metadata/<str:version>/', views.get_metadata_for_version, name='get_metadata_for_version'),
-    
+    # Serving content
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/static/<path:filename>', views.serve_rendered_text_static, name='serve_rendered_text'),
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/multimedia/<path:filename>', views.serve_rendered_text_multimedia, name='serve_rendered_text'),
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/<path:filename>', views.serve_rendered_text, name='serve_rendered_text'),
