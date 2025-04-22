@@ -28,6 +28,8 @@ from . import manipulate_project_views
 from . import export_zipfile_views
 from . import annotation_views
 from . import human_audio_views
+from . import images_v1_views
+from . import images_v2_views
 
 urlpatterns = [
     # Login
@@ -203,17 +205,17 @@ urlpatterns = [
     path('project/<int:project_id>/generate_annotated_segmented_file/', human_audio_views.generate_annotated_segmented_file, name='generate_annotated_segmented_file'),
 
     # Edit images, v1
-    path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', views.edit_images, name='edit_images'),
-    path('project/<int:project_id>/create_dall_e_3_image_status/<str:report_id>/', views.create_dall_e_3_image_status, name='create_dall_e_3_image_status'),
-    path('project/<int:project_id>/create_dall_e_3_image_monitor/<str:report_id>/', views.create_dall_e_3_image_monitor, name='create_dall_e_3_image_monitor'),
-    path('project/<int:project_id>/access_archived_images/<str:image_name>', views.access_archived_images, name='access_archived_images'),
-    path('project/<int:project_id>/restore_image/<str:archived_image_id>', views.restore_image, name='restore_image'),
-    path('project/<int:project_id>/delete_archive_image/<str:archived_image_id>', views.delete_archive_image, name='delete_archive_image'),
+    path('project/<int:project_id>/edit_images/<str:dall_e_3_image_status>', images_v1_views.edit_images, name='edit_images'),
+    path('project/<int:project_id>/create_dall_e_3_image_status/<str:report_id>/', images_v1_views.create_dall_e_3_image_status, name='create_dall_e_3_image_status'),
+    path('project/<int:project_id>/create_dall_e_3_image_monitor/<str:report_id>/', images_v1_views.create_dall_e_3_image_monitor, name='create_dall_e_3_image_monitor'),
+    path('project/<int:project_id>/access_archived_images/<str:image_name>', images_v1_views.access_archived_images, name='access_archived_images'),
+    path('project/<int:project_id>/restore_image/<str:archived_image_id>', images_v1_views.restore_image, name='restore_image'),
+    path('project/<int:project_id>/delete_archive_image/<str:archived_image_id>', images_v1_views.delete_archive_image, name='delete_archive_image'),
 
     # Edit images, v2
-    path('project/<int:project_id>/edit_images_v2/<str:status>', views.edit_images_v2, name='edit_images_v2'),
-    path('project/<int:project_id>/coherent_images_v2_status/<str:report_id>/', views.coherent_images_v2_status, name='coherent_images_v2_status'),
-    path('project/<int:project_id>/coherent_images_v2_monitor/<str:report_id>/', views.coherent_images_v2_monitor, name='coherent_images_v2_monitor'),
+    path('project/<int:project_id>/edit_images_v2/<str:status>', images_v2_views.edit_images_v2, name='edit_images_v2'),
+    path('project/<int:project_id>/coherent_images_v2_status/<str:report_id>/', images_v2_views.coherent_images_v2_status, name='coherent_images_v2_status'),
+    path('project/<int:project_id>/coherent_images_v2_monitor/<str:report_id>/', images_v2_views.coherent_images_v2_monitor, name='coherent_images_v2_monitor'),
 
     # Saving page texts in pages and images view
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
