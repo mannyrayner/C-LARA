@@ -30,6 +30,8 @@ from . import annotation_views
 from . import human_audio_views
 from . import images_v1_views
 from . import images_v2_views
+from . import save_page_texts_multiple_views
+from . import community_views
 
 urlpatterns = [
     # Login
@@ -218,23 +220,16 @@ urlpatterns = [
     path('project/<int:project_id>/coherent_images_v2_monitor/<str:report_id>/', images_v2_views.coherent_images_v2_monitor, name='coherent_images_v2_monitor'),
 
     # Saving page texts in pages and images view
-    path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
-    path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 
-
-    # Image questionnaires
-    path('image_questionnaire_project_list/', views.image_questionnaire_project_list, name='image_questionnaire_project_list'),
-    path('project/<int:project_id>/image_questionnaire_start', views.image_questionnaire_start, name='image_questionnaire_start'),
-    path('project/<int:project_id>/image_questionnaire_item/<int:index>', views.image_questionnaire_item, name='image_questionnaire_item'),
-    path('project/<int:project_id>/image_questionnaire_summary', views.image_questionnaire_summary, name='image_questionnaire_summary'),
-    path('image_questionnaire_all_projects_summary/', views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
+    path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', save_page_texts_multiple_views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
+    path('project/<int:project_id>/save_page_texts_multiple_monitor/<str:report_id>/', save_page_texts_multiple_views.save_page_texts_multiple_monitor, name='save_page_texts_multiple_monitor'), 
 
     # Creating and managing communities
-    path('create_community/', views.create_community, name='create_community'),
-    path('delete_community_menu/', views.delete_community_menu, name='delete_community_menu'),
-    path('community_home/<int:community_id>/', views.community_home, name='community_home'),
-    path('assign_coordinator_to_community/', views.assign_coordinator_to_community, name='assign_coordinator_to_community'),
-    path('assign_member_to_community/', views.assign_member_to_community, name='assign_member_to_community'),
-    path('project/<int:project_id>/project_community/', views.project_community, name='project_community'),
+    path('create_community/', community_views.create_community, name='create_community'),
+    path('delete_community_menu/', community_views.delete_community_menu, name='delete_community_menu'),
+    path('community_home/<int:community_id>/', community_views.community_home, name='community_home'),
+    path('assign_coordinator_to_community/', community_views.assign_coordinator_to_community, name='assign_coordinator_to_community'),
+    path('assign_member_to_community/', community_views.assign_member_to_community, name='assign_member_to_community'),
+    path('project/<int:project_id>/project_community/', community_views.project_community, name='project_community'),
 
     # Community reviewing of images
     path('project/<int:project_id>/community_review_images/', views.community_review_images, name='community_review_images'),
@@ -246,6 +241,13 @@ urlpatterns = [
          name='execute_community_requests_for_page_monitor'),
     path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', views.execute_community_requests_for_page_status,
          name='execute_community_requests_for_page_status'),
+
+    # Image questionnaires
+    path('image_questionnaire_project_list/', views.image_questionnaire_project_list, name='image_questionnaire_project_list'),
+    path('project/<int:project_id>/image_questionnaire_start', views.image_questionnaire_start, name='image_questionnaire_start'),
+    path('project/<int:project_id>/image_questionnaire_item/<int:index>', views.image_questionnaire_item, name='image_questionnaire_item'),
+    path('project/<int:project_id>/image_questionnaire_summary', views.image_questionnaire_summary, name='image_questionnaire_summary'),
+    path('image_questionnaire_all_projects_summary/', views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
 
     # Rendering text
     path('project/<int:project_id>/render_text_start_normal/', views.render_text_start_normal, name='render_text_start_normal'),
