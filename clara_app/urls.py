@@ -37,6 +37,7 @@ from . import image_questionnaire_views
 from . import comparing_views
 from . import rendering_views
 from . import registering_views
+from . import satisfaction_questionnaire_views
 
 urlpatterns = [
     # Login
@@ -271,10 +272,10 @@ urlpatterns = [
     path('project/<int:project_id>/register_project_content/<str:phonetic_or_normal>/', registering_views.register_project_content, name='register_project_content'),
 
     # Satisfaction questionnaire
-    path('project/<int:project_id>/satisfaction_questionnaire/', views.satisfaction_questionnaire, name='satisfaction_questionnaire'),
-    path('project/<int:project_id>/show_questionnaire/<int:user_id>/', views.show_questionnaire, name='show_questionnaire'),
-    path('project/aggregated_questionnaire_results/', views.aggregated_questionnaire_results, name='aggregated_questionnaire_results'),
-    path('project/manage_questionnaires/', views.manage_questionnaires, name='manage_questionnaires'),
+    path('project/<int:project_id>/satisfaction_questionnaire/', satisfaction_questionnaire_views.satisfaction_questionnaire, name='satisfaction_questionnaire'),
+    path('project/<int:project_id>/show_questionnaire/<int:user_id>/', satisfaction_questionnaire_views.show_questionnaire, name='show_questionnaire'),
+    path('project/aggregated_questionnaire_results/', satisfaction_questionnaire_views.aggregated_questionnaire_results, name='aggregated_questionnaire_results'),
+    path('project/manage_questionnaires/', satisfaction_questionnaire_views.manage_questionnaires, name='manage_questionnaires'),
 
     # Reading history
     path('reading_history/<str:l2_language>/<str:status>/', views.reading_history, name='reading_history'),
