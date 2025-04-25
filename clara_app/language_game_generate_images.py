@@ -43,15 +43,18 @@ Aboriginal art and borrow elements from it.
         format(f"Error when trying to create style")
         format(f"Exception: {str(e)}\n{traceback.format_exc()}")
 
+def run_create_kk_language_game_images(n_tasks=1000):
+    asyncio.run(create_kk_language_game_images(n_tasks))
+
 async def create_kk_language_game_images(n_tasks=1000):
     data = read_json_file('$CLARA/linguistic_data/kok_kaper/language_game_animals.json')
     animals = data['animals']
     adjectives = data['adjectives']
     body_parts = data['body_parts']
     tasks = []
-    for animal in animals[:n_elements]:
-        for adjective in adjectives[:n_elements]:
-            for body_part in body_parts[:n_elements]:
+    for animal in animals:
+        for adjective in adjectives:
+            for body_part in body_parts:
                 if len(tasks) <= n_tasks:
                     tasks.append(asyncio.create_task(create_kk_language_game_image(animal, adjective, body_part)))
     results = await asyncio.gather(*tasks)
@@ -71,8 +74,8 @@ create an image matching the description:
 
 Note that incongruous combinations are perfectly acceptable in the context of the game and may even be considered more amusing.
 """
-    await get_api_image_response(prompt, image_file)
+    await get_api_chatgpt4_image_response(prompt, image_file)
 
 def kk_image_file(animal, adjective, body_part):
-    return f'{animal}_{afjective}_{body_part}.jpg'
+    return f'$CLARA/linguistic_data/kok_kaper/language_game_images/{animal["kk"]}_{adjective["kk"]}_{body_part["kk"]}.jpg'
                
