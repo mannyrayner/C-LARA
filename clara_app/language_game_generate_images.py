@@ -1,8 +1,13 @@
 
-from .clara_coherent_images_utils import (
-    project_params_for_simple_clara,
-    get_api_chatgpt4_response_for_task,
-    get_api_chatgpt4_image_response_for_task
+##from .clara_coherent_images_utils import (
+##    project_params_for_simple_clara,
+##    get_api_chatgpt4_response_for_task,
+##    get_api_chatgpt4_image_response_for_task
+##    )
+
+from .clara_chatgpt4 import (
+    get_api_chatgpt4_response,
+    get_api_chatgpt4_image_response
     )
 
 from .clara_utils import (
@@ -30,7 +35,9 @@ Aboriginal children at a school in Cape York, Queensland. The style should be in
 Aboriginal art and borrow elements from it.
 """
     try:
-        style_description = asyncio.run(get_api_chatgpt4_response(prompt))
+        api_call = asyncio.run(get_api_chatgpt4_response(prompt))
+        style_description = api_call.response
+        print(f'Style: {style_description}')    
         write_txt_file(style_description, style_file)
     except Exception as e:
         format(f"Error when trying to create style")
