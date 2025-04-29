@@ -63,6 +63,21 @@ class ImportCleaner(cst.CSTTransformer):
         collector = _NameCollector()
         node.visit(collector)
         self.used = collector.names
+        self.seen_src = set()                       # final-rendered imports
+        self._mod_helper = cst.Module(body=[])      # for code_for_node
+
+    # ------------------------------------------------------------------ helpers
+    def _finalise(self, original, updated, aliases):
+        """Return updated node or REMOVE, while filtering duplicates."""
+        if not aliases:                               # nothing left
+            return RemovalSentinel.REMOVE
+
+        updated = updated.with_changes(names=aliases)
+        src = self._mod_helper.code_for_node(updated)
+        if src in self.seen_src:
+            return RemovalSentinel.REMOVE
+        self.seen_src.add(src)
+        return updated
 
     # -------------------------------------------------------------- #
     def leave_Import(self, original, updated):
@@ -70,14 +85,8 @@ class ImportCleaner(cst.CSTTransformer):
             a for a in updated.names
             if (a.asname.name.value if a.asname else a.name.value) in self.used
         ]
-        aliases = _dedupe(aliases)
-        aliases = _strip_trailing_comma(aliases)
-
-        return (
-            updated.with_changes(names=aliases)
-            if aliases
-            else RemovalSentinel.REMOVE
-        )
+        aliases = _strip_trailing_comma(_dedupe(aliases))
+        return self._finalise(original, updated, aliases)
 
     def leave_ImportFrom(self, original, updated):
         if updated.names is None or updated.names[0].name.value == "*":
@@ -87,14 +96,8 @@ class ImportCleaner(cst.CSTTransformer):
             local = a.asname.name.value if a.asname else a.name.value
             if local in self.used:
                 aliases.append(a)
-        aliases = _dedupe(aliases)
-        aliases = _strip_trailing_comma(aliases)
-
-        return (
-            updated.with_changes(names=aliases)
-            if aliases
-            else RemovalSentinel.REMOVE
-        )
+        aliases = _strip_trailing_comma(_dedupe(aliases))
+        return self._finalise(original, updated, aliases)
 
 # ------------------------------------------------------------------ #
 def trim_imports_from_file(src_file: str, dst_file: str) -> None:
