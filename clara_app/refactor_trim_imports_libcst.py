@@ -4,8 +4,30 @@ Remove unused imports from a single Python file using LibCST.
 
 """
 import libcst as cst
-from libcst import RemovalSentinel, MetadataWrapper
+from libcst import RemovalSentinel, MaybeSentinel, MetadataWrapper
 from libcst.metadata import PositionProvider              # no heavy deps
+from typing import List, Tuple
+
+# ------------------------------------------------------------- helpers
+def _dedupe(aliases: List[cst.ImportAlias]) -> List[cst.ImportAlias]:
+    seen = set()
+    out: List[cst.ImportAlias] = []
+    for alias in aliases:
+        key = (
+            alias.name.value,
+            alias.asname.name.value if alias.asname else None,
+        )
+        if key not in seen:
+            seen.add(key)
+            out.append(alias)
+    return out
+
+
+def _strip_trailing_comma(aliases: List[cst.ImportAlias]) -> List[cst.ImportAlias]:
+    if aliases:
+        aliases[-1] = aliases[-1].with_changes(comma=MaybeSentinel.DEFAULT)
+    return aliases
+
 
 # ------------------------------------------------------------------ #
 class _NameCollector(cst.CSTVisitor):
@@ -44,22 +66,35 @@ class ImportCleaner(cst.CSTTransformer):
 
     # -------------------------------------------------------------- #
     def leave_Import(self, original, updated):
-        kept = [
-            item for item in updated.names
-            if (item.asname.name.value if item.asname else item.name.value) in self.used
+        aliases = [
+            a for a in updated.names
+            if (a.asname.name.value if a.asname else a.name.value) in self.used
         ]
-        return updated.with_changes(names=kept) if kept else RemovalSentinel.REMOVE
+        aliases = _dedupe(aliases)
+        aliases = _strip_trailing_comma(aliases)
+
+        return (
+            updated.with_changes(names=aliases)
+            if aliases
+            else RemovalSentinel.REMOVE
+        )
 
     def leave_ImportFrom(self, original, updated):
         if updated.names is None or updated.names[0].name.value == "*":
-            return updated                                  # keep star-import
-        kept = []
-        for item in updated.names:
-            local = item.asname.name.value if item.asname else item.name.value
+            return updated                                          # keep  *
+        aliases = []
+        for a in updated.names:
+            local = a.asname.name.value if a.asname else a.name.value
             if local in self.used:
-                kept.append(item)
-        return updated.with_changes(names=kept) if kept else RemovalSentinel.REMOVE
+                aliases.append(a)
+        aliases = _dedupe(aliases)
+        aliases = _strip_trailing_comma(aliases)
 
+        return (
+            updated.with_changes(names=aliases)
+            if aliases
+            else RemovalSentinel.REMOVE
+        )
 
 # ------------------------------------------------------------------ #
 def trim_imports_from_file(src_file: str, dst_file: str) -> None:
