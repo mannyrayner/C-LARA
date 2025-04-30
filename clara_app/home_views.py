@@ -16,6 +16,9 @@ import logging
 config = get_config()
 logger = logging.getLogger(__name__)
 
+def redirect_login(request):
+    return redirect('login')
+
 # Welcome screen
 def home(request):
     return redirect('home_page')

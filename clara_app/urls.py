@@ -5,7 +5,6 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 
-from . import views
 from . import accounts_views
 from . import home_views
 from . import profile_views
@@ -42,8 +41,13 @@ from . import reading_histories_views
 from . import serving_content_views
 
 urlpatterns = [
+    # Home
+    path('', home_views.redirect_login, name='home-redirect'),
+    path('home/', home_views.home, name='home'),
+    path('home_page/', home_views.home_page, name='home_page'),
+    path('clara_home_page/', home_views.clara_home_page, name='clara_home_page'),
+
     # Login
-    path('', views.redirect_login, name='home-redirect'),
     path('login/', auth_views.LoginView.as_view(template_name='clara_app/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='/accounts/login/'), name='logout'),
 
@@ -56,11 +60,6 @@ urlpatterns = [
     # Account
     path('register/', accounts_views.register, name='register'),
     path('profile/', accounts_views.profile, name='profile'),
-
-    # Home
-    path('home/', home_views.home, name='home'),
-    path('home_page/', home_views.home_page, name='home_page'),
-    path('clara_home_page/', home_views.clara_home_page, name='clara_home_page'),
 
     # Profile
     path('external_profile/<int:user_id>/', profile_views.external_profile, name='external_profile'),

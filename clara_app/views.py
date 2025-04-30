@@ -1,3 +1,5 @@
+# This file is only kept for documentation purposes
+
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
@@ -150,9 +152,6 @@ import asyncio
 config = get_config()
 logger = logging.getLogger(__name__)
 
-def redirect_login(request):
-    return redirect('login')
-
 #-------------------------------------------------------
 # Moved to account_views.py
 
@@ -164,6 +163,8 @@ def redirect_login(request):
 #-------------------------------------------------------
 # Moved to home_views.py
 
+##def redirect_login(request):
+##
 ##def home(request):
 ##
 ##def home_page(request):
