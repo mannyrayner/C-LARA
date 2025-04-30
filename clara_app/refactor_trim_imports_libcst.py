@@ -8,6 +8,8 @@ from libcst import RemovalSentinel, MaybeSentinel, MetadataWrapper
 from libcst.metadata import PositionProvider              # no heavy deps
 from typing import List, Tuple
 
+from .clara_utils import read_txt_file, write_txt_file
+
 # ------------------------------------------------------------- helpers
 def _dedupe(aliases: List[cst.ImportAlias]) -> List[cst.ImportAlias]:
     seen = set()

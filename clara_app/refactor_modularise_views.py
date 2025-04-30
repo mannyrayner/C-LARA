@@ -2,22 +2,14 @@
 
 from .clara_utils import (
     read_txt_file,
-    write_txt_file,
     absolute_file_name
     )
 
 from .refactor_utils import (
     get_function_names_from_file,
-    get_imports_from_file,
-    get_functions_called_by_function,
     get_functions_called_in_file,
     get_view_functions_from_urls
     )
-
-import os
-import re
-import shutil
-from pathlib import Path
 from redbaron import RedBaron
 
 def test(id):

@@ -30,9 +30,15 @@ import traceback
 style_file = '$CLARA/linguistic_data/kok_kaper/language_game_style.txt'
 
 def create_kk_language_game_style():
+##    prompt = """Create a description of an image style suitable for a language game that will be played by
+##Aboriginal children at a school in Cape York, Queensland. The style should be inspired by traditional
+##Aboriginal art and borrow elements from it."""
+##    prompt = """Create a description of an image style suitable for a language game that will be played by
+##Aboriginal children at a school in Cape York, Queensland. We want a cartoon style suitable for creating amusing images
+##of animals with exaggerated characteristics and borrowing elements from traditional Aboriginal art.
     prompt = """Create a description of an image style suitable for a language game that will be played by
-Aboriginal children at a school in Cape York, Queensland. The style should be inspired by traditional
-Aboriginal art and borrow elements from it.
+Aboriginal children at a school in Cape York, Queensland. We want a colourful cartoon style suitable for creating amusing images
+of animals with exaggerated characteristics.
 """
     try:
         api_call = asyncio.run(get_api_chatgpt4_response(prompt))
@@ -55,7 +61,7 @@ async def create_kk_language_game_images(n_tasks=1000):
     for animal in animals:
         for adjective in adjectives:
             for body_part in body_parts:
-                if len(tasks) <= n_tasks:
+                if len(tasks) < n_tasks:
                     tasks.append(asyncio.create_task(create_kk_language_game_image(animal, adjective, body_part)))
     results = await asyncio.gather(*tasks)
 
@@ -68,7 +74,7 @@ async def create_kk_language_game_image(animal, adjective, body_part):
 
 create an image matching the description:
 
-{animal} with {adjective} {body_part}
+{animal['en']} with a comically {adjective['en']} {body_part['en']}
 
 (This has been literally translated from the Aboriginal language Kok Kaper).
 
@@ -77,5 +83,5 @@ Note that incongruous combinations are perfectly acceptable in the context of th
     await get_api_chatgpt4_image_response(prompt, image_file)
 
 def kk_image_file(animal, adjective, body_part):
-    return f'$CLARA/linguistic_data/kok_kaper/language_game_images/{animal["kk"]}_{adjective["kk"]}_{body_part["kk"]}.jpg'
+    return f'$CLARA/linguistic_data/kok_kaper/language_game_images/{animal["id"]}_{adjective["id"]}_{body_part["id"]}.jpg'
                
