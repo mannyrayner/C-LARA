@@ -82,7 +82,7 @@ def cost_of_gpt4_image_api_call(prompt, gpt_model='dall-e-3', size='1024x1024'):
         else:
             raise ValueError(f'Unknown gpt-image-1 image size {size}')
         return float(cost_per_million_tokens * number_of_tokens / 1000000) 
-    if gpt_model == 'dall-e-3':
+    if gpt_model in ( 'dall_e_3', 'dall-e-3' ):
         if size == '1024x1024':
             return float(config.get('dall_e_3_costs', '1024x1024')) 
         elif size in ( '1024x1792', '1792x1024' ):

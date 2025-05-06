@@ -172,12 +172,16 @@ def call_openai_api(messages, config_info):
         )
     return chat_completion
 
+#openai_image_response_strategy = 'url'
+openai_image_response_strategy = 'direct_decode'
+
 def call_openai_api_image(prompt, gpt_model, size, config_info):
     api_key = get_open_ai_api_key(config_info)
     client = OpenAI(api_key=api_key)
     response = client.images.generate(
         model=clean_gpt_image_name(gpt_model),
         prompt=prompt,
+        response_format="b64_json" if openai_image_response_strategy == 'direct_decode' else 'url',
         size=size,
         quality="medium" if gpt_model == "gpt-image-1" else "standard",
         n=1,
@@ -380,9 +384,11 @@ async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, ca
     # Once the API call is done:
     response = api_task.result()
 
-    response_url = response.data[0].url
+##    response_url = response.data[0].url
+##
+##    await save_openai_response_image(response_url, image_file, callback=callback)
 
-    await save_openai_response_image(response_url, image_file, callback=callback)
+    await save_openai_response_image(response, image_file, callback=callback)
 
     cost = clara_openai.cost_of_gpt4_image_api_call(prompt, gpt_model=gpt_model, size=size)
     elapsed_time = time.time() - start_time
@@ -391,7 +397,7 @@ async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, ca
     # Create an APICall object
     api_call = APICall(
         prompt=prompt,
-        response=response_url,
+        response=image_file,
         cost=cost,
         duration=elapsed_time,
         timestamp=start_time,
@@ -534,19 +540,36 @@ async def get_api_chatgpt4_interpret_image_response(prompt, file_path, gpt_model
     return api_call
 
 # Download the image from the url and save it as a 512x512 jpg
-async def save_openai_response_image(url, image_file, callback=None):
-    try:
-        abs_image_file = absolute_local_file_name(image_file)
-        await post_task_update_async(callback, f'--- Trying to download image from "{url}"')
-        response = requests.get(url)
-        await post_task_update_async(callback, f'--- Image downloaded')
-        image = Image.open(BytesIO(response.content))
-        # 512x512 is more convenient for C-LARA
-        image = image.resize((512, 512), Image.Resampling.LANCZOS)
-        image.convert("RGB").save(abs_image_file)
-    except Exception as e:
-        await post_task_update_async(callback, f"Exception when downloading image: {str(e)}\n{traceback.format_exc()}")
-        raise ChatGPTError(message = f'Unable to download image from {url}')
+async def save_openai_response_image(response, image_file, callback=None):
+    if openai_image_response_strategy == 'url':
+        try:
+            url = response.data[0].url
+            abs_image_file = absolute_local_file_name(image_file)
+            await post_task_update_async(callback, f'--- Trying to download image from "{url}"')
+            response = requests.get(url)
+            await post_task_update_async(callback, f'--- Image downloaded')
+            image = Image.open(BytesIO(response.content))
+            # 512x512 is more convenient for C-LARA
+            image = image.resize((512, 512), Image.Resampling.LANCZOS)
+            image.convert("RGB").save(abs_image_file)
+        except Exception as e:
+            await post_task_update_async(callback, f"Exception when downloading image: {str(e)}\n{traceback.format_exc()}")
+            raise ChatGPTError(message = f'Unable to download image from {url}')
+    elif openai_image_response_strategy == 'direct_decode':
+        try:
+            image_base64 = response.data[0].b64_json
+            image_bytes = base64.b64decode(image_base64)
+            abs_image_file = absolute_local_file_name(image_file)
+            image = Image.open(BytesIO(image_bytes))
+            # 512x512 is more convenient for C-LARA
+            image = image.resize((512, 512), Image.Resampling.LANCZOS)
+            image.convert("RGB").save(abs_image_file)
+            await post_task_update_async(callback, f'--- Image downloaded using direct decoding')
+        except Exception as e:
+            await post_task_update_async(callback, f"Exception when downloading image: {str(e)}\n{traceback.format_exc()}")
+            raise ChatGPTError(message = f'Unable to download image using direct decoding')
+    else:
+        raise ChatGPTError(message = f'Unknown strategy for download image {openai_image_response_strategy}. Must be "url" or "direct_decode"')
 
 # Quite often, JSON responses come back wrapped in some text, usually
 #

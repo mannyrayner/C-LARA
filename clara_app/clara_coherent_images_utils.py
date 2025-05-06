@@ -409,9 +409,15 @@ def score_description_dir_best(description_dir, image_dirs, params):
                                                                    
     write_project_json_file(description_dir_info, project_dir, f'{description_dir}/image_info.json')
 
-    if best_image_file and best_interpretation_file and best_evaluation_file:
+##    if best_image_file and best_interpretation_file and best_evaluation_file:
+##        copy_file(project_pathname(project_dir, best_image_file), project_pathname(project_dir, f'{description_dir}/image.jpg'))
+##        copy_file(project_pathname(project_dir, best_interpretation_file), project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
+##        copy_file(project_pathname(project_dir, best_evaluation_file), project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
+    if file_exists(best_image_file):
         copy_file(project_pathname(project_dir, best_image_file), project_pathname(project_dir, f'{description_dir}/image.jpg'))
+    if file_exists(best_interpretation_file):
         copy_file(project_pathname(project_dir, best_interpretation_file), project_pathname(project_dir, f'{description_dir}/interpretation.txt'))
+    if file_exists(best_evaluation_file):
         copy_file(project_pathname(project_dir, best_evaluation_file), project_pathname(project_dir, f'{description_dir}/evaluation.txt'))
 
 def element_score_for_description_dir(description_dir, params):
