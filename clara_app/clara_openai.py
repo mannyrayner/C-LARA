@@ -71,13 +71,26 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o', reasoni
     return cost
 
 def cost_of_gpt4_image_api_call(prompt, gpt_model='dall-e-3', size='1024x1024'):
-    if size == '1024x1024':
-        return float(config.get('dall_e_3_costs', '1024x1024')) 
-    elif size in ( '1024x1792', '1792x1024' ):
-        return float(config.get('dall_e_3_costs', '1792x1024')) 
+    if gpt_model == 'gpt-image-1':
+        cost_per_thousand_tokens = float(config.get('gpt-image-1', 'cost_per_thousand_tokens'))
+        if size == '1024x1024':
+            number_of_tokens = int(config.get('gpt-image-1', 'number_of_tokens_1024x1024')) 
+        elif size == '1024×1536':
+            number_of_tokens = int(config.get('gpt-image-1', 'number_of_tokens_1024×1536')) 
+        elif size == '1536×1024':
+            number_of_tokens = int(config.get('gpt-image-1', 'number_of_tokens_1536×1024'))
+        else:
+            raise ValueError(f'Unknown gpt-image-1 image size {size}')
+        return float(cost_per_million_tokens * number_of_tokens / 1000000) 
+    if gpt_model == 'dall-e-3':
+        if size == '1024x1024':
+            return float(config.get('dall_e_3_costs', '1024x1024')) 
+        elif size in ( '1024x1792', '1792x1024' ):
+            return float(config.get('dall_e_3_costs', '1792x1024')) 
+        else:
+            raise ValueError(f'Unknown dall-e-3 image size {size}')
     else:
-        # Use most expensive one for anything else
-        return float(config.get('dall_e_3_costs', '1792x1024'))
+        raise ValueError(f'Unknown image model {gpt_model}')
 
 def cost_of_gpt4v_api_call(file_path, prompt, response_string, gpt_model='gpt-4-vision-preview'):
     """Returns the cost in dollars of an OpenAI API call to gpt4v, defined by a prompt in the form of an image and a string, and a response string"""

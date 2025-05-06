@@ -68,19 +68,24 @@ async def create_kk_language_game_images(n_tasks=1000):
 async def create_kk_language_game_image(animal, adjective, body_part):
     style = read_txt_file(style_file)
     image_file = kk_image_file(animal, adjective, body_part)
-    prompt = f"""Using the following style:
+    prompt = f"""We are creating images for a language game in the Australian Aboriginal language Kok Kaper
+which involve combining an animal name, a body part word, and an adjective.
+
+For the current image, use the following style:
 
 {style}
 
-create an image matching the description:
+and create an image matching the description:
 
 {animal['en']} with a comically {adjective['en']} {body_part['en']}
 
-(This has been literally translated from the Aboriginal language Kok Kaper).
+(This has been literally translated from Kok Kaper).
 
 Note that incongruous combinations are perfectly acceptable in the context of the game and may even be considered more amusing.
 """
-    await get_api_chatgpt4_image_response(prompt, image_file)
+    await get_api_chatgpt4_image_response(prompt,
+                                          image_file,
+                                          config_info={ 'image_model': 'gpt-image-1'})
 
 def kk_image_file(animal, adjective, body_part):
     return f'$CLARA/linguistic_data/kok_kaper/language_game_images/{animal["id"]}_{adjective["id"]}_{body_part["id"]}.jpg'

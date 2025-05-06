@@ -176,13 +176,19 @@ def call_openai_api_image(prompt, gpt_model, size, config_info):
     api_key = get_open_ai_api_key(config_info)
     client = OpenAI(api_key=api_key)
     response = client.images.generate(
-        model=gpt_model,
+        model=clean_gpt_image_name(gpt_model),
         prompt=prompt,
         size=size,
-        quality="standard",
+        quality="medium" if gpt_model == "gpt-image-1" else "standard",
         n=1,
         )
     return response
+
+def clean_gpt_image_name(gpt_model):
+    if gpt_model == 'dall_e_3':
+        return 'dall-e-3'
+    else:
+        return gpt_model
 
 def call_google_gemini_image(prompt, gemini_model, number_of_images, config_info):
     """
@@ -347,7 +353,7 @@ async def get_api_image_response(prompt, image_file, config_info={}, callback=No
 
 # Version of get_api_chatgpt4_response for creating DALL-E-3 images
 async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, callback=None):
-    gpt_model = 'dall-e-3'
+    gpt_model = config_info['image_model'] if 'image_model' in config_info else 'dall-e-3'
     size='1024x1024'
     
     start_time = time.time()

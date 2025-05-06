@@ -142,6 +142,7 @@ TTS_CHOICES = [
     ]
 
 SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2 = [
+    ( 'gpt-image-1', 'GPT-Image-1' ),
     ( 'dall_e_3', 'DALL-E-3' ),
     ( 'imagen_3', 'Imagen 3' ),
     ]
