@@ -178,14 +178,22 @@ openai_image_response_strategy = 'direct_decode'
 def call_openai_api_image(prompt, gpt_model, size, config_info):
     api_key = get_open_ai_api_key(config_info)
     client = OpenAI(api_key=api_key)
-    response = client.images.generate(
-        model=clean_gpt_image_name(gpt_model),
-        prompt=prompt,
-        response_format="b64_json" if openai_image_response_strategy == 'direct_decode' else 'url',
-        size=size,
-        quality="medium" if gpt_model == "gpt-image-1" else "standard",
-        n=1,
-        )
+    if gpt_model == "gpt-image-1":
+        response = client.images.generate(
+            model=gpt_model,
+            prompt=prompt,
+            size=size,
+            quality="medium"
+            )
+    else:
+        response = client.images.generate(
+            model=clean_gpt_image_name(gpt_model),
+            prompt=prompt,
+            response_format="b64_json" if openai_image_response_strategy == 'direct_decode' else 'url',
+            size=size,
+            quality="standard",
+            n=1,
+            )
     return response
 
 def clean_gpt_image_name(gpt_model):
