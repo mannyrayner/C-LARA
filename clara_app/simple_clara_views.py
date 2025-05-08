@@ -15,6 +15,7 @@ from .utils import get_task_updates
 from .utils import uploaded_file_to_file, get_phase_up_to_date_dict
 
 from .clara_main import CLARAProjectInternal
+from .clara_registering_utils import register_project_content_helper
 from .clara_phonetic_utils import phonetic_resources_are_available
 
 from .clara_coherent_images_utils import get_style_params_from_project_params, project_params_for_simple_clara
