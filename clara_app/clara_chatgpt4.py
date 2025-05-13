@@ -30,6 +30,7 @@ import json
 import traceback
 import pprint
 
+from pathlib import Path
 from openai import OpenAI
 from google import genai
 from google.genai import types
@@ -188,8 +189,9 @@ def call_openai_api_image(prompt, gpt_model, size, config_info, element_files):
     if gpt_model == "gpt-image-1" and len(element_files) > 0:
         response = client.images.edit(
             model=gpt_model,
-            image=[ open(absolute_file_name(element_file), "rb") for element_file in element_files ],
-            prompt=prompt
+            image=[ open(element_file, "rb") for element_file in element_files ],
+            prompt=prompt,
+            size=size
             )
     elif gpt_model == "gpt-image-1":
         response = client.images.generate(
@@ -389,6 +391,8 @@ async def get_api_chatgpt4_image_response(prompt, image_file, element_files=[], 
     if n_prompt_chars != 0:
         truncated_prompt = prompt if len(prompt) <= n_prompt_chars else prompt[:n_prompt_chars] + '...'
         await post_task_update_async(callback, f'--- Sending request to {gpt_model} (size={size}): "{truncated_prompt}"')
+    if len(element_files) != 0:
+        await post_task_update_async(callback, f'--- Element files: {element_files}')
     
     loop = asyncio.get_event_loop()
 
