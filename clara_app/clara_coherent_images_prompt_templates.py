@@ -5,9 +5,9 @@ from .clara_utils import (
 config = get_config()
 
 # Ask for descriptions shorter than the maximum length to leave some slack
-max_element_description_length = int(config.get('v2_image_generation', 'max_element_description_length')) - 500
-max_page_description_length = int(config.get('v2_image_generation', 'max_page_description_length')) - 500
-max_page_description_length_imagen = int(config.get('v2_image_generation', 'max_page_description_length_imagen')) - 50  
+##max_element_description_length = int(config.get('v2_image_generation', 'max_element_description_length')) - 500
+##max_page_description_length = int(config.get('v2_image_generation', 'max_page_description_length')) - 500
+##max_page_description_length_imagen = int(config.get('v2_image_generation', 'max_page_description_length_imagen')) - 50  
 
 known_prompt_template_types = [ 'generate_style_description',
                                 'generate_style_description_example',
@@ -116,7 +116,7 @@ which will use this style.
 
 Write the specification in {text_language}.
 
-The specification needs to be at most 1000 characters long"""
+The specification needs to be at most {max_image_prompt_length} characters long"""
     }
 
 generate_style_description_example_prompt_templates = {
@@ -133,7 +133,7 @@ generate a single image, appropriate to the story, which exemplifies the style.
 
 Write the description in {text_language}.
 
-The description must be at most 3000 characters long to conform to DALL-E-3's constraints."""
+The description must be at most {max_image_prompt_length} characters long to conform to the model's constraints."""
     }
 
 style_example_interpretation_prompt_templates = {
@@ -315,11 +315,9 @@ to be passed to DALL-E-3 to generate a single image showing how "{{element_text}
 
 - Be as precise and detailed as possible to ensure consistency in the generated images.**
 
-- The description should be at most {max_element_description_length} characters long, as it will later be combined with other descriptions.
+- The description should be at most {{max_image_prompt_length}} characters long, as it will later be combined with other descriptions.
 
-- DALL-E-3 will only receive this text when generating the image, so it is essential to include the style information.
-
-- Take account of the following advice from the user about how to realise the image:
+- The image model will only receive this text when generating the image, so it is essential to include the style information.
 
 {{advice_text}}"""
     }
@@ -488,6 +486,10 @@ Please write out only the JSON-formatted list, since it will be read by a Python
 """
     }
 
+# Adapt to support gpt-image-1
+# Elements are represented as images, but passed as files to the generate call
+# In the gpt-image-1 version, the value of element_descriptions_text will be a list of element texts referring to the image files
+
 generate_page_description_prompt_templates = {
     'default': f"""We are generating a set of images to illustrate the following text, which has been divided into numbered pages:
 
@@ -519,7 +521,7 @@ generate a single image for page {{page_number}}.
 
 - Write the specification in {{text_language}}.
 
-- The specification you write out must be at most {max_page_description_length} characters long to conform with DALL-E-3's constraints.
+- The specification you write out must be at most {{max_image_prompt_length}} characters long to conform with the image model's constraints.
 
 - Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
 idea of the image and then list the aspects of the image which are essential to the text and must be represented.
@@ -546,8 +548,6 @@ If any item listed there fails to match, the image will be rejected, so only inc
 in this section which is genuinely essential, as opposed to just desirable.
 
 - DALL-E-3 will only receive this text when generating the image, so it is essential to include the style information.
-
-- Take account of the following advice from the user about how to realise the image:
 
 {{advice_text}}
 """,
@@ -588,7 +588,7 @@ generate a single image for page {{page_number}}.
 
 - Write the specification in {{text_language}}.
 
-- The specification you write out must be at most {max_page_description_length_imagen} words long to conform with Imagen 3's constraints.
+- The specification you write out must be at most {{max_image_prompt_length}} words long to conform with Imagen 3's constraints.
 
 - Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
 idea of the image and then list the aspects of the image which are essential to the text and must be represented.
@@ -637,10 +637,69 @@ in this section which is genuinely essential, as opposed to just desirable.
 
 - Imagen 3 will only receive this text when generating the image, so it is essential to include the style information.
 
-- Take account of the following advice from the user about how to realise the image:
+{{advice_text}}
+""",
+
+    'images_as_files': f"""We are using the gpt-image-1 'edit' API to generate a set of images to illustrate the following text,
+which has been divided into numbered pages:
+
+{{formatted_story_data}}
+
+{{background_text}}
+
+The intended style in which the images will be produced is described as follows:
+
+{{style_description}}
+
+We are about to generate the image for page {{page_number}}, whose text is
+
+{{page_text}}
+
+We have already generated images of various elements (characters, locations, etc) that occur on more than one page.
+The relevant images will be passed as part of the call we are constructing here.
+
+Here are the relevant elements whose images we are including in the call:
+
+{{element_descriptions_text}}
+
+In this step, please create a detailed specification of the image on page {{page_number}}, in the intended style
+and also including the images of relevant elements, that can be passed to gpt-image-1 to
+generate a single image for page {{page_number}}.
+
+*IMPORTANT*:
+
+- Write the specification in {{text_language}}.
+
+- Start the specification with a short, self-contained section entitled "Essential aspects", where you briefly summarise the central
+idea of the image and then list the aspects of the image which are essential to the text and must be represented.
+This will often include material not mentioned in the text on the current page, which is necessary to maintain continuity,
+and must be inferred from text on the other pages or from other background knowledge.
+
+- Describe how the attached images should be incorporated into the new image being generated here.
+
+For example, if the text were the traditional nursery rhyme
+
+[ {{{{ "page_number": 1, "text": "Mary had a little lamb," }}}},
+  {{{{ "page_number": 2, "text": "Its fleece was white as snow;" }}}},
+  {{{{ "page_number": 3, "text": "And everywhere that Mary went, The lamb was sure to go." }}}}
+  ]
+
+and we have attached images of "Mary" and "the lamb",
+
+then the "Essential aspects" section for page 3 (text: "And everywhere that Mary went, The lamb was sure to go.") might read:
+
+"Create an image that combines the attached images of Mary, a little girl, and her lamb, as follows.
+Mary is walking down a picturesque country lane followed by her lamb.
+They both appear happy and contented."
+
+The "Essential aspects" section may be used to check the correctness of the generated image.
+If any item listed there fails to match, the image will be rejected, so only include material
+in this section which is genuinely essential, as opposed to just desirable.
+
+- gpt-image-1 will only receive this text when generating the image, so it is essential to include the style information.
 
 {{advice_text}}
-"""
+""",
     }
 
 correct_page_description_prompt_templates = {
@@ -726,14 +785,14 @@ account of the style description. Here is a description of the uploaded image pr
 {image_interpretation}
 
 In this step, please create a detailed specification of the image on this page, based on the user
-uploaded image, in the intended style, and consistent with the text, that can be passed to DALL-E-3 to
+uploaded image, in the intended style, and consistent with the text, that can be passed to the image model to
 generate a single image for the page.
 
 *IMPORTANT*:
 
 Write the specification in {text_language}.
 
-The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+The specification you write out must be at most {max_image_prompt_length} characters long to conform with the image model's constraints.
 
 """,
 
@@ -761,7 +820,7 @@ in the intended style and taking account of the background, that can be passed t
 
 *IMPORTANT*:
 
-The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+The specification you write out must be at most {max_image_prompt_length} characters long to conform with the image model's constraints.
 
 """
     }
@@ -789,14 +848,14 @@ uploaded image, and in the intended style. This will later be used in prompts su
 
 Write the specification in {text_language}.
 
-The specification you write out must be at most 2000 characters long to conform with DALL-E-3's constraints.
+The specification you write out must be at most {max_image_prompt_length} characters long to conform with the image model's constraints.
 
 """
     }
 
 element_image_interpretation_prompt_templates = {
    'interpret_uploaded_element_image': """Please provide a description of this image.
-The image has been uploaded by the user to provide information that will later help DALL-E-3
+The image has been uploaded by the user to provide information that will later help an image model
 create images to illustrate the following text:
 
 {formatted_story_data}
@@ -804,7 +863,7 @@ create images to illustrate the following text:
 The image is meant to depict the element "{element_text}".
 
 In this step, your task is to create a text description of the image, interpreting it as meaning "{element_text}" from the text.
-The description you provide will later be combined with other information to create prompts for DALL-E-3.
+The description you provide will later be combined with other information to create prompts for the image model.
 
 ** Write the description in {text_language} **
 
@@ -829,6 +888,8 @@ For a human character, these would include:**
 - **General demeanour**
 
 **Be as precise and detailed as possible.**
+
+The description must be at most {max_image_prompt_length} characters long to conform to the image model's constraints
 """
    }
 

@@ -74,9 +74,11 @@ from .clara_coherent_images_utils import (
     element_text_to_element_name,
     element_name_to_element_text,
     element_directory,
+    get_max_image_prompt_length,
     remove_element_name_from_list_of_elements,
     add_element_name_to_list_of_elements,
     get_element_description,
+    get_element_file,
     elements_are_represented_as_images,
     get_page_text,
     get_page_description,
@@ -481,19 +483,22 @@ async def generate_expanded_style_description(description_version_number, params
     # Get text language
     text_language = get_text_language(params)
 
+    #max_image_prompt_length = 1500
+    max_image_prompt_length = get_max_image_prompt_length('style_description', params)
+
     # Create the prompt to expand the style description
     prompt_template = get_prompt_template('default', 'generate_style_description')
     prompt = prompt_template.format(text=text,
                                     text_language=text_language,
                                     base_description=base_description,
-                                    background_text=background_text)
+                                    background_text=background_text,
+                                    max_image_prompt_length=max_image_prompt_length)
 
     # Get the expanded description from the AI
     expanded_description = None
     valid_expanded_description_produced = False
     error_message = ''
     tries_left = 5
-    max_dall_e_3_prompt_length = 1500
     
     while not valid_expanded_description_produced and tries_left:
         try:
@@ -502,10 +507,10 @@ async def generate_expanded_style_description(description_version_number, params
 
             # Save the expanded description
             expanded_description = description_api_call.response
-            if len(expanded_description) < max_dall_e_3_prompt_length:
+            if len(expanded_description) < max_image_prompt_length:
                 valid_expanded_description_produced = True
             else:
-                error_message += f'-----------\nExpanded style description too long, {len(expanded_description)} chars over limit of {max_dall_e_3_prompt_length} chars'
+                error_message += f'-----------\nExpanded style description too long, {len(expanded_description)} chars over limit of {max_image_prompt_length} chars'
                 tries_left -= 1
 
         except Exception as e:
@@ -530,19 +535,21 @@ async def generate_style_description_example(description_version_number, expande
     # Get text language
     text_language = get_text_language(params)
 
+    #max_image_prompt_length = 4000
+    max_image_prompt_length = get_max_image_prompt_length('style_image', params)
+
     # Create the prompt to expand the style description
     prompt_template = get_prompt_template('default', 'generate_style_description_example')
     prompt = prompt_template.format(text=text,
                                     text_language=text_language,
-                                    expanded_style_description=expanded_style_description)
+                                    expanded_style_description=expanded_style_description,
+                                    max_image_prompt_length=max_image_prompt_length)
 
     # Get the expanded description from the AI
     image_description = None
     valid_image_description_produced = False
     error_message = ''
     tries_left = 5
-    max_dall_e_3_prompt_length = 4000
-    
         
     while not valid_image_description_produced and tries_left:
         try:
@@ -551,10 +558,10 @@ async def generate_style_description_example(description_version_number, expande
 
             # Save the expanded description
             image_description = description_api_call.response
-            if len(image_description) < max_dall_e_3_prompt_length:
+            if len(image_description) < max_image_prompt_length:
                 valid_image_description_produced = True
             else:
-                error_message += f'-----------\nStyle description example too long, {len(expanded_description)} chars over limit of {max_dall_e_3_prompt_length} chars'
+                error_message += f'-----------\nStyle description example too long, {len(expanded_description)} chars over limit of {max_image_prompt_length} chars'
                 tries_left -= 1
                 
         except Exception as e:
@@ -898,6 +905,9 @@ async def generate_expanded_element_description_and_images(element_name, element
 
     total_cost_dict = {}
 
+    #max_image_prompt_length = 1250
+    max_image_prompt_length = get_max_image_prompt_length('element_description', params)
+
     # Create the prompt to expand the element description
     prompt_template = get_prompt_template('default', 'generate_element_description')
     prompt = prompt_template.format(text=text,
@@ -905,13 +915,13 @@ async def generate_expanded_element_description_and_images(element_name, element
                                     background_text=background_text,
                                     style_description=style_description,
                                     element_text=element_text,
-                                    advice_text=advice_text)
+                                    advice_text=advice_text,
+                                    max_image_prompt_length=max_image_prompt_length)
 
     # Get the expanded description from the AI
     try:
         valid_expanded_description_produced = False
         tries_left = 5
-        max_dall_e_3_prompt_length = 1250
         
         while not valid_expanded_description_produced and tries_left:
             description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_element_description', params, callback=callback)
@@ -919,7 +929,7 @@ async def generate_expanded_element_description_and_images(element_name, element
 
             # Save the expanded description
             expanded_description = description_api_call.response
-            if len(expanded_description) < max_dall_e_3_prompt_length:
+            if len(expanded_description) < max_image_prompt_length:
                 valid_expanded_description_produced = True
             else:
                 tries_left -= 1
@@ -1719,7 +1729,7 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     advice = get_page_advice(page_number, params)
     if advice:
         advice_text = f"""
-**Bear in mind the following advice from the user when creating the page description:**
+- Bear in mind the following advice from the user when creating the page description:
 
 {advice}
 """
@@ -1736,22 +1746,47 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
             if previous_page_description:
                 previous_page_descriptions_text += f'\nPage {previous_page_number}:\n{previous_page_description}'
 
+    # Adapt to support gpt-image-1
     elements_as_images = elements_are_represented_as_images(params)
 
-    element_description_with_element_texts = [ ( element_text, get_element_description(element_text, params) )
-                                               for element_text in elements ]
-    if not element_description_with_element_texts:
-        element_descriptions_text = f'(No relevant elements)'
+    if elements and elements_as_images == 'openai_version':
+        # We're using the OpenAI gpt-image-1 edit route and there are elements. We pass the files and some text saying what each one is
+        element_files = [ get_element_file(element_text, params) for element_text in elements ]
+        element_descriptions_text = ''
+        index = 0
+        for element_text in elements:
+            index += 1
+            element_descriptions_text += f'\nFile #{index}: "{element_text}"'
     else:
-        element_descriptions_text = f'Specifications of relevant elements:\n'
-        for element_text, element_description in element_description_with_element_texts:
-            element_descriptions_text += f'\n"{element_text}":\n{element_description}'
+        # There are no elements, or we're using Imagen 3 (URLs), or we're using DALL-E-3 (descriptions)
+        element_files = []
 
+        element_description_with_element_texts = [ ( element_text, get_element_description(element_text, params) )
+                                                   for element_text in elements ]
+        
+        if not element_description_with_element_texts:
+            # We have no elements
+            element_descriptions_text = f'(No relevant elements)'
+        else:
+            # We have elements, and we're either using descriptions or URLs (Imagen 3 route). Pass the relevant information into the prompt
+            element_descriptions_text = f'Specifications of relevant elements:\n'
+            for element_text, element_description in element_description_with_element_texts:
+                element_descriptions_text += f'\n"{element_text}":\n{element_description}'
+
+    # Adapt to support gpt-image-1
     # Create the prompt
-    if elements_as_images:
+    if elements_as_images == 'gemini_version':
         prompt_template = get_prompt_template('url_image_descriptions', 'generate_page_description')
+    elif elements_as_images == 'openai_version':
+        prompt_template = get_prompt_template('images_as_files', 'generate_page_description')
     else:
         prompt_template = get_prompt_template('default', 'generate_page_description')
+
+    # Adapt to support gpt-image-1
+    # Unclear if the the max prompt length is the same with gpt-image-1 or is even defined
+    #max_image_prompt_length = 4000
+    max_image_prompt_length = get_max_image_prompt_length('page_description', params)
+    
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
                                     background_text=background_text,
                                     style_description=style_description,
@@ -1760,14 +1795,14 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
                                     text_language=text_language,
                                     advice_text=advice_text,
                                     element_descriptions_text=element_descriptions_text,
-                                    previous_page_descriptions_text=previous_page_descriptions_text)
+                                    previous_page_descriptions_text=previous_page_descriptions_text,
+                                    max_image_prompt_length=max_image_prompt_length)
     
     # Get the expanded description from the AI
     try:
         valid_expanded_description_produced = False
         tries_left = 5
         #tries_left = 1
-        max_dall_e_3_prompt_length = 4000
         
         while not valid_expanded_description_produced and tries_left:
             description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_page_description', params, callback=callback)
@@ -1775,7 +1810,7 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
 
             # Save the expanded description
             expanded_description = description_api_call.response
-            if len(expanded_description) < max_dall_e_3_prompt_length and "essential aspects" in expanded_description.lower():
+            if len(expanded_description) < max_image_prompt_length and "essential aspects" in expanded_description.lower():
                 valid_expanded_description_produced = True
             else:
                 print(f'Length of description = {len(expanded_description)}')
@@ -1785,10 +1820,12 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
 
         if valid_expanded_description_produced:   
         # Create and rate the images
-            image_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_version_number, params)
+        # Adapt to support gpt-image-1
+        # Pass the list of element images as well
+            image_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, element_files, description_version_number, params)
         else:
             image_cost_dict = {}
-            error_message = f"No generated description was less than {max_dall_e_3_prompt_length} characters long"
+            error_message = f"No generated description was less than {max_image_prompt_length} characters long"
             write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
             
         total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
@@ -1801,7 +1838,9 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
         write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
         return description_directory, {}   
 
-async def generate_and_rate_page_images(page_number, expanded_description, description_version_number, params,
+# Adapt to support gpt-image-1
+# Pass the list of element images as well
+async def generate_and_rate_page_images(page_number, expanded_description, element_files, description_version_number, params,
                                         keep_existing_images=False, callback=None, correction_tries_left=3, total_cost_dict={}):
     if correction_tries_left <= 0:
         await post_task_update_async(callback, f'Unable to correct page prompt after content policy violation, giving up')
@@ -1827,8 +1866,10 @@ async def generate_and_rate_page_images(page_number, expanded_description, descr
         all_image_dirs = []
         
     for image_version_number in range(next_image_index, next_image_index + n_images_per_description):
-        tasks.append(asyncio.create_task(generate_and_rate_page_image(page_number, expanded_description, description_version_number, image_version_number,
-                                                                      params, callback=callback)))
+        # Adapt to support gpt-image-1
+        # Pass the list of element images as well
+        tasks.append(asyncio.create_task(generate_and_rate_page_image(page_number, expanded_description, element_files, description_version_number,
+                                                                      image_version_number, params, callback=callback)))
     results = await asyncio.gather(*tasks)
     for image_dir, cost_dict in results:
         all_image_dirs.append(image_dir)
@@ -1844,7 +1885,9 @@ async def generate_and_rate_page_images(page_number, expanded_description, descr
                                                                                                            params,
                                                                                                            callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, cost_dict)
-        total_cost_dict = generate_and_rate_page_images(page_number, expanded_description1, description_version_number, params,
+        # Adapt to support gpt-image-1
+        # Pass the list of element images as well
+        total_cost_dict = generate_and_rate_page_images(page_number, expanded_description1, element_files, description_version_number, params,
                                                         keep_existing_images=False, callback=None,
                                                         correction_tries_left=correction_tries_left-1, total_cost_dict=total_cost_dict)
         
@@ -1862,20 +1905,23 @@ async def correct_expanded_description_after_content_policy_failure(expanded_des
     # Get text language
     text_language = get_text_language(params)
 
+    #max_image_prompt_length = 4000
+    max_image_prompt_length = get_max_image_prompt_length('page_description', params)
+
     # Create the prompt
     prompt_template = get_prompt_template('default', 'correct_page_description')
     prompt = prompt_template.format(formatted_story_data=formatted_story_data,
                                     page_number=page_number,
                                     page_text=page_text,
                                     text_language=text_language,
-                                    expanded_description=expanded_description_old)
+                                    expanded_description=expanded_description_old,
+                                    max_image_prompt_length=max_image_prompt_length)
     
     # Get the expanded description from the AI
     try:
         valid_expanded_description_produced = False
         tries_left = 5
         #tries_left = 1
-        max_dall_e_3_prompt_length = 4000
         
         while not valid_expanded_description_produced and tries_left:
             description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_page_description', params, callback=callback)
@@ -1883,7 +1929,7 @@ async def correct_expanded_description_after_content_policy_failure(expanded_des
 
             # Save the expanded description
             expanded_description = description_api_call.response
-            if len(expanded_description) < max_dall_e_3_prompt_length and "essential aspects" in expanded_description.lower():
+            if len(expanded_description) < max_image_prompt_length and "essential aspects" in expanded_description.lower():
                 valid_expanded_description_produced = True
             else:
                 tries_left -= 1
@@ -1903,8 +1949,11 @@ async def correct_expanded_description_after_content_policy_failure(expanded_des
         write_project_txt_file(error_message, project_dir, f'pages/page{page_number}/description_v{description_version_number}/error.txt')
         return description_directory, {}   
 
-async def generate_and_rate_page_image(page_number, description, description_version_number, image_version_number, params, callback=None):
-##    print(f'Generating and rating image for page {page_number}, description_version_number = {description_version_number} image_version_number = {image_version_number}')
+# Adapt to support gpt-image-1
+# Pass the list of element images as well
+async def generate_and_rate_page_image(page_number, description, element_files,
+                                       description_version_number, image_version_number, params, callback=None):
+##    print(f'Generating and rating image for page {page_number}, element_files = {element_files}, description_version_number = {description_version_number} image_version_number = {image_version_number}')
     project_dir = params['project_dir']
     
     total_cost_dict = {}
@@ -1916,7 +1965,9 @@ async def generate_and_rate_page_image(page_number, description, description_ver
     make_project_dir(project_dir, image_dir)
 
     try:
-        image_file, image_cost_dict = await generate_page_image(image_dir, description, page_number, params, callback=callback)
+        # Adapt to support gpt-image-1
+        # Pass the list of element images as well
+        image_file, image_cost_dict = await generate_page_image(image_dir, description, element_files, page_number, params, callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, image_cost_dict)
 
         if file_exists(image_file):
@@ -1959,11 +2010,13 @@ async def generate_and_rate_page_image(page_number, description, description_ver
     write_project_cost_file(total_cost_dict, project_dir, f'{image_dir}/cost.json')
     return image_dir, total_cost_dict
 
-async def generate_page_image(image_dir, description, page_number, params, callback=None):
+# Adapt to support gpt-image-1
+# Pass the list of element images as well
+async def generate_page_image(image_dir, description, element_files, page_number, params, callback=None):
     project_dir = params['project_dir']
     
     image_file = project_pathname(project_dir, f'{image_dir}/image.jpg')
-    api_call = await get_api_chatgpt4_image_response_for_task(description, image_file, 'generate_page_image', params, callback=callback)
+    api_call = await get_api_chatgpt4_image_response_for_task(description, image_file, 'generate_page_image', params, element_files=element_files, callback=callback)
 
     return image_file, { 'generate_page_image': api_call.cost }
 
@@ -1997,6 +2050,9 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
         previous_pages, elements, context_cost_dict = await find_relevant_previous_pages_and_elements_for_page(page_number, params, callback=callback)
         total_cost_dict = combine_cost_dicts(total_cost_dict, context_cost_dict)
 
+        #max_image_prompt_length = 4000
+        max_image_prompt_length = get_max_image_prompt_length('page_description', params)
+
         # Create the prompt
         background_advice = get_background_advice(params)
 
@@ -2006,18 +2062,19 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
                                             text_language=text_language,
                                             background_advice=background_advice,
                                             style_description=style_description,
-                                            image_interpretation=image_interpretation)
+                                            image_interpretation=image_interpretation,
+                                            max_image_prompt_length=max_image_prompt_length)
         else:
             prompt_template = get_prompt_template('just_style', 'generate_page_description_for_uploaded_image')
             prompt = prompt_template.format(page_text=page_text,
                                             text_language=text_language,
                                             style_description=style_description,
-                                            image_interpretation=image_interpretation)
+                                            image_interpretation=image_interpretation,
+                                            max_image_prompt_length=max_image_prompt_length)
 
         valid_expanded_description_produced = False
         tries_left = 5
         #tries_left = 1
-        max_dall_e_3_prompt_length = 4000
         
         while not valid_expanded_description_produced and tries_left:
             description_api_call = await get_api_chatgpt4_response_for_task(prompt, 'generate_page_description', params, callback=callback)
@@ -2025,7 +2082,7 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
 
             # Save the expanded description
             expanded_description = description_api_call.response
-            if len(expanded_description) < max_dall_e_3_prompt_length:
+            if len(expanded_description) < max_image_prompt_length:
                 valid_expanded_description_produced = True
             else:
                 print(f'Length of description = {len(expanded_description)}')
@@ -2036,7 +2093,7 @@ async def create_and_store_expanded_description_for_uploaded_image(rel_image_pat
             write_project_txt_file(expanded_description, project_dir, f'pages/page{page_number}/description_v{description_version_number}/expanded_description.txt')
             return total_cost_dict
         else:
-            error_message = f"Error when creating description of uploaded image. No generated description was less than {max_dall_e_3_prompt_length} characters long"
+            error_message = f"Error when creating description of uploaded image. No generated description was less than {max_image_prompt_length} characters long"
             await post_task_update_async(callback, error_message)
             raise ImageGenerationError(message = error_message)
         

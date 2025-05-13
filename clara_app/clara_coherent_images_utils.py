@@ -7,6 +7,7 @@ from .clara_chatgpt4 import (
     )
 
 from .clara_utils import (
+    get_config,
     read_txt_file,
     write_txt_file,
     read_json_file,
@@ -47,6 +48,8 @@ import unicodedata
 import pprint
 from pathlib import Path
 from PIL import Image
+
+config = get_config()
 
 # Params files
 
@@ -552,6 +555,9 @@ def add_element_name_to_list_of_elements(element_text, params):
     element_list.append({ 'text': element_text, 'name': element_name })
     write_project_json_file(element_list, project_dir, f'elements/elements.json')
 
+# Adapt to support gpt-image-1
+# Elements are represented as images, but passed as files to the generate call
+# and also incorporated in the description, perhaps using just the element_text + a reference to the file
 def get_element_description(element_text, params):
     project_dir = params['project_dir']
 
@@ -561,22 +567,50 @@ def get_element_description(element_text, params):
     rel_image = get_element_image(element_text, params)
     url = external_url_for_image(rel_image, params)
 
-    if elements_are_represented_as_images(params):
+    if elements_are_represented_as_images(params) == 'gemini_version':
         return f"""URL: {url}
 Description: {description}"""
     else:
         name = element_text_to_element_name(element_text)
         return f'Description: {description}'
 
+def get_max_image_prompt_length(prompt_type, params):
+    if ( 'image_models_for_tasks' in params and 'default' in params['image_models_for_tasks'] ):
+        image_model = params['image_models_for_tasks']['default']
+    else:
+        image_model = 'dall_e_3'
+
+    # Haven't yet found restrictions on image prompt lengths in gpt-image-1
+    if image_model == 'gpt-image-1':
+        return 20000
+    elif image_model == 'dall_e_3':
+        return int(config.get('max_image_prompt_lengths_for_dall_e_3', prompt_type))
+    elif image_model == 'imagen_3':
+        return int(config.get('max_image_prompt_lengths_for_imagen_3', prompt_type))
+
 def elements_are_represented_as_images(params):
-    result = 'project_id' in params and \
-             'image_models_for_tasks' in params and \
-             'default' in params['image_models_for_tasks'] and \
-             params['image_models_for_tasks']['default'] == 'imagen_3'
+    result = False
+    if ( 'image_models_for_tasks' in params and 'default' in params['image_models_for_tasks'] ):
+        image_model = params['image_models_for_tasks']['default']
+        if image_model == 'imagen_3':
+            result = 'gemini_version'
+        elif image_model == 'gpt-image-1':
+            result = 'openai_version'
 ##    print(f'elements_are_represented_as_images: params:')
 ##    pprint.pprint(params)
 ##    print(f'elements_are_represented_as_images: {result}')
     return result
+
+def get_element_file(element_text, params):
+    project_dir = params['project_dir']
+    
+    name = element_text_to_element_name(element_text)
+    file = absolute_file_name(f'{project_dir}/elements/{name}/image.jpg')
+
+    if not file_exists(file):
+        raise ValueError(f'Missing element file for "{element_text}", {file}')
+    else:
+        return file
 
 # This should be generalised, but okay while we only have one public server
 def external_url_for_image(rel_image, params):
@@ -695,10 +729,12 @@ async def get_api_chatgpt4_response_for_task(prompt, task_name, params, callback
     config_info = get_config_info_from_params(task_name, params)
     return await get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback)
 
-async def get_api_chatgpt4_image_response_for_task(description, image_file, task_name, params, callback=None):
+# Adapt to support gpt-image-1
+# Pass the list of element images as well
+async def get_api_chatgpt4_image_response_for_task(description, image_file, task_name, params, element_files=[], callback=None):
     config_info = get_config_info_from_params(task_name, params)
-    # Might be DALL-E-4 or Imagen 3
-    return await get_api_image_response(description, image_file, config_info=config_info, callback=callback)
+    # Might be DALL-E-4, Imagen 3 or gpt-image-1
+    return await get_api_image_response(description, image_file, element_files=element_files, config_info=config_info, callback=callback)
 
 async def get_api_chatgpt4_interpret_image_response_for_task(prompt, image_file, task_name, params, callback=None):
     config_info = get_config_info_from_params(task_name, params)

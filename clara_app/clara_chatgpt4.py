@@ -88,13 +88,16 @@ def get_deep_seek_api_key(config_info):
 def call_chat_gpt4(prompt, config_info={}, callback=None):
     return asyncio.run(get_api_chatgpt4_response(prompt, config_info=config_info, callback=callback))
 
-def call_chat_gpt4_image(prompt, image_file, config_info={}, callback=None):
+# Adapt to support gpt-image-1
+# Pass the list of element images as well
+def call_chat_gpt4_image(prompt, image_file, element_files=[], config_info={}, callback=None):
     if 'image_model' in config_info and config_info['image_model'] == 'imagen_3':
         shortening_api_calls, prompt = shorten_imagen_3_prompt_if_necessary(prompt, config_info={'gpt_model': DEFAULT_GPT_4_MODEL}, callback=callback)
         image_api_call = asyncio.run(get_api_gemini_image_response(prompt, image_file, config_info=config_info, callback=callback))
     else:
         shortening_api_calls, prompt = shorten_dall_e_3_prompt_if_necessary(prompt, config_info=config_info, callback=callback)
-        image_api_call = asyncio.run(get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback))
+        image_api_call = asyncio.run(get_api_chatgpt4_image_response(prompt, image_file,
+                                                                     element_files=element_files, config_info=config_info, callback=callback))
 
     return shortening_api_calls + [ image_api_call ]
 
@@ -175,10 +178,20 @@ def call_openai_api(messages, config_info):
 #openai_image_response_strategy = 'url'
 openai_image_response_strategy = 'direct_decode'
 
-def call_openai_api_image(prompt, gpt_model, size, config_info):
+# Adapt to support gpt-image-1
+# Pass the list of element images as well
+# If we are using gpt-image-1 and list of element images is non-empty,
+# use the client.images.edit endpoint
+def call_openai_api_image(prompt, gpt_model, size, config_info, element_files):
     api_key = get_open_ai_api_key(config_info)
     client = OpenAI(api_key=api_key)
-    if gpt_model == "gpt-image-1":
+    if gpt_model == "gpt-image-1" and len(element_files) > 0:
+        response = client.images.edit(
+            model=gpt_model,
+            image=[ open(absolute_file_name(element_file), "rb") for element_file in element_files ],
+            prompt=prompt
+            )
+    elif gpt_model == "gpt-image-1":
         response = client.images.generate(
             model=gpt_model,
             prompt=prompt,
@@ -357,14 +370,17 @@ async def get_api_chatgpt4_response(prompt, config_info={}, callback=None):
     
     return api_call
 
-async def get_api_image_response(prompt, image_file, config_info={}, callback=None):
+async def get_api_image_response(prompt, image_file, element_files=[], config_info={}, callback=None):
     if 'image_model' in config_info and config_info['image_model'] == 'imagen_3':
         return await get_api_gemini_image_response(prompt, image_file, config_info=config_info, callback=callback)
     else:
-        return await get_api_chatgpt4_image_response(prompt, image_file, config_info=config_info, callback=callback)
+        return await get_api_chatgpt4_image_response(prompt, image_file, element_files=element_files,
+                                                     config_info=config_info, callback=callback)
 
 # Version of get_api_chatgpt4_response for creating DALL-E-3 images
-async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, callback=None):
+# Adapt to support gpt-image-1
+# Pass the list of element images as well
+async def get_api_chatgpt4_image_response(prompt, image_file, element_files=[], config_info={}, callback=None):
     gpt_model = config_info['image_model'] if 'image_model' in config_info else 'dall-e-3'
     size='1024x1024'
     
@@ -377,7 +393,9 @@ async def get_api_chatgpt4_image_response(prompt, image_file, config_info={}, ca
     loop = asyncio.get_event_loop()
 
     # Start the API call in a separate thread to not block the event loop
-    api_task = loop.run_in_executor(None, call_openai_api_image, prompt, gpt_model, size, config_info)
+    # Adapt to support gpt-image-1
+    # Pass the list of element images as well
+    api_task = loop.run_in_executor(None, call_openai_api_image, prompt, gpt_model, size, config_info, element_files)
 
     time_waited = 0
     while not api_task.done():
