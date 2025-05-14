@@ -30,6 +30,7 @@ import json
 import traceback
 import pprint
 
+from contextlib import ExitStack
 from pathlib import Path
 from openai import OpenAI
 from google import genai
@@ -187,12 +188,24 @@ def call_openai_api_image(prompt, gpt_model, size, config_info, element_files):
     api_key = get_open_ai_api_key(config_info)
     client = OpenAI(api_key=api_key)
     if gpt_model == "gpt-image-1" and len(element_files) > 0:
-        response = client.images.edit(
-            model=gpt_model,
-            image=[ open(element_file, "rb") for element_file in element_files ],
-            prompt=prompt,
-            size=size
+        # keep files open for the duration of the request
+        with ExitStack() as stack:
+            img_handles = [
+                stack.enter_context(open(Path(element_file), "rb")) for element_file in element_files[:16]
+            ]
+            response = client.images.edit(
+                model="gpt-image-1",
+                image=img_handles,
+                prompt=prompt,
+                size=size,
             )
+        return response
+##        response = client.images.edit(
+##            model=gpt_model,
+##            image=[ open(element_file, "rb") for element_file in element_files ],
+##            prompt=prompt,
+##            size=size
+##            )
     elif gpt_model == "gpt-image-1":
         response = client.images.generate(
             model=gpt_model,

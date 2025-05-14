@@ -85,8 +85,9 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
     for description_dir in sorted(content_dir.glob('description_v*')):
         if directory_exists(description_dir):
             description_index = int(description_dir.name.split('_v')[-1])  # Get the version index
-            # Paths to expanded description, interpretation, and evaluation
+            # Paths to expanded description, elements, interpretation, and evaluation
             expanded_description_path = description_dir / 'expanded_description.txt'
+            elements_path = description_dir / 'elements.json'
             interpretation_path = description_dir / 'interpretation.txt'
             evaluation_path = description_dir / 'evaluation.txt'
 
@@ -103,6 +104,7 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
                         # Build the relative paths (relative to the content directory)
                         relative_image_path = image_path.relative_to(project_dir).as_posix()
                         relative_expanded_description_path = expanded_description_path.relative_to(project_dir) if expanded_description_path.exists() else None
+                        relative_elements_path = elements_path.relative_to(project_dir) if elements_path.exists() else None
                         relative_interpretation_path = interpretation_path.relative_to(project_dir) if interpretation_path.exists() else None
                         relative_evaluation_path = evaluation_path.relative_to(project_dir) if evaluation_path.exists() else None
                         relative_image_interpretation_path = image_interpretation_path.relative_to(project_dir) if image_interpretation_path.exists() else None
@@ -118,6 +120,7 @@ async def create_alternate_images_json(content_dir, project_dir, callback=None):
                             'image_index': image_index,
                             'image_path': str(relative_image_path),
                             'expanded_description_path': str(relative_expanded_description_path) if relative_expanded_description_path else None,
+                            'elements_path': str(relative_elements_path) if relative_elements_path else None,
                             'image_interpretation_path': str(relative_image_interpretation_path) if relative_image_interpretation_path else None,
                             'image_evaluation_path': str(relative_image_evaluation_path) if relative_image_evaluation_path else None,
                             'hidden': hidden_status,
@@ -155,6 +158,8 @@ def promote_alternate_image(content_dir, project_dir, alternate_image_id):
                 copy_file(project_dir / alt_image['image_path'], content_dir / 'image.jpg')
             if alt_image['expanded_description_path']:
                 copy_file(project_dir / alt_image['expanded_description_path'], content_dir / 'expanded_description.txt')
+            if alt_image['elements_path']:
+                copy_file(project_dir / alt_image['elements_path'], content_dir / 'elements.json')
             if alt_image['image_interpretation_path']:           
                 copy_file(project_dir / alt_image['image_interpretation_path'], content_dir / 'interpretation.txt')
             if alt_image['image_evaluation_path']:

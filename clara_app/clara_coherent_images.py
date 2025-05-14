@@ -1604,8 +1604,12 @@ async def generate_page_image_from_expanded_description(expanded_description, pa
 
     try:
         write_project_txt_file(expanded_description, project_dir, f'{description_dir}/expanded_description.txt')
+
+        relevant_pages_and_elements = read_project_json_file(project_dir, f'{page_dir}/relevant_pages_and_elements.json')
+        relevant_elements = relevant_pages_and_elements["relevant_elements"]
+        element_files = [ get_element_file(element_text, params) for element_text in relevant_elements ] 
         
-        cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_version_number, params)
+        cost_dict = await generate_and_rate_page_images(page_number, expanded_description, element_files, description_version_number, params)
 
         await create_alternate_images_json(page_dir, project_dir)
         write_project_cost_file(cost_dict, project_dir, f'{description_dir}/cost.json')
@@ -1675,6 +1679,8 @@ async def create_variant_images_for_page(params, page_number, alternate_image_id
     alternate_images_info = get_alternate_image_info_for_index(all_alternate_images_info, alternate_image_id)
     description_index = int(alternate_images_info['description_index'])
     expanded_description = read_project_txt_file(project_dir, alternate_images_info['expanded_description_path'])
+    elements = read_project_json_file(project_dir, alternate_images_info['elements']) if 'elements' in alternate_images_info else []
+    element_files = [ get_element_file(element_text, params) for element_text in elements ] 
 ##    if uploaded_image_description(expanded_description):
 ##        image_path = alternate_images_info['image_path']
 ##        expanded_description, description_cost_dict = await create_and_store_expanded_description_for_uploaded_image(image_path, page_number, description_index,
@@ -1682,7 +1688,7 @@ async def create_variant_images_for_page(params, page_number, alternate_image_id
 ##        combine_cost_dicts(total_cost_dict, description_cost_dict)
         
     await post_task_update_async(callback, f'Generating pages images for description_version_number = {description_index}')
-    images_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, description_index,
+    images_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, element_files, description_index,
                                                            params, keep_existing_images=True, callback=callback)
     combine_cost_dicts(total_cost_dict, images_cost_dict)
     # Update alternate_images.json
@@ -1817,6 +1823,9 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
                 tries_left -= 1
 
         write_project_txt_file(expanded_description, project_dir, f'pages/page{page_number}/description_v{description_version_number}/expanded_description.txt')
+        # Adapt to support gpt-image-1
+        # Save the elements as well in case we're going to create variants
+        write_project_json_file(elements, project_dir, f'pages/page{page_number}/description_v{description_version_number}/elements.json')
 
         if valid_expanded_description_produced:   
         # Create and rate the images
