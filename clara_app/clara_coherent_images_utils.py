@@ -64,7 +64,7 @@ project_params_for_simple_clara = { 'n_expanded_descriptions': 1,
                                     'page_interpretation_prompt': 'with_context_v3_objective',
                                     'page_evaluation_prompt': 'with_context_lenient',
 
-                                    'image_generation_model': 'dall_e_3',
+                                    'image_generation_model': 'gpt-image-1',
 
                                     'default_model': 'gpt-4o',
                                     'generate_element_names_model': 'gpt-4o',
@@ -575,6 +575,8 @@ Description: {description}"""
         return f'Description: {description}'
 
 def get_max_image_prompt_length(prompt_type, params):
+    print(f'get_max_image_prompt_length("{prompt_type}", params)')
+    pprint.pprint(params)
     if ( 'image_models_for_tasks' in params and 'default' in params['image_models_for_tasks'] ):
         image_model = params['image_models_for_tasks']['default']
     else:
@@ -582,11 +584,14 @@ def get_max_image_prompt_length(prompt_type, params):
 
     # Haven't yet found restrictions on image prompt lengths in gpt-image-1
     if image_model == 'gpt-image-1':
-        return 20000
+        result = 20000
     elif image_model == 'dall_e_3':
-        return int(config.get('max_image_prompt_lengths_for_dall_e_3', prompt_type))
+        result = int(config.get('max_image_prompt_lengths_for_dall_e_3', prompt_type))
     elif image_model == 'imagen_3':
-        return int(config.get('max_image_prompt_lengths_for_imagen_3', prompt_type))
+        result = int(config.get('max_image_prompt_lengths_for_imagen_3', prompt_type))
+
+    print(f'result = {prompt_type}')
+    return result
 
 def elements_are_represented_as_images(params):
     result = False

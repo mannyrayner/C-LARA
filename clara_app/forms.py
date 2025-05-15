@@ -185,9 +185,6 @@ class SimpleClaraForm(forms.Form):
         required=False,
         initial='' )
     image_basename = forms.CharField(required=False)
-    image_generation_model = forms.ChoiceField(choices=SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2,
-                                               label="Model to use for generating images",
-                                               required=False)
     description_language = forms.ChoiceField(choices=SUPPORTED_AI_ENABLED_LANGUAGES_ENGLISH_AND_FRENCH_FIRST,
                                              label="Language to use for writing image descriptions",
                                              required=False)

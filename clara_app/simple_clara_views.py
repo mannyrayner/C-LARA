@@ -50,8 +50,8 @@ import asyncio
 config = get_config()
 logger = logging.getLogger(__name__)
 
-#_simple_clara_trace = False
-_simple_clara_trace = True
+_simple_clara_trace = False
+#_simple_clara_trace = True
 
 def get_simple_clara_resources_helper(project_id, user):
     try:
@@ -210,7 +210,7 @@ def simple_clara(request, project_id, last_operation_status):
     if _simple_clara_trace:
         print(f'Resources:')
         pprint.pprint(resources)
-    
+   
     status = resources['status']
     simple_clara_type = resources['simple_clara_type'] if 'simple_clara_type' in resources else None
     rtl_language = resources['rtl_language'] if 'rtl_language' in resources else False
@@ -229,8 +229,9 @@ def simple_clara(request, project_id, last_operation_status):
     elif request.method == 'POST':
         # Extract action from the POST request
         action = request.POST.get('action')
-        if _simple_clara_trace:
-            print(f'Action = {action}')
+##        if _simple_clara_trace:
+##            print(f'Action = {action}')
+        print(f'Action = {action}')
         if action:
             form = SimpleClaraForm(request.POST, request.FILES, is_rtl_language=rtl_language)
             if form.is_valid():
@@ -299,8 +300,8 @@ def simple_clara(request, project_id, last_operation_status):
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
                 elif action == 'create_v2_style':
-                    image_generation_model = form.cleaned_data['image_generation_model']
-                    description_language = form.cleaned_data['description_language']
+                    image_generation_model = form.cleaned_data['image_generation_model'] if 'image_generation_model' in form.cleaned_data else None
+                    description_language = form.cleaned_data['description_language'] if 'description_language' in form.cleaned_data else None
                     style_advice = form.cleaned_data['style_advice']
                     simple_clara_action = { 'action': 'create_v2_style',
                                             'description_language': description_language,
@@ -440,7 +441,6 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
         elif action_type == 'create_v2_style':
             #simple_clara_action should be of the form { 'action': 'create_v2_style',
             #                                            'description_language': description_language,
-            #                                            'image_generation_model': image_generation_model,
             #                                            'style_advice':style_advice, 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_v2_elements':
@@ -450,7 +450,7 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
             #simple_clara_action should be of the form { 'action': 'delete_v2_element', 'deleted_element_text': deleted_element_text }
             result = simple_clara_delete_v2_element_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'add_v2_element':
-            #simple_clara_action should be of the form { 'action': 'add_v2_element', 'new_element_text': new_element_text }
+            #simple_clara_action should bge of the form { 'action': 'add_v2_element', 'new_element_text': new_element_text }
             result = simple_clara_add_v2_element_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_v2_pages':
             #simple_clara_action should be of the form { 'action': 'create_v2_pages', 'up_to_date_dict': up_to_date_dict }
@@ -850,7 +850,6 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
                  'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
 def simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=None):
-    image_generation_model = simple_clara_action['image_generation_model']
     description_language = simple_clara_action['description_language']
     style_advice = simple_clara_action['style_advice']
     up_to_date_dict = simple_clara_action['up_to_date_dict']
@@ -859,21 +858,27 @@ def simple_clara_create_v2_style_helper(username, project_id, simple_clara_actio
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     params = clara_project_internal.get_v2_project_params_for_simple_clara()
-    params['image_generation_model'] = image_generation_model
-    params['text_language'] = description_language
-    clara_project_internal.save_coherent_images_v2_params(params)
+    if description_language:
+        params['text_language'] = description_language
+        clara_project_internal.save_coherent_images_v2_params(params)
     
     numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
     clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
 
-    # Create the style
-    if not up_to_date_dict['v2_style_image']:
-        post_task_update(callback, f"STARTED TASK: create image style information")
-        clara_project_internal.set_style_advice_v2(style_advice)
-        style_params = get_style_params_from_project_params(params)
-        style_cost_dict = clara_project_internal.create_style_description_and_image_v2(style_params, callback=callback)
-        store_cost_dict(style_cost_dict, project, project.user)
-        post_task_update(callback, f"ENDED TASK: create image style information")
+    # Create or recreate the style
+##    if not up_to_date_dict['v2_style_image']:
+##        post_task_update(callback, f"STARTED TASK: create image style information")
+##        clara_project_internal.set_style_advice_v2(style_advice)
+##        style_params = get_style_params_from_project_params(params)
+##        style_cost_dict = clara_project_internal.create_style_description_and_image_v2(style_params, callback=callback)
+##        store_cost_dict(style_cost_dict, project, project.user)
+##        post_task_update(callback, f"ENDED TASK: create image style information")
+    post_task_update(callback, f"STARTED TASK: create image style information")
+    clara_project_internal.set_style_advice_v2(style_advice)
+    style_params = get_style_params_from_project_params(params)
+    style_cost_dict = clara_project_internal.create_style_description_and_image_v2(style_params, callback=callback)
+    store_cost_dict(style_cost_dict, project, project.user)
+    post_task_update(callback, f"ENDED TASK: create image style information")
 
     return { 'status': 'finished',
              'message': 'Created the images' }
