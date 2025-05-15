@@ -299,10 +299,14 @@ def simple_clara(request, project_id, last_operation_status):
                     image_advice_prompt = form.cleaned_data['image_advice_prompt']
                     simple_clara_action = { 'action': 'regenerate_image', 'image_advice_prompt':image_advice_prompt }
                 elif action == 'create_v2_style':
+                    image_generation_model = form.cleaned_data['image_generation_model']
                     description_language = form.cleaned_data['description_language']
                     style_advice = form.cleaned_data['style_advice']
-                    simple_clara_action = { 'action': 'create_v2_style', 'description_language': description_language,
-                                            'style_advice': style_advice, 'up_to_date_dict': up_to_date_dict }
+                    simple_clara_action = { 'action': 'create_v2_style',
+                                            'description_language': description_language,
+                                            'image_generation_model': image_generation_model,
+                                            'style_advice': style_advice,
+                                            'up_to_date_dict': up_to_date_dict }
                 elif action == 'create_v2_elements':
                     simple_clara_action = { 'action': 'create_v2_elements', 'up_to_date_dict': up_to_date_dict }
                 elif action == 'delete_v2_element':
@@ -434,7 +438,9 @@ def perform_simple_clara_action_helper(username, project_id, simple_clara_action
             # simple_clara_action should be of form { 'action': 'create_segmented_text', 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_segmented_text_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_v2_style':
-            #simple_clara_action should be of the form { 'action': 'create_v2_style', 'description_language': description_language,
+            #simple_clara_action should be of the form { 'action': 'create_v2_style',
+            #                                            'description_language': description_language,
+            #                                            'image_generation_model': image_generation_model,
             #                                            'style_advice':style_advice, 'up_to_date_dict': up_to_date_dict }
             result = simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=callback)
         elif action_type == 'create_v2_elements':
@@ -844,6 +850,7 @@ def simple_clara_regenerate_image_helper(username, project_id, simple_clara_acti
                  'message': "Unable to regenerate the image. Try looking at the 'Recent task updates' view" }
 
 def simple_clara_create_v2_style_helper(username, project_id, simple_clara_action, callback=None):
+    image_generation_model = simple_clara_action['image_generation_model']
     description_language = simple_clara_action['description_language']
     style_advice = simple_clara_action['style_advice']
     up_to_date_dict = simple_clara_action['up_to_date_dict']
@@ -852,6 +859,7 @@ def simple_clara_create_v2_style_helper(username, project_id, simple_clara_actio
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     params = clara_project_internal.get_v2_project_params_for_simple_clara()
+    params['image_generation_model'] = image_generation_model
     params['text_language'] = description_language
     clara_project_internal.save_coherent_images_v2_params(params)
     
