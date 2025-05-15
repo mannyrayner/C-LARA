@@ -79,6 +79,8 @@ from .clara_coherent_images_utils import (
     add_element_name_to_list_of_elements,
     get_element_description,
     get_element_file,
+    element_texts_with_element_files,
+    existing_element_files_for_element_texts,
     elements_are_represented_as_images,
     get_page_text,
     get_page_description,
@@ -1607,7 +1609,7 @@ async def generate_page_image_from_expanded_description(expanded_description, pa
 
         relevant_pages_and_elements = read_project_json_file(project_dir, f'{page_dir}/relevant_pages_and_elements.json')
         relevant_elements = relevant_pages_and_elements["relevant_elements"]
-        element_files = [ get_element_file(element_text, params) for element_text in relevant_elements ] 
+        element_files = existing_element_files_for_element_texts(relevant_elements, params)
         
         cost_dict = await generate_and_rate_page_images(page_number, expanded_description, element_files, description_version_number, params)
 
@@ -1680,7 +1682,7 @@ async def create_variant_images_for_page(params, page_number, alternate_image_id
     description_index = int(alternate_images_info['description_index'])
     expanded_description = read_project_txt_file(project_dir, alternate_images_info['expanded_description_path'])
     elements = read_project_json_file(project_dir, alternate_images_info['elements']) if 'elements' in alternate_images_info else []
-    element_files = [ get_element_file(element_text, params) for element_text in elements ] 
+    element_files = existing_element_files_for_element_texts(elements, params)
 ##    if uploaded_image_description(expanded_description):
 ##        image_path = alternate_images_info['image_path']
 ##        expanded_description, description_cost_dict = await create_and_store_expanded_description_for_uploaded_image(image_path, page_number, description_index,
@@ -1756,13 +1758,16 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     elements_as_images = elements_are_represented_as_images(params)
 
     if elements and elements_as_images == 'openai_version':
-        # We're using the OpenAI gpt-image-1 edit route and there are elements. We pass the files and some text saying what each one is
-        element_files = [ get_element_file(element_text, params) for element_text in elements ]
+        # We're using the OpenAI gpt-image-1 edit route and there are elements.
+        # We pass the files and some text saying what each one is
         element_descriptions_text = ''
+        element_files = []
         index = 0
-        for element_text in elements:
+        for element_text in element_texts_with_element_files(elements, params):
+            element_file = get_element_file(element_text, params)
             index += 1
             element_descriptions_text += f'\nFile #{index}: "{element_text}"'
+            element_files.append(element_file)
     else:
         # There are no elements, or we're using Imagen 3 (URLs), or we're using DALL-E-3 (descriptions)
         element_files = []

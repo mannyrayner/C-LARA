@@ -606,6 +606,24 @@ def elements_are_represented_as_images(params):
 ##    print(f'elements_are_represented_as_images: {result}')
     return result
 
+def element_texts_with_element_files(element_texts, params):
+    project_dir = params['project_dir']
+    out_list = []
+
+    for element_text in element_texts:
+        name = element_text_to_element_name(element_text)
+        file = absolute_file_name(f'{project_dir}/elements/{name}/image.jpg')
+
+        if file_exists(file):
+            out_list.append(element_text)
+
+    return out_list
+
+def existing_element_files_for_element_texts(element_texts, params):
+    good_element_texts = element_texts_with_element_files(element_texts, params)
+    
+    return [ get_element_file(element_text, params) for element_text in good_element_texts ]
+
 def get_element_file(element_text, params):
     project_dir = params['project_dir']
     
