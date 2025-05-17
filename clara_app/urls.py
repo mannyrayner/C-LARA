@@ -39,6 +39,7 @@ from . import registering_views
 from . import satisfaction_questionnaire_views
 from . import reading_histories_views
 from . import serving_content_views
+from . import language_game_views
 
 urlpatterns = [
     # Home
@@ -248,6 +249,9 @@ urlpatterns = [
          name='execute_community_requests_for_page_monitor'),
     path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', community_reviewing_views.execute_community_requests_for_page_status,
          name='execute_community_requests_for_page_status'),
+
+    # Language games
+    path("kok_kaper_game/", language_game_views.kok_kaper_animal_game, name="kok_kaper_game"),
 
     # Image questionnaires
     path('image_questionnaire_project_list/', image_questionnaire_views.image_questionnaire_project_list, name='image_questionnaire_project_list'),
