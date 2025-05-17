@@ -53,7 +53,8 @@ def run_create_kk_language_game_images(n_tasks=1000):
     asyncio.run(create_kk_language_game_images(n_tasks))
 
 async def create_kk_language_game_images(n_tasks=1000):
-    data = read_json_file('$CLARA/linguistic_data/kok_kaper/language_game_animals.json')
+    #data = read_json_file('$CLARA/linguistic_data/kok_kaper/language_game_animals.json')
+    data = read_json_file('$CLARA/game_data/kok_kaper/animals/language_game_animals.json')
     animals = data['animals']
     adjectives = data['adjectives']
     body_parts = data['body_parts']
@@ -88,5 +89,6 @@ Note that incongruous combinations are perfectly acceptable in the context of th
                                           config_info={ 'image_model': 'gpt-image-1'})
 
 def kk_image_file(animal, adjective, body_part):
-    return f'$CLARA/linguistic_data/kok_kaper/language_game_images/{animal["id"]}_{adjective["id"]}_{body_part["id"]}.jpg'
+    #return f'$CLARA/linguistic_data/kok_kaper/language_game_images/{animal["id"]}_{adjective["id"]}_{body_part["id"]}.jpg'
+    return f'$CLARA/game_data/kok_kaper/animals/language_game_images/{animal["id"]}_{adjective["id"]}_{body_part["id"]}.jpg'
                
