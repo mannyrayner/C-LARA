@@ -1,25 +1,27 @@
-{% load static %}
+
 {% extends "clara_app/base.html" %}
+
 {% block content %}
+
 <h2>Kok Kaper “Funny Animals”</h2>
 <form method="post">{% csrf_token %}
   <div class="row g-2">
     <div class="col-md-4">
       <label>Animal</label>
       <select class="form-select" name="animal">
-        {% for a in data.animals %}<option value="{{ a.en }}">{{ a.kk }} ({{ a.en }})</option>{% endfor %}
+        {% for a in data.animals %}<option value="{{ a.id }}">{{ a.kk }} ({{ a.en }})</option>{% endfor %}
       </select>
     </div>
     <div class="col-md-4">
       <label>Body part</label>
       <select class="form-select" name="part">
-        {% for p in data.body_parts %}<option value="{{ p.en }}">{{ p.kk }} ({{ p.en }})</option>{% endfor %}
+        {% for p in data.body_parts %}<option value="{{ p.id }}">{{ p.kk }} ({{ p.en }})</option>{% endfor %}
       </select>
     </div>
     <div class="col-md-4">
       <label>Size</label>
       <select class="form-select" name="adj">
-        {% for adj in data.adjectives %}<option value="{{ adj.en }}">{{ adj.kk }} ({{ adj.en }})</option>{% endfor %}
+        {% for adj in data.adjectives %}<option value="{{ adj.id }}">{{ adj.kk }} ({{ adj.en }})</option>{% endfor %}
       </select>
     </div>
   </div>
@@ -29,6 +31,6 @@
   <hr>
   <p class="fs-4 text-success">{{ kk_sentence }}</p>
   <p class="fst-italic">{{ en_sentence }}</p>
-  <img src="{{ img_path|static }}" class="img-fluid border rounded" alt="generated image">
+  <img src="{% url 'serve_clara_image' img_path %}" style="max-width: 300px; max-height: 300px;" alt="generated image">
 {% endif %}
 {% endblock %}

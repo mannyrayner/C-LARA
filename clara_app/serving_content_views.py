@@ -112,6 +112,14 @@ def serve_export_zipfile(request, project_id):
 
     #return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
 
+def serve_clara_image(request, relative_file_path):
+    file_path = absolute_file_name(f'$CLARA/{relative_file_path}')
+    if file_exists(file_path):
+        content_type, _ = mimetypes.guess_type(unquote(str(file_path)))
+        return HttpResponse(open(file_path, 'rb'), content_type=content_type)
+    else:
+        raise Http404
+
 def serve_project_image(request, project_id, base_filename):
     file_path = absolute_file_name(Path(image_dir_for_project_id(project_id)) / base_filename)
     if file_exists(file_path):

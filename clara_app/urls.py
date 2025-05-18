@@ -296,6 +296,7 @@ urlpatterns = [
     path('serve_zipfile/<int:project_id>/', serving_content_views.serve_zipfile, name='serve_zipfile'),
     path('serve_export_zipfile/<int:project_id>/', serving_content_views.serve_export_zipfile, name='serve_export_zipfile'),
 
+    path('serve_clara_image/<path:relative_file_path>', serving_content_views.serve_clara_image, name='serve_clara_image'),
     path('projects/serve_project_image/<str:project_id>/<path:base_filename>', serving_content_views.serve_project_image, name='serve_project_image'),
     path(
         'accounts/projects/serve_coherent_images_v2_file/<int:project_id>/<path:relative_path>/',
