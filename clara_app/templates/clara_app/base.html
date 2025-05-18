@@ -432,6 +432,17 @@
 		  <li class="nav-item">
 			<a class="nav-link" href="{% url 'public_content_list' %}" data-toggle="tooltip" title="Browse C-LARA and LARA content without logging in.">Content</a>
 		  </li>
+		  <!-- Games -->
+		<li class="nav-item dropdown">
+		  <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+		  Games
+		  </a>
+			<div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+				<a class="dropdown-item" href="{% url 'kok_kaper_game' %}"
+					   data-toggle="tooltip" title="Use the Australian language Kok Kaper to make pictures of funny animals">
+					   Kok Kaper animal game</a>
+			</div>
+		</li>
         {% endif %}
         </ul>
 	  </div>

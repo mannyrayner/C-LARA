@@ -11,7 +11,7 @@ from .clara_utils import absolute_file_name, read_json_file, file_exists
 # Helper: load the JSON once per process
 GAME_DATA = read_json_file(game_data_file)
 
-@login_required
+#@login_required
 def kok_kaper_animal_game(request):
     # Restore last choices & gloss‑flag from session
     last = request.session.get("kk_game_last", {})
