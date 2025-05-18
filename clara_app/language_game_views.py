@@ -13,13 +13,21 @@ GAME_DATA = read_json_file(game_data_file)
 
 @login_required
 def kok_kaper_animal_game(request):
+    # Restore last choices from session, if any, else default to first list item.
+    last = request.session.get("kk_game_last", {})
+    def _default(listname):
+        return GAME_DATA[listname][0]["id"]
+
     ctx = {
-        "data": GAME_DATA,   # used to fill the dropdowns
+        "data": GAME_DATA,
+        "sel_animal": last.get("animal", _default("animals")),
+        "sel_part":   last.get("part",   _default("body_parts")),
+        "sel_adj":    last.get("adj",    _default("adjectives")),
         "kk_sentence": "",
         "en_sentence": "",
-        "img_path": ""
+        "img_path":    ""
     }
-
+    
     if request.method == "POST":
         animal_key   = request.POST["animal"]
         part_key     = request.POST["part"]
@@ -39,9 +47,19 @@ def kok_kaper_animal_game(request):
             messages.error(request, f"Image file missing: {img_absolute}.")
 
         ctx.update({
+            "sel_animal": animal_key,
+            "sel_part":   part_key,
+            "sel_adj":    adj_key,
             "kk_sentence": kk_sentence,
             "en_sentence": en_sentence,
             "img_path":    img_relative
         })
+
+        # Persist selection to session so next GET shows same choices
+        request.session["kk_game_last"] = {
+            "animal": animal_key,
+            "part":   part_key,
+            "adj":    adj_key
+        }
 
     return render(request, "clara_app/kok_kaper_game.html", ctx)
