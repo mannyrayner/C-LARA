@@ -5,12 +5,18 @@
 
 <h2>Kok Kaper “Funny Animals”</h2>
 <form method="post">{% csrf_token %}
+  <div class="row g-2 mb-2">
+    <div class="col-auto align-self-center">
+      <input type="checkbox" class="form-check-input" id="glossToggle" name="show_gloss" value="1" {% if show_gloss %}checked{% endif %}>
+      <label class="form-check-label" for="glossToggle">Show English</label>
+    </div>
+  </div>
   <div class="row g-2">
     <div class="col-md-4">
       <label>Animal</label>
       <select class="form-select" name="animal">
 		{% for a in data.animals %}
-			<option value="{{ a.id }}" {% if a.id == sel_animal %}selected{% endif %}>{{ a.kk }} ({{ a.en }})</option>
+			<option value="{{ a.id }}" {% if a.id == sel_animal %}selected{% endif %}>{{ a.kk }}{% if show_gloss %} ({{ a.en }}){% endif %}</option>
 		{% endfor %}
 	  </select>
     </div>
@@ -18,7 +24,7 @@
       <label>Body part</label>
       <select class="form-select" name="part">
 		{% for p in data.body_parts %}
-			<option value="{{ p.id }}" {% if p.id == sel_part %}selected{% endif %}>{{ p.kk }} ({{ p.en }})</option>
+			<option value="{{ p.id }}" {% if p.id == sel_part %}selected{% endif %}>{{ p.kk }}{% if show_gloss %} ({{ p.en }}){% endif %}</option>
 		{% endfor %}
 	  </select>
     </div>
@@ -26,7 +32,7 @@
       <label>Size</label>
       <select class="form-select" name="adj">
 		{% for adj in data.adjectives %}
-			<option value="{{ adj.id }}" {% if adj.id == sel_adj %}selected{% endif %}>{{ adj.kk }} ({{ adj.en }})</option>
+			<option value="{{ adj.id }}" {% if adj.id == sel_adj %}selected{% endif %}>{{ adj.kk }}{% if show_gloss %} ({{ adj.en }}){% endif %}</option>
 		{% endfor %}
 	  </select>
     </div>
@@ -36,7 +42,7 @@
 {% if kk_sentence %}
   <hr>
   <p class="fs-4 text-success">{{ kk_sentence }}</p>
-  <p class="fst-italic">{{ en_sentence }}</p>
+  {% if show_gloss %}<p class="fst-italic">{{ en_sentence }}</p>{% endif %}
   <img src="{% url 'serve_clara_image' img_path %}" style="max-width: 300px; max-height: 300px;" alt="generated image">
 {% endif %}
 {% endblock %}

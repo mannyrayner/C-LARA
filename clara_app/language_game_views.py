@@ -13,16 +13,19 @@ GAME_DATA = read_json_file(game_data_file)
 
 @login_required
 def kok_kaper_animal_game(request):
-    # Restore last choices from session, if any, else default to first list item.
+    # Restore last choices & gloss‑flag from session
     last = request.session.get("kk_game_last", {})
     def _default(listname):
         return GAME_DATA[listname][0]["id"]
+
+    show_gloss = last.get("show_gloss", True)     # bool
 
     ctx = {
         "data": GAME_DATA,
         "sel_animal": last.get("animal", _default("animals")),
         "sel_part":   last.get("part",   _default("body_parts")),
         "sel_adj":    last.get("adj",    _default("adjectives")),
+        "show_gloss": show_gloss,
         "kk_sentence": "",
         "en_sentence": "",
         "img_path":    ""
@@ -32,6 +35,7 @@ def kok_kaper_animal_game(request):
         animal_key   = request.POST["animal"]
         part_key     = request.POST["part"]
         adj_key      = request.POST["adj"]
+        show_gloss = bool(request.POST.get("show_gloss"))
 
         # look up full records
         animal   = next(i for i in GAME_DATA["animals"] if i["id"] == animal_key)
@@ -50,6 +54,7 @@ def kok_kaper_animal_game(request):
             "sel_animal": animal_key,
             "sel_part":   part_key,
             "sel_adj":    adj_key,
+            "show_gloss": show_gloss,
             "kk_sentence": kk_sentence,
             "en_sentence": en_sentence,
             "img_path":    img_relative
@@ -59,7 +64,8 @@ def kok_kaper_animal_game(request):
         request.session["kk_game_last"] = {
             "animal": animal_key,
             "part":   part_key,
-            "adj":    adj_key
+            "adj":    adj_key,
+            "show_gloss": show_gloss
         }
 
     return render(request, "clara_app/kok_kaper_game.html", ctx)
