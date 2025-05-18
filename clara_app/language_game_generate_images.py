@@ -93,5 +93,5 @@ def kk_image_file(animal, adjective, body_part):
     return f'$CLARA/{kk_image_file_relative(animal, adjective, body_part)}'
 
 def kk_image_file_relative(animal, adjective, body_part):
-    return f'game_data/kok_kaper/animals/language_game_images/{animal["en"]}_{adjective["en"]}_{body_part["en"]}.jpg'
+    return f'game_data/kok_kaper/animals/language_game_images/{animal["id"]}_{adjective["id"]}_{body_part["id"]}.jpg'
                

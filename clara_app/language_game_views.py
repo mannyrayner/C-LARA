@@ -3,9 +3,10 @@ from pathlib import Path
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.conf import settings
+from django.contrib import messages
 
 from .language_game_generate_images import game_data_file, kk_image_file, kk_image_file_relative
-from .clara_utils import absolute_file_name, read_json_file
+from .clara_utils import absolute_file_name, read_json_file, file_exists
 
 # Helper: load the JSON once per process
 GAME_DATA = read_json_file(game_data_file)
@@ -32,6 +33,10 @@ def kok_kaper_animal_game(request):
         kk_sentence = f"{animal['kk']} la {bodypart['kk']} {adj['kk']} yongkorr"
         en_sentence = f"This is a {animal['en']} with a {adj['en']} {bodypart['en']}"
         img_relative = kk_image_file_relative(animal, adj, bodypart)
+        img_absolute = absolute_file_name(kk_image_file(animal, adj, bodypart))
+
+        if not file_exists(img_absolute):
+            messages.error(request, f"Image file missing: {img_absolute}.")
 
         ctx.update({
             "kk_sentence": kk_sentence,
