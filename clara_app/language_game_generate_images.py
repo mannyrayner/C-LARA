@@ -90,5 +90,8 @@ Note that incongruous combinations are perfectly acceptable in the context of th
                                           config_info={ 'image_model': 'gpt-image-1'})
 
 def kk_image_file(animal, adjective, body_part):
-    return f'$CLARA/game_data/kok_kaper/animals/language_game_images/{animal["en"]}_{adjective["en"]}_{body_part["en"]}.jpg'
+    return f'$CLARA/{kk_image_file_relative(animal, adjective, body_part)}'
+
+def kk_image_file_relative(animal, adjective, body_part):
+    return f'game_data/kok_kaper/animals/language_game_images/{animal["en"]}_{adjective["en"]}_{body_part["en"]}.jpg'
                
