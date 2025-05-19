@@ -1,0 +1,26 @@
+{
+	"animals": 
+	[ { "kk": "kutew", "en": "dog", "id": "dog" },
+	  { "kk": "yarraman", "en": "horse", "id": "horse" },
+	  { "kk": "koy", "en": "fish", "id": "fish" },
+	  { "kk": "ming-kula", "en": "wallaby", "id": "wallaby" },
+	  { "kk": "mim-pincherr", "en": "saltwater crocodile", "id": "crocodile" },
+	  { "kk": "mim-pengki", "en": "magpie goose", "id": "goose" }
+	  ],
+	"adjectives": 
+	[ { "kk": "thap'l", "en": "big", "id": "big" },
+	  { "kk": "tikipir", "en": "small", "id": "small" }
+	  ],
+	"body_parts": 
+	[ { "kk": "ch'kont", "en": "head", "id": "head" },
+	  { "kk": "chel", "en": "eye", "id": "eye" },
+	  { "kk": "pinth'kel", "en": "ear", "id": "ear" },
+	  { "kk": "kulng", "en": "teeth", "id": "teeth" },
+	  { "kk": "th'mel", "en": "foot", "id": "foot" },
+	  { "kk": "mar", "en": "hand", "id": "hand" },
+	  { "kk": "palperr", "en": "tail of fish", "id": "fish_tail" },
+	  { "kk": "parrek", "en": "tail of wallaby, crocodile or goanna", "id": "wallaby_tail" },
+	  { "kk": "kunthen", "en": "tail of animal", "id": "animal_tail" },
+	  { "kk": "therr", "en": "wing or arm", "id": "wing" }
+	  ]
+}
