@@ -1,4 +1,4 @@
-import json
+import json, logging
 from pathlib import Path
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
@@ -8,11 +8,35 @@ from django.contrib import messages
 from .language_game_generate_images import game_data_file, kk_image_file, kk_image_file_relative
 from .clara_utils import absolute_file_name, read_json_file, file_exists
 
-# Helper: load the JSON once per process
-GAME_DATA = read_json_file(game_data_file)
+log = logging.getLogger(__name__)
+
+_GAME_DATA = None            # cache
+
+def get_game_data():
+    """
+    Load the JSON the first time it’s needed.
+    If the file is missing or corrupt, log an error and return {}.
+    """
+    global _GAME_DATA
+    if _GAME_DATA is None:
+        try:
+            game_json = absolute_file_name(game_data_file)
+            if not file_exists(game_json):
+                raise FileNotFoundError(game_json)
+            _GAME_DATA = read_json_file(game_json)
+        except Exception as e:
+            log.error("Kok Kaper game data failed to load: %s", e, exc_info=True)
+            _GAME_DATA = {}          # graceful fallback
+    return _GAME_DATA
 
 #@login_required
 def kok_kaper_animal_game(request):
+    GAME_DATA = get_game_data()
+    if not GAME_DATA:
+        messages.error(request,
+            "Game data is unavailable – please tell the administrator.")
+        return render(request, "clara_app/kok_kaper_game_unavailable.html")
+    
     # Restore last choices & gloss‑flag from session
     last = request.session.get("kk_game_last", {})
     def _default(listname):
