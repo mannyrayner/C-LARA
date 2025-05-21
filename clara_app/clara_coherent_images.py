@@ -1821,7 +1821,8 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
 
             # Save the expanded description
             expanded_description = description_api_call.response
-            if len(expanded_description) < max_image_prompt_length and "essential aspects" in expanded_description.lower():
+            #if len(expanded_description) < max_image_prompt_length and "essential aspects" in expanded_description.lower():
+            if len(expanded_description) < max_image_prompt_length:
                 valid_expanded_description_produced = True
             else:
                 print(f'Length of description = {len(expanded_description)}')
@@ -1836,7 +1837,7 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
         # Create and rate the images
         # Adapt to support gpt-image-1
         # Pass the list of element images as well
-            image_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, element_files, description_version_number, params)
+            image_cost_dict = await generate_and_rate_page_images(page_number, expanded_description, element_files, description_version_number, params, callback=callback)
         else:
             image_cost_dict = {}
             error_message = f"No generated description was less than {max_image_prompt_length} characters long"
