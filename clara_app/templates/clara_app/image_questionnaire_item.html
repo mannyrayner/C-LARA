@@ -8,6 +8,10 @@
 <div>
   <h3>Page text</h3>
   <p>{{ page_text }}</p>
+  {% if translated_page_text %}
+	<h3>Translated page text</h3>
+	<p>{{ translated_page_text }}</p>
+  {% endif %}
 </div>
 
 {% if relative_image_path %}

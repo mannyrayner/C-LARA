@@ -221,8 +221,14 @@ class Text:
                                        'text': page_text})
             else:
                 page_text = page.to_text(annotation_type='plain').replace('<page>', '')
-                numbered_pages.append({'page_number': number,
-                                       'text': page_text})
+                translated_text = page.to_translated_text()
+                if not translated_text.replace(' ', ''):
+                    numbered_pages.append({'page_number': number,
+                                           'text': page_text})
+                else:
+                    numbered_pages.append({'page_number': number,
+                                           'text': page_text,
+                                           'translated_text': translated_text})
             number += 1
         return numbered_pages
 

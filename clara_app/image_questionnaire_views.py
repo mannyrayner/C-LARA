@@ -10,9 +10,11 @@ from .forms import ProjectSearchForm
 from .clara_main import CLARAProjectInternal
 from .clara_coherent_images_utils import project_pathname
 from .clara_coherent_images_utils import read_project_json_file, project_pathname
+from .clara_images_utils import numbered_page_list_for_coherent_images
 from .clara_utils import get_config, file_exists
 from collections import defaultdict
 import logging
+import pprint
 
 config = get_config()
 logger = logging.getLogger(__name__)
@@ -88,7 +90,16 @@ def image_questionnaire_start(request, project_id):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     project_dir = clara_project_internal.coherent_images_v2_project_dir
 
-    # Read the story data
+    # Read the story data. Regenerate first in case it has changed.
+    # We should have saved everything and have translations, so we can get the story data from the project
+    try:
+        numbered_page_list = numbered_page_list_for_coherent_images(project, clara_project_internal)
+        #pprint.pprint(numbered_page_list)
+        clara_project_internal.set_story_data_from_numbered_page_list_v2(numbered_page_list)
+    except Exception as e:
+        messages.error(request, f"Error when trying to update story data")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        return redirect('clara_home_page')
     story_data = read_project_json_file(project_dir, 'story.json') or []
 
     # We’ll build a global frequency map of elements -> how many pages they appear in
@@ -155,6 +166,7 @@ def image_questionnaire_item(request, project_id, index):
     current_page = pages_with_images[index]
     page_number = current_page.get('page_number')
     page_text = current_page.get('text', '')
+    translated_page_text = current_page.get('translated_text', '')
     relative_page_image_path = f'pages/page{page_number}/image.jpg'
 
     # Decide which questions to show
@@ -237,6 +249,7 @@ def image_questionnaire_item(request, project_id, index):
         "total_pages": len(pages_with_images),
         "page_number": page_number,
         "page_text": page_text,
+        "translated_page_text": translated_page_text,
         "relative_image_path": relative_page_image_path,
         "questions": questions_to_show,
         "question_data_list": question_data_list,
