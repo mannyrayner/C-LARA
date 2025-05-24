@@ -259,6 +259,7 @@ urlpatterns = [
     path('project/<int:project_id>/image_questionnaire_item/<int:index>', image_questionnaire_views.image_questionnaire_item, name='image_questionnaire_item'),
     path('project/<int:project_id>/image_questionnaire_summary', image_questionnaire_views.image_questionnaire_summary, name='image_questionnaire_summary'),
     path('image_questionnaire_all_projects_summary/', image_questionnaire_views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
+    path('image_questionnaire_summary_csv/', image_questionnaire_views.image_questionnaire_summary_csv, name="image_questionnaire_summary_csv"),
 
     # Compare versions of annotated text
     path('projects/<int:project_id>/compare_versions/', comparing_views.compare_versions, name='compare_versions'),

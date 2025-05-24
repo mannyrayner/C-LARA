@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Count, Avg, Q
 from django.db.models.functions import Lower
+from django.http import HttpResponse
+
 from .models import CLARAProject
 from .models import ImageQuestionnaireResponse
 from .forms import ProjectSearchForm
@@ -15,6 +17,7 @@ from .clara_utils import get_config, file_exists
 from collections import defaultdict
 import logging
 import pprint
+import csv
 
 config = get_config()
 logger = logging.getLogger(__name__)
@@ -368,7 +371,57 @@ def image_questionnaire_all_projects_summary(request):
     return render(request, "clara_app/image_questionnaire_all_projects_summary.html", {
         "search_form": search_form,
         "all_project_summaries": all_project_summaries,
+        "request": request
     })
+
+@login_required
+def image_questionnaire_summary_csv(request):
+    """
+    Same filters as the HTML summary, but outputs one CSV row per
+    (project × question_id) with averaged data.
+    """
+    # --- reuse the same search form logic --------------------------
+    search_form = ProjectSearchForm(request.GET or None)
+    query = Q(has_image_questionnaire=True)
+    if search_form.is_valid():
+        for field in ("title", "l2", "l1"):
+            val = search_form.cleaned_data.get(field)
+            if val:
+                query &= Q(**{f"{field}__icontains": val})
+    projects = CLARAProject.objects.filter(query)
+
+    # --- assemble rows ---------------------------------------------
+    rows = []
+    question_texts = {q["id"]: q["text"] for q in IMAGE_QUESTIONNAIRE_QUESTIONS}
+    for proj in projects:
+        responses = ImageQuestionnaireResponse.objects.filter(project=proj)
+        if not responses.exists():
+            continue
+        agg = (
+            responses.values("question_id")
+            .annotate(avg=Avg("rating"), n=Count("id"))
+            .order_by("question_id")
+        )
+        for r in agg:
+            rows.append({
+                "project": proj.title,
+                "question_id": r["question_id"],
+                "question_text": question_texts.get(r["question_id"]),
+                "avg_rating": f"{r['avg']:.2f}",
+                "num_responses": r["n"],
+            })
+
+    # --- stream as CSV ---------------------------------------------
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = "attachment; filename=image_summary.csv"
+    writer = csv.DictWriter(
+        response,
+        fieldnames=["project", "question_id", "question_text",
+                    "avg_rating", "num_responses"],
+    )
+    writer.writeheader()
+    writer.writerows(rows)
+    return response
 
 def _get_relevant_elements(project_dir, page_number):
     """

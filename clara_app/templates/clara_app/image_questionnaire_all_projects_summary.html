@@ -24,6 +24,13 @@
 		</tr>
 	  </table>
 	</form>
+	
+<p>
+  <a class="btn btn-sm btn-success"
+     href="{% url 'image_questionnaire_summary_csv' %}?{{ request.GET.urlencode }}">
+     Download CSV
+  </a>
+</p>
 
 {% if all_project_summaries %}
   {% for summary in all_project_summaries %}
