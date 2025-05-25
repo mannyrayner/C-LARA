@@ -9,6 +9,29 @@ Usage:
 import csv, json, sys, argparse, textwrap
 from collections import defaultdict, OrderedDict
 
+IMAGE_QUESTIONNAIRE_QUESTIONS = [
+    {
+        "id": 1,
+        "text": "How well does the image correspond to the page text?",
+    },
+    {
+        "id": 2,
+        "text": "How consistent is the style of the image with the overall style?",
+    },
+    {
+        "id": 3,
+        "text": "How consistent is the appearance of elements in the image with their previous appearance?",
+    },
+    {
+        "id": 4,
+        "text": "Is the image appropriate to the relevant culture?",
+    },
+    {
+        "id": 5,
+        "text": "How visually appealing do you find the image?",
+    },
+]
+
 def load_format(path):
     if not path:
         return {}, []
@@ -16,7 +39,8 @@ def load_format(path):
         obj = json.load(f)
     abbrev = obj.get("abbrev", {})
     order  = obj.get("order", [])
-    return abbrev, order
+    groups  = obj.get("groups", [])
+    return abbrev, order, groups
 
 def escape_tex(s):
     return s.replace("&", "\\&").replace("%", "\\%")
@@ -54,9 +78,19 @@ def row_order(table_keys, order_hint, abbrev_map):
             explicit.append(k)
     return explicit
 
+def build_group_map(groups):
+    first_of_group = {}                     # short → label (only very first)
+    for g in groups:
+        label   = g["label"]
+        members = g["members"]
+        if not members:
+            continue
+        first_of_group[members[0]] = label  # only the first short code
+    return first_of_group
 
-def build_latex(table, questions, abbrev, order):
+def build_latex(table, questions, abbrev, order, groups):
     projects = row_order(table.keys(), order, abbrev)
+    first_trigger = build_group_map(groups)  # groups read from JSON
     qcols = " & ".join([f"Q{q}" for q in questions])
     lines = [
         "\\begin{table}[h]",
@@ -68,6 +102,15 @@ def build_latex(table, questions, abbrev, order):
         "\\midrule",
     ]
     for proj in projects:
+        short = abbrev.get(proj, proj)  # DI, SC, etc.
+        # Insert group header if this project is first in its group
+        if short in first_trigger and first_trigger[short]:
+            label = first_trigger.pop(short)
+            lines.append(
+                r"\midrule"
+                f"\n\\multicolumn{{{1+len(IMAGE_QUESTIONNAIRE_QUESTIONS)}}}{{l}}{{\\textit{{{label}}}}}\\\\"
+                )
+            
         title = escape_tex(abbrev.get(proj, proj))
         cells = [table[proj].get(q, "--") for q in questions]
         lines.append(f"{title} & " + " & ".join(cells) + "\\\\")
@@ -84,9 +127,9 @@ def main():
     if not rows:
         sys.exit("CSV file is empty or headers missing.")
 
-    abbrev, order = load_format(args.fmt)
+    abbrev, order, groups = load_format(args.fmt)
     table, questions = pivot(rows)
-    latex = build_latex(table, questions, abbrev, order)
+    latex = build_latex(table, questions, abbrev, order, groups)
     print(latex)
 
 if __name__ == "__main__":
