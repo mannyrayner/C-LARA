@@ -93,13 +93,12 @@ def build_latex(table, questions, abbrev, order, groups):
     first_trigger = build_group_map(groups)  # groups read from JSON
     qcols = " & ".join([f"Q{q}" for q in questions])
     lines = [
-        "\\begin{table}[h]",
+        "\\begin{table*}[h]",
         "\\caption{Image-questionnaire results}\\label{tab:results}",
         "\\centering",
-        f"\\begin{{tabular}}{{l{'r' * len(questions)}}}",
+        f"\\begin{{tabular}}{{l{'c' * len(questions)}}}",
         "\\toprule",
-        f"Project & {qcols}\\\\",
-        "\\midrule",
+        f"Project & {qcols}\\\\"
     ]
     for proj in projects:
         short = abbrev.get(proj, proj)  # DI, SC, etc.
@@ -107,14 +106,16 @@ def build_latex(table, questions, abbrev, order, groups):
         if short in first_trigger and first_trigger[short]:
             label = first_trigger.pop(short)
             lines.append(
-                r"\midrule"
-                f"\n\\multicolumn{{{1+len(IMAGE_QUESTIONNAIRE_QUESTIONS)}}}{{l}}{{\\textit{{{label}}}}}\\\\"
-                )
+                r"\midrule")
+            lines.append(
+                f"\\multicolumn{{{1+len(IMAGE_QUESTIONNAIRE_QUESTIONS)}}}{{c}}{{\\textit{{{label}}}}}\\\\")
+            lines.append(
+                r"\midrule")
             
         title = escape_tex(abbrev.get(proj, proj))
         cells = [table[proj].get(q, "--") for q in questions]
         lines.append(f"{title} & " + " & ".join(cells) + "\\\\")
-    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}"]
+    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}"]
     return "\n".join(lines)
 
 def main():
