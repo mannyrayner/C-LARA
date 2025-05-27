@@ -48,13 +48,19 @@ def escape_tex(s):
 def pivot(rows):
     """rows: list of dicts from the CSV reader"""
     table = defaultdict(dict)      # project → {qid: "avg (n)"}
+    pages  = {}
+    evals  = {}
     questions = set()
     for r in rows:
         proj = r["project"]
         qid  = int(r["question_id"])
         questions.add(qid)
         table[proj][qid] = f"{r['avg_rating']} ({r['num_responses']})"
-    return table, sorted(questions)
+
+        # capture once per project
+        pages.setdefault(proj, r["pages"])
+        evals.setdefault(proj, r["evaluators"])
+    return table, pages, evals, sorted(questions)
 
 def row_order(table_keys, order_hint, abbrev_map):
     """
@@ -88,17 +94,17 @@ def build_group_map(groups):
         first_of_group[members[0]] = label  # only the first short code
     return first_of_group
 
-def build_latex(table, questions, abbrev, order, groups):
+def build_latex(table, pages, evals, questions, abbrev, order, groups):
     projects = row_order(table.keys(), order, abbrev)
     first_trigger = build_group_map(groups)  # groups read from JSON
     qcols = " & ".join([f"Q{q}" for q in questions])
     lines = [
         "\\begin{table*}[h]",
-        "\\caption{Image-questionnaire results}\\label{tab:results}",
+        "\\caption{Image-questionnaire results (Img = number of illustrated pages, Eval = distinct evaluators)}\\label{tab:results}",
         "\\centering",
-        f"\\begin{{tabular}}{{l{'c' * len(questions)}}}",
+        f"\\begin{{tabular}}{{l{'c' * ( 2 + len(questions) )}}}",
         "\\toprule",
-        f"Project & {qcols}\\\\"
+        f"Project & Img & Eval & {qcols}\\\\"
     ]
     for proj in projects:
         short = abbrev.get(proj, proj)  # DI, SC, etc.
@@ -108,12 +114,13 @@ def build_latex(table, questions, abbrev, order, groups):
             lines.append(
                 r"\midrule")
             lines.append(
-                f"\\multicolumn{{{1+len(IMAGE_QUESTIONNAIRE_QUESTIONS)}}}{{c}}{{\\textit{{{label}}}}}\\\\")
+                f"\\multicolumn{{{3+len(IMAGE_QUESTIONNAIRE_QUESTIONS)}}}{{c}}{{\\textit{{{label}}}}}\\\\")
             lines.append(
                 r"\midrule")
             
         title = escape_tex(abbrev.get(proj, proj))
-        cells = [table[proj].get(q, "--") for q in questions]
+        cells = [pages[proj], evals[proj]] + [table[proj].get(q, "--") for q in questions]
+        #cells = [table[proj].get(q, "--") for q in questions]
         lines.append(f"{title} & " + " & ".join(cells) + "\\\\")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}"]
     return "\n".join(lines)
@@ -129,8 +136,8 @@ def main():
         sys.exit("CSV file is empty or headers missing.")
 
     abbrev, order, groups = load_format(args.fmt)
-    table, questions = pivot(rows)
-    latex = build_latex(table, questions, abbrev, order, groups)
+    table, pages, evals, questions = pivot(rows)
+    latex = build_latex(table, pages, evals, questions, abbrev, order, groups)
     print(latex)
 
 if __name__ == "__main__":

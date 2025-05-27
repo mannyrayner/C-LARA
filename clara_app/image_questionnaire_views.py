@@ -397,6 +397,11 @@ def image_questionnaire_summary_csv(request):
         responses = ImageQuestionnaireResponse.objects.filter(project=proj)
         if not responses.exists():
             continue
+
+        # NEW: counts shared by all rows of this project
+        pages = responses.values_list("page_number", flat=True).distinct().count()
+        evals = responses.values_list("user_id", flat=True).distinct().count()
+        
         agg = (
             responses.values("question_id")
             .annotate(avg=Avg("rating"), n=Count("id"))
@@ -405,6 +410,8 @@ def image_questionnaire_summary_csv(request):
         for r in agg:
             rows.append({
                 "project": proj.title,
+                "pages": pages,              # NEW column
+                "evaluators": evals,         # NEW column
                 "question_id": r["question_id"],
                 "question_text": question_texts.get(r["question_id"]),
                 "avg_rating": f"{r['avg']:.2f}",
@@ -416,7 +423,8 @@ def image_questionnaire_summary_csv(request):
     response["Content-Disposition"] = "attachment; filename=image_summary.csv"
     writer = csv.DictWriter(
         response,
-        fieldnames=["project", "question_id", "question_text",
+        fieldnames=["project", "pages", "evaluators",
+                    "question_id", "question_text",
                     "avg_rating", "num_responses"],
     )
     writer.writeheader()
