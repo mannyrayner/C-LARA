@@ -5,7 +5,7 @@
   <a href="examples.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Example content</a>
   <a href="ongoing_activities.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Ongoing Activities</a>
   <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
-  <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
+  <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Publications</a>
   <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Technical issues</a>
   <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog and Discord</a>
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
@@ -13,9 +13,11 @@
 
 </div>
 ## Examples
-All the example texts were constructed and annotated entirely by ChatGPT-4, accessed through C-LARA. The summaries next to them have also been written by the AI.
+All the example texts were constructed and annotated entirely by ChatGPT-4 or ChatGPT-4o, accessed through C-LARA. The summaries next to them have also been written by the AI.
 
 Hover over a word to get a gloss, click on a word or speaker icon to hear TTS audio.
+
+- <a href="https://c-lara.unisa.edu.au/accounts/public_content/270" target="_blank">A Day in the Life of a Pet Detective (English)</a>. A professional pet detective starts their day at 5 a.m. and finds immense satisfaction in reuniting lost pets with their owners. The day's adventures involve locating a missing Bengal cat named Arthur in Primrose Hill and a runaway ferret named Cheddar in Clapham, both of which are successfully returned to their grateful owners.
 
 - <a href="https://c-lara.unisa.edu.au/accounts/public_content/187" target="_blank">Finley the kitten converts to Islam (English)</a>. Finley, a little kitten, is inspired by a dream to explore Islam, which leads him to embrace its teachings and share this journey with his owner, Lily, eventually inspiring her to convert to Islam as well. Together, they find joy and peace through faith and become symbols of love and dedication.
 

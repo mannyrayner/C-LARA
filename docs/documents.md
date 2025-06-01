@@ -5,14 +5,14 @@
   <a href="examples.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Example content</a>
   <a href="ongoing_activities.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Ongoing Activities</a>
   <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
-  <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
+  <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Publications</a>
   <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Technical issues</a>
   <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog and Discord</a>
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
   <a href="flinders_2024_workshop.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">2024 workshop</a>
 
 </div>
-## Documents
+## Publications
 - <a href="https://www.researchgate.net/publication/390947442_ChatGPT-Based_Learning_And_Reading_Assistant_C-LARA_Third_Report" target="_blank">ChatGPT-Based Learning And Reading Assistant (C-LARA): Third Report</a>. A comprehensive report as of late April 2025
 - <a href="https://www.researchgate.net/publication/389545354_Building_culturally_relevant_multimedia_resources_for_Indigenous_languages_using_AI_tools_and_collaborative_development_extended_abstract" target="_blank">"Building culturally relevant multimedia resources for Indigenous languages using AI tools and collaborative development (extended abstract)</a>. Paper presented at ComputEL-8. We describe how we have adapted C-LARA for use with Indigenous languages, in particular for generation of images. The Powerpoint, which is more up-to-date, is <a href="https://www.researchgate.net/publication/389820362_Building_culturally_relevant_multimedia_resources_for_Indigenous_languages_using_AI_tools_and_collaborative_development_presentation">here</a>
 - <a href="https://www.researchgate.net/publication/387962116_ChatGPT_is_Bullshit_is_Bullshit_A_Coauthored_Rebuttal_by_Human_LLM" target="_blank">"ChatGPT is Bullshit" is Bullshit: A Coauthored Rebuttal by Human & LLM</a>. A rebuttal of the high-profile paper <i>ChatGPT is bullshit</i> written by the o1 model under human supervision, together with a full trace of how it was created. o1, unprompted, identifies the critical error in <i>ChatGPT is bullshit</i> within a few seconds.
@@ -37,6 +37,5 @@
 
 - <a href="https://www.researchgate.net/publication/373952196_A_Demonstration_of_C-LARA" target="_blank">A Demonstration of C-LARA</a>. Paper presented at 9th Workshop on Speech and Language Technology in Education (SLaTE), Dublin, Ireland, August 2023.
 
-- <a href="https://github.com/mannyrayner/C-LARA/blob/main/README.txt" target="_blank">README file</a>. Installation instructions, list of files.
 
 

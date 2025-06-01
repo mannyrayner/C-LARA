@@ -5,7 +5,7 @@
   <a href="examples.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Example content</a>
   <a href="ongoing_activities.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Ongoing Activities</a>
   <a href="collaborators.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contributors</a>
-  <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Documents</a>
+  <a href="documents.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Publications</a>
   <a href="performance.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Technical issues</a>
   <a href="blog.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Blog and Discord</a>
   <a href="contact.html" style="float: left; display: block; color: black; text-align: center; padding: 14px 16px; text-decoration: none;">Contact</a>
@@ -13,6 +13,7 @@
 
 </div>
 ## Contributors
+- **HAKEEM BEEDAR**: Evaluation of images, Japanese
 - **BRANISLAV BEDI**: Pedagogical aspects, user studies, Icelandic evaluation
 - **FRANCIS BOND**: Linguistic annotation
 - **CHATGPT-4**: Software implementation and design
@@ -30,6 +31,7 @@
 - **MARTA MYKHATS**: Pedagogical aspects, Ukrainian evaluation
 - **NEASA NÍ CHIARÁIN**: User studies, Irish evaluation
 - **MANNY RAYNER**: Software implementation and design, project coordination, English evaluation
+- **SOPHIE RENDINA**: Indigenous languages, generation and evaluation of images
 - **CHADI RAHEB**: Farsi evaluation
 - **ANNIKA SIMONSEN**: Linguistic annotation, user studies, Faroese, Danish and Icelandic evaluation
 - **VLADYSLAV SUKHYI**: Ukrainian evaluation
