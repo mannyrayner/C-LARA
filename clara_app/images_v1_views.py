@@ -244,6 +244,11 @@ def edit_images(request, project_id, dall_e_3_image_status):
                     print(f'--- Started DALL-E-3 image generation task')
                     #Redirect to the monitor view, passing the task ID and report ID as parameters
                     return redirect('create_dall_e_3_image_monitor', project_id, report_id)
+
+            elif action == 'delete_all_images':
+                clara_project_internal.remove_all_project_images()
+                messages.success(request, f"Deleted all project images")
+                return redirect('edit_images', project_id=project_id, dall_e_3_image_status='no_image')
                 
             elif action == 'save_image_descriptions':
                 description_formset = ImageDescriptionFormSet(request.POST, prefix='descriptions')

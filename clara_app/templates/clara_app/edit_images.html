@@ -18,6 +18,11 @@
     </div>
   {% endif %}
   <h2>Edit Images ("{{ project.title }}")</h2>
+  <h3>Deleting images</h3>
+	 <form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<button type="submit" name="action" value="delete_all_images">Delete all project images</button>
+	</form>
   {% if uses_coherent_image_set %}
       {% if style_form  %}
 		  <h3>Style image</h3>
