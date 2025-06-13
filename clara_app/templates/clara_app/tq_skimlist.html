@@ -1,0 +1,26 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+<h3>{{ tq.title }}</h3>
+<p>{{ tq.description }}</p>
+
+<table class="table table-sm">
+  <thead><tr><th>#</th><th>Book</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for link in links %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>
+          <a href="{% url 'tq_fill' tq.slug link.id %}">
+            {{ link.book.title }}
+          </a>
+        </td>
+        <td>
+          {% if link.id in done %}<span class="badge badge-success">Done</span>
+          {% else %}<span class="badge badge-secondary">Pending</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
