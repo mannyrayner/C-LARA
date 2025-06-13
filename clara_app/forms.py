@@ -6,6 +6,7 @@ from .models import Content, UserProfile, UserConfiguration, LanguageMaster, Sat
 from .models import CLARAProject, Community, CommunityMembership
 from .models import HumanAudioInfo, PhoneticHumanAudioInfo, PhoneticHumanAudioInfo, Rating, Comment, FormatPreferences
 from .models import Activity, ActivityRegistration, ActivityComment, ActivityVote
+from .models import TextQuestionnaire
 
 from django.contrib.auth.models import User
 
@@ -1206,3 +1207,41 @@ class FundingRequestSearchForm(forms.Form):
     purpose = forms.ChoiceField(choices=[('', 'Any')] + FundingRequest.PURPOSE_CHOICES, required=False)
     status = forms.ChoiceField(choices=[('', 'Any')] + FundingRequest.STATUS_CHOICES, required=False)
 
+
+class TextQuestionnaireForm(forms.ModelForm):
+    """
+    Handles both creation and editing of a TextQuestionnaire.
+    - 'questions' is a plain textarea: one Likert prompt per line.
+    - book selection is handled separately via POSTed book_ids list.
+    """
+    questions = forms.CharField(
+        label="Questions (one per line)",
+        widget=forms.Textarea(attrs={"rows": 5, "style": "width:100%;"}),
+        help_text="Enter each Likert-scale prompt on a new line.",
+        required=True,
+    )
+
+    class Meta:
+        model = TextQuestionnaire
+        fields = ["title", "description"]
+
+    def __init__(self, *args, **kwargs):
+        """
+        When editing, initialise the textarea with existing questions joined by newline.
+        """
+        instance = kwargs.get("instance")
+        super().__init__(*args, **kwargs)
+        if instance:
+            q_lines = instance.tqquestion_set.order_by("order").values_list("text", flat=True)
+            self.fields["questions"].initial = "\n".join(q_lines)
+
+    def clean_title(self):
+        return self.cleaned_data["title"].strip()
+
+    def clean_questions(self):
+        # Normalise: strip whitespace, drop blank lines
+        raw = self.cleaned_data["questions"]
+        lines = [ln.strip() for ln in raw.splitlines() if ln.strip()]
+        if not lines:
+            raise forms.ValidationError("Please enter at least one question.")
+        return "\n".join(lines)   # store canonical form for later sync

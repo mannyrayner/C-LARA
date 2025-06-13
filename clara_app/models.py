@@ -10,6 +10,8 @@ from django.db import models
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+
+from uuid import uuid4
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -844,3 +846,33 @@ class PhoneticLexiconHistory(models.Model):
         indexes = [
             models.Index(fields=['word'], name='idx_orm_word_history'),
         ]
+
+# Text questionnaires
+
+class TextQuestionnaire(models.Model):
+    owner       = models.ForeignKey(User, on_delete=models.CASCADE)
+    title       = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+    slug        = models.UUIDField(default=uuid4, unique=True)
+
+class TQQuestion(models.Model):
+    questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)
+    text          = models.CharField(max_length=400)          # the prompt
+    order         = models.PositiveSmallIntegerField()
+
+class TQBookLink(models.Model):
+    questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)
+    book          = models.ForeignKey(Content, on_delete=models.CASCADE) 
+    order         = models.PositiveSmallIntegerField()
+
+class TQResponse(models.Model):
+    questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)
+    book_link     = models.ForeignKey(TQBookLink, on_delete=models.CASCADE)
+    rater         = models.ForeignKey(User, on_delete=models.CASCADE)  
+    submitted_at  = models.DateTimeField(auto_now=True)
+
+class TQAnswer(models.Model):
+    response  = models.ForeignKey(TQResponse, on_delete=models.CASCADE)
+    question  = models.ForeignKey(TQQuestion, on_delete=models.CASCADE)
+    likert    = models.PositiveSmallIntegerField()            # 1–5
