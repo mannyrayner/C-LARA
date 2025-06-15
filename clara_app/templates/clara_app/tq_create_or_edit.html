@@ -6,6 +6,16 @@
 
 <form method="post">
   {% csrf_token %}
+  {% if form.errors %}
+  <div class="alert alert-danger">
+    {{ form.non_field_errors }}
+    {% for field in form.visible_fields %}
+      {% for error in field.errors %}
+         <p><strong>{{ field.label }}:</strong> {{ error }}</p>
+      {% endfor %}
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <!-- meta fields -->
   <div class="form-group">
@@ -16,22 +26,35 @@
   </div>
 
   <!-- book list currently in questionnaire -->
-  {% if tq %}
-  <h5>Books in questionnaire ({{ tq.tqbooklink_set.count }})</h5>
-  <table class="table table-sm table-bordered">
-    <tr><th></th><th>Title</th><th>L2</th><th></th></tr>
-    {% for link in tq.tqbooklink_set.select_related:"book" %}
-      <tr id="row-{{ link.id }}">
-        <td>{{ forloop.counter }}</td>
-        <td>{{ link.book.title }}</td>
-        <td>{{ link.book.l2 }}</td>
-        <td>
-          <a href="{% url 'tq_remove' link.id %}" class="text-danger remove-link">🗑</a>
-        </td>
-      </tr>
-    {% endfor %}
-  </table>
-  {% endif %}
+	{% if tq %}
+	<h5>Books in questionnaire ({{ links|length }})</h5>
+	<table class="table table-sm table-bordered">
+	  <tr><th>#</th><th>Title</th><th>L2</th><th></th></tr>
+	  {% for link in links %}
+		<tr id="row-{{ link.id }}">
+		  <td>{{ forloop.counter }}</td>
+		  <td>{{ link.book.title }}</td>
+		  <td>{{ link.book.l2 }}</td>
+		  <td>
+			<a href="{% url 'tq_remove' link.id %}" class="text-danger remove-link">🗑</a>
+		  </td>
+		</tr>
+	  {% endfor %}
+	</table>
+	{% endif %}
+	
+  <!-- hidden inputs will be inserted by JS to carry book_ids -->
+  <div id="hiddenBookInputs"></div>
+  
+    <!-- questions textarea -->
+  <div class="form-group mt-3">
+    {{ form.questions.label_tag }}
+    {{ form.questions }}
+    <small class="form-text text-muted">{{ form.questions.help_text }}</small>
+  </div>
+
+  <button type="submit" name="save">Save questionnaire</button>
+</form>
 
   <!-- collapsible picker -->
   <button class="btn btn-outline-secondary mb-2" type="button" data-toggle="collapse"
@@ -41,19 +64,6 @@
   <div class="collapse" id="pickerCollapse">
     {{ book_picker|safe }}
   </div>
-
-  <!-- questions textarea -->
-  <div class="form-group mt-3">
-    {{ form.questions.label_tag }}
-    {{ form.questions }}
-    <small class="form-text text-muted">{{ form.questions.help_text }}</small>
-  </div>
-
-  <!-- hidden inputs will be inserted by JS to carry book_ids -->
-  <div id="hiddenBookInputs"></div>
-
-  <button class="btn btn-primary">Save questionnaire</button>
-</form>
 
 <script>
   // Collect checked book_ids before submit

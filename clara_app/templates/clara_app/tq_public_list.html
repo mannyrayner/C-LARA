@@ -1,0 +1,18 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+<h3>All Posted Text Questionnaires</h3>
+<table class="table table-sm">
+  <thead><tr><th>Title</th><th>Owner</th><th>Created</th></tr></thead>
+  <tbody>
+  {% for tq in tqs %}
+    <tr>
+      <td><a href="{% url 'tq_skimlist' tq.slug %}">{{ tq.title }}</a></td>
+      <td>{{ tq.owner.username }}</td>
+      <td>{{ tq.created_at|date:"Y-m-d" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="3">No questionnaires yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

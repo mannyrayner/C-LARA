@@ -236,13 +236,22 @@
 					 Project and content statistics</a>
 			  <a class="dropdown-item" href="{% url 'aggregated_questionnaire_results' %}"
 					 data-toggle="tooltip" title="Show summary results for satisfaction questionnaires.">
-					 Questionnaire summary (text)</a>					 
+					 Questionnaire summary (projects)</a>					 
 			  <a class="dropdown-item" href="{% url 'image_questionnaire_project_list' %}"
 					 data-toggle="tooltip" title="Find projects with image questionnaires">
 					 Find image questionnaires</a>			
 			  <a class="dropdown-item" href="{% url 'image_questionnaire_all_projects_summary' %}"
 					 data-toggle="tooltip" title="Show summary results for image quality questionnaires.">
 					 Questionnaire summary (images)</a>
+			  <a class="dropdown-item" href="{% url 'tq_create' %}"
+					 data-toggle="tooltip" title="Create and post a new text questionnaire">
+					 Create text questionnaire</a>	
+			  <a class="dropdown-item" href="{% url 'tq_my_list' %}"
+					 data-toggle="tooltip" title="Find posted text questionnaires">
+					 My text questionnaires</a>	
+			  <a class="dropdown-item" href="{% url 'tq_public_list' %}"
+					 data-toggle="tooltip" title="Edit text questionnaires I have created">
+					 Find posted text questionnaires</a>		
 			  <a class="dropdown-item" href="{% url 'funding_request' %}"
 					 data-toggle="tooltip" title="Submit a request to get a small amount of OpenAI credit">
 					 Funding request</a>
