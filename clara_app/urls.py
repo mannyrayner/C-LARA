@@ -33,6 +33,7 @@ from . import save_page_texts_multiple_views
 from . import community_views
 from . import community_reviewing_views
 from . import image_questionnaire_views
+from . import text_questionnaire_views 
 from . import comparing_views
 from . import rendering_views
 from . import registering_views
@@ -260,6 +261,15 @@ urlpatterns = [
     path('project/<int:project_id>/image_questionnaire_summary', image_questionnaire_views.image_questionnaire_summary, name='image_questionnaire_summary'),
     path('image_questionnaire_all_projects_summary/', image_questionnaire_views.image_questionnaire_all_projects_summary, name='image_questionnaire_all_projects_summary'),
     path('image_questionnaire_summary_csv/', image_questionnaire_views.image_questionnaire_summary_csv, name="image_questionnaire_summary_csv"),
+
+    # Text questionnaires
+    path('tq/create/', text_questionnaire_views.tq_create, name='tq_create'),
+    path('tq/edit/<int:pk>/', text_questionnaire_views.tq_edit, name='tq_edit'),
+    path('tq/<uuid:slug>/', text_questionnaire_views.tq_skimlist, name='tq_skimlist'),
+    path('tq/<uuid:slug>/<int:link_id>/', text_questionnaire_views.tq_fill, name='tq_fill'),
+    path('tq/remove/<int:link_id>/', text_questionnaire_views.tq_remove, name='tq_remove'),
+    path('tq/browse/', text_questionnaire_views.tq_public_list, name='tq_public_list'),
+    path('tq/my/', text_questionnaire_views.tq_my_list, name='tq_my_list'),
 
     # Compare versions of annotated text
     path('projects/<int:project_id>/compare_versions/', comparing_views.compare_versions, name='compare_versions'),

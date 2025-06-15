@@ -31,11 +31,18 @@ def tq_create(request):
                 _sync_questions(tq, form.cleaned_data["questions"])
             messages.success(request, "Questionnaire saved.")
             return redirect("tq_edit", pk=tq.pk)
+        else:
+            tq = None
     else:
         form = TextQuestionnaireForm()
+        tq = None
     book_picker = _render_book_picker(request)
+    links = tq.tqbooklink_set.select_related("book") if tq else []
     return render(request, "clara_app/tq_create_or_edit.html",
-                  {"form": form, "book_picker": book_picker})
+                  {"form": form,
+                   "book_picker": book_picker,
+                   "tq": tq,
+                   "links": links})
 
 # --------------------------------------------------
 @login_required
@@ -53,8 +60,12 @@ def tq_edit(request, pk):
     else:
         form = TextQuestionnaireForm(instance=tq)
     book_picker = _render_book_picker(request, preselect_ids=tq.tqbooklink_set.values_list("book_id", flat=True))
+    links = tq.tqbooklink_set.select_related("book") if tq else []
     return render(request, "clara_app/tq_create_or_edit.html",
-                  {"form": form, "book_picker": book_picker, "tq": tq})
+                  {"form": form,
+                   "book_picker": book_picker,
+                   "tq": tq,
+                   "links": links})
 
 # --------------------------------------------------
 def tq_skimlist(request, slug):
@@ -103,6 +114,19 @@ def tq_remove(request, link_id):
     link.delete()
     return JsonResponse({"ok": True})
 
+# --------------------------------------------------
+def tq_public_list(request):
+    """Public landing page: all posted questionnaires with links to skim view."""
+    tqs = TextQuestionnaire.objects.order_by("-created_at")
+    return render(request, "clara_app/tq_public_list.html", {"tqs": tqs})
+
+# --------------------------------------------------
+@login_required
+def tq_my_list(request):
+    """List questionnaires owned by the current user with edit links."""
+    my_tqs = TextQuestionnaire.objects.filter(owner=request.user).order_by("-created_at")
+    return render(request, "clara_app/tq_my_list.html", {"tqs": my_tqs})
+
 # ===== helper utilities ======================================
 def _render_book_picker(request, preselect_ids=None):
     """
@@ -111,7 +135,7 @@ def _render_book_picker(request, preselect_ids=None):
     """
     preselect_ids = set(preselect_ids or [])
     search_form = ContentSearchForm(request.GET or None)
-    query = Q(published=True)  # only published content
+    query = Q()  
 
     # ----- filter logic (verbatim from public_content_list) -----
     if search_form.is_valid():
