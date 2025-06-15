@@ -171,12 +171,17 @@ def _render_book_picker(request, preselect_ids=None):
     page_obj = paginator.get_page(request.GET.get("page"))
 
     # ----- render partial -----
+    qs = request.GET.copy()
+    qs.pop("page", None)          # remove any existing page param
+    querystring = qs.urlencode()  # '' when no other params
+
     return render_to_string(
         "clara_app/partials/tq_book_picker.html",
         {
             "page_obj": page_obj,
             "search_form": search_form,
             "preselected": preselect_ids,
+            "qs": "&" + querystring if querystring else "",  # prepend & if non-empty
         },
         request=request,
     )
