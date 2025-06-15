@@ -86,4 +86,22 @@
     });
   });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (location.hash === "#pickerCollapse") {
+    const el = document.getElementById("pickerCollapse");
+    if (el) {
+      // Bootstrap 4/5: trigger 'show' programmatically
+      if (typeof bootstrap !== "undefined" && bootstrap.Collapse) {
+        new bootstrap.Collapse(el, { toggle: true });
+      } else {
+        // fallback: manually add 'show' class
+        el.classList.add("show");
+      }
+    }
+  }
+});
+</script>
+
 {% endblock %}
