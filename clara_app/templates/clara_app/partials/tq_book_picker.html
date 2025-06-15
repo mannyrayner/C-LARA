@@ -1,0 +1,47 @@
+<form method="get" class="mb-2">
+  {{ search_form.as_p }}
+  <button class="btn btn-sm btn-primary">Search</button>
+</form>
+
+<table class="table table-sm table-bordered">
+  <thead>
+    <tr>
+      <th></th>
+      <th>Title</th>
+      <th>L2</th>
+      <th>Updated</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for content in page_obj %}
+      <tr>
+        <td>
+          <input type="checkbox" name="book_ids"
+                 value="{{ content.id }}"
+                 {% if content.id in preselected %}checked{% endif %}>
+        </td>
+        <td>{{ content.title }}</td>
+        <td>{{ content.l2 }}</td>
+        <td>{{ content.updated_at|date:"Y-m-d" }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if page_obj.has_other_pages %}
+<nav>
+  <ul class="pagination pagination-sm">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ request.GET.urlencode|cut:'page=' }}">«</a>
+      </li>
+    {% endif %}
+    <li class="page-item disabled"><span class="page-link">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span></li>
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ request.GET.urlencode|cut:'page=' }}">»</a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
