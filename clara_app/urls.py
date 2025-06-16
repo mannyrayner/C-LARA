@@ -270,6 +270,8 @@ urlpatterns = [
     path('tq/remove/<int:link_id>/', text_questionnaire_views.tq_remove, name='tq_remove'),
     path('tq/browse/', text_questionnaire_views.tq_public_list, name='tq_public_list'),
     path('tq/my/', text_questionnaire_views.tq_my_list, name='tq_my_list'),
+    path("tq/<int:pk>/results/", text_questionnaire_views.tq_results, name="tq_results"),
+    path("tq/<int:pk>/download/", text_questionnaire_views.tq_export_csv, name="tq_export_csv"),
 
     # Compare versions of annotated text
     path('projects/<int:project_id>/compare_versions/', comparing_views.compare_versions, name='compare_versions'),

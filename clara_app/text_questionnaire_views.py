@@ -3,18 +3,20 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db import transaction
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 
 from django.template.loader import render_to_string
 from django.utils.timezone import now, timedelta
 from django.db.models.functions import Lower
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Avg, Count
 
 from .models import (
     TextQuestionnaire, TQQuestion, TQBookLink, TQResponse, TQAnswer, Content
 )
-from .forms import TextQuestionnaireForm, ContentSearchForm  # new ModelForm
+from .forms import TextQuestionnaireForm, ContentSearchForm
+
+import csv
 
 # --------------------------------------------------
 @login_required
@@ -136,6 +138,51 @@ def tq_my_list(request):
     """List questionnaires owned by the current user with edit links."""
     my_tqs = TextQuestionnaire.objects.filter(owner=request.user).order_by("-created_at")
     return render(request, "clara_app/tq_my_list.html", {"tqs": my_tqs})
+
+# ------------------------------------------------------------------
+@login_required
+def tq_results(request, pk):
+    """Summary table: mean score and N for each question."""
+    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
+
+    # Aggregate answers: {q_id: {'mean': …, 'n': …}}
+    stats = (
+        TQAnswer.objects
+        .filter(response__questionnaire=tq)
+        .values('question_id', 'question__text')
+        .annotate(mean=Avg('likert'), n=Count('id'))
+        .order_by('question_id')
+    )
+
+    return render(request, "clara_app/tq_results.html",
+                  {"tq": tq, "stats": stats})
+
+# ------------------------------------------------------------------
+@login_required
+def tq_export_csv(request, pk):
+    """Download raw responses as CSV (one row per answer)."""
+    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
+
+    response = HttpResponse(content_type="text/csv")
+    response['Content-Disposition'] = f'attachment; filename=tq_{pk}_answers.csv'
+
+    writer = csv.writer(response)
+    writer.writerow(["book_id", "rater_id", "question_id", "likert"])
+
+    queryset = (
+        TQAnswer.objects
+        .filter(response__questionnaire=tq)
+        .values_list(
+            'response__book_link__book_id',
+            'response__rater_id',
+            'question_id',
+            'likert'
+        )
+    )
+    for row in queryset:
+        writer.writerow(row)
+
+    return response
 
 # ===== helper utilities ======================================
 def _render_book_picker(request, preselect_ids=None):
