@@ -27,7 +27,12 @@ def tq_create(request):
                 tq = form.save(commit=False)
                 tq.owner = request.user
                 tq.save()
-                _sync_links(tq, request.POST.getlist("book_ids"))
+                #_sync_links(tq, request.POST.getlist("book_ids"))
+                _sync_links(
+                    tq,
+                    request.POST.getlist("book_ids_checked"),
+                    request.POST.getlist("book_ids_unchecked"),
+                )
                 _sync_questions(tq, form.cleaned_data["questions"])
             messages.success(request, "Questionnaire saved.")
             return redirect("tq_edit", pk=tq.pk)
@@ -53,7 +58,12 @@ def tq_edit(request, pk):
         if form.is_valid():
             with transaction.atomic():
                 tq = form.save()
-                _sync_links(tq, request.POST.getlist("book_ids"))
+                #_sync_links(tq, request.POST.getlist("book_ids"))
+                _sync_links(
+                    tq,
+                    request.POST.getlist("book_ids_checked"),
+                    request.POST.getlist("book_ids_unchecked"),
+                )
                 _sync_questions(tq, form.cleaned_data["questions"])
             messages.success(request, "Questionnaire updated.")
             return redirect("tq_edit", pk=tq.pk)
@@ -186,14 +196,18 @@ def _render_book_picker(request, preselect_ids=None):
         request=request,
     )
 
-def _sync_links(tq, incoming_ids):
-    incoming = set(map(int, incoming_ids))
-    current  = set(tq.tqbooklink_set.values_list("book_id", flat=True))
-    # add
-    for bid in incoming - current:
+def _sync_links(tq, checked_ids, unchecked_ids):
+    checked   = set(map(int, checked_ids))
+    unchecked = set(map(int, unchecked_ids))
+
+    # 1. ADD any newly checked books that are not already linked
+    to_add = checked - set(tq.tqbooklink_set.values_list("book_id", flat=True))
+    for bid in to_add:
         TQBookLink.objects.create(questionnaire=tq, book_id=bid, order=0)
-    # delete
-    tq.tqbooklink_set.filter(book_id__in=(current - incoming)).delete()
+
+    # 2. DELETE only the unchecked books that are currently linked
+    tq.tqbooklink_set.filter(book_id__in=unchecked).delete()
+
 
 def _sync_questions(tq, raw_text):
     lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
