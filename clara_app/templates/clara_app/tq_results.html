@@ -1,0 +1,23 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+<h3>Results — {{ tq.title }}</h3>
+
+<a class="btn btn-sm btn-outline-secondary mb-3"
+   href="{% url 'tq_export_csv' tq.pk %}">⇩ Download CSV</a>
+
+<table class="table table-sm table-bordered">
+  <thead><tr><th>#</th><th>Question</th><th>Mean</th><th>N</th></tr></thead>
+  <tbody>
+    {% for row in stats %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ row.question__text }}</td>
+        <td>{{ row.mean|floatformat:2 }}</td>
+        <td>{{ row.n }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">No responses yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
