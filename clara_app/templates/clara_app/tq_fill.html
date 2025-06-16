@@ -2,7 +2,7 @@
 {% block content %}
 <h4>{{ link.book.title }}</h4>
 <a class="btn btn-sm btn-outline-primary mb-3" target="_blank"
-   href="{{ link.book.get_absolute_url }}">Open text in new tab</a>
+   href="{{ link.book.get_public_absolute_url }}">Open text in new tab</a>
 
 <form method="post">
   {% csrf_token %}
