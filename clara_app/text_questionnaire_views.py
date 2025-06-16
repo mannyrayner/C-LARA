@@ -1,5 +1,6 @@
 # text_questionnaire_views.py
 from django.views.decorators.http import require_POST
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
@@ -18,6 +19,7 @@ from .models import (
 from .forms import TextQuestionnaireForm, ContentSearchForm
 
 import csv
+from uuid import uuid4
 
 # --------------------------------------------------
 @login_required
