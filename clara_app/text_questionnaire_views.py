@@ -1,4 +1,5 @@
 # text_questionnaire_views.py
+from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
@@ -140,22 +141,79 @@ def tq_my_list(request):
     return render(request, "clara_app/tq_my_list.html", {"tqs": my_tqs})
 
 # ------------------------------------------------------------------
+##@login_required
+##def tq_results(request, pk):
+##    """Summary table: mean score and N for each question."""
+##    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
+##
+##    # Aggregate answers: {q_id: {'mean': …, 'n': …}}
+##    stats = (
+##        TQAnswer.objects
+##        .filter(response__questionnaire=tq)
+##        .values('question_id', 'question__text')
+##        .annotate(mean=Avg('likert'), n=Count('id'))
+##        .order_by('question_id')
+##    )
+##
+##    return render(request, "clara_app/tq_results.html",
+##                  {"tq": tq, "stats": stats})
+
 @login_required
 def tq_results(request, pk):
-    """Summary table: mean score and N for each question."""
     tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
 
-    # Aggregate answers: {q_id: {'mean': …, 'n': …}}
-    stats = (
-        TQAnswer.objects
-        .filter(response__questionnaire=tq)
+    stats_q = (  # existing per-question table
+        TQAnswer.objects.filter(response__questionnaire=tq)
         .values('question_id', 'question__text')
         .annotate(mean=Avg('likert'), n=Count('id'))
         .order_by('question_id')
     )
 
-    return render(request, "clara_app/tq_results.html",
-                  {"tq": tq, "stats": stats})
+# ---------- new book-level matrix ----------
+    q_count = tq.tqquestion_set.count()
+    raw = (
+        TQAnswer.objects
+        .filter(response__questionnaire=tq)
+        .values(
+            'response__book_link__book__title',
+            'question__order'
+        )
+        .annotate(mean=Avg('likert'))
+        .order_by('response__book_link__book__title', 'question__order')
+    )
+
+    # build list of rows: {"title": str, "cells": [means…], "row_mean": float}
+    from collections import defaultdict
+    tmp = defaultdict(lambda: [None] * q_count)
+    for r in raw:
+        title = r['response__book_link__book__title']
+        idx   = r['question__order'] - 1
+        tmp[title][idx] = round(r['mean'], 2)
+
+    stats_book = []
+    for title, cells in tmp.items():
+        # row mean over non-None cells
+        numeric = [c for c in cells if c is not None]
+        row_mean = round(sum(numeric) / len(numeric), 2) if numeric else "—"
+        stats_book.append(
+            {"title": title, "cells": cells, "row_mean": row_mean}
+        )
+
+    # optional ordering: ?sort=rowmean
+    if request.GET.get("sort") == "rowmean":
+        stats_book.sort(key=lambda r: (r["row_mean"] == "—", r["row_mean"]))
+    else:  # default alpha
+        stats_book.sort(key=lambda r: r["title"].lower())
+
+    return render(
+        request,
+        "clara_app/tq_results.html",
+        {
+            "tq": tq,
+            "stats_q": stats_q,
+            "stats_book": stats_book,
+        },
+    )
 
 # ------------------------------------------------------------------
 @login_required
@@ -183,6 +241,15 @@ def tq_export_csv(request, pk):
         writer.writerow(row)
 
     return response
+
+# ------------------------------------------------------------------
+@login_required
+@require_POST
+def tq_delete(request, pk):
+    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
+    tq.delete()
+    messages.success(request, "Questionnaire deleted.")
+    return redirect("tq_my_list")
 
 # ===== helper utilities ======================================
 def _render_book_picker(request, preselect_ids=None):
