@@ -29,15 +29,12 @@
 	{% if tq %}
 	<h5>Books in questionnaire ({{ links|length }})</h5>
 	<table class="table table-sm table-bordered">
-	  <tr><th>#</th><th>Title</th><th>L2</th><th></th></tr>
+	  <tr><th>#</th><th>Title</th><th>L2</th></tr>
 	  {% for link in links %}
 		<tr id="row-{{ link.id }}">
 		  <td>{{ forloop.counter }}</td>
 		  <td>{{ link.book.title }}</td>
 		  <td>{{ link.book.l2 }}</td>
-		  <td>
-			<a href="{% url 'tq_remove' link.id %}" class="text-danger remove-link">🗑</a>
-		  </td>
 		</tr>
 	  {% endfor %}
 	</table>
@@ -66,15 +63,28 @@
   </div>
 
 <script>
-  // Collect checked book_ids before submit
-  document.querySelector("form").addEventListener("submit", function (e) {
-    const dest = document.getElementById("hiddenBookInputs");
-    dest.innerHTML = "";
-    document.querySelectorAll("input[name='book_ids']:checked").forEach(cb => {
-      dest.insertAdjacentHTML("beforeend",
-        `<input type="hidden" name="book_ids" value="${cb.value}">`);
-    });
+  // Collect checked and unchecked book_ids before submit
+  
+  document.querySelector("form").addEventListener("submit", () => {
+  const dest  = document.getElementById("hiddenBookInputs");
+  dest.innerHTML = "";
+
+  const checked   = [];
+  const unchecked = [];
+
+  document.querySelectorAll("input[name='book_ids']").forEach(cb => {
+    if (cb.checked)  checked.push(cb.value);
+    else             unchecked.push(cb.value);
   });
+
+  checked.forEach(id =>
+    dest.insertAdjacentHTML("beforeend",
+      `<input type="hidden" name="book_ids_checked" value="${id}">`));
+
+  unchecked.forEach(id =>
+    dest.insertAdjacentHTML("beforeend",
+      `<input type="hidden" name="book_ids_unchecked" value="${id}">`));
+});
 
   // Ajax remove link
   document.querySelectorAll(".remove-link").forEach(a => {
