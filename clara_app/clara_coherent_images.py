@@ -83,6 +83,7 @@ from .clara_coherent_images_utils import (
     existing_element_files_for_element_texts,
     elements_are_represented_as_images,
     get_page_text,
+    get_original_page_text,
     get_page_description,
     get_page_image,
     remove_element_directory,
@@ -1724,6 +1725,21 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
     formatted_story_data = json.dumps(story_data, indent=4)
     
     page_text = get_page_text(page_number, params)
+    
+    original_page_text = get_original_page_text(page_number, params)
+    if original_page_text:
+        original_page_text_advice = f"""Note: the text has been translated from a language the AI does not know well.
+The text in the original language was
+
+{{original_page_text}}
+
+If text is going to be inserted into the image, for example in a speech bubble,
+it must be taken from the text in the original language.
+DO NOT insert translated text into the image.
+"""
+    else:
+        original_page_text_advice = ''
+    
     style_description = get_style_description(params)
 
     # Get text language
@@ -1803,6 +1819,7 @@ async def generate_page_description_and_images(page_number, previous_pages, elem
                                     style_description=style_description,
                                     page_number=page_number,
                                     page_text=page_text,
+                                    original_page_text_advice=original_page_text_advice,
                                     text_language=text_language,
                                     advice_text=advice_text,
                                     element_descriptions_text=element_descriptions_text,

@@ -715,6 +715,14 @@ def get_page_text(page_number, params):
             return text
     raise ImageGenerationError(message=f'Unable to find page "{page_number}"')
 
+def get_original_page_text(page_number, params):
+    story_data = get_story_data(params)
+    for item in story_data:
+        if page_number == item['page_number']:
+            text = item['original_page_text'] if 'original_page_text' in item else None
+            return text
+    raise ImageGenerationError(message=f'Unable to find page "{page_number}"')
+
 def get_page_description(page_number, params):
     project_dir = params['project_dir']
     

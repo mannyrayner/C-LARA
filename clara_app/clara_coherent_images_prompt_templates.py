@@ -505,6 +505,8 @@ We are about to generate the image for page {{page_number}}, whose text is
 
 {{page_text}}
 
+{{original_page_text_advice}}
+
 We have already generated detailed specifications for the images on the previous pages and also
 for various elements (characters, locations, etc) that occur on more than one page.
 Here are the specifications of relevant previous pages and elements:
@@ -567,6 +569,8 @@ The intended style in which the images will be produced is described as follows:
 We are about to generate the image for page {{page_number}}, whose text is
 
 {{page_text}}
+
+{{original_page_text_advice}}
 
 We have already generated detailed specifications for the images on the previous pages and also
 specification and images of various elements (characters, locations, etc) that occur on more than one page.
@@ -654,6 +658,8 @@ The intended style in which the images will be produced is described as follows:
 We are about to generate the image for page {{page_number}}, whose text is
 
 {{page_text}}
+
+{{original_page_text_advice}}
 
 We have already generated images of various elements (characters, locations, etc) that occur on more than one page.
 The relevant images will be passed as part of the call we are constructing here.
