@@ -9,6 +9,7 @@ from .clara_coherent_images_prompt_templates import (
     )
 
 from .clara_coherent_images_advice import (
+    get_background_and_page_advice,
     get_background_advice,
     set_background_advice,
     get_style_advice,
@@ -1443,11 +1444,12 @@ async def find_relevant_previous_pages_and_elements_for_page(page_number, params
 
     cache_file = project_pathname(project_dir, f'pages/page{page_number}/relevant_pages_and_elements.json')
 
-    if file_exists(cache_file):
-        info = read_json_file(cache_file)
-        previous_pages = info['relevant_previous_pages']
-        elements = info['relevant_elements']
-        return previous_pages, elements, total_cost_dict
+# We don't use the cached version since we may want to recompute it, but produce it anyway for documentation purposes
+##    if file_exists(cache_file):
+##        info = read_json_file(cache_file)
+##        previous_pages = info['relevant_previous_pages']
+##        elements = info['relevant_elements']
+##        return previous_pages, elements, total_cost_dict
     
     previous_pages, previous_pages_cost_dict = await find_relevant_previous_pages_for_page(page_number, params, callback=callback)
     total_cost_dict = combine_cost_dicts(total_cost_dict, previous_pages_cost_dict)
@@ -1515,6 +1517,8 @@ async def find_relevant_elements_for_page(page_number, params, callback=None):
     story_data = get_story_data(params)
     formatted_story_data = json.dumps(story_data, indent=4)
 
+    background_text, advice_text = get_background_and_page_advice(page_number, params)
+
     page_text = get_page_text(page_number, params)
 
     all_element_texts = get_all_element_texts(params)
@@ -1524,7 +1528,12 @@ async def find_relevant_elements_for_page(page_number, params, callback=None):
 
     # Create the prompt
     prompt_template = get_prompt_template('default', 'get_relevant_elements')
-    prompt = prompt_template.format(formatted_story_data=formatted_story_data, page_number=page_number, page_text=page_text, all_element_texts=all_element_texts)
+    prompt = prompt_template.format(formatted_story_data=formatted_story_data,
+                                    page_number=page_number,
+                                    page_text=page_text,
+                                    all_element_texts=all_element_texts,
+                                    background_text=background_text,
+                                    advice_text=advice_text)
 
     total_cost_dict = {}
     all_error_messages = ''
@@ -1745,20 +1754,22 @@ DO NOT insert translated text into the image.
     # Get text language
     text_language = get_text_language(params)
 
-    # Get the background if there is any
-    background_advice = get_background_advice(params)
-    background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
+##    # Get the background if there is any
+##    background_advice = get_background_advice(params)
+##    background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
+##
+##    #Get the advice if there is any
+##    advice = get_page_advice(page_number, params)
+##    if advice:
+##        advice_text = f"""
+##- Bear in mind the following advice from the user when creating the page description:
+##
+##{advice}
+##"""
+##    else:
+##        advice_text = ''
 
-    #Get the advice if there is any
-    advice = get_page_advice(page_number, params)
-    if advice:
-        advice_text = f"""
-- Bear in mind the following advice from the user when creating the page description:
-
-{advice}
-"""
-    else:
-        advice_text = ''
+    background_text, advice_text = get_background_and_page_advice(page_number, params)
     
     previous_page_descriptions_with_page_numbers = [ ( previous_page_number, get_page_description(previous_page_number, params) )
                                                      for previous_page_number in previous_pages ]

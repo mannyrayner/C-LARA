@@ -34,6 +34,23 @@ import sys
 import traceback
 import pprint
 
+def get_background_and_page_advice(page_number, params):
+    # Get the background if there is any
+    background_advice = get_background_advice(params)
+    background_text = '' if not background_advice else f'Here is some background information about the text: {background_advice}'
+
+    #Get the advice if there is any
+    advice = get_page_advice(page_number, params)
+    if advice:
+        advice_text = f"""
+- Bear in mind the following advice from the user relevant to this page:
+
+{advice}
+"""
+    else:
+        advice_text = ''
+
+    return ( background_text, advice_text )
 
 def get_background_advice(params):
     try:

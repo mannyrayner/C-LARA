@@ -456,7 +456,7 @@ elements is the following:
 
 When we later generate the image for page {page_number}, it may be helpful to consult some of these descriptions.
 
-In this step, the task is to write out a JSON-formatted list of the elements relevant to page {page_number}e.
+In this step, the task is to write out a JSON-formatted list of the elements relevant to page {page_number}.
 
 For example, if the text were the traditional nursery rhyme
 
@@ -481,6 +481,10 @@ then a plausible list of relevant elements for page 2 would be
 [ "Humpty Dumpty", "the wall"]
 
 since the image on page 2 will contain Humpty Dumpty and the wall, but probably not the King's horses or the King's men.
+
+{background_text}
+
+{advice_text}
 
 Please write out only the JSON-formatted list, since it will be read by a Python script.
 """
