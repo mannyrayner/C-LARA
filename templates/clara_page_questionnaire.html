@@ -1,0 +1,86 @@
+
+<head>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  /* MWE hover ---------------------------------------------------- */
+  document.querySelectorAll(".word[data-mwe-id]").forEach(w => {
+    const id = w.dataset.mweId;
+    if (!id) return;
+
+    w.addEventListener("mouseenter", () => {
+      document.querySelectorAll(`.word[data-mwe-id='${id}']`)
+              .forEach(el => el.classList.add("mwe-hover"));
+    });
+    w.addEventListener("mouseleave", () => {
+      document.querySelectorAll(`.word[data-mwe-id='${id}']`)
+              .forEach(el => el.classList.remove("mwe-hover"));
+    });
+  });
+
+  /* Translation pop-ups ----------------------------------------- */
+  document.querySelectorAll(".translation-icon").forEach(icon => {
+    icon.addEventListener("click", () => {
+      const txt = icon.dataset.translation;
+      const rect = icon.getBoundingClientRect();
+
+      const popup = document.createElement("div");
+      popup.className = "translation-popup";
+      popup.textContent = txt;
+      popup.style.top  = rect.bottom + 8 + "px";
+      popup.style.left = rect.left   + "px";
+
+      document.body.appendChild(popup);
+
+      /* click outside to close */
+      function remove(e){
+        if (!popup.contains(e.target) && e.target !== icon){
+          popup.remove(); document.removeEventListener("click", remove);
+        }
+      }
+      document.addEventListener("click", remove);
+    });
+  });
+
+});
+</script>
+<style>
+  .word { position: relative; display:inline-block; }
+  .word[data-gloss]:hover::after {
+      content: attr(data-gloss);
+      position: absolute; left: 0; bottom: 100%;
+      background:#333; color:#fff; padding:2px 6px; border-radius:3px;
+      white-space:nowrap; font-size:0.8rem;
+      z-index: 9999;
+  }
+  .mwe-hover 		 { background: #ffe9b5; }
+  .translation-icon  { cursor:pointer; color:#666; }
+  .translation-popup { position:absolute; background:#fff; border:1px solid #aaa;
+                       padding:4px 6px; border-radius:3px; max-width:250px;
+                       font-size:0.9rem; box-shadow:0 1px 4px rgba(0,0,0,.25);
+                       z-index:9999; }
+</style>
+</head>
+<body>
+
+  <div class="page-text">
+    {# ——— Iterate page → segments → elements, but keep only Image, Word and plain text ——— #}
+    {%- for segment in page.segments -%}
+      {%- for el in segment.content_elements -%}
+		{%- if el.type == "Image" -%}
+		  <img src="{{ '/accounts/projects/serve_project_image/' + el.content.project_id_internal + '/' + el.content.src }}" alt="Project Image" style="width: 25vw; max-width: 350px; ">
+        {%- elif el.type == "Word" -%}
+          <span class="word"
+		        data-gloss="{{ el.annotations.gloss|e if el.annotations.gloss else '' }}"
+				data-mwe-id="{{ el.annotations.mwe_id if el.annotations.mwe_id else '' }}">{{ el.content }}</span>
+        {%- else -%}
+		  {{ el.content|replace('\n', '<br>')|safe }}
+        {%- endif -%}
+      {%- endfor -%}
+	  {%- if 'translated' in segment.annotations -%}
+		<span class="translation-icon" data-translation="{{ segment.annotations.translated|e }}">&#9998;</span>
+	  {%- endif -%}
+    {%- endfor -%}
+  </div>
+</body>
+
