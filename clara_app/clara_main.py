@@ -1162,6 +1162,7 @@ class CLARAProjectInternal:
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     def get_internalised_and_annotated_text(self,
+                                            for_questionnaire=False,
                                             title=None,
                                             human_voice_id=None,
                                             audio_type_for_words='tts', audio_type_for_segments='tts',
@@ -1170,22 +1171,25 @@ class CLARAProjectInternal:
                                             phonetic=False, callback=None) -> str:
         post_task_update(callback, f"--- Creating internalised text")
         text_object = self.get_internalised_text(phonetic=phonetic) 
-        post_task_update(callback, f"--- Internalised text created")
+        
         if not text_object:
             return None
+        else:
+            post_task_update(callback, f"--- Internalised text created")
 
-        if title:
+        if not for_questionnaire and title:
             for page in text_object.pages:
                 page.annotations['title'] = title
-        
-        post_task_update(callback, f"--- Adding audio annotations")
-        audio_annotator = AudioAnnotator(self.l2_language, 
-                                         human_voice_id=human_voice_id,
-                                         audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
-                                         preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
-                                         phonetic=phonetic, callback=callback)
-        audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
-        post_task_update(callback, f"--- Audio annotations done")
+
+        if not for_questionnaire:
+            post_task_update(callback, f"--- Adding audio annotations")
+            audio_annotator = AudioAnnotator(self.l2_language, 
+                                             human_voice_id=human_voice_id,
+                                             audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
+                                             preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
+                                             phonetic=phonetic, callback=callback)
+            audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
+            post_task_update(callback, f"--- Audio annotations done")
 
         # Add acknowledgements after audio annotation, because we don't want audio on them
         if acknowledgements_info:
@@ -1204,13 +1208,14 @@ class CLARAProjectInternal:
                     # Remove the Page object from the Text object
                     text_object.remove_page(page_object)
                 add_image_to_text(text_object, image, project_id_internal=self.id, callback=callback)
-        
-        post_task_update(callback, f"--- Adding concordance annotations")
-        concordance_annotator = ConcordanceAnnotator(concordance_id=self.id)
-        concordance_annotator.annotate_text(text_object, phonetic=phonetic)
-        post_task_update(callback, f"--- Concordance annotations done")
-##        self.internalised_and_annotated_text = text_object
-        self.save_internalised_and_annotated_text(text_object, phonetic=phonetic, callback=callback)
+
+        if not for_questionnaire:
+            post_task_update(callback, f"--- Adding concordance annotations")
+            concordance_annotator = ConcordanceAnnotator(concordance_id=self.id)
+            concordance_annotator.annotate_text(text_object, phonetic=phonetic)
+            post_task_update(callback, f"--- Concordance annotations done")
+    ##        self.internalised_and_annotated_text = text_object
+            self.save_internalised_and_annotated_text(text_object, phonetic=phonetic, callback=callback)
         return text_object
 
     def save_internalised_and_annotated_text(self, text_object, phonetic=False, callback=None):
@@ -2063,6 +2068,18 @@ class CLARAProjectInternal:
                                       normal_html_exists=normal_html_exists, phonetic_html_exists=phonetic_html_exists, callback=callback)
         post_task_update(callback, f"--- Start creating pages")
         renderer.render_text(text_object, self_contained=self_contained, callback=callback)
+        post_task_update(callback, f"finished")
+        return renderer.output_dir
+
+    def render_text_for_questionnaire(self, project_id, callback=None) -> None:
+        post_task_update(callback, f"--- Start rendering text for questionnaire)")
+        l2 = self.l2_language
+        text_object = self.get_internalised_and_annotated_text(for_questionnaire=True, callback=callback)
+ 
+        post_task_update(callback, f"--- Created internalised and annotated text")
+        renderer = StaticHTMLRenderer(project_id, self.id, l2, for_questionnaire=True, callback=callback)
+        post_task_update(callback, f"--- Start creating pages")
+        renderer.render_text_for_questionnaire(text_object, callback=callback)
         post_task_update(callback, f"finished")
         return renderer.output_dir
 

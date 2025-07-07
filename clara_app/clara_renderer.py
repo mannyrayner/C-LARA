@@ -14,7 +14,8 @@ from .clara_inflection_tables import get_inflection_table_url
 
 from .clara_utils import _s3_storage, absolute_file_name
 from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists
-from .clara_utils import copy_file, basename, read_txt_file, write_txt_file, output_dir_for_project_id
+from .clara_utils import copy_file, basename, read_txt_file, write_txt_file
+from .clara_utils import output_dir_for_project_id, questionnaire_output_dir_for_project_id
 from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update 
 
 from pathlib import Path
@@ -28,7 +29,9 @@ config = get_config()
 class StaticHTMLRenderer:
     def __init__(self, project_id, project_id_internal, l2,
                  phonetic=False, format_preferences_info=None,
-                 normal_html_exists=False, phonetic_html_exists=False, callback=None):
+                 normal_html_exists=False, phonetic_html_exists=False,
+                 for_questionnaire=False,
+                 callback=None):
         post_task_update(callback, f'--- Creating StaticHTMLRenderer, format_preferences_info = {format_preferences_info}')
         #self.title = title
         self.l2 = l2
@@ -41,21 +44,22 @@ class StaticHTMLRenderer:
         self.project_id_internal = str(project_id_internal)
         self.normal_html_exists = normal_html_exists
         self.phonetic_html_exists = phonetic_html_exists
+        self.for_questionnaire = for_questionnaire
         
         # Create the new output_dir
         # Define the output directory based on the phonetic parameter
         phonetic_or_normal = "phonetic" if self.phonetic else "normal"
-        self.output_dir = Path(output_dir_for_project_id(project_id, phonetic_or_normal))
+        if not for_questionnaire:
+            self.output_dir = Path(output_dir_for_project_id(project_id, phonetic_or_normal))
+        else:
+            self.output_dir = Path(questionnaire_output_dir_for_project_id(project_id))
         
-##        # Remove the existing output_dir if we're not on S3 and it exists
-##        if not _s3_storage and directory_exists(self.output_dir):
-##            remove_directory(self.output_dir)
-
         self.delete_rendered_html_directory()
         
         make_directory(self.output_dir, parents=True)
 
-        self._copy_static_files()
+        if not for_questionnaire:
+            self._copy_static_files()
 
     def delete_rendered_html_directory(self):
         # Remove the existing output_dir if we're not on S3 and it exists
@@ -134,6 +138,14 @@ class StaticHTMLRenderer:
                                         phonetic=self.phonetic,
                                         normal_html_exists=self.normal_html_exists,
                                         phonetic_html_exists=self.phonetic_html_exists)
+        return rendered_page
+
+    def render_page_for_questionnaire(self, page, l2_language):
+        is_rtl = is_rtl_language(l2_language)
+        template = self.template_env.get_template('clara_page_questionnaire.html')
+        rendered_page = template.render(page=page,
+                                        l2_language=l2_language,
+                                        is_rtl=is_rtl)
         return rendered_page 
 
     def render_concordance_page(self, lemma, concordance_segments, l2_language):
@@ -161,7 +173,11 @@ class StaticHTMLRenderer:
         return rendered_page 
  
     def render_text(self, text, self_contained=False, callback=None):
-        post_task_update(callback, f"--- Rendering_text") 
+        post_task_update(callback, f"--- Rendering_text")
+        
+        if self.for_questionnaire:
+            return self.render_text_for_questionnaire(text, callback=None)
+        
         # Create multimedia directory if self-contained is True
         if self_contained:
             multimedia_dir = self.output_dir / 'multimedia'
@@ -223,6 +239,19 @@ class StaticHTMLRenderer:
         output_file_path = self.output_dir / "vocab_list_frequency.html"
         write_txt_file(rendered_page, output_file_path)
         post_task_update(callback, f"--- Vocabulary lists created")
+
+    def render_text_for_questionnaire(self, text, callback=None):
+        post_task_update(callback, f"--- Rendering text for questionnaire") 
+                        
+        total_pages = len(text.pages)
+        post_task_update(callback, f"--- Creating text pages")
+        for index, page in enumerate(text.pages):
+            rendered_page = self.render_page_for_questionnaire(page, self.l2)
+            output_file_path = self.output_dir / f'page_{index + 1}.html'
+            write_txt_file(rendered_page, output_file_path)
+            post_task_update(callback, f"--- Written page {index + 1}")
+        post_task_update(callback, f"--- Text pages created")
+        
         
 def adjust_audio_file_paths_in_segment_list(segments, copy_operations, multimedia_dir):
     if not segments:

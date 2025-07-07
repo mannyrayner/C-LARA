@@ -802,6 +802,11 @@ def output_dir_for_project_id(id, phonetic_or_normal):
     else:
         return str( Path(absolute_file_name(config.get('renderer', 'output_dir_phonetic'))) / str(id) )
 
+def questionnaire_output_dir_for_project_id(id):
+    config = get_config()
+    return str( Path(absolute_file_name(config.get('renderer', 'output_dir_for_questionnaire'))) / str(id) )
+
+
 def image_dir_for_project_id(id):
     config = get_config()
     return str( Path(absolute_file_name(config.get('image_repository', 'base_dir_orm'))) / str(id) )

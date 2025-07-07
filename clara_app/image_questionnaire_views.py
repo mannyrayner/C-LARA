@@ -13,11 +13,12 @@ from .clara_main import CLARAProjectInternal
 from .clara_coherent_images_utils import project_pathname
 from .clara_coherent_images_utils import read_project_json_file, project_pathname
 from .clara_images_utils import numbered_page_list_for_coherent_images
-from .clara_utils import get_config, file_exists
+from .clara_utils import get_config, file_exists, read_txt_file, questionnaire_output_dir_for_project_id
 from collections import defaultdict
 import logging
 import pprint
 import csv
+import traceback
 
 config = get_config()
 logger = logging.getLogger(__name__)
@@ -43,6 +44,14 @@ IMAGE_QUESTIONNAIRE_QUESTIONS = [
         "id": 5,
         "text": "How visually appealing do you find the image?",
     },
+    {
+        "id": 6,
+        "text": "How much do you like the text itself?",
+    },
+    {
+        "id": 7,
+        "text": "How useful do you find the glosses and translations?",
+    }
 ]
 
 @login_required
@@ -92,6 +101,14 @@ def image_questionnaire_start(request, project_id):
     # Access the internal structure
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
     project_dir = clara_project_internal.coherent_images_v2_project_dir
+
+    # Create the for-questionnaire rendered text pages
+    try:
+        clara_project_internal.render_text_for_questionnaire(project_id)
+    except Exception as e:
+        messages.error(request, f"Error when trying to create rendered text pages for questionnaire")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        return redirect('clara_home_page')
 
     # Read the story data. Regenerate first in case it has changed.
     # We should have saved everything and have translations, so we can get the story data from the project
@@ -172,6 +189,9 @@ def image_questionnaire_item(request, project_id, index):
     translated_page_text = current_page.get('translated_text', '')
     relative_page_image_path = f'pages/page{page_number}/image.jpg'
 
+    questionnaire_html_file = f'{questionnaire_output_dir_for_project_id(project_id)}/page_{page_number}.html'
+    html_snippet = read_txt_file(questionnaire_html_file) if file_exists(questionnaire_html_file) else ''
+    
     # Decide which questions to show
     # For question #3, we see if there's a relevant previous page
     # that shares an element with the current page
@@ -254,6 +274,7 @@ def image_questionnaire_item(request, project_id, index):
         "page_text": page_text,
         "translated_page_text": translated_page_text,
         "relative_image_path": relative_page_image_path,
+        "html_snippet": html_snippet,
         "questions": questions_to_show,
         "question_data_list": question_data_list,
         "show_previous": index > 0,
