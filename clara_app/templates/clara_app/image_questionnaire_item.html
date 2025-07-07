@@ -3,26 +3,13 @@
 {% load clara_tags %}
 {% block content %}
 
-<h2>Image questionnaire ({{ project.title }}), page {{ index|add:1 }}/{{ total_pages }}</h2>
+<h2>Image and text questionnaire ({{ project.title }}), page {{ index|add:1 }}/{{ total_pages }}</h2>
 
-<div>
-  <h3>Page text</h3>
-  <p>{{ page_text }}</p>
-  {% if translated_page_text %}
-	<h3>Translated page text</h3>
-	<p>{{ translated_page_text }}</p>
-  {% endif %}
+<div class="q-text-block">
+  <h3>Page text and image</h3>
+  {{ html_snippet|safe }}
 </div>
 
-{% if relative_image_path %}
-  <div>
-    <h3>Page image</h3>
-    <img src="{% url 'serve_coherent_images_v2_file' project.id relative_image_path %}" 
-         alt="Page {{ page_number }} Image" style="max-width: 300px;">
-  </div>
-{% else %}
-  <p>No image found for this page.</p>
-{% endif %}
 
 {% if has_prev_relevant_page and previous_image_relpath %}
   <div style="margin-top: 1em;">
