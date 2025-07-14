@@ -64,6 +64,31 @@ class LanguageMaster(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='language_master_set')
     language = models.CharField(max_length=50, choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
 
+class LocalisationBundle(models.Model):
+    """Named set of source strings (always English) that can be localised."""
+    name = models.CharField(max_length=60, unique=True)   # e.g. "img_q"
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class BundleItem(models.Model):
+    bundle = models.ForeignKey(LocalisationBundle, on_delete=models.CASCADE)
+    key    = models.CharField(max_length=80)              # "Q1_LABEL"
+    src    = models.TextField()                           # English string
+
+    class Meta:
+        unique_together = ('bundle', 'key')
+
+class BundleTranslation(models.Model):
+    item   = models.ForeignKey(BundleItem, on_delete=models.CASCADE)
+    lang   = models.CharField(max_length=20,
+                              choices=SUPPORTED_LANGUAGES_AND_DEFAULT)
+    text   = models.TextField(blank=True)
+    editor = models.ForeignKey(User, null=True,
+                               on_delete=models.SET_NULL)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('item', 'lang')
+
 class Community(models.Model):
     name = models.CharField(max_length=200)
     language = models.CharField(

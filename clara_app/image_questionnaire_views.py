@@ -14,6 +14,7 @@ from .clara_coherent_images_utils import project_pathname
 from .clara_coherent_images_utils import read_project_json_file, project_pathname
 from .clara_images_utils import numbered_page_list_for_coherent_images
 from .clara_utils import get_config, file_exists, read_txt_file, questionnaire_output_dir_for_project_id
+from .utils import localise, FALLBACK_LANG 
 from collections import defaultdict
 import logging
 import pprint
@@ -53,6 +54,18 @@ IMAGE_QUESTIONNAIRE_QUESTIONS = [
         "text": "How useful do you find the glosses and translations?",
     }
 ]
+
+UI_LANG_KEY = "ui_lang"
+
+def get_ui_lang(request):
+    # priority:  ?ui=XX  →  session  →  english
+    lang = request.GET.get("ui")
+    if not lang:
+        lang = request.session.get(UI_LANG_KEY)
+    if not lang:
+        lang = "english"
+    request.session["ui_lang"] = lang      # remember for next page
+    return lang
 
 @login_required
 def image_questionnaire_project_list(request):
@@ -178,6 +191,9 @@ def image_questionnaire_item(request, project_id, index):
     # Retrieve info from session
     pages_with_images = request.session.get('image_questionnaire_pages', [])
     has_any_relevant_elements = request.session.get('has_any_relevant_elements', False)
+
+    lang = get_ui_lang(request)
+    bundle = "image_questionnaire"
     
     if not pages_with_images or index < 0 or index >= len(pages_with_images):
         # Index out of range: go to a summary or fallback
@@ -252,10 +268,12 @@ def image_questionnaire_item(request, project_id, index):
     question_data_list = []
     for q in questions_to_show:
         q_id = q["id"]
+        key = str(q_id)
+        text = localise(bundle, key, lang)    
         rating_comment = answers_by_id.get(q_id, (None, ""))
         question_data_list.append({
             "id": q_id,
-            "text": q["text"],
+            "text": text,
             "rating": str(rating_comment[0]),
             "comment": rating_comment[1],
         })
@@ -268,6 +286,7 @@ def image_questionnaire_item(request, project_id, index):
 
     context = {
         "project": project,
+        "ui_lang": lang,
         "index": index,
         "total_pages": len(pages_with_images),
         "page_number": page_number,

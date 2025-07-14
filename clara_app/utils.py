@@ -19,8 +19,9 @@ from .clara_dependencies import CLARADependencies
 from .clara_utils import write_json_to_file_plain_utf8, read_json_file
 
 from .constants import SUPPORTED_LANGUAGES_AI_ENABLED_DICT
+from .models import LocalisationBundle, BundleTranslation
 
-from functools import wraps
+from functools import wraps, lru_cache
 from decimal import Decimal
 import re
 import os
@@ -31,6 +32,27 @@ import pytz
 import tempfile
 import hashlib
 import uuid
+
+FALLBACK_LANG = "english"
+
+@lru_cache(maxsize=128)
+def _bundle_dict(bundle_name: str, lang: str) -> dict[str, str]:
+    """Return {key: text} for a given bundle / lang, falling back to English."""
+    try:
+        bundle = LocalisationBundle.objects.get(name=bundle_name)
+    except LocalisationBundle.DoesNotExist:
+        return {}
+
+    items = {bi.key: bi.src for bi in bundle.bundleitem_set.all()}           # English
+    if lang != FALLBACK_LANG:
+        q = (BundleTranslation.objects
+                .filter(item__bundle=bundle, lang=lang, text__gt=""))
+        items.update({bt.item.key: bt.text for bt in q})                        # overwrite
+    return items
+
+def localise(bundle: str, key: str, lang: str) -> str:
+    """Lookup a single string with fallback → English."""
+    return _bundle_dict(bundle, lang).get(key, f"[[{key}]]")
 
 def is_ai_enabled_language(language):
     if language in SUPPORTED_LANGUAGES_AI_ENABLED_DICT and SUPPORTED_LANGUAGES_AI_ENABLED_DICT[language]:
@@ -254,6 +276,12 @@ def language_master_required(function):
         else:
             return HttpResponseForbidden('You are not authorized to edit language prompts')
     return _wrapped_view
+
+def user_can_translate(user, lang):
+    """True if user is a LanguageMaster for lang or an admin."""
+    return (user.userprofile.is_admin or
+            LanguageMaster.objects
+                          .filter(user=user, language=lang).exists())
 
 def user_is_community_member(view_func):
     """

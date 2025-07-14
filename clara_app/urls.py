@@ -107,9 +107,10 @@ urlpatterns = [
     path('public_content/<int:content_id>/', content_views.public_content_detail, name='public_content_detail'),
     path('language_statistics/', content_views.language_statistics, name='language_statistics'),
 
-    # Managing language masters
+    # Managing language masters and localisation
     path('manage_language_masters/', language_masters_views.manage_language_masters, name='manage_language_masters'),
     path('remove_language_master/<int:pk>/', language_masters_views.remove_language_master, name='remove_language_master'),
+    path('post_localisation_bundle/', language_masters_views.post_localisation_bundle, name='post_localisation_bundle'),
 
     # Funding requests
     path('funding_request/', funding_requests_views.funding_request, name='funding_request'),
@@ -123,8 +124,10 @@ urlpatterns = [
     path('list_activities_text/', activity_tracker_views.list_activities_text, name='list_activities_text'),
     path('ai_activities_reply/', activity_tracker_views.ai_activities_reply, name='ai_activities_reply'),
 
-    # Editing annotation prompt templates and examples
+    # Editing annotation prompt templates and examples  
     path('edit_prompt/', annotation_prompts_views.edit_prompt, name='edit_prompt'),
+    path('bundle_list/', annotation_prompts_views.bundle_list, name='bundle_list'),
+    path('edit_bundle/<str:bundle_name>/<str:lang_code>/', annotation_prompts_views.edit_bundle, name='edit_bundle'),
 
     # Phonetic lexica
     path('edit_phonetic_lexicon/', phonetic_lexicon_views.edit_phonetic_lexicon, name='edit_phonetic_lexicon'),

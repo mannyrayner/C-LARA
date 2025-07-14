@@ -1,16 +1,22 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django import forms
+from .models import LocalisationBundle, BundleTranslation, LanguageMaster
 from .forms import TemplateForm, PromptSelectionForm, StringForm, StringPairForm, CustomTemplateFormSet, CustomStringFormSet, CustomStringPairFormSet
 from .forms import MorphologyExampleForm, CustomMorphologyExampleFormSet, MWEExampleForm, CustomMWEExampleFormSet, ExampleWithMWEForm, ExampleWithMWEFormSet
 from .utils import get_user_config
-from .utils import language_master_required
+from .utils import language_master_required, user_can_translate
 from .clara_prompt_templates import PromptTemplateRepository
 from .clara_classes import TemplateError
 from .clara_utils import get_config
 from .clara_utils import is_rtl_language
 import logging
+
+from .constants import (
+    SUPPORTED_LANGUAGES,
+    SUPPORTED_LANGUAGES_AND_DEFAULT
+    )
 
 config = get_config()
 logger = logging.getLogger(__name__)
@@ -141,3 +147,78 @@ def edit_prompt(request):
 
     return render(request, 'clara_app/edit_prompt.html', {'prompt_selection_form': prompt_selection_form, 'prompt_formset': prompt_formset})
 
+# ------------------------------------------------------------------
+#  List all localisation bundles
+# ------------------------------------------------------------------
+@login_required
+def bundle_list(request):
+    # helper -------------------------------------------------------
+    def user_is_master(lang):
+        return (LanguageMaster.objects.filter(user=request.user,
+                                              language=lang).exists())
+
+    # gather bundles + translation tallies ------------------------
+    bundles = (LocalisationBundle.objects
+               .prefetch_related('bundleitem_set')
+               .order_by('-created_at'))
+
+    # pass 1: which languages have ≥1 translated string?
+    langs_with_data = (BundleTranslation.objects
+                       .exclude(text='')
+                       .values_list('lang', flat=True)
+                       .distinct())
+
+    # candidate language columns
+    all_langs = [c for c, _ in SUPPORTED_LANGUAGES if c != 'english']
+    lang_cols = [l for l in all_langs
+                 #if (l in langs_with_data) or user_is_master(l)]
+                 if user_is_master(l)]
+
+    # build per-bundle rows ---------------------------------------
+    rows = []
+    for b in bundles:
+        counts = {}
+        total  = b.bundleitem_set.count()
+        for lang in lang_cols:
+            done = BundleTranslation.objects.filter(item__bundle=b,
+                                                    lang=lang,
+                                                    text__gt="").count()
+            counts[lang] = (done, total)
+        rows.append({"bundle": b, "total": total, "counts": counts})
+
+    total_cols = 3 + len(lang_cols)          # for colspan in template
+
+    print(f'rows: {rows}')
+    print(f'lang_cols: {lang_cols}')
+    print(f'total_cols: {total_cols}')
+
+    return render(request, "clara_app/bundle_list.html",
+                  {"rows": rows,
+                   "lang_cols": lang_cols,
+                   "total_cols": total_cols})
+
+
+@login_required
+def edit_bundle(request, bundle_name, lang_code):
+    if not user_can_translate(request.user, lang_code):
+        return HttpResponseForbidden()
+
+    bundle = get_object_or_404(LocalisationBundle, name=bundle_name)
+    items = bundle.bundleitem_set.order_by('key').select_related()
+
+    if request.method == 'POST':
+        for item in items:
+            text = request.POST.get(f"txt_{item.id}", "").strip()
+            BundleTranslation.objects.update_or_create(
+                item=item, lang=lang_code,
+                defaults={'text': text, 'editor': request.user})
+        messages.success(request, "Translations saved.")
+        return redirect(request.path)
+
+    # build dict id→existing translation
+    existing = {bt.item_id: bt.text for bt in
+                BundleTranslation.objects.filter(item__bundle=bundle,
+                                                 lang=lang_code)}
+    return render(request, 'clara_app/edit_bundle.html',
+                  {'bundle': bundle, 'items': items,
+                   'lang': lang_code, 'existing': existing})
