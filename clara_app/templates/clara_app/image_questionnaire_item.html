@@ -6,10 +6,10 @@
 <h2>Image and text questionnaire ({{ project.title }}), page {{ index|add:1 }}/{{ total_pages }}</h2>
 
 {% comment %} --- language toggle ------------------------------------ {% endcomment %}
-{% with l1=project.l1|lower %}
+{% with l2=project.l2|lower %}
 <div class="text-end small mb-2">
   <a href="?ui=english"{% if ui_lang == "english" %} class="fw-bold"{% endif %}>English</a> |
-  <a href="?ui={{ l1 }}"{% if ui_lang == l1 %} class="fw-bold"{% endif %}>{{ l1|title }}</a>
+  <a href="?ui={{ l2 }}"{% if ui_lang == l2 %} class="fw-bold"{% endif %}>{{ l2|title }}</a>
 </div>
 {% endwith %}
 
