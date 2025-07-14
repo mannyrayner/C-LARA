@@ -236,14 +236,27 @@ def get_project_operation_durations(user, project):
     return {item['operation']: item['total'] / Decimal(60.0) for item in operation_durations}
 
 # Decorator to restrict access to project owner
+##def user_is_project_owner(function):
+##    @wraps(function)
+##    def wrap(request, *args, **kwargs):
+##        project = CLARAProject.objects.get(pk=kwargs['project_id'])
+##        if project.user != request.user:
+##            raise PermissionDenied
+##        else:
+##            return function(request, *args, **kwargs)
+##    return wrap
+
+# Decorator to restrict access to project owner or user with OWNER role
 def user_is_project_owner(function):
     @wraps(function)
     def wrap(request, *args, **kwargs):
-        project = CLARAProject.objects.get(pk=kwargs['project_id'])
-        if project.user != request.user:
-            raise PermissionDenied
-        else:
+        project_id = kwargs.get('project_id')
+        project = get_object_or_404(CLARAProject, pk=project_id)
+        user = request.user
+        if user == project.user or ProjectPermissions.objects.filter(user=user, project=project, role__in=['OWNER']).exists():
             return function(request, *args, **kwargs)
+        else:
+            raise PermissionDenied
     return wrap
 
 # Decorator to restrict access to project owner or any user having a role in the project
