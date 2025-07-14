@@ -1,0 +1,50 @@
+{% extends "clara_app/base.html" %}
+{% load static %}
+{% load l10n_helpers %}
+
+{% block content %}
+<h3>
+  Edit localisation bundle &ldquo;<b>{{ bundle.name }}</b>&rdquo;
+  <small class="text-muted">({{ lang|upper }})</small>
+</h3>
+
+<form method="post" class="mb-4">
+  {% csrf_token %}
+
+  <table class="table table-sm table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th style="width:10%">Key</th>
+        <th style="width:36%">English source</th>
+        <th style="width:36%">Translation ({{ lang|upper }})</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% for item in items %}
+      {% with txt=existing|get_item:item.id %}
+      <tr>
+        <td><code>{{ item.key }}</code></td>
+        <td>{{ item.src|linebreaksbr }}</td>
+        <td>
+          <textarea class="form-control form-control-sm"
+                    name="txt_{{ item.id }}"
+                    rows="{% if item.source|length > 60 %}3{% else %}2{% endif %}"
+                    >{{ txt }}</textarea>
+        </td>
+      </tr>
+      {% endwith %}
+    {% empty %}
+      <tr><td colspan="3" class="text-center text-muted">
+        (No strings in this bundle)
+      </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% if items %}
+    <button type="submit" class="btn btn-primary">Save translations</button>
+  {% endif %}
+  <a href="{% url 'bundle_list' %}" class="btn btn-secondary ms-2">Back</a>
+</form>
+{% endblock %}

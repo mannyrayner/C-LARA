@@ -1,0 +1,54 @@
+{% extends "clara_app/base.html" %}
+{% load static %}
+{% load l10n_helpers %}
+
+{% block content %}
+<h3>Localisation Bundles</h3>
+
+<a class="btn btn-sm btn-success mb-2"
+   href="{% url 'post_localisation_bundle' %}">+ New bundle</a>
+
+<table class="table table-sm table-bordered">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th># Keys</th>
+      {% for lang in lang_cols %}
+        <th>{{ lang|upper }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.bundle.name }}</td>
+      <td>{{ r.total }}</td>
+
+      {# ----- one cell per language ------------- #}
+      {% for lang in lang_cols %}
+        {% with pair=r.counts|get_item:lang %}
+          {% if pair %}
+            {% with done=pair.0 total=pair.1 %}
+            <td>
+              {{ done }}/{{ total }}
+              {% if done == total %}✔{% endif %}
+              {% if user|has_language_master:lang %}
+                <a href="{% url 'edit_bundle' r.bundle.name lang %}"
+                   title="Edit {{ lang }} strings"
+                   class="ml-1 small text-primary">✎</a>
+              {% endif %}
+            </td>
+            {% endwith %}
+          {% else %}
+            <td>–</td>
+          {% endif %}
+        {% endwith %}
+      {% endfor %}
+    </tr>
+  {% empty %}
+    <tr><td colspan="{{ 2|add:lang_cols|length }}">No bundles yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

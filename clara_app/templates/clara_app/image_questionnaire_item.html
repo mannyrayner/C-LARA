@@ -5,6 +5,14 @@
 
 <h2>Image and text questionnaire ({{ project.title }}), page {{ index|add:1 }}/{{ total_pages }}</h2>
 
+{% comment %} --- language toggle ------------------------------------ {% endcomment %}
+{% with l1=project.l1|lower %}
+<div class="text-end small mb-2">
+  <a href="?ui=english"{% if ui_lang == "english" %} class="fw-bold"{% endif %}>English</a> |
+  <a href="?ui={{ l1 }}"{% if ui_lang == l1 %} class="fw-bold"{% endif %}>{{ l1|title }}</a>
+</div>
+{% endwith %}
+
 <div class="q-text-block">
   <h3>Page text and image</h3>
   {{ html_snippet|safe }}
