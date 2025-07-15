@@ -1,6 +1,6 @@
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Max
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -48,6 +48,32 @@ def _bundle_dict(bundle_name: str, lang: str) -> dict[str, str]:
         q = (BundleTranslation.objects
                 .filter(item__bundle=bundle, lang=lang, text__gt=""))
         items.update({bt.item.key: bt.text for bt in q})                        # overwrite
+    return items
+
+@lru_cache(maxsize=128)
+def _bundle_dict(bundle_name: str, lang: str) -> dict[str, str]:
+    """Return {key: text} for a given bundle / lang, falling back to English."""
+    try:
+        bundle = LocalisationBundle.objects.get(name=bundle_name)
+    except LocalisationBundle.DoesNotExist:
+        return {}
+
+    # ---------- ENGLISH baseline ----------
+    items = {bi.key: bi.src for bi in bundle.bundleitem_set.all()}
+
+    # ---------- optional localisation ----------
+    if lang != FALLBACK_LANG:
+        q = (BundleTranslation.objects
+                .filter(item__bundle=bundle, lang=lang, text__gt="")
+                .order_by('-updated_at'))          # <- NEW: newest first
+        for bt in q:
+            if bt.item.key not in items:           # unlikely, but safe-guard
+                items[bt.item.key] = bt.text
+            else:
+                # overwrite only the first time we see this key
+                # (the queryset is already newest→oldest)
+                items[bt.item.key] = bt.text if items[bt.item.key] == bundle.bundleitem_set.get(key=bt.item.key).src else items[bt.item.key]
+
     return items
 
 def localise(bundle: str, key: str, lang: str) -> str:
