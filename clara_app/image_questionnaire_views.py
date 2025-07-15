@@ -98,6 +98,12 @@ def image_questionnaire_project_list(request):
     })
 
 @login_required
+def image_only_questionnaire_start(request, project_id):
+    request.session['include_text_in_image_and_text_questionnare'] = False
+    
+    return redirect('image_questionnaire_start', project_id=project_id)
+
+@login_required
 def image_and_text_questionnaire_start(request, project_id):
     request.session['include_text_in_image_and_text_questionnare'] = True
     
