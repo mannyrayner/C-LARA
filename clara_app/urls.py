@@ -259,6 +259,7 @@ urlpatterns = [
 
     # Image questionnaires
     path('image_questionnaire_project_list/', image_questionnaire_views.image_questionnaire_project_list, name='image_questionnaire_project_list'),
+    path('project/<int:project_id>/image_and_text_questionnaire_start', image_questionnaire_views.image_and_text_questionnaire_start, name='image_and_text_questionnaire_start'),
     path('project/<int:project_id>/image_questionnaire_start', image_questionnaire_views.image_questionnaire_start, name='image_questionnaire_start'),
     path('project/<int:project_id>/image_questionnaire_item/<int:index>', image_questionnaire_views.image_questionnaire_item, name='image_questionnaire_item'),
     path('project/<int:project_id>/image_questionnaire_summary', image_questionnaire_views.image_questionnaire_summary, name='image_questionnaire_summary'),

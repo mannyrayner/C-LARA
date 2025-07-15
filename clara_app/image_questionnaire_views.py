@@ -98,6 +98,12 @@ def image_questionnaire_project_list(request):
     })
 
 @login_required
+def image_and_text_questionnaire_start(request, project_id):
+    request.session['include_text_in_image_and_text_questionnare'] = True
+    
+    return redirect('image_questionnaire_start', project_id=project_id)
+
+@login_required
 def image_questionnaire_start(request, project_id):
     """
     Entry point for the image questionnaire. 
@@ -189,11 +195,20 @@ def image_questionnaire_item(request, project_id, index):
     project_dir = clara_project_internal.coherent_images_v2_project_dir
 
     # Retrieve info from session
+    include_text_questions = request.session.get('include_text_in_image_and_text_questionnare', False)
     pages_with_images = request.session.get('image_questionnaire_pages', [])
     has_any_relevant_elements = request.session.get('has_any_relevant_elements', False)
 
     lang = get_ui_lang(request)
     bundle = "image_questionnaire"
+    bundle2 = "image_questionnaire2"
+
+    ui = { key: localise(bundle2, key, lang)
+            for key in ("title", "page", "page_image_and_text", "previous_relevant_image",
+                        "questions_1_equals_worst", "not_clear_which_images_are_relevant",
+                        "next_btn", "prev_btn", "submit_btn")}
+
+    #pprint.pprint(ui)
     
     if not pages_with_images or index < 0 or index >= len(pages_with_images):
         # Index out of range: go to a summary or fallback
@@ -223,6 +238,10 @@ def image_questionnaire_item(request, project_id, index):
             #   (a) There's at least one recurring element in the entire text
             #   (b) We are not on the first page
             if has_any_relevant_elements and index > 0:
+                questions_to_show.append(q)
+        elif q["id"] in [6, 7]:
+            # Show Q6 and Q7 only if we are including the text questions
+            if include_text_questions:
                 questions_to_show.append(q)
         else:
             questions_to_show.append(q)
@@ -287,6 +306,7 @@ def image_questionnaire_item(request, project_id, index):
     context = {
         "project": project,
         "ui_lang": lang,
+        "ui": ui,
         "index": index,
         "total_pages": len(pages_with_images),
         "page_number": page_number,
