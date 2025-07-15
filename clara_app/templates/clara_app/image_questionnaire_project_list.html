@@ -35,7 +35,7 @@
       <li>
         <strong>{{ project.title }}</strong> ({{ project.l2|titlecase }})
         |
-        <a href="{% url 'image_questionnaire_start' project.id %}">Go to image questionnaire</a>
+        <a href="{% url 'image_only_questionnaire_start' project.id %}">Go to image questionnaire</a>
 		|
         <a href="{% url 'image_and_text_questionnaire_start' project.id %}">Go to image and text questionnaire</a>
         <!-- or 'Continue questionnaire' if they might have partial answers -->
