@@ -3,7 +3,7 @@
 {% load clara_tags %}
 {% block content %}
 
-<h2>Image and text questionnaire ({{ project.title }}), page {{ index|add:1 }}/{{ total_pages }}</h2>
+<h2>{{ ui.title }} ({{ project.title }}), {{ ui.page }} {{ index|add:1 }}/{{ total_pages }}</h2>
 
 {% comment %} --- language toggle ------------------------------------ {% endcomment %}
 {% with l2=project.l2|lower %}
@@ -14,28 +14,28 @@
 {% endwith %}
 
 <div class="q-text-block">
-  <h3>Page text and image</h3>
+  <h3>{{ ui.page_image_and_text }}</h3>
   {{ html_snippet|safe }}
 </div>
 
 
 {% if has_prev_relevant_page and previous_image_relpath %}
   <div style="margin-top: 1em;">
-    <h3>Previous relevant image (Page {{ previous_page_number }})</h3>
+    <h3>{{ ui.previous_relevant_image }} ({{ page }} {{ previous_page_number }})</h3>
     <img src="{% url 'serve_coherent_images_v2_file' project.id previous_image_relpath %}"
-         alt="Previous relevant page image" style="max-width: 200px;">
+         alt="{{ ui.previous_relevant_image }}" style="max-width: 200px;">
   </div>
 {% endif %}
 <br>
 
-<h3>Questions (1 = worst, 5 = best)</h3>
+<h3>{{ ui.questions_1_equals_worst }}</h3>
 
 <form method="post">
   {% csrf_token %}
   {% for qdata in question_data_list %}
 	  <p><strong>Q{{ qdata.id }}: {{ qdata.text }}</strong></p>
 	  {% if qdata.id == 3 and not previous_image_relpath %}
-	   <p><strong>(It is not clear which preceding image(s) might be relevant, but maybe we missed them)</strong></p> 
+	   <p><strong>{{ ui.not_clear_which_images_are_relevant }}</strong></p> 
 	  {% endif %}	   
 	  {% for val in "12345" %}
 		<label>
@@ -50,13 +50,13 @@
 
   <div style="margin-top: 2em;">
     {% if show_previous %}
-      <button type="submit" name="previous">Previous</button>
+      <button type="submit" name="previous">{{ ui.prev_btn }}</button>
     {% endif %}
     {% if show_next %}
-      <button type="submit" name="next">Next</button>
+      <button type="submit" name="next">{{ ui.next_btn }}</button>
     {% else %}
       <!-- If there's no next page, maybe link to a summary -->
-      <button type="submit" name="next">Finish</button>
+      <button type="submit" name="next">{{ ui.submit_btn }}</button>
     {% endif %}
   </div>
 </form>
