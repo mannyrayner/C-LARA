@@ -440,61 +440,92 @@ def image_questionnaire_all_projects_summary(request):
         "request": request
     })
 
+##@login_required
+##def image_questionnaire_summary_csv(request):
+##    """
+##    Same filters as the HTML summary, but outputs one CSV row per
+##    (project × question_id) with averaged data.
+##    """
+##    # --- reuse the same search form logic --------------------------
+##    search_form = ProjectSearchForm(request.GET or None)
+##    query = Q(has_image_questionnaire=True)
+##    if search_form.is_valid():
+##        for field in ("title", "l2", "l1"):
+##            val = search_form.cleaned_data.get(field)
+##            if val:
+##                query &= Q(**{f"{field}__icontains": val})
+##    projects = CLARAProject.objects.filter(query)
+##
+##    # --- assemble rows ---------------------------------------------
+##    rows = []
+##    question_texts = {q["id"]: q["text"] for q in IMAGE_QUESTIONNAIRE_QUESTIONS}
+##    for proj in projects:
+##        responses = ImageQuestionnaireResponse.objects.filter(project=proj)
+##        if not responses.exists():
+##            continue
+##
+##        # NEW: counts shared by all rows of this project
+##        pages = responses.values_list("page_number", flat=True).distinct().count()
+##        evals = responses.values_list("user_id", flat=True).distinct().count()
+##        
+##        agg = (
+##            responses.values("question_id")
+##            .annotate(avg=Avg("rating"), n=Count("id"))
+##            .order_by("question_id")
+##        )
+##        for r in agg:
+##            rows.append({
+##                "project": proj.title,
+##                "pages": pages,              # NEW column
+##                "evaluators": evals,         # NEW column
+##                "question_id": r["question_id"],
+##                "question_text": question_texts.get(r["question_id"]),
+##                "avg_rating": f"{r['avg']:.2f}",
+##                "num_responses": r["n"],
+##            })
+##
+##    # --- stream as CSV ---------------------------------------------
+##    response = HttpResponse(content_type="text/csv")
+##    response["Content-Disposition"] = "attachment; filename=image_summary.csv"
+##    writer = csv.DictWriter(
+##        response,
+##        fieldnames=["project", "pages", "evaluators",
+##                    "question_id", "question_text",
+##                    "avg_rating", "num_responses"],
+##    )
+##    writer.writeheader()
+##    writer.writerows(rows)
+##    return response
+
 @login_required
 def image_questionnaire_summary_csv(request):
-    """
-    Same filters as the HTML summary, but outputs one CSV row per
-    (project × question_id) with averaged data.
-    """
-    # --- reuse the same search form logic --------------------------
+    """Dump every image-questionnaire rating (one row per rater × page × question)."""
     search_form = ProjectSearchForm(request.GET or None)
     query = Q(has_image_questionnaire=True)
     if search_form.is_valid():
-        for field in ("title", "l2", "l1"):
-            val = search_form.cleaned_data.get(field)
+        for f in ("title", "l2", "l1"):
+            val = search_form.cleaned_data.get(f)
             if val:
-                query &= Q(**{f"{field}__icontains": val})
+                query &= Q(**{f"{f}__icontains": val})
     projects = CLARAProject.objects.filter(query)
 
-    # --- assemble rows ---------------------------------------------
     rows = []
-    question_texts = {q["id"]: q["text"] for q in IMAGE_QUESTIONNAIRE_QUESTIONS}
-    for proj in projects:
-        responses = ImageQuestionnaireResponse.objects.filter(project=proj)
-        if not responses.exists():
-            continue
-
-        # NEW: counts shared by all rows of this project
-        pages = responses.values_list("page_number", flat=True).distinct().count()
-        evals = responses.values_list("user_id", flat=True).distinct().count()
-        
-        agg = (
-            responses.values("question_id")
-            .annotate(avg=Avg("rating"), n=Count("id"))
-            .order_by("question_id")
-        )
-        for r in agg:
+    for p in projects:
+        for r in ImageQuestionnaireResponse.objects.filter(project=p):
             rows.append({
-                "project": proj.title,
-                "pages": pages,              # NEW column
-                "evaluators": evals,         # NEW column
-                "question_id": r["question_id"],
-                "question_text": question_texts.get(r["question_id"]),
-                "avg_rating": f"{r['avg']:.2f}",
-                "num_responses": r["n"],
+                "project"     : p.title,
+                "page"        : r.page_number,
+                "question_id" : r.question_id,
+                "rater"       : r.user_id,
+                "rating"      : r.rating,
             })
 
-    # --- stream as CSV ---------------------------------------------
+    #
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = "attachment; filename=image_summary.csv"
-    writer = csv.DictWriter(
-        response,
-        fieldnames=["project", "pages", "evaluators",
-                    "question_id", "question_text",
-                    "avg_rating", "num_responses"],
-    )
-    writer.writeheader()
-    writer.writerows(rows)
+    response["Content-Disposition"] = "attachment; filename=image_raw.csv"
+    writer = csv.DictWriter(response,
+        fieldnames=["project","page","question_id","rater","rating"])
+    writer.writeheader(); writer.writerows(rows)
     return response
 
 def _get_relevant_elements(project_dir, page_number):
