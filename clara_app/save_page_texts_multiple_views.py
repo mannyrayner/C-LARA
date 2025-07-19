@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 
+from .models import CLARAProject
 from .utils import user_has_a_project_role, get_task_updates
 
 @login_required
