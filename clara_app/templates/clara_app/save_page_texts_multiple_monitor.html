@@ -33,10 +33,10 @@
 					// If the task is finished, stop polling the server and redirect to the 'complete' view
 					if (response.status == 'finished') {
 						clearInterval(interval_id);
-						window.location = "{% url 'edit_images' project_id 'finished_syntax_correction' %}";
+						window.location = "{% url 'edit_images_v2' project_id 'finished_syntax_correction' %}";
 					} else if (response.status == 'error') {
 						clearInterval(interval_id);
-						window.location = "{% url 'edit_images' project_id 'error_syntax_correction' %}";
+						window.location = "{% url 'edit_images_v2' project_id 'error_syntax_correction' %}";
 					}
 				}
 			});
