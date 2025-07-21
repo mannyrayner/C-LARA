@@ -204,3 +204,10 @@ def diff_elements_to_text_object(diff_elements: List[DiffElement], l2_language: 
     # Create and return the Text object
     return Text(pages=pages, l2_language=l2_language, l1_language=l1_language)
 
+def remove_any_empty_pages_at_end(text):
+    if not text:
+        return text
+    pages = text.split('<page>')
+    while pages and not pages[-1].strip():
+        pages = pages[:-1]
+    return '<page>'.join(pages)

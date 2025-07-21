@@ -176,7 +176,7 @@ from .clara_coherent_images_utils import get_element_description, get_page_descr
 from .clara_coherent_images_utils import style_image_name, element_image_name, page_image_name, overview_file
 from .clara_coherent_images_utils import style_directory, element_directory, element_directory_for_element_name, page_directory
 from .clara_coherent_images_utils import get_style_image, get_page_image, get_element_image, get_all_page_images, get_all_element_images
-from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text
+from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text, remove_any_empty_pages_at_end
 from .clara_utils import absolute_file_name, absolute_local_file_name
 from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
@@ -814,10 +814,25 @@ class CLARAProjectInternal:
             error_message = f'Exception when performing alignment against segmented text: "{str(e)}"\n{traceback.format_exc()}'
             raise InternalCLARAError(message = error_message)
 
-    # Align all existing versions against segmented
+    def remove_any_empty_pages_at_end_and_save(self, text_type):
+        try:
+            text = self.load_text_version(text_type)
+            print(f'Call remove_any_empty_pages_at_end on "{text}"')
+            text_without_final_empty_pages = remove_any_empty_pages_at_end(text)
+            print(f'Result = "{text_without_final_empty_pages}"')
+            self.save_text_version(text_type, text_without_final_empty_pages, source='aligned')
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            error_message = f'Exception when trying to remove empty pages: "{str(e)}"\n{traceback.format_exc()}'
+            raise InternalCLARAError(message = error_message)
+
+    # Align all existing versions against segmented and remove any empty pages at end
     def align_all_text_versions_with_segmented_and_save(self):
         for text_type in ( 'mwe', 'translated', 'gloss', 'lemma' ):
             self.align_text_version_with_segmented_and_save(text_type)
+        for text_type in ( 'segmented_with_images', 'mwe', 'translated', 'gloss', 'lemma' ):
+            self.remove_any_empty_pages_at_end_and_save(text_type)
 
     # Call ChatGPT-4 to create a story based on the given prompt
     def create_plain_text(self, prompt: Optional[str] = None, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:

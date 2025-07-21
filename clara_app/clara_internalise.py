@@ -210,9 +210,9 @@ def parse_segment_mwe_minimal(segment_text):
 
 def parse_segment_translated(segment_text):
     try:
-        print(f'parse_segment_translated: text: {segment_text}')
+        #print(f'parse_segment_translated: text: {segment_text}')
         components = split_escaped(segment_text, '#')
-        print(f'parse_segment_translated: components: {components}')
+        #print(f'parse_segment_translated: components: {components}')
         n_components = len(components)
         if n_components == 3 and components[2].strip() == '':
             main_text = components[0]
