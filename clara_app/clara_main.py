@@ -817,9 +817,9 @@ class CLARAProjectInternal:
     def remove_any_empty_pages_at_end_and_save(self, text_type):
         try:
             text = self.load_text_version(text_type)
-            print(f'Call remove_any_empty_pages_at_end on "{text}"')
+            #print(f'Call remove_any_empty_pages_at_end on "{text}"')
             text_without_final_empty_pages = remove_any_empty_pages_at_end(text)
-            print(f'Result = "{text_without_final_empty_pages}"')
+            #print(f'Result = "{text_without_final_empty_pages}"')
             self.save_text_version(text_type, text_without_final_empty_pages, source='aligned')
         except FileNotFoundError:
             pass
@@ -827,12 +827,15 @@ class CLARAProjectInternal:
             error_message = f'Exception when trying to remove empty pages: "{str(e)}"\n{traceback.format_exc()}'
             raise InternalCLARAError(message = error_message)
 
+    def remove_any_empty_pages_at_end_and_save_for_all_text_versions(self):
+        for text_type in ( 'segmented', 'segmented_with_images', 'mwe', 'translated', 'gloss', 'lemma' ):
+            self.remove_any_empty_pages_at_end_and_save(text_type)
+
     # Align all existing versions against segmented and remove any empty pages at end
     def align_all_text_versions_with_segmented_and_save(self):
         for text_type in ( 'mwe', 'translated', 'gloss', 'lemma' ):
             self.align_text_version_with_segmented_and_save(text_type)
-        for text_type in ( 'segmented_with_images', 'mwe', 'translated', 'gloss', 'lemma' ):
-            self.remove_any_empty_pages_at_end_and_save(text_type)
+        self.remove_any_empty_pages_at_end_and_save_for_all_text_versions()
 
     # Call ChatGPT-4 to create a story based on the given prompt
     def create_plain_text(self, prompt: Optional[str] = None, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
