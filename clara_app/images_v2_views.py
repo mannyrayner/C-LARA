@@ -170,11 +170,18 @@ def edit_images_v2(request, project_id, status):
     # We also need to create entries for the pages that currently have no image.
     try:
         page_data = []
+        if _edit_images_v2_trace:
+            print(f'len(page_texts) = {len(page_texts)}')
+            print(f'len(segmented_texts) = {len(segmented_texts)}')
+            print(f'len(translated_texts) = {len(translated_texts)}')
+            print(f'len(mwe_texts) = {len(mwe_texts)}')
+            print(f'len(gloss_texts) = {len(gloss_texts)}')
+            print(f'highest key for indexed_page_data = {max([key for key in indexed_page_data])}')
         for index in range(0, len(page_texts)):
             page = index + 1
             if ( index < len(page_texts) and index < len(segmented_texts) and
                  index < len(translated_texts) and index < len(mwe_texts) and
-                 index < len(gloss_texts) and page < len(indexed_page_data) ):
+                 index < len(gloss_texts) and page in indexed_page_data ):
                 item = { 'page': page,
                          'page_text': page_texts[index],
                          'segmented_text': segmented_texts[index],
@@ -188,6 +195,8 @@ def edit_images_v2(request, project_id, status):
                          'alternate_images': indexed_page_data[page]['alternate_images'] if page in indexed_page_data else None
                          }
                 page_data.append(item)
+        if _edit_images_v2_trace:
+            print(f'len(page_data) = {len(page_data)}')
     except Exception as e:
         messages.error(request, f"Unable to get page information")
         messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")

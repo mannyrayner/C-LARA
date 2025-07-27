@@ -366,16 +366,32 @@ class CLARAProjectInternal:
     # If necessary archive the old one.
     # Update the metadata file, first creating it if it doesn't exist.
     def save_text_version(self, version: str, text: str, source='human_revised', user='Unknown', label='', gold_standard=False) -> None:
+        trace_save_text_version = False
+        #trace_save_text_version = True
+        
+##        if trace_save_text_version:
+##            print(f'Save text file: {version}')
+##            self._check_metadata_file_consistent()
+        
         file_path = self._file_path_for_version(version)
 
-        # For downward compatibility, guess metadata for existing files if necessary, assuming they were created by this user.
+        # Reconstruct the metadata file if it is missing or inconsistent
         self._create_metadata_file_if_missing(user)
+
+##        # For downward compatibility, guess metadata for existing files if necessary, assuming they were created by this user.
+##        if trace_save_text_version:
+##            print(f'Create metadata file if missing (before)')
+##            self._check_metadata_file_consistent() 
+##        self._create_metadata_file_if_missing(user)
+##        if trace_save_text_version:
+##            print(f'Create metadata file if missing (after)')
+##            self._check_metadata_file_consistent()
         
         # Archive the old version, if it exists
         if file_exists(file_path):
             timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
             archive_dir = self._get_archive_dir()
-            make_directory(archive_dir, parents=True, exist_ok=True)
+            make_directory(archive_dir, parents=True, exist_ok=True) 
             archive_path = archive_dir / f'{version}_{timestamp}.txt'
             if not file_exists(archive_path):
                 rename_file(file_path, archive_path)
@@ -388,6 +404,10 @@ class CLARAProjectInternal:
 
         # Update the metadata file, transferring the entry for 'file_path' to 'archive_path' and creating a new entry for 'file_path'
         self._update_metadata_file(file_path, archive_path, version, source, user, label, gold_standard)
+
+        if trace_save_text_version:
+            print(f'Save metadata file')
+            self._check_metadata_file_consistent()
         
         self.text_versions[version] = str(file_path)
 
@@ -411,14 +431,17 @@ class CLARAProjectInternal:
         if not file_exists(metadata_file):
             return []
         else:
-            metadata = read_json_file(metadata_file)
-            for item in metadata:
-                provenance = item['source'] if item['source'] != "human_revised" else item['source']
-                timestamp = format_timestamp(item['timestamp'])
-                gold_standard = ' (gold standard)' if item['gold_standard'] else ''
-                label = f' {item["label"]} ' if 'label' in item and item["label"] else ''
-                item['description'] = f'{provenance} {timestamp}{label}{gold_standard}'
-            return metadata
+            try:
+                metadata = read_json_file(metadata_file)
+                for item in metadata:
+                    provenance = item['source'] if item['source'] != "human_revised" else item['source']
+                    timestamp = format_timestamp(item['timestamp'])
+                    gold_standard = ' (gold standard)' if item['gold_standard'] else ''
+                    label = f' {item["label"]} ' if 'label' in item and item["label"] else ''
+                    item['description'] = f'{provenance} {timestamp}{label}{gold_standard}'
+                return metadata
+            except Exception as e:
+                return []
 
     def _get_metadata_file(self):
         return self.project_dir / 'metadata.json'
@@ -459,12 +482,10 @@ class CLARAProjectInternal:
             if file_exists(file_path):
                 # Check if metadata entry exists for the file
                 if not any(entry['file'] == str(file_path) for entry in metadata):
-                    # Assume the earliest file is source=ai_generated and the rest are source=human_revised
-                    source = "ai_generated" if version == versions[0] else "human_revised"
                     entry = {
                         "file": str(file_path),
                         "version": version,
-                        "source": source,
+                        "source": "reconstructed",
                         "user": user,
                         # Use file modification timestamp as the timestamp and convert to the right format
                         "timestamp": datetime.datetime.fromtimestamp(get_file_time(file_path)).strftime('%Y%m%d%H%M%S'),
@@ -531,6 +552,24 @@ class CLARAProjectInternal:
 
         # Write the updated metadata to the file
         write_json_to_file(metadata, metadata_file)
+
+    def _check_metadata_file_consistent(self):
+        trace = False
+        #trace = True
+        metadata_file = self._get_metadata_file()
+
+        if not local_file_exists(metadata_file):
+            if trace: print(f'metadata file does not exist')
+            return True
+        else:
+            try:
+                if trace: print(f'metadata file exists')
+                metadata = read_json_file(metadata_file)
+                if trace: format(f'Read metadata file, {len(metadata)} records')
+                return True
+            except Exception as e:
+                if trace: format(f'Unable to read metadata files')
+                return False
 
     # Delete one of the text files associated with the object
     def delete_text_version(self, version: str) -> None:
@@ -629,6 +668,8 @@ class CLARAProjectInternal:
     # Get different versions of the text cut up into pages. If a version doesn't exist, make a dummy version.
     # Raise an exception if there are syntax errors
     def get_page_texts(self):
+        trace = False
+        #trace = True
         if not self.text_versions["segmented"]:
             raise InternalCLARAError(message = 'No segmented text, unable to produce page texts')
 
@@ -702,7 +743,9 @@ class CLARAProjectInternal:
         for key in page_texts:
             page_texts[key] = [ text for text in page_texts[key] if not '<page img=' in text ]
 
-        #pprint.pprint(page_texts)
+        if trace:
+            print(f'page texts')
+            pprint.pprint(page_texts)
         return page_texts
 
     def save_page_texts_multiple(self, types_and_texts, user='', can_use_ai=False, config_info={}, callback=None):
@@ -788,14 +831,18 @@ class CLARAProjectInternal:
 
     # Align a version with the segmented text if it exists and save the aligned text
     def align_text_version_with_segmented_and_save(self, text_type, create_if_necessary=False, use_words_for_lemmas=False):
+        trace = False
+        #trace = True
         try:
             segmented_text = self.load_text_version('segmented_with_images')
-##            print(f'Aligning')
-##            print(f'segmented text: {segmented_text}')
+            if trace:
+                print(f'Aligning')
+                print(f'segmented_with_images text: "{segmented_text}"')
             
             if self.text_versions[text_type]:
                 non_segmented_text = self.load_text_version(text_type)
-##                print(f'{text_type} text: {segmented_text}')
+                if trace:
+                    print(f'{text_type} text: {segmented_text}')
             else:
                 if create_if_necessary:
                     non_segmented_text = ''
@@ -805,7 +852,8 @@ class CLARAProjectInternal:
             aligned_text = align_segmented_text_with_non_segmented_text(segmented_text, non_segmented_text,
                                                                         self.l2_language, self.l1_language,
                                                                         text_type, use_words_for_lemmas=use_words_for_lemmas)
-##            print(f'aligned text: {segmented_text}')
+            if trace:
+                print(f'aligned text: "{segmented_text}"')
             self.save_text_version(text_type, aligned_text, source='aligned')
             
             api_calls = []
