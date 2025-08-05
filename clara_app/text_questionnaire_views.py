@@ -143,23 +143,6 @@ def tq_my_list(request):
     return render(request, "clara_app/tq_my_list.html", {"tqs": my_tqs})
 
 # ------------------------------------------------------------------
-##@login_required
-##def tq_results(request, pk):
-##    """Summary table: mean score and N for each question."""
-##    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
-##
-##    # Aggregate answers: {q_id: {'mean': …, 'n': …}}
-##    stats = (
-##        TQAnswer.objects
-##        .filter(response__questionnaire=tq)
-##        .values('question_id', 'question__text')
-##        .annotate(mean=Avg('likert'), n=Count('id'))
-##        .order_by('question_id')
-##    )
-##
-##    return render(request, "clara_app/tq_results.html",
-##                  {"tq": tq, "stats": stats})
-
 @login_required
 def tq_results(request, pk):
     tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
@@ -171,7 +154,7 @@ def tq_results(request, pk):
         .order_by('question_id')
     )
 
-# ---------- new book-level matrix ----------
+# ---------- book-level matrix ----------
     q_count = tq.tqquestion_set.count()
     raw = (
         TQAnswer.objects
@@ -218,31 +201,124 @@ def tq_results(request, pk):
     )
 
 # ------------------------------------------------------------------
+##@login_required
+##def tq_export_csv(request, pk):
+##    """Download raw responses as CSV (one row per answer)."""
+##    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
+##
+##    response = HttpResponse(content_type="text/csv")
+##    response['Content-Disposition'] = f'attachment; filename=tq_{pk}_answers.csv'
+##
+##    writer = csv.writer(response)
+##    writer.writerow(["book_id", "rater_id", "question_id", "likert"])
+##
+##    queryset = (
+##        TQAnswer.objects
+##        .filter(response__questionnaire=tq)
+##        .values_list(
+##            'response__book_link__book_id',
+##            'response__rater_id',
+##            'question_id',
+##            'likert'
+##        )
+##    )
+##    for row in queryset:
+##        writer.writerow(row)
+##
+##    return response
+
 @login_required
 def tq_export_csv(request, pk):
-    """Download raw responses as CSV (one row per answer)."""
-    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
+    tq = get_object_or_404(TextQuestionnaire, pk=pk)
 
-    response = HttpResponse(content_type="text/csv")
-    response['Content-Disposition'] = f'attachment; filename=tq_{pk}_answers.csv'
+    # owner or admin can export
+    if not (request.user == tq.owner or getattr(request.user.userprofile, "is_admin", False)):
+        return HttpResponseForbidden()
 
-    writer = csv.writer(response)
-    writer.writerow(["book_id", "rater_id", "question_id", "likert"])
+    questions = list(tq.tqquestion_set.order_by("order").values("id", "order", "text"))
 
-    queryset = (
-        TQAnswer.objects
-        .filter(response__questionnaire=tq)
-        .values_list(
-            'response__book_link__book_id',
-            'response__rater_id',
-            'question_id',
-            'likert'
-        )
+    # Pull responses + answers + book in one go
+    responses = (
+        tq.tqresponse_set
+          .select_related("book_link__book", "rater")
+          .prefetch_related("tqanswer_set", "tqanswer_set__question")
+          .order_by("book_link__book_id", "rater_id", "id")
     )
-    for row in queryset:
-        writer.writerow(row)
 
-    return response
+    # ---------- RAW CSV ----------
+    if request.GET.get("raw") == "1":
+        resp = HttpResponse(content_type="text/csv")
+        resp["Content-Disposition"] = f'attachment; filename=tq_{tq.pk}_raw.csv'
+        w = csv.writer(resp)
+        w.writerow([
+            "questionnaire_id", "book_id", "book_title", "book_url",
+            "rater_id", "question_id", "question_order", "rating",
+        ])
+        for r in responses:
+            book = r.book_link.book
+            #book_url = _public_book_url(request, book)
+            book_url = book.get_public_absolute_url()
+            for a in r.tqanswer_set.all():
+                w.writerow([
+                    tq.pk, book.id, book.title, book_url,
+                    r.rater_id, a.question_id, a.question.order, a.likert
+                ])
+        return resp
+
+    # ---------- AGGREGATED (one row per book) ----------
+    # Build per-book aggregates: mean per question (by question.order) + overall
+    from collections import defaultdict
+    q_ids_by_order = {q["order"]: q["id"] for q in questions}
+
+    per_book = {}
+    for r in responses:
+        book = r.book_link.book
+        entry = per_book.setdefault(book.id, {
+            "book": book,
+            "raters": set(),
+            "sum_by_order": defaultdict(float),
+            "cnt_by_order": defaultdict(int),
+        })
+        entry["raters"].add(r.rater_id)
+        for a in r.tqanswer_set.all():
+            q_order = a.question.order
+            entry["sum_by_order"][q_order] += float(a.likert)
+            entry["cnt_by_order"][q_order] += 1
+
+    resp = HttpResponse(content_type="text/csv")
+    resp["Content-Disposition"] = f'attachment; filename=tq_{tq.pk}_summary.csv'
+
+    headers = ["questionnaire_id", "book_id", "book_title", "book_url", "n_eval", "n_responses"]
+    headers += [f"q{q['order']}_mean" for q in questions]
+    headers += ["overall_mean"]
+    w = csv.DictWriter(resp, fieldnames=headers)
+    w.writeheader()
+
+    for _, data in per_book.items():
+        book = data["book"]
+        book_url = book.get_public_absolute_url()
+        row = {
+            "questionnaire_id": tq.pk,
+            "book_id": book.id,
+            "book_title": book.title,
+            "book_url": book_url,
+            "n_eval": len(data["raters"]),
+        }
+        per_q_means, total_n = [], 0
+        for q in questions:
+            q_order = q["order"]
+            s = data["sum_by_order"].get(q_order, 0.0)
+            c = data["cnt_by_order"].get(q_order, 0)
+            mean = (s / c) if c else None
+            row[f"q{q_order}_mean"] = f"{mean:.2f}" if mean is not None else ""
+            if mean is not None:
+                per_q_means.append(mean)
+                total_n += c
+        row["n_responses"] = total_n
+        row["overall_mean"] = f"{(sum(per_q_means)/len(per_q_means)):.2f}" if per_q_means else ""
+        w.writerow(row)
+
+    return resp
 
 # ------------------------------------------------------------------
 @login_required
