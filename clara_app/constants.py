@@ -149,6 +149,7 @@ SUPPORTED_IMAGE_GENERATION_MODELS_FOR_COHERENT_IMAGES_V2 = [
 
 
 SUPPORTED_MODELS_FOR_COHERENT_IMAGES_V2 = [
+    ( 'gpt-5', 'gpt-5' ),
     ( 'gpt-4o', 'gpt-4o' ),
     ( 'o3-mini', 'o3-mini' ),
     ( 'o1-mini', 'o1-mini' )

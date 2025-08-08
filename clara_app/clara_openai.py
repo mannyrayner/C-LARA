@@ -38,7 +38,10 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o', reasoni
     # Relevant for CoT models like o1-preview
     n_reasoning_tokens = reasoning_tokens / 1000.0
 
-    if gpt_model == 'gpt-4o':
+    if gpt_model == 'gpt-5':
+        message_rate = float(config.get('chatgpt5_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('chatgpt5_costs', 'response_per_thousand_tokens'))
+    elif gpt_model == 'gpt-4o':
         message_rate = float(config.get('chatgpt4_o_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('chatgpt4_o_costs', 'response_per_thousand_tokens'))
     elif gpt_model == 'gpt-4-turbo':
