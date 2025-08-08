@@ -13,7 +13,7 @@
         <button type="button" onclick="toggleApiKeyVisibility()">View</button>
     </div> 
 	{% if clara_version == 'full_clara' %}
-	  <p>GPT-4 model: {{ form.gpt_model }}</p>
+	  <p>GPT model: {{ form.gpt_model }}</p>
 	  <p>Max annotation words: {{ form.max_annotation_words }}</p>
 	{% endif %}
     <button type="submit">Save</button>
