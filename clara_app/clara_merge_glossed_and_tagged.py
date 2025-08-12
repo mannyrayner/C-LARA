@@ -17,6 +17,7 @@ The main functions are:
 from .clara_classes import *
 
 import difflib
+import re
 
 def merge_glossed_and_tagged(glossed_text, tagged_text):
     return merge_annotations1_and_annotations2(glossed_text, tagged_text,
@@ -108,6 +109,9 @@ def merge_annotations_charwise(original_text: str, annotated_text: str, phase: s
     phase is either 'presegmentation' or 'segmentation'
     """
 
+    #merge_annotations_charwise_trace = False
+    merge_annotations_charwise_trace = True
+
     if not phase in ( 'presegmentation', 'segmentation' ):
         raise ValueError(f"Unknown third argument {phase} in call to merge_annotations_charwise. Must be 'presegmentation' or 'segmentation'")
 
@@ -125,18 +129,32 @@ def merge_annotations_charwise(original_text: str, annotated_text: str, phase: s
         if tag == "equal":
             # Nothing has changed in this region => copy original
             merged_chars.extend(original_chars[i1:i2])
+            if merge_annotations_charwise_trace:
+                print('-------------')
+                print(f'equal: "{join_char_list(original_chars[i1:i2])}"')
+                print(f'extend: "{join_char_list(original_chars[i1:i2])}"')
 
         elif tag == "delete":
             # GPT removed something from the original.
             # We keep the original text as is, so copy the "delete" region from the original.
             merged_chars.extend(original_chars[i1:i2])
+            if merge_annotations_charwise_trace:
+                print('-------------')
+                print(f'delete: "{join_char_list(original_chars[i1:i2])}"')
+                print(f'extend: "{join_char_list(original_chars[i1:i2])}"')
 
         elif tag == "insert":
             # GPT inserted something new. We ignore normal chars, only insert known markup.
-            to_insert = annotated_chars[j1:j2]
-            # We can parse these inserted chars to see if they contain tokens like "<page>" or "||"
-            # E.g. do a small while-loop scanning for markup tokens
-            merged_chars.extend(extract_markup_token(to_insert, phase))
+##            to_insert = annotated_chars[j1:j2]
+##            # We can parse these inserted chars to see if they contain tokens like "<page>" or "||"
+##            # E.g. do a small while-loop scanning for markup tokens
+##            merged_chars.extend(extract_markup_token(to_insert, phase))
+
+            merged_chars.extend(extract_markup_tokens(annotated_chars[j1:j2], phase))
+            if merge_annotations_charwise_trace:
+                print('-------------')
+                print(f'insert: "{join_char_list(annotated_chars[j1:j2])}"')
+                print(f'extend: "{join_char_list(extract_markup_tokens(annotated_chars[j1:j2], phase))}"')
 
         elif tag == "replace":
             # GPT replaced some region of original with something else.
@@ -146,43 +164,65 @@ def merge_annotations_charwise(original_text: str, annotated_text: str, phase: s
 
             # Then also look for new markup tokens from the annotated region
             to_insert = annotated_chars[j1:j2]
-            merged_chars.extend(extract_markup_token(to_insert, phase))
+            merged_chars.extend(extract_markup_tokens(to_insert, phase))
 
+            if merge_annotations_charwise_trace:
+                print('-------------')
+                print(f'replace: "{join_char_list(original_chars[i1:i2])}/{join_char_list(annotated_chars[j1:j2])}"')
+                print(f'insert: "{join_char_list(annotated_chars[j1:j2])}"')
+                print(f'extend: "{join_char_list(extract_markup_tokens(annotated_chars[j1:j2], phase))}"')
+   
     return "".join(merged_chars)
 
+def join_char_list(l):
+    return ''.join(l)
 
-def extract_markup_token(chars: list[str], phase: str) -> list[str]:
-    """
-    Extract a possible markup token, depending on the phase.
+##def extract_markup_token(chars: list[str], phase: str) -> list[str]:
+##    """
+##    Extract a possible markup token, depending on the phase.
+##
+##    We exploit the structure of the markup: we only ever need one token, since consecutive tokens are never useful.
+##    """
+##
+##    if not phase in ( 'presegmentation', 'segmentation' ):
+##        raise ValueError(f"Unknown second argument {phase} in call to extract_markup_token. Must be 'presegmentation' or 'segmentation'")
+##
+##    marked_up_string = ''.join(chars)
+##
+##    # Default is no markup material to add.
+##    token_string = ''
+##    
+##    if phase == 'presegmentation':
+##        if '<page>' in marked_up_string:
+##            # In presegmentation mode, if we have a <page>, then a preceding or following || is possible but irrelevant.
+##            token_string = '<page>'
+##        elif '||' in marked_up_string:
+##            # In presegmentation mode, a || with no <page> cannot meaninfully be combined with other material.
+##            token_string = '||'
+##    elif phase == 'segmentation':
+##        if '@' in marked_up_string:
+##            # In segmentation mode, if we have a @, then a preceding or following | is possible but irrelevant.
+##            token_string = '@'
+##        elif '|' in marked_up_string:
+##            # In segmentation mode, a | with no @ cannot meaninfully be combined with other material.
+##            token_string = '|'
+##        
+##
+##    return list(token_string)
 
-    We exploit the structure of the markup: we only ever need one token, since consecutive tokens are never useful.
-    """
 
-    if not phase in ( 'presegmentation', 'segmentation' ):
-        raise ValueError(f"Unknown second argument {phase} in call to extract_markup_token. Must be 'presegmentation' or 'segmentation'")
+_PRESEG_TOKENS = re.compile(r'(?:<page>|\|\|)')
+_SEG_TOKENS    = re.compile(r'(?:@|\|)')  # will match each '|' individually
 
-    marked_up_string = ''.join(chars)
+def extract_markup_tokens(chars: list[str], phase: str) -> list[str]:
+    if phase not in ('presegmentation', 'segmentation'):
+        raise ValueError(f"Unknown phase {phase}")
 
-    # Default is no markup material to add.
-    token_string = ''
-    
+    s = ''.join(chars)
     if phase == 'presegmentation':
-        if '<page>' in marked_up_string:
-            # In presegmentation mode, if we have a <page>, then a preceding or following || is possible but irrelevant.
-            token_string = '<page>'
-        elif '||' in marked_up_string:
-            # In presegmentation mode, a || with no <page> cannot meaninfully be combined with other material.
-            token_string = '||'
-    elif phase == 'segmentation':
-        if '@' in marked_up_string:
-            # In segmentation mode, if we have a @, then a preceding or following | is possible but irrelevant.
-            token_string = '@'
-        elif '|' in marked_up_string:
-            # In segmentation mode, a | with no @ cannot meaninfully be combined with other material.
-            token_string = '|'
-        
+        toks = [m.group(0) for m in _PRESEG_TOKENS.finditer(s)]
+    else:
+        toks = [m.group(0) for m in _SEG_TOKENS.finditer(s)]
 
-    return list(token_string)
-
-
-
+    # Return as a flat list of characters for the caller’s extend()
+    return list(''.join(toks))

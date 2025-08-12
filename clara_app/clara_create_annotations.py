@@ -45,6 +45,7 @@ import difflib
 import traceback
 import copy
 import pprint
+import unicodedata
 
 config = get_config()
 
@@ -152,6 +153,9 @@ def generate_or_improve_segmented_version(annotate_or_improve, text, l2_language
 
 def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l2_language,
                                                     text_type=None, config_info={}, callback=None):
+    trace_segmentation_two_phase = False
+    #trace_segmentation_two_phase = True
+    
     if annotate_or_improve != 'annotate':
         raise ValueError('Improvement of segmented text not currently supported')
     all_api_calls = []
@@ -163,6 +167,11 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
         presegmented_text = text
     else:
         presegment_prompt =  presegmentation_prompt(annotate_or_improve, text, l2_language, text_type=text_type)
+
+        if trace_segmentation_two_phase:
+            print('presegment_prompt:')
+            print(f"""{presegment_prompt}""")
+            
         n_attempts = 0
         valid_presegmentation_found = False
         limit = int(config.get('chatgpt4_annotation', 'retry_limit'))
@@ -174,29 +183,115 @@ def generate_or_improve_segmented_version_two_phase(annotate_or_improve, text, l
             try:
                 presegment_api_call = clara_chatgpt4.call_chat_gpt4(presegment_prompt, config_info=config_info, callback=callback)
                 presegmented_text0 = presegment_api_call.response
-                #print(f'presegmented_text0:\n{presegmented_text0}')
-                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>", but sometimes these don't come out quite right
+
+                if trace_segmentation_two_phase:
+                   print('Raw presegmented_text:')
+                   print(f"""{presegmented_text0}""") 
+                        
+                # The template should tell the AI to return the answer enclosed between the tags "<startoftext>", "<endoftext>",
+                # but sometimes these don't come out quite right
                 presegmented_text = find_between_tags(presegmented_text0, "text", "text")
-                # Try to correct if we have a mismatch
-                if presegmented_text != text.replace('||', '').replace('<page>', ''):
-                    presegmented_text = merge_annotations_charwise(text, presegmented_text, 'presegmentation')
-                presegmented_text = clean_up_segment_breaks_in_text(presegmented_text)
-                valid_presegmentation_found = True
+
+                preseg_s = sanitize_preseg(presegmented_text)
+
+                valid_presegmentation_found, ratio = is_preseg_close_enough(text, preseg_s, rel_tol=0.01, abs_tol=15)
+                if valid_presegmentation_found:
+                    presegmented_text = preseg_s
+
                 all_api_calls.append(presegment_api_call)
+                        
             except ValueError as e:
-                post_task_update(callback, f'*** Warning: error when sending request to AI')
+                post_task_update(callback, f'*** Warning: error when performing presegmentation')
                 error_message = f'"{str(e)}"'
                 post_task_update(callback, error_message)
             except Exception as e:
-                post_task_update(callback, f'*** Warning: error when sending request to AI')
+                post_task_update(callback, f'*** Warning: error when performing presegmentation')
                 error_message = f'"{str(e)}"\n{traceback.format_exc()}'
                 post_task_update(callback, error_message)
 
     segmented_text, segmented_api_calls = generate_or_improve_annotated_version('annotate', 'segmented', presegmented_text, l1_language, l2_language,
                                                                                 previous_version='presegmented', config_info=config_info, callback=callback)
     segmented_text = clean_up_segment_breaks_in_text(segmented_text)
+
+    segmented_text = remove_empty_pages(segmented_text)
+    
     all_api_calls.extend(segmented_api_calls)
     return ( segmented_text, all_api_calls )
+
+# Checking whether presegmentation is acceptable
+
+_PAGE = "<page>"
+_SEG  = "||"
+
+def _unicode_simplify(s: str) -> str:
+    """NFKC + normalise common punctuation/whitespace variants."""
+    s = unicodedata.normalize("NFKC", s)
+    # Map curly quotes & nbspace to simple forms
+    s = s.replace("\u00A0", " ")
+    s = s.replace("’", "'").replace("“", '"').replace("”", '"')
+    return s
+
+def sanitize_preseg(preseg: str) -> str:
+    """
+    - Keep <page> and '||'
+    - Remove stray single '|' and any '@' tokens (from later stages)
+    - Tidy spacing around markers (optional)
+    """
+    s = _unicode_simplify(preseg)
+
+    # Remove single pipes that aren't part of '||'
+    s = re.sub(r"(?<!\|)\|(?!\|)", "", s)
+
+    # Drop any stray '@' (morph tags belong to segmentation, not preseg)
+    s = s.replace("@", "")
+
+    # Optional: normalise spaces around markers (not required, but nice)
+    s = re.sub(r"\s*<page>\s*", f"\n{_PAGE}\n", s)   # put pages on their own line
+    s = re.sub(r"\s*\|\|\s*", f" {_SEG} ", s)       # space-pad segments
+
+    return s
+
+def _canon_for_compare(s: str) -> str:
+    """
+    Build a comparison string that ignores *all* whitespace and our markup.
+    We also ignore single '|' just in case.
+    """
+    s = _unicode_simplify(s)
+    s = s.replace(_PAGE, "").replace(_SEG, "")
+    s = s.replace("|", "")  # any remaining single pipes
+    s = s.replace("@", "")  # any stray morph marker
+    # remove all whitespace
+    s = re.sub(r"\s+", "", s)
+    return s
+
+def is_preseg_close_enough(original: str, preseg: str,
+                           rel_tol: float = 0.01, abs_tol: int = 15) -> tuple[bool, float]:
+    """
+    Return (ok, ratio). Uses difflib ratio on canonicalised strings and
+    also enforces an absolute edit budget via opcodes.
+    rel_tol ≈ allowed relative edits (1%); abs_tol ≈ minimum absolute slack.
+    """
+    a = _canon_for_compare(original)
+    b = _canon_for_compare(preseg)
+
+    # Quick path: identical canon
+    if a == b:
+        return True, 1.0
+
+    # Compute rough absolute diff count via opcodes
+    sm = difflib.SequenceMatcher(None, a, b)
+    edits = 0
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag == "equal":
+            continue
+        # Count the larger side as the “edit mass”
+        edits += max(i2 - i1, j2 - j1)
+
+    budget = max(abs_tol, int(rel_tol * max(len(a), 1)))
+    ratio  = sm.ratio()
+
+    ok = edits <= budget
+    return ok, ratio
 
 def clean_up_segment_breaks_in_text(text: str) -> str:
     text1 = add_segment_break_before_page(text)
@@ -244,6 +339,27 @@ def add_segment_break_before_page(text: str) -> str:
 
 def move_segment_break_before_line_break(text: str) -> str:
     return text.replace('\n||', '||\n')
+
+_EMPTY_PAGE_RE = re.compile(r'^(?:\s+|\|\|)+$')  # only whitespace and/or ||
+
+def remove_empty_pages(preseg_text: str) -> str:
+    """
+    Drop pages that contain no actual content (only whitespace and/or '||').
+    Reconstructs the text with <page> prefixes for the remaining pages.
+    """
+    # Split on <page>. If the string starts with <page>, the first chunk is ''.
+    chunks = re.split(r'<page>', preseg_text)
+    keep = []
+    for chunk in chunks:
+        # Keep pages that are not empty
+        if chunk and not _EMPTY_PAGE_RE.match(chunk):
+            keep.append(chunk)
+
+    if not keep:
+        # Nothing left—return original (or raise). Safer to return original.
+        return preseg_text
+
+    return ''.join('<page>' + c for c in keep)
 
 def generate_or_improve_annotated_version(annotate_or_improve, processing_phase, annotated_text, l1_language, l2_language,
                                           previous_version='default', mwe=False,
