@@ -51,7 +51,11 @@ IMAGE_QUESTIONNAIRE_QUESTIONS = [
     },
     {
         "id": 7,
-        "text": "How useful do you find the glosses and translations?",
+        "text": "How useful do you find the glosses?",
+    },
+    {
+        "id": 8,
+        "text": "How useful do you find the translations?",
     }
 ]
 
@@ -245,8 +249,8 @@ def image_questionnaire_item(request, project_id, index):
             #   (b) We are not on the first page
             if has_any_relevant_elements and index > 0:
                 questions_to_show.append(q)
-        elif q["id"] in [6, 7]:
-            # Show Q6 and Q7 only if we are including the text questions
+        elif q["id"] in [6, 7, 8]:
+            # Show Q6-Q8 only if we are including the text questions
             if include_text_questions:
                 questions_to_show.append(q)
         else:
