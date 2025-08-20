@@ -132,6 +132,11 @@ def image_questionnaire_start(request, project_id):
     project_dir = clara_project_internal.coherent_images_v2_project_dir
 
     # Create the for-questionnaire rendered text pages
+    if not clara_project_internal.text_available_for_questionnaire_rendering(project_id):
+        messages.error(request, f"Error when trying to create rendered text pages for questionnaire")
+        messages.error(request, f"Text has not been compiled")
+        return redirect('clara_home_page')
+    
     try:
         clara_project_internal.render_text_for_questionnaire(project_id)
     except Exception as e:

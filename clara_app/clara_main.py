@@ -2137,6 +2137,10 @@ class CLARAProjectInternal:
         post_task_update(callback, f"finished")
         return renderer.output_dir
 
+    def text_available_for_questionnaire_rendering(self, project_id, callback=None):
+        text_object = self.get_internalised_and_annotated_text(for_questionnaire=True, callback=callback)
+        return True if text_object else False
+
     def render_text_for_questionnaire(self, project_id, callback=None) -> None:
         post_task_update(callback, f"--- Start rendering text for questionnaire)")
         l2 = self.l2_language
