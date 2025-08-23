@@ -11,6 +11,8 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
+from django.utils import timezone
+
 from uuid import uuid4
  
 class UserProfile(models.Model):
@@ -880,6 +882,9 @@ class TextQuestionnaire(models.Model):
     description = models.TextField(blank=True)
     created_at  = models.DateTimeField(auto_now_add=True)
     slug        = models.UUIDField(default=uuid4, unique=True)
+    per_page_questions = models.TextField(
+        blank=True,
+        help_text="Optional. One question per line. If present, tq_fill will run a page-by-page step.")
 
 class TQQuestion(models.Model):
     questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)
@@ -900,4 +905,7 @@ class TQResponse(models.Model):
 class TQAnswer(models.Model):
     response  = models.ForeignKey(TQResponse, on_delete=models.CASCADE)
     question  = models.ForeignKey(TQQuestion, on_delete=models.CASCADE)
-    likert    = models.PositiveSmallIntegerField()            # 1–5
+    likert    = models.PositiveSmallIntegerField() # 1–5
+    page_number = models.PositiveIntegerField(null=True, blank=True)  # NEW
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+

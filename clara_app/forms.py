@@ -1211,20 +1211,26 @@ class FundingRequestSearchForm(forms.Form):
 
 class TextQuestionnaireForm(forms.ModelForm):
     """
-    Handles both creation and editing of a TextQuestionnaire.
-    - 'questions' is a plain textarea: one Likert prompt per line.
-    - book selection is handled separately via POSTed book_ids list.
+    - 'questions' collects the end-of-book Likert prompts (one per line).
+    - 'per_page_questions' holds optional per-page prompts (one per line).
     """
     questions = forms.CharField(
-        label="Questions (one per line)",
+        label="Whole-book questions (one per line)",
         widget=forms.Textarea(attrs={"rows": 5, "style": "width:100%;"}),
-        help_text="Enter each Likert-scale prompt on a new line.",
+        help_text="These are asked once at the end of the questionnaire.",
         required=True,
+    )
+
+    per_page_questions = forms.CharField(
+        label="Per-page questions (optional; one per line)",
+        widget=forms.Textarea(attrs={"rows": 5, "style": "width:100%;"}),
+        help_text="If provided, raters will answer these on each illustrated page.",
+        required=False,
     )
 
     class Meta:
         model = TextQuestionnaire
-        fields = ["title", "description"]
+        fields = ["title", "description", "per_page_questions"]
 
     def __init__(self, *args, **kwargs):
         """
