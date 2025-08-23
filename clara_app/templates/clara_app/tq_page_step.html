@@ -1,0 +1,33 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h4>{{ tq.title }} — Page {{ page }}/{{ total_pages }}</h4>
+
+<div class="row">
+  <div class="col-md-7">
+    <div class="border rounded p-2" style="min-height: 320px;">
+      {{ page_html|safe }}
+    </div>
+  </div>
+  <div class="col-md-5">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="phase" value="page">
+      {% for idx, qtext in page_questions %}
+        <p class="mt-3"><strong>Q{{ idx }}.</strong> {{ qtext }}</p>
+        {% for v in "12345" %}
+          <label class="me-2">
+            <input type="radio" name="q_pg_{{ idx }}" value="{{ v }}"
+                   {% if existing.idx|stringformat:"s" == v %}checked{% endif %}>
+            {{ v }}
+          </label>
+        {% endfor %}
+        <hr>
+      {% endfor %}
+      <button class="btn btn-primary">
+        {% if page < total_pages %}Next page{% else %}Continue{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

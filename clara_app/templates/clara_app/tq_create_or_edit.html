@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<h2>{{ tq|default_if_none:"Create" }} Text-Level Questionnaire</h2>
+<h2>{{ tq|default_if_none:"Create" }} Questionnaire</h2>
 
 <form method="post">
   {% csrf_token %}
@@ -25,93 +25,78 @@
     {{ form.description.label_tag }} {{ form.description }}
   </div>
 
-  <!-- book list currently in questionnaire -->
-	{% if tq %}
-	<h5>Books in questionnaire ({{ links|length }})</h5>
-	<table class="table table-sm table-bordered">
-	  <tr><th>#</th><th>Title</th><th>L2</th></tr>
-	  {% for link in links %}
-		<tr id="row-{{ link.id }}">
-		  <td>{{ forloop.counter }}</td>
-		  <td>{{ link.book.title }}</td>
-		  <td>{{ link.book.l2 }}</td>
-		</tr>
-	  {% endfor %}
-	</table>
-	{% endif %}
-	
-  <!-- hidden inputs will be inserted by JS to carry book_ids -->
+  {% if tq %}
+    <h5>Books in questionnaire ({{ links|length }})</h5>
+    <table class="table table-sm table-bordered">
+      <tr><th>#</th><th>Title</th><th>L2</th></tr>
+      {% for link in links %}
+      <tr id="row-{{ link.id }}">
+        <td>{{ forloop.counter }}</td>
+        <td>{{ link.book.title }}</td>
+        <td>{{ link.book.l2 }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+
   <div id="hiddenBookInputs"></div>
-  
-    <!-- questions textarea -->
+
+  <!-- whole-book questions -->
   <div class="form-group mt-3">
     {{ form.questions.label_tag }}
     {{ form.questions }}
     <small class="form-text text-muted">{{ form.questions.help_text }}</small>
   </div>
 
-  <button type="submit" name="save">Save questionnaire</button>
-</form>
-
-  <!-- collapsible picker -->
-  <button class="btn btn-outline-secondary mb-2" type="button" data-toggle="collapse"
-          data-target="#pickerCollapse" aria-expanded="false">
-    Add / Remove Books
-  </button>
-  <div class="collapse" id="pickerCollapse">
-    {{ book_picker|safe }}
+  <!-- per-page questions -->
+  <div class="form-group mt-3">
+    {{ form.per_page_questions.label_tag }}
+    {{ form.per_page_questions }}
+    <small class="form-text text-muted">{{ form.per_page_questions.help_text }}</small>
   </div>
 
+  <button type="submit" name="save" class="btn btn-primary">Save questionnaire</button>
+  <a href="{% url 'tq_my_list' %}" class="btn btn-secondary">Back</a>
+</form>
+
+<!-- collapsible picker -->
+<button class="btn btn-outline-secondary mb-2" type="button"
+        data-toggle="collapse" data-target="#pickerCollapse" aria-expanded="false">
+  Add / Remove Books
+</button>
+<div class="collapse" id="pickerCollapse">
+  {{ book_picker|safe }}
+</div>
+
 <script>
-  // Collect checked and unchecked book_ids before submit
-  
+  // carry checked/unchecked ids
   document.querySelector("form").addEventListener("submit", () => {
-  const dest  = document.getElementById("hiddenBookInputs");
-  dest.innerHTML = "";
-
-  const checked   = [];
-  const unchecked = [];
-
-  document.querySelectorAll("input[name='book_ids']").forEach(cb => {
-    if (cb.checked)  checked.push(cb.value);
-    else             unchecked.push(cb.value);
-  });
-
-  checked.forEach(id =>
-    dest.insertAdjacentHTML("beforeend",
-      `<input type="hidden" name="book_ids_checked" value="${id}">`));
-
-  unchecked.forEach(id =>
-    dest.insertAdjacentHTML("beforeend",
-      `<input type="hidden" name="book_ids_unchecked" value="${id}">`));
-});
-
-  // Ajax remove link
-  document.querySelectorAll(".remove-link").forEach(a => {
-    a.addEventListener("click", evt => {
-      evt.preventDefault();
-      fetch(a.href).then(r => r.json()).then(() => {
-        document.getElementById("row-" + a.href.split('/').pop()).remove();
-      });
+    const dest  = document.getElementById("hiddenBookInputs");
+    dest.innerHTML = "";
+    const checked   = [];
+    const unchecked = [];
+    document.querySelectorAll("input[name='book_ids']").forEach(cb => {
+      (cb.checked ? checked : unchecked).push(cb.value);
     });
+    checked.forEach(id =>
+      dest.insertAdjacentHTML("beforeend",
+        `<input type="hidden" name="book_ids_checked" value="${id}">`));
+    unchecked.forEach(id =>
+      dest.insertAdjacentHTML("beforeend",
+        `<input type="hidden" name="book_ids_unchecked" value="${id}">`));
   });
-</script>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  if (location.hash === "#pickerCollapse") {
-    const el = document.getElementById("pickerCollapse");
-    if (el) {
-      // Bootstrap 4/5: trigger 'show' programmatically
+  // keep picker open when linked with #pickerCollapse
+  document.addEventListener("DOMContentLoaded", () => {
+    if (location.hash === "#pickerCollapse") {
+      const el = document.getElementById("pickerCollapse");
+      if (!el) return;
       if (typeof bootstrap !== "undefined" && bootstrap.Collapse) {
         new bootstrap.Collapse(el, { toggle: true });
       } else {
-        // fallback: manually add 'show' class
         el.classList.add("show");
       }
     }
-  }
-});
+  });
 </script>
-
 {% endblock %}
