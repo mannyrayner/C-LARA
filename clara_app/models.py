@@ -886,10 +886,27 @@ class TextQuestionnaire(models.Model):
         blank=True,
         help_text="Optional. One question per line. If present, tq_fill will run a page-by-page step.")
 
+##class TQQuestion(models.Model):
+##    questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)
+##    text          = models.CharField(max_length=400)          # the prompt
+##    order         = models.PositiveSmallIntegerField()
+
 class TQQuestion(models.Model):
+    SCOPE_BOOK = "BOOK"
+    SCOPE_PAGE = "PAGE"
+    SCOPE_CHOICES = (
+        (SCOPE_BOOK, "Book-level"),
+        (SCOPE_PAGE, "Per-page"),
+    )
+
     questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)
-    text          = models.CharField(max_length=400)          # the prompt
-    order         = models.PositiveSmallIntegerField()
+    text = models.TextField()
+    order = models.PositiveIntegerField()
+    scope = models.CharField(max_length=8, choices=SCOPE_CHOICES, default=SCOPE_BOOK)
+
+    class Meta:
+        ordering = ["scope", "order"]
+        unique_together = ("questionnaire", "scope", "order")
 
 class TQBookLink(models.Model):
     questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)

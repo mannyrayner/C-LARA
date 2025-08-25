@@ -1,7 +1,7 @@
 # text_questionnaire_views.py
 from django.views.decorators.http import require_POST
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db import transaction
@@ -67,29 +67,54 @@ def tq_create(request):
 def tq_edit(request, pk):
     tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
 
+##    if request.method == "POST":
+##        form = TextQuestionnaireForm(request.POST, instance=tq)
+##        if form.is_valid():
+##            with transaction.atomic():
+##                tq = form.save()  # persists page_level_questions edits
+##
+##                _sync_links(
+##                    tq,
+##                    request.POST.getlist("book_ids_checked"),
+##                    request.POST.getlist("book_ids_unchecked"),
+##                )
+##                _sync_questions(tq, form.cleaned_data["questions"])
+##
+##            messages.success(request, "Questionnaire updated.")
+##            return redirect("tq_edit", pk=tq.pk)
+##    else:
+##        # Prefill 'questions' from existing TQQuestion rows
+##        existing_qs = (
+##            tq.tqquestion_set.order_by("order").values_list("text", flat=True)
+##        )
+##        form = TextQuestionnaireForm(
+##            instance=tq,
+##            initial={"questions": "\n".join(existing_qs)},
+##        )
+
     if request.method == "POST":
         form = TextQuestionnaireForm(request.POST, instance=tq)
         if form.is_valid():
             with transaction.atomic():
-                tq = form.save()  # persists page_level_questions edits
-
+                tq = form.save()  # saves page_level_questions on the model
                 _sync_links(
                     tq,
                     request.POST.getlist("book_ids_checked"),
                     request.POST.getlist("book_ids_unchecked"),
                 )
-                _sync_questions(tq, form.cleaned_data["questions"])
-
+                _sync_questions(tq, form.cleaned_data["questions"])  # BOOK only
             messages.success(request, "Questionnaire updated.")
             return redirect("tq_edit", pk=tq.pk)
     else:
-        # Prefill 'questions' from existing TQQuestion rows
-        existing_qs = (
-            tq.tqquestion_set.order_by("order").values_list("text", flat=True)
+        whole_book_lines = list(
+            tq.tqquestion_set
+              .filter(scope=TQQuestion.SCOPE_BOOK)
+              .order_by("order")
+              .values_list("text", flat=True)
         )
         form = TextQuestionnaireForm(
             instance=tq,
-            initial={"questions": "\n".join(existing_qs)},
+            initial={"questions": "\n".join(whole_book_lines)},
         )
 
     preselect = tq.tqbooklink_set.values_list("book_id", flat=True)
@@ -127,106 +152,217 @@ def tq_skimlist(request, slug):
                   {"tq": tq, "links": links, "done": set(done_ids)})
 
 # --------------------------------------------------
+##def tq_fill(request, slug, link_id):
+##    """Questionnaire runner. If tq.per_page_questions is present, do a page-by-page phase first."""
+##    tq   = get_object_or_404(TextQuestionnaire, slug=slug)
+##    link = get_object_or_404(TQBookLink, pk=link_id, questionnaire=tq)
+##    user = request.user
+##
+##    # Create/find an in-flight response
+##    resp, _ = TQResponse.objects.get_or_create(
+##        questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True
+##    )
+##
+##    # --- Are there per-page questions? --------------------------------
+##    page_q_texts = parse_per_page_questions(tq)
+##
+##    # We can retrieve the CLARA project via the linked content/book:
+##    # Adjust attribute names as in your codebase.
+##    project = link.book.project if hasattr(link.book, 'project') else link.book.content.project
+##
+##    if page_q_texts:
+##        total_pages = count_questionnaire_pages(project)
+##
+##        # decide which page we’re on
+##        page = request.GET.get('page')
+##        if page is None:
+##            # jump to the first page with missing answers (or 1)
+##            answered_pages = set(
+##                TQAnswer.objects.filter(response=resp, page_number__isnull=False)
+##                .values_list('page_number', flat=True)
+##            )
+##            page = next((p for p in range(1, total_pages+1) if p not in answered_pages), None)
+##            page = page or 1
+##        else:
+##            page = int(page)
+##
+##        # handle POST for a page step
+##        if request.method == "POST" and request.POST.get("phase") == "page":
+##            for idx, qtext in enumerate(page_q_texts, start=1):
+##                field = f"q_pg_{idx}"
+##                val = request.POST.get(field)
+##                if val:
+##                    # We map to a synthetic TQQuestion row if you want book-level later,
+##                    # but to keep minimal change, we store under a virtual per-page question
+##                    # by creating/using real TQQuestion rows. Easiest: ensure page-scope
+##                    # questions exist as TQQuestion objects. 
+##                    q_obj, _ = TQQuestion.objects.get_or_create(
+##                        questionnaire=tq,
+##                        text=qtext,
+##                        order=idx,
+##                    )
+##                    TQAnswer.objects.update_or_create(
+##                        response=resp, question=q_obj, page_number=page,
+##                        defaults={'likert': int(val)}
+##                    )
+##
+##            # next page or move on to normal (book-level) matrix
+##            if page < total_pages:
+##                return redirect(f"{request.path}?page={page+1}")
+##            else:
+##                return redirect(request.path)  # fall through to normal matrix
+##
+##        # render a page step (GET)
+##        existing = {}
+##        # pre-fill previously given per-page ratings for this specific page
+##        for idx, qtext in enumerate(page_q_texts, start=1):
+##            try:
+##                q_obj = TQQuestion.objects.get(
+##                    questionnaire=tq,
+##                    text=qtext,
+##                    order=idx
+##                )
+##                ans = TQAnswer.objects.filter(response=resp, question=q_obj, page_number=page).first()
+##                if ans:
+##                    existing[idx] = ans.likert
+##            except TQQuestion.DoesNotExist:
+##                pass
+##
+##        page_html = load_questionnaire_page_html(project, page)
+##
+##        return render(request, "clara_app/tq_page_step.html", {
+##            "tq": tq, "link": link, "page": page, "total_pages": total_pages,
+##            "page_html": page_html, "page_questions": list(enumerate(page_q_texts, start=1)),
+##            "existing": existing,
+##        })
+##
+##    # --- No per-page questions → behave like the original tq_fill ------
+##    questions = tq.tqquestion_set.all().order_by("order")
+##    if request.method == "POST":
+##        resp.submitted_at = timezone.now()
+##        resp.save(update_fields=['submitted_at'])
+##        for q in questions:
+##            rating = int(request.POST.get(f"q{q.id}", 0))
+##            if rating:
+##                TQAnswer.objects.update_or_create(
+##                    response=resp, question=q, page_number=None,
+##                    defaults={'likert': rating}
+##                )
+##        return redirect("tq_skimlist", slug=slug)
+##
+##    return render(request, "clara_app/tq_fill.html",
+##                  {"tq": tq, "link": link, "questions": questions})
+
+@login_required
 def tq_fill(request, slug, link_id):
-    """Questionnaire runner. If tq.per_page_questions is present, do a page-by-page phase first."""
+    """Run questionnaire: optional per-page phase, then whole-book."""
     tq   = get_object_or_404(TextQuestionnaire, slug=slug)
     link = get_object_or_404(TQBookLink, pk=link_id, questionnaire=tq)
     user = request.user
 
-    # Create/find an in-flight response
+    # ensure an in-flight response
     resp, _ = TQResponse.objects.get_or_create(
         questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True
     )
 
-    # --- Are there per-page questions? --------------------------------
+    # per-page questions (text blob on model)
     page_q_texts = parse_per_page_questions(tq)
 
-    # We can retrieve the CLARA project via the linked content/book:
-    # Adjust attribute names as in your codebase.
-    project = link.book.project if hasattr(link.book, 'project') else link.book.content.project
+    # locate the project to pull rendered page HTML
+    project = getattr(link.book, "project", None) or link.book.content.project
 
     if page_q_texts:
         total_pages = count_questionnaire_pages(project)
 
-        # decide which page we’re on
-        page = request.GET.get('page')
-        if page is None:
-            # jump to the first page with missing answers (or 1)
-            answered_pages = set(
-                TQAnswer.objects.filter(response=resp, page_number__isnull=False)
-                .values_list('page_number', flat=True)
-            )
-            page = next((p for p in range(1, total_pages+1) if p not in answered_pages), None)
-            page = page or 1
-        else:
-            page = int(page)
-
-        # handle POST for a page step
-        if request.method == "POST" and request.POST.get("phase") == "page":
-            for idx, qtext in enumerate(page_q_texts, start=1):
-                field = f"q_pg_{idx}"
-                val = request.POST.get(field)
-                if val:
-                    # We map to a synthetic TQQuestion row if you want book-level later,
-                    # but to keep minimal change, we store under a virtual per-page question
-                    # by creating/using real TQQuestion rows. Easiest: ensure page-scope
-                    # questions exist as TQQuestion objects. 
-                    q_obj, _ = TQQuestion.objects.get_or_create(
-                        questionnaire=tq,
-                        text=qtext,
-                        order=idx,
-                    )
-                    TQAnswer.objects.update_or_create(
-                        response=resp, question=q_obj, page_number=page,
-                        defaults={'likert': int(val)}
-                    )
-
-            # next page or move on to normal (book-level) matrix
-            if page < total_pages:
-                return redirect(f"{request.path}?page={page+1}")
-            else:
-                return redirect(request.path)  # fall through to normal matrix
-
-        # render a page step (GET)
-        existing = {}
-        # pre-fill previously given per-page ratings for this specific page
-        for idx, qtext in enumerate(page_q_texts, start=1):
-            try:
-                q_obj = TQQuestion.objects.get(
-                    questionnaire=tq,
-                    text=qtext,
-                    order=idx
+        # which pages already done? (answers tied to PAGE scope questions)
+        answered_pages = set(
+            TQAnswer.objects
+                .filter(
+                    response=resp,
+                    page_number__isnull=False,
+                    question__scope=TQQuestion.SCOPE_PAGE
                 )
-                ans = TQAnswer.objects.filter(response=resp, question=q_obj, page_number=page).first()
+                .values_list("page_number", flat=True)
+        )
+
+        # if all pages are done, skip straight to whole-book phase
+        if len(answered_pages) < total_pages:
+            # find current page (first not answered) unless explicit ?page=
+            page_param = request.GET.get("page")
+            if page_param is None:
+                page = next((p for p in range(1, total_pages+1) if p not in answered_pages), 1)
+            else:
+                page = int(page_param)
+
+            # handle POST (per-page phase)
+            if request.method == "POST" and request.POST.get("phase") == "page":
+                for idx, qtext in enumerate(page_q_texts, start=1):
+                    val = request.POST.get(f"q_pg_{idx}")
+                    if val:
+                        # ensure a PAGE-scope TQQuestion for this prompt/index
+                        q_obj, _ = TQQuestion.objects.get_or_create(
+                            questionnaire=tq, scope=TQQuestion.SCOPE_PAGE,
+                            order=idx, defaults={"text": qtext}
+                        )
+                        # update the text if it ever changes
+                        if q_obj.text != qtext:
+                            q_obj.text = qtext
+                            q_obj.save(update_fields=["text"])
+
+                        TQAnswer.objects.update_or_create(
+                            response=resp, question=q_obj, page_number=page,
+                            defaults={"likert": int(val)}
+                        )
+
+                # go to next page or drop into whole-book phase
+                if page < total_pages:
+                    return redirect(f"{request.path}?page={page+1}")
+                else:
+                    # all done with pages; fall through to whole-book
+                    answered_pages = set(range(1, total_pages+1))
+
+            # GET render of the current page (or after failed POST)
+            page_html = load_questionnaire_page_html(project, page)
+            existing = {}
+            for idx, qtext in enumerate(page_q_texts, start=1):
+                q_obj = TQQuestion.objects.filter(
+                    questionnaire=tq, scope=TQQuestion.SCOPE_PAGE, order=idx
+                ).first()
+                if not q_obj:
+                    continue
+                ans = TQAnswer.objects.filter(
+                    response=resp, question=q_obj, page_number=page
+                ).first()
                 if ans:
                     existing[idx] = ans.likert
-            except TQQuestion.DoesNotExist:
-                pass
 
-        page_html = load_questionnaire_page_html(project, page)
+            return render(
+                request, "clara_app/tq_page_step.html",
+                {
+                    "tq": tq, "link": link,
+                    "page": page, "total_pages": total_pages,
+                    "page_html": page_html,
+                    "page_questions": list(enumerate(page_q_texts, start=1)),
+                    "existing": existing,
+                },
+            )
 
-        return render(request, "clara_app/tq_page_step.html", {
-            "tq": tq, "link": link, "page": page, "total_pages": total_pages,
-            "page_html": page_html, "page_questions": list(enumerate(page_q_texts, start=1)),
-            "existing": existing,
-        })
-
-    # --- No per-page questions → behave like the original tq_fill ------
-    questions = tq.tqquestion_set.all().order_by("order")
+    # ---- Whole-book phase (LIKERT matrix) ----
+    questions = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).order_by("order")
     if request.method == "POST":
+        # whole-book submit
         resp.submitted_at = timezone.now()
-        resp.save(update_fields=['submitted_at'])
+        resp.save(update_fields=["submitted_at"])
         for q in questions:
             rating = int(request.POST.get(f"q{q.id}", 0))
             if rating:
                 TQAnswer.objects.update_or_create(
                     response=resp, question=q, page_number=None,
-                    defaults={'likert': rating}
+                    defaults={"likert": rating},
                 )
         return redirect("tq_skimlist", slug=slug)
 
-    return render(request, "clara_app/tq_fill.html",
-                  {"tq": tq, "link": link, "questions": questions})
+    return render(request, "clara_app/tq_fill.html", {"tq": tq, "link": link, "questions": questions})
 
 # --------------------------------------------------
 @login_required
@@ -436,6 +572,24 @@ def tq_delete(request, pk):
     messages.success(request, "Questionnaire deleted.")
     return redirect("tq_my_list")
 
+# ------------------------------------------------------------------
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def tq_delete_all_data(request):
+    try:
+        # Delete in dependency order to avoid FK errors
+        TQAnswer.objects.all().delete()
+        TQResponse.objects.all().delete()
+        TQQuestion.objects.all().delete()
+        TQBookLink.objects.all().delete()
+        TextQuestionnaire.objects.all().delete()
+
+        return redirect("tq_my_list")
+    except Exception as e:
+        messages.error(request, f"Error when trying to delete TQ data")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        return redirect('clara_home_page')
+
 # ===== helper utilities ======================================
 def _render_book_picker(request, preselect_ids=None):
     """
@@ -508,11 +662,19 @@ def _sync_links(tq, checked_ids, unchecked_ids):
     tq.tqbooklink_set.filter(book_id__in=unchecked).delete()
 
 
-def _sync_questions(tq, raw_text):
-    lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
-    tq.tqquestion_set.all().delete()
+##def _sync_questions(tq, raw_text):
+##    lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+##    tq.tqquestion_set.all().delete()
+##    for i, line in enumerate(lines, 1):
+##        TQQuestion.objects.create(questionnaire=tq, text=line, order=i)
+
+def _sync_questions(tq, raw_text: str):
+    lines = [l.strip() for l in (raw_text or "").splitlines() if l.strip()]
+    tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).delete()
     for i, line in enumerate(lines, 1):
-        TQQuestion.objects.create(questionnaire=tq, text=line, order=i)
+        TQQuestion.objects.create(
+            questionnaire=tq, text=line, order=i, scope=TQQuestion.SCOPE_BOOK
+        )
 
 def _get_or_create_anon_user(request):
     key = request.session.get("anon_uid")
