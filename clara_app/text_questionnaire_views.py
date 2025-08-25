@@ -8,10 +8,11 @@ from django.db import transaction
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 
 from django.template.loader import render_to_string
-from django.utils.timezone import now, timedelta
+#from django.utils.timezone import now, timedelta
 from django.db.models.functions import Lower
 from django.core.paginator import Paginator
 from django.db.models import Q, Avg, Count
+from django.utils import timezone
 
 from .models import (
     TextQuestionnaire, TQQuestion, TQBookLink, TQResponse, TQAnswer, Content
@@ -260,10 +261,21 @@ def tq_fill(request, slug, link_id):
     link = get_object_or_404(TQBookLink, pk=link_id, questionnaire=tq)
     user = request.user
 
+    print(f'user = {user}')
+
     # ensure an in-flight response
-    resp, _ = TQResponse.objects.get_or_create(
-        questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True
-    )
+##    resp, _ = TQResponse.objects.get_or_create(
+##        questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True
+##    )
+
+    resp = (TQResponse.objects
+           .filter(questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True)
+           .order_by('id')
+           .first())
+    if not resp:
+        resp = TQResponse.objects.create(questionnaire=tq, book_link=link, rater=user, )
+
+    print(f'resp = {resp}')
 
     # per-page questions (text blob on model)
     page_q_texts = parse_per_page_questions(tq)
@@ -284,6 +296,8 @@ def tq_fill(request, slug, link_id):
                 )
                 .values_list("page_number", flat=True)
         )
+
+        print(f'answered_pages = {answered_pages}')
 
         # if all pages are done, skip straight to whole-book phase
         if len(answered_pages) < total_pages:
@@ -319,7 +333,8 @@ def tq_fill(request, slug, link_id):
                     return redirect(f"{request.path}?page={page+1}")
                 else:
                     # all done with pages; fall through to whole-book
-                    answered_pages = set(range(1, total_pages+1))
+                    #answered_pages = set(range(1, total_pages+1))
+                    return redirect(request.path)
 
             # GET render of the current page (or after failed POST)
             page_html = load_questionnaire_page_html(project, page)
@@ -614,7 +629,7 @@ def _render_book_picker(request, preselect_ids=None):
         if title:
             query &= Q(title__icontains=title)
         if time_period:
-            days_ago = now() - timedelta(days=int(time_period))
+            days_ago = now() - timezone.timedelta(days=int(time_period))
             query &= Q(updated_at__gte=days_ago)
 
     content_qs = Content.objects.filter(query)

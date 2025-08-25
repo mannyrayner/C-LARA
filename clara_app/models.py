@@ -5,7 +5,9 @@ from .constants import TEXT_TYPE_CHOICES, SUPPORTED_LANGUAGES, SUPPORTED_LANGUAG
 from .constants import ACTIVITY_CATEGORY_CHOICES, ACTIVITY_STATUS_CHOICES, ACTIVITY_RESOLUTION_CHOICES
 from .constants import TTS_CHOICES
 
-from django.contrib.auth.models import User, Group, Permission 
+from django.contrib.auth.models import User, Group, Permission
+from django.db.models import Q, UniqueConstraint
+
 from django.db import models
 
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -917,7 +919,17 @@ class TQResponse(models.Model):
     questionnaire = models.ForeignKey(TextQuestionnaire, on_delete=models.CASCADE)
     book_link     = models.ForeignKey(TQBookLink, on_delete=models.CASCADE)
     rater         = models.ForeignKey(User, on_delete=models.CASCADE)  
-    submitted_at  = models.DateTimeField(auto_now=True)
+    #submitted_at  = models.DateTimeField(auto_now=True)
+    submitted_at  = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=['questionnaire', 'book_link', 'rater'],
+                condition=Q(submitted_at__isnull=True),
+                name='uniq_open_tqresponse'
+            )
+        ]
 
 class TQAnswer(models.Model):
     response  = models.ForeignKey(TQResponse, on_delete=models.CASCADE)
