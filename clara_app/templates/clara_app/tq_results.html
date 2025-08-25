@@ -1,55 +1,103 @@
 {% extends "clara_app/base.html" %}
+{% load static %}
+{% load range_extras %}
+
 {% block content %}
-<h3>Results — {{ tq.title }}</h3>
+<h3>Results: {{ tq.title }}</h3>
 
-<a class="btn btn-sm btn-outline-secondary mb-3"
-   href="{% url 'tq_export_csv' tq.pk %}">⇩ Download CSV</a>
-
+{# ---- Whole-book (scope=BOOK) per-question stats ---- #}
+{% if stats_q_book %}
+<h5>Whole-book questions: global stats</h5>
 <table class="table table-sm table-bordered">
-  <thead><tr><th>#</th><th>Question</th><th>Mean</th><th>N</th></tr></thead>
+  <thead>
+    <tr><th>#</th><th>Question</th><th>Mean</th><th>n</th></tr>
+  </thead>
   <tbody>
-    {% for row in stats_q %}
+    {% for r in stats_q_book %}
       <tr>
         <td>{{ forloop.counter }}</td>
-        <td>{{ row.question__text }}</td>
-        <td>{{ row.mean|floatformat:2 }}</td>
-        <td>{{ row.n }}</td>
+        <td>{{ r.question__text }}</td>
+        <td>{{ r.mean|floatformat:2 }}</td>
+        <td>{{ r.n }}</td>
       </tr>
-    {% empty %}
-      <tr><td colspan="4">No responses yet.</td></tr>
     {% endfor %}
   </tbody>
 </table>
+{% endif %}
 
-<h5 class="mt-4">Mean score per book</h5>
+{# ---- Whole-book matrix (book × question) ---- #}
+{% if stats_book_matrix %}
+<h5>Whole-book questions: by book</h5>
 <table class="table table-sm table-bordered">
   <thead>
     <tr>
-      <th>
-        <a href="?">{% if request.GET.sort %}▲{% endif %} Book</a>
-      </th>
-      {% for q in tq.tqquestion_set.all|dictsort:"order" %}
-        <th>Q{{ q.order }}</th>
-      {% endfor %}
-      <th>
-        <a href="?sort=rowmean">
-          Row&nbsp;Mean{% if request.GET.sort == 'rowmean' %} ▲{% endif %}
-        </a>
-      </th>
+      <th>Title</th>
+      {% for i in 1|to:book_q_count %}<th>Q{{ i }}</th>{% endfor %}
+      <th>Avg</th>
     </tr>
   </thead>
   <tbody>
-    {% for row in stats_book %}
+    {% for row in stats_book_matrix %}
       <tr>
         <td>{{ row.title }}</td>
-        {% for val in row.cells %}
-          <td>{{ val|default:"—" }}</td>
+        {% for cell in row.cells %}
+          <td>{% if cell is not None %}{{ cell|floatformat:2 }}{% else %}—{% endif %}</td>
         {% endfor %}
         <td>{{ row.row_mean }}</td>
       </tr>
-    {% empty %}
-      <tr><td colspan="{{ tq.tqquestion_set.count|add:'2' }}">No data yet.</td></tr>
     {% endfor %}
   </tbody>
 </table>
+{% endif %}
+
+{# ---- Page-level (scope=PAGE) per-question stats ---- #}
+{% if stats_q_page %}
+<h5>Page-level questions: global stats</h5>
+<table class="table table-sm table-bordered">
+  <thead>
+    <tr><th>#</th><th>Question</th><th>Mean</th><th>n</th></tr>
+  </thead>
+  <tbody>
+    {% for r in stats_q_page %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ r.question__text }}</td>
+        <td>{{ r.mean|floatformat:2 }}</td>
+        <td>{{ r.n }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{# ---- Page-level matrix (book × question aggregated across pages) ---- #}
+{% if stats_page_matrix %}
+<h5>Page-level questions: by book (means aggregated across pages)</h5>
+<table class="table table-sm table-bordered">
+  <thead>
+    <tr>
+      <th>Title</th>
+      {% for i in 1|to:page_q_count %}<th>Q{{ i }}</th>{% endfor %}
+      <th>Avg</th>
+      <th>Pages rated</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in stats_page_matrix %}
+      <tr>
+        <td>{{ row.title }}</td>
+        {% for cell in row.cells %}
+          <td>{% if cell is not None %}{{ cell|floatformat:2 }}{% else %}—{% endif %}</td>
+        {% endfor %}
+        <td>{{ row.row_mean }}</td>
+        <td>{{ row.pages_rated }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<p class="text-muted small">
+  Tip: add <code>?sort=rowmean</code> to the URL to sort rows by their average.
+</p>
 {% endblock %}
