@@ -10,7 +10,7 @@
 <h5>Whole-book questions: global stats</h5>
 <table class="table table-sm table-bordered">
   <thead>
-    <tr><th>#</th><th>Question</th><th>Mean</th><th>n</th></tr>
+    <tr><th>#</th><th>Question</th><th>Mean</th><th>n (ratings)</th></tr>
   </thead>
   <tbody>
     {% for r in stats_q_book %}
@@ -55,7 +55,7 @@
 <h5>Page-level questions: global stats</h5>
 <table class="table table-sm table-bordered">
   <thead>
-    <tr><th>#</th><th>Question</th><th>Mean</th><th>n</th></tr>
+    <tr><th>#</th><th>Question</th><th>Mean</th><th>n (pages)</th></tr>
   </thead>
   <tbody>
     {% for r in stats_q_page %}
@@ -64,6 +64,7 @@
         <td>{{ r.question__text }}</td>
         <td>{{ r.mean|floatformat:2 }}</td>
         <td>{{ r.n }}</td>
+        {# If you later want both: add <td>{{ r.n_ratings }}</td> with an extra header #}
       </tr>
     {% endfor %}
   </tbody>
