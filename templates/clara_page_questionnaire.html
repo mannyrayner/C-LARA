@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     {%- for segment in page.segments -%}
       {%- for el in segment.content_elements -%}
 		{%- if el.type == "Image" -%}
-		  <img src="{{ '/accounts/projects/serve_project_image/' + el.content.project_id_internal + '/' + el.content.src }}" alt="Project Image" style="width: 25vw; max-width: 350px; ">
+		  
         {%- elif el.type == "Word" -%}
           <span class="word"
 		        data-gloss="{{ el.annotations.gloss|e if el.annotations.gloss else '' }}"
