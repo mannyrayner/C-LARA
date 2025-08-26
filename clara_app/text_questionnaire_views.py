@@ -403,58 +403,115 @@ def tq_my_list(request):
 # ------------------------------------------------------------------
 ##@login_required
 ##def tq_results(request, pk):
+##    """
+##    Results page that reports BOTH scopes:
+##      - Page-level questions (aggregated across pages per book)
+##      - Whole-book questions (as before)
+##    """
 ##    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
 ##
-##    stats_q = (  # existing per-question table
-##        TQAnswer.objects.filter(response__questionnaire=tq)
-##        .values('question_id', 'question__text')
-##        .annotate(mean=Avg('likert'), n=Count('id'))
-##        .order_by('question_id')
-##    )
-##
-### ---------- book-level matrix ----------
-##    q_count = tq.tqquestion_set.count()
-##    raw = (
-##        TQAnswer.objects
-##        .filter(response__questionnaire=tq)
-##        .values(
-##            'response__book_link__book__title',
-##            'question__order'
+##    # ---------- helpers ----------
+##    def _per_question_stats(scope):
+##        """
+##        Per-question global stats (mean, n), ordered by question.order.
+##        For PAGE scope: aggregates across ALL pages (page_number ignored).
+##        """
+##        qs = (
+##            TQAnswer.objects
+##            .filter(response__questionnaire=tq, question__scope=scope)
+##            .values('question_id', 'question__text', 'question__order')
+##            .annotate(mean=Avg('likert'), n=Count('id'))
+##            .order_by('question__order')
 ##        )
-##        .annotate(mean=Avg('likert'))
-##        .order_by('response__book_link__book__title', 'question__order')
-##    )
+##        return qs
 ##
-##    # build list of rows: {"title": str, "cells": [means…], "row_mean": float}
-##    from collections import defaultdict
-##    tmp = defaultdict(lambda: [None] * q_count)
-##    for r in raw:
-##        title = r['response__book_link__book__title']
-##        idx   = r['question__order'] - 1
-##        tmp[title][idx] = round(r['mean'], 2)
+##    def _matrix_for_scope(scope):
+##        """
+##        Build a book × question matrix of means.
+##        For PAGE scope: aggregate across pages per book (so one cell per book, per question).
+##        Returns (rows, q_count), where each row = {
+##            "title": str,
+##            "cells": [means…],  # aligned to question order
+##            "row_mean": float or "—",
+##            "pages_rated": int (only for PAGE scope)
+##        }
+##        """
+##        qset = tq.tqquestion_set.filter(scope=scope).order_by("order")
+##        q_count = qset.count()
+##        if q_count == 0:
+##            return [], 0
 ##
-##    stats_book = []
-##    for title, cells in tmp.items():
-##        # row mean over non-None cells
-##        numeric = [c for c in cells if c is not None]
-##        row_mean = round(sum(numeric) / len(numeric), 2) if numeric else "—"
-##        stats_book.append(
-##            {"title": title, "cells": cells, "row_mean": row_mean}
+##        # Base queryset: one row per (book, question)
+##        # PAGE scope: include page answers, but aggregate them away via Avg.
+##        base = (
+##            TQAnswer.objects
+##            .filter(response__questionnaire=tq, question__scope=scope)
+##            .values(
+##                'response__book_link__book__title',
+##                'question__order'
+##            )
+##            .annotate(mean=Avg('likert'))
+##            .order_by('response__book_link__book__title', 'question__order')
 ##        )
 ##
-##    # optional ordering: ?sort=rowmean
-##    if request.GET.get("sort") == "rowmean":
-##        stats_book.sort(key=lambda r: (r["row_mean"] == "—", r["row_mean"]))
-##    else:  # default alpha
-##        stats_book.sort(key=lambda r: r["title"].lower())
+##        from collections import defaultdict
+##        tmp = defaultdict(lambda: [None] * q_count)
+##
+##        # For PAGE scope we’ll also compute how many distinct pages received any ratings for that book
+##        pages_rated_map = defaultdict(int)
+##        if scope == TQQuestion.SCOPE_PAGE:
+##            pages_qs = (
+##                TQAnswer.objects
+##                .filter(response__questionnaire=tq, question__scope=scope)
+##                .values('response__book_link__book__title', 'page_number')
+##                .distinct()
+##            )
+##            for r in pages_qs:
+##                if r['page_number'] is not None:
+##                    pages_rated_map[r['response__book_link__book__title']] += 1
+##
+##        for r in base:
+##            title = r['response__book_link__book__title']
+##            idx   = r['question__order'] - 1
+##            tmp[title][idx] = round(r['mean'], 2) if r['mean'] is not None else None
+##
+##        rows = []
+##        for title, cells in tmp.items():
+##            numeric = [c for c in cells if c is not None]
+##            row_mean = round(sum(numeric) / len(numeric), 2) if numeric else "—"
+##            row = {"title": title, "cells": cells, "row_mean": row_mean}
+##            if scope == TQQuestion.SCOPE_PAGE:
+##                row["pages_rated"] = pages_rated_map.get(title, 0)
+##            rows.append(row)
+##
+##        # optional ordering: ?sort=rowmean (applies to both matrices)
+##        if request.GET.get("sort") == "rowmean":
+##            rows.sort(key=lambda r: (r["row_mean"] == "—", r["row_mean"]))
+##        else:
+##            rows.sort(key=lambda r: r["title"].lower())
+##
+##        return rows, q_count
+##
+##    # ---------- gather both scopes ----------
+##    stats_q_book = _per_question_stats(TQQuestion.SCOPE_BOOK)
+##    stats_q_page = _per_question_stats(TQQuestion.SCOPE_PAGE)
+##
+##    stats_book_matrix, book_q_count = _matrix_for_scope(TQQuestion.SCOPE_BOOK)
+##    stats_page_matrix, page_q_count = _matrix_for_scope(TQQuestion.SCOPE_PAGE)
 ##
 ##    return render(
 ##        request,
 ##        "clara_app/tq_results.html",
 ##        {
 ##            "tq": tq,
-##            "stats_q": stats_q,
-##            "stats_book": stats_book,
+##            # global per-question summaries
+##            "stats_q_book": stats_q_book,
+##            "stats_q_page": stats_q_page,
+##            # matrices
+##            "stats_book_matrix": stats_book_matrix,
+##            "stats_page_matrix": stats_page_matrix,
+##            "book_q_count": book_q_count,
+##            "page_q_count": page_q_count,
 ##        },
 ##    )
 
@@ -464,28 +521,101 @@ def tq_results(request, pk):
     Results page that reports BOTH scopes:
       - Page-level questions (aggregated across pages per book)
       - Whole-book questions (as before)
+
+    IMPORTANT: Only submitted responses are included.
     """
     tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
 
     # ---------- helpers ----------
     def _per_question_stats(scope):
         """
-        Per-question global stats (mean, n), ordered by question.order.
-        For PAGE scope: aggregates across ALL pages (page_number ignored).
+        Per-question global stats (mean, counts), ordered by question.order.
+
+        For PAGE scope we report:
+          - n: total ratings (all raters × all pages that had a rating)
+          - n_pages: distinct pages that received at least one rating
+        For BOOK scope we report:
+          - n: total ratings (all raters × all books)
         """
         qs = (
             TQAnswer.objects
-            .filter(response__questionnaire=tq, question__scope=scope)
+            .filter(
+                response__questionnaire=tq,
+                response__submitted_at__isnull=False,   # only submitted
+                question__scope=scope
+            )
             .values('question_id', 'question__text', 'question__order')
-            .annotate(mean=Avg('likert'), n=Count('id'))
+            .annotate(
+                mean=Avg('likert'),
+                n=Count('id'),
+                n_pages=Count('page_number', distinct=True)  # harmless for BOOK scope
+            )
             .order_by('question__order')
         )
         return qs
 
+    def _per_question_stats(scope):
+        """
+        Per-question global stats (mean, counts), ordered by question.order.
+
+        BOOK scope:
+          - mean over all ratings
+          - n = total ratings (answers)
+        PAGE scope:
+          - mean over all ratings
+          - n = distinct pages (count of unique (book, page_number) that received ≥1 rating for that question)
+          - n_ratings also available if needed
+        """
+        base = (
+            TQAnswer.objects
+            .filter(
+                response__questionnaire=tq,
+                response__submitted_at__isnull=False,   # only submitted
+                question__scope=scope
+            )
+        )
+
+        if scope == TQQuestion.SCOPE_BOOK:
+            # as before
+            return (
+                base.values('question_id', 'question__text', 'question__order')
+                    .annotate(mean=Avg('likert'), n=Count('id'))
+                    .order_by('question__order')
+            )
+
+        # --- PAGE scope: n should be "distinct pages", robust across multiple books ---
+        # 1) Compute mean and total ratings per question (kept in case you want it)
+        agg = (
+            base.values('question_id', 'question__text', 'question__order')
+                .annotate(mean=Avg('likert'), n_ratings=Count('id'))
+                .order_by('question__order')
+        )
+
+        # 2) Count distinct (book, page) per question
+        from collections import defaultdict
+        pages_per_q = defaultdict(int)
+        distinct_pairs = (
+            base.exclude(page_number__isnull=True)
+                .values('question_id', 'response__book_link__book_id', 'page_number')
+                .distinct()
+        )
+        for r in distinct_pairs:
+            pages_per_q[r['question_id']] += 1
+
+        # 3) Replace n with distinct-pages count; keep n_ratings if you need it
+        result = []
+        for row in agg:
+            row = dict(row)
+            row['n'] = pages_per_q.get(row['question_id'], 0)   # <- n = distinct pages
+            # row['n_ratings'] remains available if you want to display it
+            result.append(row)
+        return result
+
     def _matrix_for_scope(scope):
         """
         Build a book × question matrix of means.
-        For PAGE scope: aggregate across pages per book (so one cell per book, per question).
+
+        For PAGE scope: aggregate across pages per book (so one cell per book per question).
         Returns (rows, q_count), where each row = {
             "title": str,
             "cells": [means…],  # aligned to question order
@@ -498,11 +628,14 @@ def tq_results(request, pk):
         if q_count == 0:
             return [], 0
 
-        # Base queryset: one row per (book, question)
-        # PAGE scope: include page answers, but aggregate them away via Avg.
+        # Base queryset: one row per (book, question) with mean over all ratings.
         base = (
             TQAnswer.objects
-            .filter(response__questionnaire=tq, question__scope=scope)
+            .filter(
+                response__questionnaire=tq,
+                response__submitted_at__isnull=False,        # only submitted
+                question__scope=scope
+            )
             .values(
                 'response__book_link__book__title',
                 'question__order'
@@ -514,12 +647,16 @@ def tq_results(request, pk):
         from collections import defaultdict
         tmp = defaultdict(lambda: [None] * q_count)
 
-        # For PAGE scope we’ll also compute how many distinct pages received any ratings for that book
+        # For PAGE scope compute how many distinct pages received any ratings for that book.
         pages_rated_map = defaultdict(int)
         if scope == TQQuestion.SCOPE_PAGE:
             pages_qs = (
                 TQAnswer.objects
-                .filter(response__questionnaire=tq, question__scope=scope)
+                .filter(
+                    response__questionnaire=tq,
+                    response__submitted_at__isnull=False,    # only submitted
+                    question__scope=scope
+                )
                 .values('response__book_link__book__title', 'page_number')
                 .distinct()
             )
@@ -573,31 +710,6 @@ def tq_results(request, pk):
     )
 
 # ------------------------------------------------------------------
-##@login_required
-##def tq_export_csv(request, pk):
-##    """Download raw responses as CSV (one row per answer)."""
-##    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
-##
-##    response = HttpResponse(content_type="text/csv")
-##    response['Content-Disposition'] = f'attachment; filename=tq_{pk}_answers.csv'
-##
-##    writer = csv.writer(response)
-##    writer.writerow(["book_id", "rater_id", "question_id", "likert"])
-##
-##    queryset = (
-##        TQAnswer.objects
-##        .filter(response__questionnaire=tq)
-##        .values_list(
-##            'response__book_link__book_id',
-##            'response__rater_id',
-##            'question_id',
-##            'likert'
-##        )
-##    )
-##    for row in queryset:
-##        writer.writerow(row)
-##
-##    return response
 
 @login_required
 def tq_export_csv(request, pk):
