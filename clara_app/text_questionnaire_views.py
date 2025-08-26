@@ -19,7 +19,13 @@ from .models import (
 )
 from .forms import TextQuestionnaireForm, ContentSearchForm
 
-from .clara_utils import output_dir_for_project_id, read_txt_file
+from .clara_utils import file_exists, read_txt_file, output_dir_for_project_id, questionnaire_output_dir_for_project_id
+
+from .clara_main import CLARAProjectInternal
+
+from .clara_coherent_images_utils import read_project_json_file, project_pathname
+
+from .clara_images_utils import numbered_page_list_for_coherent_images
 
 import csv
 from uuid import uuid4
@@ -62,36 +68,10 @@ def tq_create(request):
         {"form": form, "book_picker": book_picker, "tq": tq, "links": links},
     )
 
-
 # --------------------------------------------------
 @login_required
 def tq_edit(request, pk):
     tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
-
-##    if request.method == "POST":
-##        form = TextQuestionnaireForm(request.POST, instance=tq)
-##        if form.is_valid():
-##            with transaction.atomic():
-##                tq = form.save()  # persists page_level_questions edits
-##
-##                _sync_links(
-##                    tq,
-##                    request.POST.getlist("book_ids_checked"),
-##                    request.POST.getlist("book_ids_unchecked"),
-##                )
-##                _sync_questions(tq, form.cleaned_data["questions"])
-##
-##            messages.success(request, "Questionnaire updated.")
-##            return redirect("tq_edit", pk=tq.pk)
-##    else:
-##        # Prefill 'questions' from existing TQQuestion rows
-##        existing_qs = (
-##            tq.tqquestion_set.order_by("order").values_list("text", flat=True)
-##        )
-##        form = TextQuestionnaireForm(
-##            instance=tq,
-##            initial={"questions": "\n".join(existing_qs)},
-##        )
 
     if request.method == "POST":
         form = TextQuestionnaireForm(request.POST, instance=tq)
@@ -128,13 +108,59 @@ def tq_edit(request, pk):
         {"form": form, "book_picker": book_picker, "tq": tq, "links": links},
     )
 
-
 def _sync_questions(tq, raw_text: str):
     """Replace whole-book questions with the new list (one per line)."""
     lines = [l.strip() for l in (raw_text or "").splitlines() if l.strip()]
     tq.tqquestion_set.all().delete()
     for i, line in enumerate(lines, 1):
         TQQuestion.objects.create(questionnaire=tq, text=line, order=i)
+
+def ensure_q_pages_ready(request, project):
+    """
+    Make sure rendered questionnaire pages exist for this project.
+    Returns (ok: bool, err: Optional[str]).
+    """
+    cpi = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    project_id = project.id
+    try:
+        if not cpi.text_available_for_questionnaire_rendering(project_id):
+            messages.error(request, "Error creating rendered text pages for questionnaire.")
+            messages.error(request, "Text has not been compiled.")
+            return False, "text-not-compiled"
+
+        cpi.render_text_for_questionnaire(project_id)
+
+        # Rebuild story data from numbered pages (keeps things in sync)
+        numbered = numbered_page_list_for_coherent_images(project, cpi)
+        cpi.set_story_data_from_numbered_page_list_v2(numbered)
+
+        return True, None
+    except Exception as e:
+        messages.error(request, "Error when trying to create rendered text pages for questionnaire.")
+        messages.error(request, f"Exception: {str(e)}\n{traceback.format_exc()}")
+        return False, "exception"
+
+def load_q_page_assets(project, page_number: int):
+    """
+    Return (image_relpath, html_snippet) for a 1-based page_number.
+    Falls back to empty strings if not found.
+    """
+    project_id = project.id
+    cpi = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    project_dir = cpi.coherent_images_v2_project_dir
+    story = read_project_json_file(project_dir, "story.json") or []
+    # story.json entries are typically { "page_number": N, ... }
+    entry = next((p for p in story if p.get("page_number") == page_number), None)
+
+    # Relative image path (served via serve_coherent_images_v2_file)
+    image_relpath = f"pages/page{page_number}/image.jpg"
+
+    # Rendered HTML snippet file
+    out_dir = questionnaire_output_dir_for_project_id(project_id)
+    html_file = f"{out_dir}/page_{page_number}.html"
+    html_snippet = read_txt_file(html_file) if file_exists(html_file) else ""
+
+    return image_relpath, html_snippet
 
 # --------------------------------------------------
 def tq_skimlist(request, slug):
@@ -153,106 +179,6 @@ def tq_skimlist(request, slug):
                   {"tq": tq, "links": links, "done": set(done_ids)})
 
 # --------------------------------------------------
-##def tq_fill(request, slug, link_id):
-##    """Questionnaire runner. If tq.per_page_questions is present, do a page-by-page phase first."""
-##    tq   = get_object_or_404(TextQuestionnaire, slug=slug)
-##    link = get_object_or_404(TQBookLink, pk=link_id, questionnaire=tq)
-##    user = request.user
-##
-##    # Create/find an in-flight response
-##    resp, _ = TQResponse.objects.get_or_create(
-##        questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True
-##    )
-##
-##    # --- Are there per-page questions? --------------------------------
-##    page_q_texts = parse_per_page_questions(tq)
-##
-##    # We can retrieve the CLARA project via the linked content/book:
-##    # Adjust attribute names as in your codebase.
-##    project = link.book.project if hasattr(link.book, 'project') else link.book.content.project
-##
-##    if page_q_texts:
-##        total_pages = count_questionnaire_pages(project)
-##
-##        # decide which page we’re on
-##        page = request.GET.get('page')
-##        if page is None:
-##            # jump to the first page with missing answers (or 1)
-##            answered_pages = set(
-##                TQAnswer.objects.filter(response=resp, page_number__isnull=False)
-##                .values_list('page_number', flat=True)
-##            )
-##            page = next((p for p in range(1, total_pages+1) if p not in answered_pages), None)
-##            page = page or 1
-##        else:
-##            page = int(page)
-##
-##        # handle POST for a page step
-##        if request.method == "POST" and request.POST.get("phase") == "page":
-##            for idx, qtext in enumerate(page_q_texts, start=1):
-##                field = f"q_pg_{idx}"
-##                val = request.POST.get(field)
-##                if val:
-##                    # We map to a synthetic TQQuestion row if you want book-level later,
-##                    # but to keep minimal change, we store under a virtual per-page question
-##                    # by creating/using real TQQuestion rows. Easiest: ensure page-scope
-##                    # questions exist as TQQuestion objects. 
-##                    q_obj, _ = TQQuestion.objects.get_or_create(
-##                        questionnaire=tq,
-##                        text=qtext,
-##                        order=idx,
-##                    )
-##                    TQAnswer.objects.update_or_create(
-##                        response=resp, question=q_obj, page_number=page,
-##                        defaults={'likert': int(val)}
-##                    )
-##
-##            # next page or move on to normal (book-level) matrix
-##            if page < total_pages:
-##                return redirect(f"{request.path}?page={page+1}")
-##            else:
-##                return redirect(request.path)  # fall through to normal matrix
-##
-##        # render a page step (GET)
-##        existing = {}
-##        # pre-fill previously given per-page ratings for this specific page
-##        for idx, qtext in enumerate(page_q_texts, start=1):
-##            try:
-##                q_obj = TQQuestion.objects.get(
-##                    questionnaire=tq,
-##                    text=qtext,
-##                    order=idx
-##                )
-##                ans = TQAnswer.objects.filter(response=resp, question=q_obj, page_number=page).first()
-##                if ans:
-##                    existing[idx] = ans.likert
-##            except TQQuestion.DoesNotExist:
-##                pass
-##
-##        page_html = load_questionnaire_page_html(project, page)
-##
-##        return render(request, "clara_app/tq_page_step.html", {
-##            "tq": tq, "link": link, "page": page, "total_pages": total_pages,
-##            "page_html": page_html, "page_questions": list(enumerate(page_q_texts, start=1)),
-##            "existing": existing,
-##        })
-##
-##    # --- No per-page questions → behave like the original tq_fill ------
-##    questions = tq.tqquestion_set.all().order_by("order")
-##    if request.method == "POST":
-##        resp.submitted_at = timezone.now()
-##        resp.save(update_fields=['submitted_at'])
-##        for q in questions:
-##            rating = int(request.POST.get(f"q{q.id}", 0))
-##            if rating:
-##                TQAnswer.objects.update_or_create(
-##                    response=resp, question=q, page_number=None,
-##                    defaults={'likert': rating}
-##                )
-##        return redirect("tq_skimlist", slug=slug)
-##
-##    return render(request, "clara_app/tq_fill.html",
-##                  {"tq": tq, "link": link, "questions": questions})
 
 @login_required
 def tq_fill(request, slug, link_id):
@@ -338,6 +264,12 @@ def tq_fill(request, slug, link_id):
 
             # GET render of the current page (or after failed POST)
             page_html = load_questionnaire_page_html(project, page)
+
+            ok, _err = ensure_q_pages_ready(request, project) 
+            if not ok:
+                return redirect('clara_home_page')
+            image_relpath, html_snippet = load_q_page_assets(project, page)
+            
             existing = {}
             for idx, qtext in enumerate(page_q_texts, start=1):
                 q_obj = TQQuestion.objects.filter(
@@ -356,7 +288,8 @@ def tq_fill(request, slug, link_id):
                 {
                     "tq": tq, "link": link,
                     "page": page, "total_pages": total_pages,
-                    "page_html": page_html,
+                    "image_relpath": image_relpath,
+                    "html_snippet": html_snippet,
                     "page_questions": list(enumerate(page_q_texts, start=1)),
                     "existing": existing,
                 },
@@ -401,119 +334,6 @@ def tq_my_list(request):
     return render(request, "clara_app/tq_my_list.html", {"tqs": my_tqs})
 
 # ------------------------------------------------------------------
-##@login_required
-##def tq_results(request, pk):
-##    """
-##    Results page that reports BOTH scopes:
-##      - Page-level questions (aggregated across pages per book)
-##      - Whole-book questions (as before)
-##    """
-##    tq = get_object_or_404(TextQuestionnaire, pk=pk, owner=request.user)
-##
-##    # ---------- helpers ----------
-##    def _per_question_stats(scope):
-##        """
-##        Per-question global stats (mean, n), ordered by question.order.
-##        For PAGE scope: aggregates across ALL pages (page_number ignored).
-##        """
-##        qs = (
-##            TQAnswer.objects
-##            .filter(response__questionnaire=tq, question__scope=scope)
-##            .values('question_id', 'question__text', 'question__order')
-##            .annotate(mean=Avg('likert'), n=Count('id'))
-##            .order_by('question__order')
-##        )
-##        return qs
-##
-##    def _matrix_for_scope(scope):
-##        """
-##        Build a book × question matrix of means.
-##        For PAGE scope: aggregate across pages per book (so one cell per book, per question).
-##        Returns (rows, q_count), where each row = {
-##            "title": str,
-##            "cells": [means…],  # aligned to question order
-##            "row_mean": float or "—",
-##            "pages_rated": int (only for PAGE scope)
-##        }
-##        """
-##        qset = tq.tqquestion_set.filter(scope=scope).order_by("order")
-##        q_count = qset.count()
-##        if q_count == 0:
-##            return [], 0
-##
-##        # Base queryset: one row per (book, question)
-##        # PAGE scope: include page answers, but aggregate them away via Avg.
-##        base = (
-##            TQAnswer.objects
-##            .filter(response__questionnaire=tq, question__scope=scope)
-##            .values(
-##                'response__book_link__book__title',
-##                'question__order'
-##            )
-##            .annotate(mean=Avg('likert'))
-##            .order_by('response__book_link__book__title', 'question__order')
-##        )
-##
-##        from collections import defaultdict
-##        tmp = defaultdict(lambda: [None] * q_count)
-##
-##        # For PAGE scope we’ll also compute how many distinct pages received any ratings for that book
-##        pages_rated_map = defaultdict(int)
-##        if scope == TQQuestion.SCOPE_PAGE:
-##            pages_qs = (
-##                TQAnswer.objects
-##                .filter(response__questionnaire=tq, question__scope=scope)
-##                .values('response__book_link__book__title', 'page_number')
-##                .distinct()
-##            )
-##            for r in pages_qs:
-##                if r['page_number'] is not None:
-##                    pages_rated_map[r['response__book_link__book__title']] += 1
-##
-##        for r in base:
-##            title = r['response__book_link__book__title']
-##            idx   = r['question__order'] - 1
-##            tmp[title][idx] = round(r['mean'], 2) if r['mean'] is not None else None
-##
-##        rows = []
-##        for title, cells in tmp.items():
-##            numeric = [c for c in cells if c is not None]
-##            row_mean = round(sum(numeric) / len(numeric), 2) if numeric else "—"
-##            row = {"title": title, "cells": cells, "row_mean": row_mean}
-##            if scope == TQQuestion.SCOPE_PAGE:
-##                row["pages_rated"] = pages_rated_map.get(title, 0)
-##            rows.append(row)
-##
-##        # optional ordering: ?sort=rowmean (applies to both matrices)
-##        if request.GET.get("sort") == "rowmean":
-##            rows.sort(key=lambda r: (r["row_mean"] == "—", r["row_mean"]))
-##        else:
-##            rows.sort(key=lambda r: r["title"].lower())
-##
-##        return rows, q_count
-##
-##    # ---------- gather both scopes ----------
-##    stats_q_book = _per_question_stats(TQQuestion.SCOPE_BOOK)
-##    stats_q_page = _per_question_stats(TQQuestion.SCOPE_PAGE)
-##
-##    stats_book_matrix, book_q_count = _matrix_for_scope(TQQuestion.SCOPE_BOOK)
-##    stats_page_matrix, page_q_count = _matrix_for_scope(TQQuestion.SCOPE_PAGE)
-##
-##    return render(
-##        request,
-##        "clara_app/tq_results.html",
-##        {
-##            "tq": tq,
-##            # global per-question summaries
-##            "stats_q_book": stats_q_book,
-##            "stats_q_page": stats_q_page,
-##            # matrices
-##            "stats_book_matrix": stats_book_matrix,
-##            "stats_page_matrix": stats_page_matrix,
-##            "book_q_count": book_q_count,
-##            "page_q_count": page_q_count,
-##        },
-##    )
 
 @login_required
 def tq_results(request, pk):
