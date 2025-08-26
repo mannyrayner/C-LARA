@@ -3,6 +3,15 @@
 
 <h4>{{ tq.title }} — page {{ page }} / {{ total_pages }}</h4>
 
+{# Image (served via coherent_images route) #}
+{% if image_relpath %}
+  <img
+    src="{% url 'serve_coherent_images_v2_file' link.book.project.id image_relpath %}"
+    alt="Page image"
+    style="max-width: 400px; margin-bottom: 0.5rem;"
+  >
+{% endif %}
+
 {# Rendered page HTML in its special environment #}
 <div class="clara-qpage">
   {{ html_snippet|safe }}
