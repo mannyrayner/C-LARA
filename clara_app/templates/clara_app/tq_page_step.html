@@ -3,8 +3,9 @@
 
 <h4>{{ tq.title }} — page {{ page }} / {{ total_pages }}</h4>
 
-<div class="mb-3">
-  {{ page_html|safe }}
+{# Rendered page HTML in its special environment #}
+<div class="clara-qpage">
+  {{ html_snippet|safe }}
 </div>
 
 <form method="post">
