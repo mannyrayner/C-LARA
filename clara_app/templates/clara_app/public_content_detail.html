@@ -4,6 +4,20 @@
 {% block content %}
   <h2>{{ content.title }}</h2>
   <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  
+  <p><strong>Programmatic access (for AIs/agents):</strong>
+  <a href="{% url 'public_content_manifest1' content_id=content.id %}"
+     rel="alternate"
+     type="application/json">
+     JSON manifest
+  </a>
+  </p>
+
+<p class="text-muted">
+  Tip for automated clients: fetch the JSON manifest above to get the full annotated text,
+  page structure, and public asset URLs in one call.
+</p>
+
   <p>Access count: {{ content.unique_access_count }}</p>
   {% if average_rating %}
     <p>Average Rating: {{ average_rating }}</p>
