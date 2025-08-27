@@ -6,6 +6,7 @@ from django.http import JsonResponse, Http404, HttpResponse
 from django.views.decorators.http import require_GET
 from django.views.decorators.cache import never_cache, cache_control
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.utils import timezone
 
 from .models import Content  # adjust import to your app
 from .clara_utils import absolute_file_name, output_dir_for_project_id, file_exists, read_txt_file
@@ -19,6 +20,9 @@ from urllib.parse import urljoin
 @xframe_options_exempt
 def public_content_manifest1(request, content_id: int):
     resp = public_content_manifest(request, content_id)
+    resp["Content-Type"] = "application/json; charset=utf-8"
+    resp["Access-Control-Allow-Origin"] = "*"
+    resp["X-CLARA-Manifest-Generated"] = timezone.now().isoformat()
     # hard no-cache at the HTTP layer
     resp["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp["Pragma"] = "no-cache"
