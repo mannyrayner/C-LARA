@@ -34,6 +34,10 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-default-secret-key')
 DEBUG = bool(os.getenv('DJANGO_DEBUG', False)) and not os.getenv('CLARA_ENVIRONMENT') == 'unisa'
 #DEBUG = True
 
+USE_X_FORWARDED_HOST = True
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Nginx sets X-Forwarded-Proto
+
 # Local machine, Heroku, UniSA server
 ALLOWED_HOSTS = [
     'localhost',
