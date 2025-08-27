@@ -12,10 +12,12 @@
      JSON manifest
   </a>
   </p>
+  
+{{ manifest|json_script:"clara-manifest" }}
 
 <p class="text-muted">
-  Tip for automated clients: fetch the JSON manifest above to get the full annotated text,
-  page structure, and public asset URLs in one call.
+  Tip for automated clients: fetch the manifest in the JSON script above to get the full text,
+  page structure, and image URLs.
 </p>
 
   <p>Access count: {{ content.unique_access_count }}</p>
