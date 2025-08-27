@@ -41,6 +41,7 @@ from . import satisfaction_questionnaire_views
 from . import reading_histories_views
 from . import serving_content_views
 from . import language_game_views
+from . import public_api_views
 
 urlpatterns = [
     # Home
@@ -306,6 +307,10 @@ urlpatterns = [
     path('reading_history/<str:l2_language>/<str:status>/', reading_histories_views.reading_history, name='reading_history'),
     path('update_reading_history_status/<str:l2_language>/<str:report_id>/', reading_histories_views.update_reading_history_status, name='update_reading_history_status'),
     path('update_reading_history_monitor/<str:l2_language>/<str:report_id>/', reading_histories_views.update_reading_history_monitor, name='update_reading_history_monitor'),
+
+    # Public API (primarily AI access to posted content)
+    path("accounts/public_api/content/<int:content_id>/public_content_manifest.json", public_api_views.public_content_manifest, name="public_content_manifest"),
+    path("accounts/public_api/content/<int:content_id>/public_content_manifest1.json", public_api_views.public_content_manifest1, name="public_content_manifest1"),
 
     # Serving content
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/static/<path:filename>', serving_content_views.serve_rendered_text_static, name='serve_rendered_text'),
