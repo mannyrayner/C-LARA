@@ -19,7 +19,8 @@ from urllib.parse import urljoin
 @cache_control(no_store=True, no_cache=True, must_revalidate=True, max_age=0)
 @xframe_options_exempt
 def public_content_manifest1(request, content_id: int):
-    resp = public_content_manifest(request, content_id)
+    manifest = public_content_manifest(request, content_id)
+    resp = JsonResponse(manifest, json_dumps_params={"ensure_ascii": False})
     resp["Content-Type"] = "application/json; charset=utf-8"
     resp["Access-Control-Allow-Origin"] = "*"
     resp["X-CLARA-Manifest-Generated"] = timezone.now().isoformat()
@@ -86,5 +87,4 @@ def public_content_manifest(request, content_id: int):
         "version": 1,
     }
 
-    resp = JsonResponse(manifest, json_dumps_params={"ensure_ascii": False})
-    return resp
+    return manifest

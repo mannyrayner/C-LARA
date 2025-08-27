@@ -8,6 +8,8 @@ from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils import timezone
 
+from .public_api_views import public_content_manifest
+
 from .models import Content
 from .models import CLARAProject, Comment, Rating
 from django.contrib.auth.models import User
@@ -262,6 +264,8 @@ def send_rating_or_comment_notification_email(request, recipients, content, acti
 
 def public_content_detail(request, content_id):
     content = get_object_or_404(Content, id=content_id)
+    manifest = public_content_manifest(request, content_id)
+    
     comments = Comment.objects.filter(content=content).order_by('timestamp')  
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
 
@@ -289,6 +293,7 @@ def public_content_detail(request, content_id):
 
     return render(request, 'clara_app/public_content_detail.html', {
         'content': content,
+        'manifest': manifest,
         'comments': comments,
         'average_rating': average_rating['rating__avg']
     })
