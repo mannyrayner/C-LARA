@@ -47,6 +47,8 @@ import copy
 import pprint
 import unicodedata
 
+from typing import Any, Dict, List, Tuple
+
 config = get_config()
 
 ASYNC = True
@@ -475,11 +477,11 @@ def generate_or_improve_annotated_version(annotate_or_improve, processing_phase,
                                                                                                  previous_version, mwe,
                                                                                                  context=context, config_info=config_info, callback=callback)
 
-    print(f'annotations_for_segments')
-    pprint.pprint(annotations_for_segments)
-
-    print(f'annotated_elements')
-    pprint.pprint(annotated_elements)
+##    print(f'annotations_for_segments')
+##    pprint.pprint(annotations_for_segments)
+##
+##    print(f'annotated_elements')
+##    pprint.pprint(annotated_elements)
     
     # Reassemble the annotated elements back into the segmented_text structure
     index = 0
@@ -548,28 +550,37 @@ async def process_annotations_async(chunks, process_segments_singly, segmented_e
                                     segmented_elements_translations_dict, annotate_or_improve, processing_phase,
                                     l1_language, l2_language, previous_version, mwe,
                                     context=None, config_info={}, callback=None):
-    tasks = []
-    for chunk in chunks:
-        if process_segments_singly:
-            key = key_for_segment_elements(chunk)
-            mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
-            translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
-        else:
-            mwes_for_segment = []
-            translation_for_segment = None
-        
-        tasks.append(asyncio.create_task(
-            call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase, chunk,
-                                                                l1_language, l2_language, previous_version,
-                                                                mwe, mwes_for_segment, translation_for_segment,
-                                                                context=context, config_info=config_info, callback=callback)
-        ))
+    
+    max_chunks_to_annotate_in_parallel = int(config.get('chatgpt4_annotation', 'max_chunks_to_annotate_in_parallel'))
 
-    await post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
-    results = await asyncio.gather(*tasks)
+    results = []
+    while chunks:
+        initial_chunks = chunks[:max_chunks_to_annotate_in_parallel]
+        chunks = chunks[max_chunks_to_annotate_in_parallel:]
+    
+        tasks = []
+        for chunk in initial_chunks:
+            if process_segments_singly:
+                key = key_for_segment_elements(chunk)
+                mwes_for_segment = segmented_elements_mwe_dict[key] if segmented_elements_mwe_dict and key in segmented_elements_mwe_dict else []
+                translation_for_segment = segmented_elements_translations_dict[key] if segmented_elements_translations_dict and key in segmented_elements_translations_dict else None
+            else:
+                mwes_for_segment = []
+                translation_for_segment = None
+            
+            tasks.append(asyncio.create_task(
+                call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improve, processing_phase, chunk,
+                                                                    l1_language, l2_language, previous_version,
+                                                                    mwe, mwes_for_segment, translation_for_segment,
+                                                                    context=context, config_info=config_info, callback=callback)
+            ))
 
-    print(f'process_annotations_async: results')
-    pprint.pprint(results)
+        await post_task_update_async(callback, f'--- Running {len(tasks)} async tasks')
+        initial_results = await asyncio.gather(*tasks)
+
+        results += initial_results
+
+        print(f'{len(initial_results)} new results for async tasks, {len(results)} results total')
         
     all_api_calls = []
     annotations_for_segments = []
@@ -803,10 +814,15 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
             api_call = await clara_chatgpt4.get_api_chatgpt4_response(annotation_prompt, config_info=config_info, callback=callback)
             api_calls += [ api_call ]
             if processing_phase == 'mwe':
-                mwes_and_analysis = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe', callback=callback)
+                mwe_parse_response = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, 'mwe',
+                                                                             config_info=config_info, callback=callback)
+                
+                analysis = mwe_parse_response['analysis']
+                mwes = mwe_parse_response['mwes']
+                api_calls += mwe_parse_response['api_calls']
+
                 # Call find_mwe_positions_for_content_elements because we'll get an exception of the mwe can't be found in the segment.
                 # If so, we need to retry.
-                mwes = mwes_and_analysis['mwes']
                 correct_mwes = []
                 for mwe in mwes:
                     try:
@@ -816,7 +832,7 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                         # Try again if possible, otherwise discard the MWE so that we don't fail
                         if n_attempts < limit:
                             raise e
-                mwes_and_analysis['mwes'] = correct_mwes
+                mwes_and_analysis = { 'mwes': correct_mwes, 'analysis': analysis }
                 return ( mwes_and_analysis, api_calls )
             elif processing_phase == 'segmented' and previous_version == 'presegmented':
                 segmented_text0 = api_call.response
@@ -827,12 +843,23 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                     segmented_text = merge_annotations_charwise(text_to_annotate, segmented_text, 'segmentation')
                 return ( segmented_text, api_calls )
             elif processing_phase == 'translated':
-                translation_annotations = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
-                                                                                  previous_version=previous_version, callback=callback)
-                return ( translation_annotations, api_calls )
+                translation_parse_response = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
+                                                                                     previous_version=previous_version,
+                                                                                     config_info=config_info, callback=callback)
+                api_calls += translation_parse_response['api_calls']
+                return ( translation_parse_response['items'], api_calls )
             else:
-                annotated_simplified_elements = await parse_chatgpt_annotation_response(api_call.response, simplified_elements, processing_phase,
-                                                                                        previous_version=previous_version, callback=callback)
+                if processing_phase in ( 'gloss', 'lemma' ):
+                    simplified_elements1 = substitute_mwes_in_content_string_list(simplified_elements, mwes)
+                else:
+                    simplified_elements1 = simplified_elements
+                    
+                gloss_or_lemma_parse_response = await parse_chatgpt_annotation_response(api_call.response, simplified_elements1, processing_phase,
+                                                                                        previous_version=previous_version,
+                                                                                        config_info=config_info, callback=callback)
+
+                api_calls += gloss_or_lemma_parse_response['api_calls']
+                annotated_simplified_elements = gloss_or_lemma_parse_response['items']
                 nontrivial_annotated_elements = [ unsimplify_element(element, processing_phase, previous_version=previous_version)
                                                   for element in annotated_simplified_elements ]
                 annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, processing_phase)
@@ -1381,63 +1408,669 @@ def unsimplify_element(element, processing_phase, previous_version='default'):
         print(message)
         raise InternalCLARAError(message = message)
 
-async def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, previous_version='default', callback=None):
-    print(f'parse_chatgpt_annotation_response({response}, ...')
-    if processing_phase == 'mwe':
-        # Extract the initial analysis text and the JSON list
-        intro, response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list', callback=callback)
-##        if isinstance(response_object, list):
-##            mwes = [element.split() for element in response_object]
-        #print(f'intro = "{intro}", response_object = {response_object}')
-        if is_list_of_lists_of_strings(response_object):
-            print(f'Well-formed MWE response: {response_object}')
-            mwes = response_object
-            # Return a structure containing both the analysis and the list of MWEs
-            return {'analysis': intro, 'mwes': mwes}
-        else:
-            message = f'Response is not a list of lists of strings: {response_object}'
-            print(message)
-            await post_task_update_async(callback, message)
-            raise ChatGPTError(message=message)
-        
-    if processing_phase == 'translated':
-        response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
-        #print(f'response_object for translation: {response_object}')
-        if not isinstance(response_object, list):
-            raise ChatGPTError(message=f'Response is not a list: {response}')
 
-        if len(response_object) != len(simplified_elements):
-            raise ChatGPTError(message=f'Wrong number of elements in reponse list (should have been {len(simplified_elements)}): {response}')
+##async def parse_chatgpt_annotation_response(response, simplified_elements, processing_phase, previous_version='default',
+##                                            config_info={}, callback=None):
+##    print(f'parse_chatgpt_annotation_response("""{response}""", {simplified_elements}, "{processing_phase}", ...')
+##    if processing_phase == 'mwe':
+##        # Extract the initial analysis text and the JSON list
+##        intro, response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_intro_and_json(response, object_type='list', callback=callback)
+##        if is_list_of_lists_of_strings(response_object):
+##            print(f'Well-formed MWE response: {response_object}')
+##            mwes = response_object
+##            # Return a structure containing both the analysis and the list of MWEs
+##            return {'analysis': intro, 'mwes': mwes}
+##        else:
+##            message = f'Response is not a list of lists of strings: {response_object}'
+##            print(message)
+##            await post_task_update_async(callback, message)
+##            raise ChatGPTError(message=message)
+##        
+##    if processing_phase == 'translated':
+##        response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
+##        #print(f'response_object for translation: {response_object}')
+##        if not isinstance(response_object, list):
+##            raise ChatGPTError(message=f'Response is not a list: {response}')
+##
+##        if len(response_object) != len(simplified_elements):
+##            raise ChatGPTError(message=f'Wrong number of elements in reponse list (should have been {len(simplified_elements)}): {response}')
+##
+##        for element in response_object:
+##            if not well_formed_element_in_annotation_response(element, 'translated'):
+##                raise ChatGPTError(message=f'Bad element in response: {element}')
+##
+##        return [ { 'translated': element[1] } for element in response_object ]
+##
+##    else:
+##        # Handle other processing phases (non-MWE)
+##        response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
+##        if not isinstance(response_object, list):
+##            raise ChatGPTError(message=f'Response is not a list: {response}')
+##
+##        usable_response_object = []
+##        for element in response_object:
+##            if not well_formed_element_in_annotation_response(element, processing_phase, previous_version=previous_version,):
+##                await post_task_update_async(callback, f'*** Warning: bad element {element} in annotation response, discarding')
+##            else:
+##                usable_response_object.append(element)
+##
+##        original_text = ' '.join([element if isinstance(element, str) else element[0] for element in simplified_elements])
+##        annotated_text = ' '.join([element[0] for element in usable_response_object])
+##        if original_text != annotated_text:
+##            warning = f"""*** Warning: original text and annotated text are different.
+##     Original text: {original_text}
+##    Annotated text: {annotated_text}"""
+##            await post_task_update_async(callback, warning)
+##
+##        return usable_response_object
 
-        for element in response_object:
-            if not well_formed_element_in_annotation_response(element, 'translated'):
-                raise ChatGPTError(message=f'Bad element in response: {element}')
+#----------------------------------------
+# New AI-written version
 
-        return [ { 'translated': element[1] } for element in response_object ]
+JSON_FENCE_RE = re.compile(
+    r"(?:```(?:json)?\s*)(\[.*?\])\s*```",
+    flags=re.DOTALL | re.IGNORECASE,
+)
 
-    else:
-        # Handle other processing phases (non-MWE)
-        response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(response, object_type='list', callback=callback)
-        if not isinstance(response_object, list):
-            raise ChatGPTError(message=f'Response is not a list: {response}')
+BRACKETED_LIST_RE = re.compile(
+    r"(\[[\s\S]*\])\s*\Z",  # last [...] in the string
+    flags=re.DOTALL,
+)
 
-        usable_response_object = []
-        for element in response_object:
-            if not well_formed_element_in_annotation_response(element, processing_phase, previous_version=previous_version,):
-                await post_task_update_async(callback, f'*** Warning: bad element {element} in annotation response, discarding')
+SMART_APOS = "\u2019\u02BC\u2032\uFF07"  # curly/right/single-prime/fullwidth
+
+def _norm_apostrophes(s: str) -> str:
+    if not s:
+        return s
+    for ch in SMART_APOS:
+        s = s.replace(ch, "'")
+    return s
+
+def _norm_ws(s: str) -> str:
+    return re.sub(r"\s+", " ", s).strip()
+
+def _extract_json_list_block(text: str) -> Tuple[str, str]:
+    """
+    Return (intro_text, json_block_str). Tries code fences first, then last [...] block.
+    Raises ValueError if nothing plausible found.
+    """
+    m = JSON_FENCE_RE.search(text)
+    if m:
+        intro = text[:m.start()].strip()
+        return intro, m.group(1).strip()
+
+    m = BRACKETED_LIST_RE.search(text)
+    if m:
+        intro = text[:m.start()].strip()
+        return intro, m.group(1).strip()
+
+    # A final, gentle 'Output:' heuristic
+    out_idx = text.lower().rfind("output:")
+    if out_idx >= 0:
+        after = text[out_idx+7:].strip()
+        mm = BRACKETED_LIST_RE.search(after)
+        if mm:
+            intro = text[:out_idx].strip()
+            return intro, mm.group(1).strip()
+
+    raise ValueError("No JSON list block found")
+
+def _json_load_loose(s: str) -> Any:
+    """
+    Strict json.loads, with a very light fallback: normalize smart quotes/apostrophes.
+    Avoids risky global single→double conversions.
+    """
+    try:
+        return json.loads(s)
+    except json.JSONDecodeError:
+        s2 = _norm_apostrophes(s)
+        if s2 != s:
+            return json.loads(s2)  # may still raise
+        raise
+
+def _is_list_of_lists_of_strings(x: Any) -> bool:
+    return (
+        isinstance(x, list)
+        and all(isinstance(row, list) for row in x)
+        and all(all(isinstance(tok, str) for tok in row) for row in x)
+    )
+
+def _validate_mwe_vocab(mwe_list: List[List[str]], tokens: List[str]) -> Tuple[List[List[str]], List[Tuple[List[str], str]]]:
+    """
+    Ensure every string in every MWE is a member of 'tokens' (after simple normalization).
+    Returns (kept_mwes, dropped_with_reason).
+    """
+    # Build a normalized vocabulary → original-token(s) map (handles smart apostrophes)
+    norm2orig = {}
+    for t in tokens:
+        key = _norm_apostrophes(t)
+        norm2orig.setdefault(key, set()).add(t)
+
+    kept = []
+    dropped = []
+
+    for row in mwe_list:
+        ok = True
+        fixed_row = []
+        for tok in row:
+            nt = _norm_apostrophes(tok)
+            if nt in norm2orig:
+                # Prefer original spelling identical to nt if present, else any
+                if tok in norm2orig[nt]:
+                    fixed_row.append(tok)
+                else:
+                    fixed_row.append(sorted(norm2orig[nt], key=lambda s: (s != nt, s))[0])
             else:
-                usable_response_object.append(element)
+                ok = False
+                dropped.append((row, f"Token '{tok}' not in segment vocabulary"))
+                break
+        if ok:
+            kept.append(fixed_row)
 
-        original_text = ' '.join([element if isinstance(element, str) else element[0] for element in simplified_elements])
-        annotated_text = ' '.join([element[0] for element in usable_response_object])
-        if original_text != annotated_text:
-            warning = f"""*** Warning: original text and annotated text are different.
-     Original text: {original_text}
-    Annotated text: {annotated_text}"""
-            await post_task_update_async(callback, warning)
+    return kept, dropped
 
-        return usable_response_object
+def _mismatch_report(original_tokens: List[str], mwe_list: List[List[str]]) -> str:
+    return (
+        "Segment tokens:\n"
+        f"{original_tokens}\n\n"
+        "Provided MWEs:\n"
+        f"{mwe_list}"
+    )
 
+async def _repair_mwe_with_gpt(raw_response: str,
+                               tokens: List[str],
+                               config_info: dict,
+                               callback=None) -> Tuple[List[List[str]], List[Any], str]:
+    """
+    Ask GPT to emit ONLY valid JSON (list of lists of strings) with vocabulary limited to 'tokens'.
+    Returns (mwes, api_calls, analysis_text_used).
+    """
+    api_calls = []
+
+    system_hint = (
+        "You will repair a JSON list of multi-word expressions (MWEs) for one tokenized segment.\n"
+        "Rules:\n"
+        "1) Output VALID JSON only: a list of lists of strings (e.g., [[\"give\",\"up\"], [\"might\",\"as\",\"well\"]]).\n"
+        "2) Each string MUST be EXACTLY one token from the provided vocabulary (case sensitive), no new tokens.\n"
+        "3) No commentary, no code fences, no backticks—JSON only.\n"
+        "4) MWEs need not be contiguous in the original segment, but tokens must come from it.\n"
+        "5) If unsure, omit the questionable MWE rather than inventing tokens.\n"
+    )
+    user_prompt = (
+        "Here is the original assistant output you need to repair, followed by the segment's tokens.\n\n"
+        f"--- Original assistant output ---\n{raw_response}\n\n"
+        f"--- Token vocabulary (exactly these strings allowed) ---\n{tokens}\n\n"
+        "Return ONLY JSON as specified—no prose."
+    )
+
+    # One shot; you said you'll track costs—keep this cheap. You can add retries if desired.
+    api = await clara_chatgpt4.get_api_chatgpt4_response(
+        prompt=f"{system_hint}\n\n{user_prompt}",
+        config_info=config_info,
+        callback=callback
+    )
+    api_calls.append(api)
+
+    try:
+        repaired = _json_load_loose(api.response)
+    except Exception as e:
+        # Final attempt: strip everything before/after a [] block
+        try:
+            _, block = _extract_json_list_block(api.response)
+            repaired = _json_load_loose(block)
+        except Exception:
+            raise ChatGPTError(message=f"Repair failed: model did not return valid JSON. Raw:\n{api.response}") from e
+
+    if not _is_list_of_lists_of_strings(repaired):
+        raise ChatGPTError(message=f"Repair failed: JSON not a list of lists of strings. Got: {type(repaired)}")
+
+    # Tight vocab check
+    kept, dropped = _validate_mwe_vocab(repaired, tokens)
+    if dropped:
+        # We deliberately do NOT iterate further—your policy was to keep moving quickly.
+        if callback:
+            await post_task_update_async(callback, f"Repair dropped {len(dropped)} MWEs for OOV tokens.")
+    return kept, api_calls, ""  # analysis is not meaningful on repair
+
+def _tokens_and_mwe_map(simplified_elements):
+    """
+    Accepts:
+      - ['If', 'we', ...] OR
+      - [['If', None], ['get','get out'], ...]
+    Returns:
+      tokens: [str, ...]
+      mwe_labels: [str|None, ...]  (parallel to tokens)
+    """
+    tokens, labels = [], []
+    for el in simplified_elements:
+        if isinstance(el, str):
+            tokens.append(_norm_apostrophes(el)); labels.append(None)
+        elif isinstance(el, (list, tuple)) and len(el) >= 1:
+            tok = el[0]
+            lab = el[1] if len(el) > 1 else None
+            tokens.append(_norm_apostrophes(str(tok)))
+            labels.append(str(lab) if lab not in (None, "") else None)
+        else:
+            # very defensive
+            tokens.append(_norm_apostrophes(str(el)))
+            labels.append(None)
+    return tokens, labels
+
+def _group_indices_by_label(labels):
+    """
+    {'get out': [4,6], 'might as well':[9,10,11], None:[...]} but we drop None group.
+    """
+    groups = {}
+    for i, lab in enumerate(labels):
+        if lab is None:
+            continue
+        groups.setdefault(lab, []).append(i)
+    return groups
+
+# --- LEMMA / GLOSS validators & repair ---
+
+def _valid_lemma_shape(obj, n_tokens):
+    if not isinstance(obj, list) or len(obj) != n_tokens:
+        return False
+    for row in obj:
+        if not isinstance(row, list): return False
+        if len(row) not in (2,3): return False
+        if not (isinstance(row[0], str) and isinstance(row[1], str)): return False
+        if len(row) == 3 and not isinstance(row[2], str): return False
+    return True
+
+def _valid_gloss_shape(obj, n_tokens):
+    if not isinstance(obj, list) or len(obj) != n_tokens:
+        return False
+    for row in obj:
+        if not (isinstance(row, list) and len(row) == 2 and isinstance(row[0], str) and isinstance(row[1], str)):
+            return False
+    return True
+
+def _enforce_token_match(obj_rows, tokens):
+    """
+    First column MUST match tokens exactly (after apostrophe normalization).
+    Returns (ok:bool, mismatches:[(i, expected, got)])
+    """
+    mismatches = []
+    for i, row in enumerate(obj_rows):
+        got = _norm_apostrophes(row[0])
+        exp = tokens[i]
+        if got != exp:
+            mismatches.append((i, exp, row[0]))
+    return len(mismatches) == 0, mismatches
+
+def _check_mwe_uniform_value(obj_rows, labels, col_idx):
+    """
+    For lemma/gloss, enforce same value across tokens that share the same MWE label.
+    col_idx = 1 (lemma or gloss column).
+    Returns (ok:bool, offenders: {label: set(values)})
+    """
+    groups = _group_indices_by_label(labels)
+    offenders = {}
+    for lab, idxs in groups.items():
+        values = {obj_rows[i][col_idx] for i in idxs if i < len(obj_rows)}
+        if len(values) > 1:
+            offenders[lab] = values
+    return (len(offenders) == 0), offenders
+
+def _retry_limit_from_config(config_info, default=2):
+    try:
+        return int(config_info.get('chatgpt4_annotation', {}).get('retry_limit', default))
+    except Exception:
+        return default
+
+async def _repair_lemma_with_gpt(raw_response, tokens, labels, config_info, callback=None, attempts=2):
+    """
+    Ask GPT to output ONLY JSON list where each item is:
+      [token, lemma]  OR  [token, lemma, UPOS]
+    Constraints:
+      - length == len(tokens), in the SAME ORDER
+      - row[0] == token (exact)
+      - for tokens sharing the same non-null MWE label, row[1] must be IDENTICAL across the group
+      - JSON only, no prose/fences
+    Returns (rows, api_calls)
+    """
+    api_calls = []
+    sys_msg = (
+        "Repair lemma output for a tokenized segment.\n"
+        "Rules:\n"
+        "1) Output VALID JSON ONLY: a list with one item per token, in the same order as given.\n"
+        "2) Each item is either [token, lemma] OR [token, lemma, UPOS].\n"
+        "3) The first element MUST equal the provided token exactly.\n"
+        "4) For tokens that share the same MWE label, the lemma (second element) MUST be identical across those tokens.\n"
+        "5) No commentary, no code fences, no extra text—JSON only."
+    )
+    mwe_info = {lab: _group_indices_by_label(labels)[lab] for lab in _group_indices_by_label(labels)}
+    user_msg_base = (
+        "Original assistant output to repair:\n"
+        f"{raw_response}\n\n"
+        "Tokens (in order):\n"
+        f"{tokens}\n\n"
+        "MWE labels aligned to tokens (None if not in an MWE):\n"
+        f"{labels}\n\n"
+        "Return ONLY the JSON array as specified."
+    )
+    last_error = None
+    for _ in range(max(1, attempts)):
+        api = await clara_chatgpt4.get_api_chatgpt4_response(
+            prompt=f"{sys_msg}\n\n{user_msg_base}",
+            config_info=config_info,
+            callback=callback
+        )
+        api_calls.append(api)
+        try:
+            obj = _json_load_loose(api.response)
+        except Exception as e:
+            # try bracket extract
+            try:
+                _, block = _extract_json_list_block(api.response)
+                obj = _json_load_loose(block)
+            except Exception as e2:
+                last_error = e2
+                continue
+
+        if not _valid_lemma_shape(obj, len(tokens)):
+            last_error = ValueError("Shape invalid after repair")
+            continue
+        ok_tok, mm = _enforce_token_match(obj, tokens)
+        if not ok_tok:
+            last_error = ValueError(f"Token mismatch at {mm[:3]}…")
+            continue
+        ok_mwe, off = _check_mwe_uniform_value(obj, labels, 1)
+        if not ok_mwe:
+            last_error = ValueError(f"MWE uniformity failed: {list(off.keys())[:3]}…")
+            continue
+        return obj, api_calls
+    raise ChatGPTError(message=f"Lemma repair failed after {attempts} attempts: {last_error}")
+
+async def _repair_gloss_with_gpt(raw_response, tokens, labels, config_info, callback=None, attempts=2):
+    """
+    Ask GPT to output ONLY JSON list of [token, gloss] with same constraints as lemma re MWE uniformity.
+    """
+    api_calls = []
+    sys_msg = (
+        "Repair gloss output for a tokenized segment.\n"
+        "Rules:\n"
+        "1) Output VALID JSON ONLY: a list with one item per token, in the same order as given.\n"
+        "2) Each item is [token, gloss].\n"
+        "3) The first element MUST equal the provided token exactly.\n"
+        "4) For tokens that share the same MWE label, the gloss (second element) MUST be identical across those tokens.\n"
+        "5) No commentary or code fences—JSON only."
+    )
+    user_msg_base = (
+        "Original assistant output to repair:\n"
+        f"{raw_response}\n\n"
+        "Tokens (in order):\n"
+        f"{tokens}\n\n"
+        "MWE labels aligned to tokens (None if not in an MWE):\n"
+        f"{labels}\n\n"
+        "Return ONLY the JSON array as specified."
+    )
+    last_error = None
+    for _ in range(max(1, attempts)):
+        api = await clara_chatgpt4.get_api_chatgpt4_response(
+            prompt=f"{sys_msg}\n\n{user_msg_base}",
+            config_info=config_info,
+            callback=callback
+        )
+        api_calls.append(api)
+        try:
+            obj = _json_load_loose(api.response)
+        except Exception as e:
+            try:
+                _, block = _extract_json_list_block(api.response)
+                obj = _json_load_loose(block)
+            except Exception as e2:
+                last_error = e2
+                continue
+
+        if not _valid_gloss_shape(obj, len(tokens)):
+            last_error = ValueError("Shape invalid after repair")
+            continue
+        ok_tok, mm = _enforce_token_match(obj, tokens)
+        if not ok_tok:
+            last_error = ValueError(f"Token mismatch at {mm[:3]}…")
+            continue
+        ok_mwe, off = _check_mwe_uniform_value(obj, labels, 1)
+        if not ok_mwe:
+            last_error = ValueError(f"MWE uniformity failed: {list(off.keys())[:3]}…")
+            continue
+        return obj, api_calls
+    raise ChatGPTError(message=f"Gloss repair failed after {attempts} attempts: {last_error}")
+
+async def parse_chatgpt_annotation_response(
+    response: str,
+    simplified_elements: List[Any],
+    processing_phase: str,
+    previous_version='default',
+    config_info: dict = {},
+    callback=None,
+) -> Dict[str, Any]:
+    """
+    Robust parse for annotation phases. Returns a dict that always includes:
+      - 'api_calls': [APICall, ...]  (possibly empty)
+    Plus, depending on phase:
+      - 'analysis' and 'mwes' for 'mwe'
+      - 'items' for 'translated'  (list of {'translated': ...})
+      - 'elements' for other phases (your original usable_response_object)
+
+    Failure policy:
+      * Try strict parse → local normalization → GPT repair (for 'mwe' and 'translated').
+      * If still failing, raise ChatGPTError.
+    """
+    print(f'parse_chatgpt_annotation_response("""{response}""", {simplified_elements}, ...')
+    # derive tokens + MWE labels once
+    tokens, labels = _tokens_and_mwe_map(simplified_elements)
+    retry_limit = _retry_limit_from_config(config_info, default=2)
+    api_calls: List[Any] = []
+
+    # PHASE: MWE ---------------------------------------------------------
+    if processing_phase == 'mwe':
+        # 1) Try your existing helper (best case: keeps original intro/analysis).
+        try:
+            intro, obj = clara_chatgpt4.interpret_chat_gpt4_response_as_intro_and_json(
+                response, object_type='list', callback=callback
+            )
+        except Exception:
+            intro, obj = None, None
+
+        # 2) Fallback: tolerant extraction + JSON load
+        if obj is None:
+            try:
+                intro2, block = _extract_json_list_block(response)
+                obj = _json_load_loose(block)
+                intro = intro or intro2
+            except Exception:
+                # 3) Ask GPT to repair (no analysis preserved)
+                kept, calls, _ = await _repair_mwe_with_gpt(response, [str(x) if not isinstance(x,str) else x for x in simplified_elements], config_info, callback)
+                api_calls.extend(calls)
+                return {'analysis': "", 'mwes': kept, 'api_calls': api_calls}
+
+        # 4) Validate basic shape
+        if not _is_list_of_lists_of_strings(obj):
+            # Try GPT repair
+            kept, calls, _ = await _repair_mwe_with_gpt(
+                json.dumps(obj, ensure_ascii=False),  # show model what it tried
+                [str(x) if not isinstance(x,str) else x for x in simplified_elements],
+                config_info, callback
+            )
+            api_calls.extend(calls)
+            return {'analysis': intro or "", 'mwes': kept, 'api_calls': api_calls}
+
+        # 5) Enforce vocabulary
+        seg_tokens = [e if isinstance(e, str) else e[0] for e in simplified_elements]
+        seg_tokens = [_norm_apostrophes(t) for t in seg_tokens]
+
+        kept, dropped = _validate_mwe_vocab(obj, seg_tokens)
+        if dropped and callback:
+            await post_task_update_async(
+                callback,
+                f"*** Warning: {len(dropped)} MWEs discarded (token not in segment).\n" +
+                _mismatch_report(seg_tokens, [d[0] for d in dropped])
+            )
+
+        return {'analysis': intro or "", 'mwes': kept, 'api_calls': api_calls}
+
+    # PHASE: translated --------------------------------------------------
+    if processing_phase == 'translated':
+        # Expect a list of [src, translated] pairs (per your current contract).
+        try:
+            response_object = clara_chatgpt4.interpret_chat_gpt4_response_as_json(
+                response, object_type='list', callback=callback
+            )
+        except Exception:
+            response_object = None
+
+        def _valid_translated(obj: Any) -> bool:
+            if not isinstance(obj, list):
+                return False
+            return all(isinstance(el, list) and len(el) >= 2 and isinstance(el[1], str) for el in obj)
+
+        if not _valid_translated(response_object) or len(response_object) != len(simplified_elements):
+            # Ask GPT to repair to the exact length
+            tokens = [e if isinstance(e, str) else e[0] for e in simplified_elements]
+            system = (
+                "You will convert assistant output into a JSON list of translation pairs.\n"
+                "Rules:\n"
+                "1) Output VALID JSON only: a list of lists. Each inner list is [source_token, translated_string].\n"
+                f"2) The output MUST have exactly {len(tokens)} items, one per source_token, IN THIS ORDER.\n"
+                "3) Use the source token verbatim for the first element of each pair; do not change it.\n"
+                "4) If you cannot translate a token, copy it as the translation rather than deleting it.\n"
+                "5) No commentary, no code fences—JSON only."
+            )
+            user = (
+                "Original assistant output to repair:\n"
+                f"{response}\n\n"
+                "Here is the exact sequence of source tokens:\n"
+                f"{tokens}\n\n"
+                "Return ONLY the JSON array as specified."
+            )
+            api = await clara_chatgpt4.get_api_chatgpt4_response(
+                prompt=f"{system}\n\n{user}",
+                config_info=config_info,
+                callback=callback
+            )
+            api_calls.append(api)
+
+            try:
+                response_object = _json_load_loose(api.response)
+            except Exception as e:
+                try:
+                    _, block = _extract_json_list_block(api.response)
+                    response_object = _json_load_loose(block)
+                except Exception:
+                    raise ChatGPTError(message="Repair failed: could not coerce translation list to valid JSON.") from e
+
+            if not _valid_translated(response_object) or len(response_object) != len(simplified_elements):
+                raise ChatGPTError(message="Repair failed: translation list still invalid length/shape.")
+
+        # Final validation and projection
+        out = [{'translated': el[1]} for el in response_object]
+        return {'items': out, 'api_calls': api_calls}
+
+    # PHASE: lemma ---------------------------------------------------------
+    if processing_phase == 'lemma':
+        # Expect list of [token, lemma] or [token, lemma, UPOS] aligned to tokens
+        try:
+            obj = clara_chatgpt4.interpret_chat_gpt4_response_as_json(
+                response, object_type='list', callback=callback
+            )
+        except Exception:
+            obj = None
+
+        def _passes_all(o):
+            return (
+                _valid_lemma_shape(o, len(simplified_elements)) and
+                _enforce_token_match(o, simplified_elements)[0] and
+                _check_mwe_uniform_value(o, labels, 1)[0]
+            )
+
+        if not _passes_all(obj):
+            # Try tolerant extraction quickly
+            if obj is None:
+                try:
+                    _, block = _extract_json_list_block(response)
+                    obj = _json_load_loose(block)
+                except Exception:
+                    obj = None
+            if obj is None or not _passes_all(obj):
+                # GPT repair with retries
+                fixed, calls = await _repair_lemma_with_gpt(
+                    raw_response=response, tokens=tokens, labels=labels,
+                    config_info=config_info, callback=callback, attempts=retry_limit
+                )
+                api_calls.extend(calls)
+                obj = fixed
+
+        # warn if any uniformity issue (shouldn’t happen post-repair)
+        ok_mwe, offenders = _check_mwe_uniform_value(obj, labels, 1)
+        if not ok_mwe and callback:
+            await post_task_update_async(callback, f"*** Warning (lemma): non-uniform MWE lemmas {list(offenders.keys())[:5]}…")
+
+        return {'items': obj, 'api_calls': api_calls}
+
+    # PHASE: gloss ---------------------------------------------------------
+    if processing_phase == 'gloss':
+        # Expect list of [token, gloss] aligned to tokens
+        try:
+            obj = clara_chatgpt4.interpret_chat_gpt4_response_as_json(
+                response, object_type='list', callback=callback
+            )
+        except Exception:
+            obj = None
+
+        def _passes_all(o):
+            return (
+                _valid_gloss_shape(o, len(simplified_elements)) and
+                _enforce_token_match(o, simplified_elements)[0] and
+                _check_mwe_uniform_value(o, labels, 1)[0]
+            )
+
+        if not _passes_all(obj):
+            if obj is None:
+                try:
+                    _, block = _extract_json_list_block(response)
+                    obj = _json_load_loose(block)
+                except Exception:
+                    obj = None
+            if obj is None or not _passes_all(obj):
+                fixed, calls = await _repair_gloss_with_gpt(
+                    raw_response=response, tokens=tokens, labels=labels,
+                    config_info=config_info, callback=callback, attempts=retry_limit
+                )
+                api_calls.extend(calls)
+                obj = fixed
+
+        ok_mwe, offenders = _check_mwe_uniform_value(obj, labels, 1)
+        if not ok_mwe and callback:
+            await post_task_update_async(callback, f"*** Warning (gloss): non-uniform MWE glosses {list(offenders.keys())[:5]}…")
+
+        return {'items': obj, 'api_calls': api_calls}
+
+##    if not isinstance(response_object, list):
+##        raise ChatGPTError(message=f"Response is not a list: {response}")
+##
+##    usable = []
+##    for element in response_object:
+##        if not well_formed_element_in_annotation_response(element, processing_phase, previous_version=previous_version):
+##            await post_task_update_async(callback, f'*** Warning: bad element {element} in annotation response, discarding')
+##        else:
+##            usable.append(element)
+##
+##    original_text = ' '.join([el if isinstance(el, str) else el[0] for el in simplified_elements])
+##    annotated_text = ' '.join([el[0] for el in usable if isinstance(el, (list, tuple)) and el])
+##    if _norm_ws(_norm_apostrophes(original_text)) != _norm_ws(_norm_apostrophes(annotated_text)):
+##        warning = (
+##            "*** Warning: original text and annotated text are different.\n"
+##            f" Original text: {original_text}\n"
+##            f"Annotated text: {annotated_text}"
+##        )
+##        await post_task_update_async(callback, warning)
+##
+##    return {'elements': usable, 'api_calls': api_calls}
+
+#----------------------------------------
 
 def simplified_element_list_to_text(simplified_elements):
     return ' '.join([ element if isinstance(element, str) else element[0]
