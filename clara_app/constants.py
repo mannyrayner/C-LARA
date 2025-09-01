@@ -95,6 +95,8 @@ SUPPORTED_LANGUAGES_WITH_AI_ENABLED_STATUS = [
     ('korean', 'Korean', True),
     ('kunjen', 'Kunjen', False), #Not AI-enabled
     ('latin', 'Latin', True),
+    ('latvian', 'Latvian', True),
+    ('lithuanian', 'Lithuanian', True),
     ('malay', 'Malay', True),
     ('mandarin', 'Mandarin', True),
     ('māori', 'Māori', True),
