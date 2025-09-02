@@ -1479,6 +1479,13 @@ BRACKETED_LIST_RE = re.compile(
 
 SMART_APOS = "\u2019\u02BC\u2032\uFF07"  # curly/right/single-prime/fullwidth
 
+trace_annotation_response = False
+#trace_annotation_response = True
+
+def print_if_trace(s):
+    if trace_annotation_response:
+        print(s)
+
 def _norm_apostrophes(s: str) -> str:
     if not s:
         return s
@@ -1526,6 +1533,7 @@ def _json_load_loose(s: str) -> Any:
         s2 = _norm_apostrophes(s)
         if s2 != s:
             return json.loads(s2)  # may still raise
+        print_if_trace(f'Error in _json_load_loose({s}')
         raise
 
 def _is_list_of_lists_of_strings(x: Any) -> bool:
@@ -1671,33 +1679,45 @@ def _group_indices_by_label(labels):
 
 def _valid_lemma_shape(obj, n_tokens):
     if not isinstance(obj, list) or len(obj) != n_tokens:
+        print_if_trace(f'Failed _valid_lemma_shape({obj}, {n_tokens}): length')
         return False
     for row in obj:
-        if not isinstance(row, list): return False
-        if len(row) not in (2,3): return False
-        if not (isinstance(row[0], str) and isinstance(row[1], str)): return False
-        if len(row) == 3 and not isinstance(row[2], str): return False
+        if not isinstance(row, list):
+            print_if_trace(f'Failed _valid_lemma_shape({obj}, {n_tokens}): bad row {row}')
+            return False
+        if len(row) not in (2,3):
+            print_if_trace(f'Failed _valid_lemma_shape({obj}, {n_tokens}): bad row {row}')
+            return False
+        if not (isinstance(row[0], str) and isinstance(row[1], str)):
+            print_if_trace(f'Failed _valid_lemma_shape({obj}, {n_tokens}): bad row {row}')
+            return False
+        if len(row) == 3 and not isinstance(row[2], str):
+            print_if_trace(f'Failed _valid_lemma_shape({obj}, {n_tokens}): bad row {row}')
+            return False
     return True
 
 def _valid_gloss_shape(obj, n_tokens):
     if not isinstance(obj, list) or len(obj) != n_tokens:
+        print_if_trace(f'Failed _valid_gloss_shape({obj}, {n_tokens}): length')
         return False
     for row in obj:
         if not (isinstance(row, list) and len(row) == 2 and isinstance(row[0], str) and isinstance(row[1], str)):
+            print_if_trace(f'Failed _valid_gloss_shape({obj}, {n_tokens}): bad row {row}')
             return False
     return True
 
-def _enforce_token_match(obj_rows, tokens):
+def _enforce_token_match(obj_rows, simplified_elements):
     """
-    First column MUST match tokens exactly (after apostrophe normalization).
+    First column MUST match token word form exactly (after apostrophe normalization).
     Returns (ok:bool, mismatches:[(i, expected, got)])
     """
     mismatches = []
     for i, row in enumerate(obj_rows):
         got = _norm_apostrophes(row[0])
-        exp = tokens[i]
+        exp = simplified_elements[i][0]
         if got != exp:
             mismatches.append((i, exp, row[0]))
+            print_if_trace(f'Failed _enforce_token_match({obj_rows}, {tokens}): bad row {row}')
     return len(mismatches) == 0, mismatches
 
 def _check_mwe_uniform_value(obj_rows, labels, col_idx):
@@ -1712,6 +1732,7 @@ def _check_mwe_uniform_value(obj_rows, labels, col_idx):
         values = {obj_rows[i][col_idx] for i in idxs if i < len(obj_rows)}
         if len(values) > 1:
             offenders[lab] = values
+            print_if_trace(f'Failed _check_mwe_uniform_value({obj_rows}, {labels}, {col_idx}): lab = {lab}, values = {values}')
     return (len(offenders) == 0), offenders
 
 def _retry_limit_from_config(config_info, default=2):
