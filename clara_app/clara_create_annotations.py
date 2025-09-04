@@ -1479,8 +1479,8 @@ BRACKETED_LIST_RE = re.compile(
 
 SMART_APOS = "\u2019\u02BC\u2032\uFF07"  # curly/right/single-prime/fullwidth
 
-trace_annotation_response = False
-#trace_annotation_response = True
+#trace_annotation_response = False
+trace_annotation_response = True
 
 def print_if_trace(s):
     if trace_annotation_response:
@@ -1714,10 +1714,10 @@ def _enforce_token_match(obj_rows, simplified_elements):
     mismatches = []
     for i, row in enumerate(obj_rows):
         got = _norm_apostrophes(row[0])
-        exp = simplified_elements[i][0]
+        exp = _norm_apostrophes(simplified_elements[i][0])
         if got != exp:
-            mismatches.append((i, exp, row[0]))
-            print_if_trace(f'Failed _enforce_token_match({obj_rows}, {tokens}): bad row {row}')
+            mismatches.append((i, exp, got))
+            print_if_trace(f'Failed _enforce_token_match({obj_rows}, {simplified_elements}): bad row {row}')
     return len(mismatches) == 0, mismatches
 
 def _check_mwe_uniform_value(obj_rows, labels, col_idx):
@@ -1753,6 +1753,7 @@ async def _repair_lemma_with_gpt(raw_response, simplified_elements, labels, conf
     Returns (rows, api_calls)
     """
     api_calls = []
+    tokens = [ element[0] for element in simplified_elements ]
     sys_msg = (
         "Repair lemma output for a tokenized segment.\n"
         "Rules:\n"
@@ -1810,6 +1811,7 @@ async def _repair_gloss_with_gpt(raw_response, simplified_elements, labels, conf
     Ask GPT to output ONLY JSON list of [token, gloss] with same constraints as lemma re MWE uniformity.
     """
     api_calls = []
+    tokens = [ element[0] for element in simplified_elements ]
     sys_msg = (
         "Repair gloss output for a tokenized segment.\n"
         "Rules:\n"
