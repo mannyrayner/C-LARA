@@ -1741,7 +1741,7 @@ def _retry_limit_from_config(config_info, default=2):
     except Exception:
         return default
 
-async def _repair_lemma_with_gpt(raw_response, tokens, labels, config_info, callback=None, attempts=2):
+async def _repair_lemma_with_gpt(raw_response, simplified_elements, labels, config_info, callback=None, attempts=2):
     """
     Ask GPT to output ONLY JSON list where each item is:
       [token, lemma]  OR  [token, lemma, UPOS]
@@ -1791,10 +1791,10 @@ async def _repair_lemma_with_gpt(raw_response, tokens, labels, config_info, call
                 last_error = e2
                 continue
 
-        if not _valid_lemma_shape(obj, len(tokens)):
+        if not _valid_lemma_shape(obj, len(simplified_elements)):
             last_error = ValueError("Shape invalid after repair")
             continue
-        ok_tok, mm = _enforce_token_match(obj, tokens)
+        ok_tok, mm = _enforce_token_match(obj, simplified_elements)
         if not ok_tok:
             last_error = ValueError(f"Token mismatch at {mm[:3]}…")
             continue
@@ -1805,7 +1805,7 @@ async def _repair_lemma_with_gpt(raw_response, tokens, labels, config_info, call
         return obj, api_calls
     raise ChatGPTError(message=f"Lemma repair failed after {attempts} attempts: {last_error}")
 
-async def _repair_gloss_with_gpt(raw_response, tokens, labels, config_info, callback=None, attempts=2):
+async def _repair_gloss_with_gpt(raw_response, simplified_elements, labels, config_info, callback=None, attempts=2):
     """
     Ask GPT to output ONLY JSON list of [token, gloss] with same constraints as lemma re MWE uniformity.
     """
@@ -1846,10 +1846,10 @@ async def _repair_gloss_with_gpt(raw_response, tokens, labels, config_info, call
                 last_error = e2
                 continue
 
-        if not _valid_gloss_shape(obj, len(tokens)):
+        if not _valid_gloss_shape(obj, len(simplified_elements)):
             last_error = ValueError("Shape invalid after repair")
             continue
-        ok_tok, mm = _enforce_token_match(obj, tokens)
+        ok_tok, mm = _enforce_token_match(obj, simplified_elements)
         if not ok_tok:
             last_error = ValueError(f"Token mismatch at {mm[:3]}…")
             continue
@@ -2018,7 +2018,7 @@ async def parse_chatgpt_annotation_response(
             if obj is None or not _passes_all(obj):
                 # GPT repair with retries
                 fixed, calls = await _repair_lemma_with_gpt(
-                    raw_response=response, tokens=tokens, labels=labels,
+                    raw_response=response, simplified_elements=simplified_elements, labels=labels,
                     config_info=config_info, callback=callback, attempts=retry_limit
                 )
                 api_calls.extend(calls)
@@ -2057,7 +2057,7 @@ async def parse_chatgpt_annotation_response(
                     obj = None
             if obj is None or not _passes_all(obj):
                 fixed, calls = await _repair_gloss_with_gpt(
-                    raw_response=response, tokens=tokens, labels=labels,
+                    raw_response=response, simplified_elements=simplified_elements, labels=labels,
                     config_info=config_info, callback=callback, attempts=retry_limit
                 )
                 api_calls.extend(calls)
