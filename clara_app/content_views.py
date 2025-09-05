@@ -264,7 +264,10 @@ def send_rating_or_comment_notification_email(request, recipients, content, acti
 
 def public_content_detail(request, content_id):
     content = get_object_or_404(Content, id=content_id)
-    manifest = public_content_manifest(request, content_id)
+    try:
+        manifest = public_content_manifest(request, content_id)
+    except Exception as e:
+        manifest = None
     
     comments = Comment.objects.filter(content=content).order_by('timestamp')  
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
