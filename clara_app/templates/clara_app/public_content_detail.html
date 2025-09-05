@@ -5,15 +5,17 @@
   <h2>{{ content.title }}</h2>
   <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
   
-  <p><strong>Programmatic access (for AIs/agents):</strong>
-  <a href="{% url 'public_content_manifest1' content_id=content.id %}"
-     rel="alternate"
-     type="application/json">
-     JSON manifest
-  </a>
-  </p>
-  
-{{ manifest|json_script:"clara-manifest" }}
+  {% if manifest %}
+	<p><strong>Programmatic access (for AIs/agents):</strong>
+	<a href="{% url 'public_content_manifest1' content_id=content.id %}"
+	 rel="alternate"
+	 type="application/json">
+	 JSON manifest
+	</a>
+	</p>
+
+	{{ manifest|json_script:"clara-manifest" }}
+  {% endif %}
 
 <p class="text-muted">
   Tip for automated clients: fetch the manifest in the JSON script above to get the full text,
