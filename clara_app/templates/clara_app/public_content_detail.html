@@ -15,12 +15,12 @@
 	</p>
 
 	{{ manifest|json_script:"clara-manifest" }}
-  {% endif %}
 
-<p class="text-muted">
-  Tip for automated clients: fetch the manifest in the JSON script above to get the full text,
-  page structure, and image URLs.
-</p>
+	<p class="text-muted">
+	  Tip for automated clients: fetch the manifest in the JSON script above to get the full text,
+	  page structure, and image URLs.
+	</p>
+  {% endif %}
 
   <p>Access count: {{ content.unique_access_count }}</p>
   {% if average_rating %}
