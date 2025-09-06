@@ -863,8 +863,9 @@ async def call_chatgpt4_to_annotate_or_improve_elements_async(annotate_or_improv
                 nontrivial_annotated_elements = [ unsimplify_element(element, processing_phase, previous_version=previous_version)
                                                   for element in annotated_simplified_elements ]
                 annotated_elements = merge_elements_and_annotated_elements(elements, nontrivial_annotated_elements, processing_phase)
-                if n_attempts < limit: #Don't give up if MWEs are not consistently annotated
-                    await check_mwes_are_consistently_annotated(elements, mwes, processing_phase, callback=callback)
+                # We are checking this already in parse_chatgpt_annotation_response so remove check here
+##                if n_attempts < limit: #Don't give up if MWEs are not consistently annotated
+##                    await check_mwes_are_consistently_annotated(elements, mwes, processing_phase, callback=callback)
                 return ( annotated_elements, api_calls )
                 
         except MWEError as e:
