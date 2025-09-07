@@ -1,25 +1,43 @@
+{# templates/clara_app/public_content_detail.html #}
 {% extends 'clara_app/base.html' %}
 {% load clara_tags %}
 
 {% block content %}
   <h2>{{ content.title }}</h2>
-  <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
-  
-  {% if manifest %}
-	<p><strong>Programmatic access (for AIs/agents):</strong>
-	<a href="{% url 'public_content_manifest1' content_id=content.id %}"
-	 rel="alternate"
-	 type="application/json">
-	 JSON manifest
-	</a>
-	</p>
 
-	{{ manifest|json_script:"clara-manifest" }}
+  {% if unlock_form %}
+    <p>This content is password-protected.</p>
+    {% if content.password_hint %}<p><em>Hint:</em> {{ content.password_hint }}</p>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      {{ unlock_form.as_p }}
+      <button type="submit">Unlock</button>
+    </form>
+  {% else %}
+    {% if content.external_url %}
+      <p>Link to published content:
+        <a href="{{ content.external_url }}" target="_blank" rel="noopener">{{ content.external_url }}</a>
+      </p>
+	{% else %}
+	  <p>Link to published content: 
+	     <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a>
+	  </p>
+    {% endif %}
 
-	<p class="text-muted">
-	  Tip for automated clients: fetch the manifest in the JSON script above to get the full text,
-	  page structure, and image URLs.
-	</p>
+    {% if manifest %}
+      <p><strong>Programmatic access (for AIs/agents):</strong>
+        <a href="{% url 'public_content_manifest1' content_id=content.id %}{% if access_token %}?access={{ access_token|urlencode }}{% endif %}"
+           rel="alternate" type="application/json">
+          JSON manifest
+        </a>
+      </p>
+
+      {{ manifest|json_script:"clara-manifest" }}
+      <p class="text-muted">
+        Tip for automated clients: fetch the manifest in the JSON script above to get the full text,
+        page structure, and image URLs.
+      </p>
+    {% endif %}
   {% endif %}
 
   <p>Access count: {{ content.unique_access_count }}</p>
@@ -28,62 +46,34 @@
   {% else %}
     <p>No ratings yet.</p>
   {% endif %}
-  
+
   <table>
-  <tr>
-    <td>Text language:</td>
-    <td>{{ content.l2|titlecase }}</td>
-  </tr>
-  <tr>
-    <td>Annotation language:</td>
-    <td>{{ content.l1|titlecase }}</td>
-  </tr>
-  {% if content.project %}
-  <tr>
-    <td>Created by:</td>
-    <td>{{ content.project.user.username|slice:":3" }}***</td>
-  </tr>
-  {% else %}
-  <tr>
-    <td>Created by:</td>
-    <td>{{ content.annotator|slice:":3" }}***</td>
-  </tr>
-  {% endif %}
-  <tr>
-    <td>Summary:</td>
-    <td>{{ content.summary }}</td>
-  </tr>
-  <tr>
-    <td>Length in words:</td>
-    <td>{{ content.length_in_words }}</td>
-  </tr>
-  <tr>
-    <td>Author:</td>
-    <td>{{ content.author|slice:":3" }}***</td>
-  </tr>
-  <tr>
-    <td>Voice:</td>
-    <td>{{ content.voice }}</td>
-  </tr>
-  <tr>
-    <td>Difficulty Level:</td>
-    <td>{{ content.difficulty_level }}</td>
-  </tr>
-</table>
+    <tr><td>Text language:</td><td>{{ content.l2|titlecase }}</td></tr>
+    <tr><td>Annotation language:</td><td>{{ content.l1|titlecase }}</td></tr>
+    {% if content.project %}
+      <tr><td>Created by:</td><td>{{ content.project.user.username|slice:":3" }}***</td></tr>
+    {% else %}
+      <tr><td>Created by:</td><td>{{ content.annotator|slice:":3" }}***</td></tr>
+    {% endif %}
+    <tr><td>Summary:</td><td>{{ content.summary }}</td></tr>
+    <tr><td>Length in words:</td><td>{{ content.length_in_words }}</td></tr>
+    <tr><td>Author:</td><td>{{ content.author|slice:":3" }}***</td></tr>
+    <tr><td>Voice:</td><td>{{ content.voice }}</td></tr>
+    <tr><td>Difficulty Level:</td><td>{{ content.difficulty_level }}</td></tr>
+  </table>
 
   <h3>Comments</h3>
   {% for comment in comments %}
     <p>
       <strong>{{ comment.user.username|slice:":3" }}***</strong>
-      ({{ comment.timestamp|date:"F j, Y, P" }}):  <!-- Anonymized comment user's name -->
+      ({{ comment.timestamp|date:"F j, Y, P" }}):
       {{ comment.comment }}
     </p>
   {% empty %}
     <p>No comments yet.</p>
   {% endfor %}
-  
+
   <div class="call-to-action">
     <p>Want to participate? <a href="{% url 'login' %}?next={{ content.get_absolute_url }}">Log in or register</a> to comment and vote!</p>
-</div>
-
+  </div>
 {% endblock %}

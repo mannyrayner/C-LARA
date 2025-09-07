@@ -3,7 +3,17 @@
 
 {% block content %}
   <h2>{{ content.title }}</h2>
-  <p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  {% if unlock_form %}
+    <p>This content is password-protected.</p>
+    {% if content.password_hint %}<p><em>Hint:</em> {{ content.password_hint }}</p>{% endif %}
+    <form method="post">
+      {% csrf_token %}
+      {{ unlock_form.as_p }}
+      <button type="submit">Unlock</button>
+    </form>
+  {% else %}
+	<p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
+  {% endif %}
   {% if content.project.community %}
 	<p>Link to community image review data: <a href="{% url 'community_review_images_external' content.project.id %}" target="_blank" rel="noopener">here</a></p>
   {% endif %}
