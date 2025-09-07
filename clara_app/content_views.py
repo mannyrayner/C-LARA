@@ -2,22 +2,26 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.db.models import Count, Avg, Q, F, Sum
 from django.db.models.functions import Lower
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.core.cache import cache
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.conf import settings
 
 from .public_api_views import public_content_manifest
 
 from .models import Content
-from .models import CLARAProject, Comment, Rating
-from django.contrib.auth.models import User
-from .forms import ContentSearchForm, ContentRegistrationForm
-from .forms import DeleteContentForm
+from .models import CLARAProject, Comment, Rating, HumanAudioInfo, PhoneticHumanAudioInfo
+from .forms import ContentSearchForm, ContentRegistrationForm, ContentUnlockForm
+from .forms import DeleteContentForm, RegisterAsContentForm
 from .forms import RatingForm, CommentForm
-from .utils import get_user_config
-from .utils import create_update
+from .utils import get_user_config, user_has_a_project_role, user_has_a_named_project_role, create_update
+from .clara_main import CLARAProjectInternal
+from .clara_registering_utils import register_project_content_helper
 from .clara_utils import get_config
 from datetime import timedelta
 from ipware import get_client_ip
@@ -27,6 +31,101 @@ import logging
 
 config = get_config()
 logger = logging.getLogger(__name__)
+
+SIGNER = TimestampSigner(salt="clara-public-content")
+
+@login_required
+@user_has_a_project_role
+def offer_to_register_content_normal(request, project_id):
+    return offer_to_register_content(request, 'normal', project_id)
+
+@login_required
+@user_has_a_project_role
+def offer_to_register_content_phonetic(request, project_id):
+    return offer_to_register_content(request, 'phonetic', project_id)
+
+def offer_to_register_content(request, phonetic_or_normal, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    if phonetic_or_normal == 'normal':
+        succeeded = clara_project_internal.rendered_html_exists(project_id)
+    else:
+        succeeded = clara_project_internal.rendered_phonetic_html_exists(project_id)
+
+    if succeeded:
+        # Define URLs for the first page of content and the zip file
+        content_url = True
+        # Put back zipfile later
+        #zipfile_url = True
+        zipfile_url = None
+        # Create the form for registering the project content
+        register_form = RegisterAsContentForm()
+        messages.success(request, f'Rendered text found')
+    else:
+        content_url = None
+        zipfile_url = None
+        register_form = None
+        messages.error(request, "Rendered text not found")
+
+    clara_version = get_user_config(request.user)['clara_version']
+        
+    return render(request, 'clara_app/render_text_complete.html',
+                  {'phonetic_or_normal': phonetic_or_normal,
+                   'content_url': content_url, 'zipfile_url': zipfile_url,
+                   'project': project, 'register_form': register_form, 'clara_version': clara_version})
+
+# Register content produced by rendering from a project        
+##@login_required
+##@user_has_a_project_role
+##def register_project_content(request, phonetic_or_normal, project_id):
+##    project = get_object_or_404(CLARAProject, pk=project_id)
+##
+##    if request.method == 'POST':
+##        form = RegisterAsContentForm(request.POST)
+##        if form.is_valid() and form.cleaned_data.get('register_as_content'):
+##            if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
+##                raise PermissionDenied("You don't have permission to register a text.")
+##
+##            # register_project_content_helper, shared with simple-C-LARA, creates the associated Content object
+##            content = register_project_content_helper(project_id, phonetic_or_normal)
+##            
+##            # Create an Update record for the update feed
+##            if content:
+##                create_update(request.user, 'PUBLISH', content)
+##            
+##            return redirect(content.get_absolute_url())
+##
+##    # If the form was not submitted or was not valid, redirect back to the project detail page.
+##    return redirect('project_detail', project_id=project.id)
+
+@login_required
+@user_has_a_project_role
+def register_project_content(request, phonetic_or_normal, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    if request.method == 'POST':
+        form = RegisterAsContentForm(request.POST)
+        if form.is_valid() and form.cleaned_data.get('register_as_content'):
+            if not user_has_a_named_project_role(request.user, project_id, ['OWNER']):
+                raise PermissionDenied("You don't have permission to register a text.")
+
+            content = register_project_content_helper(project_id, phonetic_or_normal)
+
+            if content:
+                # Set password if provided
+                raw_pw = form.cleaned_data.get("password") or None
+                hint = form.cleaned_data.get("password_hint") or ""
+                if raw_pw:
+                    print(f'set password = {raw_pw}')
+                    content.set_password(raw_pw)
+                    content.password_hint = hint
+                    content.save(update_fields=["password_hash", "password_hint", "password_last_set"])
+                create_update(request.user, 'PUBLISH', content)
+
+            return redirect(content.get_absolute_url())
+
+    return redirect('project_detail', project_id=project.id)
 
 # Register a piece of content that's already posted somewhere on the web
 @login_required
@@ -40,8 +139,8 @@ def register_content(request):
         form = ContentRegistrationForm()
 
     clara_version = get_user_config(request.user)['clara_version']
-    
     return render(request, 'clara_app/register_content.html', {'form': form, 'clara_version': clara_version})
+
 
 # Confirm that content has been registered
 def content_success(request):
@@ -162,25 +261,42 @@ def content_detail(request, content_id):
     delete_form = DeleteContentForm()
     can_delete = ( content.project and request.user == content.project.user ) or request.user.userprofile.is_admin
 
-    # Get the client's IP address
-    #client_ip = get_client_ip(request)
+    unlocked_key = f"content_unlocked_{content.id}"
 
-    client_ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'])
-    
-    if client_ip is None:
-        client_ip = '0.0.0.0'  # Fallback IP if detection fails
-    
-    # Check if this IP has accessed this content before
-    #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
-    if True:
-        # Increment the unique access count
+    unlock_form = None
+
+    # Only increment access count *after* unlock for protected content
+    can_view = (not content.is_protected) or request.session.get(unlocked_key, False)
+
+    if can_view:
+        # Access counting
         content.unique_access_count = F('unique_access_count') + 1
         content.save(update_fields=['unique_access_count'])
-        content.refresh_from_db()  # Refresh the instance to get the updated count
-        # Log the access
-        #ContentAccess.objects.create(content=content, ip_address=client_ip)
-    
+        content.refresh_from_db()
+        
     if request.method == 'POST':
+        # Handle unlock POST
+        if content.is_protected:
+            unlock_form = ContentUnlockForm(request.POST)
+            client_ip, _ = get_client_ip(request, request_header_order=[
+                'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'
+            ])
+            client_ip = client_ip or '0.0.0.0'
+            if too_many_attempts(client_ip, content.id):
+                messages.error(request, "Too many attempts. Try again later.")
+            elif form.is_valid():
+                if content.check_password(form.cleaned_data["password"]):
+                    request.session[unlocked_key] = True
+                    # create a signed token for programmatic manifest fetches
+                    token = SIGNER.sign(f"{content.id}:{request.session.session_key}")
+                    request.session[f"{unlocked_key}_token"] = token
+                    messages.success(request, "Unlocked.")
+                    return redirect('content_detail', content_id=content.id)
+                else:
+                    messages.error(request, "Incorrect password.")
+        else:
+            unlock_form = ContentUnlockForm()
+        
         if 'delete' in request.POST:
             if can_delete:
                 content.delete()
@@ -229,6 +345,7 @@ def content_detail(request, content_id):
     clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/content_detail.html', {
+        'unlock_form': unlock_form if content.is_protected and not can_view else None,
         'can_delete': can_delete,
         'delete_form': delete_form,
         'content': content,
@@ -262,43 +379,100 @@ def send_rating_or_comment_notification_email(request, recipients, content, acti
             print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
 
 
+##def public_content_detail(request, content_id):
+##    content = get_object_or_404(Content, id=content_id)
+##    try:
+##        manifest = public_content_manifest(request, content_id)
+##    except Exception as e:
+##        manifest = None
+##    
+##    comments = Comment.objects.filter(content=content).order_by('timestamp')  
+##    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
+##
+##    # Print out all request headers for debugging
+##    headers = request.META
+##
+##    # Get the client's IP address
+##    #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
+##    client_ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'])
+##    
+##    #client_ip, is_routable = get_client_ip(request, proxy_count=1)
+##    
+##    if client_ip is None:
+##        client_ip = '0.0.0.0'  # Fallback IP if detection fails
+##    
+##    # Check if this IP has accessed this content before
+##    #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
+##    if True:
+##        # Increment the unique access count
+##        content.unique_access_count = F('unique_access_count') + 1
+##        content.save(update_fields=['unique_access_count'])
+##        content.refresh_from_db()  # Refresh the instance to get the updated count
+##        # Log the access
+##        #ContentAccess.objects.create(content=content, ip_address=client_ip)
+##
+##    return render(request, 'clara_app/public_content_detail.html', {
+##        'content': content,
+##        'manifest': manifest,
+##        'comments': comments,
+##        'average_rating': average_rating['rating__avg']
+##    })
+
 def public_content_detail(request, content_id):
     content = get_object_or_404(Content, id=content_id)
-    try:
-        manifest = public_content_manifest(request, content_id)
-    except Exception as e:
-        manifest = None
-    
-    comments = Comment.objects.filter(content=content).order_by('timestamp')  
-    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
+    unlocked_key = f"content_unlocked_{content.id}"
 
-    # Print out all request headers for debugging
-    headers = request.META
+    # Handle unlock POST
+    if request.method == "POST" and content.is_protected:
+        form = ContentUnlockForm(request.POST)
+        client_ip, _ = get_client_ip(request, request_header_order=[
+            'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'
+        ])
+        client_ip = client_ip or '0.0.0.0'
+        if too_many_attempts(client_ip, content.id):
+            messages.error(request, "Too many attempts. Try again later.")
+        elif form.is_valid():
+            if content.check_password(form.cleaned_data["password"]):
+                request.session[unlocked_key] = True
+                # create a signed token for programmatic manifest fetches
+                token = SIGNER.sign(f"{content.id}:{request.session.session_key}")
+                request.session[f"{unlocked_key}_token"] = token
+                messages.success(request, "Unlocked.")
+                return redirect('public_content_detail', content_id=content.id)
+            else:
+                messages.error(request, "Incorrect password.")
+    else:
+        form = ContentUnlockForm()
 
-    # Get the client's IP address
-    #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
-    client_ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'])
-    
-    #client_ip, is_routable = get_client_ip(request, proxy_count=1)
-    
-    if client_ip is None:
-        client_ip = '0.0.0.0'  # Fallback IP if detection fails
-    
-    # Check if this IP has accessed this content before
-    #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
-    if True:
-        # Increment the unique access count
+    # Only increment access count *after* unlock for protected content
+    can_view = (not content.is_protected) or request.session.get(unlocked_key, False)
+##    print(f'content.is_protected = {content.is_protected}')
+##    print(f'request.session.get(unlocked_key = {request.session.get(unlocked_key)}')
+##    print(f'can_view = {can_view}')
+    manifest = None
+    if can_view:
+        try:
+            manifest = public_content_manifest(request, content_id)
+        except Exception:
+            manifest = None
+
+        # Access counting
         content.unique_access_count = F('unique_access_count') + 1
         content.save(update_fields=['unique_access_count'])
-        content.refresh_from_db()  # Refresh the instance to get the updated count
-        # Log the access
-        #ContentAccess.objects.create(content=content, ip_address=client_ip)
+        content.refresh_from_db()
+
+    comments = Comment.objects.filter(content=content).order_by('timestamp')
+    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
+
+    token = request.session.get(f"{unlocked_key}_token") if can_view and content.is_protected else None
 
     return render(request, 'clara_app/public_content_detail.html', {
         'content': content,
-        'manifest': manifest,
+        'manifest': manifest if can_view else None,
         'comments': comments,
-        'average_rating': average_rating['rating__avg']
+        'average_rating': average_rating['rating__avg'],
+        'unlock_form': form if content.is_protected and not can_view else None,
+        'access_token': token,  # for programmatic clients
     })
 
 # Use ipware function instead
@@ -346,3 +520,12 @@ def language_statistics(request):
         'total_contents': total_contents,
         'total_accesses': total_accesses,
     })
+
+def too_many_attempts(ip: str, content_id: int, limit=10, window_minutes=15) -> bool:
+    key = f"pw_attempts:{content_id}:{ip}"
+    data = cache.get(key, {"count": 0, "start": timezone.now()})
+    if (timezone.now() - data["start"]).total_seconds() > window_minutes * 60:
+        data = {"count": 0, "start": timezone.now()}
+    data["count"] += 1
+    cache.set(key, data, timeout=window_minutes * 60)
+    return data["count"] > limit

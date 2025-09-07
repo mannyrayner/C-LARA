@@ -104,13 +104,39 @@ class DeleteTTSDataForm(forms.Form):
 class DeleteContentForm(forms.Form):
     pass
 
+##class ContentRegistrationForm(forms.ModelForm):
+##    class Meta:
+##        model = Content
+##        fields = [
+##            'external_url', 'title', 'text_type', 'l2', 'l1', 'length_in_words', 'author',
+##            'voice', 'annotator', 'difficulty_level'
+##        ]
+
 class ContentRegistrationForm(forms.ModelForm):
+    password = forms.CharField(
+        required=False, widget=forms.PasswordInput, help_text="Optional: set a password to protect this content."
+    )
+    password_hint = forms.CharField(required=False, max_length=255, help_text="Optional: shown on the unlock screen.")
+
     class Meta:
         model = Content
         fields = [
-            'external_url', 'title', 'text_type', 'l2', 'l1', 'length_in_words', 'author',
-            'voice', 'annotator', 'difficulty_level'
+            "external_url", "project", "title", "text_type", "l2", "l1", "length_in_words",
+            "author", "voice", "annotator", "difficulty_level", "summary",
+            "password", "password_hint"
         ]
+
+    def save(self, commit=True):
+        content = super().save(commit=False)
+        raw = self.cleaned_data.get("password") or None
+        content.set_password(raw)
+        content.password_hint = self.cleaned_data.get("password_hint") or ""
+        if commit:
+            content.save()
+        return content
+
+class ContentUnlockForm(forms.Form):
+    password = forms.CharField(widget=forms.PasswordInput, label="Password")
 
 class FormatPreferencesForm(forms.ModelForm):
     class Meta:
@@ -617,8 +643,16 @@ class MakeExportZipForm(forms.Form):
 class RenderTextForm(forms.Form):
     pass
 
+##class RegisterAsContentForm(forms.Form):
+##    register_as_content = forms.BooleanField(required=False, initial=False)
+
 class RegisterAsContentForm(forms.Form):
-    register_as_content = forms.BooleanField(required=False, initial=False)
+    register_as_content = forms.BooleanField(required=False)
+    password = forms.CharField(
+        required=False, widget=forms.PasswordInput,
+        help_text="Optional: set a password to protect this text."
+    )
+    password_hint = forms.CharField(required=False, max_length=255)
 
 class RatingForm(forms.ModelForm):
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]  # Assuming 1-5 rating

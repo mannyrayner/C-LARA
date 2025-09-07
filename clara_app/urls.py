@@ -100,6 +100,9 @@ urlpatterns = [
     path('delete_tts_data_complete/<str:language>/<str:status>/', delete_tts_views.delete_tts_data_complete, name='delete_tts_data_complete'),
 
     # Registering and listing content
+    path('project/<int:project_id>/offer_to_register_content_normal/', content_views.offer_to_register_content_normal, name='offer_to_register_content_normal'),
+    path('project/<int:project_id>/offer_to_register_content_phonetic/', content_views.offer_to_register_content_phonetic, name='offer_to_register_content_phonetic'),
+    path('project/<int:project_id>/register_project_content/<str:phonetic_or_normal>/', content_views.register_project_content, name='register_project_content'),
     path('register_content/', content_views.register_content, name='register_content'),
     path('content_success/', content_views.content_success, name='content_success'),
     path('content_list/', content_views.content_list, name='content_list'),
@@ -291,11 +294,6 @@ urlpatterns = [
     path('project/<int:project_id>/render_text_status/<str:report_id>/', rendering_views.render_text_status, name='render_text_status'),
     path('project/<int:project_id>/render_text_monitor/<str:phonetic_or_normal>/<str:report_id>/', rendering_views.render_text_monitor, name='render_text_monitor'),
     path('project/<int:project_id>/render_text_complete/<str:phonetic_or_normal>/<str:status>/', rendering_views.render_text_complete, name='render_text_complete'),
-
-    # Registering content
-    path('project/<int:project_id>/offer_to_register_content_normal/', registering_views.offer_to_register_content_normal, name='offer_to_register_content_normal'),
-    path('project/<int:project_id>/offer_to_register_content_phonetic/', registering_views.offer_to_register_content_phonetic, name='offer_to_register_content_phonetic'),
-    path('project/<int:project_id>/register_project_content/<str:phonetic_or_normal>/', registering_views.register_project_content, name='register_project_content'),
 
     # Satisfaction questionnaire
     path('project/<int:project_id>/satisfaction_questionnaire/', satisfaction_questionnaire_views.satisfaction_questionnaire, name='satisfaction_questionnaire'),

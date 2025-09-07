@@ -12,6 +12,7 @@ from django.db import models
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.hashers import make_password, check_password
 
 from django.utils import timezone
 
@@ -335,6 +336,11 @@ class Content(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
     unique_access_count = models.IntegerField(default=0)
 
+    # New fields (hashed password, optional hint)
+    password_hash = models.CharField(max_length=128, blank=True, null=True)
+    password_hint = models.CharField(max_length=255, blank=True, null=True)
+    password_last_set = models.DateTimeField(blank=True, null=True)
+
     def __str__(self):
         return self.title
 
@@ -349,6 +355,23 @@ class Content(models.Model):
             return reverse('serve_rendered_text', args=[self.project.id, self.text_type, 'page_1.html'])
         else:
             return self.external_url
+
+    @property
+    def is_protected(self) -> bool:
+        return bool(self.password_hash)
+
+    def set_password(self, raw: str | None):
+        if raw:
+            self.password_hash = make_password(raw)
+            self.password_last_set = timezone.now()
+        else:
+            self.password_hash = None
+            self.password_last_set = None
+
+    def check_password(self, raw: str) -> bool:
+        if not self.password_hash:
+            return True  # unprotected
+        return check_password(raw, self.password_hash)
 
 class ContentAccess(models.Model):
     content = models.ForeignKey(Content, on_delete=models.CASCADE, related_name='accesses')
