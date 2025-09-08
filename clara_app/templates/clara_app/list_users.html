@@ -3,19 +3,47 @@
 {% block content %}
   <h2>User List</h2>
   <p>Total Users: {{ page_obj.paginator.count }}</p>
+
+  <form method="get" style="margin-bottom: 1em;">
+    <input type="text" name="q" placeholder="Search username..." value="{{ q }}">
+    <input type="hidden" name="sort" value="{{ sort }}">
+    <button type="submit">Search</button>
+    {% if q %}
+      <a href="?sort={{ sort }}">Clear</a>
+    {% endif %}
+  </form>
+
+  <p>
+    Sort by:
+    {% if sort == "date" %}
+      <strong>Newest first</strong> |
+      <a href="?sort=username{% if q %}&q={{ q|urlencode }}{% endif %}">Alphabetical</a>
+    {% else %}
+      <a href="?sort=date{% if q %}&q={{ q|urlencode }}{% endif %}">Newest first</a> |
+      <strong>Alphabetical</strong>
+    {% endif %}
+  </p>
+
   <div class="user-list">
     <ul>
       {% for user in page_obj %}
-        <li><a href="{% url 'external_profile' user.id %}">{{ user.username }}</a></li>
+        <li>
+          <a href="{% url 'external_profile' user.id %}">{{ user.username }}</a>
+        </li>
+      {% empty %}
+        <li>No users found.</li>
       {% endfor %}
     </ul>
+
     <div class="pagination">
       {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        <a href="?sort={{ sort }}&q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}">previous</a>
       {% endif %}
-      <span class="page-current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</span>
+      <span class="page-current">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+      </span>
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">next</a>
+        <a href="?sort={{ sort }}&q={{ q|urlencode }}&page={{ page_obj.next_page_number }}">next</a>
       {% endif %}
     </div>
   </div>
