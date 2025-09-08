@@ -42,6 +42,7 @@ from . import reading_histories_views
 from . import serving_content_views
 from . import language_game_views
 from . import public_api_views
+from . import content_password_views
 
 urlpatterns = [
     # Home
@@ -110,6 +111,11 @@ urlpatterns = [
     path('content/<int:content_id>/', content_views.content_detail, name='content_detail'),
     path('public_content/<int:content_id>/', content_views.public_content_detail, name='public_content_detail'),
     path('language_statistics/', content_views.language_statistics, name='language_statistics'),
+
+    # Resetting and clearning content passwords
+    path("content/passwords/", content_password_views.manage_content_passwords, name="manage_content_passwords"),
+    path("content/passwords/clear/", content_password_views.clear_content_password, name="clear_content_password"),
+    path("content/passwords/set/", content_password_views.set_content_password, name="set_content_password"),
 
     # Managing language masters and localisation
     path('manage_language_masters/', language_masters_views.manage_language_masters, name='manage_language_masters'),

@@ -138,6 +138,18 @@ class ContentRegistrationForm(forms.ModelForm):
 class ContentUnlockForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput, label="Password")
 
+class ContentPasswordUpdateForm(forms.Form):
+    content_id = forms.IntegerField(widget=forms.HiddenInput)
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput,
+        help_text="Leave empty to clear the password."
+    )
+    password_hint = forms.CharField(
+        required=False, max_length=255,
+        help_text="Optional hint shown on the unlock screen."
+    )
+
 class FormatPreferencesForm(forms.ModelForm):
     class Meta:
         model = FormatPreferences
