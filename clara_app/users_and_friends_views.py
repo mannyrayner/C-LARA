@@ -15,13 +15,28 @@ logger = logging.getLogger(__name__)
 
 @login_required
 def list_users(request):
-    users = User.objects.all().order_by('-date_joined')  # Assuming you want the newest users first
-    paginator = Paginator(users, 10)  # Show 10 users per page
+    sort = request.GET.get("sort", "date")  # default sort
+    q = request.GET.get("q", "").strip()
 
-    page_number = request.GET.get('page')
+    users = User.objects.all()
+
+    if q:
+        users = users.filter(username__icontains=q)
+
+    if sort == "username":
+        users = users.order_by("username")
+    else:  # newest first
+        users = users.order_by("-date_joined")
+
+    paginator = Paginator(users, 10)
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'clara_app/list_users.html', {'page_obj': page_obj})
+    return render(request, "clara_app/list_users.html", {
+        "page_obj": page_obj,
+        "sort": sort,
+        "q": q,
+    })
 
 @login_required
 def friends(request):
