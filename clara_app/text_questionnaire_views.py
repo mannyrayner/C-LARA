@@ -187,13 +187,6 @@ def tq_fill(request, slug, link_id):
     link = get_object_or_404(TQBookLink, pk=link_id, questionnaire=tq)
     user = request.user
 
-    print(f'user = {user}')
-
-    # ensure an in-flight response
-##    resp, _ = TQResponse.objects.get_or_create(
-##        questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True
-##    )
-
     resp = (TQResponse.objects
            .filter(questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True)
            .order_by('id')
@@ -201,10 +194,25 @@ def tq_fill(request, slug, link_id):
     if not resp:
         resp = TQResponse.objects.create(questionnaire=tq, book_link=link, rater=user, )
 
-    print(f'resp = {resp}')
+    # check if this user has already started (any answers exist)
+    has_answers = TQAnswer.objects.filter(response=resp).exists()
 
     # per-page questions (text blob on model)
     page_q_texts = parse_per_page_questions(tq)
+    book_qs = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).exists()
+
+    # --- intro screen if no answers yet ---
+    if not has_answers and request.method == "GET":
+        return render(
+            request,
+            "clara_app/tq_intro.html",
+            {
+                "tq": tq,
+                "link": link,
+                "has_page_questions": bool(page_q_texts),
+                "has_book_questions": bool(book_qs),
+            },
+        )
 
     # locate the project to pull rendered page HTML
     project = getattr(link.book, "project", None) or link.book.content.project
