@@ -1,0 +1,28 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+<h4>{{ link.book.title }}</h4>
+<a class="btn btn-sm btn-outline-primary mb-3" target="_blank"
+   href="{{ link.book.get_public_absolute_url }}">Open text in new tab</a>
+
+<div class="alert alert-info">
+  <p>You are about to complete a questionnaire about this text.</p>
+  <ul>
+    {% if has_page_questions %}
+      <li>You will first answer questions about individual pages. You will be able to access glosses of words by hovering over them and translations of sentences by clicking on pencil icons.</li>
+    {% endif %}
+    {% if has_book_questions %}
+	  {% if has_page_questions %}
+		<li>You will then answer questions about the whole text.</li>
+	  {% else %}
+	    <li>You will answer questions about the whole text.</li>
+	  {% endif %}
+    {% endif %}
+  </ul>
+  <p>Please read the text (open link above) and then click "Begin". You can leave the questionnaire at any time and return later.</p>
+</div>
+
+<form method="post" action="{{ request.path }}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-primary">Begin</button>
+</form>
+{% endblock %}
