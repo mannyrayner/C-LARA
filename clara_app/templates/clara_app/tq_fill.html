@@ -6,6 +6,8 @@
 
 <form method="post">
   {% csrf_token %}
+  <input type="hidden" name="phase" value="book">
+  
   <table class="table table-bordered">
     <thead>
       <tr><th>Question</th>

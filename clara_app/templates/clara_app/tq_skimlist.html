@@ -1,25 +1,35 @@
+{# templates/clara_app/tq_skimlist.html #}
 {% extends "clara_app/base.html" %}
+{% load dict_extras %}
 {% block content %}
 <h3>{{ tq.title }}</h3>
 <p>{{ tq.description }}</p>
 
 <table class="table table-sm">
-  <thead><tr><th>#</th><th>Book</th><th>Status</th></tr></thead>
+  <thead>
+    <tr><th>#</th><th>Book</th><th>Status</th></tr>
+  </thead>
   <tbody>
     {% for link in links %}
+      {% with p=progress|get_item:link.id %}
       <tr>
         <td>{{ forloop.counter }}</td>
         <td>
-          <a href="{% url 'tq_fill' tq.slug link.id %}">
-            {{ link.book.title }}
-          </a>
+          <a href="{% url 'tq_fill' tq.slug link.id %}">{{ link.book.title }}</a>
         </td>
         <td>
-          {% if link.id in done %}<span class="badge badge-success">Done</span>
-          {% else %}<span class="badge badge-secondary">Pending</span>
+          {% if p.status == "done" %}
+            <span class="badge badge-success">Complete</span>
+          {% elif p.status == "partial" %}
+            <span class="badge badge-warning">
+              In progress ({{ p.answered }}/{{ p.required }})
+            </span>
+          {% else %}
+            <span class="badge badge-secondary">Not started</span>
           {% endif %}
         </td>
       </tr>
+      {% endwith %}
     {% endfor %}
   </tbody>
 </table>

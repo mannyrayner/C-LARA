@@ -23,6 +23,7 @@
 
 <form method="post" action="{{ request.path }}">
   {% csrf_token %}
+  <input type="hidden" name="phase" value="intro">
   <button type="submit" class="btn btn-primary">Begin</button>
 </form>
 {% endblock %}
