@@ -163,20 +163,96 @@ def load_q_page_assets(project, page_number: int):
     return image_relpath, html_snippet
 
 # --------------------------------------------------
+##def tq_skimlist(request, slug):
+##    """Evaluator landing page: list of books + progress."""
+##    tq = get_object_or_404(TextQuestionnaire, slug=slug)
+##    # if anonymous, create or retrieve lightweight user
+##    if not request.user.is_authenticated:
+##        user = _get_or_create_anon_user(request)
+##    else:
+##        user = request.user
+##    links = tq.tqbooklink_set.select_related("book").all()
+##    done_ids = TQResponse.objects.filter(
+##        questionnaire=tq, rater=user
+##    ).values_list("book_link_id", flat=True)
+##    return render(request, "clara_app/tq_skimlist.html",
+##                  {"tq": tq, "links": links, "done": set(done_ids)})
+
 def tq_skimlist(request, slug):
-    """Evaluator landing page: list of books + progress."""
+    """Evaluator landing page: list of books + granular progress."""
     tq = get_object_or_404(TextQuestionnaire, slug=slug)
+
     # if anonymous, create or retrieve lightweight user
     if not request.user.is_authenticated:
         user = _get_or_create_anon_user(request)
     else:
         user = request.user
+
     links = tq.tqbooklink_set.select_related("book").all()
-    done_ids = TQResponse.objects.filter(
-        questionnaire=tq, rater=user
-    ).values_list("book_link_id", flat=True)
-    return render(request, "clara_app/tq_skimlist.html",
-                  {"tq": tq, "links": links, "done": set(done_ids)})
+
+    # Precompute questionnaire shape
+    page_q_texts = parse_per_page_questions(tq) or []
+    n_page_q = len(page_q_texts)
+    book_qs = list(tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).order_by("order"))
+    n_book_q = len(book_qs)
+
+    progress = {}  # link.id -> dict(status, answered, required)
+
+    for link in links:
+        # Find latest relevant response for this user/book (prefer in-flight; else latest submitted)
+        resp = (TQResponse.objects
+                .filter(questionnaire=tq, book_link=link, rater=user)
+                .order_by('-submitted_at', '-id')
+                .first())
+
+        # Work out required counts
+        # Need the project to count pages only if there are per-page questions
+        if n_page_q:
+            project = getattr(link.book, "project", None) or getattr(link.book.content, "project", None)
+            total_pages = count_questionnaire_pages(project)
+        else:
+            total_pages = 0
+
+        required = (n_page_q * total_pages) + n_book_q
+
+        if not resp:
+            progress[link.id] = {"status": "none", "answered": 0, "required": required}
+            continue
+
+        # Count answers bound to this response
+        ans_page = TQAnswer.objects.filter(
+            response=resp,
+            page_number__isnull=False,
+            question__scope=TQQuestion.SCOPE_PAGE
+        ).count()
+
+        ans_book = TQAnswer.objects.filter(
+            response=resp,
+            page_number__isnull=True,
+            question__scope=TQQuestion.SCOPE_BOOK
+        ).count()
+
+        answered = ans_page + ans_book
+
+        if required == 0:
+            # Edge case: no questions defined — treat as complete
+            status = "done"
+        elif answered == 0:
+            status = "none"
+        elif answered >= required and (resp.submitted_at or n_page_q == 0 or n_book_q == 0):
+            # Mark complete if all required answered; submitted_at preferred but
+            # allow completion when all answers present.
+            status = "done"
+        else:
+            status = "partial"
+
+        progress[link.id] = {"status": status, "answered": answered, "required": required}
+
+    return render(
+        request,
+        "clara_app/tq_skimlist.html",
+        {"tq": tq, "links": links, "progress": progress}
+    )
 
 # --------------------------------------------------
 
@@ -200,6 +276,8 @@ def tq_fill(request, slug, link_id):
     # per-page questions (text blob on model)
     page_q_texts = parse_per_page_questions(tq)
     book_qs = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).exists()
+
+    phase = request.POST.get("phase")
 
     # --- intro screen if no answers yet ---
     if not has_answers and request.method == "GET":
@@ -243,7 +321,7 @@ def tq_fill(request, slug, link_id):
                 page = int(page_param)
 
             # handle POST (per-page phase)
-            if request.method == "POST" and request.POST.get("phase") == "page":
+            if request.method == "POST" and phase == "page":
                 for idx, qtext in enumerate(page_q_texts, start=1):
                     val = request.POST.get(f"q_pg_{idx}")
                     if val:
@@ -305,7 +383,9 @@ def tq_fill(request, slug, link_id):
 
     # ---- Whole-book phase (LIKERT matrix) ----
     questions = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).order_by("order")
-    if request.method == "POST":
+    
+    # Only treat POST as a submission when phase == "book"
+    if request.method == "POST" and phase == "book":
         # whole-book submit
         resp.submitted_at = timezone.now()
         resp.save(update_fields=["submitted_at"])
