@@ -275,9 +275,48 @@ def tq_fill(request, slug, link_id):
 
     # per-page questions (text blob on model)
     page_q_texts = parse_per_page_questions(tq)
-    book_qs = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).exists()
+    book_qs = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK)
+
+    n_page_q      = len(page_q_texts)
+    n_book_q      = book_qs.count()
+
+    print(f'n_page_q = {n_page_q}')
+    print(f'n_book_q = {n_book_q}')
 
     phase = request.POST.get("phase")
+
+    # We need project to count pages (only if there are per-page questions)
+    project = getattr(link.book, "project", None) or getattr(link.book.content, "project", None)
+    total_pages = count_questionnaire_pages(project) if n_page_q else 0
+
+    print(f'total_pages = {total_pages}')
+
+    # ▶ Compute completion (all required answers present) ----------------------
+    # Count page answers and book answers for this response
+    ans_page_cnt = (TQAnswer.objects
+                    .filter(response=resp, page_number__isnull=False,
+                            question__scope=TQQuestion.SCOPE_PAGE)
+                    .count())
+    ans_book_cnt = (TQAnswer.objects
+                    .filter(response=resp, page_number__isnull=True,
+                            question__scope=TQQuestion.SCOPE_BOOK)
+                    .count())
+
+    print(f'ans_page_cnt = {ans_page_cnt}')
+    print(f'ans_book_cnt = {ans_book_cnt}')
+
+    required = (n_page_q * total_pages) + n_book_q
+    answered = ans_page_cnt + ans_book_cnt
+
+    print(f'required = {required}')
+    print(f'answered = {answered}')
+
+    # Consider “complete” when explicitly submitted OR (answered >= required and required>0)
+    is_complete = bool(resp.submitted_at) or (required > 0 and answered >= required)
+
+    # ▶ If complete and GET, don’t show empty forms again; go back to skim list
+    if is_complete and request.method == "GET":
+        return redirect("tq_skimlist", slug=slug)
 
     # --- intro screen if no answers yet ---
     if not has_answers and request.method == "GET":
@@ -298,27 +337,32 @@ def tq_fill(request, slug, link_id):
     if page_q_texts:
         total_pages = count_questionnaire_pages(project)
 
-        # which pages already done? (answers tied to PAGE scope questions)
-        answered_pages = set(
+        n_page_q = len(page_q_texts)
+
+        # Count answers per page for this response
+        ans_counts = (
             TQAnswer.objects
-                .filter(
-                    response=resp,
-                    page_number__isnull=False,
-                    question__scope=TQQuestion.SCOPE_PAGE
-                )
-                .values_list("page_number", flat=True)
+            .filter(
+                response=resp,
+                page_number__isnull=False,
+                question__scope=TQQuestion.SCOPE_PAGE,
+            )
+            .values("page_number")
+            .annotate(cnt=Count("id"))
         )
 
-        print(f'answered_pages = {answered_pages}')
+        answered_count_by_page = {row["page_number"]: row["cnt"] for row in ans_counts}
 
+        # A page is complete only if it has answers for ALL per-page questions
+        incomplete_pages = [
+            p for p in range(1, total_pages + 1)
+            if answered_count_by_page.get(p, 0) < n_page_q
+        ]
+        
         # if all pages are done, skip straight to whole-book phase
-        if len(answered_pages) < total_pages:
-            # find current page (first not answered) unless explicit ?page=
-            page_param = request.GET.get("page")
-            if page_param is None:
-                page = next((p for p in range(1, total_pages+1) if p not in answered_pages), 1)
-            else:
-                page = int(page_param)
+        if incomplete_pages:
+            # find current page (first not answered)
+            page = incomplete_pages[0]
 
             # handle POST (per-page phase)
             if request.method == "POST" and phase == "page":
@@ -340,13 +384,8 @@ def tq_fill(request, slug, link_id):
                             defaults={"likert": int(val)}
                         )
 
-                # go to next page or drop into whole-book phase
-                if page < total_pages:
-                    return redirect(f"{request.path}?page={page+1}")
-                else:
-                    # all done with pages; fall through to whole-book
-                    #answered_pages = set(range(1, total_pages+1))
-                    return redirect(request.path)
+                # go to next incomplete page or drop into whole-book phase
+                return redirect('tq_fill', slug=slug, link_id=link_id)
 
             # GET render of the current page (or after failed POST)
             page_html = load_questionnaire_page_html(project, page)
@@ -396,6 +435,14 @@ def tq_fill(request, slug, link_id):
                     response=resp, question=q, page_number=None,
                     defaults={"likert": rating},
                 )
+        return redirect('tq_skimlist', slug=slug)
+
+    # If there are no book questions and per-page already complete, treat as done
+    if n_book_q == 0 and n_page_q > 0 and request.method == "GET":
+        # Mark complete if not already
+        if not resp.submitted_at:
+            resp.submitted_at = timezone.now()
+            resp.save(update_fields=["submitted_at"])
         return redirect("tq_skimlist", slug=slug)
 
     return render(request, "clara_app/tq_fill.html", {"tq": tq, "link": link, "questions": questions})
