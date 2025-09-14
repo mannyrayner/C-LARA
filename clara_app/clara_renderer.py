@@ -12,17 +12,20 @@ The renderer also supports self-contained rendering, which means that all multim
 
 from .clara_inflection_tables import get_inflection_table_url
 
+from .clara_audio_repository_orm import AudioRepositoryORM
+
 from .clara_utils import _s3_storage, absolute_file_name
 from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists
 from .clara_utils import copy_file, basename, read_txt_file, write_txt_file
-from .clara_utils import output_dir_for_project_id, questionnaire_output_dir_for_project_id
-from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update 
+from .clara_utils import output_dir_for_project_id, questionnaire_output_dir_for_project_id, image_dir_for_project_id
+from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update
 
 from pathlib import Path
 import os
 from jinja2 import Environment, FileSystemLoader
 import shutil
 import traceback
+import pprint
 
 config = get_config()
 
@@ -187,7 +190,9 @@ class StaticHTMLRenderer:
             # Traverse the Text object, replacing each multimedia file with a
             # reference to the new multimedia directory and storing the copy operations
             for page in text.pages:
-                adjust_audio_file_paths_in_segment_list(page.segments, copy_operations, multimedia_dir)                     
+                adjust_audio_file_paths_at_top_level_of_page(page, copy_operations, multimedia_dir)    
+                adjust_audio_file_paths_in_segment_list(page.segments, copy_operations, multimedia_dir)
+                adjust_image_file_paths_in_segment_list(page.segments, copy_operations, multimedia_dir) 
             n_files_to_copy = len(copy_operations)
             n_files_copied = 0
             post_task_update(callback, f"--- Copying {n_files_to_copy} audio files")
@@ -251,7 +256,31 @@ class StaticHTMLRenderer:
             write_txt_file(rendered_page, output_file_path)
             post_task_update(callback, f"--- Written page {index + 1}")
         post_task_update(callback, f"--- Text pages created")
+
+def get_top_level_audio_file_path(tts_info):
+    try:
+        engine_id = tts_info['engine_id']
+        language_id = tts_info['language_id']
+        voice_id = tts_info['voice_id']
+        base_filename = tts_info['file_path']
         
+        audio_repository = AudioRepositoryORM()
+        base_dir = audio_repository.base_dir
+        
+        file_path = absolute_file_name( Path(base_dir) / engine_id / language_id / voice_id / base_filename )
+
+        return file_path
+    except Exception as e:
+        raise InternalCLARAError(message = f'Unable to create audio file for top level audio info {tts_info}')
+
+
+def adjust_audio_file_paths_at_top_level_of_page(page, copy_operations, multimedia_dir):
+    if 'tts' in page.annotations:
+        old_audio_file_path = get_top_level_audio_file_path(page.annotations['tts'])
+        new_audio_file_path = multimedia_dir / basename(old_audio_file_path)
+        new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
+        copy_operations[old_audio_file_path] = new_audio_file_path
+        page.annotations['tts']['file_path'] = new_audio_file_path_relative
         
 def adjust_audio_file_paths_in_segment_list(segments, copy_operations, multimedia_dir):
     if not segments:
@@ -272,7 +301,17 @@ def adjust_audio_file_paths_in_segment_list(segments, copy_operations, multimedi
                     new_audio_file_path_relative = os.path.join('./multimedia', basename(old_audio_file_path))
                     copy_operations[old_audio_file_path] = new_audio_file_path
                     element.annotations['tts']['file_path'] = new_audio_file_path_relative
-            if element.type == "Image" and 'transformed_segments' in element.content:
-                adjust_audio_file_paths_in_segment_list(element.content['transformed_segments'], copy_operations, multimedia_dir)
 
-
+def adjust_image_file_paths_in_segment_list(segments, copy_operations, multimedia_dir):
+    if not segments:
+        return
+    for segment in segments:
+        for element in segment.content_elements:
+            if element.type == "Image":
+                image_dir = image_dir_for_project_id(element.content['project_id_internal'])
+                old_image_file_path = absolute_file_name( Path(image_dir) / element.content['src'] )
+                new_image_file_path = multimedia_dir / basename(old_image_file_path)
+                new_image_file_path_relative = os.path.join('./multimedia', basename(old_image_file_path))
+                copy_operations[old_image_file_path] = new_image_file_path
+                element.content['file_path'] = new_image_file_path_relative
+                
