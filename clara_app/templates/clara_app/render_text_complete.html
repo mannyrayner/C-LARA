@@ -8,9 +8,6 @@
   {% if content_url %}
     <h3>Rendered Text ("{{ project.title }}")</h3>
 	<p><a href="{% url 'serve_rendered_text' project.id phonetic_or_normal 'page_1.html' %}" target="_blank">View Content</a></p>
-    {% if zipfile_url %}
-       <p><a href="{% url 'serve_zipfile' project.id %}" download="{{ project.id }}.zip">Download Zip</a></p>
-    {% endif %}
 	
 	<form method="post" action="{% url 'register_project_content' project.id phonetic_or_normal %}" id="register-content-form">
       {% csrf_token %}

@@ -19,9 +19,14 @@
         <a href="{{ content.external_url }}" target="_blank" rel="noopener">{{ content.external_url }}</a>
       </p>
 	{% else %}
-	  <p>Link to published content: 
+	  <p>Link to published content (for humans): 
 	     <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a>
 	  </p>
+	  {% if zip_exists %}
+		<p>
+		  <a href="{% url 'serve_zipfile' content.project_id 'normal' %}" download="{{ content.project_id }}.zip">Download content zip</a>
+		</p>
+	  {% endif %}
     {% endif %}
 
     {% if manifest %}
