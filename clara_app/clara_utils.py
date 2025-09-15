@@ -802,6 +802,10 @@ def output_dir_for_project_id(id, phonetic_or_normal):
     else:
         return str( Path(absolute_file_name(config.get('renderer', 'output_dir_phonetic'))) / str(id) )
 
+def content_zipfile_path_for_project_id(id, phonetic_or_normal):
+    output_dir = output_dir_for_project_id(id, phonetic_or_normal)
+    return f'{output_dir}/content_zipfile_{phonetic_or_normal}.zip'
+
 def questionnaire_output_dir_for_project_id(id):
     config = get_config()
     return str( Path(absolute_file_name(config.get('renderer', 'output_dir_for_questionnaire'))) / str(id) )

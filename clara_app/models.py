@@ -17,6 +17,8 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 
 from uuid import uuid4
+
+from .clara_utils import file_exists, absolute_file_name, content_zipfile_path_for_project_id
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -138,6 +140,16 @@ class CLARAProject(models.Model):
         related_name='projects',
         help_text="If set, this project belongs to the specified community."
         )
+
+    def zip_filepath(self, text_type):
+        return absolute_file_name(content_zipfile_path_for_project_id(self.id, text_type))
+
+    def zip_exists(self, text_type):
+        filepath = self.zip_filepath(text_type)
+        print(f'Zip filename: {filepath}')
+        exists = file_exists(filepath)
+        print(f'Zip exists: {exists}')
+        return exists
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [
@@ -355,6 +367,12 @@ class Content(models.Model):
             return reverse('serve_rendered_text', args=[self.project.id, self.text_type, 'page_1.html'])
         else:
             return self.external_url
+
+    def zip_filepath(self):
+        return self.project.zip_filepath(self.text_type)
+
+    def zip_exists(self):
+        return self.project.zip_exists(self.text_type)
 
     @property
     def is_protected(self) -> bool:

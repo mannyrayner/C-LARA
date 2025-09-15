@@ -466,8 +466,11 @@ def public_content_detail(request, content_id):
 
     token = request.session.get(f"{unlocked_key}_token") if can_view and content.is_protected else None
 
+    zip_exists = content.zip_exists()
+
     return render(request, 'clara_app/public_content_detail.html', {
         'content': content,
+        'zip_exists': zip_exists,
         'manifest': manifest if can_view else None,
         'comments': comments,
         'average_rating': average_rating['rating__avg'],

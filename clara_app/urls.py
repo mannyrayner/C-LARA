@@ -322,7 +322,7 @@ urlpatterns = [
     path('rendered_texts/<int:project_id>/<str:phonetic_or_normal>/<path:filename>', serving_content_views.serve_rendered_text, name='serve_rendered_text'),
 
     path('serve_coherent_images_v2_overview/<int:project_id>/', serving_content_views.serve_coherent_images_v2_overview, name='serve_coherent_images_v2_overview'),
-    path('serve_zipfile/<int:project_id>/', serving_content_views.serve_zipfile, name='serve_zipfile'),
+    path('serve_zipfile/<int:project_id>/<str:phonetic_or_normal>/', serving_content_views.serve_zipfile, name='serve_zipfile'),
     path('serve_export_zipfile/<int:project_id>/', serving_content_views.serve_export_zipfile, name='serve_export_zipfile'),
 
     path('serve_clara_image/<path:relative_file_path>', serving_content_views.serve_clara_image, name='serve_clara_image'),

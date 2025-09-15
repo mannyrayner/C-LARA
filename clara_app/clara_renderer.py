@@ -16,9 +16,9 @@ from .clara_audio_repository_orm import AudioRepositoryORM
 
 from .clara_utils import _s3_storage, absolute_file_name
 from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists
-from .clara_utils import copy_file, basename, read_txt_file, write_txt_file
-from .clara_utils import output_dir_for_project_id, questionnaire_output_dir_for_project_id, image_dir_for_project_id
-from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update
+from .clara_utils import copy_file, basename, read_txt_file, write_txt_file, make_tmp_file
+from .clara_utils import output_dir_for_project_id, questionnaire_output_dir_for_project_id, image_dir_for_project_id, content_zipfile_path_for_project_id
+from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update, make_zipfile
 
 from pathlib import Path
 import os
@@ -244,6 +244,15 @@ class StaticHTMLRenderer:
         output_file_path = self.output_dir / "vocab_list_frequency.html"
         write_txt_file(rendered_page, output_file_path)
         post_task_update(callback, f"--- Vocabulary lists created")
+
+        if self_contained:
+            post_task_update(callback, f"--- Creating zipfile")
+            tmp_zipfile = make_tmp_file('project_zip', 'zip')
+            phonetic_or_normal = "phonetic" if self.phonetic else "normal"
+            zipfile = content_zipfile_path_for_project_id(self.project_id, phonetic_or_normal)
+            make_zipfile(self.output_dir, tmp_zipfile, callback=callback)
+            copy_file(tmp_zipfile, zipfile)
+            post_task_update(callback, f"--- Zipfile created: {zipfile}")
 
     def render_text_for_questionnaire(self, text, callback=None):
         post_task_update(callback, f"--- Rendering text for questionnaire") 

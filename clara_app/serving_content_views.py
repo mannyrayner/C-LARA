@@ -10,7 +10,7 @@ from .clara_main import CLARAProjectInternal
 #from .clara_audio_repository import AudioRepository
 from .clara_audio_repository_orm import AudioRepositoryORM
 from .clara_utils import _s3_storage, _s3_bucket, get_config, absolute_file_name, file_exists
-from .clara_utils import output_dir_for_project_id, image_dir_for_project_id
+from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, content_zipfile_path_for_project_id
 
 from pathlib import Path
 from urllib.parse import unquote
@@ -18,6 +18,7 @@ from urllib.parse import unquote
 import os
 import mimetypes
 import logging
+import traceback
 
 config = get_config()
 logger = logging.getLogger(__name__)
@@ -71,18 +72,29 @@ def serve_rendered_text_multimedia(request, project_id, phonetic_or_normal, file
 
 # Serve up self-contained zipfile of HTML pages created from a project
 @login_required
-def serve_zipfile(request, project_id):
-    project = get_object_or_404(CLARAProject, pk=project_id)
-    web_accessible_dir = Path(settings.STATIC_ROOT) / f"rendered_texts/{project.id}"
-    zip_filepath = Path(settings.STATIC_ROOT) / f"rendered_texts/{project.id}.zip"
-
-    if not zip_filepath.exists():
-        raise Http404("Zipfile does not exist")
-
-    return FileResponse(open(zip_filepath, 'rb'), as_attachment=True)
-
+def serve_zipfile(request, project_id, phonetic_or_normal):
+    print(f'--- serve_zipfile(request, {project_id}, {phonetic_or_normal}):')
+    
+    try:
+        zip_filepath = absolute_file_name(content_zipfile_path_for_project_id(project_id, phonetic_or_normal))
+        print(f'--- zip_filepath = {zip_filepath}')
+        
+        if not file_exists(zip_filepath):
+            print(f'--- Zipfile not found {zip_filepath}')
+            raise Http404("Zipfile does not exist")
+        else:
+            print(f'--- Serving zipfile {zip_filepath}')
+            zip_file = open(zip_filepath, 'rb')
+            response = FileResponse(zip_file, as_attachment=True)
+            response['Content-Type'] = 'application/zip'
+            response['Content-Disposition'] = f'attachment; filename="{project_id}.zip"'
+            return response
+    except Exception as e:
+            error_message = f'*** Error in serve_zipfile: "{str(e)}"\n{traceback.format_exc()}'
+            print(error_message)
+            raise Http404("error_message")
+            
 # Serve up export zipfile
-@login_required
 def serve_export_zipfile(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
