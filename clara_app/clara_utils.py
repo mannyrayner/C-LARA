@@ -751,6 +751,9 @@ def get_file_time(pathname, time_format='float'):
 def make_tmp_file(prefix, extension):
     return f"$CLARA/tmp/{prefix}_{uuid.uuid4()}.{extension}"
 
+def make_tmp_dir(prefix):
+    return f"$CLARA/tmp/{prefix}_{uuid.uuid4()}"
+
 def print_and_flush(Object):
     try:
         print(Object, flush=True)

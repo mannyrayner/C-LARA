@@ -15,8 +15,8 @@ from .clara_inflection_tables import get_inflection_table_url
 from .clara_audio_repository_orm import AudioRepositoryORM
 
 from .clara_utils import _s3_storage, absolute_file_name
-from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists
-from .clara_utils import copy_file, basename, read_txt_file, write_txt_file, make_tmp_file
+from .clara_utils import remove_directory, make_directory, copy_directory, copy_directory_to_s3, directory_exists, copy_directory
+from .clara_utils import copy_file, basename, read_txt_file, write_txt_file, make_tmp_file, make_tmp_dir
 from .clara_utils import output_dir_for_project_id, questionnaire_output_dir_for_project_id, image_dir_for_project_id, content_zipfile_path_for_project_id
 from .clara_utils import get_config, is_rtl_language, replace_punctuation_with_underscores, post_task_update, make_zipfile
 
@@ -247,12 +247,17 @@ class StaticHTMLRenderer:
 
         if self_contained:
             post_task_update(callback, f"--- Creating zipfile")
-            tmp_zipfile = make_tmp_file('project_zip', 'zip')
+            tmp_zipfile_path = make_tmp_file('project_zip', 'zip')
+            tmp_zipfile_dir_path = make_tmp_dir('project_zip_dir')
             phonetic_or_normal = "phonetic" if self.phonetic else "normal"
-            zipfile = content_zipfile_path_for_project_id(self.project_id, phonetic_or_normal)
-            make_zipfile(self.output_dir, tmp_zipfile, callback=callback)
-            copy_file(tmp_zipfile, zipfile)
-            post_task_update(callback, f"--- Zipfile created: {zipfile}")
+            
+            zipfile_path = content_zipfile_path_for_project_id(self.project_id, phonetic_or_normal)
+            copy_directory(self.output_dir, f'{tmp_zipfile_dir_path}/content')
+            create_start_page_for_self_contained_dir(tmp_zipfile_dir_path)
+            
+            make_zipfile(tmp_zipfile_dir_path, tmp_zipfile_path, callback=callback)
+            copy_file(tmp_zipfile_path, zipfile_path)
+            post_task_update(callback, f"--- Zipfile created: {zipfile_path}")
 
     def render_text_for_questionnaire(self, text, callback=None):
         post_task_update(callback, f"--- Rendering text for questionnaire") 
@@ -265,6 +270,13 @@ class StaticHTMLRenderer:
             write_txt_file(rendered_page, output_file_path)
             post_task_update(callback, f"--- Written page {index + 1}")
         post_task_update(callback, f"--- Text pages created")
+
+def create_start_page_for_self_contained_dir(dir_path):
+    text = """<h1>Content</h1>
+
+<a href="./content/page_1.html"><b>Click here</b></a>
+"""
+    write_txt_file(text, f'{dir_path}/START.html')
 
 def get_top_level_audio_file_path(tts_info):
     try:
