@@ -1,4 +1,6 @@
 {% extends "clara_app/base.html" %}
+{% load dict_extras %} {# for get_item #}
+
 {% block content %}
 <h4>{{ link.book.title }}</h4>
 <a class="btn btn-sm btn-outline-primary mb-3" target="_blank"
@@ -7,28 +9,35 @@
 <form method="post">
   {% csrf_token %}
   <input type="hidden" name="phase" value="book">
-  
+
   <table class="table table-bordered">
     <thead>
-      <tr><th>Question</th>
-        {% for n in "12345" %}<th>{{ forloop.counter }}</th>{% endfor %}
+      <tr>
+        <th>Question</th>
+        {% for _ in "12345" %}
+          <th class="text-center">{{ forloop.counter }}</th>
+        {% endfor %}
       </tr>
     </thead>
     <tbody>
       {% for q in questions %}
+      {% with prev=answered_book|get_item:q.id %}
       <tr>
         <td>{{ q.text }}</td>
-        {% for n in "12345" %}
-        <td class="text-center">
-          <input type="radio" name="q{{ q.id }}" value="{{ forloop.counter }}"
-                 required>
-        </td>
+        {% for _ in "12345" %}
+          <td class="text-center">
+            <input type="radio"
+                   name="q{{ q.id }}"
+                   value="{{ forloop.counter }}"
+                   {% if prev == forloop.counter %}checked{% endif %}>
+          </td>
         {% endfor %}
       </tr>
+      {% endwith %}
       {% endfor %}
     </tbody>
   </table>
 
-  <button class="btn btn-primary">Submit ratings</button>
+  <button class="btn btn-primary">Submit</button>
 </form>
 {% endblock %}
