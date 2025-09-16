@@ -1,5 +1,6 @@
 {% extends "clara_app/base.html" %}
 {% block content %}
+{% load dict_extras %}
 
 <h4>{{ tq.title }} — page {{ page }} / {{ total_pages }}</h4>
 
@@ -22,17 +23,21 @@
   <input type="hidden" name="phase" value="page">
   <input type="hidden" name="page" value="{{ page }}">
 
-  {% for idx, qtext in page_questions %}
-    <p><strong>{{ qtext }}</strong></p>
-    {% for val in "12345" %}
+{% for idx, qtext in page_questions %}
+  <p><strong>{{ qtext }}</strong></p>
+  {% with prev=existing|get_item:idx %}
+    {% for _ in "12345" %}
       <label class="mr-2">
-        <input type="radio" name="q_pg_{{ idx }}" value="{{ val }}"
-               {% if existing.idx == val|add:""|default_if_none:"" %}checked{% endif %}>
-        {{ val }}
+        <input type="radio"
+               name="q_pg_{{ idx }}"
+               value="{{ forloop.counter }}"
+               {% if prev == forloop.counter %}checked{% endif %}>
+        {{ forloop.counter }}
       </label>
     {% endfor %}
-    <hr>
-  {% endfor %}
+  {% endwith %}
+  <hr>
+{% endfor %}
 
   {% if page < total_pages %}
     <button class="btn btn-primary">Save & Next</button>
