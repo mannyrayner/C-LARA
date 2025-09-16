@@ -31,6 +31,8 @@ import csv
 from uuid import uuid4
 from pathlib import Path
 
+import pprint
+
 # --------------------------------------------------
 @login_required
 def tq_create(request):
@@ -263,10 +265,18 @@ def tq_fill(request, slug, link_id):
     link = get_object_or_404(TQBookLink, pk=link_id, questionnaire=tq)
     user = request.user
 
+    # Is there a response that hasn't yet been submitted? If so, use that.
     resp = (TQResponse.objects
            .filter(questionnaire=tq, book_link=link, rater=user, submitted_at__isnull=True)
            .order_by('id')
            .first())
+    # Are there submitted responses? If so, use the most recent one.
+    if not resp:
+        resp = (TQResponse.objects
+                .filter(questionnaire=tq, book_link=link, rater=user)
+                .order_by('-submitted_at', '-id')
+                .first())
+    # Create a new response
     if not resp:
         resp = TQResponse.objects.create(questionnaire=tq, book_link=link, rater=user, )
 
@@ -310,6 +320,16 @@ def tq_fill(request, slug, link_id):
 
     print(f'required = {required}')
     print(f'answered = {answered}')
+
+    # Reopen a previously-submitted response if new questions were added
+    if resp.submitted_at and required > answered:
+        resp.submitted_at = None
+        resp.save(update_fields=["submitted_at"])
+
+    # If fully complete and GET, bounce to skim list
+    is_complete = bool(resp.submitted_at) or (required > 0 and answered >= required)
+    if is_complete and request.method == "GET":
+        return redirect("tq_skimlist", slug=slug)
 
     # Consider “complete” when explicitly submitted OR (answered >= required and required>0)
     is_complete = bool(resp.submitted_at) or (required > 0 and answered >= required)
@@ -408,16 +428,22 @@ def tq_fill(request, slug, link_id):
                 if ans:
                     existing[idx] = ans.likert
 
+            context = { "tq": tq,
+                        "link": link,
+                        "page": page,
+                        "total_pages": total_pages,
+                        "image_relpath": image_relpath,
+                        "html_snippet": html_snippet,
+                        "page_questions": list(enumerate(page_q_texts, start=1)),
+                        "existing": existing
+                        }
+
+            print(f'context:')
+            pprint.pprint(context)
+
             return render(
                 request, "clara_app/tq_page_step.html",
-                {
-                    "tq": tq, "link": link,
-                    "page": page, "total_pages": total_pages,
-                    "image_relpath": image_relpath,
-                    "html_snippet": html_snippet,
-                    "page_questions": list(enumerate(page_q_texts, start=1)),
-                    "existing": existing,
-                },
+                context
             )
 
     # ---- Whole-book phase (LIKERT matrix) ----
