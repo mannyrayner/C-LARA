@@ -447,31 +447,59 @@ def tq_fill(request, slug, link_id):
             )
 
     # ---- Whole-book phase (LIKERT matrix) ----
-    questions = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).order_by("order")
-    
-    # Only treat POST as a submission when phase == "book"
+    book_qs_qs = tq.tqquestion_set.filter(scope=TQQuestion.SCOPE_BOOK).order_by("order")
+
+    # Map of {question_id: likert} for THIS response
+    answered_book = {
+        qid: likert
+        for (qid, likert) in TQAnswer.objects.filter(
+            response=resp,
+            page_number__isnull=True,
+            question__scope=TQQuestion.SCOPE_BOOK
+        ).values_list("question_id", "likert")
+    }
+
     if request.method == "POST" and phase == "book":
-        # whole-book submit
-        resp.submitted_at = timezone.now()
-        resp.save(update_fields=["submitted_at"])
-        for q in questions:
-            rating = int(request.POST.get(f"q{q.id}", 0))
-            if rating:
+        # Upsert only questions that were posted; untouched radios keep their prior values.
+        for q in book_qs_qs:
+            raw = request.POST.get(f"q{q.id}")
+            if raw:
                 TQAnswer.objects.update_or_create(
                     response=resp, question=q, page_number=None,
-                    defaults={"likert": rating},
+                    defaults={"likert": int(raw)}
                 )
-        return redirect('tq_skimlist', slug=slug)
 
-    # If there are no book questions and per-page already complete, treat as done
-    if n_book_q == 0 and n_page_q > 0 and request.method == "GET":
-        # Mark complete if not already
+        # Mark submitted if all book questions now have answers AND per-page (if any) is complete
+        # (You already computed n_page_q, total_pages, etc. above)
+        ans_page_cnt = TQAnswer.objects.filter(
+            response=resp, page_number__isnull=False,
+            question__scope=TQQuestion.SCOPE_PAGE
+        ).count()
+        ans_book_cnt = TQAnswer.objects.filter(
+            response=resp, page_number__isnull=True,
+            question__scope=TQQuestion.SCOPE_BOOK
+        ).count()
+        required = (n_page_q * total_pages) + book_qs_qs.count()
+
+        if required == 0 or (ans_page_cnt + ans_book_cnt) >= required:
+            resp.submitted_at = timezone.now()
+            resp.save(update_fields=["submitted_at"])
+
+        return redirect("tq_skimlist", slug=slug)
+
+    # If there are NO book questions and per-page already complete, finish.
+    if book_qs_qs.count() == 0 and n_page_q > 0 and request.method == "GET":
         if not resp.submitted_at:
             resp.submitted_at = timezone.now()
             resp.save(update_fields=["submitted_at"])
         return redirect("tq_skimlist", slug=slug)
 
-    return render(request, "clara_app/tq_fill.html", {"tq": tq, "link": link, "questions": questions})
+    # Render whole-book with existing preselected
+    return render(
+        request,
+        "clara_app/tq_fill.html",
+        {"tq": tq, "link": link, "questions": list(book_qs_qs), "answered_book": answered_book},
+    )
 
 # --------------------------------------------------
 @login_required
