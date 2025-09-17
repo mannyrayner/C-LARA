@@ -1,3 +1,8 @@
+Background for creating images:
+
+This text is part of a series about Sarah, a real engineering student and keen amateur flautist who is considering spending a year in Bavaria doing a Masters in green hydrogen technology. 
+
+---------------------------------
 Wohnungssuche in Burghausen
 
 Sarah steht in der bunten Altstadt von Burghausen. Sie liest ein Angebot auf einem Wohnungs-Pinboard. "Schöne Dachgeschosswohnung, möbliert, unbefristet, zu vermieten. Miete: 600 Euro. Kaution: 1200 Euro. Nebenkosten: 150 Euro," steht dort. Sie denkt: „Diese Wohnung könnte perfekt für mich sein!“ Sarah schreibt die Telefonnummer des Vermieters auf und beschließt, sofort anzurufen.
@@ -202,3 +207,26 @@ Sarah bekommt ein Rezept für ein Nasenspray und Halspastillen. In der Apotheke 
 Zu Hause trägt Sarah die Beitrags­fälligkeit in den Kalender ein und notiert: „eGK ankündigen – Briefkasten checken“. Deshalb fühlt sie sich vorbereitet: Kasse aktiv, Hausärztin gefunden, erste kleine Sorge geklärt. Auf dem Weg zur Probe denkt sie: Mit jedem Schritt wird das Leben hier einfacher – und morgen kümmert sie sich um den Impf­termin.
 
 ---------------------------------
+
+Erste Präsentation im Seminar
+
+1. Thema & Planung
+Im Seminar „Nachhaltige Energiesysteme“ wird jede Woche eine Kurzpräsentation gehalten. Sarah meldet „Grüner Wasserstoff: Chancen und Grenzen“. Außerdem plant sie zehn Minuten Vortrag und fünf Minuten Fragen, damit die Zeit reicht. Obwohl sie geübt ist, setzt sie sich ein Ziel: klar, präzise, ohne Jargon.
+
+2. Folien aufbauen
+Sie entwirft drei Blöcke: Warum? (Klimaziele), Wie? (Elektrolyse, Wirkungsgrad), Wozu? (Industrie/Verkehr). Eine Grafik wird aus Daten der IEA erstellt; Quellen stehen klein darunter. „Wäre es möglich, komplexe Begriffe in Alltagsvergleiche zu übersetzen?“, fragt sie sich und notiert: „Tank = Energiespeicher, Batterie = Rucksack“.
+
+3. Üben mit Feedback
+Am Abend probt Sarah vor Aya, die im gleichen Kurs ist. „Könntest du die Folie 2 langsamer erklären?“ – „Klar.“ Sarah streicht Nebensätze, damit der Kern sichtbar bleibt, und ersetzt Degradation durch „Bauteile werden mit der Zeit belastet“. Trotzdem lässt sie eine Fachzeile für Fortgeschrittene stehen.
+
+4. Vortragsbeginn
+Im Seminarraum startet der Beamer. „Guten Morgen. In zehn Minuten zeige ich, wie grüner Wasserstoff funktioniert und wo seine Grenzen liegen.“ Sie strukturiert jeden Abschnitt mit erstens/zweitens/drittens. Während sie spricht, bleiben die Folien textarm; Beispiele kommen mündlich.
+
+5. Diagramm & Analogie
+Bei der Wirkungsgrad-Folie erklärt Sarah: „Stellen Sie sich Elektrolyse vor wie einen Umweg: Man kann ankommen, allerdings geht Energie verloren.“ Ein Pfeildiagramm wird eingeblendet. Deshalb sei direkte Elektrifizierung oft effizienter, obwohl Wasserstoff in bestimmten Fällen unverzichtbar sei (Stahl, Chemie, Langzeitspeicher).
+
+6. Fragerunde
+„Welche Risiken sehen Sie?“ – „Wenn der Preis würde stark fallen, entstünde Druck, ihn auch dort zu nutzen, wo Alternativen besser sind.“ – „Könnten Sie die Speicherfrage präzisieren?“ Sarah antwortet knapp und verweist auf die Quelle. Eine Diskussion über Infrastruktur entwickelt sich; sie moderiert mit „Zuerst sammeln, dann antworten“.
+
+7. Abschluss & Reflexion
+Zeitcheck: noch eine Minute. Sarah fasst zusammen: „Chancen in Industrie, Grenzen im Alltagsstrom; damit bleibt Priorisierung zentral.“ Applaus. Die Dozentin, die das Seminar leitet, lobt die Klarheit. Später notiert Sarah drei Verbesserungen: ein ruhigeres Tempo, eine Vergleichstabelle, ein Zusatz-Slide für Zahlen. Nächstes Mal will ich das Q&A noch aktiver steuern, denkt sie.
