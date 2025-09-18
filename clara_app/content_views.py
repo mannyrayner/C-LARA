@@ -459,6 +459,7 @@ def build_content_zip(request, content_id):
         return redirect('public_content_detail', content_id=content.id)
 
     try:
+        messages.success(request, "Trying to create/update zipfile")
         project.build_zip(content.text_type)
         messages.success(request, "Zipfile created/updated.")
     except Exception as e:
