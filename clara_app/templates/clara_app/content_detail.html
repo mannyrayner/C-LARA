@@ -14,6 +14,31 @@
   {% else %}
 	<p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
   {% endif %}
+  {% if zip_exists %}
+	<p>
+	  <a href="{% url 'serve_zipfile' content.project_id content.text_type %}"
+		 download="{{ content.project_id }}.zip">
+		Download content zip
+	  </a>
+	{% if zip_fresh %}
+	  <span class="badge badge-success ml-2">Up to date</span>
+	{% else %}
+	  <span class="badge badge-warning ml-2">Out of date</span>
+	{% endif %}
+	</p>
+  {% else %}
+	<p><em>No zipfile generated yet.</em></p>
+  {% endif %}
+  
+  <form method="post" action="{% url 'build_content_zip' content.id %}">
+	  {% csrf_token %}
+	  <button class="btn btn-sm btn-outline-primary">
+		{% if zip_exists %}Refresh zip{% else %}Build zip{% endif %}
+	  </button>
+	  {% if not zip_fresh and zip_exists %}
+		<small class="text-muted ml-2">The rendered content changed since the last zip.</small>
+	  {% endif %}
+   </form>
   {% if content.project.community %}
 	<p>Link to community image review data: <a href="{% url 'community_review_images_external' content.project.id %}" target="_blank" rel="noopener">here</a></p>
   {% endif %}

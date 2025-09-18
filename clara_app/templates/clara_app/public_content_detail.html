@@ -24,9 +24,29 @@
 	  </p>
 	  {% if zip_exists %}
 		<p>
-		  <a href="{% url 'serve_zipfile' content.project_id 'normal' %}" download="{{ content.project_id }}.zip">Download content zip</a>
+		  <a href="{% url 'serve_zipfile' content.project_id content.text_type %}"
+			 download="{{ content.project_id }}.zip">
+			Download content zip
+		  </a>
+		{% if zip_fresh %}
+		  <span class="badge badge-success ml-2">Up to date</span>
+		{% else %}
+		  <span class="badge badge-warning ml-2">Out of date</span>
+		{% endif %}
 		</p>
+	  {% else %}
+		<p><em>No zipfile generated yet.</em></p>
 	  {% endif %}
+	  
+	  <form method="post" action="{% url 'build_content_zip' content.id %}">
+		  {% csrf_token %}
+		  <button class="btn btn-sm btn-outline-primary">
+			{% if zip_exists %}Refresh zip{% else %}Build zip{% endif %}
+		  </button>
+		  {% if not zip_fresh and zip_exists %}
+			<small class="text-muted ml-2">The rendered content changed since the last zip.</small>
+		  {% endif %}
+	   </form>
     {% endif %}
 
     {% if manifest %}
