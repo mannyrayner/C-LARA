@@ -342,6 +342,9 @@ def content_detail(request, content_id):
 
         return redirect('content_detail', content_id=content_id)
 
+    zip_exists = content.project.zip_exists(content.text_type)
+    zip_fresh = content.project.zip_is_fresh(content.text_type) if content.project else False
+
     clara_version = get_user_config(request.user)['clara_version']
     
     return render(request, 'clara_app/content_detail.html', {
@@ -349,6 +352,8 @@ def content_detail(request, content_id):
         'can_delete': can_delete,
         'delete_form': delete_form,
         'content': content,
+        'zip_exists': zip_exists,
+        'zip_fresh': zip_fresh,
         'rating_form': rating_form,
         'comment_form': comment_form,
         'comments': comments,
@@ -378,46 +383,6 @@ def send_rating_or_comment_notification_email(request, recipients, content, acti
         else:
             print(f' --- On UniSA would do: EmailMessage({subject}, {message}, {from_email}, {recipient_list}).send()')
 
-
-##def public_content_detail(request, content_id):
-##    content = get_object_or_404(Content, id=content_id)
-##    try:
-##        manifest = public_content_manifest(request, content_id)
-##    except Exception as e:
-##        manifest = None
-##    
-##    comments = Comment.objects.filter(content=content).order_by('timestamp')  
-##    average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
-##
-##    # Print out all request headers for debugging
-##    headers = request.META
-##
-##    # Get the client's IP address
-##    #client_ip, is_routable = get_client_ip(request, request_header_order=['X_FORWARDED_FOR', 'REMOTE_ADDR'], proxy_count=1)
-##    client_ip, is_routable = get_client_ip(request, request_header_order=['HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'])
-##    
-##    #client_ip, is_routable = get_client_ip(request, proxy_count=1)
-##    
-##    if client_ip is None:
-##        client_ip = '0.0.0.0'  # Fallback IP if detection fails
-##    
-##    # Check if this IP has accessed this content before
-##    #if not ContentAccess.objects.filter(content=content, ip_address=client_ip).exists():
-##    if True:
-##        # Increment the unique access count
-##        content.unique_access_count = F('unique_access_count') + 1
-##        content.save(update_fields=['unique_access_count'])
-##        content.refresh_from_db()  # Refresh the instance to get the updated count
-##        # Log the access
-##        #ContentAccess.objects.create(content=content, ip_address=client_ip)
-##
-##    return render(request, 'clara_app/public_content_detail.html', {
-##        'content': content,
-##        'manifest': manifest,
-##        'comments': comments,
-##        'average_rating': average_rating['rating__avg']
-##    })
-
 def public_content_detail(request, content_id):
     content = get_object_or_404(Content, id=content_id)
     unlocked_key = f"content_unlocked_{content.id}"
@@ -446,9 +411,6 @@ def public_content_detail(request, content_id):
 
     # Only increment access count *after* unlock for protected content
     can_view = (not content.is_protected) or request.session.get(unlocked_key, False)
-##    print(f'content.is_protected = {content.is_protected}')
-##    print(f'request.session.get(unlocked_key = {request.session.get(unlocked_key)}')
-##    print(f'can_view = {can_view}')
     manifest = None
     if can_view:
         try:
@@ -466,11 +428,13 @@ def public_content_detail(request, content_id):
 
     token = request.session.get(f"{unlocked_key}_token") if can_view and content.is_protected else None
 
-    zip_exists = content.zip_exists()
+    zip_exists = content.project.zip_exists(content.text_type)
+    zip_fresh = content.project.zip_is_fresh(content.text_type) if content.project else False
 
     return render(request, 'clara_app/public_content_detail.html', {
         'content': content,
         'zip_exists': zip_exists,
+        'zip_fresh': zip_fresh,
         'manifest': manifest if can_view else None,
         'comments': comments,
         'average_rating': average_rating['rating__avg'],
@@ -486,6 +450,21 @@ def public_content_detail(request, content_id):
 ##    else:
 ##        ip = request.META.get('REMOTE_ADDR')
 ##    return ip
+
+def build_content_zip(request, content_id):
+    content = get_object_or_404(Content, id=content_id)
+    project = content.project
+    if not project:
+        messages.error(request, "This content is external; no zip can be built.")
+        return redirect('public_content_detail', content_id=content.id)
+
+    try:
+        project.build_zip(content.text_type)
+        messages.success(request, "Zipfile created/updated.")
+    except Exception as e:
+        messages.error(request, f"Failed to build zipfile: {e}")
+
+    return redirect('public_content_detail', content_id=content.id)
 
 # Get summary tables for projects and content, broken down by language
 def language_statistics(request):

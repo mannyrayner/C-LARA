@@ -110,6 +110,7 @@ urlpatterns = [
     path('public_content_list/', content_views.public_content_list, name='public_content_list'),
     path('content/<int:content_id>/', content_views.content_detail, name='content_detail'),
     path('public_content/<int:content_id>/', content_views.public_content_detail, name='public_content_detail'),
+    path('build_content_zip/<int:content_id>/', content_views.build_content_zip, name='build_content_zip'),
     path('language_statistics/', content_views.language_statistics, name='language_statistics'),
 
     # Resetting and clearning content passwords

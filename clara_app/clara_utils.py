@@ -867,6 +867,14 @@ def make_zipfile(directory, zipfile, callback=None):
         post_task_update(callback, f'--- Error when trying to zip {directory} to {zipfile}: {str(e)}')
         raise InternalCLARAError( message=f'*** Error: something went wrong when trying to unzip {pathname} to {dir}')
 
+def create_start_page_for_self_contained_dir(dir_path):
+    text = """<h1>Content</h1>
+
+<a href="./content/page_1.html"><b>Click here</b></a>
+"""
+    write_txt_file(text, f'{dir_path}/START.html')
+
+
 ## Extract a zipfile to a directory
 def unzip_file(pathname, dir, callback=None):
     abspathname = absolute_local_file_name(pathname)

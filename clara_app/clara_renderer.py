@@ -245,20 +245,6 @@ class StaticHTMLRenderer:
         write_txt_file(rendered_page, output_file_path)
         post_task_update(callback, f"--- Vocabulary lists created")
 
-        if self_contained:
-            post_task_update(callback, f"--- Creating zipfile")
-            tmp_zipfile_path = make_tmp_file('project_zip', 'zip')
-            tmp_zipfile_dir_path = make_tmp_dir('project_zip_dir')
-            phonetic_or_normal = "phonetic" if self.phonetic else "normal"
-            
-            zipfile_path = content_zipfile_path_for_project_id(self.project_id, phonetic_or_normal)
-            copy_directory(self.output_dir, f'{tmp_zipfile_dir_path}/content')
-            create_start_page_for_self_contained_dir(tmp_zipfile_dir_path)
-            
-            make_zipfile(tmp_zipfile_dir_path, tmp_zipfile_path, callback=callback)
-            copy_file(tmp_zipfile_path, zipfile_path)
-            post_task_update(callback, f"--- Zipfile created: {zipfile_path}")
-
     def render_text_for_questionnaire(self, text, callback=None):
         post_task_update(callback, f"--- Rendering text for questionnaire") 
                         
@@ -270,13 +256,6 @@ class StaticHTMLRenderer:
             write_txt_file(rendered_page, output_file_path)
             post_task_update(callback, f"--- Written page {index + 1}")
         post_task_update(callback, f"--- Text pages created")
-
-def create_start_page_for_self_contained_dir(dir_path):
-    text = """<h1>Content</h1>
-
-<a href="./content/page_1.html"><b>Click here</b></a>
-"""
-    write_txt_file(text, f'{dir_path}/START.html')
 
 def get_top_level_audio_file_path(tts_info):
     try:

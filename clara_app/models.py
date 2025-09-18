@@ -18,7 +18,12 @@ from django.utils import timezone
 
 from uuid import uuid4
 
-from .clara_utils import file_exists, absolute_file_name, content_zipfile_path_for_project_id
+import os
+import shutil
+
+from .clara_utils import file_exists, absolute_file_name, make_tmp_file, make_tmp_dir, copy_file, copy_directory
+from .clara_utils import output_dir_for_project_id, content_zipfile_path_for_project_id
+from .clara_utils import make_zipfile, create_start_page_for_self_contained_dir
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -144,12 +149,57 @@ class CLARAProject(models.Model):
     def zip_filepath(self, text_type):
         return absolute_file_name(content_zipfile_path_for_project_id(self.id, text_type))
 
-    def zip_exists(self, text_type):
-        filepath = self.zip_filepath(text_type)
-        print(f'Zip filename: {filepath}')
-        exists = file_exists(filepath)
-        print(f'Zip exists: {exists}')
-        return exists
+    def zip_exists(self, text_type: str) -> bool:
+        return file_exists(self.zip_filepath(text_type))
+
+    def rendered_output_dir(self, text_type: str) -> str:
+        # where the render writes to
+        return absolute_file_name(output_dir_for_project_id(self.id, text_type))
+
+    def zip_is_fresh(self, text_type: str) -> bool:
+        """Zip is fresh if it exists and is newer than the newest file in rendered output dir."""
+        zpath = self.zip_filepath(text_type)
+        if not file_exists(zpath):
+            return False
+        try:
+            zip_mtime = os.path.getmtime(zpath)
+            out_dir = self.rendered_output_dir(text_type)
+            newest = zip_mtime  # default ok
+            for root, dirs, files in os.walk(out_dir):
+                for f in files:
+                    m = os.path.getmtime(os.path.join(root, f))
+                    if m > newest:
+                        newest = m
+                        if newest > zip_mtime:
+                            return False
+            return True
+        except Exception:
+            return False  # be conservative
+
+    def build_zip(self, text_type: str, callback=None) -> str:
+        """
+        Create/refresh the zip from the current rendered output.
+        Returns the final zip filepath on success; raises on failure.
+        """
+        if callback: post_task_update(callback, f"--- Creating zipfile")
+        tmp_zipfile_path = make_tmp_file('project_zip', 'zip')
+        tmp_zipfile_dir_path = make_tmp_dir('project_zip_dir')
+
+        out_dir = self.rendered_output_dir(text_type)
+        if not os.path.isdir(out_dir):
+            raise RuntimeError(f"Rendered output not found: {out_dir}")
+
+        # copy rendered output into tmp/content and add a start page
+        copy_directory(out_dir, f'{tmp_zipfile_dir_path}/content')
+        create_start_page_for_self_contained_dir(tmp_zipfile_dir_path)
+
+        make_zipfile(tmp_zipfile_dir_path, tmp_zipfile_path, callback=callback)
+        final_path = self.zip_filepath(text_type)
+        # ensure destination dir exists
+        os.makedirs(os.path.dirname(final_path), exist_ok=True)
+        copy_file(tmp_zipfile_path, final_path)
+        if callback: post_task_update(callback, f"--- Zipfile created: {final_path}")
+        return final_path
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [
@@ -367,12 +417,6 @@ class Content(models.Model):
             return reverse('serve_rendered_text', args=[self.project.id, self.text_type, 'page_1.html'])
         else:
             return self.external_url
-
-    def zip_filepath(self):
-        return self.project.zip_filepath(self.text_type)
-
-    def zip_exists(self):
-        return self.project.zip_exists(self.text_type)
 
     @property
     def is_protected(self) -> bool:
