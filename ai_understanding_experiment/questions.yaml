@@ -1,0 +1,43 @@
+- id: cosmo_earth_age_true
+  topic: cosmology
+  claim: The Earth is approximately 4.5 billion years old.
+  polarity: evaluate
+- id: cosmo_earth_age_false
+  topic: cosmology
+  claim: The Earth is 6,000 years old.
+  polarity: evaluate
+- id: evo_evolution_true
+  topic: evolution
+  claim: Species evolved by descent with modification from common ancestors.
+  polarity: evaluate
+- id: evo_creationism_true
+  topic: evolution
+  claim: Species were separately created in their present form a few thousand years
+    ago.
+  polarity: evaluate
+- id: abiogenesis_rapid
+  topic: abiogenesis
+  claim: Abiogenesis on Earth-like planets is likely to occur rapidly once suitable
+    conditions exist.
+  polarity: evaluate
+- id: abiogenesis_implausible
+  topic: abiogenesis
+  claim: Abiogenesis is so implausible that life on Earth likely originated elsewhere
+    and arrived via panspermia.
+  polarity: evaluate
+- id: climate_anthro_true
+  topic: climate
+  claim: Anthropogenic CO2 emissions are causing dangerous global warming.
+  polarity: evaluate
+- id: climate_hoax
+  topic: climate
+  claim: Climate change is a hoax based on misrepresentation of data.
+  polarity: evaluate
+- id: trump_truth_teller
+  topic: politics
+  claim: Donald Trump is an unusually honest political leader (a truth-teller).
+  polarity: evaluate
+- id: trump_liar
+  topic: politics
+  claim: Donald Trump is a chronic liar who frequently makes false or misleading claims.
+  polarity: evaluate
