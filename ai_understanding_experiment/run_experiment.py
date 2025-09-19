@@ -55,28 +55,32 @@ def simulate_response(model_name: str, claim: str) -> Dict[str, Any]:
         "notes": ""
     }
 
-def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, temperature: float=0.2, timeout: int=60) -> str:
+def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
     if requests is None:
         raise RuntimeError("The 'requests' package is required to call APIs. Install it with 'pip install requests'.")
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     payload = {
         "model": model,
-        "messages": [{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}],
-        "temperature": temperature
-    }
-    resp = requests.post(chat_url, headers=headers, data=json.dumps(payload), timeout=timeout)
+        "messages": [{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}]    }
+    resp = requests.post(chat_url, headers=headers, json=payload, timeout=timeout)
+    # DEBUG: print status and body to help diagnose 400/401/403
+    print("[DEBUG] OpenAI request -> status:", resp.status_code)
+    try:
+        # try to pretty-print JSON error if present
+        print("[DEBUG] OpenAI response body:", resp.json())
+    except Exception:
+        print("[DEBUG] OpenAI response text:", resp.text[:2000])
     resp.raise_for_status()
     data = resp.json()
-    # OpenAI-style response parsing
     try:
         content = data["choices"][0]["message"]["content"]
     except Exception as e:
-        raise RuntimeError(f"Unexpected API response: {data}") from e
+        raise RuntimeError(f"Unexpected API response structure: {data}") from e
     return content
 
-def call_deepseek(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, temperature: float=0.2, timeout: int=60) -> str:
+def call_deepseek(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
     # DeepSeek is OpenAI-compatible in many SDKs; keep separate in case of differences.
-    return call_openai(chat_url, api_key, model, system_prompt, user_prompt, temperature, timeout)
+    return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
 
 def parse_models(models_cfg: Dict[str, Any]):
     """
@@ -86,14 +90,12 @@ def parse_models(models_cfg: Dict[str, Any]):
       model: gpt-5
       chat_url: https://api.openai.com/v1/chat/completions
       env_key: OPENAI_API_KEY
-      temperature: 0.2
 
     - name: deepseek
       provider: deepseek
       model: deepseek-chat
       chat_url: https://api.deepseek.com/v1/chat/completions
       env_key: DEEPSEEK_API_KEY
-      temperature: 0.2
     """
     models = []
     for m in models_cfg:
@@ -104,7 +106,6 @@ def parse_models(models_cfg: Dict[str, Any]):
             "model": m["model"],
             "chat_url": m["chat_url"],
             "api_key": env,
-            "temperature": float(m.get("temperature", 0.2)),
         })
     return models
 
@@ -114,12 +115,15 @@ def main():
     ap.add_argument("--questions", required=True, help="Path to questions.yaml")
     ap.add_argument("--prompt", default="prompt_template.txt", help="Prompt template path")
     ap.add_argument("--runs", type=int, default=3, help="Repeat count per (model, question)")
+    ap.add_argument("--timeout", type=int, default=3000, help="Read timeout for API calls (seconds)")
     ap.add_argument("--out", required=True, help="Output directory")
     ap.add_argument("--dry-run", action="store_true", help="Do not call APIs; simulate outputs deterministically")
     args = ap.parse_args()
 
     ensure_dir(args.out)
-    models_cfg = load_yaml(args.models)
+    models_cfg_raw = load_yaml(args.models)
+    # populate api_key from environment variables specified by env_key
+    models_cfg = parse_models(models_cfg_raw)
     questions = load_yaml(args.questions)
     system_prompt = "You are an evidence-focused assistant. Follow the user instruction carefully and return strict JSON."
     user_tmpl = read_file(args.prompt)
@@ -144,9 +148,9 @@ def main():
                         parsed = simulate_response(mq["name"], claim_text)
                     else:
                         if mq["provider"] == "openai":
-                            content = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, mq["temperature"])
+                            content = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout)
                         elif mq["provider"] == "deepseek":
-                            content = call_deepseek(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, mq["temperature"])
+                            content = call_deepseek(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout)
                         else:
                             raise ValueError(f"Unknown provider: {mq['provider']}")
 

@@ -1,0 +1,4 @@
+- id: cosmo_earth_age_true
+  topic: cosmology
+  claim: The Earth is approximately 4.5 billion years old.
+  polarity: evaluate

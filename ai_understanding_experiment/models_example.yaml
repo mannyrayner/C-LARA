@@ -3,7 +3,6 @@
   model: gpt-5
   chat_url: https://api.openai.com/v1/chat/completions
   env_key: OPENAI_API_KEY
-  temperature: 0.2
 - name: deepseek
   provider: deepseek
   model: deepseek-chat
