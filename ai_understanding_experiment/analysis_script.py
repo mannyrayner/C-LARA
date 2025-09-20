@@ -9,6 +9,7 @@ Produces:
 - per_question_decisions_wide.csv
 - agreement_by_question.csv
 - conf_stats_by_model_question.csv
+- conf_mean_by_question_model.csv  <-- NEW: full per-model x per-question mean confidences
 - avg_conf_by_model.csv
 - consistency_by_model_question.csv
 - first_thesis_samples.csv
@@ -99,20 +100,29 @@ def main():
         agreement.append(rec)
     agreement_df = pd.DataFrame(agreement)
 
+    # Per-model per-question confidence stats (mean, std, n)
     conf_stats = df.groupby(['model','question_id'])['confidence'].agg(['mean','std','count']).reset_index().rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
     avg_conf_model = df.groupby('model')['confidence'].agg(['mean','std','count']).reset_index().rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
 
+    # NEW: pivot to full per-question x per-model mean_confidence table
+    conf_pivot = conf_stats.pivot(index='question_id', columns='model', values='mean_confidence').sort_index()
+    # fill NaN with empty for nicer CSV/readout
+    conf_pivot_filled = conf_pivot.fillna('')
+
+    # Consistency across runs for each model/question
     consistency = df.groupby(['model','question_id'])['decision_norm'].nunique().reset_index().rename(columns={'decision_norm':'unique_decisions'})
     consistency['consistent'] = consistency['unique_decisions']==1
     consistency_summary = consistency.groupby('model')['consistent'].mean().reset_index().rename(columns={'consistent':'prop_consistent'})
 
     first_thesis = df.sort_values(['model','question_id','run']).groupby(['model','question_id']).first().reset_index()[['model','question_id','thesis']]
 
+    # Save outputs
     counts.to_csv(os.path.join(OUT_DIR, 'decision_counts_by_model.csv'))
     wide.reset_index().to_csv(os.path.join(OUT_DIR, 'per_question_decisions_wide.csv'), index=False)
     agreement_df.to_csv(os.path.join(OUT_DIR, 'agreement_by_question.csv'), index=False)
     conf_stats.to_csv(os.path.join(OUT_DIR, 'conf_stats_by_model_question.csv'), index=False)
-    avg_conf_model.to_csv(os.path.join(OUT_DIR, 'avg_conf_by_model.csv'), index=False)
+    conf_pivot_filled.to_csv(os.path.join(OUT_DIR, 'conf_mean_by_question_model.csv'))
+    avg_conf_model.to_csv(os.path.join(OUT_DIR, 'avg_conf_by_model.csv'))
     consistency.to_csv(os.path.join(OUT_DIR, 'consistency_by_model_question.csv'), index=False)
     first_thesis.to_csv(os.path.join(OUT_DIR, 'first_thesis_samples.csv'), index=False)
 
@@ -134,8 +144,12 @@ def main():
     report_lines.append("5) Average confidence per model:")
     report_lines.append(avg_conf_model.to_string(index=False))
     report_lines.append("")
-    report_lines.append("6) Per-model per-question mean confidence (showing questions with lowest mean confidence):")
-    low_conf = conf_stats.sort_values('mean_confidence').head(10)
+    report_lines.append("6) Per-model per-question mean confidence (FULL table):")
+    # include the pivoted full table in the report text
+    report_lines.append(conf_pivot_filled.to_string())
+    report_lines.append("")
+    report_lines.append("6b) Questions ordered by mean confidence:")
+    low_conf = conf_stats.sort_values('mean_confidence')
     report_lines.append(low_conf.to_string(index=False))
     report_lines.append("")
     report_lines.append("7) Sample of first textual theses per model/question (first 200 chars):")
