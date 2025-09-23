@@ -32,10 +32,10 @@
           Results
         </a>
 		<!-- CSV (averaged, one row per book) -->
-		<a href="{% url 'tq_export_csv' tq.pk %}" class="btn btn-outline-info">CSV</a>
+		<a href="{% url 'tq_export_csv' tq.pk %}?kind=all" class="btn btn-outline-info">CSV</a>
 
 		<!-- CSV (raw rows) -->
-		<a href="{% url 'tq_export_csv' tq.pk %}?raw=1" class="btn btn-outline-info">CSV (raw)</a>
+		<a href="{% url 'tq_export_csv' tq.pk %}?kind=all" class="btn btn-outline-info">CSV (raw)</a>
 		<form action="{% url 'tq_delete' tq.pk %}" method="post"
         onsubmit="return confirm('Delete this questionnaire?');" style="display:inline;">
 		{% csrf_token %}
