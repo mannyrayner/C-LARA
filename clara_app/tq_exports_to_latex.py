@@ -145,10 +145,9 @@ def sort_rows(df: pd.DataFrame, qcols: List[str], avg_col: Optional[str], mode: 
 
 # ---------- rendering ----------
 
-def make_href(title: str, url: str) -> str:
-    if pd.isna(url) or not url or not isinstance(url, str):
-        return escape_tex(title)
-    return r"\href{" + url + "}{" + r"\emph{" + escape_tex(title) + r"}}"
+def make_title(title: str) -> str:
+    """Return \emph{Title} with proper LaTeX escaping (no hyperlink)."""
+    return r"\emph{" + escape_tex(title or "") + r"}"
 
 def render_book_table(df: pd.DataFrame, caption: str, label: str, sort_mode: str = "avg") -> str:
     if df is None or df.empty:
@@ -184,7 +183,7 @@ def render_book_table(df: pd.DataFrame, caption: str, label: str, sort_mode: str
     lines.append(r"\midrule")
 
     for _, row in df2.iterrows():
-        title = make_href(row.get("book_title",""), row.get("book_url",""))
+        title = make_title(row.get("book_title", ""))
         qvals = []
         for c in qcols:
             v = row.get(c)
@@ -244,7 +243,7 @@ def render_page_table(df: pd.DataFrame, caption: str, label: str, sort_mode: str
     lines.append(r"\midrule")
 
     for _, row in df2.iterrows():
-        title = make_href(row.get("book_title",""), row.get("book_url",""))
+        title = make_title(row.get("book_title", ""))
         qvals = []
         for c in qcols:
             v = row.get(c)
