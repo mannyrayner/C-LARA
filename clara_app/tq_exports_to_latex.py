@@ -27,7 +27,20 @@ from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
-# -------------------------- helpers --------------------------
+import os.path
+
+import pprint
+
+trace = True
+#trace = False
+
+# -------------------------- helpers ---------------------
+
+def absolute_file_name(pathname):
+    pathname = os.path.abspath(os.path.expandvars(pathname))
+        
+    ## Replace backslashes with forward slashes
+    return pathname.replace('\\', '/')
 
 def escape_tex(s: str) -> str:
     if s is None:
@@ -64,14 +77,32 @@ def read_csv_from_zip(zf: zipfile.ZipFile, name_like: str) -> Optional[pd.DataFr
                 return pd.read_csv(fp)
     return None
 
+def read_csv_from_zip_by_parts(zf: zipfile.ZipFile, *parts: str) -> Optional[pd.DataFrame]:
+    """
+    Find the first CSV inside `zf` whose lowercased path contains *all* `parts`.
+    Example: parts ('book','matrix') -> matches 'tq_7_book_matrix.csv'.
+    Returns a DataFrame or None if not found.
+    """
+    parts = tuple(p.lower() for p in parts)
+    for name in zf.namelist():
+        low = name.lower()
+        if low.endswith(".csv") and all(p in low for p in parts):
+            with zf.open(name) as f:
+                return pd.read_csv(f)
+    return None
+
+
 def load_exports(path: Path) -> List[Tuple[str, Optional[pd.DataFrame], Optional[pd.DataFrame]]]:
     """
     For a path that is a directory or a single zip, return a list of tuples:
       (base_name, df_book, df_page)
     where base_name is a safe stem for output file names.
+
+    df_book   := book-level matrix (rows = books, cols = Q1.. + avg)
+    df_page   := page-level matrix (rows = books, cols = Q1.. + pages rated)
     """
-    results = []
-    zips: List[Path] = []
+    if trace: print(f'--- Calling load_exports on {path}')
+    results: List[Tuple[str, Optional[pd.DataFrame], Optional[pd.DataFrame]]] = []
 
     if path.is_dir():
         zips = sorted(p for p in path.glob("*.zip"))
@@ -87,11 +118,31 @@ def load_exports(path: Path) -> List[Tuple[str, Optional[pd.DataFrame], Optional
     for z in zips:
         base = z.stem  # file name without .zip
         with zipfile.ZipFile(z, "r") as zf:
-            df_book = read_csv_from_zip(zf, "summary_book") or read_csv_from_zip(zf, "book_summary")
-            df_page = read_csv_from_zip(zf, "summary_page") or read_csv_from_zip(zf, "page_summary")
+            # Prefer the new names:
+            df_book = read_csv_from_zip_by_parts(zf, "book", "matrix")
+            df_page = read_csv_from_zip_by_parts(zf, "page", "matrix")
+
+            # Fallbacks (older naming in some branches)
+            if df_book is None:
+                df_book = (read_csv_from_zip_by_parts(zf, "summary", "book")
+                           or read_csv_from_zip_by_parts(zf, "book", "summary")
+                           or read_csv_from_zip_by_parts(zf, "book"))
+            if df_page is None:
+                df_page = (read_csv_from_zip_by_parts(zf, "summary", "page")
+                           or read_csv_from_zip_by_parts(zf, "page", "summary")
+                           or read_csv_from_zip_by_parts(zf, "page"))
+
+        if df_book is None and df_page is None:
+            print(f"[warn] No usable CSVs found in {z.name}", file=sys.stderr)
+
         results.append((base, df_book, df_page))
 
+    if trace:
+        kinds = [(b, df_b is not None, df_p is not None) for (b, df_b, df_p) in results]
+        print(f'--- load_exports: found (base, has_book, has_page) = {kinds}')
+        pprint.pprint(results)
     return results
+
 
 def sort_rows(df: pd.DataFrame, qcols: List[str], mode: str = "avg") -> pd.DataFrame:
     """Sort by avg (desc) or alpha of title. Adds/uses 'Avg' column if needed."""
@@ -234,12 +285,12 @@ def main():
     want_book = args.book or (not args.book and not args.page)
     want_page = args.page or (not args.book and not args.page)
 
-    out_dir = Path(args.out)
+    out_dir = Path(absolute_file_name(args.out))
     out_dir.mkdir(parents=True, exist_ok=True)
 
     index_lines = []
     for p in args.paths:
-        for base, df_book, df_page in load_exports(Path(p)):
+        for base, df_book, df_page in load_exports(Path(absolute_file_name(p))):
             safe_base = re.sub(r"[^A-Za-z0-9_.-]+", "_", base)
 
             if want_book and df_book is not None and not df_book.empty:
