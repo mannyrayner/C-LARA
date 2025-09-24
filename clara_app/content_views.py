@@ -428,7 +428,7 @@ def public_content_detail(request, content_id):
 
     token = request.session.get(f"{unlocked_key}_token") if can_view and content.is_protected else None
 
-    zip_exists = content.project.zip_exists(content.text_type)
+    zip_exists = content.project.zip_exists(content.text_type) if content.project else False
     zip_fresh = content.project.zip_is_fresh(content.text_type) if content.project else False
 
     return render(request, 'clara_app/public_content_detail.html', {
