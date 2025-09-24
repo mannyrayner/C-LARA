@@ -1,51 +1,34 @@
 #!/usr/bin/env python3
 """
-tq_exports_to_latex.py
-----------------------
-Convert one or more C‑LARA text‑questionnaire export ZIPs (created by
-`tq_export_csv(..., kind="all")`) into LaTeX tables you can \\input in the paper.
+tq_exports_to_latex.py — robust column autodetection
 
-Supports:
-  • Whole‑book summary tables (book × question means + overall + #raters)
-  • Page‑level summary tables (book × question means aggregated across pages,
-    plus pages_rated and (if present) n_raters)
+Converts one or more C-LARA text-questionnaire export ZIPs (created by
+`tq_export_csv(..., kind="all")`) into LaTeX tables you can \input.
 
 Usage:
-  python tq_exports_to_latex.py path/to/exports_dir_or_zip [... more paths ...] \
-         --out tex_tables --sort avg --book --page
-
-Notes:
-  • You can pass a directory (it will scan for *.zip) and/or specific *.zip files.
-  • Output .tex files are written to --out (created if needed).
-  • Each ZIP produces up to two files: <base>_book.tex and <base>_page.tex.
-  • A tiny index file tables_index.tex is created with \\input lines for convenience.
+  python tq_exports_to_latex.py path/or/zip [...more...] --out tex_tables
+Options:
+  --book   only whole-book tables
+  --page   only page-level tables
+  --sort {avg,alpha}  (default avg)
 """
 
-import argparse, io, re, sys, zipfile
+import argparse, io, re, sys, zipfile, os, pprint
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-
 import pandas as pd
 
-import os.path
-
-import pprint
-
 trace = True
-#trace = False
+# trace = False
 
-# -------------------------- helpers ---------------------
+# ---------- small helpers ----------
 
 def absolute_file_name(pathname):
     pathname = os.path.abspath(os.path.expandvars(pathname))
-        
-    ## Replace backslashes with forward slashes
-    return pathname.replace('\\', '/')
+    return pathname.replace("\\", "/")
 
 def escape_tex(s: str) -> str:
-    if s is None:
-        return ""
-    # conservative escaping
+    if s is None: return ""
     return (s.replace('\\', r'\\')
              .replace('&', r'\&')
              .replace('%', r'\%')
@@ -57,32 +40,7 @@ def escape_tex(s: str) -> str:
              .replace('~', r'\textasciitilde{}')
              .replace('^', r'\textasciicircum{}'))
 
-def find_q_mean_cols(df: pd.DataFrame) -> List[str]:
-    """
-    Return question-mean columns in order: ['q1_mean','q2_mean',...].
-    Works even if there are gaps: it sorts by embedded integer.
-    """
-    qcols = [c for c in df.columns if re.fullmatch(r"q\d+_mean", c)]
-    qcols.sort(key=lambda c: int(re.findall(r'\d+', c)[0]))
-    return qcols
-
-def read_csv_from_zip(zf: zipfile.ZipFile, name_like: str) -> Optional[pd.DataFrame]:
-    """
-    Return first CSV whose name contains name_like (case-insensitive).
-    """
-    name_like_lower = name_like.lower()
-    for zi in zf.infolist():
-        if zi.filename.lower().endswith('.csv') and name_like_lower in zi.filename.lower():
-            with zf.open(zi.filename) as fp:
-                return pd.read_csv(fp)
-    return None
-
 def read_csv_from_zip_by_parts(zf: zipfile.ZipFile, *parts: str) -> Optional[pd.DataFrame]:
-    """
-    Find the first CSV inside `zf` whose lowercased path contains *all* `parts`.
-    Example: parts ('book','matrix') -> matches 'tq_7_book_matrix.csv'.
-    Returns a DataFrame or None if not found.
-    """
     parts = tuple(p.lower() for p in parts)
     for name in zf.namelist():
         low = name.lower()
@@ -91,38 +49,29 @@ def read_csv_from_zip_by_parts(zf: zipfile.ZipFile, *parts: str) -> Optional[pd.
                 return pd.read_csv(f)
     return None
 
-
 def load_exports(path: Path) -> List[Tuple[str, Optional[pd.DataFrame], Optional[pd.DataFrame]]]:
-    """
-    For a path that is a directory or a single zip, return a list of tuples:
-      (base_name, df_book, df_page)
-    where base_name is a safe stem for output file names.
-
-    df_book   := book-level matrix (rows = books, cols = Q1.. + avg)
-    df_page   := page-level matrix (rows = books, cols = Q1.. + pages rated)
-    """
+    """Return [(base_name, df_book_matrix, df_page_matrix), ...]."""
     if trace: print(f'--- Calling load_exports on {path}')
-    results: List[Tuple[str, Optional[pd.DataFrame], Optional[pd.DataFrame]]] = []
+    results = []
 
     if path.is_dir():
         zips = sorted(p for p in path.glob("*.zip"))
     elif path.is_file() and path.suffix.lower() == ".zip":
         zips = [path]
     else:
-        raise SystemExit(f"Path is neither a directory of zips nor a .zip file: {path}")
+        raise SystemExit(f"Path is neither a directory of zips nor a .zip: {path}")
 
     if not zips:
         print(f"[warn] No .zip files found in {path}", file=sys.stderr)
         return results
 
     for z in zips:
-        base = z.stem  # file name without .zip
+        base = z.stem
         with zipfile.ZipFile(z, "r") as zf:
-            # Prefer the new names:
+            # Preferred names produced by current exporter:
             df_book = read_csv_from_zip_by_parts(zf, "book", "matrix")
             df_page = read_csv_from_zip_by_parts(zf, "page", "matrix")
-
-            # Fallbacks (older naming in some branches)
+            # Fallbacks:
             if df_book is None:
                 df_book = (read_csv_from_zip_by_parts(zf, "summary", "book")
                            or read_csv_from_zip_by_parts(zf, "book", "summary")
@@ -143,104 +92,92 @@ def load_exports(path: Path) -> List[Tuple[str, Optional[pd.DataFrame], Optional
         pprint.pprint(results)
     return results
 
+# ---------- column autodetection ----------
 
-def sort_rows(df: pd.DataFrame, qcols: List[str], mode: str = "avg") -> pd.DataFrame:
-    """Sort by avg (desc) or alpha of title. Adds/uses 'Avg' column if needed."""
+_Q_MEAN_PATS = [
+    re.compile(r"^q(\d+)_mean$", re.I),   # q1_mean, q2_mean, ...
+    re.compile(r"^Q(\d+)$"),              # Q1, Q2, ...
+]
+def detect_q_cols(df: pd.DataFrame) -> List[str]:
+    # collect all columns matching any pattern, with their numeric index
+    found = []
+    for col in df.columns:
+        for pat in _Q_MEAN_PATS:
+            m = pat.fullmatch(str(col))
+            if m:
+                found.append( (int(m.group(1)), col) )
+                break
+    found.sort(key=lambda t: t[0])
+    return [c for _, c in found]
+
+def detect_avg_col(df: pd.DataFrame) -> Optional[str]:
+    for name in ["overall_mean", "Avg", "avg", "Average", "mean"]:
+        if name in df.columns:
+            return name
+    return None
+
+def detect_pages_col(df: pd.DataFrame) -> Optional[str]:
+    for name in ["pages_rated", "Pages", "pages", "n_pages"]:
+        if name in df.columns:
+            return name
+    return None
+
+def detect_raters_col(df: pd.DataFrame) -> Optional[str]:
+    for name in ["n_raters", "n_eval", "raters", "n_evaluators"]:
+        if name in df.columns:
+            return name
+    return None
+
+# ---------- sorting ----------
+
+def sort_rows(df: pd.DataFrame, qcols: List[str], avg_col: Optional[str], mode: str = "avg") -> pd.DataFrame:
     df = df.copy()
     if mode == "alpha":
-        return df.sort_values(by="book_title", key=lambda s: s.str.lower())
-
-    # Default: sort by overall_mean (or computed mean of qcols) descending
-    if "overall_mean" in df.columns:
-        key = df["overall_mean"]
+        if "book_title" in df.columns:
+            return df.sort_values(by="book_title", key=lambda s: s.str.lower())
+        return df
+    # default: by average descending
+    if avg_col and avg_col in df.columns:
+        key = pd.to_numeric(df[avg_col], errors="coerce")
     else:
-        # compute across qcols (skip NaNs)
-        key = df[qcols].mean(axis=1, skipna=True)
+        key = df[qcols].apply(pd.to_numeric, errors="coerce").mean(axis=1, skipna=True)
     return df.iloc[key.sort_values(ascending=False).index]
+
+# ---------- rendering ----------
 
 def make_href(title: str, url: str) -> str:
     if pd.isna(url) or not url or not isinstance(url, str):
         return escape_tex(title)
     return r"\href{" + url + "}{" + r"\emph{" + escape_tex(title) + r"}}"
 
-def render_book_table(df: pd.DataFrame, caption: str, label: str) -> str:
-    """
-    Render whole-book table: Title | Q1..Qk | Avg | n_eval
-    """
+def render_book_table(df: pd.DataFrame, caption: str, label: str, sort_mode: str = "avg") -> str:
     if df is None or df.empty:
         return "% (no whole-book data)\n"
 
-    qcols = find_q_mean_cols(df)
-    df2 = df.copy()
+    qcols   = detect_q_cols(df)
+    avg_col = detect_avg_col(df)
+    raters_col = detect_raters_col(df)
 
-    # ensure numeric for formatting
-    for c in qcols + ["overall_mean"]:
-        if c in df2.columns:
+    df2 = df.copy()
+    # numeric coercion
+    for c in qcols + ([avg_col] if avg_col else []):
+        if c and c in df2.columns:
             df2[c] = pd.to_numeric(df2[c], errors="coerce")
 
-    df2 = sort_rows(df2, qcols, mode="avg")
+    df2 = sort_rows(df2, qcols, avg_col, mode=sort_mode)
 
-    header_q = " & ".join([c.replace("q", "Q").replace("_mean", "") for c in qcols])
+    header_q = " & ".join([re.sub(r"^q(\d+)_mean$", r"Q\1", c) for c in qcols])
+    cols_extra = 1 + (1 if raters_col else 0)  # Avg + optional #raters
     lines = []
     lines.append(r"\begin{table}[h]")
     lines.append(r"\centering")
-    lines.append(r"\begin{tabular}{@{}l" + "r" * (len(qcols) + 2) + r"@{}}")
+    lines.append(r"\begin{tabular}{@{}l" + "r" * (len(qcols) + cols_extra) + r"@{}}")
     lines.append(r"\toprule")
-    lines.append(r"\textbf{Title} & " + header_q + r" & \textbf{Avg.} & \textbf{\#raters}\\")
-    lines.append(r"\midrule")
-
-    for _, row in df2.iterrows():
-        title = make_href(row.get("book_title",""), row.get("book_url",""))
-        qvals = []
-        for c in qcols:
-            v = row.get(c)
-            qvals.append(f"{v:.2f}" if pd.notna(v) else r"--")
-        avg = row.get("overall_mean")
-        avg_s = f"{avg:.2f}" if pd.notna(avg) else r"--"
-        n_eval = int(row.get("n_eval")) if pd.notna(row.get("n_eval")) else 0
-        lines.append(title + " & " + " & ".join(qvals) + f" & {avg_s} & {n_eval}" + r"\\")
-
-    lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
-    if caption:
-        lines.append(r"\caption{" + escape_tex(caption) + r"}")
-    if label:
-        lines.append(r"\label{" + escape_tex(label) + r"}")
-    lines.append(r"\end{table}")
-    return "\n".join(lines) + "\n"
-
-def render_page_table(df: pd.DataFrame, caption: str, label: str) -> str:
-    """
-    Render page-level table: Title | Q1..Qk | Avg | Pages | (optional) #raters
-    Expects columns: book_title, book_url, pages_rated (int), qN_mean...
-    Optionally uses n_raters if present.
-    """
-    if df is None or df.empty:
-        return "% (no page-level data)\n"
-
-    qcols = find_q_mean_cols(df)
-    df2 = df.copy()
-
-    for c in qcols:
-        df2[c] = pd.to_numeric(df2[c], errors="coerce")
-
-    # compute row avg across qcols
-    df2["row_avg"] = df2[qcols].mean(axis=1, skipna=True)
-
-    df2 = sort_rows(df2, qcols, mode="avg")
-
-    has_n_raters = "n_raters" in df2.columns
-    header_q = " & ".join([c.replace("q", "Q").replace("_mean", "") for c in qcols])
-
-    # build col spec
-    extra_cols = 2 + (1 if has_n_raters else 0)  # Avg + Pages + maybe #raters
-    lines = []
-    lines.append(r"\begin{table}[h]")
-    lines.append(r"\centering")
-    lines.append(r"\begin{tabular}{@{}l" + "r" * (len(qcols) + extra_cols) + r"@{}}")
-    lines.append(r"\toprule")
-    head = r"\textbf{Title} & " + header_q + r" & \textbf{Avg.} & \textbf{Pages}"
-    if has_n_raters:
+    head = r"\textbf{Title}"
+    if header_q:
+        head += " & " + header_q
+    head += r" & \textbf{Avg.}"
+    if raters_col:
         head += r" & \textbf{\#raters}"
     head += r"\\"
     lines.append(head)
@@ -252,34 +189,96 @@ def render_page_table(df: pd.DataFrame, caption: str, label: str) -> str:
         for c in qcols:
             v = row.get(c)
             qvals.append(f"{v:.2f}" if pd.notna(v) else r"--")
-        avg_s = f"{row['row_avg']:.2f}" if pd.notna(row["row_avg"]) else r"--"
-        pages = int(row.get("pages_rated")) if pd.notna(row.get("pages_rated")) else 0
-        cells = [title] + qvals + [avg_s, str(pages)]
-        if has_n_raters:
-            nr = int(row.get("n_raters")) if pd.notna(row.get("n_raters")) else 0
-            cells.append(str(nr))
+        avg_v = row.get(avg_col) if avg_col else pd.Series(qvals, dtype="float").mean()
+        avg_s = f"{float(avg_v):.2f}" if pd.notna(avg_v) else r"--"
+        cells = [title]
+        if qvals: cells += qvals
+        cells.append(avg_s)
+        if raters_col:
+            rv = row.get(raters_col)
+            cells.append(str(int(rv)) if pd.notna(rv) else "0")
         lines.append(" & ".join(cells) + r"\\")
 
     lines.append(r"\bottomrule")
     lines.append(r"\end{tabular}")
-    if caption:
-        lines.append(r"\caption{" + escape_tex(caption) + r"}")
-    if label:
-        lines.append(r"\label{" + escape_tex(label) + r"}")
+    if caption: lines.append(r"\caption{" + escape_tex(caption) + r"}")
+    if label:   lines.append(r"\label{" + escape_tex(label) + r"}")
     lines.append(r"\end{table}")
     return "\n".join(lines) + "\n"
 
-# -------------------------- main --------------------------
+def render_page_table(df: pd.DataFrame, caption: str, label: str, sort_mode: str = "avg") -> str:
+    if df is None or df.empty:
+        return "% (no page-level data)\n"
+
+    qcols      = detect_q_cols(df)
+    pages_col  = detect_pages_col(df)
+    raters_col = detect_raters_col(df)
+    avg_col    = detect_avg_col(df)  # some exports include Avg here too
+
+    df2 = df.copy()
+    for c in qcols + ([avg_col] if avg_col else []):
+        if c and c in df2.columns:
+            df2[c] = pd.to_numeric(df2[c], errors="coerce")
+
+    if not avg_col:
+        df2["row_avg"] = df2[qcols].mean(axis=1, skipna=True)
+        avg_col = "row_avg"
+
+    df2 = sort_rows(df2, qcols, avg_col, mode=sort_mode)
+
+    header_q = " & ".join([re.sub(r"^q(\d+)_mean$", r"Q\1", c) for c in qcols])
+    cols_extra = 2 + (1 if raters_col else 0)  # Avg + Pages + optional #raters
+    lines = []
+    lines.append(r"\begin{table}[h]")
+    lines.append(r"\centering")
+    lines.append(r"\begin{tabular}{@{}l" + "r" * (len(qcols) + cols_extra) + r"@{}}")
+    lines.append(r"\toprule")
+    head = r"\textbf{Title}"
+    if header_q:
+        head += " & " + header_q
+    head += r" & \textbf{Avg.} & \textbf{Pages}"
+    if raters_col:
+        head += r" & \textbf{\#raters}"
+    head += r"\\"
+    lines.append(head)
+    lines.append(r"\midrule")
+
+    for _, row in df2.iterrows():
+        title = make_href(row.get("book_title",""), row.get("book_url",""))
+        qvals = []
+        for c in qcols:
+            v = row.get(c)
+            qvals.append(f"{v:.2f}" if pd.notna(v) else r"--")
+        avg_v = row.get(avg_col)
+        avg_s = f"{float(avg_v):.2f}" if pd.notna(avg_v) else r"--"
+        pages = int(row.get(pages_col)) if (pages_col and pd.notna(row.get(pages_col))) else 0
+
+        cells = [title]
+        if qvals: cells += qvals
+        cells += [avg_s, str(pages)]
+        if raters_col:
+            rv = row.get(raters_col)
+            cells.append(str(int(rv)) if pd.notna(rv) else "0")
+        lines.append(" & ".join(cells) + r"\\")
+
+    lines.append(r"\bottomrule")
+    lines.append(r"\end{tabular}")
+    if caption: lines.append(r"\caption{" + escape_tex(caption) + r"}")
+    if label:   lines.append(r"\label{" + escape_tex(label) + r"}")
+    lines.append(r"\end{table}")
+    return "\n".join(lines) + "\n"
+
+# ---------- main ----------
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("paths", nargs="+", help="ZIP file(s) or a directory containing ZIPs")
-    ap.add_argument("--out", default="tex_tables", help="Output directory for .tex files")
-    ap.add_argument("--sort", choices=["avg", "alpha"], default="avg", help="Row ordering")
-    ap.add_argument("--book", action="store_true", help="Generate whole-book tables")
-    ap.add_argument("--page", action="store_true", help="Generate page-level tables")
-    ap.add_argument("--caption-prefix", default="", help="Prefix for captions")
-    ap.add_argument("--label-prefix", default="tab:", help="Prefix for LaTeX labels")
+    ap.add_argument("paths", nargs="+", help="ZIP(s) or a directory with ZIPs")
+    ap.add_argument("--out", default="tex_tables", help="Output dir for .tex")
+    ap.add_argument("--sort", choices=["avg","alpha"], default="avg")
+    ap.add_argument("--book", action="store_true", help="Only whole-book tables")
+    ap.add_argument("--page", action="store_true", help="Only page-level tables")
+    ap.add_argument("--caption-prefix", default="", help="Caption prefix")
+    ap.add_argument("--label-prefix", default="tab:", help="Label prefix")
     args = ap.parse_args()
 
     want_book = args.book or (not args.book and not args.page)
@@ -294,22 +293,29 @@ def main():
             safe_base = re.sub(r"[^A-Za-z0-9_.-]+", "_", base)
 
             if want_book and df_book is not None and not df_book.empty:
-                tex = render_book_table(df_book, caption=f"{args.caption_prefix}Whole‑book questionnaire summary ({safe_base})",
-                                        label=f"{args.label_prefix}{safe_base}_book")
+                tex = render_book_table(
+                    df_book,
+                    caption=f"{args.caption_prefix}Whole-book questionnaire summary ({safe_base})",
+                    label=f"{args.label_prefix}{safe_base}_book",
+                    sort_mode=args.sort,
+                )
                 out_file = out_dir / f"{safe_base}_book.tex"
                 out_file.write_text(tex, encoding="utf-8")
                 index_lines.append(r"\input{" + str(out_file) + "}")
                 print(f"[ok] wrote {out_file}")
 
             if want_page and df_page is not None and not df_page.empty:
-                tex = render_page_table(df_page, caption=f"{args.caption_prefix}Page‑level questionnaire summary ({safe_base})",
-                                        label=f"{args.label_prefix}{safe_base}_page")
+                tex = render_page_table(
+                    df_page,
+                    caption=f"{args.caption_prefix}Page-level questionnaire summary ({safe_base})",
+                    label=f"{args.label_prefix}{safe_base}_page",
+                    sort_mode=args.sort,
+                )
                 out_file = out_dir / f"{safe_base}_page.tex"
                 out_file.write_text(tex, encoding="utf-8")
                 index_lines.append(r"\input{" + str(out_file) + "}")
                 print(f"[ok] wrote {out_file}")
 
-    # write a minimal index .tex to include all generated tables
     if index_lines:
         idx = out_dir / "tables_index.tex"
         idx.write_text("% Auto-generated list of tables\n" + "\n".join(index_lines) + "\n", encoding="utf-8")
