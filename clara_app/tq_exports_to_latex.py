@@ -299,16 +299,16 @@ def render_group_longtable(exp: str,
     qmax  = max(all_qnums)
     qcols = [f"Q{i}" for i in range(1, qmax + 1)]
 
-    # Longtable skeleton (generic head used only for page breaks)
+    # Longtable skeleton (generic head only for page breaks)
     col_spec = "@{}l" + "r" * len(qcols) + "r@{}"  # Title + Qs + Avg
     head = r"\textbf{Title} & " + " & ".join(qcols) + r" & \textbf{Avg.}\\"
 
     lines = []
     lines.append(r"\begin{longtable}{" + col_spec + "}")
     lines.append(r"\toprule")
-    lines.append(head)
-    lines.append(r"\midrule")
+    # No generic header on the first page:
     lines.append(r"\endfirsthead")
+    # From page 2 onwards, show the generic header:
     lines.append(r"\toprule")
     lines.append(head)
     lines.append(r"\midrule")
