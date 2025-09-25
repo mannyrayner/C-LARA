@@ -51,8 +51,20 @@ def escape_tex(s: str) -> str:
              .replace('^', r'\textasciicircum{}'))
 
 def strip_parenthetical(title: str) -> str:
-    # remove last " (…)" block if present
+    # kept for backward-compat if you still call it elsewhere
     return re.sub(r"\s*\([^()]*\)\s*$", "", title or "").strip()
+
+def clean_title_core(title: str) -> str:
+    """
+    Remove ALL parenthetical chunks anywhere in the title and any trailing ', vN'.
+    Collapse whitespace. Example:
+      'Foo (gpt-image-1, gpt-5), v2 (Chinese glosses)' -> 'Foo'
+    """
+    s = re.sub(r"\([^)]*\)", "", title or "")
+    s = re.sub(r",?\s*v\d+\b", "", s, flags=re.I)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
 
 def read_csv_from_zip_by_parts(zf: zipfile.ZipFile, *parts: str) -> Optional[pd.DataFrame]:
     parts = tuple(p.lower() for p in parts)
@@ -259,38 +271,41 @@ def render_group_longtable(exp: str,
     """
     Build one longtable for a (exp, lang), with Teacher + Student sections (if present).
     Columns are the superset of available Qs across both audiences.
+    Each section prints its own Q-header row (only its present Qs are labeled).
     """
     if not audience_to_df:
         return None
 
-    # Determine superset of Q columns
+    # Determine superset of Q columns + collect a normalised {title -> pages} map
     all_qnums = set()
-    pages_by_title: Dict[str,int] = {}
+    pages_by_title: Dict[str, int] = {}
     for df in audience_to_df.values():
         if df is None or df.empty:
             continue
         for c in df.columns:
             m = re.fullmatch(r"Q(\d+)", c)
-            if m: all_qnums.add(int(m.group(1)))
-        # collect known pages
+            if m:
+                all_qnums.add(int(m.group(1)))
         if "pages" in df.columns:
             for _, r in df.iterrows():
-                if pd.notna(r.get("pages")):
-                    pages_by_title[r["book_title"]] = int(r["pages"])
+                tcore = clean_title_core(str(r.get("book_title", "")))
+                p = r.get("pages")
+                if pd.notna(p):
+                    pages_by_title[tcore] = int(p)
 
     if not all_qnums:
         return None
 
-    qmax = max(all_qnums)
-    qcols = [f"Q{i}" for i in range(1, qmax+1)]
+    qmax  = max(all_qnums)
+    qcols = [f"Q{i}" for i in range(1, qmax + 1)]
 
-    # Prepare latex
-    header_q = " & ".join(qcols)
-    col_spec  = "@{}l" + "r"*len(qcols) + "r@{}"  # Title + Qs + Avg
+    # Longtable skeleton (generic head used only for page breaks)
+    col_spec = "@{}l" + "r" * len(qcols) + "r@{}"  # Title + Qs + Avg
+    head = r"\textbf{Title} & " + " & ".join(qcols) + r" & \textbf{Avg.}\\"
+
     lines = []
     lines.append(r"\begin{longtable}{" + col_spec + "}")
     lines.append(r"\toprule")
-    head = r"\textbf{Title} & " + header_q + r" & \textbf{Avg.}\\"
     lines.append(head)
     lines.append(r"\midrule")
     lines.append(r"\endfirsthead")
@@ -304,23 +319,34 @@ def render_group_longtable(exp: str,
     def _emit_section(name: str, df: pd.DataFrame):
         if df is None or df.empty:
             return
-        # ensure all needed cols exist
+
+        # Ensure all needed cols exist
         for c in qcols + ["Avg", "book_title", "pages"]:
             if c not in df.columns:
                 df[c] = None
 
+        # Recompute Avg robustly over visible Q columns
         df2 = df.copy()
-        # recompute Avg over visible columns (robust)
         df2["Avg"] = df2[qcols].apply(pd.to_numeric, errors="coerce").mean(axis=1, skipna=True)
         df2 = sort_rows(df2, qcols, "Avg", mode=sort_mode)
 
-        lines.append(r"\multicolumn{" + str(1+len(qcols)+1) + r"}{l}{\textit{" + escape_tex(name) + r"}}\\")
+        # Section label
+        lines.append(r"\multicolumn{" + str(1 + len(qcols) + 1) + r"}{l}{\textit{" + escape_tex(name) + r"}}\\")
+
+        # Section-specific header: label only those Qs that actually have data
+        present = [c for c in qcols if df2[c].notna().any()]
+        section_header = " & ".join([c if c in present else "" for c in qcols])
+        lines.append(r"\textbf{Title} & " + section_header + r" & \textbf{Avg.}\\")
+        lines.append(r"\midrule")
+
+        # Rows
         for _, r in df2.iterrows():
-            title_core = strip_parenthetical(str(r["book_title"]))
-            pages = r.get("pages")
-            if (pd.isna(pages) or pages is None) and title_core in pages_by_title:
-                pages = pages_by_title[title_core]
-            title_tex = r"\emph{" + escape_tex(title_core) + (" (%d pages)" % pages if pages else "") + "}"
+            title_core = clean_title_core(str(r["book_title"]))
+            pages_val  = r.get("pages")
+            if (pd.isna(pages_val) or pages_val is None) and title_core in pages_by_title:
+                pages_val = pages_by_title[title_core]
+
+            title_tex = r"\emph{" + escape_tex(title_core) + (" (%d pages)" % pages_val if pages_val else "") + "}"
             cells = [title_tex]
             for c in qcols:
                 v = r.get(c)
@@ -331,15 +357,14 @@ def render_group_longtable(exp: str,
 
         lines.append(r"\addlinespace")
 
-    # Emit Teacher then Student (if present)
-    # normalize keys
+    # Emit sections in a stable order
     aud_keys = {k.lower(): k for k in audience_to_df.keys()}
     if "teacher" in aud_keys:
         _emit_section("Teacher", audience_to_df[aud_keys["teacher"]])
     if "student" in aud_keys:
         _emit_section("Student", audience_to_df[aud_keys["student"]])
 
-    # close and caption
+    # Caption/label
     cap = f"{caption_prefix}Experiment {exp}"
     if lang and lang != "NA":
         cap += f" — {lang.title()}"
