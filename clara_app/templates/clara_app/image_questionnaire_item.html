@@ -16,6 +16,10 @@
 <div class="q-text-block">
   <h3>{{ ui.page_image_and_text }}</h3>
   {{ html_snippet|safe }}
+  {% if relative_image_path %}
+    <img src="{% url 'serve_coherent_images_v2_file' project.id relative_image_path %}"
+         style="max-width: 200px;">
+  {% endif %}
 </div>
 
 
