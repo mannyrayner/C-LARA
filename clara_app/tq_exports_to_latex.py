@@ -369,7 +369,7 @@ def render_group_longtable(exp: str,
     cap = f"{caption_prefix}Experiment {exp}"
     if lang and lang != "NA":
         cap += f" — {lang.title()}"
-    label = f"{label_prefix}exp_{exp}_{lang}_combined"
+    label = f"{label_prefix}exp-{exp}-{lang}-combined"
     lines.append(r"\caption{" + escape_tex(cap) + r"}")
     lines.append(r"\label{" + escape_tex(label) + r"}")
     lines.append(r"\end{longtable}")

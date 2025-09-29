@@ -233,7 +233,7 @@ def image_questionnaire_item(request, project_id, index):
     page_number = current_page.get('page_number')
     page_text = current_page.get('text', '')
     translated_page_text = current_page.get('translated_text', '')
-    relative_page_image_path = f'pages/page{page_number}/image.jpg'
+    relative_page_image_path = f'pages/page{(page_number)}/image.jpg'
 
     questionnaire_html_file = f'{questionnaire_output_dir_for_project_id(project_id)}/page_{page_number}.html'
     html_snippet = read_txt_file(questionnaire_html_file) if file_exists(questionnaire_html_file) else ''
@@ -337,7 +337,7 @@ def image_questionnaire_item(request, project_id, index):
         "previous_page_number": prev_page_num,
         "previous_image_relpath": previous_image_relpath,
     }
-    #pprint.pprint(context)
+    pprint.pprint(context)
     return render(request, "clara_app/image_questionnaire_item.html", context)
 
 
