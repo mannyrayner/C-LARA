@@ -24,6 +24,8 @@ import shutil
 from .clara_utils import file_exists, absolute_file_name, make_tmp_file, make_tmp_dir, copy_file, copy_directory
 from .clara_utils import output_dir_for_project_id, content_zipfile_path_for_project_id
 from .clara_utils import make_zipfile, create_start_page_for_self_contained_dir
+
+from .clara_make_content_zip import build_content_zip
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -177,29 +179,35 @@ class CLARAProject(models.Model):
             return False  # be conservative
 
     def build_zip(self, text_type: str, callback=None) -> str:
-        """
-        Create/refresh the zip from the current rendered output.
-        Returns the final zip filepath on success; raises on failure.
-        """
-        if callback: post_task_update(callback, f"--- Creating zipfile")
-        tmp_zipfile_path = make_tmp_file('project_zip', 'zip')
-        tmp_zipfile_dir_path = make_tmp_dir('project_zip_dir')
+        return build_content_zip(self, text_type, callback)
 
-        out_dir = self.rendered_output_dir(text_type)
-        if not os.path.isdir(out_dir):
-            raise RuntimeError(f"Rendered output not found: {out_dir}")
-
-        # copy rendered output into tmp/content and add a start page
-        copy_directory(out_dir, f'{tmp_zipfile_dir_path}/content')
-        create_start_page_for_self_contained_dir(tmp_zipfile_dir_path)
-
-        make_zipfile(tmp_zipfile_dir_path, tmp_zipfile_path, callback=callback)
-        final_path = self.zip_filepath(text_type)
-        # ensure destination dir exists
-        os.makedirs(os.path.dirname(final_path), exist_ok=True)
-        copy_file(tmp_zipfile_path, final_path)
-        if callback: post_task_update(callback, f"--- Zipfile created: {final_path}")
-        return final_path
+##    def build_zip(self, text_type: str, callback=None) -> str: 
+##        """
+##        Create/refresh the zip from the current rendered output.
+##        Returns the final zip filepath on success; raises exception on failure.
+##        """
+##        if callback: post_task_update(callback, f"--- Creating zipfile")
+##        tmp_zipfile_path = make_tmp_file('project_zip', 'zip')
+##        tmp_zipfile_dir_path = make_tmp_dir('project_zip_dir')
+##
+##        out_dir = self.rendered_output_dir(text_type)
+##        if not os.path.isdir(out_dir):
+##            raise RuntimeError(f"Rendered output not found: {out_dir}")
+##
+##        # copy rendered output into tmp/content and add a start page
+##        copy_directory(out_dir, f'{tmp_zipfile_dir_path}/content')
+##        # TO DO: handle images. Go through the HTML pages to find items of the form
+##        # <img src="/accounts/projects/serve_project_image/<project_name>/<file>" alt="<alt>" style="<style>">
+##        # Copy the image file to the multimedia directory and replace with a suitable reference.	  
+##        create_start_page_for_self_contained_dir(tmp_zipfile_dir_path)
+##
+##        make_zipfile(tmp_zipfile_dir_path, tmp_zipfile_path, callback=callback)
+##        final_path = self.zip_filepath(text_type)
+##        # ensure destination dir exists
+##        os.makedirs(os.path.dirname(final_path), exist_ok=True)
+##        copy_file(tmp_zipfile_path, final_path)
+##        if callback: post_task_update(callback, f"--- Zipfile created: {final_path}")
+##        return final_path
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [
