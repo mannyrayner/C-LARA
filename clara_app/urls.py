@@ -288,6 +288,7 @@ urlpatterns = [
     path('tq/my/', text_questionnaire_views.tq_my_list, name='tq_my_list'),
     path("tq/<int:pk>/results/", text_questionnaire_views.tq_results, name="tq_results"),
     path("tq/<int:pk>/download/", text_questionnaire_views.tq_export_csv, name="tq_export_csv"),
+    path("tq/<int:pk>/export_csv_raw", text_questionnaire_views.tq_export_csv_raw, name="tq_export_csv_raw"),
     path("tq/delete/<int:pk>/", text_questionnaire_views.tq_delete, name="tq_delete"),
     path("tq/delete_all_data/", text_questionnaire_views.tq_delete_all_data, name="delete_all_data"),
 
