@@ -25,7 +25,7 @@ from .clara_utils import file_exists, absolute_file_name, make_tmp_file, make_tm
 from .clara_utils import output_dir_for_project_id, content_zipfile_path_for_project_id
 from .clara_utils import make_zipfile, create_start_page_for_self_contained_dir
 
-from .clara_make_content_zip import build_content_zip
+#from .clara_make_content_zip import build_content_zip
  
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -178,8 +178,8 @@ class CLARAProject(models.Model):
         except Exception:
             return False  # be conservative
 
-    def build_zip(self, text_type: str, callback=None) -> str:
-        return build_content_zip(self, text_type, callback)
+##    def build_zip(self, text_type: str, callback=None) -> str:
+##        return build_content_zip(self, text_type, callback)
 
 ##    def build_zip(self, text_type: str, callback=None) -> str: 
 ##        """

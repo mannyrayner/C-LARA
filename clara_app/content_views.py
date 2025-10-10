@@ -14,6 +14,8 @@ from django.conf import settings
 
 from .public_api_views import public_content_manifest
 
+from .clara_make_content_zip import build_content_zip_for_text_type
+
 from .models import Content
 from .models import CLARAProject, Comment, Rating, HumanAudioInfo, PhoneticHumanAudioInfo
 from .forms import ContentSearchForm, ContentRegistrationForm, ContentUnlockForm
@@ -460,7 +462,8 @@ def build_content_zip(request, content_id):
 
     try:
         messages.success(request, "Trying to create/update zipfile")
-        project.build_zip(content.text_type)
+        #project.build_zip(content.text_type)
+        build_content_zip_for_text_type(request, project, content.text_type)
         messages.success(request, "Zipfile created/updated.")
     except Exception as e:
         messages.error(request, f"Failed to build zipfile: {e}")
