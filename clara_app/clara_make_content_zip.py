@@ -54,7 +54,7 @@ def _rewrite_imgs_and_collect_sources(request, html_text: str):
         new_src = f"multimedia/{basename}"
         to_copy.append((_coerce_project_id(proj_id_raw), basename, src))
 
-        messages.success(request, f"Rewriting <img>: {src} → {new_src}")
+        #messages.success(request, f"Rewriting <img>: {src} → {new_src}")
 
         return f"{m.group('prefix')}{new_src}{m.group('suffix')}"
 
@@ -106,7 +106,7 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
 
     #for root, _dirs, files in os.walk(content_dir):
     files = os.listdir(content_dir)
-    print(f'content_dir: {content_dir}')
+    #print(f'content_dir: {content_dir}')
     #print(f'files: {files}')
     for fname in files:
         if not fname.lower().endswith(".html") or not fname.lower().startswith("page"):
@@ -123,9 +123,10 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
 
         new_html, to_copy = _rewrite_imgs_and_collect_sources(request, html)
         if new_html == html:
-            messages.success(request, f"--- HTML not changed: {fname}")
+            #messages.success(request, f"--- HTML not changed: {fname}")
+            continue
         else:
-            messages.success(request, f"--- HTML changed: {fname}")
+            #messages.success(request, f"--- HTML changed: {fname}")
             # Write back the rewritten HTML
             with open(html_path, "w", encoding="utf-8") as f:
                 f.write(new_html)
@@ -147,7 +148,7 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
                         try:
                             copy_file(src_path, dst_path)
                             copied_basenames.add(basename)
-                            messages.success(request, f"Copied image: {src_path} → {dst_path}")
+                            #messages.success(request, f"Copied image: {src_path} → {dst_path}")
                         except Exception as e:
                             msg = f"Failed to copy {src_path} -> {dst_path}: {e}"
                             messages.error(request, f"WARNING: {msg}")
