@@ -815,6 +815,7 @@ def questionnaire_output_dir_for_project_id(id):
 
 
 def image_dir_for_project_id(id):
+    print(f'image_dir_for_project_id({id}')
     config = get_config()
     return str( Path(absolute_file_name(config.get('image_repository', 'base_dir_orm'))) / str(id) )
 ##    if _use_orm_repositories:

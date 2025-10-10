@@ -61,13 +61,18 @@ def _rewrite_imgs_and_collect_sources(request, html_text: str):
     new_html = _img_tag_src_pat.sub(_sub, html_text)
     return new_html, to_copy
 
+##def _coerce_project_id(s: str):
+##    """Return a project id suitable for image_dir_for_project_id.
+##    If s ends with _<digits>, return the numeric tail. Else return s as-is."""
+##    tail = re.search(r"_(\d+)$", s)
+##    if tail:
+##        return int(tail.group(1))
+##    return int(s) if s.isdigit() else s
+
 def _coerce_project_id(s: str):
-    """Return a project id suitable for image_dir_for_project_id.
-    If s ends with _<digits>, return the numeric tail. Else return s as-is."""
-    tail = re.search(r"_(\d+)$", s)
-    if tail:
-        return int(tail.group(1))
+    """Use numeric id *only* if s is purely digits; otherwise keep the slug."""
     return int(s) if s.isdigit() else s
+
 
 def build_content_zip_for_text_type(request, project, text_type: str) -> str:
     """
@@ -102,7 +107,7 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
     #for root, _dirs, files in os.walk(content_dir):
     files = os.listdir(content_dir)
     print(f'content_dir: {content_dir}')
-    print(f'files: {files}')
+    #print(f'files: {files}')
     for fname in files:
         if not fname.lower().endswith(".html") or not fname.lower().startswith("page"):
             continue
@@ -134,9 +139,11 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
                         messages.error(request, f"WARNING: {msg}") 
                         continue
 
-                    src_path = img_dir / basename
+                    src_path = absolute_file_name(f'{img_dir}/{basename}')
+                    #print(f'src_path = {src_path}')
                     if file_exists(src_path):
-                        dst_path = multimedia_dir / basename
+                        dst_path = absolute_file_name(f'{multimedia_dir}/{basename}')
+                        #print(f'dst_path = {dst_path}')
                         try:
                             copy_file(src_path, dst_path)
                             copied_basenames.add(basename)
@@ -145,7 +152,7 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
                             msg = f"Failed to copy {src_path} -> {dst_path}: {e}"
                             messages.error(request, f"WARNING: {msg}")
                     else:
-                        msg = f"Missing image for zip (project={proj_id} basename={basename} from {original_src})"
+                        msg = f"Missing image for zip (project={proj_id} basename={basename} from {original_src}: {src_path})"
                         messages.error(request, f"WARNING: {msg}")
 
     # 4) Zip it up
