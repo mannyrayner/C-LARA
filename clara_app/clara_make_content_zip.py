@@ -1,5 +1,7 @@
 from django.contrib import messages
 
+from .clara_audio_repository_orm import AudioRepositoryORM
+
 from .clara_utils import file_exists, absolute_file_name, make_tmp_file, make_tmp_dir, copy_file, copy_directory
 from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, content_zipfile_path_for_project_id
 from .clara_utils import post_task_update, make_zipfile, create_start_page_for_self_contained_dir
@@ -32,6 +34,35 @@ _serve_url_pat = re.compile(
     """,
     re.IGNORECASE | re.VERBOSE,
 )
+
+# <source ... src="..."> (used inside <audio> and <video>)
+_source_tag_src_pat = re.compile(
+    r"""(?P<prefix><source\b[^>]*?\bsrc\s*=\s*["'])
+        (?P<src>[^"']+)
+        (?P<suffix>["'][^>]*>)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Also handle <audio src="..."> (some browsers/emitters use it)
+_audio_tag_src_pat = re.compile(
+    r"""(?P<prefix><audio\b[^>]*?\bsrc\s*=\s*["'])
+        (?P<src>[^"']+)
+        (?P<suffix>["'][^>]*>)
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Accept optional scheme/host, then /accounts/serve_audio_file/<engine>/<l2>/<voice>/<file>(?…)
+_serve_audio_url_pat = re.compile(
+    r"""^(?:https?://[^/]+)?
+        /accounts/serve_audio_file/
+        (?P<engine>[^/]+)/(?P<l2>[^/]+)/(?P<voice>[^/]+)/(?P<file>[^?#]+)
+        (?:[?#].*)?$
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
 def _rewrite_imgs_and_collect_sources(request, html_text: str):
     """Find serve_project_image urls, return (new_html, [(project_id, filename)])."""
     to_copy = []
@@ -73,6 +104,36 @@ def _coerce_project_id(s: str):
     """Use numeric id *only* if s is purely digits; otherwise keep the slug."""
     return int(s) if s.isdigit() else s
 
+def _rewrite_audio_and_collect_sources(html_text: str):
+    """
+    Find serve_audio_file URLs in <source src="..."> and <audio src="...">,
+    rewrite to multimedia/<basename>, and return (new_html, [copy tuples]).
+    copy tuples: (engine, l2, voice, basename, original_src)
+    """
+    to_copy = []
+
+    def _sub_generic(m):
+        src = m.group("src")
+        m2 = _serve_audio_url_pat.match(src)
+        if not m2:
+            return m.group(0)
+
+        engine = m2.group("engine")
+        l2     = m2.group("l2")
+        voice  = m2.group("voice")
+        rel    = unquote(m2.group("file")).split("?", 1)[0].split("#", 1)[0]
+        basename = os.path.basename(rel)
+
+        new_src = f"multimedia/{basename}"
+        to_copy.append((engine, l2, voice, basename, src))
+        return f"{m.group('prefix')}{new_src}{m.group('suffix')}"
+
+    # Apply to <source> tags
+    new_html = _source_tag_src_pat.sub(_sub_generic, html_text)
+    # And to <audio src="..."> if present
+    new_html = _audio_tag_src_pat.sub(_sub_generic, new_html)
+
+    return new_html, to_copy
 
 def build_content_zip_for_text_type(request, project, text_type: str) -> str:
     """
@@ -121,7 +182,10 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
             with open(html_path, "r", encoding="latin-1") as f:
                 html = f.read()
 
-        new_html, to_copy = _rewrite_imgs_and_collect_sources(request, html)
+        #new_html, to_copy = _rewrite_imgs_and_collect_sources(request, html)
+        new_html_imgs, img_to_copy = _rewrite_imgs_and_collect_sources(request, html)
+        new_html, audio_to_copy    = _rewrite_audio_and_collect_sources(new_html_imgs)
+
         if new_html == html:
             #messages.success(request, f"--- HTML not changed: {fname}")
             continue
@@ -131,7 +195,8 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
             with open(html_path, "w", encoding="utf-8") as f:
                 f.write(new_html)
 
-            for proj_id, basename, original_src in to_copy:
+            # 1) Copy images
+            for proj_id, basename, original_src in img_to_copy:
                 # Resolve source path on disk using image_dir_for_project_id
                     try:
                         img_dir = Path(image_dir_for_project_id(proj_id))
@@ -156,7 +221,31 @@ def build_content_zip_for_text_type(request, project, text_type: str) -> str:
                         msg = f"Missing image for zip (project={proj_id} basename={basename} from {original_src}: {src_path})"
                         messages.error(request, f"WARNING: {msg}")
 
-    # 4) Zip it up
+            # 2) Copy audio files
+            if audio_to_copy:
+                try:
+                    audio_repo = AudioRepositoryORM()  # same class as in serve_audio_file
+                    audio_base = Path(audio_repo.base_dir)
+                except Exception as e:
+                    messages.error(request, f"WARNING: Audio repo unavailable: {e}")
+                    audio_base = None
+
+                for engine, l2, voice, basename, original_src in audio_to_copy:
+                    if not audio_base:
+                        # Can't resolve; we already reported the repo error
+                        continue
+
+                    src_path = absolute_file_name(audio_base / engine / l2 / voice / basename)
+                    if file_exists(src_path):
+                        dst_path = absolute_file_name(f"{multimedia_dir}/{basename}")
+                        try:
+                            copy_file(src_path, dst_path)
+                        except Exception as e:
+                            messages.error(request, f"WARNING: Failed to copy audio {src_path} -> {dst_path}: {e}")
+                    else:
+                        messages.error(request, f"WARNING: Missing audio for zip ({engine}/{l2}/{voice}/{basename} from {original_src}: {src_path})")
+
+    # 3) Zip it up
     make_zipfile(tmp_zipfile_dir_path, tmp_zipfile_path, callback=None)
     final_path = project.zip_filepath(text_type)
     os.makedirs(os.path.dirname(final_path), exist_ok=True)
