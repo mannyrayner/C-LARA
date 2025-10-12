@@ -280,13 +280,14 @@ def content_detail(request, content_id):
         # Handle unlock POST
         if content.is_protected:
             unlock_form = ContentUnlockForm(request.POST)
-            client_ip, _ = get_client_ip(request, request_header_order=[
-                'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'
-            ])
-            client_ip = client_ip or '0.0.0.0'
-            if too_many_attempts(client_ip, content.id):
-                messages.error(request, "Too many attempts. Try again later.")
-            elif form.is_valid():
+##            client_ip, _ = get_client_ip(request, request_header_order=[
+##                'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'
+##            ])
+##            client_ip = client_ip or '0.0.0.0'
+##            if too_many_attempts(client_ip, content.id):
+##                messages.error(request, "Too many attempts. Try again later.")
+##            elif form.is_valid():
+            if form.is_valid():
                 if content.check_password(form.cleaned_data["password"]):
                     request.session[unlocked_key] = True
                     # create a signed token for programmatic manifest fetches
