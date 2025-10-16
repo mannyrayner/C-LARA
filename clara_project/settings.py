@@ -30,9 +30,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'your-default-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# In particular, never run in debug mode on UniSA
-DEBUG = bool(os.getenv('DJANGO_DEBUG', False)) and not os.getenv('CLARA_ENVIRONMENT') == 'unisa'
-#DEBUG = True
+# In particular, only run in debug mode on UniSA if absolutely necessary
+#DEBUG = bool(os.getenv('DJANGO_DEBUG', False)) and not os.getenv('CLARA_ENVIRONMENT') == 'unisa'
+DEBUG = True
 
 USE_X_FORWARDED_HOST = True
 
