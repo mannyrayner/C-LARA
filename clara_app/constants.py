@@ -135,6 +135,8 @@ SUPPORTED_LANGUAGES_AND_DEFAULT = [ ('default', 'Default') ] + SUPPORTED_LANGUAG
 
 SUPPORTED_LANGUAGES_AND_OTHER = SUPPORTED_LANGUAGES + [ ('other', 'Other') ]
 
+SUBSTITUTE_AUDIO_LANGUAGE = { 'old norse': 'icelandic' }
+
 TTS_CHOICES = [
     ( 'none', 'None' ),
     ( 'google', 'Google TTS' ),

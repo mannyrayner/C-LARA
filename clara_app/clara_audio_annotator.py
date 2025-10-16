@@ -35,14 +35,20 @@ import regex
 import pprint
 import subprocess
 
+from constants import SUBSTITUTE_AUDIO_LANGUAGE
+
 config = get_config()
 
 class AudioAnnotator:
-    def __init__(self, language, tts_engine_type=None,
+    def __init__(self, language0, tts_engine_type=None,
                  human_voice_id=None,
                  audio_type_for_words='tts', audio_type_for_segments='tts', use_context=False,
                  preferred_tts_engine=None, preferred_tts_voice=None,
                  phonetic=False, callback=None):
+        if language0 in SUBSTITUTE_AUDIO_LANGUAGE:
+            language = SUBSTITUTE_AUDIO_LANGUAGE[language0]
+        else:
+            language = language0
         self.language = language
         # TTS for words
         self.tts_engine = create_tts_engine(tts_engine_type) if tts_engine_type else get_tts_engine(language, words_or_segments='words', phonetic=False, callback=callback)
