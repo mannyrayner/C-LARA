@@ -345,7 +345,7 @@ def content_detail(request, content_id):
 
         return redirect('content_detail', content_id=content_id)
 
-    zip_exists = content.project.zip_exists(content.text_type)
+    zip_exists = content.project.zip_exists(content.text_type) if content.project else False
     zip_fresh = content.project.zip_is_fresh(content.text_type) if content.project else False
 
     clara_version = get_user_config(request.user)['clara_version']
