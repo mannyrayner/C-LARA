@@ -35,7 +35,7 @@ import regex
 import pprint
 import subprocess
 
-from constants import SUBSTITUTE_AUDIO_LANGUAGE
+from .constants import SUBSTITUTE_AUDIO_LANGUAGE
 
 config = get_config()
 
