@@ -5,6 +5,8 @@ import shutil, subprocess
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
+from ai_assistant.ai_assistant_utils import _maybe_cygpath
+
 URL_TAG_RE = re.compile(r"""\{%\s*url\s+'([^']+)'\s*([^%}]*)%\}""")
 A_TAG_RE   = re.compile(r"""<a[^>]*href=['"]\s*\{%\s*url\s+'([^']+)'[^%}]*%\}\s*['"][^>]*>(.*?)</a>""", re.I|re.S)
 CAPITALIZED = re.compile(r"\b([A-Z][A-Za-z0-9_]*)\s*\.objects\b")
@@ -137,26 +139,6 @@ def write_yaml_card(out_dir: Path, card: dict):
     fname = f"{card['id']}.yaml"
     with (out_dir / fname).open("w", encoding="utf-8") as f:
         yaml.safe_dump(card, f, sort_keys=False, allow_unicode=True)
-
-def _maybe_cygpath(p: str) -> str:
-    """
-    If running on Windows and a POSIX-looking path was provided (e.g., /home/...),
-    and 'cygpath' is available (Cygwin), convert to a native Windows path.
-    Otherwise return the original.
-    """
-    if os.name != "nt":
-        return p
-    # Heuristic: POSIX-ish absolute path
-    if not p or not p.startswith("/"):
-        return p
-    cyg = shutil.which("cygpath")
-    if not cyg:
-        return p
-    try:
-        win = subprocess.check_output([cyg, "-w", p], text=True).strip()
-        return win
-    except Exception:
-        return p
 
 def main():
     ap = argparse.ArgumentParser(description="C-LARA static functionality map extractor (v0)")
