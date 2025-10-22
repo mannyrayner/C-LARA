@@ -18,10 +18,11 @@ CONFIG_TOML ?= $(abspath ./config.toml)
 # Helper: load MODEL/API_KEY from TOML at recipe time
 
 define LOAD_FROM_TOML
-eval "$$(PYTHONPATH="$(PYMODPATH)" $(PY) read_config.py --toml "$(CONFIG_TOML)" --format sh)"; \
+eval "$$(PYTHONPATH="$(PYMODPATH)" $(PY) read_config.py --toml "$(CONFIG_TOML)" --format sh | tr -d '\r')"; \
 if [ -z "$$MODEL" ]; then echo "ERROR: MODEL missing in $(CONFIG_TOML)"; exit 2; fi; \
 if [ -z "$$API_KEY" ]; then echo "ERROR: API_KEY missing in $(CONFIG_TOML)"; exit 2; fi;
 endef
+
 
 # ---- Phonies ----
 .PHONY: all deps extract extract-nopubs map enrich enrich-some clean clean-cfg show help check-config
@@ -58,10 +59,10 @@ enrich: $(ENRICH)
 	@mkdir -p "$(OUT)"
 	@{ $(LOAD_FROM_TOML) \
 	  echo "Enriching cards with AI (MODEL=$$MODEL)"; \
-	  OPENAI_API_KEY="$$API_KEY" PYTHONPATH="$(PYMODPATH)" \
+	  PYTHONPATH="$(PYMODPATH)" \
 	  $(PY) -m ai_assistant.ai_enrich_features \
 	    --repo "$(REPO)" --out "$(OUT)" \
-	    --gpt-model "$$MODEL"; }
+	    --gpt-model "$$MODEL" --api-key "$$OPENAI_API_KEY"; }
 
 # Enrich only a subset: make enrich-some ONLY="export_zipfile,edit_images_v2" LIMIT=2
 ONLY  ?=
@@ -71,12 +72,11 @@ enrich-some: $(ENRICH)
 	@{ $(LOAD_FROM_TOML) \
 	  echo "Enriching subset (MODEL=$$MODEL)"; \
 	  PYTHONPATH="$(PYMODPATH)" \
-	  OPENAI_API_KEY="$$API_KEY" PYTHONPATH="$(PYMODPATH)" \
 	  $(PY) -m ai_assistant.ai_enrich_features \
 	    --repo "$(REPO)" --out "$(OUT)" \
 	    $(if $(ONLY),--only $(ONLY),) \
 	    $(if $(LIMIT),--limit $(LIMIT),) \
-	    --gpt-model "$$MODEL"; }
+	    --gpt-model "$$MODEL" --api-key "$$OPENAI_API_KEY"; }
 
 clean:
 	@echo "Removing knowledge output at $(OUT)"
