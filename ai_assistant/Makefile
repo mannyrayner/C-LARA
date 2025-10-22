@@ -14,22 +14,14 @@ PYMODPATH := $(if $(REPO_WIN),$(REPO_WIN),$(REPO))
 
 # ---- Private config via TOML ----
 CONFIG_TOML ?= $(abspath ./config.toml)
-CONFIG_MK   ?= $(abspath ./.config.mk)
 
-# Auto-generate .config.mk from config.toml when present
-# (This will define MODEL and API_KEY variables.)
-$(CONFIG_MK): read_config.py $(CONFIG_TOML)
-	@echo "Loading private config from $(CONFIG_TOML) → $(CONFIG_MK)"
-	PYTHONPATH="$(PYMODPATH)" \
-	@$(PY) read_config.py --toml "$(CONFIG_TOML)" > "$(CONFIG_MK)"
+# Helper: load MODEL/API_KEY from TOML at recipe time
 
-# Always include; it must exist
-include $(CONFIG_MK)
-
-# Fail fast if MODEL/API_KEY are missing
-check-config: $(CONFIG_MK)
-	@if [ -z "$(MODEL)" ]; then echo "ERROR: MODEL not set in $(CONFIG_MK) (from config.toml)"; exit 2; fi
-	@if [ -z "$(API_KEY)" ]; then echo "ERROR: API_KEY not set in $(CONFIG_MK) (from config.toml)"; exit 2; fi
+define LOAD_FROM_TOML
+eval "$$(PYTHONPATH="$(PYMODPATH)" $(PY) read_config.py --toml "$(CONFIG_TOML)" --format sh)"; \
+if [ -z "$$MODEL" ]; then echo "ERROR: MODEL missing in $(CONFIG_TOML)"; exit 2; fi; \
+if [ -z "$$API_KEY" ]; then echo "ERROR: API_KEY missing in $(CONFIG_TOML)"; exit 2; fi;
+endef
 
 # ---- Phonies ----
 .PHONY: all deps extract extract-nopubs map enrich enrich-some clean clean-cfg show help check-config
@@ -61,26 +53,30 @@ extract-nopubs: $(SCRIPT)
 # Full pipeline: extract -> enrich
 map: extract enrich
 
-# Enrich all cards — TOML required
-enrich: $(ENRICH) $(CONFIG_MK) check-config
-	@echo "Enriching cards with AI (MODEL=$(MODEL))"
+# Enrich all cards — TOML required (loads MODEL/API_KEY at recipe time)
+enrich: $(ENRICH)
 	@mkdir -p "$(OUT)"
-	@OPENAI_API_KEY="$(API_KEY)" \
-	PYTHONPATH="$(PYMODPATH)" \
-	$(PY) -m ai_assistant.ai_enrich_features \
-	--repo "$(REPO)" --out "$(OUT)" --gpt-model "$(MODEL)"
+	@{ $(LOAD_FROM_TOML) \
+	  echo "Enriching cards with AI (MODEL=$$MODEL)"; \
+	  OPENAI_API_KEY="$$API_KEY" PYTHONPATH="$(PYMODPATH)" \
+	  $(PY) -m ai_assistant.ai_enrich_features \
+	    --repo "$(REPO)" --out "$(OUT)" \
+	    --gpt-model "$$MODEL"; }
 
 # Enrich only a subset: make enrich-some ONLY="export_zipfile,edit_images_v2" LIMIT=2
-ONLY  ?= 
+ONLY  ?=
 LIMIT ?= 0
-enrich-some: $(ENRICH) $(CONFIG_MK) check-config
-	@echo "Enriching cards with AI (MODEL=$(MODEL))"
-	@OPENAI_API_KEY="$(API_KEY)" \
-	PYTHONPATH="$(PYMODPATH)" \
-	$(PY) -m  ai_assistant.ai_enrich_features  --repo "$(REPO)" --out "$(OUT)" \
-		$(if $(ONLY),--only $(ONLY),) \
-		$(if $(LIMIT),--limit $(LIMIT),) \
-		--gpt-model $(MODEL)
+enrich-some: $(ENRICH)
+	@mkdir -p "$(OUT)"
+	@{ $(LOAD_FROM_TOML) \
+	  echo "Enriching subset (MODEL=$$MODEL)"; \
+	  PYTHONPATH="$(PYMODPATH)" \
+	  OPENAI_API_KEY="$$API_KEY" PYTHONPATH="$(PYMODPATH)" \
+	  $(PY) -m ai_assistant.ai_enrich_features \
+	    --repo "$(REPO)" --out "$(OUT)" \
+	    $(if $(ONLY),--only $(ONLY),) \
+	    $(if $(LIMIT),--limit $(LIMIT),) \
+	    --gpt-model "$$MODEL"; }
 
 clean:
 	@echo "Removing knowledge output at $(OUT)"
