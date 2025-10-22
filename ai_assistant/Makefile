@@ -20,17 +20,19 @@ CONFIG_MK   ?= $(abspath ./.config.mk)
 # (This will define MODEL and API_KEY variables.)
 $(CONFIG_MK): read_config.py $(CONFIG_TOML)
 	@echo "Loading private config from $(CONFIG_TOML) → $(CONFIG_MK)"
+	PYTHONPATH="$(PYMODPATH)" \
 	@$(PY) read_config.py --toml "$(CONFIG_TOML)" > "$(CONFIG_MK)"
 
-# Load if it exists (don’t error if missing)
--include $(CONFIG_MK)
+# Always include; it must exist
+include $(CONFIG_MK)
 
-# Optional CLI overrides (still possible): make enrich MODEL=gpt-4o
-MODEL   ?=
-API_KEY ?=
+# Fail fast if MODEL/API_KEY are missing
+check-config: $(CONFIG_MK)
+	@if [ -z "$(MODEL)" ]; then echo "ERROR: MODEL not set in $(CONFIG_MK) (from config.toml)"; exit 2; fi
+	@if [ -z "$(API_KEY)" ]; then echo "ERROR: API_KEY not set in $(CONFIG_MK) (from config.toml)"; exit 2; fi
 
 # ---- Phonies ----
-.PHONY: all deps extract extract-nopubs clean rebuild show help map enrich enrich-some cfg clean-cfg
+.PHONY: all deps extract extract-nopubs map enrich enrich-some clean clean-cfg show help check-config
 
 all: extract
 
@@ -59,30 +61,26 @@ extract-nopubs: $(SCRIPT)
 # Full pipeline: extract -> enrich
 map: extract enrich
 
-# Enrich cards with AI (reads MODEL/API_KEY from .config.mk if present)
-# We pass the API key as an environment variable to avoid exposing it in argv.
-enrich: $(ENRICH) $(CONFIG_MK)
-	@echo "Enriching cards with AI:"
-	@echo "  REPO = $(REPO)"
-	@echo "  OUT  = $(OUT)"
-	@echo "  MODEL = $(MODEL)"
-	@# (API key is set via env; not echoed)"
+# Enrich all cards — TOML required
+enrich: $(ENRICH) $(CONFIG_MK) check-config
+	@echo "Enriching cards with AI (MODEL=$(MODEL))"
 	@mkdir -p "$(OUT)"
 	@OPENAI_API_KEY="$(API_KEY)" \
 	PYTHONPATH="$(PYMODPATH)" \
-	$(PY) -m ai_assistant.ai_enrich_features --repo "$(REPO)" --out "$(OUT)" \
-		$(if $(MODEL),--gpt-model $(MODEL),)
+	$(PY) -m ai_assistant.ai_enrich_features \
+	--repo "$(REPO)" --out "$(OUT)" --gpt-model "$(MODEL)"
 
 # Enrich only a subset: make enrich-some ONLY="export_zipfile,edit_images_v2" LIMIT=2
 ONLY  ?= 
 LIMIT ?= 0
-enrich-some: $(CONFIG_MK)
+enrich-some: $(ENRICH) $(CONFIG_MK) check-config
+	@echo "Enriching cards with AI (MODEL=$(MODEL))"
 	@OPENAI_API_KEY="$(API_KEY)" \
 	PYTHONPATH="$(PYMODPATH)" \
 	$(PY) -m  ai_assistant.ai_enrich_features  --repo "$(REPO)" --out "$(OUT)" \
 		$(if $(ONLY),--only $(ONLY),) \
 		$(if $(LIMIT),--limit $(LIMIT),) \
-		$(if $(MODEL),--gpt-model $(MODEL),)
+		--gpt-model $(MODEL)
 
 clean:
 	@echo "Removing knowledge output at $(OUT)"

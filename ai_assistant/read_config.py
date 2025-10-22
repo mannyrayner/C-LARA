@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
 Reads ai_assistant/config.toml and emits a tiny Makefile fragment (.config.mk)
-with MODEL and API_KEY assignments (no echoing to stdout during normal make).
+with MODEL and API_KEY assignments.
 
-Usage (from Makefile rule):
+Usage:
   python3 read_config.py --toml config.toml > .config.mk
 """
+import argparse, sys, os, shutil, subprocess
 
-import argparse, sys
+from ai_assistant.ai_assistant_utils import _maybe_cygpath
 
 def load_toml(path: str) -> dict:
-    # Python 3.11+: tomllib is stdlib. Otherwise try tomli (pip install tomli).
+    # Python 3.11+: tomllib is stdlib. Otherwise try tomli.
     try:
         import tomllib  # type: ignore
         with open(path, "rb") as f:
@@ -21,7 +22,7 @@ def load_toml(path: str) -> dict:
             with open(path, "rb") as f:
                 return tomli.load(f)
         except Exception as e:
-            print(f"# WARN: Could not import tomllib/tomli: {e}", file=sys.stderr)
+            print(f"# WARN: Could not import/parse TOML via tomllib/tomli: {e}", file=sys.stderr)
             return {}
 
 def main():
@@ -29,15 +30,14 @@ def main():
     ap.add_argument("--toml", required=True)
     args = ap.parse_args()
 
-    data = load_toml(args.toml) or {}
+    toml_path = _maybe_cygpath(args.toml)  # <<< normalize for Windows Python
+    data = load_toml(toml_path) or {}
     openai = data.get("openai", {})
     model = str(openai.get("model", "")).strip()
     api_key = str(openai.get("api_key", "")).strip()
 
-    # Emit a minimal Makefile snippet. We avoid printing secrets elsewhere.
+    # Emit a minimal Makefile snippet
     print(f"MODEL := {model}")
-    # Keep API key in a variable, but we’ll pass it to the tool as an env var
-    # to avoid showing it in the process args list.
     print(f"API_KEY := {api_key}")
 
 if __name__ == "__main__":

@@ -178,14 +178,10 @@ def main():
     # (If either is omitted, clara_chatgpt4 uses defaults: DEFAULT_GPT_4_MODEL = 'gpt-4o'
     #  and env var OPENAI_API_KEY.)  # see clara_chatgpt4.get_open_ai_api_key & DEFAULT_GPT_4_MODEL
 
-    repo = Path(args.repo)
-    out = Path(args.out)
     map_dir = out / "feature_map"
     index = (out / "feature_index.yaml")
     if not map_dir.exists():
         print(f"Missing feature_map at: {map_dir}", file=sys.stderr); sys.exit(1)
-
-    chat = _import_chat_module(repo)  # uses clara_chatgpt4 API  :contentReference[oaicite:1]{index=1}
 
     cards = sorted(map_dir.glob("*.yaml"))
     if args.only:
@@ -200,7 +196,7 @@ def main():
         prompt, sources = build_prompt(card, repo)
 
         # Call model via C-LARA helper (includes tracing/costs)  :contentReference[oaicite:2]{index=2}
-        api = chat.call_chat_gpt4(prompt, config_info={}, callback=None)
+        api = chat.call_chat_gpt4(prompt, config_info=config_info, callback=None)
         # Parse JSON robustly using your helper
         try:
             intro, obj = chat.interpret_chat_gpt4_response_as_intro_and_json(api.response, object_type='dict', callback=None)  # :contentReference[oaicite:3]{index=3}
