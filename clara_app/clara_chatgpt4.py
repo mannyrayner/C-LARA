@@ -64,7 +64,9 @@ def get_open_ai_api_key(config_info):
     else:
         key = os.environ.get("OPENAI_API_KEY")
         source = 'env variable OPENAI_API_KEY'
-        
+
+    # Normalize to avoid CR/LF sneaking into HTTP headers on Windows
+    key = (key or "").strip()
     #print(f'open_ai_api_key = "{key}" (from {source})\n')
     return key
 
