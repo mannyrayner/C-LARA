@@ -144,9 +144,21 @@ Think in **stages**, each surfaced clearly in `project_detail.html`:
 
 ## 5) Two Canonical Patterns in the Code
 
-### A. Straight-through, file-system oriented “tooling” view (e.g., Export zipfile)
-- **Entry view** validates the project, constructs a **self-contained directory** (copying/normalizing assets), zips it, and returns a streaming response.
-- The important bits: reliable path resolution via `CLARAProjectInternal`, careful filtering (what to include/exclude), and stable HTTP response.
+### A. Add some kind of annotations to a text (e.g., create_segmented_text)
+- Top-level function is in annotation_views, here create_segmented_text, calls annotation_views.create_annotated_text_of_right_type
+- annotation_views.create_annotated_text_of_right_type has some arguments:
+  The argument 'request' is the Django request.
+  The argument 'this_version' is the version we are currently creating/editing. E.g. here it is 'segmented'
+  The argument 'previous_version' is the version it is created from. E.g. here it is 'plain'
+  The argument 'template' is the HTML template we will use for rendering the form
+
+  annotation_views.create_annotated_text_of_right_type calls annotation_views.CreateAnnotationTextFormOfRightType to create a form that is shown to the user.
+  If request.method == 'POST' then annotation_views.create_annotated_text_of_right_type extracts the value text_choice from the form. text_choice says what operation the user requested. This can include manual editing of the annotated text, loading an archived version, etc as well as performing the generation operation, here creating a segmented text.
+  If text_choice == 'generate', annotation_views.create_annotated_text_of_right_type makes an async_task to annotation_views.perform_generate_operation_and_store_api_calls
+- annotation_views.perform_generate_operation_and_store_api_calls calls annotation_views.perform_generate_operation
+- annotation_views.perform_generate_operation calls the appropriate method on the CLARAProjectInternal. For the 'generate' operation and segmentation, this method is create_segmented_text.
+- CLARAProjectInternal.create_segmented_text, defined in clara_main.py, calls clara_create_annotations.generate_segmented_version
+- clara_create_annotations.generate_segmented_version 
 
 ### B. Multistage orchestration “dashboard” view (e.g., Edit Images v2)
 - **Single page** controlling multiple, semi-independent stages:
