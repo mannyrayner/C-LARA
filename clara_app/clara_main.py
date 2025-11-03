@@ -1994,8 +1994,6 @@ class CLARAProjectInternal:
             error_message = f'*** Error when creating element names: "{str(e)}"\n{traceback.format_exc()}'
             post_task_update(callback, error_message)
 
-    # *** HERE
-
     def remove_all_element_information_v2(self, params, callback=None):
         try:
             project_id = self.id

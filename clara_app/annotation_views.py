@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 #
 # The argument 'this_version' is the version we are currently creating/editing.
 # The argument 'previous_version' is the version it is created from. E.g. "gloss" is created from "segmented".
+# The argument 'template' is the HTML template we will use for rendering the form
 #
 # Most of the operations are common to all these types of text, but there are some small divergences
 # which have to be treated specially:
