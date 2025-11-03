@@ -55,6 +55,8 @@ def simulate_response(model_name: str, claim: str) -> Dict[str, Any]:
         "notes": ""
     }
 
+# ---------- provider-specific callers ----------
+
 def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
     if requests is None:
         raise RuntimeError("The 'requests' package is required to call APIs. Install it with 'pip install requests'.")
@@ -81,6 +83,76 @@ def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, use
 def call_deepseek(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
     # DeepSeek is OpenAI-compatible in many SDKs; keep separate in case of differences.
     return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+
+def call_anthropic(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int = 60) -> str:
+    """
+    Anthropic messages endpoint.
+    We send system + user as two separate messages; we ask for a single text output.
+    """
+    if requests is None:
+        raise RuntimeError("The 'requests' package is required to call APIs. Install it with 'pip install requests'.")
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+    }
+    payload = {
+        "model": model,
+        "max_tokens": 2048,
+        "system": system_prompt,
+        "messages": [
+            {"role": "user", "content": user_prompt},
+        ],
+    }
+    resp = requests.post(chat_url, headers=headers, json=payload, timeout=timeout)
+    print("[DEBUG] Anthropic request -> status:", resp.status_code)
+    try:
+        print("[DEBUG] Anthropic response body:", resp.json())
+    except Exception:
+        print("[DEBUG] Anthropic response text:", resp.text[:2000])
+    resp.raise_for_status()
+    data = resp.json()
+    # Anthropic returns content as a list of blocks
+    try:
+        blocks = data.get("content", [])
+        text_parts = [b.get("text", "") for b in blocks if b.get("type") == "text"]
+        return "\n".join(text_parts).strip()
+    except Exception as e:
+        raise RuntimeError(f"Unexpected Anthropic response structure: {data}") from e
+
+
+def call_gemini(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int = 60) -> str:
+    """
+    Google Generative Language API (Gemini) - basic REST call.
+    We'll concatenate system + user into one prompt to preserve behaviour.
+    """
+    if requests is None:
+        raise RuntimeError("The 'requests' package is required to call APIs. Install it with 'pip install requests'.")
+    full_prompt = f"{system_prompt}\n\n{user_prompt}"
+    url = f"{chat_url}?key={api_key}"
+    payload = {
+        "contents": [
+            {
+                "role": "user",
+                "parts": [{"text": full_prompt}],
+            }
+        ],
+        # keep it simple; if you need temperature/topP, add here
+    }
+    resp = requests.post(url, json=payload, timeout=timeout)
+    print("[DEBUG] Gemini request -> status:", resp.status_code)
+    try:
+        print("[DEBUG] Gemini response body:", resp.json())
+    except Exception:
+        print("[DEBUG] Gemini response text:", resp.text[:2000])
+    resp.raise_for_status()
+    data = resp.json()
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        raise RuntimeError(f"Unexpected Gemini response structure: {data}") from e
+
+
 
 def parse_models(models_cfg: Dict[str, Any]):
     """
@@ -109,21 +181,58 @@ def parse_models(models_cfg: Dict[str, Any]):
         })
     return models
 
+def test_providers(models_cfg: List[Dict[str, Any]], timeout: int = 60):
+    """
+    Quick connectivity test: call each model once with a trivial prompt.
+    """
+    system_prompt = "You are a helpful assistant."
+    user_prompt = "Say hello and identify yourself in one sentence."
+    for mq in models_cfg:
+        if not mq["api_key"]:
+            print(f"[SKIP] {mq['name']} ({mq['provider']}) – no API key in env.")
+            continue
+        print(f"[TEST] Calling {mq['name']} ({mq['provider']}) ...")
+        provider = mq["provider"]
+        try:
+            if provider == "openai":
+                out = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
+            elif provider == "deepseek":
+                out = call_deepseek(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
+            elif provider == "anthropic":
+                out = call_anthropic(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
+            elif provider == "xai":
+                out = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
+            elif provider == "google":
+                out = call_gemini(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
+            else:
+                print(f"[WARN] Unknown provider {provider}, skipping.")
+                continue
+            print(f"[OK] {mq['name']} -> {out[:200]!r}")
+        except Exception as e:
+            print(f"[ERROR] {mq['name']} ({mq['provider']}): {e}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", required=True, help="Path to models.yaml")
-    ap.add_argument("--questions", required=True, help="Path to questions.yaml")
+    ap.add_argument("--questions", required=False, help="Path to questions.yaml")
     ap.add_argument("--prompt", default="prompt_template.txt", help="Prompt template path")
     ap.add_argument("--runs", type=int, default=3, help="Repeat count per (model, question)")
     ap.add_argument("--timeout", type=int, default=3000, help="Read timeout for API calls (seconds)")
-    ap.add_argument("--out", required=True, help="Output directory")
+    ap.add_argument("--out", required=False, help="Output directory")
     ap.add_argument("--dry-run", action="store_true", help="Do not call APIs; simulate outputs deterministically")
+    ap.add_argument("--test-providers", action="store_true", help="Call each provider once with a tiny prompt and exit")
     args = ap.parse_args()
 
-    ensure_dir(args.out)
     models_cfg_raw = load_yaml(args.models)
     # populate api_key from environment variables specified by env_key
     models_cfg = parse_models(models_cfg_raw)
+
+    if args.test_providers:
+        test_providers(models_cfg, timeout=args.timeout)
+        return
+    
+    ensure_dir(args.out)
     questions = load_yaml(args.questions)
     system_prompt = "You are an evidence-focused assistant. Follow the user instruction carefully and return strict JSON."
     user_tmpl = read_file(args.prompt)
@@ -151,6 +260,20 @@ def main():
                             content = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout)
                         elif mq["provider"] == "deepseek":
                             content = call_deepseek(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout)
+                        elif mq["provider"] == "anthropic":
+                            content = call_anthropic(
+                                mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout
+                            )
+                        elif mq["provider"] == "xai":
+                            # xAI is OpenAI-compatible
+                            content = call_openai(
+                                mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout
+                            )
+                        elif mq["provider"] == "google":
+                            content = call_gemini(
+                                mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout
+                            )
+
                         else:
                             raise ValueError(f"Unknown provider: {mq['provider']}")
 

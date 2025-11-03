@@ -3,9 +3,31 @@
   model: gpt-5
   chat_url: https://api.openai.com/v1/chat/completions
   env_key: OPENAI_API_KEY
+
 - name: deepseek
   provider: deepseek
   model: deepseek-chat
   chat_url: https://api.deepseek.com/v1/chat/completions
-  env_key: DEEPSEEK_API_KEY
+  env_key: DEEP_SEEK_API_KEY
+  temperature: 0.2
+
+- name: claude
+  provider: anthropic
+  model: claude-opus-4-1-20250805
+  chat_url: https://api.anthropic.com/v1/messages
+  env_key: ANTHROPIC_API_KEY
+  temperature: 0.2
+
+- name: grok
+  provider: xai
+  model: grok-4
+  chat_url: https://api.x.ai/v1/chat/completions
+  env_key: XAI_API_KEY
+  temperature: 0.2
+
+- name: gemini
+  provider: google
+  model: gemini-2.5-pro
+  chat_url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent
+  env_key: GEMINI_API_KEY
   temperature: 0.2
