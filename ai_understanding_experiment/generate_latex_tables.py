@@ -156,6 +156,45 @@ def write_conf_by_question(conf_csv, out_path):
         f.write("\n".join(lines))
     print("Wrote", out_path)
 
+def write_majority_matrix(decisions_csv, unanimity_csv, out_path):
+    dec = pd.read_csv(decisions_csv, index_col=0)
+    uni = pd.read_csv(unanimity_csv, index_col=0)
+
+    models = list(dec.columns)
+
+    lines = []
+    lines.append(r'\begin{table}[h]')
+    lines.append(r'\centering')
+    lines.append(r'\caption{Per-question majority decision by model. A star ($^\ast$) marks cells where runs were not unanimous for that model/question.}')
+    lines.append(r'\label{tab:majority-matrix}')
+    col_spec = 'l' + 'c' * len(models)
+    lines.append(r'\begin{tabular}{' + col_spec + r'}')
+    lines.append(r'\hline')
+    header = 'question\\_id & ' + ' & '.join([latex_escape(m) for m in models]) + r' \\'
+    lines.append(header)
+    lines.append(r'\hline')
+    for q, row in dec.iterrows():
+        cells = []
+        for m in models:
+            val = row[m]
+            if pd.isna(val):
+                cells.append('')
+            else:
+                mark = ''
+                try:
+                    if not bool(uni.loc[q, m]):
+                        mark = r'$^\ast$'
+                except Exception:
+                    pass
+                cells.append(latex_escape(val) + mark)
+        lines.append(latex_escape(q) + ' & ' + ' & '.join(cells) + r' \\')
+    lines.append(r'\hline')
+    lines.append(r'\end{tabular}')
+    lines.append(r'\end{table}')
+    with open(out_path, 'w', encoding='utf-8') as f:
+        f.write("\n".join(lines))
+    print("Wrote", out_path)
+
 def write_theses_longtable(theses_csv, out_path):
     df = pd.read_csv(theses_csv)
     lines = []
@@ -218,6 +257,12 @@ def main():
     write_agreement(files['agreement'], os.path.join(OUT, 'agreement.tex'))
     write_avg_conf(files['avg_conf'], os.path.join(OUT, 'avg_conf.tex'))
     write_conf_by_question(files['conf_pivot'], os.path.join(OUT, 'conf_by_question.tex'))
+    maj_decisions = os.path.join(IN, 'majority_decisions_wide.csv')
+    
+    unanimity = os.path.join(IN, 'unanimity_wide.csv')
+    if os.path.exists(maj_decisions) and os.path.exists(unanimity):
+        write_majority_matrix(maj_decisions, unanimity, os.path.join(OUT, 'majority_matrix.tex'))
+        
     write_theses_longtable(files['theses'], os.path.join(OUT, 'theses_longtable.tex'))
     print("All LaTeX fragments written to", os.path.abspath(OUT))
 

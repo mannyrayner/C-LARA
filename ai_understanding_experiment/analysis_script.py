@@ -104,7 +104,7 @@ def main():
     conf_stats = df.groupby(['model','question_id'])['confidence'].agg(['mean','std','count']).reset_index().rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
     avg_conf_model = df.groupby('model')['confidence'].agg(['mean','std','count']).reset_index().rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
 
-    # NEW: pivot to full per-question x per-model mean_confidence table
+    # Pivot to full per-question x per-model mean_confidence table
     conf_pivot = conf_stats.pivot(index='question_id', columns='model', values='mean_confidence').sort_index()
     # fill NaN with empty for nicer CSV/readout
     conf_pivot_filled = conf_pivot.fillna('')
@@ -116,6 +116,45 @@ def main():
 
     first_thesis = df.sort_values(['model','question_id','run']).groupby(['model','question_id']).first().reset_index()[['model','question_id','thesis']]
 
+    # Majority / collapsed decisions per (model, question)
+    # For almost all cells there is only 1 unique decision; where there isn't, we mark it.
+    def collapse_decisions(group):
+        vals = group['decision_norm'].tolist()
+        uniq = sorted(set(vals))
+        if len(uniq) == 1:
+            return pd.Series({
+                'decision_collapsed': uniq[0],
+                'unanimous': True
+            })
+        else:
+            # pick the most frequent as the "collapsed" one
+            counts = group['decision_norm'].value_counts()
+            maj = counts.idxmax()
+            return pd.Series({
+                'decision_collapsed': maj,
+                'unanimous': False
+            })
+
+    collapsed = (
+        df.groupby(['question_id', 'model'])
+          .apply(collapse_decisions)
+          .reset_index()
+    )
+
+    # pivot to questions x models
+    collapsed_wide = collapsed.pivot(
+        index='question_id',
+        columns='model',
+        values='decision_collapsed'
+    ).sort_index()
+
+    # also pivot unanimity flags
+    unanimity_wide = collapsed.pivot(
+        index='question_id',
+        columns='model',
+        values='unanimous'
+    ).sort_index()
+
     # Save outputs
     counts.to_csv(os.path.join(OUT_DIR, 'decision_counts_by_model.csv'))
     wide.reset_index().to_csv(os.path.join(OUT_DIR, 'per_question_decisions_wide.csv'), index=False)
@@ -125,6 +164,8 @@ def main():
     avg_conf_model.to_csv(os.path.join(OUT_DIR, 'avg_conf_by_model.csv'))
     consistency.to_csv(os.path.join(OUT_DIR, 'consistency_by_model_question.csv'), index=False)
     first_thesis.to_csv(os.path.join(OUT_DIR, 'first_thesis_samples.csv'), index=False)
+    collapsed_wide.to_csv(os.path.join(OUT_DIR, 'majority_decisions_wide.csv'))
+    unanimity_wide.to_csv(os.path.join(OUT_DIR, 'unanimity_wide.csv'))
 
     report_lines = []
     report_lines.append("Experiment detailed analysis report")
