@@ -1,0 +1,21 @@
+\begin{table}[h]
+\centering
+\caption{Per-question majority decision by model. A star ($^\ast$) marks cells where runs were not unanimous for that model/question.}
+\label{tab:majority-matrix}
+\begin{tabular}{lccccc}
+\hline
+question\_id & claude & deepseek & gemini & gpt5 & grok \\
+\hline
+abiogenesis\_implausible & b & b & b & b & b \\
+abiogenesis\_rapid & a & b & b$^\ast$ & b & a \\
+climate\_anthro\_true & a & a & a & a & a \\
+climate\_hoax & b & b & b & b & b \\
+cosmo\_earth\_age\_false & b & b & b & b & b \\
+cosmo\_earth\_age\_true & a & a & a & a & a \\
+evo\_creationism\_true & b & b & b & b & b \\
+evo\_evolution\_true & a & a & a & a & a \\
+trump\_liar & a & a & a & a & a \\
+trump\_truth\_teller & b & b & b & b & b \\
+\hline
+\end{tabular}
+\end{table}
