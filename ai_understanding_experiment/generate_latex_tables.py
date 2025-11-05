@@ -146,7 +146,7 @@ def write_conf_by_question(conf_csv, out_path):
             if pd.isna(v):
                 vals.append('')
             else:
-                vals.append(f"{float(v):.6f}")
+                vals.append(f"{float(v):.2f}")
         line = latex_escape(q) + ' & ' + ' & '.join(vals) + r' \\'
         lines.append(line)
     lines.append(r'\hline')
