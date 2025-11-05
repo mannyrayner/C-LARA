@@ -1,0 +1,11 @@
+question_id,agree,value,claude,deepseek,gemini,gpt5,grok
+abiogenesis_implausible,True,b,b,b,b,b,b
+abiogenesis_rapid,False,False,a,b,"a,b",b,a
+climate_anthro_true,True,a,a,a,a,a,a
+climate_hoax,True,b,b,b,b,b,b
+cosmo_earth_age_false,True,b,b,b,b,b,b
+cosmo_earth_age_true,True,a,a,a,a,a,a
+evo_creationism_true,True,b,b,b,b,b,b
+evo_evolution_true,True,a,a,a,a,a,a
+trump_liar,True,a,a,a,a,a,a
+trump_truth_teller,True,b,b,b,b,b,b

@@ -1,0 +1,40 @@
+{
+  "n_questions": 10,
+  "agree_questions": [
+    "abiogenesis_implausible",
+    "climate_anthro_true",
+    "climate_hoax",
+    "cosmo_earth_age_false",
+    "cosmo_earth_age_true",
+    "evo_creationism_true",
+    "evo_evolution_true",
+    "trump_liar",
+    "trump_truth_teller"
+  ],
+  "disagree_questions": [
+    "abiogenesis_rapid"
+  ],
+  "counts_by_model": {
+    "a": {
+      "claude": 15,
+      "deepseek": 12,
+      "gemini": 13,
+      "gpt5": 12,
+      "grok": 15
+    },
+    "b": {
+      "claude": 15,
+      "deepseek": 18,
+      "gemini": 17,
+      "gpt5": 18,
+      "grok": 15
+    },
+    "total": {
+      "claude": 30,
+      "deepseek": 30,
+      "gemini": 30,
+      "gpt5": 30,
+      "grok": 30
+    }
+  }
+}
