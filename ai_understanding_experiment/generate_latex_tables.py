@@ -114,8 +114,8 @@ def write_avg_conf(avg_conf_csv, out_path):
     lines.append(r'\hline')
     for _, row in df.iterrows():
         model = latex_escape(row['model']) if 'model' in row else latex_escape(row.name)
-        mean = f"{row.get('mean_confidence', ''):.4f}" if pd.notna(row.get('mean_confidence', None)) else ''
-        std = f"{row.get('std_confidence', ''):.4f}" if pd.notna(row.get('std_confidence', None)) else ''
+        mean = f"{row.get('mean_confidence', ''):.2f}" if pd.notna(row.get('mean_confidence', None)) else ''
+        std = f"{row.get('std_confidence', ''):.2f}" if pd.notna(row.get('std_confidence', None)) else ''
         n = int(row.get('n', 0)) if pd.notna(row.get('n', None)) else 0
         lines.append(f"{model} & {mean} & {std} & {n} \\\\")
     lines.append(r'\hline')

@@ -10,8 +10,9 @@ Run a small, repeatable experiment querying multiple LLMs about polarised claims
 Usage:
   python run_experiment.py --models models.yaml --questions questions.yaml --runs 3 --out outdir
 """
-import os, sys, json, csv, time, argparse, hashlib, random, datetime, pathlib, base64
+import os, sys, json, csv, time, argparse, hashlib, random, datetime, pathlib, base64, pprint
 from typing import Dict, Any, List
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     import requests  # type: ignore
@@ -54,6 +55,68 @@ def simulate_response(model_name: str, claim: str) -> Dict[str, Any]:
         "confidence": conf,
         "notes": ""
     }
+
+# ---------- run a single task ----------
+
+def run_single_task(task, prompt_template, system_prompt, timeout, dry_run=False):
+    mq = task["model"]
+    q = task["question"]
+    r = task["run_idx"]
+
+    claim_text = q["claim"]
+
+    # 1) build prompt from template + question
+    user_prompt = prompt_template.format(claim_text=claim_text)
+
+    # 2) call provider
+    if dry_run:
+        parsed_response = simulate_response(mq["name"], claim_text)
+        
+    else:
+        content = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
+        # Try to parse model JSON; if it sent text, attempt to extract JSON substring
+        try:
+            parsed_response = json.loads(content)
+        except Exception:
+            # crude extraction
+            start = content.find("{")
+            end = content.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                parsed_response = json.loads(content[start:end+1])
+            else:
+                parsed_response = {"decision":"", "thesis":"", "argument":content, "key_evidence":[], "citations":[], "counterpoints":[], "rebuttals":[], "confidence":""}
+
+    # 3) normalise 
+    out = {
+        "ts": datetime.datetime.utcnow().isoformat(),
+        "model": mq["name"],
+        "provider": mq["provider"],
+        "question_id": q["id"],
+        "topic": q["topic"],
+        "claim": claim_text,
+        "run": r,
+        "parsed_response": parsed_response
+    }
+
+    return out
+
+def call_model_provider(provider: str, chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
+    try:
+        if provider == "openai":
+            out = call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+        elif provider == "deepseek":
+            out = call_deepseek(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+        elif provider == "anthropic":
+            out = call_anthropic(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+        elif provider == "xai":
+            out = call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+        elif provider == "google":
+            out = call_gemini(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+        else:
+            raise Exception(f"[ERROR] Unknown provider: {provider}")
+        return out
+    except Exception as e:
+        print(f"[ERROR] {name} (provider): {e}")
 
 # ---------- provider-specific callers ----------
 
@@ -152,8 +215,6 @@ def call_gemini(chat_url: str, api_key: str, model: str, system_prompt: str, use
     except Exception as e:
         raise RuntimeError(f"Unexpected Gemini response structure: {data}") from e
 
-
-
 def parse_models(models_cfg: Dict[str, Any]):
     """
     models.yaml example:
@@ -192,25 +253,11 @@ def test_providers(models_cfg: List[Dict[str, Any]], timeout: int = 60):
             print(f"[SKIP] {mq['name']} ({mq['provider']}) – no API key in env.")
             continue
         print(f"[TEST] Calling {mq['name']} ({mq['provider']}) ...")
-        provider = mq["provider"]
         try:
-            if provider == "openai":
-                out = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
-            elif provider == "deepseek":
-                out = call_deepseek(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
-            elif provider == "anthropic":
-                out = call_anthropic(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
-            elif provider == "xai":
-                out = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
-            elif provider == "google":
-                out = call_gemini(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=timeout)
-            else:
-                print(f"[WARN] Unknown provider {provider}, skipping.")
-                continue
+            out = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
             print(f"[OK] {mq['name']} -> {out[:200]!r}")
         except Exception as e:
             print(f"[ERROR] {mq['name']} ({mq['provider']}): {e}")
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -220,6 +267,7 @@ def main():
     ap.add_argument("--runs", type=int, default=3, help="Repeat count per (model, question)")
     ap.add_argument("--timeout", type=int, default=3000, help="Read timeout for API calls (seconds)")
     ap.add_argument("--out", required=False, help="Output directory")
+    ap.add_argument("--workers", type=int, default=5, help="Max parallel API calls")
     ap.add_argument("--dry-run", action="store_true", help="Do not call APIs; simulate outputs deterministically")
     ap.add_argument("--test-providers", action="store_true", help="Call each provider once with a tiny prompt and exit")
     args = ap.parse_args()
@@ -235,8 +283,10 @@ def main():
     ensure_dir(args.out)
     questions = load_yaml(args.questions)
     system_prompt = "You are an evidence-focused assistant. Follow the user instruction carefully and return strict JSON."
-    user_tmpl = read_file(args.prompt)
+    prompt_template = read_file(args.prompt)
 
+    max_workers = getattr(args, "workers", 5)  
+    
     # Outputs
     jsonl_path = os.path.join(args.out, "raw.jsonl")
     csv_path = os.path.join(args.out, "summary.csv")
@@ -244,66 +294,49 @@ def main():
         cw = csv.writer(cf)
         cw.writerow(["ts","model","provider","question_id","topic","claim","run","decision","confidence","thesis"])
 
+        tasks = []
         for mq in models_cfg:
-            if not args.dry_run and not mq["api_key"]:
-                print(f"[WARN] Skipping model {mq['name']} (missing API key in env).")
-                continue
-            for q in questions:
-                for r in range(1, args.runs+1):
-                    claim_text = q["claim"]
-                    user_prompt = user_tmpl.format(claim_text=claim_text)
+            for q in questions: 
+                for run_idx in range(args.runs):
+                    tasks.append({
+                        "model": mq,
+                        "question": q,
+                        "run_idx": run_idx
+                    })
 
-                    if args.dry_run:
-                        parsed = simulate_response(mq["name"], claim_text)
-                    else:
-                        if mq["provider"] == "openai":
-                            content = call_openai(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout)
-                        elif mq["provider"] == "deepseek":
-                            content = call_deepseek(mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout)
-                        elif mq["provider"] == "anthropic":
-                            content = call_anthropic(
-                                mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout
-                            )
-                        elif mq["provider"] == "xai":
-                            # xAI is OpenAI-compatible
-                            content = call_openai(
-                                mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout
-                            )
-                        elif mq["provider"] == "google":
-                            content = call_gemini(
-                                mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout=args.timeout
-                            )
+        pprint.pprint(tasks)
 
-                        else:
-                            raise ValueError(f"Unknown provider: {mq['provider']}")
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_task = {}
+            for t in tasks:
+                fut = executor.submit(
+                    run_single_task,
+                    t,
+                    prompt_template,
+                    system_prompt,
+                    args.timeout,
+                    args.dry_run
+                )
+                future_to_task[fut] = t
 
-                        # Try to parse model JSON; if it sent text, attempt to extract JSON substring
-                        try:
-                            parsed = json.loads(content)
-                        except Exception:
-                            # crude extraction
-                            start = content.find("{")
-                            end = content.rfind("}")
-                            if start != -1 and end != -1 and end > start:
-                                parsed = json.loads(content[start:end+1])
-                            else:
-                                parsed = {"decision":"", "thesis":"", "argument":content, "key_evidence":[], "citations":[], "counterpoints":[], "rebuttals":[], "confidence":""}
-
-                    record = {
-                        "ts": datetime.datetime.utcnow().isoformat(),
-                        "model": mq["name"],
-                        "provider": mq["provider"],
-                        "question_id": q["id"],
-                        "topic": q["topic"],
-                        "claim": claim_text,
-                        "run": r,
-                        "response": parsed
-                    }
-                    jf.write(json.dumps(record, ensure_ascii=False) + "\n")
-
-                    cw.writerow([record["ts"], record["model"], record["provider"], q["id"], q["topic"], claim_text, r, parsed.get("decision",""), parsed.get("confidence",""), parsed.get("thesis","")])
-                    cf.flush()
-                    time.sleep(0.1)
+            for fut in as_completed(future_to_task):
+                task = future_to_task[fut]
+                record = fut.result()
+                parsed_response = record["parsed_response"]
+                
+                jf.write(json.dumps(record, ensure_ascii=False) + "\n")
+                cw.writerow([record["ts"],
+                             record["model"],
+                             record["provider"],
+                             record["question_id"],
+                             record["topic"],
+                             record["claim"],
+                             parsed_response.get("run",""),
+                             parsed_response.get("decision","c"),
+                             parsed_response.get("confidence","0"),
+                             parsed_response.get("thesis","")])
+                cf.flush()
+                time.sleep(0.1)
 
     print(f"Done. Wrote:\n- {jsonl_path}\n- {csv_path}")
 
