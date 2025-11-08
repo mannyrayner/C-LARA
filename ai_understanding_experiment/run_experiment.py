@@ -71,9 +71,10 @@ def run_single_task(task, prompt_template, system_prompt, timeout, dry_run=False
     # 2) call provider
     if dry_run:
         parsed_response = simulate_response(mq["name"], claim_text)
+        usage = {}
         
     else:
-        content = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
+        content, usage = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
         # Try to parse model JSON; if it sent text, attempt to extract JSON substring
         try:
             parsed_response = json.loads(content)
@@ -95,7 +96,8 @@ def run_single_task(task, prompt_template, system_prompt, timeout, dry_run=False
         "topic": q["topic"],
         "claim": claim_text,
         "run": r,
-        "parsed_response": parsed_response
+        "parsed_response": parsed_response,
+        "usage": usage
     }
 
     return out
@@ -139,10 +141,11 @@ def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, use
     data = resp.json()
     try:
         content = data["choices"][0]["message"]["content"]
+        usage = data.get("usage", {})
+        return content, usage
     except Exception as e:
         raise RuntimeError(f"Unexpected API response structure: {data}") from e
-    return content
-
+    
 def call_deepseek(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
     # DeepSeek is OpenAI-compatible in many SDKs; keep separate in case of differences.
     return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
@@ -179,7 +182,8 @@ def call_anthropic(chat_url: str, api_key: str, model: str, system_prompt: str, 
     try:
         blocks = data.get("content", [])
         text_parts = [b.get("text", "") for b in blocks if b.get("type") == "text"]
-        return "\n".join(text_parts).strip()
+        usage = data.get("usage", {})
+        return "\n".join(text_parts).strip(), usage
     except Exception as e:
         raise RuntimeError(f"Unexpected Anthropic response structure: {data}") from e
 
@@ -211,7 +215,9 @@ def call_gemini(chat_url: str, api_key: str, model: str, system_prompt: str, use
     resp.raise_for_status()
     data = resp.json()
     try:
-        return data["candidates"][0]["content"]["parts"][0]["text"]
+        text = data["candidates"][0]["content"]["parts"][0]["text"]
+        usage = data.get("usageMetadata", {})
+        return text, usage
     except Exception as e:
         raise RuntimeError(f"Unexpected Gemini response structure: {data}") from e
 
@@ -260,6 +266,9 @@ def test_providers(models_cfg: List[Dict[str, Any]], timeout: int = 60):
             print(f"[ERROR] {mq['name']} ({mq['provider']}): {e}")
 
 def main():
+    start_time = time.time()
+    provider_usage = {}
+    
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", required=True, help="Path to models.yaml")
     ap.add_argument("--questions", required=False, help="Path to questions.yaml")
@@ -327,6 +336,15 @@ but you disclose uncertainty honestly. Your goal is to evaluate claims using pub
                 task = future_to_task[fut]
                 record = fut.result()
                 parsed_response = record["parsed_response"]
+
+                usage = record.get("usage", {}) or {}
+                prov = record["provider"]
+                if prov not in provider_usage:
+                    provider_usage[prov] = {}
+                # add whatever numeric fields we got
+                for k, v in usage.items():
+                    if isinstance(v, (int, float)):
+                        provider_usage[prov][k] = provider_usage[prov].get(k, 0) + v
                 
                 jf.write(json.dumps(record, ensure_ascii=False) + "\n")
                 cw.writerow([record["ts"],
@@ -342,6 +360,12 @@ but you disclose uncertainty honestly. Your goal is to evaluate claims using pub
                 cf.flush()
 
     print(f"Done. Wrote:\n- {jsonl_path}\n- {csv_path}")
+    elapsed = time.time() - start_time
+    print(f"Total elapsed time: {elapsed:.1f}s")
+    print("Usage totals by provider:")
+    for prov, stats in provider_usage.items():
+        pretty = ", ".join(f"{k}={v}" for k, v in stats.items())
+        print(f"  {prov}: {pretty}")
 
 if __name__ == "__main__":
     main()
