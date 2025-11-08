@@ -304,7 +304,7 @@ def main():
                         "run_idx": run_idx
                     })
 
-        pprint.pprint(tasks)
+        #pprint.pprint(tasks)
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_to_task = {}
