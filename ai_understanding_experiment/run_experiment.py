@@ -116,7 +116,7 @@ def call_model_provider(provider: str, chat_url: str, api_key: str, model: str, 
             raise Exception(f"[ERROR] Unknown provider: {provider}")
         return out
     except Exception as e:
-        print(f"[ERROR] {name} (provider): {e}")
+        print(f"[ERROR] (provider): {e}")
 
 # ---------- provider-specific callers ----------
 
@@ -282,7 +282,8 @@ def main():
     
     ensure_dir(args.out)
     questions = load_yaml(args.questions)
-    system_prompt = "You are an evidence-focused assistant. Follow the user instruction carefully and return strict JSON."
+    system_prompt = """You are an evidence-focused assistant. You do not hedge unnecessarily, 
+but you disclose uncertainty honestly. Your goal is to evaluate claims using publicly availableevidence, citing sources precisely."""
     prompt_template = read_file(args.prompt)
 
     max_workers = getattr(args, "workers", 5)  
@@ -296,6 +297,9 @@ def main():
 
         tasks = []
         for mq in models_cfg:
+            if not mq["api_key"]:
+                print(f"[SKIP] {mq['name']} ({mq['provider']}) – no API key in env.")
+                continue
             for q in questions: 
                 for run_idx in range(args.runs):
                     tasks.append({
@@ -331,12 +335,11 @@ def main():
                              record["question_id"],
                              record["topic"],
                              record["claim"],
-                             parsed_response.get("run",""),
+                             record["run"],
                              parsed_response.get("decision","c"),
                              parsed_response.get("confidence","0"),
                              parsed_response.get("thesis","")])
                 cf.flush()
-                time.sleep(0.1)
 
     print(f"Done. Wrote:\n- {jsonl_path}\n- {csv_path}")
 
