@@ -5,8 +5,8 @@
   env_key: OPENAI_API_KEY
   temperature: 0.2
   pricing:
-    input_per_1k: 0.005     # $ per 1K prompt_tokens
-    output_per_1k: 0.015    # $ per 1K completion_tokens
+    input_per_1k: 0.00125
+    output_per_1k: 0.010
 
 - name: deepseek
   provider: deepseek
@@ -15,8 +15,8 @@
   env_key: DEEP_SEEK_API_KEY
   temperature: 0.2
   pricing:
-    input_per_1k: 0.005     # $ per 1K prompt_tokens
-    output_per_1k: 0.015    # $ per 1K completion_tokens
+    input_per_1k: 0.00057
+    output_per_1k: 0.00168
 
 - name: claude
   provider: anthropic
@@ -25,8 +25,8 @@
   env_key: ANTHROPIC_API_KEY
   temperature: 0.2
   pricing:
-    input_per_1k: 0.005     # $ per 1K prompt_tokens
-    output_per_1k: 0.015    # $ per 1K completion_tokens
+    input_per_1k: 0.015
+    output_per_1k: 0.075
 
 - name: grok
   provider: xai
@@ -35,8 +35,8 @@
   env_key: XAI_API_KEY
   temperature: 0.2
   pricing:
-    input_per_1k: 0.005     # $ per 1K prompt_tokens
-    output_per_1k: 0.015    # $ per 1K completion_tokens
+    input_per_1k: 0.003
+    output_per_1k: 0.015
 
 - name: gemini
   provider: google
@@ -45,6 +45,5 @@
   env_key: GEMINI_API_KEY
   temperature: 0.2
   pricing:
-    input_per_1k: 0.0025
-    output_per_1k: 0.007
-    thoughts_per_1k: 0.0     
+    input_per_1k: 0.00030
+    output_per_1k: 0.00250
