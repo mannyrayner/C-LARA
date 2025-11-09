@@ -120,6 +120,56 @@ def call_model_provider(provider: str, chat_url: str, api_key: str, model: str, 
     except Exception as e:
         print(f"[ERROR] (provider): {e}")
 
+def compute_cost_for_usage(model_cfg: dict, usage: dict) -> float:
+    """
+    Map provider-specific usage fields to the generic pricing fields in the model config.
+    Returns a dollar float.
+    """
+    if not usage:
+        return 0.0
+    pricing = model_cfg.get("pricing") or {}
+    cost = 0.0
+
+    # OpenAI / xAI / deepseek style
+    # openai/xai give: prompt_tokens, completion_tokens, total_tokens
+    # deepseek adds prompt_cache_hit_tokens / prompt_cache_miss_tokens
+    if "prompt_tokens" in usage or "completion_tokens" in usage:
+        prompt = usage.get("prompt_tokens", 0)
+        completion = usage.get("completion_tokens", 0)
+        # if there is cache info and you want to bill only cache *misses*, do that here:
+        miss = usage.get("prompt_cache_miss_tokens", 0)
+        # choose one of these strategies:
+
+        # simplest: bill on prompt_tokens as-is
+        billable_prompt = prompt
+
+        # compute
+        cost += (billable_prompt / 1000.0) * pricing.get("input_per_1k", 0.0)
+        cost += (completion / 1000.0) * pricing.get("output_per_1k", 0.0)
+        return cost
+
+    # Anthropic style
+    if "input_tokens" in usage or "output_tokens" in usage:
+        inp = usage.get("input_tokens", 0)
+        out = usage.get("output_tokens", 0)
+        cost += (inp / 1000.0) * pricing.get("input_per_1k", 0.0)
+        cost += (out / 1000.0) * pricing.get("output_per_1k", 0.0)
+        return cost
+
+    # Google Gemini style
+    # usageMetadata: promptTokenCount, candidatesTokenCount, totalTokenCount, thoughtsTokenCount
+    if "promptTokenCount" in usage or "candidatesTokenCount" in usage:
+        prompt = usage.get("promptTokenCount", 0)
+        out = usage.get("candidatesTokenCount", 0)
+        thoughts = usage.get("thoughtsTokenCount", 0)
+        cost += (prompt / 1000.0) * pricing.get("input_per_1k", 0.0)
+        cost += (out / 1000.0) * pricing.get("output_per_1k", 0.0)
+        cost += (thoughts / 1000.0) * pricing.get("thoughts_per_1k", 0.0)
+        return cost
+
+    # fallback: nothing billable
+    return 0.0
+
 # ---------- provider-specific callers ----------
 
 def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
@@ -245,6 +295,7 @@ def parse_models(models_cfg: Dict[str, Any]):
             "model": m["model"],
             "chat_url": m["chat_url"],
             "api_key": env,
+            "pricing": m["pricing"],
         })
     return models
 
@@ -268,6 +319,7 @@ def test_providers(models_cfg: List[Dict[str, Any]], timeout: int = 60):
 def main():
     start_time = time.time()
     provider_usage = {}
+    provider_costs = {}
     
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", required=True, help="Path to models.yaml")
@@ -284,6 +336,7 @@ def main():
     models_cfg_raw = load_yaml(args.models)
     # populate api_key from environment variables specified by env_key
     models_cfg = parse_models(models_cfg_raw)
+    model_cfg_by_name = {m["name"]: m for m in models_cfg}
 
     if args.test_providers:
         test_providers(models_cfg, timeout=args.timeout)
@@ -345,6 +398,14 @@ but you disclose uncertainty honestly. Your goal is to evaluate claims using pub
                 for k, v in usage.items():
                     if isinstance(v, (int, float)):
                         provider_usage[prov][k] = provider_usage[prov].get(k, 0) + v
+
+                # cost accumulation
+                # we need the full model config to read pricing
+                model_cfg = model_cfg_by_name[record["model"]]  # create this dict once after parsing
+                call_cost = compute_cost_for_usage(model_cfg, usage)
+                if prov not in provider_costs:
+                    provider_costs[prov] = 0.0
+                provider_costs[prov] += call_cost
                 
                 jf.write(json.dumps(record, ensure_ascii=False) + "\n")
                 cw.writerow([record["ts"],
@@ -362,10 +423,15 @@ but you disclose uncertainty honestly. Your goal is to evaluate claims using pub
     print(f"Done. Wrote:\n- {jsonl_path}\n- {csv_path}")
     elapsed = time.time() - start_time
     print(f"Total elapsed time: {elapsed:.1f}s")
+    
     print("Usage totals by provider:")
     for prov, stats in provider_usage.items():
         pretty = ", ".join(f"{k}={v}" for k, v in stats.items())
-        print(f"  {prov}: {pretty}")
+        cost = provider_costs.get(prov, 0.0)
+        print(f"  {prov}: {pretty}, cost=${cost:.4f}")
 
+    total_cost = sum(provider_costs.values())
+    print(f"Total cost: ${total_cost:.4f}")
+    
 if __name__ == "__main__":
     main()
