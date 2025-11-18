@@ -81,19 +81,42 @@ def main():
     unique_decisions = df.groupby(['question_id','model'])['decision'].agg(lambda s: ','.join(sorted(set(s)))).reset_index()
     wide = unique_decisions.pivot(index='question_id', columns='model', values='decision').fillna('')
 
+##    def models_agree(row):
+##        vals = [v for v in row.tolist() if v!='']
+##        if len(vals)==0:
+##            return False, None
+##        indiv = []
+##        for v in vals:
+##            if ',' in v:
+##                return False, False
+##            indiv.append(v)
+##        if all(x==indiv[0] for x in indiv):
+##            return True, indiv[0]
+##        else:
+##            return False, indiv
+
     def models_agree(row):
-        vals = [v for v in row.tolist() if v!='']
-        if len(vals)==0:
-            return False, None
-        indiv = []
-        for v in vals:
-            if ',' in v:
-                return False, False
-            indiv.append(v)
-        if all(x==indiv[0] for x in indiv):
-            return True, indiv[0]
-        else:
-            return False, indiv
+        """
+        Decide whether all models agree, and always return the full
+        list of per-model decisions as `value`.
+
+        - `agree` is True iff every non-empty cell has a single code
+          (no commas) and all codes are identical.
+        - `value` is always the list of raw cell values in row order
+          (e.g. ['a', 'b', 'b', 'a', 'a']).
+        """
+        vals = [v for v in row.tolist() if v != '']
+        if not vals:
+            return False, []
+
+        # models 'agree' only if:
+        #  - no cell contains a comma (i.e. each model had a unique decision),
+        #  - and all codes are identical
+        simple_vals = [v for v in vals if ',' not in v]
+        agree = (len(simple_vals) == len(vals) and len(set(simple_vals)) == 1)
+
+        return agree, vals
+
 
     agreement = []
     for q, row in wide.iterrows():
