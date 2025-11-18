@@ -81,20 +81,6 @@ def main():
     unique_decisions = df.groupby(['question_id','model'])['decision'].agg(lambda s: ','.join(sorted(set(s)))).reset_index()
     wide = unique_decisions.pivot(index='question_id', columns='model', values='decision').fillna('')
 
-##    def models_agree(row):
-##        vals = [v for v in row.tolist() if v!='']
-##        if len(vals)==0:
-##            return False, None
-##        indiv = []
-##        for v in vals:
-##            if ',' in v:
-##                return False, False
-##            indiv.append(v)
-##        if all(x==indiv[0] for x in indiv):
-##            return True, indiv[0]
-##        else:
-##            return False, indiv
-
     def models_agree(row):
         """
         Decide whether all models agree, and always return the full
@@ -117,6 +103,15 @@ def main():
 
         return agree, vals
 
+    def majority_decision(series):
+        # keep only valid decisions
+        vals = [d for d in series if d in ('a', 'b', 'c')]
+        if not vals:
+            return ''
+        counts = pd.Series(vals).value_counts()
+        top = counts[counts == counts.max()].index.tolist()
+        # usually a single element, but if tied we concatenate, e.g. 'ab'
+        return ''.join(sorted(top))
 
     agreement = []
     for q, row in wide.iterrows():
@@ -140,6 +135,17 @@ def main():
             'count': 'n'
         })
     )
+
+    # Majority decision per (model, question_id)
+    maj_dec = (
+        df.groupby(['model', 'question_id'])['decision']
+          .apply(majority_decision)
+          .reset_index()
+          .rename(columns={'decision': 'majority_decision'})
+        )
+
+    # Attach majority_decision
+    conf_stats = conf_stats.merge(maj_dec, on=['model','question_id'], how='left')
 
     avg_conf_model = (
         conf_df.groupby('model')['confidence']
@@ -202,6 +208,48 @@ def main():
         values='unanimous'
     ).sort_index()
 
+    # Per-question agreement across models
+    decisions_per_model = (
+        df.groupby(['question_id','model'])['decision']
+          .apply(lambda s: ''.join(sorted(set(s))))
+          .reset_index()
+    )
+
+    decisions_pivot = decisions_per_model.pivot(
+        index='question_id',
+        columns='model',
+        values='decision'
+    )
+
+    # Preserve the order of models as they appear in the pivot columns
+    model_order = list(decisions_pivot.columns)
+
+    agree_flags = []
+    values_list = []
+
+    for _, row in decisions_pivot.iterrows():
+        # row is indexed by model; we want decisions in the same model order
+        vals = [row[m] for m in model_order]
+        # normalize missing to ''
+        vals = [v if isinstance(v, str) else '' for v in vals]
+        non_empty = [v for v in vals if v != '']
+        uniq = sorted(set(non_empty))
+        if len(uniq) == 1 and len(non_empty) > 0:
+            agree_flags.append(True)
+        else:
+            agree_flags.append(False)
+        values_list.append(vals)
+
+    agreement_df = (
+        pd.DataFrame({
+            'question_id': decisions_pivot.index,
+            'agree': agree_flags,
+            'value': values_list,
+        })
+        .reset_index(drop=True)
+        .sort_values('question_id')
+    )
+
     # Save outputs
     counts.to_csv(os.path.join(OUT_DIR, 'decision_counts_by_model.csv'))
     wide.reset_index().to_csv(os.path.join(OUT_DIR, 'per_question_decisions_wide.csv'), index=False)
@@ -224,7 +272,8 @@ def main():
     report_lines.append("2) Any 'c' (decline) responses across models? %s (total c responses = %d)" % ("Yes" if 'c' in counts.columns and counts['c'].sum()>0 else "No", int(counts.get('c', pd.Series(dtype=int)).sum() if 'c' in counts.columns else 0)))
     report_lines.append("")
     report_lines.append("3) Per-question agreement across models (agree=True means all models gave the same unique decision):")
-    report_lines.append(agreement_df[['question_id','agree','value']].to_string(index=False))
+    report_lines.append(f"Model order in 'value' column: {', '.join(model_order)}")
+    report_lines.append(agreement_df.to_string(index=False))
     report_lines.append("")
     report_lines.append("4) Consistency across runs for each model (proportion of question_ids with identical decisions across runs):")
     report_lines.append(consistency_summary.to_string(index=False))
