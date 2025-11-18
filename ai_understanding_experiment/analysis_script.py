@@ -104,17 +104,6 @@ def main():
         agreement.append(rec)
     agreement_df = pd.DataFrame(agreement)
 
-    # Per-model per-question confidence stats (mean, std, n)
-##    conf_stats = df.groupby(['model','question_id'])['confidence']
-##    .agg(['mean','std','count'])
-##    .reset_index()
-##    .rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
-##
-##    avg_conf_model = df.groupby('model')['confidence']
-##    .agg(['mean','std','count'])
-##    .reset_index()
-##    .rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
-
     # --- restrict confidence stats to rows with numeric confidence ---
     conf_df = df.dropna(subset=['confidence']).copy()
 
