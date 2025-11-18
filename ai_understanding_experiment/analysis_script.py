@@ -43,39 +43,43 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
     df = pd.read_csv(IN)
-    if 'response' in df.columns:
-        parsed = df['response'].apply(safe_parse)
-        if 'decision' not in df.columns:
-            df['decision'] = parsed.apply(lambda r: (r.get('decision') or '').strip() if isinstance(r, dict) else '')
-        if 'confidence' not in df.columns:
-            def parse_conf(x):
-                try:
-                    return float(x)
-                except Exception:
-                    return np.nan
-            df['confidence'] = parsed.apply(lambda r: parse_conf(r.get('confidence') if isinstance(r, dict) else None))
-        if 'thesis' not in df.columns:
-            df['thesis'] = parsed.apply(lambda r: r.get('thesis') if isinstance(r, dict) else '')
 
-    df['decision'] = df['decision'].fillna('').astype(str)
-
-    def norm_decision(s):
-        s = s.strip().lower()
+    def norm_decision(val):
+        """Normalise decision codes to 'a', 'b', 'c' where possible."""
+        if pd.isna(val):
+            return 'c'  # treat missing as 'c' (no position / refusal)
+        s = str(val).strip().lower()
         if s.startswith('a'):
             return 'a'
         if s.startswith('b'):
             return 'b'
         if s.startswith('c'):
             return 'c'
+        # fall back to raw string if something unexpected shows up
         return s
 
-    df['decision_norm'] = df['decision'].apply(norm_decision)
+# --- Ensure decision column exists and has one of the three permitted values ---
+    if 'decision' not in df.columns:
+        df['decision'] = 'c'
+    df['decision'] = df['decision'].apply(norm_decision)
 
-    counts = df.groupby(['model','decision_norm']).size().unstack(fill_value=0)
+# --- Ensure confidence is numeric, tolerating "N/A" etc. ---
+    if 'confidence' in df.columns:
+        df['confidence'] = pd.to_numeric(df['confidence'], errors='coerce')
+    else:
+        # if for some reason it's missing, create it so later code still works
+        df['confidence'] = np.nan
+
+# --- Ensure thesis column exists (textual, so just default to empty string) ---
+    if 'thesis' not in df.columns:
+        df['thesis'] = ""
+    df['thesis'] = df['thesis'].fillna("").astype(str)           
+
+    counts = df.groupby(['model','decision']).size().unstack(fill_value=0)
     counts['total'] = counts.sum(axis=1)
 
-    unique_decisions = df.groupby(['question_id','model'])['decision_norm'].agg(lambda s: ','.join(sorted(set(s)))).reset_index()
-    wide = unique_decisions.pivot(index='question_id', columns='model', values='decision_norm').fillna('')
+    unique_decisions = df.groupby(['question_id','model'])['decision'].agg(lambda s: ','.join(sorted(set(s)))).reset_index()
+    wide = unique_decisions.pivot(index='question_id', columns='model', values='decision').fillna('')
 
     def models_agree(row):
         vals = [v for v in row.tolist() if v!='']
@@ -101,16 +105,47 @@ def main():
     agreement_df = pd.DataFrame(agreement)
 
     # Per-model per-question confidence stats (mean, std, n)
-    conf_stats = df.groupby(['model','question_id'])['confidence'].agg(['mean','std','count']).reset_index().rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
-    avg_conf_model = df.groupby('model')['confidence'].agg(['mean','std','count']).reset_index().rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
+##    conf_stats = df.groupby(['model','question_id'])['confidence']
+##    .agg(['mean','std','count'])
+##    .reset_index()
+##    .rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
+##
+##    avg_conf_model = df.groupby('model')['confidence']
+##    .agg(['mean','std','count'])
+##    .reset_index()
+##    .rename(columns={'mean':'mean_confidence','std':'std_confidence','count':'n'})
 
+    # --- restrict confidence stats to rows with numeric confidence ---
+    conf_df = df.dropna(subset=['confidence']).copy()
+
+    conf_stats = (
+        conf_df.groupby(['model', 'question_id'])['confidence']
+        .agg(['mean', 'std', 'count'])
+        .reset_index()
+        .rename(columns={
+            'mean': 'mean_confidence',
+            'std': 'std_confidence',
+            'count': 'n'
+        })
+    )
+
+    avg_conf_model = (
+        conf_df.groupby('model')['confidence']
+        .agg(['mean', 'std', 'count'])
+        .reset_index()
+        .rename(columns={
+            'mean': 'mean_confidence',
+            'std': 'std_confidence',
+            'count': 'n'
+        })
+    )
     # Pivot to full per-question x per-model mean_confidence table
     conf_pivot = conf_stats.pivot(index='question_id', columns='model', values='mean_confidence').sort_index()
     # fill NaN with empty for nicer CSV/readout
     conf_pivot_filled = conf_pivot.fillna('')
 
     # Consistency across runs for each model/question
-    consistency = df.groupby(['model','question_id'])['decision_norm'].nunique().reset_index().rename(columns={'decision_norm':'unique_decisions'})
+    consistency = df.groupby(['model','question_id'])['decision'].nunique().reset_index().rename(columns={'decision':'unique_decisions'})
     consistency['consistent'] = consistency['unique_decisions']==1
     consistency_summary = consistency.groupby('model')['consistent'].mean().reset_index().rename(columns={'consistent':'prop_consistent'})
 
@@ -119,7 +154,7 @@ def main():
     # Majority / collapsed decisions per (model, question)
     # For almost all cells there is only 1 unique decision; where there isn't, we mark it.
     def collapse_decisions(group):
-        vals = group['decision_norm'].tolist()
+        vals = group['decision'].tolist()
         uniq = sorted(set(vals))
         if len(uniq) == 1:
             return pd.Series({
@@ -128,7 +163,7 @@ def main():
             })
         else:
             # pick the most frequent as the "collapsed" one
-            counts = group['decision_norm'].value_counts()
+            counts = group['decision'].value_counts()
             maj = counts.idxmax()
             return pd.Series({
                 'decision_collapsed': maj,
