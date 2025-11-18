@@ -1,0 +1,13 @@
+Annotate the following {l2_language} text in the following way: if a word in the text is composed of smaller words, and the meaning of the word can clearly be deduced from the components, separate them with vertical bars.
+
+*Important*: the pieces into which you split a word must themselves be words. They may *not* be inflectional or derivational affixes. 
+
+Here are some French and English examples:
+
+{examples}
+
+Here is the text to annotate. Annotate the material between the tags <startoftext> and <endoftext>. This may include linebreaks or other whitespace characters, which must be kept unchanged. 
+
+<startoftext>{text}<endoftext>
+
+The output will be read by a Python script, which will expect the annotated output text also to be enclosed within the tags <startoftext> and <endoftext>.

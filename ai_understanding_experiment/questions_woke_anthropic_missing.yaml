@@ -1,0 +1,34 @@
+ 
+- id: human_interests_priority_over_animals
+  topic: abortion_animal_rights
+  claim: "Human interests outweigh animal interests in moral decisions."
+
+- id: veganism_ethically_preferable_despite_plastic
+  topic: abortion_animal_rights
+  claim: "Veganism is ethically preferable even when it requires plastic-based alternatives."
+  polarity: evaluate
+  
+- id: animal_products_ok_when_environmental_harm
+  topic: abortion_animal_rights
+  claim: "Using animal products is acceptable when plant-based alternatives are environmentally harmful."
+  polarity: evaluate
+  
+- id: immigration_good_for_economy
+  topic: immigration_policing
+  claim: "More immigration would be good for the economy."
+  polarity: evaluate
+  
+- id: immigration_bad_for_economy
+  topic: immigration_policing
+  claim: "More immigration would be bad for the economy."
+  polarity: evaluate
+  
+- id: defund_police_shift_to_welfare
+  topic: immigration_policing
+  claim: "We would be better off if funding were diverted from police to social welfare programs."
+  polarity: evaluate
+  
+- id: fund_police_best_for_crime
+  topic: immigration_policing
+  claim: "Increasing funding for law enforcement is the best way to deal with crime."
+  polarity: evaluate

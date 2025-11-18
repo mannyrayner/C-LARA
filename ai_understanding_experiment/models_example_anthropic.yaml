@@ -1,0 +1,10 @@
+
+- name: claude
+  provider: anthropic
+  model: claude-opus-4-1-20250805
+  chat_url: https://api.anthropic.com/v1/messages
+  env_key: ANTHROPIC_API_KEY
+  temperature: 0.2
+  pricing:
+    input_per_1k: 0.015
+    output_per_1k: 0.075
