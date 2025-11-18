@@ -58,6 +58,50 @@ def simulate_response(model_name: str, claim: str) -> Dict[str, Any]:
 
 # ---------- run a single task ----------
 
+##def run_single_task(task, prompt_template, system_prompt, timeout, dry_run=False):
+##    mq = task["model"]
+##    q = task["question"]
+##    r = task["run_idx"]
+##
+##    claim_text = q["claim"]
+##
+##    # 1) build prompt from template + question
+##    user_prompt = prompt_template.format(claim_text=claim_text)
+##
+##    # 2) call provider
+##    if dry_run:
+##        parsed_response = simulate_response(mq["name"], claim_text)
+##        usage = {}
+##        
+##    else:
+##        content, usage = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
+##        # Try to parse model JSON; if it sent text, attempt to extract JSON substring
+##        try:
+##            parsed_response = json.loads(content)
+##        except Exception:
+##            # crude extraction
+##            start = content.find("{")
+##            end = content.rfind("}")
+##            if start != -1 and end != -1 and end > start:
+##                parsed_response = json.loads(content[start:end+1])
+##            else:
+##                parsed_response = {"decision":"", "thesis":"", "argument":content, "key_evidence":[], "citations":[], "counterpoints":[], "rebuttals":[], "confidence":""}
+##
+##    # 3) normalise 
+##    out = {
+##        "ts": datetime.datetime.utcnow().isoformat(),
+##        "model": mq["name"],
+##        "provider": mq["provider"],
+##        "question_id": q["id"],
+##        "topic": q["topic"],
+##        "claim": claim_text,
+##        "run": r,
+##        "parsed_response": parsed_response,
+##        "usage": usage
+##    }
+##
+##    return out
+
 def run_single_task(task, prompt_template, system_prompt, timeout, dry_run=False):
     mq = task["model"]
     q = task["question"]
@@ -68,26 +112,65 @@ def run_single_task(task, prompt_template, system_prompt, timeout, dry_run=False
     # 1) build prompt from template + question
     user_prompt = prompt_template.format(claim_text=claim_text)
 
+    def make_fallback_response(argument_text: str = "") -> Dict[str, Any]:
+        return {
+            "decision": "",
+            "thesis": "",
+            "argument": argument_text,
+            "key_evidence": [],
+            "citations": [],
+            "counterpoints": [],
+            "rebuttals": [],
+            "confidence": "",
+            "notes": "fallback_parsed_response",
+        }
+
     # 2) call provider
     if dry_run:
         parsed_response = simulate_response(mq["name"], claim_text)
         usage = {}
-        
     else:
-        content, usage = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
-        # Try to parse model JSON; if it sent text, attempt to extract JSON substring
-        try:
-            parsed_response = json.loads(content)
-        except Exception:
-            # crude extraction
-            start = content.find("{")
-            end = content.rfind("}")
-            if start != -1 and end != -1 and end > start:
-                parsed_response = json.loads(content[start:end+1])
-            else:
-                parsed_response = {"decision":"", "thesis":"", "argument":content, "key_evidence":[], "citations":[], "counterpoints":[], "rebuttals":[], "confidence":""}
+        content, usage = call_model_provider(
+            mq["provider"],
+            mq["chat_url"],
+            mq["api_key"],
+            mq["model"],
+            system_prompt,
+            user_prompt,
+            timeout,
+        )
 
-    # 3) normalise 
+        # Normalise content to a string
+        if content is None:
+            content = ""
+        elif not isinstance(content, str):
+            content = str(content)
+
+        content_stripped = content.strip()
+
+        if not content_stripped:
+            # All retries failed or we got an empty body: safe fallback
+            parsed_response = make_fallback_response(argument_text="")
+        else:
+            # Try direct JSON first
+            try:
+                parsed_response = json.loads(content_stripped)
+            except Exception:
+                # Try crude substring extraction
+                try:
+                    start = content_stripped.find("{")
+                    end = content_stripped.rfind("}")
+                    if start != -1 and end != -1 and end > start:
+                        inner = content_stripped[start : end + 1]
+                        parsed_response = json.loads(inner)
+                    else:
+                        # No plausible JSON object: treat whole thing as free text
+                        parsed_response = make_fallback_response(argument_text=content_stripped)
+                except Exception:
+                    # Even substring parse failed: final fallback
+                    parsed_response = make_fallback_response(argument_text=content_stripped)
+
+    # 3) normalise output record
     out = {
         "ts": datetime.datetime.utcnow().isoformat(),
         "model": mq["name"],
@@ -97,28 +180,77 @@ def run_single_task(task, prompt_template, system_prompt, timeout, dry_run=False
         "claim": claim_text,
         "run": r,
         "parsed_response": parsed_response,
-        "usage": usage
+        "usage": usage,
     }
 
     return out
 
-def call_model_provider(provider: str, chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
-    try:
-        if provider == "openai":
-            out = call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
-        elif provider == "deepseek":
-            out = call_deepseek(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
-        elif provider == "anthropic":
-            out = call_anthropic(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
-        elif provider == "xai":
-            out = call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
-        elif provider == "google":
-            out = call_gemini(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
-        else:
-            raise Exception(f"[ERROR] Unknown provider: {provider}")
-        return out
-    except Exception as e:
-        print(f"[ERROR] (provider): {e}")
+
+##def call_model_provider(provider: str, chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
+##    try:
+##        if provider == "openai":
+##            out = call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+##        elif provider == "deepseek":
+##            out = call_deepseek(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+##        elif provider == "anthropic":
+##            out = call_anthropic(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+##        elif provider == "xai":
+##            out = call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+##        elif provider == "google":
+##            out = call_gemini(chat_url, api_key, model, system_prompt, user_prompt, timeout=timeout)
+##        else:
+##            raise Exception(f"[ERROR] Unknown provider: {provider}")
+##        return out
+##    except Exception as e:
+##        print(f"[ERROR] (provider): {e}")
+
+def call_model_provider(
+    provider: str,
+    chat_url: str,
+    api_key: str,
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    timeout: int = 60,
+    max_retries: int = 3,
+    backoff_seconds: int = 5,
+):
+    """
+    Dispatch to the appropriate provider-specific caller.
+
+    Always returns a tuple (content, usage_dict), even on failure.
+    On repeated failure, content is an empty string and usage is {}.
+    """
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            if provider == "openai":
+                return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+            elif provider == "deepseek":
+                return call_deepseek(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+            elif provider == "anthropic":
+                return call_anthropic(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+            elif provider == "xai":
+                # xAI is OpenAI-compatible
+                return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+            elif provider == "google":
+                return call_gemini(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+            else:
+                raise RuntimeError(f"[ERROR] Unknown provider: {provider}")
+        except Exception as e:
+            last_error = e
+            print(f"[ERROR] {provider} attempt {attempt}/{max_retries}: {e}")
+            if attempt < max_retries:
+                # brief backoff before retrying
+                time.sleep(backoff_seconds)
+            else:
+                print(f"[ERROR] {provider}: giving up after {max_retries} attempts.")
+                # Fall through to return a safe default
+
+    # If we get here, all retries failed
+    # Return empty content and empty usage so callers can still proceed
+    return "", {}
+
 
 def compute_cost_for_usage(model_cfg: dict, usage: dict) -> float:
     """
@@ -299,6 +431,23 @@ def parse_models(models_cfg: Dict[str, Any]):
         })
     return models
 
+##def test_providers(models_cfg: List[Dict[str, Any]], timeout: int = 60):
+##    """
+##    Quick connectivity test: call each model once with a trivial prompt.
+##    """
+##    system_prompt = "You are a helpful assistant."
+##    user_prompt = "Say hello and identify yourself in one sentence."
+##    for mq in models_cfg:
+##        if not mq["api_key"]:
+##            print(f"[SKIP] {mq['name']} ({mq['provider']}) – no API key in env.")
+##            continue
+##        print(f"[TEST] Calling {mq['name']} ({mq['provider']}) ...")
+##        try:
+##            out = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
+##            print(f"[OK] {mq['name']} -> {out[:200]!r}")
+##        except Exception as e:
+##            print(f"[ERROR] {mq['name']} ({mq['provider']}): {e}")
+
 def test_providers(models_cfg: List[Dict[str, Any]], timeout: int = 60):
     """
     Quick connectivity test: call each model once with a trivial prompt.
@@ -311,10 +460,24 @@ def test_providers(models_cfg: List[Dict[str, Any]], timeout: int = 60):
             continue
         print(f"[TEST] Calling {mq['name']} ({mq['provider']}) ...")
         try:
-            out = call_model_provider(mq["provider"], mq["chat_url"], mq["api_key"], mq["model"], system_prompt, user_prompt, timeout)
-            print(f"[OK] {mq['name']} -> {out[:200]!r}")
+            content, usage = call_model_provider(
+                mq["provider"],
+                mq["chat_url"],
+                mq["api_key"],
+                mq["model"],
+                system_prompt,
+                user_prompt,
+                timeout=timeout,
+            )
+            # content may be empty on repeated failure
+            snippet = (content or "")[:200]
+            print(f"[OK] {mq['name']} -> {snippet!r}")
+            if usage:
+                print(f"       usage: {usage}")
         except Exception as e:
+            # In principle call_model_provider shouldn't raise now, but keep this as a guard
             print(f"[ERROR] {mq['name']} ({mq['provider']}): {e}")
+
 
 def main():
     start_time = time.time()
