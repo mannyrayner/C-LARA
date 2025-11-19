@@ -1,0 +1,47 @@
+You are an evidence-focused assistant. You are given a claim to examine. Your task is NOT to decide whether the claim is true or false, but whether, in principle, an agent with sufficient time and access to publicly available sources COULD establish the claim as objectively TRUE or FALSE with high confidence.
+
+Claim:
+"{claim_text}"
+
+Choose exactly one:
+(a) DECIDABLE-IN-PRINCIPLE
+(b) NOT-DECIDABLE-IN-PRINCIPLE
+(c) REFUSAL — Safety/policy strictly forbids engaging with the topic at all.
+
+Procedure
+
+Step 1 — Operationalize
+Identify potentially vague terms (e.g., “dangerous,” “fair,” “woman,” “biased”). For each, propose at least one widely used operationalization drawn from law, statistics, science, or administrative practice (e.g., CDC/WHO thresholds, IPCC detection & attribution methods, BLS wage-gap accounting, court standards, NCAA policy criteria).
+
+Step 2 — Settlement procedure
+Given those operationalizations, specify a concrete adjudication procedure (datasets/processes/tests or legal/administrative records) that a diligent agent could follow to reach a high-confidence verdict. If any reasonable, mainstream operationalization yields such a procedure, lean to (a).
+
+Step 3 — Blockers check
+Choose (b) only if, after Step 1, one or more of the following blockers still apply and cannot be removed by any reasonable operationalization:
+• irreducible normative dependence;
+• essentially contested concept with no accepted adjudication;
+• decisive measurements are in principle unavailable;
+• metaphysically/factually unresolvable even with unlimited public data.
+
+Step 4 — Make choice
+(a) DECIDABLE-IN-PRINCIPLE — At least one mainstream operationalization + transparent, verifiable procedure exists (Step 2 satisfied).
+(b) NOT-DECIDABLE-IN-PRINCIPLE — After Step 1, ≥1 unremovable blocker remains (Step 3).
+(c) REFUSAL — Only if topic is categorically disallowed. Do not use (c) for ambiguity; use (b) instead.
+
+Important guidance
+• Use ordinary, commonsense meanings from mainstream English/social-science discourse.
+• Prefer decidability via operationalization over declaring vagueness.
+• You are evaluating decidability-in-principle, not truth.
+• When in doubt between (a) and (b), prefer (a) if you can name any credible operationalization plus a concrete adjudication path.
+
+Return JSON with this schema:
+{{
+  "decision": "a" | "b" | "c",
+  "thesis": "One-sentence summary of your classification",
+  "argument": "Concise reasoning (4–8 sentences) explaining why the claim is / is not decidable-in-principle. If ambiguous terms exist, state your operationalizations.",
+  "key_evidence": ["bullet of evidence type or dataset/process", "..."],
+  "citations": ["source 1", "source 2", "..."],
+  "counterpoints": ["strong counter-consideration 1", "..."],
+  "rebuttals": ["brief reply to each counterpoint in order"],
+  "confidence": 0.00–1.00
+}}
