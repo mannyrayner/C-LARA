@@ -144,6 +144,49 @@ def main():
           .rename(columns={'decision': 'majority_decision'})
         )
 
+    # --- Pairwise agreement across models (same majority decision on a question) ---
+    maj = maj_dec[['model','question_id','majority_decision']].copy()
+
+    # Normalise majority_decision to {'a','b','c'}; everything else -> '?'
+    def norm_abc(x: str) -> str:
+        if not isinstance(x, str):
+            return '?'
+        s = x.strip().lower()
+        return s[0] if s and s[0] in {'a','b','c'} else '?'
+
+    maj['majority_decision'] = maj['majority_decision'].apply(norm_abc)
+
+    models = sorted(maj['model'].unique())
+    pairs = []
+    for i in range(len(models)):
+        for j in range(i+1, len(models)):
+            mi, mj = models[i], models[j]
+            a = maj[maj['model']==mi].set_index('question_id')['majority_decision']
+            b = maj[maj['model']==mj].set_index('question_id')['majority_decision']
+            joined = a.to_frame('di').join(b.to_frame('dj'), how='inner')
+            n = len(joined)
+            agree_n = int((joined['di'] == joined['dj']).sum())
+            disagree_list = joined[joined['di'] != joined['dj']].reset_index()[['question_id','di','dj']].to_dict('records')
+            pairs.append({
+                'model_i': mi,
+                'model_j': mj,
+                'n_compared': n,
+                'n_agree': agree_n,
+                'agree_rate': (agree_n / n) if n else float('nan'),
+                'disagreements': disagree_list
+            })
+
+    pairwise_df = pd.DataFrame(pairs).sort_values(['agree_rate','model_i','model_j'], ascending=[False, True, True])
+
+    # Pretty square matrix (Model x Model -> agree_rate), helpful in the report
+    matrix = pd.DataFrame(index=models, columns=models, dtype=float)
+    for m in models:
+        matrix.loc[m,m] = 1.0
+    for row in pairs:
+        i, j = row['model_i'], row['model_j']
+        matrix.loc[i,j] = row['agree_rate']
+        matrix.loc[j,i] = row['agree_rate']
+
     # Attach majority_decision
     conf_stats = conf_stats.merge(maj_dec, on=['model','question_id'], how='left')
 
@@ -289,7 +332,16 @@ def main():
     low_conf = conf_stats.sort_values('mean_confidence')
     report_lines.append(low_conf.to_string(index=False))
     report_lines.append("")
-    report_lines.append("7) Sample of first textual theses per model/question (first 200 chars):")
+    # --- Write to report ---
+    report_lines.append("\n7a) Pairwise model agreement on majority decisions (proportion of statements):\n")
+    report_lines.append(pairwise_df[['model_i','model_j','n_compared','n_agree','agree_rate']].to_string(index=False))
+
+    report_lines.append("\n\n7b) Agreement heat-matrix (rows/cols are models; 1.00 = perfect agreement):\n")
+    # format matrix nicely
+    matrix_fmt = matrix.applymap(lambda x: f"{x:0.2f}" if pd.notna(x) else "–")
+    report_lines.append(matrix_fmt.to_string())
+    report_lines.append("")
+    report_lines.append("8) Sample of first textual theses per model/question (first 200 chars):")
     sample_texts = first_thesis.copy()
     sample_texts['thesis_short'] = sample_texts['thesis'].fillna('').astype(str).str.replace('\n',' ').str.slice(0,200)
     report_lines.append(sample_texts[['model','question_id','thesis_short']].to_string(index=False))
