@@ -1,0 +1,4 @@
+- id: trans_women_are_women
+  topic: gender_identity_and_trans
+  claim: "Trans women are women."
+  polarity: evaluate

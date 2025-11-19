@@ -1,0 +1,9 @@
+- name: grok
+  provider: xai
+  model: grok-4
+  chat_url: https://api.x.ai/v1/chat/completions
+  env_key: XAI_API_KEY
+  temperature: 0.2
+  pricing:
+    input_per_1k: 0.003
+    output_per_1k: 0.015
