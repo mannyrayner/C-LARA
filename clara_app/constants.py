@@ -109,6 +109,7 @@ SUPPORTED_LANGUAGES_WITH_AI_ENABLED_STATUS = [
     ('romanian', 'Romanian', True),
     ('russian', 'Russian', True),
     ('serbian', 'Serbian', True),
+    ('sinhala', 'Sinhala', True),
     ('slovak', 'Slovak', True),
     ('slovenian', 'Slovenian', True),
     ('spanish', 'Spanish', True),
