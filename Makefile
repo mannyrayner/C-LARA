@@ -51,26 +51,32 @@ SPLIT_MB        ?= 2000     # split threshold per part (~2GB)
 
 backup-legacy:
 	@set -euo pipefail; \
+	set -x; \
+	echo "CLARA=$(CLARA)"; \
+	echo "LEGACY_ROOT=$(LEGACY_ROOT)"; \
+	echo "BACKUP_DEST=$(BACKUP_DEST)"; \
 	[ -n "$(CLARA)" ] || { echo "CLARA is not set"; exit 1; }; \
 	[ -d "$(LEGACY_ROOT)" ] || { echo "LEGACY_ROOT does not exist: $(LEGACY_ROOT)"; exit 1; }; \
 	mkdir -p "$(BACKUP_DEST)"; \
 	if command -v pigz >/dev/null 2>&1; then COMP="tar -I 'pigz -9' -cf"; else COMP="tar -czf"; fi; \
 	echo "==> Archiving top-level folders from $(LEGACY_ROOT) to $(BACKUP_DEST)"; \
-	for d in "$$(find "$(LEGACY_ROOT)" -mindepth 1 -maxdepth 1 -type d -print)"; do \
-	  name="$$(basename "$$d")"; \
+	find "$(LEGACY_ROOT)" -mindepth 1 -maxdepth 1 -type d -print0 | \
+	while IFS= read -r -d '' d; do \
+	  name=$$(basename "$$d"); \
 	  out="$(BACKUP_DEST)/$${name}.tgz"; \
-	  echo "----> $$name"; \
-	  ( cd "$(LEGACY_ROOT)" && eval $$COMP "\"$$out\"" "\"$$name\"" ); \
-	  sha256sum "$$out" > "$$out.sha256"; \
+	  echo "----> $$name  ->  $$out"; \
+	  ( cd "$(LEGACY_ROOT)" && eval $$COMP "\"$$out\"" "\"$$name\"" ) \
+	    || { echo "WARN: archiving $$name failed; continuing"; continue; }; \
+	  sha256sum "$$out" > "$$out.sha256" || { echo "WARN: checksum for $$out failed"; }; \
 	done; \
 	echo "==> Splitting archives larger than $(SPLIT_MB) MB"; \
 	for f in "$(BACKUP_DEST)"/*.tgz; do \
-	  [ -f "$$f" ] || continue; \
+	  [ -e "$$f" ] || break; \
 	  sz_m=$$(du -m "$$f" | awk '{print $$1}'); \
 	  if [ "$$sz_m" -ge "$(SPLIT_MB)" ]; then \
 	    echo "----> splitting $${f}"; \
-	    split -b "$(SPLIT_MB)m" -d -a 3 "$$f" "$$f.part."; \
-	    sha256sum "$$f".part.* > "$$f.parts.sha256"; \
+	    split -b "$(SPLIT_MB)m" -d -a 3 "$$f" "$$f.part." || { echo "WARN: split failed for $$f"; continue; }; \
+	    sha256sum "$$f".part.* > "$$f.parts.sha256" || echo "WARN: sha256 for parts failed"; \
 	    rm -f "$$f"; \
 	  fi; \
 	done; \
