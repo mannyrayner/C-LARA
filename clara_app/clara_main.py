@@ -1029,12 +1029,17 @@ class CLARAProjectInternal:
 
     # Call ChatGPT-4 to create version of the text with translation annotations
     def create_translated_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:
-        segmented_text = self.load_text_version("segmented_with_images")
-        translated_text, api_calls = generate_translated_version(segmented_text, self.l2_language, self.l1_language,
-                                                                 config_info=config_info, callback=callback)
-        self.save_text_version("translated", translated_text, user=user, label=label, source='ai_generated')
-            
-        return api_calls
+        try:
+            segmented_text = self.load_text_version("segmented_with_images")
+            translated_text, api_calls = generate_translated_version(segmented_text, self.l2_language, self.l1_language,
+                                                                     config_info=config_info, callback=callback)
+            self.save_text_version("translated", translated_text, user=user, label=label, source='ai_generated')
+                
+            return api_calls
+        except Exception as e:
+            print(f'Exception in create_translated_text:')
+            print(e)
+            raise e
 
     # Create a "phonetic" version of the text 
     def create_phonetic_text(self, user='Unknown', label='', config_info={}, callback=None) -> List[APICall]:

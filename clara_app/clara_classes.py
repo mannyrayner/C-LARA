@@ -345,8 +345,8 @@ class Segment:
 
         # Postfix trailers for segment-level layers
         if annotation_type == "mwe":
-            analysis_text = self.annotations.get("analysis", "")
-            mwes = self.annotations.get("mwes", [])
+            analysis_text = self.annotations.get("analysis", "") if self.annotations else ''
+            mwes = self.annotations.get("mwes", []) if self.annotations else ''
             if analysis_text or mwes:
                 mwes_text = ",".join(
                     [" ".join([escape_special_chars(w) for w in mwe]) for mwe in mwes]
@@ -354,7 +354,7 @@ class Segment:
                 out_text += f"\n_analysis: {analysis_text}\n_MWEs: {mwes_text}"
 
         if annotation_type == "mwe_minimal":
-            mwes = self.annotations.get("mwes", [])
+            mwes = self.annotations.get("mwes", []) if self.annotations else ''
             if mwes:
                 mwes_text = ",".join(
                     [" ".join([escape_special_chars(w) for w in mwe]) for mwe in mwes]
@@ -362,7 +362,7 @@ class Segment:
                 out_text += f"#{mwes_text}#"
 
         if annotation_type == "translated":
-            translated = self.annotations.get("translated", "")
+            translated = self.annotations.get("translated", "") if self.annotations else ''
             escaped_translated = escape_special_chars(translated)
             out_text += f"#{escaped_translated}#"
 
@@ -507,20 +507,26 @@ class Page:
         Returns:
             Rendered string for this page in the selected view.
         """
-        segment_separator = "" if annotation_type == "plain" else "||"
-        segment_texts = segment_separator.join(
-            seg.to_text(annotation_type) for seg in self.segments
-        )
+        try:
+            segment_separator = "" if annotation_type == "plain" else "||"
+            segment_texts = segment_separator.join(
+                seg.to_text(annotation_type) for seg in self.segments
+            )
 
-        if annotation_type == "segmented_for_labelled":
-            # Historical behavior: do not wrap in <page …> for this mode.
-            return segment_texts
+            if annotation_type == "segmented_for_labelled":
+                # Historical behavior: do not wrap in <page …> for this mode.
+                return segment_texts
 
-        if self.annotations:
-            attrs = " ".join(f"{k}='{v}'" for k, v in self.annotations.items())
-            return f"<page {attrs}>{segment_texts}"
-        else:
-            return f"<page>{segment_texts}"
+            if self.annotations:
+                attrs = " ".join(f"{k}='{v}'" for k, v in self.annotations.items())
+                return f"<page {attrs}>{segment_texts}"
+            else:
+                return f"<page>{segment_texts}"
+        except Exception as e:
+            print(f'Error in page.to_text (annotation_type = {annotation_type}, page =')
+            print(self)
+            raise e
+        
 
     def to_translated_text(self) -> str:
         """Concatenate segment-level translations (if present) with spaces.

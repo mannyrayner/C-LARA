@@ -41,6 +41,8 @@ from io import BytesIO
 
 config = get_config()
 
+# gpt-5 seems quite slow for these tasks
+#DEFAULT_GPT_4_MODEL = 'gpt-5'
 DEFAULT_GPT_4_MODEL = 'gpt-4o'
 
 def get_api_key_and_provider_for_config(config_info):
