@@ -40,18 +40,27 @@ backup_db:
 restore_db:
 	cp db.sqlite3.bkp db.sqlite3 
 
+.PHONY: backup-legacy backup-legacy-clean backup-legacy-list
+
+# Config
+CLARA           ?= $(shell echo $$CLARA)
+# If your dir is lowercase, change to $(CLARA)/lara_legacy
+LEGACY_ROOT     ?= $(CLARA)/LARA_legacy
+BACKUP_DEST     ?= $(CLARA)/backups_lara_legacy
+SPLIT_MB        ?= 2000     # split threshold per part (~2GB)
+
 backup-legacy:
 	@set -euo pipefail; \
 	[ -n "$(CLARA)" ] || { echo "CLARA is not set"; exit 1; }; \
+	[ -d "$(LEGACY_ROOT)" ] || { echo "LEGACY_ROOT does not exist: $(LEGACY_ROOT)"; exit 1; }; \
 	mkdir -p "$(BACKUP_DEST)"; \
 	if command -v pigz >/dev/null 2>&1; then COMP="tar -I 'pigz -9' -cf"; else COMP="tar -czf"; fi; \
 	echo "==> Archiving top-level folders from $(LEGACY_ROOT) to $(BACKUP_DEST)"; \
-	for d in "$$LEGACY_ROOT"/*; do \
-	  [ -d "$$d" ] || continue; \
+	for d in "$$(find "$(LEGACY_ROOT)" -mindepth 1 -maxdepth 1 -type d -print)"; do \
 	  name="$$(basename "$$d")"; \
 	  out="$(BACKUP_DEST)/$${name}.tgz"; \
 	  echo "----> $$name"; \
-	  ( cd "$$LEGACY_ROOT" && eval $$COMP "\"$$out\"" "\"$$name\"" ); \
+	  ( cd "$(LEGACY_ROOT)" && eval $$COMP "\"$$out\"" "\"$$name\"" ); \
 	  sha256sum "$$out" > "$$out.sha256"; \
 	done; \
 	echo "==> Splitting archives larger than $(SPLIT_MB) MB"; \
