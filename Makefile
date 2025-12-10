@@ -89,3 +89,88 @@ backup-legacy-list:
 backup-legacy-clean:
 	@echo "Removing $(BACKUP_DEST)"; \
 	rm -rf "$(BACKUP_DEST)"
+
+# === Cygwin-side Make targets (run these on your laptop) ===
+
+# Remote (server) details
+REMOTE_USER    ?= stm-admmxr
+REMOTE_HOST    ?= stmpl-lara2.ml.unisa.edu.au
+REMOTE_DIR     ?= /home/stm-admmxr/C-LARA/backups_lara_legacy/
+
+# Local (laptop) destination in Cygwin path form
+LOCAL_DIR      ?= /home/LARALegacyFromServer
+
+# rsync options:
+#  -a               archive (preserves times/perm as best as Windows allows)
+#  --info=progress2 nice progress
+#  --partial        keep partial files if interrupted
+#  --inplace        write in place (helps resume big files)
+#  -e ssh           use SSH transport
+RSYNC_OPTS      ?= -a --info=progress2 --partial --inplace -e ssh
+
+.PHONY: pull-legacy-backup pull-legacy-verify ensure-local-dir
+
+ensure-local-dir:
+	mkdir -p "$(LOCAL_DIR)"
+
+pull-legacy-backup: ensure-local-dir
+	@echo "Pulling from $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR) -> $(LOCAL_DIR)/"
+	rsync $(RSYNC_OPTS) "$(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)" "$(LOCAL_DIR)/"
+
+# Optional: verify any .sha256 files that came down (single-file archives)
+pull-legacy-verify:
+	@echo "Verifying .sha256 checksums (single-file .tgz):"
+	@find "$(LOCAL_DIR)" -type f -name '*.sha256' -print0 | \
+	  xargs -0 -I{} sh -c 'cd "$$(dirname "{}")" && sha256sum -c "$$(basename "{}")" || true'
+	@echo "If you have split archives (.tgz.part.*), compare parts with the corresponding *.parts.sha256:"
+	@echo "    cd $(LOCAL_DIR) && sha256sum -c <archive>.tgz.parts.sha256"
+
+.PHONY: list-archives verify-legacy extract-legacy clean-extracted
+
+list-archives:
+	@ls -lh "$(LOCAL_DIR)"/*.tgz
+
+# Verify any *.sha256 files (single-file archives)
+verify-legacy:
+	@set -euo pipefail; set -x; \
+	find "$(LOCAL_DIR)" -maxdepth 1 -type f -name '*.sha256' -print0 | \
+	xargs -0 -I{} sh -c 'cd "$$(dirname "{}")" && sha256sum -c "$$(basename "{}")"'
+
+# Extract each .tgz into a directory with the same basename
+# e.g., foo.tgz -> ./foo/
+extract-legacy:
+	@set -euo pipefail; set -x; \
+	find "$(LOCAL_DIR)" -maxdepth 1 -type f -name '*.tgz' -print0 | \
+	while IFS= read -r -d '' f; do \
+	  base="$$(basename "$$f" .tgz)"; \
+	  dest="$(LOCAL_DIR)/$$base"; \
+	  mkdir -p "$$dest"; \
+	  echo "==> Extracting $$f -> $$dest/"; \
+	  tar -xzf "$$f" -C "$$dest"; \
+	done
+
+# Remove all extracted directories (does not delete the .tgz archives)
+clean-extracted:
+	@set -euo pipefail; set -x; \
+	find "$(LOCAL_DIR)" -maxdepth 1 -type d ! -path "$(LOCAL_DIR)" -print0 | \
+	while IFS= read -r -d '' d; do \
+	  case "$$d" in \
+	    "$(LOCAL_DIR)") ;; \
+	    *) echo "Removing $$d"; rm -rf "$$d" ;; \
+	  esac; \
+	done
+	
+# === pull all exported project zips to Cygwin laptop ===
+REMOTE_EXPORTS_DIR  ?= /home/stm-admmxr/C-LARA/tmp/all_exports/
+LOCAL_EXPORTS_DIR   ?= /home/CLARA_all_exports
+
+RSYNC_OPTS_EXPORTS  ?= -a --info=progress2 --partial --inplace -e ssh
+
+.PHONY: make-all-clara-exports pull-all-clara-exports --existing overwrite --checksums
+
+make-all-clara-exports:
+	python3 manage.py export_all_project_zips --checksums
+	
+pull-all-clara-exports:
+	mkdir -p "$(LOCAL_EXPORTS_DIR)"; \
+	rsync $(RSYNC_OPTS_EXPORTS) "$(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_EXPORTS_DIR)" "$(LOCAL_EXPORTS_DIR)/"
