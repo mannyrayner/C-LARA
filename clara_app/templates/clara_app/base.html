@@ -349,6 +349,9 @@
 					<a class="dropdown-item" href="{% url 'delete_old_task_updates' %}"
 						   data-toggle="tooltip" title="Remove all task updates more than 30 days old.">
 						   Delete old task updates</a>
+					<a class="dropdown-item" href="{% url 'start_bulk_source_exports' %}"
+						   data-toggle="tooltip" title="Create a directory containing zips of all projects plus metadata.">
+						   Prepare zipfiles of all projects</a>
 				</div>
             </li>
           {% endif %}

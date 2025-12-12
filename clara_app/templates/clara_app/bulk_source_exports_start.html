@@ -1,0 +1,32 @@
+<!-- templates/clara_app/bulk_source_exports_start.html -->
+{% extends "clara_app/base.html" %}
+{% load static %}
+{% block content %}
+<div class="container" style="max-width: 720px; margin: 2rem auto;">
+  <h2>Bulk export — source zips</h2>
+  <p>This will create <code>source.zip</code> + <code>metadata.json</code> under <code>$CLARA/tmp/bulk_source_exports/&lt;project_id&gt;/</code> for each included project.</p>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label for="id_only_ids">{{ form.only_ids.label }}</label>
+      {{ form.only_ids }}
+      <small class="form-text text-muted">{{ form.only_ids.help_text }}</small>
+      {% if form.only_ids.errors %}
+        <div class="text-danger">{{ form.only_ids.errors }}</div>
+      {% endif %}
+    </div>
+
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label for="id_skip_ids">{{ form.skip_ids.label }}</label>
+      {{ form.skip_ids }}
+      <small class="form-text text-muted">{{ form.skip_ids.help_text }}</small>
+      {% if form.skip_ids.errors %}
+        <div class="text-danger">{{ form.skip_ids.errors }}</div>
+      {% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Start export</button>
+  </form>
+</div>
+{% endblock %}

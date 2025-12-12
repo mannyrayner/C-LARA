@@ -1,0 +1,53 @@
+<!-- templates/clara_app/bulk_source_exports_complete.html -->
+{% extends "clara_app/base.html" %}
+{% block content %}
+<div class="container" style="max-width: 920px; margin: 2rem auto;">
+  <h2>Bulk export — complete</h2>
+
+  <p><strong>Result:</strong> {{ result|title }}</p>
+  <p><strong>Output root:</strong> <code>{{ out_root }}</code></p>
+  <p><strong>Units scanned:</strong> {{ total_units }} |
+     <strong>Successes:</strong> {{ success_count }} |
+     <strong>Failures:</strong> {{ failure_count }}</p>
+
+  <h3 style="margin-top:1.5rem;">Sample successes (up to 30)</h3>
+  {% if successes %}
+  <table class="table table-sm">
+    <thead><tr><th>ID</th><th>Slug</th><th>Title</th><th>Owner</th><th>Size (bytes)</th><th>SHA256</th></tr></thead>
+    <tbody>
+      {% for s in successes %}
+      <tr>
+        <td>{{ s.id }}</td>
+        <td>{{ s.slug }}</td>
+        <td>{{ s.title }}</td>
+        <td>{{ s.owner_username }}</td>
+        <td>{{ s.size_bytes }}</td>
+        <td style="font-family:monospace;">{{ s.sha256|slice:":16" }}…</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if has_more_successes %}<p><em>(More successes exist…)</em></p>{% endif %}
+  {% else %}
+  <p><em>No successes detected.</em></p>
+  {% endif %}
+
+  <h3 style="margin-top:1.5rem;">Sample failures (up to 30)</h3>
+  {% if failures %}
+    <ul>
+      {% for f in failures %}
+        <li><code>{{ f.project_id }}</code> — {{ f.error }}</li>
+      {% endfor %}
+    </ul>
+    {% if has_more_failures %}<p><em>(More failures exist…)</em></p>{% endif %}
+  {% else %}
+    <p><em>No failures recorded.</em></p>
+  {% endif %}
+
+  <h3 style="margin-top:1.5rem;">Next step (download)</h3>
+  <p>From your laptop, you can pull the bundle with <code>rsync</code>:</p>
+  <pre style="background:#f7f7f7; border:1px solid #ddd; padding:0.75rem;">
+rsync -avz --progress user@server:"$CLARA/tmp/bulk_source_exports/" "/path/on/laptop/bulk_source_exports/"
+  </pre>
+</div>
+{% endblock %}
