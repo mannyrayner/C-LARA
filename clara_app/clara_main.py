@@ -157,8 +157,8 @@ from .clara_annotated_images import add_image_to_text
 from .clara_phonetic_text import segmented_text_to_phonetic_text
 from .clara_mwe import simplify_mwe_tagged_text, annotate_mwes_in_text
 from .clara_acknowledgements import add_acknowledgements_to_text_object
-from .clara_export_import import create_export_zipfile, change_project_id_in_imported_directory, update_multimedia_from_imported_directory
-from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
+##from .clara_export_import import change_project_id_in_imported_directory, update_multimedia_from_imported_directory
+##from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_coherent_images import process_style, generate_element_names, process_elements, process_pages
 from .clara_coherent_images import generate_overview_html, add_uploaded_page_image, add_uploaded_element_image, create_variant_images_for_page
 from .clara_coherent_images import execute_community_requests_list
@@ -275,30 +275,30 @@ class CLARAProjectInternal:
         project._load_existing_text_versions()
         return project
 
-    # Reconstitute a CLARAProjectInternal from an export zipfile
-    @classmethod
-    def create_CLARAProjectInternal_from_zipfile(cls, zipfile: str, new_id: str, callback=None) -> 'CLARAProjectInternal':
-        try:
-            tmp_dir = tempfile.mkdtemp()
-            unzip_file(zipfile, tmp_dir)
-            post_task_update(callback, '--- Unzipped import file')
-            change_project_id_in_imported_directory(tmp_dir, new_id)
-            tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
-            rename_files_in_project_dir(tmp_project_dir, new_id)
-            project = cls.from_directory(tmp_project_dir)
-            update_metadata_file_paths(project, project.project_dir, callback=callback)
-            update_multimedia_from_imported_directory(project, tmp_dir, callback=callback)
-            global_metadata = get_global_metadata(tmp_dir)
-            return ( project, global_metadata )
-        except Exception as e:
-            post_task_update(callback, f'*** Error when trying to import zipfile {zipfile}')
-            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-            post_task_update(callback, error_message)
-            return ( None, None )
-        finally:
-            # Remove the tmp dir once we've used it
-            if local_directory_exists(tmp_dir):
-                remove_local_directory(tmp_dir)
+##    # Reconstitute a CLARAProjectInternal from an export zipfile
+##    @classmethod
+##    def create_CLARAProjectInternal_from_zipfile(cls, zipfile: str, new_id: str, callback=None) -> 'CLARAProjectInternal':
+##        try:
+##            tmp_dir = tempfile.mkdtemp()
+##            unzip_file(zipfile, tmp_dir)
+##            post_task_update(callback, '--- Unzipped import file')
+##            change_project_id_in_imported_directory(tmp_dir, new_id)
+##            tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
+##            rename_files_in_project_dir(tmp_project_dir, new_id)
+##            project = cls.from_directory(tmp_project_dir)
+##            update_metadata_file_paths(project, project.project_dir, callback=callback)
+##            update_multimedia_from_imported_directory(project, tmp_dir, callback=callback)
+##            global_metadata = get_global_metadata(tmp_dir)
+##            return ( project, global_metadata )
+##        except Exception as e:
+##            post_task_update(callback, f'*** Error when trying to import zipfile {zipfile}')
+##            error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+##            post_task_update(callback, error_message)
+##            return ( None, None )
+##        finally:
+##            # Remove the tmp dir once we've used it
+##            if local_directory_exists(tmp_dir):
+##                remove_local_directory(tmp_dir)
             
     # If there are already files in the associated directory, update self.text_versions
     def _load_existing_text_versions(self) -> None:
@@ -2203,48 +2203,48 @@ class CLARAProjectInternal:
                                          audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments)
         return None if not audio_annotator else audio_annotator.printname_for_voice()
 
-    # Make a zipfile for exporting the project and other metadata
-    def create_export_zipfile(self, simple_clara_type='create_text_and_image',
-                              uses_coherent_image_set=False,
-                              uses_coherent_image_set_v2=False,
-                              use_translation_for_images=False,
-                              human_voice_id=None, human_voice_id_phonetic=None,
-                              audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
-        global_metadata = { 'simple_clara_type': simple_clara_type,
-                            'uses_coherent_image_set': uses_coherent_image_set,
-                            'uses_coherent_image_set_v2': uses_coherent_image_set_v2,
-                            'use_translation_for_images': use_translation_for_images,
-                            'human_voice_id': human_voice_id,
-                            'human_voice_id_phonetic': human_voice_id_phonetic,
-                            'audio_type_for_words': audio_type_for_words,
-                            'audio_type_for_segments': audio_type_for_segments }
-        project_directory = self.project_dir
-        audio_metadata = self.get_audio_metadata(tts_engine_type=None,
-                                                 human_voice_id=human_voice_id, 
-                                                 audio_type_for_words=audio_type_for_words,
-                                                 audio_type_for_segments=audio_type_for_segments,
-                                                 type='all', 
-                                                 phonetic=False, callback=callback)
-        if self.text_versions['phonetic'] and human_voice_id_phonetic:
-            audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,
-                                                              human_voice_id=human_voice_id_phonetic,
-                                                              audio_type_for_words='human',
-                                                              audio_type_for_segments=audio_type_for_words,
-                                                              type='all', 
-                                                              phonetic=True, callback=callback)
-        else:
-            audio_metadata_phonetic = None
-        image_metadata = self.get_all_project_images(callback=callback)
-        image_description_metadata = self.get_all_project_image_descriptions(callback=callback)
-        zipfile = self.export_zipfile_pathname()
-        result = create_export_zipfile(global_metadata, project_directory, audio_metadata, audio_metadata_phonetic,
-                                       image_metadata, image_description_metadata,
-                                       zipfile, callback=callback)
-        if result:
-            return zipfile
-        else:
-            post_task_update(callback, f"error")
-            return False
-
-    def export_zipfile_pathname(self):
-        return absolute_file_name(f"$CLARA/tmp/{self.id}_zipfile.zip")
+##    # Make a zipfile for exporting the project and other metadata
+##    def create_export_zipfile(self, simple_clara_type='create_text_and_image',
+##                              uses_coherent_image_set=False,
+##                              uses_coherent_image_set_v2=False,
+##                              use_translation_for_images=False,
+##                              human_voice_id=None, human_voice_id_phonetic=None,
+##                              audio_type_for_words='tts', audio_type_for_segments='tts', callback=None):
+##        global_metadata = { 'simple_clara_type': simple_clara_type,
+##                            'uses_coherent_image_set': uses_coherent_image_set,
+##                            'uses_coherent_image_set_v2': uses_coherent_image_set_v2,
+##                            'use_translation_for_images': use_translation_for_images,
+##                            'human_voice_id': human_voice_id,
+##                            'human_voice_id_phonetic': human_voice_id_phonetic,
+##                            'audio_type_for_words': audio_type_for_words,
+##                            'audio_type_for_segments': audio_type_for_segments }
+##        project_directory = self.project_dir
+##        audio_metadata = self.get_audio_metadata(tts_engine_type=None,
+##                                                 human_voice_id=human_voice_id, 
+##                                                 audio_type_for_words=audio_type_for_words,
+##                                                 audio_type_for_segments=audio_type_for_segments,
+##                                                 type='all', 
+##                                                 phonetic=False, callback=callback)
+##        if self.text_versions['phonetic'] and human_voice_id_phonetic:
+##            audio_metadata_phonetic = self.get_audio_metadata(tts_engine_type=None,
+##                                                              human_voice_id=human_voice_id_phonetic,
+##                                                              audio_type_for_words='human',
+##                                                              audio_type_for_segments=audio_type_for_words,
+##                                                              type='all', 
+##                                                              phonetic=True, callback=callback)
+##        else:
+##            audio_metadata_phonetic = None
+##        image_metadata = self.get_all_project_images(callback=callback)
+##        image_description_metadata = self.get_all_project_image_descriptions(callback=callback)
+##        zipfile = self.export_zipfile_pathname()
+##        result = create_export_zipfile(global_metadata, project_directory, audio_metadata, audio_metadata_phonetic,
+##                                       image_metadata, image_description_metadata,
+##                                       zipfile, callback=callback)
+##        if result:
+##            return zipfile
+##        else:
+##            post_task_update(callback, f"error")
+##            return False
+##
+##    def export_zipfile_pathname(self):
+##        return absolute_file_name(f"$CLARA/tmp/{self.id}_zipfile.zip")

@@ -192,7 +192,12 @@ urlpatterns = [
     path('project/<int:project_id>/make_export_zipfile/', export_zipfile_views.make_export_zipfile, name='make_export_zipfile'),
     path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', export_zipfile_views.make_export_zipfile_status, name='make_export_zipfile_status'),
     path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', export_zipfile_views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
-    path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', export_zipfile_views.make_export_zipfile_complete, name='make_export_zipfile_complete'), 
+    path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', export_zipfile_views.make_export_zipfile_complete, name='make_export_zipfile_complete'),
+
+    path("admin/bulk_exports/start/", export_zipfile_views.start_bulk_source_exports, name="start_bulk_source_exports"),
+    path("admin/bulk_exports/monitor/<str:report_id>/", export_zipfile_views.bulk_source_exports_monitor, name="bulk_source_exports_monitor"),
+    path("admin/bulk_exports/status/<str:report_id>/", export_zipfile_views.bulk_source_exports_status, name="bulk_source_exports_status"),
+    path("admin/bulk_exports/complete/<str:result>/", export_zipfile_views.bulk_source_exports_complete, name="bulk_source_exports_complete"),
 
     # Annotation
     path('project/<int:project_id>/create_plain_text/', annotation_views.create_plain_text, name='create_plain_text'),

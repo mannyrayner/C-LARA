@@ -2,7 +2,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
+
 from .models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInfo
+from .clara_main import CLARAProjectInternal
 
 from django_q.tasks import async_task
 from .forms import ProjectCreationForm
@@ -12,12 +14,19 @@ from .utils import user_has_a_project_role
 from .utils import get_task_updates
 from .utils import uploaded_file_to_file
 
-from .clara_main import CLARAProjectInternal
+#from .clara_main import CLARAProjectInternal
+from .clara_export_import import change_project_id_in_imported_directory, update_multimedia_from_imported_directory
+from .clara_export_import import get_global_metadata, rename_files_in_project_dir, update_metadata_file_paths
 from .clara_utils import get_config, local_file_exists, remove_file
+from .clara_utils import local_directory_exists, remove_local_directory
 from .clara_utils import copy_local_file_to_s3_if_necessary, copy_s3_file_to_local_if_necessary
 from .clara_utils import post_task_update
+from .clara_utils import unzip_file
+
+import os
 import logging
 import traceback
+import tempfile
 
 config = get_config()
 logger = logging.getLogger(__name__)
@@ -79,7 +88,7 @@ def import_project_from_zip_file(zip_file, project_id, internal_id, callback=Non
         post_task_update(callback, f"--- Found uploaded file {zip_file}")
 
         # Create a new internal project from the zipfile
-        clara_project_internal, global_metadata = CLARAProjectInternal.create_CLARAProjectInternal_from_zipfile(zip_file, internal_id, callback=callback)
+        clara_project_internal, global_metadata = create_CLARAProjectInternal_from_zipfile(zip_file, internal_id, callback=callback)
         if clara_project_internal is None:
             post_task_update(callback, f"Error: unable to create internal project")
             post_task_update(callback, f"error")
@@ -139,6 +148,31 @@ def import_project_from_zip_file(zip_file, project_id, internal_id, callback=Non
     finally:
         # remove_file removes the S3 file if we're in S3 mode (i.e. Heroku) and the local file if we're in local mode.
         remove_file(zip_file)
+
+# Reconstitute a CLARAProjectInternal from an export zipfile
+def create_CLARAProjectInternal_from_zipfile(zipfile, new_id, callback=None):
+    try:
+        tmp_dir = tempfile.mkdtemp()
+        unzip_file(zipfile, tmp_dir)
+        post_task_update(callback, '--- Unzipped import file')
+        change_project_id_in_imported_directory(tmp_dir, new_id)
+        tmp_project_dir = os.path.join(tmp_dir, 'project_dir')
+        rename_files_in_project_dir(tmp_project_dir, new_id)
+        project = CLARAProjectInternal.from_directory(tmp_project_dir)
+        update_metadata_file_paths(project, project.project_dir, callback=callback)
+        update_multimedia_from_imported_directory(project, tmp_dir, callback=callback)
+        global_metadata = get_global_metadata(tmp_dir)
+        return ( project, global_metadata )
+    except Exception as e:
+        post_task_update(callback, f'*** Error when trying to import zipfile {zipfile}')
+        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
+        post_task_update(callback, error_message)
+        return ( None, None )
+    finally:
+        # Remove the tmp dir once we've used it
+        if local_directory_exists(tmp_dir):
+            remove_local_directory(tmp_dir)
+
 
 # Import a new project from a zipfile
 @login_required

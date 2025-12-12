@@ -580,3 +580,26 @@ def get_previous_week_start_date():
 
     return meeting_start_adelaide
 
+def audio_info_for_project(project):
+    human_audio_info = HumanAudioInfo.objects.filter(project=project).first()
+    human_audio_info_phonetic = PhoneticHumanAudioInfo.objects.filter(project=project).first()
+        
+    if human_audio_info and human_audio_info.voice_talent_id:
+        human_voice_id = human_audio_info.voice_talent_id
+        audio_type_for_words = 'human' if human_audio_info.use_for_words else 'tts'
+        audio_type_for_segments = 'human' if human_audio_info.use_for_segments else 'tts'
+    else:
+        audio_type_for_words = 'tts'
+        audio_type_for_segments = 'tts'
+        human_voice_id = None
+
+    if human_audio_info_phonetic and human_audio_info_phonetic.voice_talent_id:
+        human_voice_id_phonetic = human_audio_info_phonetic.voice_talent_id
+    else:
+        human_voice_id_phonetic = None
+
+    return { 'human_voice_id': human_voice_id,
+             'human_voice_id_phonetic': human_voice_id_phonetic,
+             'audio_type_for_words': audio_type_for_words,
+             'audio_type_for_segments': audio_type_for_segments
+             }             

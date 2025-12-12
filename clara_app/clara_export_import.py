@@ -1,9 +1,13 @@
+
+from .clara_main import CLARAProjectInternal
 from .clara_classes import InternalCLARAError
 #from .clara_utils import _use_orm_repositories
-from .clara_utils import absolute_local_file_name, pathname_parts, file_exists, local_file_exists, basename, copy_local_file, copy_to_local_file, remove_local_file
+from .clara_utils import absolute_local_file_name, absolute_file_name
+from .clara_utils import pathname_parts, file_exists, local_file_exists, basename, copy_local_file, copy_to_local_file, remove_local_file
 from .clara_utils import make_local_directory, copy_directory_to_local_directory, local_directory_exists, remove_local_directory
 from .clara_utils import get_immediate_subdirectories_in_local_directory, get_files_in_local_directory, rename_file
 from .clara_utils import make_tmp_file, write_json_to_local_file, read_json_local_file, make_zipfile, unzip_file, post_task_update
+from .utils import audio_info_for_project
 from .clara_audio_annotator import AudioAnnotator
 ##from .clara_audio_repository import AudioRepository
 ##from .clara_audio_repository_orm import AudioRepositoryORM
@@ -15,29 +19,72 @@ import os
 import tempfile
 import traceback
 
-def create_export_zipfile(global_metadata, project_directory, audio_metadata, audio_metadata_phonetic,
-                          image_metadata, image_description_metadata,
-                          zipfile, callback=None):
+def make_export_zipfile_internal(project):
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    audio_info = audio_info_for_project(project)
+
+    global_metadata = { 'simple_clara_type': project.simple_clara_type,
+                        'uses_coherent_image_set': project.uses_coherent_image_set,
+                        'uses_coherent_image_set_v2': project.uses_coherent_image_set_v2,
+                        'use_translation_for_images': project.use_translation_for_images,
+                        'human_voice_id': audio_info['human_voice_id'],
+                        'human_voice_id_phonetic': audio_info['human_voice_id_phonetic'],
+                        'audio_type_for_words': audio_info['audio_type_for_words'],
+                        'audio_type_for_segments': audio_info['audio_type_for_segments'] }
+    project_directory = clara_project_internal.project_dir
+    audio_metadata = clara_project_internal.get_audio_metadata(tts_engine_type=None,
+                                                               human_voice_id=audio_info['human_voice_id'],
+                                                               audio_type_for_words=audio_info['audio_type_for_words'],
+                                                               audio_type_for_segments=audio_info['audio_type_for_segments'],
+                                                               type='all',
+                                                               phonetic=False)
+    if clara_project_internal.text_versions['phonetic'] and audio_info['human_voice_id_phonetic']:
+        audio_metadata_phonetic = clara_project_internal.get_audio_metadata(tts_engine_type=None,
+                                                                            human_voice_id=audio_info['human_voice_id_phonetic'],
+                                                                            audio_type_for_words='human',
+                                                                            audio_type_for_segments=audio_info['audio_type_for_words'],
+                                                                            phonetic=True)
+    else:
+        audio_metadata_phonetic = None
+        
+    image_metadata = clara_project_internal.get_all_project_images()
+    image_description_metadata = clara_project_internal.get_all_project_image_descriptions()
+    zipfile = export_zipfile_pathname(clara_project_internal)
+    result = make_export_zipfile_from_data_and_metadata(global_metadata, project_directory,
+                                                        audio_metadata, audio_metadata_phonetic,
+                                                        image_metadata, image_description_metadata,
+                                                        zipfile)
+    if result:
+        return zipfile
+    else:
+        post_task_update(callback, f"error")
+        return False
+
+def export_zipfile_pathname(clara_project_internal):
+    return absolute_file_name(f"$CLARA/tmp/{clara_project_internal.id}_zipfile.zip")
+
+
+def make_export_zipfile_from_data_and_metadata(global_metadata, project_directory,
+                                               audio_metadata, audio_metadata_phonetic,
+                                               image_metadata, image_description_metadata,
+                                               zipfile):
     try:
         tmp_dir = tempfile.mkdtemp()
         tmp_zipfile = make_tmp_file('project_zip', 'zip')
 
-        write_global_metadata_to_tmp_dir(global_metadata, tmp_dir, callback=callback)
-        copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=callback)
-        copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False, callback=callback)
-        copy_audio_data_to_tmp_dir(audio_metadata_phonetic, tmp_dir, phonetic=True, callback=callback)
-        copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=callback)
-        copy_image_description_data_to_tmp_dir(image_description_metadata, tmp_dir, callback=callback)
+        write_global_metadata_to_tmp_dir(global_metadata, tmp_dir)
+        copy_project_directory_to_tmp_dir(project_directory, tmp_dir)
+        copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False)
+        copy_audio_data_to_tmp_dir(audio_metadata_phonetic, tmp_dir, phonetic=True)
+        copy_image_data_to_tmp_dir(image_metadata, tmp_dir)
+        copy_image_description_data_to_tmp_dir(image_description_metadata, tmp_dir)
         
-        make_zipfile(tmp_dir, tmp_zipfile, callback=callback)
+        make_zipfile(tmp_dir, tmp_zipfile)
         copy_local_file(tmp_zipfile, zipfile)
-        post_task_update(callback, f'--- Zipfile created and copied to {zipfile}')
         return True
     except Exception as e:
-        post_task_update(callback, f'*** Error when trying to create zipfile for project')
-        error_message = f'"{str(e)}"\n{traceback.format_exc()}'
-        post_task_update(callback, error_message)
-        return False
+        raise e
     finally:
         # Remove the tmp dir and tmp zipfile once we've used them
         if local_directory_exists(tmp_dir):

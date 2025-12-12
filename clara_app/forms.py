@@ -193,6 +193,20 @@ class ProjectImportForm(forms.Form):
     title = forms.CharField(label='Project Title', max_length=255)
     zipfile = forms.FileField(label='Project Zipfile')
 
+class BulkSourceExportForm(forms.Form):
+    only_ids = forms.CharField(
+        required=False,
+        label="Only project IDs",
+        help_text="Comma-separated project IDs to include (leave blank = all). Example: 12,15,18",
+        widget=forms.TextInput(attrs={"placeholder": "e.g. 12,15,18"})
+    )
+    skip_ids = forms.CharField(
+        required=False,
+        label="Skip project IDs",
+        help_text="Comma-separated project IDs to exclude. Example: 3,7,9",
+        widget=forms.TextInput(attrs={"placeholder": "e.g. 3,7,9"})
+    )
+
 class SimpleClaraForm(forms.Form):
     status = forms.CharField(initial='No project', required=False)
     l2 = forms.ChoiceField(label='Text language', choices=SUPPORTED_LANGUAGES, required=False)
