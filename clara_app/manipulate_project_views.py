@@ -98,11 +98,7 @@ def project_list(request, clara_version):
     for project in projects:
         role = 'OWNER' if project.user == user else ProjectPermissions.objects.get(user=user, project=project).role
         project_data[project] = {
-            'role': role,
-            'cost': get_project_api_cost(user=user, project=project),
-            'operation_costs': get_project_operation_costs(user=user, project=project),
-            'duration': get_project_api_duration(user=user, project=project),  
-            'operation_durations': get_project_operation_durations(user=user, project=project),  
+            'role': role,  
         }
 
     paginator = Paginator(list(project_data.items()), 10) 
