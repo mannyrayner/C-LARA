@@ -176,6 +176,7 @@ def export_all_project_zips_task(params, callback):
             unit_dir = out_root / str(project.id)
             unit_dir.mkdir(parents=True, exist_ok=True)
 
+            post_task_update(callback, f"Preparing to export project {project.id} “{project.title}”")
             zip_path = make_export_zipfile_internal(project)  # returns Path to local zip
             dest_zip = unit_dir / "source.zip"
             dest_zip.write_bytes(Path(zip_path).read_bytes())

@@ -1337,7 +1337,12 @@ class CLARAProjectInternal:
                            audio_type_for_words='tts', audio_type_for_segments='tts', use_context=False, 
                            type='all', phonetic=False, callback=None):
         post_task_update(callback, f"--- Getting audio metadata (phonetic = {phonetic})")
-        text_object = self.get_internalised_text(phonetic=phonetic)
+        try:
+            text_object = self.get_internalised_text(phonetic=phonetic)
+        except Exception as e:
+            post_task_update(callback, f"--- Error when trying to create internalised text (phonetic = {phonetic})")
+            post_task_update(callback, f"{e}")
+            return []
 
         if text_object:
             post_task_update(callback, f"--- Internalised text created")
