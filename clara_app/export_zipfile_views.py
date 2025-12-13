@@ -26,6 +26,7 @@ import traceback
 import os
 import json
 import hashlib
+import shutil
 
 from pathlib import Path
 
@@ -146,17 +147,16 @@ def start_bulk_source_exports(request):
     return render(request, "clara_app/bulk_source_exports_start.html", {"form": form})
 
 def export_all_project_zips_task(params, callback):
-    #out_root = Path(params.get("dest_root") or (Path.environ["CLARA"] + "/tmp/bulk_source_exports")).resolve()
     out_root = Path( params.get("dest_root") or absolute_file_name("$CLARA/tmp/bulk_source_exports") )
     out_root.mkdir(parents=True, exist_ok=True)
+
+    if params.get("clear_output_dir"):
+        _clear_dir(out_root)
+        post_task_update(callback, f"Cleared existing contents in {out_root}")
 
     # filters
     only_ids   = set(int(x) for x in (params.get("only_ids") or "").split(",") if x.strip().isdigit())
     skip_ids   = set(int(x) for x in (params.get("skip_ids") or "").split(",") if x.strip().isdigit())
-
-##    qs = CLARAProject.objects.all().select_related("internal", "user").prefetch_related(
-##        Prefetch("projectpermissions_set", queryset=ProjectPermissions.objects.select_related("user"))
-##    )
 
     qs = CLARAProject.objects.all()
     if only_ids:
@@ -176,7 +176,7 @@ def export_all_project_zips_task(params, callback):
             unit_dir = out_root / str(project.id)
             unit_dir.mkdir(parents=True, exist_ok=True)
 
-            zip_path = make_export_zipfile_with_messages(project, callback)  # returns Path to local zip
+            zip_path = make_export_zipfile_internal(project)  # returns Path to local zip
             dest_zip = unit_dir / "source.zip"
             dest_zip.write_bytes(Path(zip_path).read_bytes())
 
@@ -204,6 +204,18 @@ def export_all_project_zips_task(params, callback):
         post_task_update(callback, f"finished with {len(failures)} errors")
     else:
         post_task_update(callback, "error")
+
+def _clear_dir(root: Path) -> None:
+    """Delete only the contents of `root`, not the directory itself."""
+    for child in root.iterdir():
+        try:
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
+        except Exception:
+            # best effort; leave a note in failures.json if needed
+            pass
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
@@ -240,14 +252,7 @@ def bulk_source_exports_complete(request, result):
           if meta_p.exists() and zip_p.exists():
               try:
                   meta = json.loads(meta_p.read_text(encoding="utf-8"))
-                  successes.append({
-                      "id": meta.get("id"),
-                      "slug": meta.get("slug"),
-                      "title": meta.get("title"),
-                      "owner_username": meta.get("owner_username"),
-                      "size_bytes": meta.get("size_bytes"),
-                      "sha256": meta.get("sha256"),
-                  })
+                  successes.append(meta)
               except Exception:
                   # malformed metadata — treat as failure
                   failures.append({"project_id": d.name, "error": "malformed metadata.json"})

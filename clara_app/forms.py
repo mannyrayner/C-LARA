@@ -206,6 +206,12 @@ class BulkSourceExportForm(forms.Form):
         help_text="Comma-separated project IDs to exclude. Example: 3,7,9",
         widget=forms.TextInput(attrs={"placeholder": "e.g. 3,7,9"})
     )
+    clear_output_dir = forms.BooleanField(
+        required=False,
+        initial=False,
+        label="Empty output folder before starting",
+        help_text="Deletes all subfolders of $CLARA/tmp/bulk_source_exports before export."
+    )
 
 class SimpleClaraForm(forms.Form):
     status = forms.CharField(initial='No project', required=False)
