@@ -26,6 +26,16 @@
       {% endif %}
     </div>
 
+    <div class="form-check" style="margin-bottom:1rem;">
+      <label class="form-check-label" for="id_clear_output_dir">
+        {{ form.clear_output_dir }} {{ form.clear_output_dir.label }}
+      </label>
+      <small class="form-text text-muted d-block">{{ form.clear_output_dir.help_text }}</small>
+      {% if form.clear_output_dir.errors %}
+        <div class="text-danger">{{ form.clear_output_dir.errors }}</div>
+      {% endif %}
+    </div>
+
     <button type="submit" class="btn btn-primary">Start export</button>
   </form>
 </div>
