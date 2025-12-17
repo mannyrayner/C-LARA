@@ -5,19 +5,23 @@ from django.contrib import messages
 
 from django.db.models import Prefetch
 
-from .models import CLARAProject, ProjectPermissions
+from django_q.tasks import async_task
+
+from .models import CLARAProject, ProjectPermissions, AudioMetadata
+from .forms import MakeExportZipForm, BulkSourceExportForm, BulkAudioExportForm
 
 from .clara_export_import import make_export_zipfile_internal
 
-from django_q.tasks import async_task
-from .forms import MakeExportZipForm, BulkSourceExportForm
+from .clara_audio_repository_orm import AudioRepositoryORM
+
 from .utils import get_user_config, make_asynch_callback_and_report_id
 from .utils import user_has_a_project_role
 from .utils import get_task_updates
 from .utils import audio_info_for_project
 
 from .clara_main import CLARAProjectInternal
-from .clara_utils import _s3_storage, get_config, absolute_file_name
+
+from .clara_utils import _s3_storage, get_config, absolute_file_name, make_directory
 from .clara_utils import generate_s3_presigned_url
 from .clara_utils import post_task_update
 
@@ -131,6 +135,7 @@ def make_export_zipfile_complete(request, project_id, status):
                    'clara_version': clara_version} )
 
 # ------------------------------------------
+# Bulk export of project directories
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
@@ -206,18 +211,6 @@ def export_all_project_zips_task(params, callback):
     else:
         post_task_update(callback, "error")
 
-def _clear_dir(root: Path) -> None:
-    """Delete only the contents of `root`, not the directory itself."""
-    for child in root.iterdir():
-        try:
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
-        except Exception:
-            # best effort; leave a note in failures.json if needed
-            pass
-
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
 def bulk_source_exports_monitor(request, report_id):
@@ -285,6 +278,167 @@ def bulk_source_exports_complete(request, result):
         "has_more_failures": len(failures) > 30,
     }
     return render(request, "clara_app/bulk_source_exports_complete.html", ctx)
+
+# ------------------------------------------
+# Bulk export of audio
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def start_bulk_audio_export(request):
+    if request.method == "POST":
+        form = BulkAudioExportForm(request.POST)
+        if form.is_valid():
+            callback, report_id = make_asynch_callback_and_report_id(request, "bulk_audio_exports")
+            params = form.cleaned_data
+            async_task(export_all_audio_task, params, callback)
+            return redirect("bulk_audio_export_monitor", report_id=report_id)
+    else:
+        form = BulkAudioExportForm()
+    return render(request, "clara_app/bulk_audio_export_start.html", {"form": form})
+
+def export_all_audio_task(params, callback):
+    out_root = Path( absolute_file_name("$CLARA/tmp/bulk_audio_exports") )
+    out_root.mkdir(parents=True, exist_ok=True)
+
+    if params.get("empty_dest_first"):
+        _clear_dir(out_root)
+        post_task_update(callback, f"Cleared existing contents in {out_root}")
+
+    # filters
+    engine_id = params.get("engine_id").strip() or None
+    language_id = params.get("language_id").strip() or None
+    voice_id = params.get("voice_id").strip() or None
+
+    repo = AudioRepositoryORM(callback=callback)  # base_dir_orm resolved here
+    base_dir = Path(repo.base_dir)
+
+    post_task_update(callback, f"Starting bulk audio export {base_dir} → {out_root}")
+
+    q = AudioMetadata.objects.all()
+    if engine_id:   q = q.filter(engine_id=engine_id)
+    if language_id: q = q.filter(language_id=language_id)
+    if voice_id:    q = q.filter(voice_id=voice_id)
+
+    total = q.count()
+    post_task_update(callback, f"Found {total} audio metadata rows to process")
+
+    # group by engine/language/voice
+    triples = q.values_list("engine_id", "language_id", "voice_id").distinct()
+    index = []
+    failures = []
+    processed = 0
+
+    for eng, lang, voi in triples:
+        rel_dir = Path(eng) / lang / voi
+        dest_dir = out_root / rel_dir
+        make_directory(str(dest_dir), parents=True, exist_ok=True)
+
+        rows = q.filter(engine_id=eng, language_id=lang, voice_id=voi)
+        count = 0
+        bytes_ = 0
+        manifest = {"engine_id": eng, "language_id": lang, "voice_id": voi, "items": []}
+
+        post_task_update(callback, f"Exporting {eng}/{lang}/{voi} ({rows.count()} items)…")
+
+        for r in rows.iterator():
+            try:
+                src = Path(absolute_file_name(r.file_path))
+                if not src.exists():
+                    failures.append({"engine_id": eng, "language_id": lang, "voice_id": voi,
+                                     "text": r.text, "context": r.context,
+                                     "error": "missing file", "file_path": r.file_path})
+                    continue
+                dst = dest_dir / src.name  # keep filename
+                if not dst.exists():
+                    shutil.copy2(src, dst)
+                item = {
+                    "text": r.text,
+                    "context": r.context,
+                    "file": dst.name,
+                    "size": dst.stat().st_size,
+                    "sha256": _sha256(dst),
+                }
+                manifest["items"].append(item)
+                count += 1
+                bytes_ += item["size"]
+
+                processed += 1
+                if processed % 500 == 0:
+                    post_task_update(callback, f"…{processed}/{total} entries done")
+
+            except Exception as e:
+                failures.append({"engine_id": eng, "language_id": lang, "voice_id": voi,
+                                 "text": r.text, "context": r.context, "error": str(e)})
+
+        manifest_path = dest_dir / "manifest.json"
+        manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2))
+
+        index.append({
+            "engine_id": eng, "language_id": lang, "voice_id": voi,
+            "count": count, "bytes": bytes_,
+            "dir": str(rel_dir),
+        })
+
+    (out_root / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2))
+    if failures:
+        (out_root / "failures.json").write_text(json.dumps(failures, ensure_ascii=False, indent=2))
+        post_task_update(callback, f"finished with {len(failures)} errors")
+    else:
+        post_task_update(callback, "finished")
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def bulk_audio_export_monitor(request, report_id):
+    return render(request, "clara_app/bulk_audio_export_monitor.html", {"report_id": report_id})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def bulk_audio_export_status(request, report_id):
+    msgs = get_task_updates(report_id)
+    status = "error" if any("error" in m.lower() for m in msgs) else ("finished" if any("finished" in m.lower() for m in msgs) else "unknown")
+    return JsonResponse({"messages": msgs, "status": status})
+
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def bulk_audio_export_complete(request, result):
+    out_root = Path(os.environ.get("CLARA", "")) / "tmp" / "bulk_audio_exports"  # <-- audio, not source
+    index_path = out_root / "index.json"
+    fails_path = out_root / "failures.json"
+
+    index = json.loads(index_path.read_text()) if index_path.exists() else []
+    failures = json.loads(fails_path.read_text()) if fails_path.exists() else []
+
+    counts = {
+        "voices": len({(m.get("engine_id"), m.get("language_id"), m.get("voice_id")) for m in index}),
+        "items": sum(int(m.get("count", 0)) for m in index),
+        "bytes": sum(int(m.get("bytes", 0)) for m in index),
+        "failures": len(failures),
+    }
+
+    return render(request, "clara_app/bulk_audio_export_complete.html", {
+        "out_root": str(out_root),
+        "voices_count": counts["voices"],
+        "items_count": counts["items"],
+        "bytes_count": counts["bytes"],
+        "failure_count": counts["failures"],
+        "failures": failures[:50],  # peek
+        "has_more_failures": len(failures) > 50,
+        "result": result,  # keep if you also show a simple status
+    })
+
+# ------------------------------------------
+
+def _clear_dir(root: Path) -> None:
+    """Delete only the contents of `root`, not the directory itself."""
+    for child in root.iterdir():
+        try:
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
+        except Exception:
+            # best effort; leave a note in failures.json if needed
+            pass
 
 def _sha256(p: Path) -> str:
     h = hashlib.sha256()

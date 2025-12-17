@@ -213,6 +213,26 @@ class BulkSourceExportForm(forms.Form):
         help_text="Deletes all subfolders of $CLARA/tmp/bulk_source_exports before export."
     )
 
+class BulkAudioExportForm(forms.Form):
+    engine_id = forms.CharField(
+        required=False,
+        help_text="Filter by TTS engine id (e.g. 'google', 'human_voice'). Blank = all."
+    )
+    language_id = forms.CharField(
+        required=False,
+        help_text="Filter by language id (e.g. 'en-GB'). Blank = all."
+    )
+    voice_id = forms.CharField(
+        required=False,
+        help_text="Filter by voice id (e.g. 'en-GB-News-J' or a human voice id). Blank = all."
+    )
+    empty_dest_first = forms.BooleanField(
+        required=False,
+        initial=False,
+        help_text="Remove destination directory before export."
+    )
+
+
 class SimpleClaraForm(forms.Form):
     status = forms.CharField(initial='No project', required=False)
     l2 = forms.ChoiceField(label='Text language', choices=SUPPORTED_LANGUAGES, required=False)
