@@ -1,0 +1,52 @@
+<!-- templates/clara_app/bulk_audio_export_complete.html -->
+{% extends "clara_app/base.html" %}
+{% block content %}
+<div class="container" style="max-width: 920px; margin: 2rem auto;">
+  <h2>Bulk audio export — complete</h2>
+
+  {% if result %}
+    <p><strong>Result:</strong> {{ result|title }}</p>
+  {% endif %}
+
+  <p><strong>Output root:</strong> <code>{{ out_root }}</code></p>
+  <p>
+    <strong>Voice triplets:</strong> {{ voices_count }} |
+    <strong>Items:</strong> {{ items_count }} |
+    <strong>Total bytes:</strong> {{ bytes_count }} |
+    <strong>Failures:</strong> {{ failure_count }}
+  </p>
+
+  <h3 style="margin-top:1.5rem;">Failures (peek up to 50)</h3>
+  {% if failures %}
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th>Engine</th><th>Lang</th><th>Voice</th><th>Text (truncated)</th><th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in failures %}
+          <tr>
+            <td>{{ f.engine_id|default:"—" }}</td>
+            <td>{{ f.language_id|default:"—" }}</td>
+            <td>{{ f.voice_id|default:"—" }}</td>
+            <td style="max-width:420px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              {{ f.text|default:"" }}
+            </td>
+            <td>{{ f.error|default:"Unknown" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if has_more_failures %}<p><em>(More failures exist…)</em></p>{% endif %}
+  {% else %}
+    <p><em>No failures recorded.</em></p>
+  {% endif %}
+
+  <h3 style="margin-top:1.5rem;">Next step (download)</h3>
+  <p>From your laptop, pull the bundle with <code>rsync</code>:</p>
+  <pre style="background:#f7f7f7; border:1px solid #ddd; padding:0.75rem;">
+rsync -avz --progress user@server:"$CLARA/tmp/bulk_audio_exports/" "/path/on/laptop/bulk_audio_exports/"
+  </pre>
+</div>
+{% endblock %}

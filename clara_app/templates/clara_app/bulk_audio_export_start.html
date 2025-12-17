@@ -1,0 +1,12 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+<h2>Bulk audio export</h2>
+<form method="post">
+  {% csrf_token %}
+  <div>{{ form.engine_id.label_tag }} {{ form.engine_id }}<br><small>{{ form.engine_id.help_text }}</small></div>
+  <div>{{ form.language_id.label_tag }} {{ form.language_id }}<br><small>{{ form.language_id.help_text }}</small></div>
+  <div>{{ form.voice_id.label_tag }} {{ form.voice_id }}<br><small>{{ form.voice_id.help_text }}</small></div>
+  <div>{{ form.empty_dest_first }} {{ form.empty_dest_first.label_tag }}<br><small>{{ form.empty_dest_first.help_text }}</small></div>
+  <button type="submit" class="btn btn-primary">Start export</button>
+</form>
+{% endblock %}
