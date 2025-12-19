@@ -58,7 +58,6 @@ def make_export_zipfile_internal(project):
     if result:
         return zipfile
     else:
-        post_task_update(callback, f"error")
         return False
 
 def export_zipfile_pathname(clara_project_internal):

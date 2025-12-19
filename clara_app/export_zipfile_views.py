@@ -1,3 +1,97 @@
+"""
+Export packaging views: create portable C-LARA export bundles (projects and audio).
+
+This module provides UI endpoints for exporting data out of a running C-LARA instance
+into a filesystem bundle (zip files / directory trees) that can be copied elsewhere and
+imported later. There are three workflows:
+
+A) Single-project export zip (role-guarded)
+   Views:
+     - make_export_zipfile(request, project_id)
+         Creates a report_id via make_asynch_callback_and_report_id, then enqueues an async Django-Q task
+         (make_export_zipfile_with_messages). Redirects to the monitor view. 
+     - make_export_zipfile_status(request, project_id, report_id)
+         JSON polling endpoint; returns unread TaskUpdate rows for report_id and derives status:
+           status='error' if 'error' message seen
+           status='finished' if 'finished' message seen
+           else 'unknown'. :contentReference[oaicite:2]{index=2}
+     - make_export_zipfile_monitor(request, project_id, report_id)
+         Rendered monitor page which polls the status endpoint. :contentReference[oaicite:3]{index=3}
+     - make_export_zipfile_complete(request, project_id, status)
+         Completion page; if S3 storage is enabled, returns a presigned URL for the zipfile path
+         computed by CLARAProjectInternal.export_zipfile_pathname(). 
+
+   Work performed:
+     - make_export_zipfile_with_messages(project, callback) calls clara_export_import.make_export_zipfile_internal(project),
+       posts progress messages via post_task_update(callback, ...), and posts a terminal 'finished' or 'error' marker. 
+
+   Export zip structure (built by clara_export_import.make_export_zipfile_internal):
+     - Output zip path: $CLARA/tmp/<project_id>_zipfile.zip  (export_zipfile_pathname) 
+     - Contents assembled in a temp dir then zipped:
+         metadata.json
+         project_dir/                 (project directory copied verbatim)
+         audio/metadata.json + audio files (filenames rewritten to basenames)
+         phonetic_audio/metadata.json + audio files (if phonetic text exists + human phonetic voice configured)
+         images/metadata.json + image & thumbnail files (filenames rewritten to basenames)
+         image_descriptions/metadata.json (records only)
+       The global metadata includes project simple_clara_type, coherent-image flags, translation-for-images flag,
+       and the project’s audio configuration (human voice ids and audio type settings). 
+
+B) Bulk export of project source zips (admin-only)
+   Views:
+     - start_bulk_source_exports / bulk_source_exports_monitor / bulk_source_exports_status / bulk_source_exports_complete 
+
+   Work performed:
+     - export_all_project_zips_task(params, callback) iterates over CLARAProject objects (with optional only_ids/skip_ids filters),
+       writes one directory per project under an output root, and records index/failures JSON files. 
+
+   Output format:
+     - Output root:
+         Path(params["dest_root"]) if provided, else $CLARA/tmp/bulk_source_exports 
+     - Per project:
+         <out_root>/<project_id>/source.zip
+         <out_root>/<project_id>/metadata.json   (id/title/l1/l2/owner_username/size_bytes/sha256)
+     - Batch summary:
+         <out_root>/index.json
+         <out_root>/failures.json
+     - Terminal status markers posted:
+         'error' if failures exist, else 'finished'. :contentReference[oaicite:12]{index=12}
+
+C) Bulk export of audio repository content (admin-only)
+   Views:
+     - start_bulk_audio_export / bulk_audio_export_monitor / bulk_audio_export_status / bulk_audio_export_complete 
+
+   Work performed:
+     - export_all_audio_task(params, callback) copies audio files referenced by AudioMetadata rows into a directory tree
+       grouped by (engine_id, language_id, voice_id), and writes a manifest.json per triple plus index/failures. 
+
+   Output format:
+     - Output root: $CLARA/tmp/bulk_audio_exports 
+     - Per triple:
+         <out_root>/<engine_id>/<language_id>/<voice_id>/manifest.json
+         (audio files stored alongside manifest, preserving filename)
+     - Batch summary:
+         <out_root>/index.json
+         <out_root>/failures.json (only written if failures exist)
+
+Task update mechanism
+---------------------
+All async jobs emit progress via post_task_update(callback, "..."). The callback is the object returned by
+make_asynch_callback_and_report_id(...) and is polled via get_task_updates(report_id) in the *_status endpoints. 
+
+Security model
+--------------
+- Single-project export endpoints require login and project role membership.
+- Bulk export endpoints are restricted to admins (userprofile.is_admin).
+
+Implementation caveats (current code)
+-------------------------------------
+- bulk_source_exports_complete reads from $CLARA/tmp/bulk_source_exports unconditionally (via os.environ["CLARA"]/tmp/...),
+  which may diverge from a custom dest_root used in the batch task. :contentReference[oaicite:19]{index=19} 
+- bulk_audio_export_status flags an error if any message contains substring "error". The audio task posts
+  "finished with N errors" on failure, so status becomes "error" (probably intended), but note this is substring-based. 
+"""
+
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
@@ -190,7 +284,7 @@ def export_all_project_zips_task(params, callback):
                 "id": project.id,
                 "title": project.title,
                 "l2": project.l2,
-                "l1": project.l2,
+                "l1": project.l1,
                 "owner_username": project.user.username if project.user else None,
                 "size_bytes": dest_zip.stat().st_size,
                 "sha256": _sha256(dest_zip),
@@ -207,9 +301,10 @@ def export_all_project_zips_task(params, callback):
     (out_root / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2))
     (out_root / "failures.json").write_text(json.dumps(failures, ensure_ascii=False, indent=2))
     if failures:
-        post_task_update(callback, f"finished with {len(failures)} errors")
-    else:
+        post_task_update(callback, f"{len(failures)} failures")
         post_task_update(callback, "error")
+    else:
+        post_task_update(callback, "finished")
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
