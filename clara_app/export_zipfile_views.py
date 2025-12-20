@@ -125,6 +125,7 @@ import os
 import json
 import hashlib
 import shutil
+import pprint
 
 from pathlib import Path
 
@@ -239,19 +240,26 @@ def start_bulk_source_exports(request):
         if form.is_valid():
             callback, report_id = make_asynch_callback_and_report_id(request, "bulk_source_exports")
             params = form.cleaned_data
-            async_task(export_all_project_zips_task, params, callback)
-            return redirect("bulk_source_exports_monitor", report_id=report_id)
+            
+            dest_root = params.get("dest_root") or absolute_file_name("$CLARA/tmp/bulk_source_exports")
+            
+            async_task(export_all_project_zips_task, params, dest_root, callback)
+            
+            return redirect("bulk_source_exports_monitor", report_id=str(report_id), dest_root=str(dest_root))
     else:
         form = BulkSourceExportForm()
     return render(request, "clara_app/bulk_source_exports_start.html", {"form": form})
 
-def export_all_project_zips_task(params, callback):
-    out_root = Path( params.get("dest_root") or absolute_file_name("$CLARA/tmp/bulk_source_exports") )
-    out_root.mkdir(parents=True, exist_ok=True)
+def export_all_project_zips_task(params, dest_root, callback):
 
+    pprint.pprint(params)
+
+    dest_root_dir = Path( dest_root )
+    dest_root_dir.mkdir(parents=True, exist_ok=True)
+    
     if params.get("clear_output_dir"):
-        _clear_dir(out_root)
-        post_task_update(callback, f"Cleared existing contents in {out_root}")
+        _clear_dir(dest_root_dir)
+        post_task_update(callback, f"Cleared existing contents in {dest_root}")
 
     # filters
     only_ids   = set(int(x) for x in (params.get("only_ids") or "").split(",") if x.strip().isdigit())
@@ -272,7 +280,7 @@ def export_all_project_zips_task(params, callback):
     index = []
     for project in qs:
         try:
-            unit_dir = out_root / str(project.id)
+            unit_dir = dest_root_dir / str(project.id)
             unit_dir.mkdir(parents=True, exist_ok=True)
 
             post_task_update(callback, f"Preparing to export project {project.id} “{project.title}”")
@@ -298,8 +306,8 @@ def export_all_project_zips_task(params, callback):
             failures.append({"project_id": project.id, "error": str(e)})
             post_task_update(callback, f"error exporting {project.id}: {e}\n{traceback.format_exc()}")
 
-    (out_root / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2))
-    (out_root / "failures.json").write_text(json.dumps(failures, ensure_ascii=False, indent=2))
+    (dest_root_dir / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=2))
+    (dest_root_dir / "failures.json").write_text(json.dumps(failures, ensure_ascii=False, indent=2))
     if failures:
         post_task_update(callback, f"{len(failures)} failures")
         post_task_update(callback, "error")
@@ -308,8 +316,8 @@ def export_all_project_zips_task(params, callback):
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
-def bulk_source_exports_monitor(request, report_id):
-    return render(request, "clara_app/bulk_source_exports_monitor.html", {"report_id": report_id})
+def bulk_source_exports_monitor(request, report_id, dest_root):
+    return render(request, "clara_app/bulk_source_exports_monitor.html", {"report_id": report_id, "dest_root": dest_root})
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
@@ -320,19 +328,20 @@ def bulk_source_exports_status(request, report_id):
 
 @login_required
 @user_passes_test(lambda u: u.userprofile.is_admin)
-def bulk_source_exports_complete(request, result):
+def bulk_source_exports_complete(request, result, dest_root):
     """
     Summarise what was written to $CLARA/tmp/bulk_source_exports:
       - successes: projects with both metadata.json and source.zip
       - failures: from failures.json if present
     """
-    out_root = Path(os.environ.get("CLARA", "")) / "tmp" / "bulk_source_exports"
     successes = []
     failures = []
     total_units = 0
 
-    if out_root.exists():
-      for d in sorted(out_root.iterdir(), key=lambda p: p.name):
+    dest_root_dir = Path( dest_root ) 
+
+    if dest_root_dir.exists():
+      for d in sorted(dest_root_dir.iterdir(), key=lambda p: p.name):
           if not d.is_dir():
               continue
           total_units += 1
@@ -349,7 +358,7 @@ def bulk_source_exports_complete(request, result):
               failures.append({"project_id": d.name, "error": "missing source.zip or metadata.json"})
 
       # task-level failures file (e.g., exceptions)
-      fail_file = out_root / "failures.json"
+      fail_file = dest_root_dir / "failures.json"
       if fail_file.exists():
           try:
               extra = json.loads(fail_file.read_text(encoding="utf-8"))
@@ -363,7 +372,7 @@ def bulk_source_exports_complete(request, result):
 
     ctx = {
         "result": result,
-        "out_root": str(out_root),
+        "dest_root": str(dest_root_dir),
         "total_units": total_units,
         "success_count": len(successes),
         "failure_count": len(failures),

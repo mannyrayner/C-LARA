@@ -195,9 +195,9 @@ urlpatterns = [
     path('project/<int:project_id>/make_export_zipfile_complete/<str:status>/', export_zipfile_views.make_export_zipfile_complete, name='make_export_zipfile_complete'),
 
     path("admin/bulk_exports/start/", export_zipfile_views.start_bulk_source_exports, name="start_bulk_source_exports"),
-    path("admin/bulk_exports/monitor/<str:report_id>/", export_zipfile_views.bulk_source_exports_monitor, name="bulk_source_exports_monitor"),
+    path("admin/bulk_exports/monitor/<str:report_id>/<path:dest_root>/", export_zipfile_views.bulk_source_exports_monitor, name="bulk_source_exports_monitor"),
     path("admin/bulk_exports/status/<str:report_id>/", export_zipfile_views.bulk_source_exports_status, name="bulk_source_exports_status"),
-    path("admin/bulk_exports/complete/<str:result>/", export_zipfile_views.bulk_source_exports_complete, name="bulk_source_exports_complete"),
+    path("admin/bulk_exports/complete/<str:result>/<path:dest_root>/", export_zipfile_views.bulk_source_exports_complete, name="bulk_source_exports_complete"),
 
     path("admin/bulk_audio_export/start/", export_zipfile_views.start_bulk_audio_export, name="bulk_audio_export_start"),
     path("admin/bulk_audio_export/monitor/<str:report_id>/", export_zipfile_views.bulk_audio_export_monitor, name="bulk_audio_export_monitor"),

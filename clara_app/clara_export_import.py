@@ -209,7 +209,7 @@ def change_project_id_in_imported_directory(tmp_dir, new_id):
         raise FileNotFoundError(f"project_dir not found in unzipped directory")
     stored_data_file = os.path.join(tmp_project_dir, 'stored_data.json')
     if not local_file_exists(stored_data_file):
-        post_task_update(callback, f'--- Unable to find stored_data file in unzipped directory')
+        #post_task_update(callback, f'--- Unable to find stored_data file in unzipped directory')
         raise FileNotFoundError(f"stored_data.json not found in unzipped directory")
     stored_data = read_json_local_file(stored_data_file)
     stored_data['id'] = new_id
