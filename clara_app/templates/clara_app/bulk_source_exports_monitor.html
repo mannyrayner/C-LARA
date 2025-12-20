@@ -33,10 +33,10 @@
 					// If the task is finished, stop polling the server and redirect to the 'complete' view
 					if (response.status == 'finished') {
 						clearInterval(interval_id);
-						window.location = "{% url 'bulk_audio_export_complete' 'success' %}";
+						window.location = "{% url 'bulk_source_exports_complete' 'success' dest_root %}";
 					} else if (response.status == 'error') {
 						clearInterval(interval_id);
-						window.location = "{% url 'bulk_audio_export_complete' 'error' %}";
+						window.location = "{% url 'bulk_source_exports_complete' 'error' dest_root %}";
 					}
 				}
 			});
