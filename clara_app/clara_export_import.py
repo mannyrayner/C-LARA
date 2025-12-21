@@ -7,6 +7,7 @@ from .clara_utils import pathname_parts, file_exists, local_file_exists, basenam
 from .clara_utils import make_local_directory, copy_directory_to_local_directory, local_directory_exists, remove_local_directory
 from .clara_utils import get_immediate_subdirectories_in_local_directory, get_files_in_local_directory, rename_file
 from .clara_utils import make_tmp_file, write_json_to_local_file, read_json_local_file, make_zipfile, unzip_file, post_task_update
+from .clara_utils import export_zipfile_pathname_for_clara_project_internal
 from .utils import audio_info_for_project
 from .clara_audio_annotator import AudioAnnotator
 ##from .clara_audio_repository import AudioRepository
@@ -50,7 +51,7 @@ def make_export_zipfile_internal(project):
         
     image_metadata = clara_project_internal.get_all_project_images()
     image_description_metadata = clara_project_internal.get_all_project_image_descriptions()
-    zipfile = export_zipfile_pathname(clara_project_internal)
+    zipfile = export_zipfile_pathname_for_clara_project_internal(clara_project_internal)
     result = make_export_zipfile_from_data_and_metadata(global_metadata, project_directory,
                                                         audio_metadata, audio_metadata_phonetic,
                                                         image_metadata, image_description_metadata,
@@ -60,8 +61,8 @@ def make_export_zipfile_internal(project):
     else:
         return False
 
-def export_zipfile_pathname(clara_project_internal):
-    return absolute_file_name(f"$CLARA/tmp/{clara_project_internal.id}_zipfile.zip")
+##def export_zipfile_pathname(clara_project_internal):
+##    return absolute_file_name(f"$CLARA/tmp/{clara_project_internal.id}_zipfile.zip")
 
 
 def make_export_zipfile_from_data_and_metadata(global_metadata, project_directory,

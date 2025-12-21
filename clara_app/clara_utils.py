@@ -809,6 +809,9 @@ def content_zipfile_path_for_project_id(id, phonetic_or_normal):
     output_dir = output_dir_for_project_id(id, phonetic_or_normal)
     return f'{output_dir}/content_zipfile_{phonetic_or_normal}.zip'
 
+def export_zipfile_pathname_for_clara_project_internal(clara_project_internal):
+    return absolute_file_name(f"$CLARA/tmp/{clara_project_internal.id}_zipfile.zip")
+
 def questionnaire_output_dir_for_project_id(id):
     config = get_config()
     return str( Path(absolute_file_name(config.get('renderer', 'output_dir_for_questionnaire'))) / str(id) )

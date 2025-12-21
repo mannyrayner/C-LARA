@@ -10,7 +10,8 @@ from .clara_main import CLARAProjectInternal
 #from .clara_audio_repository import AudioRepository
 from .clara_audio_repository_orm import AudioRepositoryORM
 from .clara_utils import _s3_storage, _s3_bucket, get_config, absolute_file_name, file_exists
-from .clara_utils import output_dir_for_project_id, image_dir_for_project_id, content_zipfile_path_for_project_id
+from .clara_utils import output_dir_for_project_id, image_dir_for_project_id
+from .clara_utils import export_zipfile_pathname_for_clara_project_internal, content_zipfile_path_for_project_id
 
 from pathlib import Path
 from urllib.parse import unquote
@@ -98,7 +99,7 @@ def serve_zipfile(request, project_id, phonetic_or_normal):
 def serve_export_zipfile(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
-    zip_filepath = absolute_file_name(clara_project_internal.export_zipfile_pathname())
+    zip_filepath = absolute_file_name(export_zipfile_pathname_for_clara_project_internal(clara_project_internal))
 
     if not file_exists(zip_filepath):
         raise Http404("Zipfile does not exist")

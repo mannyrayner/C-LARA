@@ -1,3 +1,76 @@
+"""
+Views and helpers for the “Simple C-LARA” one-page wizard.
+
+Simple C-LARA is a streamlined interface for creating and publishing
+multimedia C-LARA texts. It hides most of the underlying pipeline
+(plain text, segmentation, multimedia rendering, posting, etc.) behind
+a small set of high-level actions that can be driven from a single
+form.
+
+Main responsibilities
+---------------------
+
+- Inspect the current state of a CLARA project and report what resources
+  already exist (prompt, plain text, segmented text, title, images,
+  rendered HTML, posted content, preferred TTS engine, etc.), together
+  with a coarse “status” string that reflects how far through the
+  pipeline the project has progressed.
+
+- Render the Simple C-LARA page, pre-populate the form with the
+  available resources, and interpret user actions from the form
+  (e.g. create project, create text, regenerate image, create segmented
+  text, create rendered HTML, post text, etc.).
+
+- Decide whether an action can be executed immediately in the web
+  process (cheap operations like saving text or changing the title),
+  or should be delegated to a background task (expensive operations
+  involving LLMs, image generation, segmentation, rendering, etc.),
+  using django-q.
+
+- Dispatch all Simple C-LARA actions to dedicated helper functions
+  that wrap the underlying CLARAProjectInternal methods, record API
+  usage, and report progress via the task update mechanism.
+
+- Provide lightweight polling views that the UI can call to monitor
+  the progress of background tasks and update the page accordingly.
+
+Key entry points
+----------------
+
+- get_simple_clara_resources_helper(project_id, user):
+  Collects the current state of a project into a single
+  `resources_available` dict (languages, title, simple_clara_type,
+  up_to_date_dict, prompt/plain/segmented text, images, rendered
+  HTML status, content/posting status, and preferred TTS engine).
+  Returns an `error` field instead of raising if anything goes wrong.
+
+- simple_clara(request, project_id, last_operation_status):
+  Main view for the Simple C-LARA page. On GET, displays the form
+  pre-filled from `resources_available` and surfaces any “finished” or
+  “error” status from the last operation. On POST, interprets the
+  `action` field, builds a corresponding `simple_clara_action` dict,
+  and either executes it locally or enqueues it as a background task,
+  redirecting to `simple_clara` or `simple_clara_monitor` as needed.
+
+- perform_simple_clara_action_helper(username, project_id,
+  simple_clara_action, callback=None):
+  Central dispatcher for all Simple C-LARA actions, intended to run
+  either synchronously or in a django-q worker. Routes to the relevant
+  `simple_clara_*_helper` function, wraps exceptions, and posts
+  progress / error messages via `post_task_update`.
+
+- simple_clara_status(request, project_id, report_id) and
+  simple_clara_monitor(request, project_id, report_id):
+  Support views used by the monitoring page to poll task updates and
+  show progress while a long-running action is executing.
+
+The various `simple_clara_*_helper` functions implement individual
+pipeline steps: creating projects, generating or saving plain text,
+titles and images (including V2 coherent image styles/elements/pages),
+creating segmented text and rendered HTML, managing TTS preferences,
+and posting completed projects to the public `Content` model.
+"""
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse

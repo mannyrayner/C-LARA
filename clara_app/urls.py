@@ -146,7 +146,7 @@ urlpatterns = [
     path('import_phonetic_lexicon_monitor/<str:language>/<str:report_id>/', phonetic_lexicon_views.import_phonetic_lexicon_monitor, name='import_phonetic_lexicon_monitor'),
     path('import_phonetic_lexicon_complete/<str:language>/<str:status>/', phonetic_lexicon_views.import_phonetic_lexicon_complete, name='import_phonetic_lexicon_complete'),
 
-    # Simple C-LARA
+    # Simple C-LARA [commented by AI]
     path('project/<int:project_id>/simple_clara/<str:last_operation_status>/', simple_clara_views.simple_clara, name='simple_clara'),
     path('project/<int:project_id>/simple_clara_status/<str:report_id>/', simple_clara_views.simple_clara_status, name='simple_clara_status'),
     path('project/<int:project_id>/simple_clara_monitor/<str:report_id>/', simple_clara_views.simple_clara_monitor, name='simple_clara_monitor'),
@@ -188,7 +188,7 @@ urlpatterns = [
     path('project/<int:project_id>/delete/', manipulate_project_views.delete_project, name='delete_project'),  
     path('project/<int:project_id>/history/', manipulate_project_views.project_history, name='project_history'),
 
-    # Making export data
+    # Making export data [commented by AI]
     path('project/<int:project_id>/make_export_zipfile/', export_zipfile_views.make_export_zipfile, name='make_export_zipfile'),
     path('project/<int:project_id>/make_export_zipfile_status/<str:report_id>/', export_zipfile_views.make_export_zipfile_status, name='make_export_zipfile_status'),
     path('project/<int:project_id>/make_export_zipfile_monitor/<str:report_id>/', export_zipfile_views.make_export_zipfile_monitor, name='make_export_zipfile_monitor'),
