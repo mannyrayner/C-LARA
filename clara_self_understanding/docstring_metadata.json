@@ -32,6 +32,34 @@
           "_clear_dir suppresses all exceptions silently, which can leave partial state without reporting; tasks may claim success while output directories were not actually cleared."
         ]
       }
+    },
+    {
+      "created_at": "2025-12-22T12:20:18.331671+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 5529,
+        "completion_tokens": 1912,
+        "total_tokens": 7441,
+        "estimated_cost_usd": 0.026031250000000002
+      },
+      "analysis": {
+        "proposed_docstring": "Views for packaging and exporting C-LARA content into portable bundles. This module drives three asynchronous workflows: single-project export zips for project members, bulk source exports of all projects, and bulk audio exports of repository content. It wires up start/monitor/status/complete pages, dispatches long-running tasks via django-q, streams progress via task updates, and writes manifest/index files alongside the exported archives.",
+        "short_summary": "This views module orchestrates creation of export bundles for C-LARA projects and audio. It provides protected endpoints to kick off async packaging jobs, polls task updates, and renders monitor/complete pages. Bulk exports iterate over all projects or audio metadata, write out zips and manifests, and record index/failure summaries.",
+        "key_responsibilities": [
+          "Initiate single-project export zip creation with role-guarding, enqueue async tasks, and render status/complete pages with optional S3 presigned download links.",
+          "Provide admin-only bulk source export flow: collect filters, start a background job to zip each project into a directory tree, and summarize successes/failures.",
+          "Provide admin-only bulk audio export flow: copy repository audio grouped by engine/language/voice, emit manifests and index files, and report outcomes.",
+          "Expose JSON status endpoints that poll task updates and derive simple finished/error/unknown states for front-end monitors."
+        ],
+        "potential_issues": [
+          "Single-project status detection checks for exact 'error' or 'finished' messages; non-exact error texts may leave status 'unknown'.",
+          "Bulk status endpoints flag any message containing 'error', which may produce false positives on benign messages mentioning errors.",
+          "bulk_audio_export_complete reads from a hardcoded CLARA tmp path; if export destinations ever become configurable, summaries may point to the wrong directory.",
+          "Destination roots for bulk source exports are passed via URL parameters; although admin-only, unvalidated paths could expose or clobber arbitrary directories.",
+          "_clear_dir silently ignores deletion errors, which can leave stale files and ambiguous results on subsequent runs."
+        ]
+      }
     }
   ]
 }
