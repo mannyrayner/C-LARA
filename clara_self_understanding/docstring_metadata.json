@@ -1,0 +1,37 @@
+{
+  "clara_app/export_zipfile_views.py": [
+    {
+      "created_at": "2025-12-22T09:19:04.278343+00:00",
+      "model": "gpt-5.2",
+      "usage": {
+        "model": "gpt-5.2",
+        "prompt_tokens": 5529,
+        "completion_tokens": 895,
+        "total_tokens": 6424,
+        "estimated_cost_usd": 0.0
+      },
+      "analysis": {
+        "proposed_docstring": "Views for exporting C-LARA data into portable filesystem bundles.\n\nThis module implements three export workflows:\n\n1) Single-project export (role-guarded): starts an async Django-Q task that builds a project export zip via clara_export_import.make_export_zipfile_internal, streams progress through TaskUpdate messages (post_task_update), and provides a polling JSON status endpoint plus monitor/complete pages. The completion view optionally returns an S3 presigned URL when S3 storage is enabled.\n\n2) Bulk export of project source zips (admin-only): starts an async task that iterates over CLARAProject rows (optionally filtered by only_ids/skip_ids), writes one subdirectory per project containing source.zip and metadata.json, and writes index.json/failures.json at the batch root. A monitor/status/complete UI summarizes results.\n\n3) Bulk export of the audio repository (admin-only): starts an async task that copies audio files referenced by AudioMetadata into an output directory tree grouped by (engine_id, language_id, voice_id), writing a manifest.json per group plus index.json and optional failures.json. A monitor/status/complete UI summarizes results.\n\nAll long-running work is executed asynchronously via django_q.tasks.async_task and reports progress through the shared report_id/callback mechanism created by make_asynch_callback_and_report_id and polled via get_task_updates.\n\nMaintainer notes: status endpoints infer completion by scanning messages for terminal markers (\"finished\"/\"error\"), and some completion views assume fixed output locations (e.g., bulk_audio_export_complete reads $CLARA/tmp/bulk_audio_exports regardless of runtime parameters).",
+        "short_summary": "This module provides Django views to export C-LARA content into portable bundles for transfer or later import. It supports single-project export zips for authorized project members and two admin-only bulk exports: project source zips and the audio repository. Exports run as Django-Q async tasks and are monitored via polling endpoints that read TaskUpdate messages.",
+        "key_responsibilities": [
+          "Start single-project export zip creation as an async task and render start/monitor/complete pages",
+          "Provide JSON polling endpoints that return task update messages and a derived status",
+          "Run bulk admin exports for (a) per-project source.zip bundles with metadata and (b) audio repository file trees with manifests",
+          "Write export artifacts to filesystem locations under $CLARA/tmp (or a provided dest_root for bulk source exports)",
+          "Optionally generate S3 presigned download URLs for single-project export zips when S3 storage is enabled",
+          "Provide helper utilities for clearing output directories and computing SHA-256 checksums for exported files"
+        ],
+        "potential_issues": [
+          "make_export_zipfile_status checks for exact membership of 'error'/'finished' in the returned messages list; if messages include longer strings (e.g., 'finished with N errors') or different casing, status may remain 'unknown'.",
+          "bulk_*_status endpoints use substring matching for 'error'/'finished'; any progress message containing the word 'error' (even in a non-failure context) will mark the whole job as error.",
+          "bulk_audio_export_complete ignores any runtime-configured output root and always reads from $CLARA/tmp/bulk_audio_exports; if the task output location changes, the completion page will misreport results.",
+          "start_bulk_source_exports passes dest_root via the URL; long or unusual filesystem paths may cause routing/encoding issues and may expose server filesystem layout to admins via rendered pages.",
+          "export_all_project_zips_task loads all projects into memory when applying only_ids/skip_ids (it converts the queryset to a Python list); this can be slow/large on big databases and bypasses database-side filtering.",
+          "export_all_project_zips_task always writes failures.json (even empty), while bulk_audio_export_task writes failures.json only when failures exist; downstream tooling may need to handle both conventions.",
+          "The async tasks accept Django model instances (e.g., project) as arguments; depending on Django-Q serialization settings, passing ORM objects can be fragile compared to passing IDs and reloading in the worker.",
+          "_clear_dir suppresses all exceptions silently; partial deletions can lead to confusing mixed outputs without any surfaced error reporting."
+        ]
+      }
+    }
+  ]
+}
