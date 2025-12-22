@@ -32,17 +32,18 @@ def load_prices() -> Dict[str, Any]:
 
 
 def estimate_cost_usd(model: str, prompt_tokens: int, completion_tokens: int) -> float:
-    """
-    Estimate cost from prices.json.
-
-    Assumes prices.json is in USD per 1M tokens for:
-      - input (prompt tokens)
-      - output (completion tokens)
-
-    If model not present, returns 0.0.
-    """
     prices = load_prices()
-    entry = (prices.get("models") or {}).get(model)
+    tiers = (prices.get("models") or {}).get(model)
+    if not tiers:
+        return 0.0
+
+    # Prefer standard, then priority, then batch, then unknown
+    entry = (
+        tiers.get("standard")
+        or tiers.get("priority")
+        or tiers.get("batch")
+        or tiers.get("unknown")
+    )
     if not entry:
         return 0.0
 
