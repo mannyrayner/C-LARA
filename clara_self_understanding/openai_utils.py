@@ -5,6 +5,10 @@ import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
+from pathlib import Path
+
+SELF_DIR = Path(__file__).resolve().parent
+PRICES_FILE = SELF_DIR / "prices.json"
 
 try:
     from openai import OpenAI  # new-style OpenAI client

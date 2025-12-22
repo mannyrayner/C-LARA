@@ -142,6 +142,15 @@ def generate_docstrings_for_views(
     _save_docstring_metadata(existing_metadata)
     return existing_metadata
 
+def generate_docstrings_for_one_view_module(
+    module_name: str,
+    model: str = "gpt-5.1-codex-max",
+) -> Dict[str, List[Dict]]:
+    """
+    Convenience: generate docstring-style metadata for exactly one *_views module.
+    Example module_name: 'simple_clara_views'
+    """
+    return generate_docstrings_for_views([module_name], model=model)
 
 def generate_docstrings_for_all_discovered_views(
     model: str = "gpt-5.2",
