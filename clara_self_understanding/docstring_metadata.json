@@ -60,6 +60,1154 @@
           "_clear_dir silently ignores deletion errors, which can leave stale files and ambiguous results on subsequent runs."
         ]
       }
+    },
+    {
+      "created_at": "2025-12-22T19:49:33.821417+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 5529,
+        "completion_tokens": 798,
+        "total_tokens": 6327,
+        "estimated_cost_usd": 0.014891249999999998
+      },
+      "analysis": {
+        "proposed_docstring": "Views for packaging and exporting C\u2011LARA project data and audio into portable bundles. This module exposes UI endpoints to kick off asynchronous export jobs (single project zip, bulk source exports, bulk audio exports), monitor their progress via task update polling, and present completion summaries or download links. It orchestrates Django\u2011Q tasks that invoke internal export helpers, writes index/manifest metadata alongside exported content, and enforces project membership or admin access as appropriate.",
+        "short_summary": "This module implements the web workflows for exporting C-LARA projects and audio into zipfiles or directory trees. It wires up form submissions to asynchronous Django-Q tasks, supplies polling endpoints for progress, and renders monitor/complete pages. Single-project exports are role-protected, while bulk source and audio exports are admin-only, and outputs include accompanying metadata manifests.",
+        "key_responsibilities": [
+          "Start and monitor an async task to build a single project export zip, then render completion with optional S3 presigned URL.",
+          "Kick off bulk source exports for all (or filtered) projects, writing per-project source.zip and metadata.json plus batch index/failures, and render status/summary pages.",
+          "Kick off bulk audio export tasks that copy referenced audio files grouped by engine/language/voice with manifest and index/failures, and render status/summary pages.",
+          "Integrate with the task update mechanism (make_asynch_callback_and_report_id, post_task_update, get_task_updates) to report progress/errors to polling JSON endpoints."
+        ],
+        "potential_issues": [
+          "bulk_audio_export_complete always reads from $CLARA/tmp/bulk_audio_exports via os.environ, ignoring any alternative base configured in the task helper.",
+          "Error/status detection is simplistic: make_export_zipfile_status only flags exact 'error'/'finished' messages, and bulk status endpoints mark any message containing 'error' as failure (including phrases like 'finished with N errors').",
+          "bulk_source_exports writes failures.json even when empty; conversely, bulk_audio_export_complete assumes index/failures files exist and may misreport if paths differ.",
+          "Path handling relies on absolute_file_name and env CLARA; misconfiguration could break export destinations or presigned URL generation."
+        ]
+      }
+    },
+    {
+      "created_at": "2025-12-22T19:56:11.368223+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 5529,
+        "completion_tokens": 937,
+        "total_tokens": 6466,
+        "estimated_cost_usd": 0.01628125
+      },
+      "analysis": {
+        "proposed_docstring": "Django view layer for producing portable export bundles from a C-LARA instance. It orchestrates single-project export zip creation and bulk export jobs for project sources and audio repositories, delegating heavy work to asynchronous Django-Q tasks and exposing monitoring/status endpoints. The module wires up forms, permission checks, and template rendering for starting jobs, polling task updates, and presenting completion summaries, including S3 presigned download links when applicable. It also contains helpers to clean output directories and compute file hashes used in export manifests.",
+        "short_summary": "This module exposes views to export C-LARA project data and audio content into filesystem bundles. It starts asynchronous tasks to build single-project export zipfiles, bulk source exports, or bulk audio exports, and provides polling and monitor pages to track task progress. Completion views summarize output directories and surface download URLs when using S3 storage.",
+        "key_responsibilities": [
+          "Start, monitor, and complete single-project export zip creation with role-based access control and optional S3 presigned download links.",
+          "Handle admin-only bulk source export jobs over all or filtered projects, including directory preparation, metadata generation, and failure tracking.",
+          "Handle admin-only bulk audio export jobs, grouping audio files by engine/language/voice and writing manifests and summary indices.",
+          "Coordinate asynchronous task execution via Django-Q and propagate progress/final statuses through task update callbacks and JSON polling endpoints."
+        ],
+        "potential_issues": [
+          "Status detection relies on substring checks for 'error' and 'finished', which may misclassify messages that merely contain those words.",
+          "bulk_audio_export_complete always reads from $CLARA/tmp/bulk_audio_exports and would not honor a different destination if that were ever made configurable.",
+          "Clearing output directories in bulk exports (_clear_dir) is best-effort and silently ignores errors, potentially leaving stale files.",
+          "Long-running export tasks copy entire project directories and audio repositories; large datasets may impact performance or storage and lack pagination or throttling."
+        ]
+      }
+    }
+  ],
+  "clara_app/accounts_views.py": [
+    {
+      "created_at": "2025-12-22T19:51:54.538718+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 524,
+        "completion_tokens": 855,
+        "total_tokens": 1379,
+        "estimated_cost_usd": 0.009205
+      },
+      "analysis": {
+        "proposed_docstring": "Provides the custom account views for C-LARA, handling user registration and profile display while relying on Django\u2019s built-in authentication for login/logout. The register view validates and creates a new user along with associated profile and configuration records, then redirects to the login screen. The profile view requires authentication, ensures a profile exists, pulls user configuration (including the Clara version), and renders the profile template with user details.",
+        "short_summary": "This module defines the account-related views beyond Django\u2019s built-in login/logout. It implements a registration workflow that saves a user, creates a profile and configuration, and shows success feedback. It also exposes an authenticated profile view that ensures the profile exists and renders user and configuration data.",
+        "key_responsibilities": [
+          "Handle user registration via a RegistrationForm, persisting the new user and creating related UserProfile and UserConfiguration records.",
+          "Provide an authenticated profile view that retrieves or creates the user\u2019s profile and reads configuration values for display.",
+          "Render appropriate templates for registration and profile, and use Django messages for user feedback."
+        ],
+        "potential_issues": [
+          "The register view saves the user twice and manually sets the email, which may be redundant if the form already includes that field.",
+          "No transaction is used during registration; if creating the profile or configuration fails, a user could be created without associated records.",
+          "The profile view assumes get_user_config returns a dict containing 'clara_version'; missing keys or configuration retrieval failures could raise errors.",
+          "Registration does not log the user in after creation, which may or may not be intended."
+        ]
+      }
+    }
+  ],
+  "clara_app/activity_tracker_views.py": [
+    {
+      "created_at": "2025-12-22T19:52:18.331974+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 4199,
+        "completion_tokens": 2408,
+        "total_tokens": 6607,
+        "estimated_cost_usd": 0.02932875
+      },
+      "analysis": {
+        "proposed_docstring": "Views for managing the C-LARA activity tracker, covering creation, detail display and updates, listing with filtering and scoring, notifications, and administrative integrations. It handles activity creation, comment submission, registration/unregistration, status/resolution changes, and voting (including current vote scoring), and renders the appropriate templates with forms and context. Helper functions collect interested parties and send comment notification emails. Admin-only endpoints provide a plain-text summary feed and process AI-generated activity updates and votes, using transactions and messaging to report outcomes.",
+        "short_summary": "This module defines Django views for creating, viewing, updating, and listing tracked activities in the C-LARA app. It manages comments, registrations, status/resolution updates, and votes, updating timestamps and notifying participants by email when needed. Admin-only views expose a text summary endpoint and a handler for ingesting AI-supplied activity updates and votes.",
+        "key_responsibilities": [
+          "Render activity creation form, persist new activities with the current user as creator, and redirect to detail pages.",
+          "Display activity details with associated comments, registration status, status/resolution forms, and voting controls, handling updates to each via POST.",
+          "Send notification emails to creators, voters, and commenters (respecting opt-out flags) when new comments are added.",
+          "List and filter activities, annotate them with a vote-based score and custom status ordering, and render either HTML or an admin-only plain text summary.",
+          "Ingest admin-submitted AI updates to create comments or new activities and record AI user votes, maintaining per-week vote uniqueness."
+        ],
+        "potential_issues": [
+          "create_activity does not return a response when a POSTed form is invalid, which will cause a 500 error instead of re-rendering the form.",
+          "Several permission checks assume a userprofile with an is_admin attribute exists; missing profiles could raise AttributeError.",
+          "AI update processing assumes the JSON structure contains expected keys and that referenced activity IDs exist; malformed data will trigger generic exceptions.",
+          "Notification recipient filtering only considers ActivityRegistration opt-outs; unregistered users who have voted or commented will be emailed unless otherwise handled.",
+          "Activity list filtering prioritizes id over other filters and silently ignores invalid search forms, which may surprise users; week_start is computed in some views but unused."
+        ]
+      }
+    }
+  ],
+  "clara_app/admin_permission_views.py": [
+    {
+      "created_at": "2025-12-22T19:52:36.024761+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1261,
+        "completion_tokens": 1804,
+        "total_tokens": 3065,
+        "estimated_cost_usd": 0.019616250000000002
+      },
+      "analysis": {
+        "proposed_docstring": "Admin-facing Django views for managing user permissions and project ownership within the CLARA application. It exposes handlers to reset another user's password, grant oneself co-ownership of projects via a search and selection formset, and select and update a user's profile permissions, all restricted to authenticated administrators. The views coordinate form processing, model updates on CLARAProject, ProjectPermissions, and UserProfile, and render the corresponding templates with status messages and user configuration context.",
+        "short_summary": "This module defines administrator-only views to manage accounts and permissions in the CLARA app. It includes a password reset view, a workflow to search for projects and add oneself as a co-owner, and a two-step form to select a user and update their profile permissions. Each view relies on associated forms, displays feedback messages, and renders dedicated templates.",
+        "key_responsibilities": [
+          "Handle an admin password reset form to update another user's credentials and render the reset template with user configuration context.",
+          "Provide a search and selection interface for projects and create ProjectPermissions entries to make the admin a co-owner of selected projects.",
+          "Offer a two-stage form workflow to choose a user and edit their UserProfile permissions, persisting changes and giving feedback."
+        ],
+        "potential_issues": [
+          "In admin_project_ownership, if a posted ProjectSelectionFormSet is invalid, the view will attempt to render without defining projects_info, leading to a NameError.",
+          "The project ownership view does not check for existing ownership, so creating duplicate ProjectPermissions entries is possible.",
+          "The user_passes_test lambdas assume every User has an associated UserProfile; missing profiles would raise an AttributeError.",
+          "Catching User.DoesNotExist in admin_password_reset may be ineffective since the user comes from validated form data, and other failure modes (e.g., saving errors) are not handled."
+        ]
+      }
+    }
+  ],
+  "clara_app/annotation_prompts_views.py": [
+    {
+      "created_at": "2025-12-22T19:53:13.082699+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 2764,
+        "completion_tokens": 3644,
+        "total_tokens": 6408,
+        "estimated_cost_usd": 0.039895
+      },
+      "analysis": {
+        "proposed_docstring": "Views for managing editable prompt templates/examples and localisation bundles. This module lets language masters load, edit, and save prompt templates or example strings for various annotation types using dynamic formsets backed by a PromptTemplateRepository, with fallbacks to default language data. It also provides views to list localisation bundles with per-language translation progress and to edit bundle translations for permitted users, rendering the corresponding templates and surfacing success or error messages.",
+        "short_summary": "This module contains Django views for editing annotation prompt templates/examples and managing localisation bundles. Language masters can select languages, annotation types, and operations to load and save prompt data via formsets with fallback loading behaviour. It also lists localisation bundles with translation counts and allows editing translations per language for users with the proper permissions.",
+        "key_responsibilities": [
+          "Handle the edit_prompt view to select, load, display, and save prompt templates or example strings for different annotation types and languages via appropriate formsets",
+          "Coordinate loading of prompt data from language-specific or default repositories, and saving updates through PromptTemplateRepository while reporting status via Django messages",
+          "List localisation bundles and compute per-language translation completion for languages the current user masters in the bundle_list view",
+          "Provide an edit_bundle view to update localisation bundle translations per language, persisting changes to BundleTranslation models and rendering edit_bundle.html"
+        ],
+        "potential_issues": [
+          "edit_bundle uses HttpResponseForbidden but does not import it, which will raise a NameError on forbidden access",
+          "In the save branch for two-field StringPair prompts, the code checks new_prompts[-1][2], which will raise IndexError if both fields are present",
+          "Initial data preparation for 'presegmented' annotation types differs between load and save branches (load only includes annotate or segmented), which may lead to misaligned formsets",
+          "Debug print statements and unused variables/imports remain in production code, potentially cluttering logs or indicating incomplete refactoring",
+          "Language column selection in bundle_list ignores languages with existing translations unless the user is a master, which may hide data unexpectedly"
+        ]
+      }
+    }
+  ],
+  "clara_app/annotation_views.py": [
+    {
+      "created_at": "2025-12-22T19:53:37.572715+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 8646,
+        "completion_tokens": 1761,
+        "total_tokens": 10407,
+        "estimated_cost_usd": 0.0284175
+      },
+      "analysis": {
+        "proposed_docstring": "Views supporting creation, annotation and editing of the various text versions within a CLARA project. A generic handler coordinates the workflows for plain, segmented, glossed, lemma-tagged and related versions, routing to the appropriate form and template, enforcing project roles, and invoking CLARAProjectInternal to load, validate and save content. Operations that generate, correct or improve text can be run asynchronously via django_q, with monitor and status endpoints to poll task progress and a completion view to return users to the editing page. Additional views manage acknowledgements and per-project format preferences.",
+        "short_summary": "This module provides Django views for creating, annotating and editing different textual representations in a CLARA project. A generic view encapsulates most workflows and delegates to specific forms/templates for each version, invoking CLARAProjectInternal for processing and starting async tasks for AI-based generation. It includes endpoints for polling and displaying asynchronous task status, plus simple views to edit acknowledgements and format preferences.",
+        "key_responsibilities": [
+          "Dispatch creation and editing of multiple text versions (plain, segmented, glossed, lemma-tagged, etc.) through a common view that loads existing content, validates edits, handles archived versions, and saves updates.",
+          "Initiate AI-driven generation, correction or improvement operations and tagging utilities (TreeTagger, Jieba, pypinyin), storing API call metadata and logging project actions.",
+          "Expose monitor and status endpoints for asynchronous tasks driven by django_q, and report completion back to the editing interface with user feedback.",
+          "Select appropriate forms and templates for each text version and provide role- and credit-based permission checks.",
+          "Manage auxiliary project settings such as acknowledgements and format preferences via dedicated forms."
+        ],
+        "potential_issues": [
+          "The imported name `messages` from django.contrib is shadowed by a local variable in generate_text_status, which could be confusing or error-prone.",
+          "Exception handling in create_annotated_text_of_right_type raises the caught exception before setting an error message, making the subsequent messages.error unreachable; broad exception catches elsewhere may swallow errors silently.",
+          "is_chinese_language is imported twice from different modules, with the second import overwriting the first, which may lead to unexpected behavior if the implementations differ.",
+          "Asynchronous task helpers rely on post_task_update messages to convey errors, but unexpected exceptions may not surface in the UI beyond a generic status, and some operations skip credit checks for non-AI paths.",
+          "CLARAProjectAction creation is wrapped in a bare except and will silently fail if logging actions cannot be saved."
+        ]
+      }
+    }
+  ],
+  "clara_app/community_reviewing_views.py": [
+    {
+      "created_at": "2025-12-22T19:53:56.902010+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 2956,
+        "completion_tokens": 2341,
+        "total_tokens": 5297,
+        "estimated_cost_usd": 0.027105
+      },
+      "analysis": {
+        "proposed_docstring": "Views to support community reviewing of coherent images in CLARA projects. Provides entry points for community members, coordinators and external users to browse pages, view alternate images and descriptions, cast votes, hide or request variants, upload images, and leave advice per page. Orchestrates execution of approved community requests via asynchronous django_q tasks, persisting cost information and allowing clients to poll and monitor task status. Relies on CLARAProjectInternal and coherent images utilities to load project data from disk, update AI voting metadata, and promote preferred images, with role-based access enforced by custom decorators.",
+        "short_summary": "This module defines Django views that drive the community image review workflow for CLARA projects. It renders page overviews and per-page review screens for different community roles, allowing voting, hiding/unhiding, variant requests, uploads, and advice submission. It also triggers asynchronous execution of approved requests and exposes endpoints to poll and monitor task status.",
+        "key_responsibilities": [
+          "Render community and coordinator image review pages and per-page review screens based on project story data and alternate images",
+          "Process POST actions such as voting on images, hiding/unhiding images, requesting variants, uploading user images, setting request statuses, and adding advice",
+          "Trigger asynchronous execution of approved community requests via django_q and store associated cost information",
+          "Expose JSON status and monitor views for long-running community request execution tasks"
+        ],
+        "potential_issues": [
+          "Use of asyncio.run within synchronous views may block the server under load",
+          "The status detection in execute_community_requests_for_page_status simply searches for substrings 'error' or 'finished' in messages, which may be unreliable",
+          "Variable shadowing of the imported messages module in execute_community_requests_for_page_status could be confusing",
+          "Assumes story_data indexing by page_number - 1 without validating bounds, which may raise if data is malformed",
+          "community_review_images_external is accessible to any logged-in user and calls update_ai_votes_in_feedback for each page, which might be expensive or unintended"
+        ]
+      }
+    }
+  ],
+  "clara_app/community_views.py": [
+    {
+      "created_at": "2025-12-22T19:54:07.399313+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1985,
+        "completion_tokens": 990,
+        "total_tokens": 2975,
+        "estimated_cost_usd": 0.01238125
+      },
+      "analysis": {
+        "proposed_docstring": "Community-facing Django views for managing communities, membership roles, and project associations within CLARA. Provides admin-only flows to create and delete communities and to promote users to coordinators, coordinator-level functionality to add members to communities they oversee, and project owner controls to assign or clear a community on a project with language validation. Also includes a community home view that displays projects for members. The views are built around the Community, CommunityMembership, and CLARAProject models and render the corresponding templates and forms.",
+        "short_summary": "This module defines Django views for community lifecycle and membership management. Admin users can create or delete communities and assign coordinators, coordinators can add members to their communities, and project owners can assign a project to a community with language checks. A community home view shows projects to authorized members.",
+        "key_responsibilities": [
+          "Handle admin-only creation and deletion of Community records with form workflows and confirmation templates",
+          "Render a community home page for members, showing associated projects and user role",
+          "Allow admins to promote users to coordinator roles and coordinators to add members via validated forms",
+          "Enable project owners to set or clear a project's Community association with validation against project language"
+        ],
+        "potential_issues": [
+          "Role value checks are inconsistent (membership roles are set to 'COORDINATOR'/'MEMBER' but community_home compares to 'CO'), which may break coordinator-specific logic",
+          "Assumes userprofile.is_admin exists on all users; missing profiles could raise AttributeError",
+          "create_community view lacks feedback on failure/success and uses a hardcoded redirect",
+          "Debug print statements in community_home may be undesirable in production and config/logger are defined but unused"
+        ]
+      }
+    }
+  ],
+  "clara_app/comparing_views.py": [
+    {
+      "created_at": "2025-12-22T19:54:19.260850+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1146,
+        "completion_tokens": 1237,
+        "total_tokens": 2383,
+        "estimated_cost_usd": 0.0138025
+      },
+      "analysis": {
+        "proposed_docstring": "Django views for retrieving version-specific metadata and comparing editions of CLARA project texts. Authenticated users with a project role can fetch metadata for a given version as JSON or post selections to compute and render a diff between two files within a version. The module dynamically populates a diff selection form from project metadata, delegates diff computation to CLARAProjectInternal, and prepares results for rendering with appropriate markup. It also injects user configuration such as the CLARA version into templates and handles internalisation errors via the messages framework.",
+        "short_summary": "This module defines views that let authorized users access metadata for specific versions of a CLARA project and compare two editions of a text. It builds and populates a diff selection form from project metadata, calls into CLARAProjectInternal to compute differences, and renders the results alongside the form. Errors during diff computation are surfaced via Django messages and some markup is converted to HTML spans for display.",
+        "key_responsibilities": [
+          "Fetch and return metadata for a specific project version as JSON to authenticated, authorized users.",
+          "Render and process a diff selection form for comparing two files within a project version.",
+          "Invoke CLARAProjectInternal to retrieve metadata and compute diffs between text editions.",
+          "Prepare diff output for display by converting custom markup to HTML and rendering appropriate templates with project context and user configuration."
+        ],
+        "potential_issues": [
+          "Form validation is commented out, and values are taken directly from request.POST, which may lead to KeyError or bypass validation.",
+          "Dynamic assignment of form choices without validation may allow invalid selections or make the form's is_valid() unusable.",
+          "Version and file inputs are not validated against available metadata, so invalid or tampered POST data could trigger errors in diff computation.",
+          "The module initializes a global config but does not use it within these views; ensure this is intentional or remove unused code."
+        ]
+      }
+    }
+  ],
+  "clara_app/content_password_views.py": [
+    {
+      "created_at": "2025-12-22T19:54:33.258313+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1000,
+        "completion_tokens": 1020,
+        "total_tokens": 2020,
+        "estimated_cost_usd": 0.01145
+      },
+      "analysis": {
+        "proposed_docstring": "Views for listing and managing password protection on content within CLARA projects. Provides a dashboard of protected content owned by the logged-in user along with per-item forms to update or clear passwords and hints. Ensures only the project owner can make changes via a simple ownership assertion, and uses Django messages and templates to render feedback. Interacts with the Content model, CLARAProject model, and ContentPasswordUpdateForm to persist password hashes and hints.",
+        "short_summary": "This module contains Django views to list content items with passwords and allow a logged-in project owner to set or clear those passwords. It renders a management page with forms per protected content and processes POST submissions to update or remove protection, providing user feedback via messages.",
+        "key_responsibilities": [
+          "Render a management page of password-protected Content objects for projects owned by the current user with prepopulated update forms.",
+          "Handle POST submissions to clear a content item's password after verifying project ownership.",
+          "Handle POST submissions to set or update a content item's password and hint, treating empty input as a request to clear protection.",
+          "Enforce that only the owning user can modify content protection via an ownership assertion."
+        ],
+        "potential_issues": [
+          "The ownership assertion is very strict (only the exact project owner), which may exclude other roles; a comment notes this could be relaxed.",
+          "POST-only behavior is enforced via method checks and redirects rather than decorators like require_POST, so non-POST requests silently redirect.",
+          "The type annotation for _assert_owner expects a CLARAProjectInternal but it is called with the model instance; this may be misleading.",
+          "Excluded content selection only checks for password_hash being non-null; content with empty strings or other states might be skipped or included unintentionally."
+        ]
+      }
+    }
+  ],
+  "clara_app/content_views.py": [
+    {
+      "created_at": "2025-12-22T19:55:02.163934+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 4828,
+        "completion_tokens": 2582,
+        "total_tokens": 7410,
+        "estimated_cost_usd": 0.031855
+      },
+      "analysis": {
+        "proposed_docstring": "Views for registering, listing and viewing CLARA content, handling both internal project-derived texts and externally registered URLs. It exposes entry points for offering to register rendered project output, registering content (with optional protection), and rendering detail pages where users can unlock, rate, comment, delete and build downloadable zip archives. Public counterparts list and show content with manifest generation, access counting and simple unlock token handling. Additional utilities include email notification on ratings/comments and aggregate language statistics across projects and content.",
+        "short_summary": "This module implements the user-facing and public views around CLARA content. It lets project owners register rendered texts as content, handles external content registration, and lists/searches available items. Detail views support unlocking protected content, ratings, comments, download zip building and email notifications, with public equivalents that gate access via signed tokens. It also provides aggregate statistics by language.",
+        "key_responsibilities": [
+          "Offer and perform registration of rendered project content (normal or phonetic) and external content sources, including optional password protection.",
+          "List and search content for logged-in and public users with ordering and pagination.",
+          "Render content detail pages for authenticated and public users, handling unlock flow, access counting, ratings, comments, deletion and manifest retrieval.",
+          "Send notification emails to content owners/co-owners on new ratings or comments and expose language-level statistics summaries.",
+          "Trigger building of downloadable content zip archives and provide programmatic access tokens for protected content."
+        ],
+        "potential_issues": [
+          "In content_detail the unlock logic references an undefined variable 'form' and never instantiates an unlock form on GET, so protected content may not be unlockable and may raise NameError on POST.",
+          "build_content_zip lacks any authentication/authorization decorators, allowing unauthenticated users to trigger zip builds for project content.",
+          "Deletion permission in content_detail only checks project.user or admin and may ignore other owner roles defined via project permissions.",
+          "Access counting simply increments on each view after unlock and is not truly unique; there is no throttling on authenticated unlock attempts (the rate limit is commented out).",
+          "Public content list/detail expose all Content objects without filtering by protection status, potentially leaking metadata for protected items."
+        ]
+      }
+    }
+  ],
+  "clara_app/create_project_views.py": [
+    {
+      "created_at": "2025-12-22T19:55:16.634697+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 3471,
+        "completion_tokens": 1642,
+        "total_tokens": 5113,
+        "estimated_cost_usd": 0.02075875
+      },
+      "analysis": {
+        "proposed_docstring": "This module defines views and helpers around creating, importing, monitoring, and cloning C-LARA projects. It handles simple creation via form submission, import of a project from a zip archive via an asynchronous django-q task with status polling, and cloning an existing project including copying internal files. It coordinates between Django models, the C-LARA internal project representation, various utility functions for file handling and S3, and renders the appropriate templates with user-specific configuration.",
+        "short_summary": "Provides Django views for creating new projects, importing projects from zipfiles asynchronously with status monitoring, and cloning existing projects. It wires form handling to model creation, kicks off background tasks for long-running imports, updates project metadata, and renders templates for creation and monitoring.",
+        "key_responsibilities": [
+          "Render and process project creation forms, instantiating CLARAProject records and corresponding internal project objects.",
+          "Accept and stage uploaded project zipfiles, schedule asynchronous import tasks, and update project metadata and audio info from extracted content.",
+          "Expose JSON endpoints and monitoring pages for tracking async import progress and handling completion redirects.",
+          "Clone existing projects by creating new records and copying internal project files to a new internal ID."
+        ],
+        "potential_issues": [
+          "In clone_project, the new CLARAProject is instantiated but not saved before using its id to generate an internal_id, so new_project.id will be None unless saved first.",
+          "The async import worker uses get_object_or_404 in a non-view context, which raises Http404; the exception is caught, but using a model query might be clearer.",
+          "import_project_status checks for literal 'error' or 'finished' strings in the list of messages; if messages are not exact matches, status detection may be unreliable.",
+          "Variable name 'messages' in import_project_status shadows the imported django.contrib.messages, which could be confusing.",
+          "Using placeholder l1 and l2 values when creating a project before import completion may expose inconsistent data if accessed prematurely."
+        ]
+      }
+    }
+  ],
+  "clara_app/credit_views.py": [
+    {
+      "created_at": "2025-12-22T19:55:37.299278+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1266,
+        "completion_tokens": 1474,
+        "total_tokens": 2740,
+        "estimated_cost_usd": 0.0163225
+      },
+      "analysis": {
+        "proposed_docstring": "Views for managing user credit balances within the CLARA application, including displaying balances, allowing administrators to add credit, and enabling users to transfer credit to others. The module wires up form handling, basic permission checks, session-backed transfer confirmation, and notification via email, rendering corresponding templates with contextual settings such as the user's CLARA version.",
+        "short_summary": "This module implements Django views to view and adjust user credit balances. Logged-in users can see their own credit, administrators can add credit to accounts, and users can initiate transfers to other accounts with a confirmation code sent via email. Pending transfers are stored in the session and finalized upon code verification.",
+        "key_responsibilities": [
+          "Render the current user's credit balance along with CLARA version metadata.",
+          "Provide an admin-only endpoint to add credit to a specified user's profile via AddCreditForm.",
+          "Handle credit transfers by collecting recipient and amount, checking balances, sending confirmation codes via email, and staging transfer details in the session.",
+          "Verify confirmation codes with ConfirmTransferForm to complete staged transfers and update user profiles accordingly."
+        ],
+        "potential_issues": [
+          "The transfer confirmation error branch renders a template without the 'clara_app/' prefix, which may not exist.",
+          "Transfer credit uses AddCreditForm and treats the 'user' field as a username string; if the form is a ModelChoiceField it may not match expectations.",
+          "No transactional safeguards are used when debiting/crediting balances, so concurrent requests could lead to race conditions or overdrafts between staging and confirmation.",
+          "Pending transfer details are stored in the session without expiry or signature, and available credit is not revalidated at confirmation time.",
+          "Email obfuscation assumes addresses are at least 10 characters and may behave oddly with very short email addresses."
+        ]
+      }
+    }
+  ],
+  "clara_app/delete_tts_views.py": [
+    {
+      "created_at": "2025-12-22T19:56:01.153371+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1110,
+        "completion_tokens": 1601,
+        "total_tokens": 2711,
+        "estimated_cost_usd": 0.0173975
+      },
+      "analysis": {
+        "proposed_docstring": "Admin-only Django views that orchestrate deletion of cached text-to-speech data for a selected language. Provides a form-driven entry point to launch the cleanup, schedules the actual deletion as a django-q asynchronous task, and supplies templates and a JSON API for monitoring progress and reporting completion. Integrates with AudioAnnotator for the deletion logic and utility helpers to attach task callbacks and user configuration metadata to the UI.",
+        "short_summary": "This module defines the views for deleting cached TTS data per language, restricted to administrators. It presents a form to start the deletion, kicks off the deletion asynchronously via django-q, and redirects to a monitoring page. An API endpoint returns task updates for polling, and a completion view displays success or error messages and allows re-running the deletion.",
+        "key_responsibilities": [
+          "Render and handle the DeleteTTSDataForm to initiate TTS data deletion for a chosen language",
+          "Schedule the deletion work as an asynchronous task using django_q with callback/report tracking",
+          "Provide a JSON status endpoint that returns task update messages for client-side polling",
+          "Render monitoring and completion templates, surfacing clara version and success/error feedback to admins"
+        ],
+        "potential_issues": [
+          "Assumes every authenticated user has a userprofile with an is_admin attribute; missing profiles will raise errors",
+          "Async task error handling is minimal; failures inside the task may not be surfaced clearly beyond generic status checks",
+          "Status detection checks for literal 'error' or 'finished' in messages, which may not align with the structure of updates returned by get_task_updates",
+          "The monitor view does not perform any status logic itself and relies on client-side polling with potentially naive status values",
+          "Repeated printing to stdout instead of using the configured logger could hinder production diagnostics"
+        ]
+      }
+    }
+  ],
+  "clara_app/funding_requests_views.py": [
+    {
+      "created_at": "2025-12-22T19:56:29.468295+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1975,
+        "completion_tokens": 2176,
+        "total_tokens": 4151,
+        "estimated_cost_usd": 0.02422875
+      },
+      "analysis": {
+        "proposed_docstring": "Views for handling the C-LARA funding request workflow, including submission by users and review/approval by designated funding reviewers. Provides endpoints to create funding requests, filter and approve them via a formset, trigger email confirmation with a code, and finalize approvals by updating request records and transferring user credits. Integrates with FundingRequest forms and templates, uses session storage for pending approvals, and sends notification emails via the utility mail helper.",
+        "short_summary": "This module defines Django views that implement the funding request lifecycle. Authenticated users can submit funding requests, while funding reviewers can search, approve, and finalize transfer of credits. The approval process uses a two-step confirmation with an emailed code and updates FundingRequest records, user profiles, and notifies requesters.",
+        "key_responsibilities": [
+          "Render and process the funding request submission form for logged-in users.",
+          "Provide a review interface for funding reviewers to search funding requests and prepare approval/credit assignments via a formset.",
+          "Initiate confirmation by emailing a code and storing pending transfers in the session when approvals are staged.",
+          "Confirm approvals by validating the confirmation code, updating FundingRequest status and assigned credits, transferring user profile credits, and sending notifications."
+        ],
+        "potential_issues": [
+          "credit_assigned values are cast to int during review, potentially losing decimal precision if fractional amounts are allowed.",
+          "Status comparisons (e.g., checking for 'Submitted') may not align with the labels passed into the formset, depending on how choices are defined in the form.",
+          "Available credit is only checked at the staging step; user balances are not revalidated when confirming, and concurrent changes could lead to overdrawing.",
+          "Credit transfers and request updates are performed without transactional safeguards, so concurrent approvals could lead to inconsistent balances."
+        ]
+      }
+    }
+  ],
+  "clara_app/home_views.py": [
+    {
+      "created_at": "2025-12-22T19:56:40.341486+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 808,
+        "completion_tokens": 1180,
+        "total_tokens": 1988,
+        "estimated_cost_usd": 0.012810000000000002
+      },
+      "analysis": {
+        "proposed_docstring": "Views for handling the C-LARA landing flow, including redirecting users to login or appropriate home pages based on community membership, presenting a community-selection screen when needed, and rendering the main home page with recent content and activity. It wires up the UnifiedSearchForm to control the time window for displayed items, fetches Content and Activity instances accordingly, and annotates activities for custom status ordering. Utility functions provide redirects and ordering helpers for use in templates.",
+        "short_summary": "This module defines the entry points for the application's home and welcome pages. It redirects users to login or the correct home depending on their community memberships, shows a selection page when multiple communities exist, and renders the main C-LARA home page with recent content and activities filtered by a time period. Activities are annotated to enforce a custom sort order by status before being passed to templates.",
+        "key_responsibilities": [
+          "Redirect unauthenticated or ambiguous landing requests to login or the appropriate home view.",
+          "Determine a user's community memberships to route them to a specific community home or present a selection page.",
+          "Render the login-protected C-LARA home page with recent Content and Activity filtered by a configurable time period from UnifiedSearchForm.",
+          "Annotate and order Activity querysets by a custom status priority before display."
+        ],
+        "potential_issues": [
+          "The module imports configuration via get_config but never uses it, which may indicate dead code.",
+          "home_page is not login-protected; anonymous users with no memberships will be redirected to clara_home_page, which requires login and may cause an unexpected redirect loop.",
+          "time_period from GET is cast directly to int without validation beyond form cleaning; invalid or negative values could raise errors or produce odd results.",
+          "Community membership checks use multiple queries (exists and count); this could be optimized, and status strings in annotate_and_order_activities_for_home_page must match model choices to avoid default ordering."
+        ]
+      }
+    }
+  ],
+  "clara_app/human_audio_views.py": [
+    {
+      "created_at": "2025-12-22T19:57:00.283705+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 6799,
+        "completion_tokens": 1874,
+        "total_tokens": 8673,
+        "estimated_cost_usd": 0.02723875
+      },
+      "analysis": {
+        "proposed_docstring": "Views for configuring, uploading, and processing human (and phonetic) audio assets for CLARA projects. This module renders forms to capture audio metadata, accepts individual file uploads or LiteDevTools zip packages, and triggers asynchronous tasks to unpack, align, and install audio via CLARAProjectInternal and AudioRepositoryORM. It also exposes polling endpoints and monitoring pages for background tasks, and download endpoints for generated metadata and annotated text files.",
+        "short_summary": "This module contains Django views to manage human voice recordings and related metadata for CLARA projects. It supports both standard and phonetic audio workflows, including individual uploads, LiteDevTools zip imports, and manual text/audio alignment. Background processing is delegated to django-q async tasks with accompanying status and monitoring views, and helper endpoints generate metadata and labelled text for download.",
+        "key_responsibilities": [
+          "Render and handle forms for human and phonetic audio configuration, including labelled segmented text and audio item formsets",
+          "Process individual audio uploads, LiteDevTools zip archives, and manual alignment audio/metadata files, saving to AudioRepositoryORM and triggering CLARAProjectInternal methods",
+          "Initiate and monitor asynchronous tasks for zipfile processing and manual alignment via django-q, providing JSON status endpoints and monitoring templates",
+          "Generate downloadable metadata and labelled segmented text files for voice recorder and manual alignment workflows"
+        ],
+        "potential_issues": [
+          "Phonetic audio processing view bypasses form.is_valid validation and manually parses POST, which may hide form errors or accept invalid data",
+          "Manual alignment branch uses messages.success when required inputs are missing, which may mislead users about an error state",
+          "Restoring existing files on POST in human_audio_processing relies on request.FILES keys; inadvertent overwrites or missing file handling could occur",
+          "Use of file_exists/local_file_exists with S3/local copies may be brittle if storage state is inconsistent, and remove_file in async tasks will delete the uploaded archive after processing"
+        ]
+      }
+    }
+  ],
+  "clara_app/image_questionnaire_views.py": [
+    {
+      "created_at": "2025-12-22T19:57:37.970066+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 5223,
+        "completion_tokens": 3456,
+        "total_tokens": 8679,
+        "estimated_cost_usd": 0.04108875
+      },
+      "analysis": {
+        "proposed_docstring": "Django view handlers for CLARA image questionnaires: listing eligible projects, preparing questionnaire sessions, rendering per-page rating forms for images (with optional text questions) and storing responses, plus summary and CSV export views. These views leverage CLARAProjectInternal to regenerate story and image data, track relevant elements for continuity questions, and localize UI labels. Session state is used to cache page data and inclusion flags, and helpers locate prior relevant pages for continuity comparisons.",
+        "short_summary": "This module provides the web workflow for CLARA image questionnaires. It lets users search for projects with questionnaires, choose to include text-related questions, and then steps through each page with an image to collect ratings. It also includes summary views for individual users and aggregated results across projects, along with a CSV export of raw responses. Utility functions read relevant element data to determine continuity questions.",
+        "key_responsibilities": [
+          "List and filter CLARA projects that have image questionnaires enabled.",
+          "Initialize and cache questionnaire page data in the session, including rendered text and relevant element frequency.",
+          "Render per-page questionnaire forms with localized UI, handle navigation, and save/update ImageQuestionnaireResponse records.",
+          "Provide user-level completion summaries and aggregated project summaries, and expose a CSV export of raw questionnaire responses.",
+          "Helper functions to read relevant elements per page and locate prior pages sharing elements for continuity questions."
+        ],
+        "potential_issues": [
+          "Pages and related data are stored in the session; with cookie-based sessions this could exceed size limits or be cleared, causing abrupt redirects to the summary.",
+          "Only login is enforced; there is no check that the current user is authorized for a given project\u2019s questionnaire.",
+          "The aggregate summary uses question text from a static list, not localized, and entries with no responses include an unexpected \"search_form\" key, leading to inconsistent data passed to templates.",
+          "Debug pprint of context in the item view may clutter logs or leak data in production.",
+          "The session flag name include_text_in_image_and_text_questionnare is misspelled and may cause confusion or mismatch with other code."
+        ]
+      }
+    }
+  ],
+  "clara_app/images_v1_views.py": [
+    {
+      "created_at": "2025-12-22T19:57:51.371406+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 10936,
+        "completion_tokens": 1399,
+        "total_tokens": 12335,
+        "estimated_cost_usd": 0.02766
+      },
+      "analysis": {
+        "proposed_docstring": "Views for managing images and related AI workflows within a CLARA project. This module renders and processes the image editing interface, including handling uploads, deleting or archiving images, and synchronizing text versions per page. It orchestrates asynchronous DALL\u2011E\u20113/GPT\u20114 calls to generate coherent image sets, descriptive variables, and image request sequences, and exposes monitoring endpoints for those tasks. Utilities for validating generated sequences and accessing or restoring archived images are also provided.",
+        "short_summary": "This module implements the image editing and generation views for CLARA projects. It prepares formsets with existing images and text versions, handles uploads, deletions, and description variables, and can launch asynchronous DALL-E and GPT-4 workflows to generate images or description sequences. It provides monitor endpoints for long-running tasks and views for browsing/restoring archived images.",
+        "key_responsibilities": [
+          "Render and process the edit-images page, including image uploads, deletion, text-version saving, and style image handling",
+          "Trigger asynchronous generation of DALL\u2011E\u20113 images, description variables, and image request sequences, with callback/report monitoring",
+          "Validate and store GPT-generated description lists and image request sequences, ensuring consistency and initialization of description variables",
+          "Execute coherent image generation/interpretation workflows (image-generation and image-understanding) and persist results via CLARAProjectInternal",
+          "Expose task status/monitor endpoints and views for accessing, restoring, or deleting archived images"
+        ],
+        "potential_issues": [
+          "HttpResponseNotAllowed is used in restore_image/delete_archive_image but not imported, which will raise NameError",
+          "The style image form error message uses an undefined variable 'i' in messages.error",
+          "Validation and indexing of text versions and page numbers may lead to off-by-one or missing-page edge cases, especially when generating placeholders",
+          "check_and_correct_initialization_in_image_request_sequence silently drops uninitialized description variables from prompts, which may yield unexpected image prompts",
+          "Overwriting of the imported 'messages' name within create_dall_e_3_image_status could be confusing, though locally scoped"
+        ]
+      }
+    }
+  ],
+  "clara_app/images_v2_views.py": [
+    {
+      "created_at": "2025-12-22T19:58:00.144768+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 7908,
+        "completion_tokens": 665,
+        "total_tokens": 8573,
+        "estimated_cost_usd": 0.016535
+      },
+      "analysis": {
+        "proposed_docstring": "Views for managing the v2 coherent image workflow in CLARA projects. This module renders and processes the edit page for images, handling form submissions to save parameters, advice, and page texts, delete elements or pages, and trigger asynchronous AI-driven generation of style, element, and page descriptions and images. It also exposes monitoring and status endpoints for background tasks and defines helper functions invoked asynchronously to perform generation, cost logging, and content policy checks.",
+        "short_summary": "This module provides the edit view for coherent images v2, allowing authenticated project users to view and update image parameters, advice, and page texts, and to initiate AI-backed generation tasks. It orchestrates asynchronous tasks via django_q, reports status, and serves a monitor template. Helper functions wrap CLARAProjectInternal methods to generate style, element, and page images, log costs, and enforce content policy checks.",
+        "key_responsibilities": [
+          "Render and process the edit_images_v2 view for authenticated project users, handling multiple form actions (saving parameters, advice, texts; deleting elements/pages; creating overviews; downloading zip archives).",
+          "Initiate asynchronous generation of style descriptions, element names and images, page descriptions and images, and variant images via django_q tasks and report progress/status.",
+          "Update project state through CLARAProjectInternal (saving params, advice, texts, story data) and log API usage/costs.",
+          "Expose JSON status and monitoring views for coherent image generation tasks.",
+          "Perform content policy checks on generated assets and post task updates accordingly."
+        ],
+        "potential_issues": [
+          "Many broad try/except blocks swallow exceptions and set generic error flags; underlying causes may be obscured.",
+          "Page and element data assembly assumes consistent lengths of multiple text arrays and presence of keys in images dict; missing or out-of-range entries could lead to silent omission or errors.",
+          "Duplicate import of get_element_names_params_from_project_params and unused variables (params_for_project_dir) suggest minor maintenance inconsistencies.",
+          "Debug prints (_edit_images_v2_trace, print statements) are present and may clutter logs in production.",
+          "Content policy violation checks rely on external helpers; misconfigured paths or params could misreport generation outcomes."
+        ]
+      }
+    }
+  ],
+  "clara_app/language_game_views.py": [
+    {
+      "created_at": "2025-12-22T19:58:15.488507+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1068,
+        "completion_tokens": 1541,
+        "total_tokens": 2609,
+        "estimated_cost_usd": 0.016745
+      },
+      "analysis": {
+        "proposed_docstring": "Defines views for the Kok Kaper animal language game, including lazy loading and caching of the underlying game data from JSON, handling GET/POST workflows to build Kok Kaper and English sentences with associated images, and rendering appropriate templates with user selections persisted in the session.",
+        "short_summary": "Provides the kok_kaper_animal_game view that drives a combinatorial language game for assembling animals, body parts and adjectives. It lazily loads and caches game data from a JSON file, restores and persists user selections via the session, and on POST constructs sentences and image paths while rendering either the game template or an unavailable notice with messages.",
+        "key_responsibilities": [
+          "Load and cache game configuration data from a JSON file via get_game_data() with graceful fallback on error.",
+          "Handle GET and POST requests for the kok_kaper_animal_game view, restoring prior selections and toggles from the session.",
+          "Look up selected animal, body part and adjective records to build Kok Kaper and English sentences and determine the appropriate image file.",
+          "Persist user choices back into the session and render game or error templates with Django messages as needed."
+        ],
+        "potential_issues": [
+          "The cached _GAME_DATA is never refreshed within a process, so updates to the JSON file require a restart to take effect.",
+          "Using next() without a default on POSTed IDs will raise StopIteration if invalid or missing IDs are submitted.",
+          "Defaults assume each game data list contains at least one element; empty lists would cause errors when accessing index 0.",
+          "The boolean conversion for show_gloss relies on the presence of the POST key and may not handle unexpected values intuitively.",
+          "The login_required decorator is commented out, so the game is currently accessible to unauthenticated users, which may be unintended."
+        ]
+      }
+    }
+  ],
+  "clara_app/language_masters_views.py": [
+    {
+      "created_at": "2025-12-22T19:58:30.006227+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1544,
+        "completion_tokens": 1194,
+        "total_tokens": 2738,
+        "estimated_cost_usd": 0.013869999999999999
+      },
+      "analysis": {
+        "proposed_docstring": "Admin-only Django views for managing language master assignments and localisation bundles. Provides forms and workflows to add or remove language masters, confirm deletions, and upload or edit key/text bundles with validation and messaging. Renders corresponding templates with user configuration context and persists changes via model get_or_create/update_or_create within transactions.",
+        "short_summary": "This module defines administrator-restricted views to manage language master privileges and localisation bundles. It allows assigning and removing LanguageMaster records and provides a form to load, validate, and save LocalisationBundle contents. Templates are rendered with user configuration context and use Django's messaging framework for feedback.",
+        "key_responsibilities": [
+          "Render and process the AssignLanguageMasterForm to add language masters and list existing ones",
+          "Handle confirmation and deletion of LanguageMaster entries",
+          "Display, load, validate, and save localisation bundles composed of tab-separated key/text pairs",
+          "Render admin templates with user configuration data and provide user feedback via messages"
+        ],
+        "potential_issues": [
+          "The global config and the imported user_can_translate are unused, which may indicate stale code paths",
+          "get_user_config must provide a 'clara_version' key or templates may fail if missing",
+          "The post_localisation_bundle view overloads POST for both loading and saving actions; incorrect form submissions could hit unexpected branches",
+          "No explicit success message is shown when adding language masters, and duplicate bundle item keys are simply overwritten without warning"
+        ]
+      }
+    }
+  ],
+  "clara_app/manipulate_project_views.py": [
+    {
+      "created_at": "2025-12-22T19:58:48.078772+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 2385,
+        "completion_tokens": 1853,
+        "total_tokens": 4238,
+        "estimated_cost_usd": 0.021511250000000003
+      },
+      "analysis": {
+        "proposed_docstring": "Views for managing CLARA projects and their membership, including listing projects a user can access, updating project metadata, viewing project history, and deleting projects. These handlers enforce ownership or role-based access, coordinate with forms and Django messages, and render templates for project lists, details, member management, and confirmation pages. Some actions interact with the internal CLARA project representation to assess available text versions, up-to-date status, costs, and to perform cleanup on deletion. Menu rendering and feature availability are tailored based on user configuration and project languages.",
+        "short_summary": "This module defines Django views to list, inspect, update, and delete CLARA projects, as well as to manage project members and view action history. It applies login and project role/ownership decorators, populates forms, and sends user feedback via messages. Project detail views calculate available processing steps and costs via the CLARA internal API and render the appropriate templates with context.",
+        "key_responsibilities": [
+          "List projects the current user owns or has permissions on, with search and pagination",
+          "Manage project membership by adding and removing users with specific roles",
+          "Display project details, available text versions, costs, and update project title or image set settings",
+          "Confirm and perform deletion of a project and its associated internal resources",
+          "Show a chronological history of actions performed on a project"
+        ],
+        "potential_issues": [
+          "The remove_project_member view lacks an ownership/role check, so any authenticated user could potentially remove permissions if they know the permission ID",
+          "Using ProjectPermissions.objects.get inside the project listing loop may trigger extra queries and could raise exceptions if permissions are missing despite the filter",
+          "Duplicate import of is_chinese_language suggests possible confusion over function origin, and unused imports (operation cost/duration utilities) clutter the module",
+          "Deletion relies on CLARAProjectInternal.delete(); failures in internal cleanup are not handled, potentially leaving orphaned internal resources",
+          "The Q construction in project_list is unnecessarily wrapped and may be brittle; role determination assumes a ProjectPermissions entry exists for non-owners"
+        ]
+      }
+    }
+  ],
+  "clara_app/phonetic_lexicon_views.py": [
+    {
+      "created_at": "2025-12-22T19:59:25.254484+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 4239,
+        "completion_tokens": 3484,
+        "total_tokens": 7723,
+        "estimated_cost_usd": 0.04013875
+      },
+      "analysis": {
+        "proposed_docstring": "Django views for managing phonetic lexicons and orthography data within C-LARA, aimed at language masters. Provides the main edit interface for reviewing and saving grapheme-to-phoneme correspondences and plain or aligned lexicon entries, including handling uploads of lexicon files. Coordinates asynchronous installation of plain lexicons with status polling and completion confirmation, and interacts with repository classes and templates to persist and present lexicon data.",
+        "short_summary": "This module implements the views that allow a language master to edit and upload phonetic lexicon and orthography resources. The main edit view handles saving grapheme/phoneme data, reviewing generated lexicon entries, and uploading aligned or plain lexicon files. Plain lexicon imports are offloaded to a background task with supporting status and monitoring views.",
+        "key_responsibilities": [
+          "Render and process the phonetic lexicon edit form, including grapheme-to-phoneme correspondences, accent characters, and plain/aligned lexicon entry review.",
+          "Validate and persist orthography and lexicon changes via PhoneticOrthographyRepository and PhoneticLexiconRepositoryORM, updating language encodings as needed.",
+          "Handle uploads of aligned and plain lexicon files, copying to S3 when appropriate and initializing repository data from uploaded content.",
+          "Kick off asynchronous plain lexicon import tasks using django_q, provide JSON status polling, and render monitoring/completion views."
+        ],
+        "potential_issues": [
+          "Use of a local variable named \"messages\" in import_phonetic_lexicon_status shadows django.contrib.messages and may be confusing.",
+          "The branch handling a missing language in edit_phonetic_lexicon sets an undefined grapheme_phoneme_correspondence_formset rather than grapheme_phoneme_formset, so formsets may retain stale data or be None unexpectedly in the template.",
+          "Status detection in import_phonetic_lexicon_status only checks for exact \"error\" or \"finished\" strings in the task update list; unexpected message formats could leave status \"unknown\".",
+          "Hard conversion of max_entries_to_show from config to int may raise if misconfigured, and the template may receive None for form or formsets if language selection is missing."
+        ]
+      }
+    }
+  ],
+  "clara_app/profile_views.py": [
+    {
+      "created_at": "2025-12-22T19:59:38.528724+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1150,
+        "completion_tokens": 1392,
+        "total_tokens": 2542,
+        "estimated_cost_usd": 0.0153575
+      },
+      "analysis": {
+        "proposed_docstring": "Views for displaying and editing user profiles and managing friend relationships in the C\u2011LARA application. Provides an authenticated profile edit workflow, an external profile view that lets visitors send, accept or reject friend requests, and utilities to notify users by email and update the activity feed. Integrates with user and profile models, friend request forms, and includes the current C\u2011LARA version in template contexts. Email notifications are only sent in the UniSA deployment environment.",
+        "short_summary": "This module defines profile-related views, including a login-protected profile editor and a public-facing profile page with friend request functionality. It handles form submission, validation, and saving for user and profile data, as well as creating, updating, and deleting FriendRequest records based on user actions. It also renders profile pages with contextual information and triggers notification emails when friend requests are sent.",
+        "key_responsibilities": [
+          "Render and process the user account and profile edit forms, saving changes and flashing success messages.",
+          "Display external user profiles and determine friend request status between the current user and the profile being viewed.",
+          "Handle sending, accepting, rejecting, cancelling, and unfriending actions via FriendRequestForm submissions and update the activity feed.",
+          "Send HTML email notifications for new friend requests in the UniSA environment and include C-LARA version information in rendered templates."
+        ],
+        "potential_issues": [
+          "The privacy check in external_profile references an undefined variable `user` instead of `profile_user`, which will raise a NameError or bypass privacy logic.",
+          "external_profile is not login-protected but assumes a valid `request.user` for friend request actions, allowing anonymous users to initiate actions or causing errors.",
+          "There are no authorization checks to ensure only the sender/receiver can accept or delete a friend request by ID, which could allow malicious manipulation.",
+          "get_config() and logger are imported and set up but unused; friend request email notifications are only sent in a specific environment, potentially surprising in other deployments."
+        ]
+      }
+    }
+  ],
+  "clara_app/public_api_views.py": [
+    {
+      "created_at": "2025-12-22T19:59:51.577235+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1039,
+        "completion_tokens": 1151,
+        "total_tokens": 2190,
+        "estimated_cost_usd": 0.012808749999999999
+      },
+      "analysis": {
+        "proposed_docstring": "Public API views to generate and serve a machine-friendly manifest of published content. It resolves a Content record by ID, reads compiled HTML pages from the project output directory, extracts plain text and image URLs, and assembles a structured manifest. The primary entry point is a GET endpoint that returns the manifest as JSON with strict no-cache and CORS headers for external consumers, while a helper builds the manifest dictionary. Filesystem utilities are used to locate and read page files; no templates are rendered.",
+        "short_summary": "This module exposes a public-facing endpoint that returns a JSON manifest for a given Content object. It builds the manifest by traversing the compiled project output, converting HTML pages to plaintext and listing image sources. The GET view sets no-cache and cross-origin headers to support external clients such as LLMs.",
+        "key_responsibilities": [
+          "Handle GET requests for a content manifest and respond with a JSON payload and appropriate cache/CORS headers.",
+          "Construct a manifest dictionary for a Content instance, including metadata and per-page plaintext and image URLs.",
+          "Locate and read compiled HTML page files from the project output directory, converting HTML to text and extracting image sources."
+        ],
+        "potential_issues": [
+          "Image extraction relies on a naive regex and may miss complex cases or break on unexpected HTML.",
+          "Pagination stops at the first missing page file, which could skip subsequent pages if numbering is non-sequential.",
+          "Assumes Content.project and related fields exist; missing relationships or attributes could raise exceptions when masking the author.",
+          "Direct filesystem access is used without error handling, so missing or unreadable files will propagate errors or silently truncate the manifest.",
+          "Headers such as Access-Control-Allow-Origin are set redundantly, and xframe_options_exempt may have security implications."
+        ]
+      }
+    }
+  ],
+  "clara_app/reading_histories_views.py": [
+    {
+      "created_at": "2025-12-22T20:00:08.554462+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 2873,
+        "completion_tokens": 1457,
+        "total_tokens": 4330,
+        "estimated_cost_usd": 0.01816125
+      },
+      "analysis": {
+        "proposed_docstring": "Django views for presenting and maintaining per-user reading histories by L2 language, including creation of backing CLARA projects, form handling for language selection, deletion and phonetic preferences, and adding new projects to a combined history via asynchronous compilation tasks. Provides monitor and status endpoints for polling task progress, and helpers to derive available languages and projects based on posted content and existing internalised texts.",
+        "short_summary": "This module renders and processes the reading history page for a user and a chosen target language. It handles creating the underlying CLARA project for a new reading history, managing phonetic preferences, and dispatching asynchronous tasks to update and recompile the combined reading history when projects are added. Additional endpoints support polling task status, and helper functions filter eligible languages and projects based on stored content.",
+        "key_responsibilities": [
+          "Render the reading history view with forms and data for the current user/L2, and handle POST actions for language selection, deletion, phonetic preference updates, and adding projects",
+          "Create associated CLARAProject and CLARAProjectInternal records when a new reading history is initialised",
+          "Schedule and perform asynchronous updates of reading histories (compiling combined text with optional phonetics) and expose status/monitoring views for these tasks",
+          "Determine available target languages and projects eligible to be added to a reading history based on posted content and presence of internalised texts"
+        ],
+        "potential_issues": [
+          "If an unexpected POST action is received, the view may fall through without redirecting and attempt to render with undefined context variables",
+          "Concurrent creation/deletion of reading histories and associated CLARA projects could lead to orphaned or missing internal resources",
+          "The async task uses get_object_or_404 and object instances passed in; failures there may not be fully surfaced beyond generic error messages",
+          "update_reading_history_status treats any message containing the substring 'error' or 'finished' as status, which may be brittle",
+          "Helper functions rely on has_saved_internalised_and_annotated_text; if phonetic requirements are toggled, available language/project lists may not update as expected"
+        ]
+      }
+    }
+  ],
+  "clara_app/registering_views.py": [
+    {
+      "created_at": "2025-12-22T20:00:21.271244+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1076,
+        "completion_tokens": 994,
+        "total_tokens": 2070,
+        "estimated_cost_usd": 0.011285
+      },
+      "analysis": {
+        "proposed_docstring": "This module is effectively a placeholder; the view logic for registering rendered project content has been moved to content_views.py. It previously offered endpoints to check for rendered HTML (normal or phonetic) and present a registration form, and to register a project's rendered content into the system with appropriate permission checks and update logging.",
+        "short_summary": "This Django views module no longer defines active views; the content has been relocated. The commented code shows handlers for offering registration of rendered project content (normal or phonetic) and completing registration into the content model. It interacted with project models, user permissions, and forms before redirecting or rendering status templates.",
+        "key_responsibilities": [
+          "Placeholder indicating that registration-related view functions have been moved to content_views.py",
+          "Previously checked for the existence of rendered HTML content and presented registration options for normal or phonetic renderings",
+          "Handled POST submissions to register project content, enforcing owner permissions and logging updates"
+        ],
+        "potential_issues": [
+          "The module contains only commented-out code; any URL patterns or imports still referencing these views will fail at runtime",
+          "Stale imports and commented logic may confuse maintainers about the current location of functionality",
+          "If the old code is re-enabled, permissions, form handling, and redirects should be reviewed against current models and templates"
+        ]
+      }
+    }
+  ],
+  "clara_app/rendering_views.py": [
+    {
+      "created_at": "2025-12-22T20:00:47.164501+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 2347,
+        "completion_tokens": 2666,
+        "total_tokens": 5013,
+        "estimated_cost_usd": 0.02959375
+      },
+      "analysis": {
+        "proposed_docstring": "Views to initiate, monitor, and complete rendering of CLARA project texts, handling both normal and phonetic variants. This module validates required text versions, configures human or TTS audio preferences, and enqueues asynchronous rendering tasks via django-q using CLARAProjectInternal. It exposes a status API for client-side polling, displays progress and completion templates, and handles error reporting and registration of rendered content.",
+        "short_summary": "This module defines Django views for starting CLARA text rendering jobs (normal or phonetic) and for monitoring their progress. It selects appropriate audio sources, schedules rendering as asynchronous tasks, and uses callbacks to report status updates. Supporting views render start, monitor, and completion pages and expose a JSON status endpoint for JavaScript polling.",
+        "key_responsibilities": [
+          "Validate that required text versions exist before initiating normal or phonetic rendering of a CLARA project.",
+          "Determine human or TTS audio preferences and enqueue asynchronous rendering tasks with django-q using CLARAProjectInternal.",
+          "Provide views to render start, monitor, status (JSON), and completion pages for rendering workflows, including error messaging.",
+          "Set up and use callback/report IDs to collect task updates and convey success or failure to the user interface."
+        ],
+        "potential_issues": [
+          "CLARAProjectInternal instances are passed directly into django-q tasks; if not serializable, this could fail or behave unexpectedly under distributed workers.",
+          "The status endpoint only checks for literal 'error' or 'finished' messages; intermediate statuses are reported as 'unknown', which may not reflect progress accurately.",
+          "Variable name 'messages' in render_text_status shadows django.contrib.messages, which could be confusing though scoped locally.",
+          "render_text_start_phonetic_or_normal is undecorated and relies on being called internally; exposing it via URL without protections would bypass authentication/authorization.",
+          "Completion view uses placeholder booleans for content_url/zipfile_url rather than actual URLs, so downstream functionality may be incomplete."
+        ]
+      }
+    }
+  ],
+  "clara_app/satisfaction_questionnaire_views.py": [
+    {
+      "created_at": "2025-12-22T20:01:01.264226+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 1739,
+        "completion_tokens": 1290,
+        "total_tokens": 3029,
+        "estimated_cost_usd": 0.015073749999999999
+      },
+      "analysis": {
+        "proposed_docstring": "Views for handling satisfaction questionnaires within the CLARA app. This module provides endpoints for users to submit or edit feedback for a specific project, display an existing questionnaire response, and for authorized reviewers to manage responses via export or deletion. It also exposes a view aggregating questionnaire metrics and distributions for reporting templates. Templates are rendered for each workflow, with messaging and redirects used to guide user flow; data export leverages pandas/OpenPyXL to produce an Excel file.",
+        "short_summary": "This module defines Django views around the satisfaction questionnaire feature. Authenticated users can fill out and update their responses per project, and view completed questionnaires. Reviewers can list, export, or delete responses, and an aggregation view computes averages and distributions for reporting.",
+        "key_responsibilities": [
+          "Render and process the satisfaction questionnaire form for a given project and user, updating or creating responses as needed.",
+          "Display a read-only view of a specific user's questionnaire for a project.",
+          "Provide a management interface for reviewers to list, export to Excel, or delete questionnaire submissions.",
+          "Aggregate questionnaire data (averages, distributions, recent free-text answers) and render a summary template."
+        ],
+        "potential_issues": [
+          "The aggregated_questionnaire_results view is not access-controlled, potentially exposing survey data to any visitor.",
+          "show_questionnaire only checks login status and does not verify that the requesting user is authorized to view another user's response.",
+          "manage_questionnaires assumes every reviewer has a userprofile with is_questionnaire_reviewer; missing profiles will raise errors.",
+          "Exported Excel uses values() and may include sensitive fields or timestamps converted to naive without timezone context; content type is for Excel 97-2003 despite using an .xlsx writer.",
+          "The get_config() and logger are unused, which may indicate incomplete configuration or logging omissions."
+        ]
+      }
+    }
+  ],
+  "clara_app/save_page_texts_multiple_views.py": [
+    {
+      "created_at": "2025-12-22T20:01:10.471581+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 459,
+        "completion_tokens": 866,
+        "total_tokens": 1325,
+        "estimated_cost_usd": 0.00923375
+      },
+      "analysis": {
+        "proposed_docstring": "Views to monitor and report on the progress of a bulk \"save page texts\" operation for a CLARA project. Provides an endpoint to poll task updates and derive a simple status code, and a companion view to render a monitoring template for a given project and report. Access is restricted to authenticated users with a role on the target project.",
+        "short_summary": "This module defines two views related to monitoring a multi-page text saving task. One view polls task updates by report ID and returns a JSON payload with messages and a derived status. The other renders a monitoring page for a given project and report. Both views enforce login and project role checks.",
+        "key_responsibilities": [
+          "Expose a JSON endpoint that fetches task update messages via get_task_updates and maps them to a simple status indicator.",
+          "Render a monitoring page for a project's multi-page text saving process, passing project and report context to the template.",
+          "Enforce that only authenticated users with an appropriate project role can access these monitoring endpoints."
+        ],
+        "potential_issues": [
+          "Status derivation is based on naive membership checks for the strings 'error' or 'finished' in the messages payload; if get_task_updates returns a different structure or messages containing those substrings, the status could be misclassified.",
+          "The function logs to stdout using print rather than using Django's logging facilities.",
+          "There is no explicit error handling around get_task_updates; an invalid report_id could raise exceptions that aren't caught here.",
+          "The JSON polling view does not verify the project context beyond the decorator, which may rely on report_id alone; ensure user authorization is appropriately enforced."
+        ]
+      }
+    }
+  ],
+  "clara_app/serving_content_views.py": [
+    {
+      "created_at": "2025-12-22T20:01:25.632390+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 2206,
+        "completion_tokens": 1722,
+        "total_tokens": 3928,
+        "estimated_cost_usd": 0.0199775
+      },
+      "analysis": {
+        "proposed_docstring": "This module provides Django view functions for serving generated CLARA project content and media files, including rendered HTML pages, static and multimedia assets, project images, audio files, and downloadable zip archives. It locates files based on CLARA project metadata and utility helpers, supports both local filesystem and optional S3-backed storage, and applies basic protections such as login requirements for some endpoints and same-origin framing on rendered text. It also includes endpoints for delivering coherent image project assets with path normalization to mitigate traversal.",
+        "short_summary": "Defines file-serving views for various CLARA project outputs and assets. Views resolve file paths using project information and utility helpers, optionally fetching from S3 if configured, and return appropriate HTTP responses or 404s. Some endpoints require authentication or apply clickjacking protections. Includes download endpoints for packaged zipfiles and exported projects.",
+        "key_responsibilities": [
+          "Serve rendered CLARA text HTML, static assets, and multimedia files by project and variant, with optional S3 support and clickjacking protection.",
+          "Provide authenticated download of packaged content zipfiles and exported project archives based on CLARAProject metadata.",
+          "Deliver project-related images, coherent image project overviews, and individual coherent image files with path normalization to prevent traversal.",
+          "Serve audio files from the audio repository, requiring login and handling both local and S3-backed storage paths."
+        ],
+        "potential_issues": [
+          "The S3 presigned URL branch in serve_export_zipfile references _s3_client and _s3_bucket_name, which are not imported and is noted as non-functional.",
+          "serve_clara_image builds paths from a relative file path without explicit normalization, which could expose path traversal if absolute_file_name does not guard against it.",
+          "Directly opening files for HttpResponse without using FileResponse may leave file descriptors open; reliance on GC may hide leaks under load.",
+          "S3 object keys are constructed from absolute paths in several views, which may not correspond to actual keys in the bucket.",
+          "Debug printing is used instead of logging, and exceptions in serve_zipfile are swallowed and re-raised as generic 404s, potentially obscuring errors."
+        ]
+      }
+    }
+  ],
+  "clara_app/simple_clara_views.py": [
+    {
+      "created_at": "2025-12-22T20:01:42.309141+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 19492,
+        "completion_tokens": 1341,
+        "total_tokens": 20833,
+        "estimated_cost_usd": 0.037774999999999996
+      },
+      "analysis": {
+        "proposed_docstring": "Views and helper functions powering the \"Simple C-LARA\" one-page wizard. This module inspects the state of a CLARA project, renders a consolidated form, and dispatches user-initiated actions either synchronously or via django-q background tasks. It wraps CLARAProjectInternal operations for text generation, segmentation, rendering, image generation/review (including coherent image set V2), TTS preferences, and posting content, while exposing polling endpoints for UI progress monitoring.",
+        "short_summary": "This module implements the Simple C-LARA wizard views for creating and publishing multimedia CLARA texts from a single page. It collects project resources, renders and processes the form, and routes actions to synchronous helpers or background django-q tasks with progress reporting. It also provides review interfaces for coherent images (pages, elements, styles) and lightweight status/monitor endpoints for long-running jobs.",
+        "key_responsibilities": [
+          "Summarize project state (languages, title, texts, images, segmentation/rendering status) via get_simple_clara_resources_helper for pre-populating the wizard.",
+          "Render and process the main simple_clara form, interpreting actions to create projects, generate/save texts, images, segmentation, TTS preferences, rendering, and posting.",
+          "Dispatch Simple C-LARA actions to dedicated helper functions, running either in-process or in django-q workers and posting task updates for UI polling.",
+          "Expose status and monitor views (simple_clara_status/monitor and execute_*_status/monitor) to support client-side polling of background tasks.",
+          "Provide review and feedback views for coherent image set V2 (pages, elements, styles), including AI and user image generation requests, uploads, and voting."
+        ],
+        "potential_issues": [
+          "execute_simple_clara_style_requests_monitor is missing the @login_required decorator (a bare `login_required` identifier), so access control may be broken.",
+          "simple_clara and review views do not enforce project ownership/role beyond login; get_object_or_404 fetches any project by ID, which may allow unauthorized access unless constrained elsewhere.",
+          "Errors returned from get_simple_clara_resources_helper (resources['error']) are not handled before accessing fields like resources['status'], which could raise KeyError.",
+          "For rewrite_text, API calls are stored under the 'image' key; this may miscategorize costs/logging.",
+          "Background tasks rely on post_task_update string markers; mismatches could lead to polling endpoints never detecting completion."
+        ]
+      }
+    }
+  ],
+  "clara_app/task_update_views.py": [
+    {
+      "created_at": "2025-12-22T20:01:47.767932+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 492,
+        "completion_tokens": 520,
+        "total_tokens": 1012,
+        "estimated_cost_usd": 0.005815
+      },
+      "analysis": {
+        "proposed_docstring": "Views for displaying and managing task update messages in the CLARA app. This module provides a user-facing page to list recent task updates for the logged-in user and an admin-only endpoint to purge old updates. It leverages Django's authentication decorators, fetches configuration and version information for rendering, and uses the TaskUpdate model to query or delete records based on time thresholds.",
+        "short_summary": "This module defines Django views to show recent task updates to a logged-in user and to allow administrators to delete outdated task updates. It filters TaskUpdate records by recency and user, renders them with the current CLARA version, and uses Django's messaging framework to report deletion results.",
+        "key_responsibilities": [
+          "Render a list of task updates from the past hour for the current user.",
+          "Retrieve and include the user's CLARA version in the task updates view.",
+          "Provide an admin-restricted action to delete task updates older than 30 days.",
+          "Use Django authentication decorators and messaging framework for access control and feedback."
+        ],
+        "potential_issues": [
+          "The use of request.user.username as user_id assumes usernames match TaskUpdate.user_id; if TaskUpdate uses a different identifier, filtering may be incorrect.",
+          "Hard-coded time windows (last 60 minutes for viewing, last 30 days for deletion) may not suit all deployments and are not configurable.",
+          "The delete_old_task_updates view deletes old updates for all users, which may be unintended if per-user retention is desired.",
+          "get_user_config is called without error handling; missing or malformed configuration could cause failures."
+        ]
+      }
+    }
+  ],
+  "clara_app/text_questionnaire_views.py": [
+    {
+      "created_at": "2025-12-22T20:02:08.201977+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 9348,
+        "completion_tokens": 1785,
+        "total_tokens": 11133,
+        "estimated_cost_usd": 0.029535
+      },
+      "analysis": {
+        "proposed_docstring": "Views for managing and running text questionnaires against books, including creation/editing by owners, evaluator landing pages with per-book progress, the multi-phase fill flow for per-page and whole-book Likert questions, and analytics/export of results. The module renders questionnaires and their per-page assets via CLARA project helpers, syncs linked books and questions, and supports public/owner listings and admin data purges. It also provides CSV/ZIP exports of aggregated or raw answers mirroring the results view.",
+        "short_summary": "This module defines Django views for the lifecycle of text questionnaires: creating/editing questionnaires with linked books and questions, listing questionnaires for owners or the public, and allowing evaluators to fill them out page-by-page and at the whole-book level. It computes per-book progress, manages responses and answers, ensures rendered page assets exist, and provides analytics and CSV/ZIP exports as seen in the results view. Administrative utilities include deleting questionnaires and flushing all questionnaire data.",
+        "key_responsibilities": [
+          "Render and process creation/edit forms for TextQuestionnaire objects, syncing linked books and book-scope questions",
+          "Provide evaluator-facing views to list assigned books with progress and to run questionnaires through per-page and whole-book phases, creating anonymous users as needed",
+          "Ensure rendered page assets exist for per-page questions via CLARA project utilities and load per-page HTML/image snippets for display",
+          "Compute questionnaire analytics for submitted responses and render results, with CSV/ZIP export of aggregated matrices, stats, and raw answer data",
+          "Administrative actions such as deleting questionnaires, removing links, and purging all questionnaire-related data"
+        ],
+        "potential_issues": [
+          "The module references traceback and now() in helper functions but does not import them, leading to NameError on error paths or date filtering",
+          "Duplicate definitions of _sync_questions may cause confusion; the later version only deletes book-scope questions",
+          "count_questionnaire_pages and asset loading assume a valid project and filesystem state; missing projects or compiled pages can raise errors or miscount requirements",
+          "load_questionnaire_page_html is called in tq_fill but its result is not used; ensure intended asset is actually rendered",
+          "Progress and completion logic depends on filesystem page counts; discrepancies between counted pages and stored answers may reopen submitted responses unexpectedly",
+          "Anonymous user creation may leave unused User records; no cleanup is provided"
+        ]
+      }
+    }
+  ],
+  "clara_app/update_feed_views.py": [
+    {
+      "created_at": "2025-12-22T20:02:17.079455+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 695,
+        "completion_tokens": 809,
+        "total_tokens": 1504,
+        "estimated_cost_usd": 0.00895875
+      },
+      "analysis": {
+        "proposed_docstring": "This module defines the authenticated view responsible for rendering a user's update feed, aggregating recent activity by the user and their friends. It queries Update records, limits to the latest 50, filters out entries that cannot be rendered, and passes them to a template along with user-specific configuration. Helper logic validates that each update's content_object matches the expected models for its update_type before inclusion in the feed.",
+        "short_summary": "Provides the update feed view for logged-in users, assembling recent updates by the user and their friends. Retrieves and filters Update instances for validity before rendering the feed template with user configuration context.",
+        "key_responsibilities": [
+          "Retrieve current user's friends and query recent Update records involving them or the user.",
+          "Validate update entries against expected model types for each update_type before displaying.",
+          "Render the update feed template with the filtered updates and user-specific settings such as clara_version."
+        ],
+        "potential_issues": [
+          "The 'PUBLISH' branch in valid_update_for_update_feed checks that content_object is both a Comment and a Content, which can never be true, likely preventing publish updates from appearing.",
+          "Invalid or unexpected updates are silently filtered out with only a print warning, which may hide data issues in production.",
+          "The module-level config from get_config() is defined but unused, which may indicate leftover or redundant code."
+        ]
+      }
+    }
+  ],
+  "clara_app/user_config_views.py": [
+    {
+      "created_at": "2025-12-22T20:02:28.107028+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 484,
+        "completion_tokens": 1159,
+        "total_tokens": 1643,
+        "estimated_cost_usd": 0.012195000000000001
+      },
+      "analysis": {
+        "proposed_docstring": "View logic for displaying and updating per-user configuration. This module exposes the authenticated user_config view, ensuring a UserConfiguration record exists, binding it to a form for editing, and persisting changes with feedback messages. It also passes along the current Clara version from utility helpers for rendering in the user configuration template.",
+        "short_summary": "Provides a single authenticated view for users to manage their configuration settings. The view will create a UserConfiguration record if missing, bind it to a form for GET/POST, and save valid submissions with a success message. It fetches Clara version information to include in the rendered template.",
+        "key_responsibilities": [
+          "Expose the login-protected user_config view for rendering and processing user configuration forms.",
+          "Ensure a UserConfiguration instance exists for the current user, creating one on legacy accounts as needed.",
+          "Bind and validate UserConfigForm data, saving updates and providing Django messages and redirects on success.",
+          "Include Clara version information from utilities when rendering the user configuration template."
+        ],
+        "potential_issues": [
+          "The module-level config and logger variables are initialized but never used.",
+          "If get_user_config does not return a dict with 'clara_version', rendering will raise a KeyError.",
+          "No explicit handling or feedback is provided for invalid form submissions aside from re-rendering the form with errors.",
+          "get_or_create will create a UserConfiguration with defaults; if additional required fields are later added to the model, this may fail or create incomplete records."
+        ]
+      }
+    }
+  ],
+  "clara_app/users_and_friends_views.py": [
+    {
+      "created_at": "2025-12-22T20:02:35.086920+00:00",
+      "model": "gpt-5.1-codex-max",
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 632,
+        "completion_tokens": 736,
+        "total_tokens": 1368,
+        "estimated_cost_usd": 0.008150000000000001
+      },
+      "analysis": {
+        "proposed_docstring": "Views for listing users and displaying friendship information. Provides a paginated user search/sort view and a friends dashboard showing incoming/outgoing friend requests, current friends, and configuration details for the logged-in user. These views require authentication and render HTML templates with the appropriate context data pulled from Django's auth User model and related utilities.",
+        "short_summary": "This module defines two authenticated Django views for user and friend management. It lets logged-in users browse and search all users with sorting and pagination, and view their own friend-related information including requests and current friends. It renders the corresponding templates with context built from the auth models and helper utilities.",
+        "key_responsibilities": [
+          "Handle authenticated requests to list and search users with sorting and pagination.",
+          "Collect and render incoming/outgoing friend request data and current friends for the logged-in user.",
+          "Populate templates with user profile and configuration details retrieved via utility functions."
+        ],
+        "potential_issues": [
+          "Assumes every User has an associated userprofile; missing profiles could raise an AttributeError.",
+          "User.objects.all() may include the requesting user and can be large without additional filtering or pagination size controls.",
+          "Sort parameter defaults to date_joined but lacks validation of unexpected values.",
+          "Imported config and logger are unused, suggesting dead code or missing instrumentation."
+        ]
+      }
     }
   ]
 }

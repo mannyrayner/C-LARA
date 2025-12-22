@@ -100,6 +100,8 @@ def ensure_view_modules_downloaded(module_names: List[str]) -> Dict[str, Path]:
         repo_to_local[repo_path] = Path(meta.local_path)
     return repo_to_local
 
+def _kb(n: int) -> str:
+    return f"{n/1024:.1f} KB"
 
 def generate_docstrings_for_views(
     module_names: List[str],
@@ -118,29 +120,87 @@ def generate_docstrings_for_views(
     # Ensure files are downloaded
     repo_to_local = ensure_view_modules_downloaded(module_names)
 
-    for repo_path, local_path in repo_to_local.items():
-        source_code = local_path.read_text(encoding="utf-8")
+    total = len(repo_to_local)
+    total_prompt_tokens = 0
+    total_completion_tokens = 0
+    total_cost = 0.0
 
-        analysis, usage = call_model_for_docstring(
-            client=client,
-            model=model,
-            repo_path=repo_path,
-            source_code=source_code,
-        )
+    print(f"[docstrings] Model: {model}")
+    print(f"[docstrings] Modules: {total}")
 
-        record = {
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "model": usage.model,
-            "usage": asdict(usage),
-            "analysis": analysis,
-        }
+    for i, (repo_path, local_path) in enumerate(repo_to_local.items(), start=1):
+        try:
+            p = Path(local_path)
+            size_bytes = p.stat().st_size if p.exists() else 0
+            print(f"[docstrings] ({i}/{total}) {repo_path}  ({_kb(size_bytes)})")
 
-        per_file_list = existing_metadata.get(repo_path, [])
-        per_file_list.append(record)
-        existing_metadata[repo_path] = per_file_list
+            source_code = p.read_text(encoding="utf-8")
 
-    _save_docstring_metadata(existing_metadata)
+            analysis, usage = call_model_for_docstring(
+                client=client,
+                model=model,
+                repo_path=repo_path,
+                source_code=source_code,
+            )
+
+            record = {
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": usage.model,
+                "usage": asdict(usage),
+                "analysis": analysis,
+            }
+
+            per_file_list = existing_metadata.get(repo_path, [])
+            per_file_list.append(record)
+            existing_metadata[repo_path] = per_file_list
+
+            # Save incrementally so you don’t lose everything if something dies later
+            _save_docstring_metadata(existing_metadata)
+
+            total_prompt_tokens += usage.prompt_tokens
+            total_completion_tokens += usage.completion_tokens
+            total_cost += float(usage.estimated_cost_usd)
+
+            print(
+                f"[docstrings]    tokens: prompt={usage.prompt_tokens}, "
+                f"completion={usage.completion_tokens}, total={usage.total_tokens}  "
+                f"cost≈${usage.estimated_cost_usd:.6f}"
+            )
+            print(
+                f"[docstrings]    running: prompt={total_prompt_tokens}, "
+                f"completion={total_completion_tokens}, cost≈${total_cost:.4f}"
+            )
+
+        except Exception as e:
+            # Record the failure (but keep going)
+            print(f"[docstrings][ERROR] {repo_path}: {type(e).__name__}: {e}")
+
+            record = {
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "model": model,
+                "usage": {
+                    "model": model,
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                    "estimated_cost_usd": 0.0,
+                },
+                "analysis": {
+                    "proposed_docstring": "",
+                    "short_summary": "",
+                    "key_responsibilities": [],
+                    "potential_issues": [f"Exception during docstring generation: {type(e).__name__}: {e}"],
+                },
+            }
+
+            per_file_list = existing_metadata.get(repo_path, [])
+            per_file_list.append(record)
+            existing_metadata[repo_path] = per_file_list
+            _save_docstring_metadata(existing_metadata)
+
+    print(f"[docstrings] DONE. Estimated total cost≈${total_cost:.4f}")
     return existing_metadata
+
 
 def generate_docstrings_for_one_view_module(
     module_name: str,
