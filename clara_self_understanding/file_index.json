@@ -2,274 +2,708 @@
   "clara_app/export_zipfile_views.py": {
     "repo_path": "clara_app/export_zipfile_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\export_zipfile_views.py",
-    "downloaded_at": "2025-12-22T19:51:35.081512+00:00",
+    "downloaded_at": "2025-12-23T11:36:36.152255+00:00",
     "sha256": "ba58faa39ef35d3794e1cd7cf6b2e2a25c1fb8222d9f3d4069c7a70cb84ee40e",
     "size_bytes": 24212
   },
   "clara_app/urls.py": {
     "repo_path": "clara_app/urls.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\urls.py",
-    "downloaded_at": "2025-12-22T19:51:29.671710+00:00",
+    "downloaded_at": "2025-12-23T11:36:05.671642+00:00",
     "sha256": "db90a025963fe21e56d952cd3e091113c632026cade2cfd32448cc165be60bdf",
     "size_bytes": 30420
   },
   "clara_app/accounts_views.py": {
     "repo_path": "clara_app/accounts_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\accounts_views.py",
-    "downloaded_at": "2025-12-22T19:51:30.072220+00:00",
+    "downloaded_at": "2025-12-23T11:36:06.143171+00:00",
     "sha256": "0201101f7f33099ee71f0cedf9e51e3e888e11a4bcec36662e8abd95b8e2e185",
     "size_bytes": 1576
   },
   "clara_app/activity_tracker_views.py": {
     "repo_path": "clara_app/activity_tracker_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\activity_tracker_views.py",
-    "downloaded_at": "2025-12-22T19:51:30.424627+00:00",
+    "downloaded_at": "2025-12-23T11:36:06.507822+00:00",
     "sha256": "48bc562e12940cbd6a2c842a40504d93131bae2f7763ff6d7bba3ee8d917903f",
     "size_bytes": 21186
   },
   "clara_app/admin_permission_views.py": {
     "repo_path": "clara_app/admin_permission_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\admin_permission_views.py",
-    "downloaded_at": "2025-12-22T19:51:30.777541+00:00",
+    "downloaded_at": "2025-12-23T11:36:11.828227+00:00",
     "sha256": "0cb531011158c5d89403102d3c1e5e6ca163b0c520a156955aa834a02bb8d3cb",
     "size_bytes": 5096
   },
   "clara_app/annotation_prompts_views.py": {
     "repo_path": "clara_app/annotation_prompts_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\annotation_prompts_views.py",
-    "downloaded_at": "2025-12-22T19:51:31.326279+00:00",
+    "downloaded_at": "2025-12-23T11:36:12.512036+00:00",
     "sha256": "1ab2452a690a8ddde875c48cc065f530c9d0ab55d7376d2caac733c8a009b2f4",
     "size_bytes": 13448
   },
   "clara_app/annotation_views.py": {
     "repo_path": "clara_app/annotation_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\annotation_views.py",
-    "downloaded_at": "2025-12-22T19:51:32.058694+00:00",
+    "downloaded_at": "2025-12-23T11:36:12.943799+00:00",
     "sha256": "01cedf2ab1b8f5e0d109a3aa066f4d46ff803eb22104cf3641dabf9fc4f93beb",
     "size_bytes": 43110
   },
   "clara_app/community_reviewing_views.py": {
     "repo_path": "clara_app/community_reviewing_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\community_reviewing_views.py",
-    "downloaded_at": "2025-12-22T19:51:32.403896+00:00",
+    "downloaded_at": "2025-12-23T11:36:33.029212+00:00",
     "sha256": "4812ca7a0bfe610333f943c9ff62b6d35d56464154d5848fe59afe00bd1dc288",
     "size_bytes": 13673
   },
   "clara_app/community_views.py": {
     "repo_path": "clara_app/community_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\community_views.py",
-    "downloaded_at": "2025-12-22T19:51:32.734987+00:00",
+    "downloaded_at": "2025-12-23T11:36:33.367982+00:00",
     "sha256": "c288b697a553a6613fc75d910888b87f207a76604507e27d9a22a20d67decd08",
     "size_bytes": 9195
   },
   "clara_app/comparing_views.py": {
     "repo_path": "clara_app/comparing_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\comparing_views.py",
-    "downloaded_at": "2025-12-22T19:51:33.097603+00:00",
+    "downloaded_at": "2025-12-23T11:36:33.727079+00:00",
     "sha256": "f944af6c4f1135966515b43dcf0438a01109e0a7e9a814b5862bab5e48d0f49e",
     "size_bytes": 4233
   },
   "clara_app/content_password_views.py": {
     "repo_path": "clara_app/content_password_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\content_password_views.py",
-    "downloaded_at": "2025-12-22T19:51:33.428808+00:00",
+    "downloaded_at": "2025-12-23T11:36:34.407676+00:00",
     "sha256": "08589d67e774f37802231f7ecb29dac537a6328f9568d790fe7cb100a004403a",
     "size_bytes": 3770
   },
   "clara_app/content_views.py": {
     "repo_path": "clara_app/content_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\content_views.py",
-    "downloaded_at": "2025-12-22T19:51:33.772123+00:00",
+    "downloaded_at": "2025-12-23T11:36:34.744597+00:00",
     "sha256": "de533a09f76d30f66f971919921eda406ce3f8c06364c067294a589339d90480",
     "size_bytes": 22261
   },
   "clara_app/create_project_views.py": {
     "repo_path": "clara_app/create_project_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\create_project_views.py",
-    "downloaded_at": "2025-12-22T19:51:34.319193+00:00",
+    "downloaded_at": "2025-12-23T11:36:35.100009+00:00",
     "sha256": "616ae0bdcba7cbb4ab2b735cdc3f84ffe574910bfd30b176e744ad3b57eecd2e",
     "size_bytes": 15978
   },
   "clara_app/credit_views.py": {
     "repo_path": "clara_app/credit_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\credit_views.py",
-    "downloaded_at": "2025-12-22T19:51:34.672696+00:00",
+    "downloaded_at": "2025-12-23T11:36:35.438682+00:00",
     "sha256": "ce84e9535c41a5669fd364321dc7be531dc51bd62b7e39d542a782a322d383df",
     "size_bytes": 5580
   },
   "clara_app/delete_tts_views.py": {
     "repo_path": "clara_app/delete_tts_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\delete_tts_views.py",
-    "downloaded_at": "2025-12-22T19:51:35.011742+00:00",
+    "downloaded_at": "2025-12-23T11:36:35.803880+00:00",
     "sha256": "e011a280302be2716cd44f298244f912ce95bf680b7510bbee17ae43e739a7f1",
     "size_bytes": 4144
   },
   "clara_app/funding_requests_views.py": {
     "repo_path": "clara_app/funding_requests_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\funding_requests_views.py",
-    "downloaded_at": "2025-12-22T19:51:35.415654+00:00",
+    "downloaded_at": "2025-12-23T11:36:36.829259+00:00",
     "sha256": "f6544ac45d48585ce81008200ce8ee3679a1973f33a9910bc3ff6d02759d667b",
     "size_bytes": 9363
   },
   "clara_app/home_views.py": {
     "repo_path": "clara_app/home_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\home_views.py",
-    "downloaded_at": "2025-12-22T19:51:35.760638+00:00",
+    "downloaded_at": "2025-12-23T11:36:37.186856+00:00",
     "sha256": "5cd2d5d3547aa656f8fd550a3857a20aabd8d8bdd8723a2a30144b41e682e311",
     "size_bytes": 2867
   },
   "clara_app/human_audio_views.py": {
     "repo_path": "clara_app/human_audio_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\human_audio_views.py",
-    "downloaded_at": "2025-12-22T19:51:36.105404+00:00",
+    "downloaded_at": "2025-12-23T11:36:37.866350+00:00",
     "sha256": "5f8f45caa1d95119d171114cb950337c87475f2d998ca5c6584b161d565095b3",
     "size_bytes": 33092
   },
   "clara_app/image_questionnaire_views.py": {
     "repo_path": "clara_app/image_questionnaire_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\image_questionnaire_views.py",
-    "downloaded_at": "2025-12-22T19:51:36.483841+00:00",
+    "downloaded_at": "2025-12-23T11:36:38.210478+00:00",
     "sha256": "b77206c513750f13deb614ff09c50c047cb878e638b494bd581dbe9810235cef",
     "size_bytes": 23312
   },
   "clara_app/images_v1_views.py": {
     "repo_path": "clara_app/images_v1_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\images_v1_views.py",
-    "downloaded_at": "2025-12-22T19:51:36.959374+00:00",
+    "downloaded_at": "2025-12-23T11:36:38.555827+00:00",
     "sha256": "a161490ca9540dadc630caaef971d0f4360f8a5c6a76aa7769247f45869c8a00",
     "size_bytes": 60146
   },
   "clara_app/images_v2_views.py": {
     "repo_path": "clara_app/images_v2_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\images_v2_views.py",
-    "downloaded_at": "2025-12-22T19:51:37.300811+00:00",
+    "downloaded_at": "2025-12-23T11:36:38.884625+00:00",
     "sha256": "802c37c8a212a328ca0df868eb96cee2008be8c120141f378f39c5d45842d34c",
     "size_bytes": 41716
   },
   "clara_app/language_game_views.py": {
     "repo_path": "clara_app/language_game_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\language_game_views.py",
-    "downloaded_at": "2025-12-22T19:51:37.703482+00:00",
+    "downloaded_at": "2025-12-23T11:36:39.544932+00:00",
     "sha256": "1781f17ed5fc035dca72d5bc0a330f86a04b9224a396d1da6507ed408570cbb6",
     "size_bytes": 3617
   },
   "clara_app/language_masters_views.py": {
     "repo_path": "clara_app/language_masters_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\language_masters_views.py",
-    "downloaded_at": "2025-12-22T19:51:38.132753+00:00",
+    "downloaded_at": "2025-12-23T11:36:39.889786+00:00",
     "sha256": "421b30154b4e81e86389674737157c0ef42eadb3d2c089a36bc6070a44250b30",
     "size_bytes": 6416
   },
   "clara_app/manipulate_project_views.py": {
     "repo_path": "clara_app/manipulate_project_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\manipulate_project_views.py",
-    "downloaded_at": "2025-12-22T19:51:38.554801+00:00",
+    "downloaded_at": "2025-12-23T11:36:40.222341+00:00",
     "sha256": "d8fbc174b68771b99b464352d442dda6b741c4540a769c63be1ef88b90e67ab2",
     "size_bytes": 10760
   },
   "clara_app/phonetic_lexicon_views.py": {
     "repo_path": "clara_app/phonetic_lexicon_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\phonetic_lexicon_views.py",
-    "downloaded_at": "2025-12-22T19:51:38.977168+00:00",
+    "downloaded_at": "2025-12-23T11:36:40.959336+00:00",
     "sha256": "1f94ae7b58d9219894fd5ff4fb8a1bde44e23027c94dcc7aad7fe9d11b441007",
     "size_bytes": 20499
   },
   "clara_app/profile_views.py": {
     "repo_path": "clara_app/profile_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\profile_views.py",
-    "downloaded_at": "2025-12-22T19:51:39.390995+00:00",
+    "downloaded_at": "2025-12-23T11:36:41.300385+00:00",
     "sha256": "f63e460b4559078d74928d8b0f62ac8f5c26b57617bfeaf2aacc20ef2019ba20",
     "size_bytes": 4485
   },
   "clara_app/public_api_views.py": {
     "repo_path": "clara_app/public_api_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\public_api_views.py",
-    "downloaded_at": "2025-12-22T19:51:39.727440+00:00",
+    "downloaded_at": "2025-12-23T11:36:41.630264+00:00",
     "sha256": "eff0c460a13c44ad561cca72ee369547c44a2691d22664fe98eb04ea5ca0a735",
     "size_bytes": 3489
   },
   "clara_app/reading_histories_views.py": {
     "repo_path": "clara_app/reading_histories_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\reading_histories_views.py",
-    "downloaded_at": "2025-12-22T19:51:40.145328+00:00",
+    "downloaded_at": "2025-12-23T11:36:41.972686+00:00",
     "sha256": "ff229abcf06fc452abe9db8c2104c03eea3ace6aafaeb5eb1848a8bc6e8f26c5",
     "size_bytes": 13157
   },
   "clara_app/registering_views.py": {
     "repo_path": "clara_app/registering_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\registering_views.py",
-    "downloaded_at": "2025-12-22T19:51:40.535495+00:00",
+    "downloaded_at": "2025-12-23T11:36:42.311106+00:00",
     "sha256": "ee02e44c47fcc1044488757fb7e220c7765dd821a95a7d5d3a8c54f40ded0553",
     "size_bytes": 3925
   },
   "clara_app/rendering_views.py": {
     "repo_path": "clara_app/rendering_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\rendering_views.py",
-    "downloaded_at": "2025-12-22T19:51:40.947629+00:00",
+    "downloaded_at": "2025-12-23T11:36:42.647839+00:00",
     "sha256": "8ed04902dfabfbabc98704a0408bd6093048c54d4a81e7234ec6d3f1a64cccfc",
     "size_bytes": 10323
   },
   "clara_app/satisfaction_questionnaire_views.py": {
     "repo_path": "clara_app/satisfaction_questionnaire_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\satisfaction_questionnaire_views.py",
-    "downloaded_at": "2025-12-22T19:51:41.282293+00:00",
+    "downloaded_at": "2025-12-23T11:36:42.995178+00:00",
     "sha256": "04dbe6a8b2a3e1a31e699f7973ae60195f7bec3f69b39e03e68434671a19e7d6",
     "size_bytes": 7660
   },
   "clara_app/save_page_texts_multiple_views.py": {
     "repo_path": "clara_app/save_page_texts_multiple_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\save_page_texts_multiple_views.py",
-    "downloaded_at": "2025-12-22T19:51:41.617235+00:00",
+    "downloaded_at": "2025-12-23T11:36:43.662731+00:00",
     "sha256": "c67617216d46fed0fe4c80084fa4ab95c3d2e83bf81ea0e1197785e295eb7d12",
     "size_bytes": 1039
   },
   "clara_app/serving_content_views.py": {
     "repo_path": "clara_app/serving_content_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\serving_content_views.py",
-    "downloaded_at": "2025-12-22T19:51:41.991360+00:00",
+    "downloaded_at": "2025-12-23T11:36:44.004601+00:00",
     "sha256": "45318889d9a20c65a0437c833116b7cbd7a067073cb483757ce60a3e7fc9231c",
     "size_bytes": 9078
   },
   "clara_app/simple_clara_views.py": {
     "repo_path": "clara_app/simple_clara_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\simple_clara_views.py",
-    "downloaded_at": "2025-12-22T19:51:42.336393+00:00",
+    "downloaded_at": "2025-12-23T11:36:44.355655+00:00",
     "sha256": "f61c4cd4511324581905c8e09067396ff131a7d3be3f77c69503c881402e9105",
     "size_bytes": 93322
   },
   "clara_app/task_update_views.py": {
     "repo_path": "clara_app/task_update_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\task_update_views.py",
-    "downloaded_at": "2025-12-22T19:51:42.659914+00:00",
+    "downloaded_at": "2025-12-23T11:36:44.692904+00:00",
     "sha256": "99afde383db65c23e3f8b189ad83248f5ef40bf36ca60d0e485c0f6ddcaddbfb",
     "size_bytes": 1308
   },
   "clara_app/text_questionnaire_views.py": {
     "repo_path": "clara_app/text_questionnaire_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\text_questionnaire_views.py",
-    "downloaded_at": "2025-12-22T19:51:43.074297+00:00",
+    "downloaded_at": "2025-12-23T11:36:45.103785+00:00",
     "sha256": "37743f8ef50980715dc339c34eb0f7031e8d68ac5f533cb41df00dcf4e8db00f",
     "size_bytes": 40172
   },
   "clara_app/update_feed_views.py": {
     "repo_path": "clara_app/update_feed_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\update_feed_views.py",
-    "downloaded_at": "2025-12-22T19:51:43.400642+00:00",
+    "downloaded_at": "2025-12-23T11:36:45.443570+00:00",
     "sha256": "9f21c81839b5cce5b0401ae92473f342a4b81262142aef44e624f97a0826f6a5",
     "size_bytes": 2362
   },
   "clara_app/user_config_views.py": {
     "repo_path": "clara_app/user_config_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\user_config_views.py",
-    "downloaded_at": "2025-12-22T19:51:43.750203+00:00",
+    "downloaded_at": "2025-12-23T11:36:45.775503+00:00",
     "sha256": "d1866450b5817d435a22714370d94e7d50b7bae0de3028a18d2dbf8d590be97e",
     "size_bytes": 1268
   },
   "clara_app/users_and_friends_views.py": {
     "repo_path": "clara_app/users_and_friends_views.py",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\users_and_friends_views.py",
-    "downloaded_at": "2025-12-22T19:51:44.088767+00:00",
+    "downloaded_at": "2025-12-23T11:36:46.106328+00:00",
     "sha256": "35613d804b32e51d775df237b7a6d6bf508fe465be8953cc7158564e62202a11",
     "size_bytes": 1898
+  },
+  "clara_app/clara_acknowledgements.py": {
+    "repo_path": "clara_app/clara_acknowledgements.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_acknowledgements.py",
+    "downloaded_at": "2025-12-23T11:36:13.360496+00:00",
+    "sha256": "955c4cd0d4b6018634ef66c0bbdaa64c6082d81ced7fff23777cdedca9f788d0",
+    "size_bytes": 1542
+  },
+  "clara_app/clara_align_with_segmented.py": {
+    "repo_path": "clara_app/clara_align_with_segmented.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_align_with_segmented.py",
+    "downloaded_at": "2025-12-23T11:36:13.779013+00:00",
+    "sha256": "4e52a9dac2aeb334ba2b0dfe191a5eaa40c2c2144526d68c314bfe631ac061b8",
+    "size_bytes": 8863
+  },
+  "clara_app/clara_annotated_images.py": {
+    "repo_path": "clara_app/clara_annotated_images.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_annotated_images.py",
+    "downloaded_at": "2025-12-23T11:36:14.208256+00:00",
+    "sha256": "ebce6a0809ab9ea9e509c40dc93cbd706696a5fd01e7df900294b1b5c7858175",
+    "size_bytes": 6819
+  },
+  "clara_app/clara_audio_annotator.py": {
+    "repo_path": "clara_app/clara_audio_annotator.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_audio_annotator.py",
+    "downloaded_at": "2025-12-23T11:36:14.639259+00:00",
+    "sha256": "136f2c991c62c12e61d43abefc7a1c537f93dfead1941ac96dcedc88f6e7b9a2",
+    "size_bytes": 33385
+  },
+  "clara_app/clara_audio_repository_orm.py": {
+    "repo_path": "clara_app/clara_audio_repository_orm.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_audio_repository_orm.py",
+    "downloaded_at": "2025-12-23T11:36:15.060897+00:00",
+    "sha256": "b1abe310d168bab8970463815de36446ffcfc4d3f566db4728c053ee1ef4228e",
+    "size_bytes": 11548
+  },
+  "clara_app/clara_cefr.py": {
+    "repo_path": "clara_app/clara_cefr.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_cefr.py",
+    "downloaded_at": "2025-12-23T11:36:15.443573+00:00",
+    "sha256": "3c9868cb1f109b4d8c64f5dad7f1887dee99ef79c0136f62ca269e5858606fd6",
+    "size_bytes": 3652
+  },
+  "clara_app/clara_chatgpt4.py": {
+    "repo_path": "clara_app/clara_chatgpt4.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_chatgpt4.py",
+    "downloaded_at": "2025-12-23T11:36:15.864172+00:00",
+    "sha256": "0b45d8a96219f0277727caa56594f3bccaac0c5d3b9efaca0216251f23899fa4",
+    "size_bytes": 28543
+  },
+  "clara_app/clara_chinese.py": {
+    "repo_path": "clara_app/clara_chinese.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_chinese.py",
+    "downloaded_at": "2025-12-23T11:36:16.196172+00:00",
+    "sha256": "b628b1f34337bc0ef6b1cdfe16098cd10d299a0e1f82a370c208bfcda7687fe0",
+    "size_bytes": 6236
+  },
+  "clara_app/clara_classes.py": {
+    "repo_path": "clara_app/clara_classes.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_classes.py",
+    "downloaded_at": "2025-12-23T11:36:16.575818+00:00",
+    "sha256": "1a7f38b31fa07ce5c752d64ee3ebb0f0af3934d50b20ed8a1a8e07c3f509ce3d",
+    "size_bytes": 55812
+  },
+  "clara_app/clara_coherent_images.py": {
+    "repo_path": "clara_app/clara_coherent_images.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images.py",
+    "downloaded_at": "2025-12-23T11:36:16.932140+00:00",
+    "sha256": "f56d1beb82da789c0ad75ba1ba5f86b321d16b6bea8914ba2c12551ad127a352",
+    "size_bytes": 125286
+  },
+  "clara_app/clara_coherent_images_advice.py": {
+    "repo_path": "clara_app/clara_coherent_images_advice.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_advice.py",
+    "downloaded_at": "2025-12-23T11:36:17.261260+00:00",
+    "sha256": "ab7b89bc98ebab9be09f490d02bd578c1e09226d87eaac91c8c99fc8a4f36236",
+    "size_bytes": 5271
+  },
+  "clara_app/clara_coherent_images_alternate.py": {
+    "repo_path": "clara_app/clara_coherent_images_alternate.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_alternate.py",
+    "downloaded_at": "2025-12-23T11:36:17.614049+00:00",
+    "sha256": "2295bc4ce3a72d9591ce5a5daaafbbb52953fcaef7e88516d7d30b1659ff49e0",
+    "size_bytes": 16222
+  },
+  "clara_app/clara_coherent_images_community_feedback.py": {
+    "repo_path": "clara_app/clara_coherent_images_community_feedback.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_community_feedback.py",
+    "downloaded_at": "2025-12-23T11:36:18.002739+00:00",
+    "sha256": "441ce0907fbfdbdea5e1ddb22878902a75624e5082d3869c923054dec9c9c3a4",
+    "size_bytes": 35673
+  },
+  "clara_app/clara_coherent_images_evaluate_image.py": {
+    "repo_path": "clara_app/clara_coherent_images_evaluate_image.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_evaluate_image.py",
+    "downloaded_at": "2025-12-23T11:36:18.354829+00:00",
+    "sha256": "3dad7b525d4209cb55756bbed613229f04c23021264461102f4e00d95e1110d6",
+    "size_bytes": 15858
+  },
+  "clara_app/clara_coherent_images_evaluate_prompts.py": {
+    "repo_path": "clara_app/clara_coherent_images_evaluate_prompts.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_evaluate_prompts.py",
+    "downloaded_at": "2025-12-23T11:36:18.679909+00:00",
+    "sha256": "40bc52fa2ecafa911c84739bf3bae9a02febb33c245dc6139f3783ba7e763885",
+    "size_bytes": 17484
+  },
+  "clara_app/clara_coherent_images_export.py": {
+    "repo_path": "clara_app/clara_coherent_images_export.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_export.py",
+    "downloaded_at": "2025-12-23T11:36:19.013202+00:00",
+    "sha256": "3fbf3566395544185ad3ee2073d4406c2e060c71eb412659cde3d9c4733825e8",
+    "size_bytes": 4511
+  },
+  "clara_app/clara_coherent_images_prompt_templates.py": {
+    "repo_path": "clara_app/clara_coherent_images_prompt_templates.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_prompt_templates.py",
+    "downloaded_at": "2025-12-23T11:36:19.357894+00:00",
+    "sha256": "f7db005436721e0f79559847e3dc757ab2d2db5da10bc442b2bf1de8c58b08f6",
+    "size_bytes": 51412
+  },
+  "clara_app/clara_coherent_images_utils.py": {
+    "repo_path": "clara_app/clara_coherent_images_utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_coherent_images_utils.py",
+    "downloaded_at": "2025-12-23T11:36:19.709544+00:00",
+    "sha256": "375c67a67df09a119fff6621d5b5743fb78395b0aeaf749562436d07ad2ca85a",
+    "size_bytes": 38738
+  },
+  "clara_app/clara_community.py": {
+    "repo_path": "clara_app/clara_community.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_community.py",
+    "downloaded_at": "2025-12-23T11:36:20.062742+00:00",
+    "sha256": "62b39e2015e2991cd141dd3856ea4c160a3f0249824fe042fd9ebadf03091bbd",
+    "size_bytes": 1186
+  },
+  "clara_app/clara_concordance_annotator.py": {
+    "repo_path": "clara_app/clara_concordance_annotator.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_concordance_annotator.py",
+    "downloaded_at": "2025-12-23T11:36:20.430622+00:00",
+    "sha256": "6c4b25e35ad6189329d0f7187a56fcd0dd954268deccc49b1b3a9a5df9fbeb87",
+    "size_bytes": 3082
+  },
+  "clara_app/clara_conventional_tagging.py": {
+    "repo_path": "clara_app/clara_conventional_tagging.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_conventional_tagging.py",
+    "downloaded_at": "2025-12-23T11:36:20.767923+00:00",
+    "sha256": "e557b0fd26600d06bccf32986f91227cd35558d86e96585ddce613237f5f3ea2",
+    "size_bytes": 13746
+  },
+  "clara_app/clara_correct_syntax.py": {
+    "repo_path": "clara_app/clara_correct_syntax.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_correct_syntax.py",
+    "downloaded_at": "2025-12-23T11:36:21.108402+00:00",
+    "sha256": "c8504e7530766e1dc04a65c9f73296067e41a12c3a3012f241cece4aa3cb3de9",
+    "size_bytes": 8965
+  },
+  "clara_app/clara_create_annotations.py": {
+    "repo_path": "clara_app/clara_create_annotations.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_create_annotations.py",
+    "downloaded_at": "2025-12-23T11:36:21.559854+00:00",
+    "sha256": "2d68749d7c095158a4a1405e9d357d5b324af261c685312f3f631550ab803437",
+    "size_bytes": 114108
+  },
+  "clara_app/clara_create_story.py": {
+    "repo_path": "clara_app/clara_create_story.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_create_story.py",
+    "downloaded_at": "2025-12-23T11:36:21.902195+00:00",
+    "sha256": "ee233a081ee75e137c936c3fb87474cbb79fa7533329fc7d3247a294c43b021b",
+    "size_bytes": 2451
+  },
+  "clara_app/clara_create_title.py": {
+    "repo_path": "clara_app/clara_create_title.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_create_title.py",
+    "downloaded_at": "2025-12-23T11:36:22.253383+00:00",
+    "sha256": "f4c56e4abd8056e979e46ff3fa02f2449d5ae8c93acb82bd2283c94fea84a76a",
+    "size_bytes": 1614
+  },
+  "clara_app/clara_dall_e_3_image.py": {
+    "repo_path": "clara_app/clara_dall_e_3_image.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_dall_e_3_image.py",
+    "downloaded_at": "2025-12-23T11:36:22.602852+00:00",
+    "sha256": "f5cc67d98628028fe83ec4a751a18627deb196b37b39e1b002f6b202e2c6fdab",
+    "size_bytes": 16193
+  },
+  "clara_app/clara_dependencies.py": {
+    "repo_path": "clara_app/clara_dependencies.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_dependencies.py",
+    "downloaded_at": "2025-12-23T11:36:22.953259+00:00",
+    "sha256": "1b94bb4125a73cdaca21292635a844e1eb54436cd2e38043772cf2fc3369722a",
+    "size_bytes": 22452
+  },
+  "clara_app/clara_diff.py": {
+    "repo_path": "clara_app/clara_diff.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_diff.py",
+    "downloaded_at": "2025-12-23T11:36:23.299951+00:00",
+    "sha256": "6bed93789c3d19c0a350fbba858ccceb4c98d90e7a7015b8e618ca6047897e60",
+    "size_bytes": 10829
+  },
+  "clara_app/clara_export_import.py": {
+    "repo_path": "clara_app/clara_export_import.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_export_import.py",
+    "downloaded_at": "2025-12-23T11:36:23.660025+00:00",
+    "sha256": "c2461fc92a508504b02f4896f0b5392a40f858f1522c572f73a9017252f9fd9d",
+    "size_bytes": 23370
+  },
+  "clara_app/clara_grapheme_phoneme_align.py": {
+    "repo_path": "clara_app/clara_grapheme_phoneme_align.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_grapheme_phoneme_align.py",
+    "downloaded_at": "2025-12-23T11:36:23.996786+00:00",
+    "sha256": "16e4d2b98cde01069fa54eb5174501b8e6a77796885232ccbc9fa4996bca4396",
+    "size_bytes": 8279
+  },
+  "clara_app/clara_grapheme_phoneme_resources.py": {
+    "repo_path": "clara_app/clara_grapheme_phoneme_resources.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_grapheme_phoneme_resources.py",
+    "downloaded_at": "2025-12-23T11:36:24.359912+00:00",
+    "sha256": "e07be1d0ac5ab4e3a7cff44c4a45c766820befaeeff3bb0c16b89d2161be503c",
+    "size_bytes": 8809
+  },
+  "clara_app/clara_image_repository_orm.py": {
+    "repo_path": "clara_app/clara_image_repository_orm.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_image_repository_orm.py",
+    "downloaded_at": "2025-12-23T11:36:24.703185+00:00",
+    "sha256": "36878e81a3e2deeb7eaf5ba1bb8f6037937d13ba8fbd027dfa104b77d894e7eb",
+    "size_bytes": 31421
+  },
+  "clara_app/clara_images_utils.py": {
+    "repo_path": "clara_app/clara_images_utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_images_utils.py",
+    "downloaded_at": "2025-12-23T11:36:25.046069+00:00",
+    "sha256": "9bbd5f8af6e4457f4c72cf2e3f28835ebf3b8ee2ee4cb694c9b9fb18c7288f02",
+    "size_bytes": 2088
+  },
+  "clara_app/clara_inflection_tables.py": {
+    "repo_path": "clara_app/clara_inflection_tables.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_inflection_tables.py",
+    "downloaded_at": "2025-12-23T11:36:25.384992+00:00",
+    "sha256": "ae339420147e793e388a8db1afcdc45b39be160a150fd6780a917bf35b8e7f96",
+    "size_bytes": 669
+  },
+  "clara_app/clara_internalise.py": {
+    "repo_path": "clara_app/clara_internalise.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_internalise.py",
+    "downloaded_at": "2025-12-23T11:36:25.721385+00:00",
+    "sha256": "7ed31acbfba917871466a0af98d98cbb5fe4b3958fc5551499cc53d277ba0bf6",
+    "size_bytes": 16527
+  },
+  "clara_app/clara_ldt.py": {
+    "repo_path": "clara_app/clara_ldt.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_ldt.py",
+    "downloaded_at": "2025-12-23T11:36:26.106128+00:00",
+    "sha256": "b18631a6a7604fb142556a58bcffbb9a04b611df908fcbf2b1479bd3d8e38e03",
+    "size_bytes": 3038
+  },
+  "clara_app/clara_main.py": {
+    "repo_path": "clara_app/clara_main.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_main.py",
+    "downloaded_at": "2025-12-23T11:36:26.462028+00:00",
+    "sha256": "59eab37cdf2523bb2c7de69107ec7a443554486086700364db29d7190b5672d1",
+    "size_bytes": 129213
+  },
+  "clara_app/clara_make_content_zip.py": {
+    "repo_path": "clara_app/clara_make_content_zip.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_make_content_zip.py",
+    "downloaded_at": "2025-12-23T11:36:26.848892+00:00",
+    "sha256": "08ac9e7090ca2df6cfcc59dbf74771dedf93d094fa81c063b5768c82008d9c68",
+    "size_bytes": 10853
+  },
+  "clara_app/clara_manual_audio_align.py": {
+    "repo_path": "clara_app/clara_manual_audio_align.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_manual_audio_align.py",
+    "downloaded_at": "2025-12-23T11:36:27.192637+00:00",
+    "sha256": "bceda3bbee119adab448ad6bd8428ce25e1ae5c3cdb0c5fbbd4e7a07924ff269",
+    "size_bytes": 7245
+  },
+  "clara_app/clara_merge_glossed_and_tagged.py": {
+    "repo_path": "clara_app/clara_merge_glossed_and_tagged.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_merge_glossed_and_tagged.py",
+    "downloaded_at": "2025-12-23T11:36:27.542956+00:00",
+    "sha256": "d1403832e3dba418e32a66d6dd172e6ab1a0c794d5b5b5a7273313dd34148833",
+    "size_bytes": 11461
+  },
+  "clara_app/clara_mwe.py": {
+    "repo_path": "clara_app/clara_mwe.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_mwe.py",
+    "downloaded_at": "2025-12-23T11:36:27.875859+00:00",
+    "sha256": "8a67efe7ae024f31f7b4ad06e261487de5f90e4ad0634764e12bda0e6db2b57c",
+    "size_bytes": 5421
+  },
+  "clara_app/clara_openai.py": {
+    "repo_path": "clara_app/clara_openai.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_openai.py",
+    "downloaded_at": "2025-12-23T11:36:28.236734+00:00",
+    "sha256": "8b79fe458b5ff7b1d79aa72957190c50b656fd1cd6d0570acb7beab9c1065295",
+    "size_bytes": 7907
+  },
+  "clara_app/clara_phonetic_chatgpt4.py": {
+    "repo_path": "clara_app/clara_phonetic_chatgpt4.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_phonetic_chatgpt4.py",
+    "downloaded_at": "2025-12-23T11:36:28.575641+00:00",
+    "sha256": "8a3f7d1c836eddae1f346993577c6fff52e4520529af4acaaa3f6c313d4810f4",
+    "size_bytes": 7280
+  },
+  "clara_app/clara_phonetic_lexicon_repository_orm.py": {
+    "repo_path": "clara_app/clara_phonetic_lexicon_repository_orm.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_phonetic_lexicon_repository_orm.py",
+    "downloaded_at": "2025-12-23T11:36:28.932237+00:00",
+    "sha256": "ce500fdcc04aa62c341c344c622d5a898eae3d18ec569323aa6e32f7781a016a",
+    "size_bytes": 29733
+  },
+  "clara_app/clara_phonetic_orthography_repository.py": {
+    "repo_path": "clara_app/clara_phonetic_orthography_repository.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_phonetic_orthography_repository.py",
+    "downloaded_at": "2025-12-23T11:36:29.266915+00:00",
+    "sha256": "586105fd07fe44405ce16c8abdac42fe71530603daeeb52b2c8635872655ba81",
+    "size_bytes": 10558
+  },
+  "clara_app/clara_phonetic_text.py": {
+    "repo_path": "clara_app/clara_phonetic_text.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_phonetic_text.py",
+    "downloaded_at": "2025-12-23T11:36:29.606676+00:00",
+    "sha256": "d5433aec95667977def5bbb8f58110fa345061b04dcebd5c22d473d098f97588",
+    "size_bytes": 14033
+  },
+  "clara_app/clara_phonetic_utils.py": {
+    "repo_path": "clara_app/clara_phonetic_utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_phonetic_utils.py",
+    "downloaded_at": "2025-12-23T11:36:29.953211+00:00",
+    "sha256": "0b22150574f671c7a1407818c5b2507fd070883d9ae133bb79b8294cc5e78e40",
+    "size_bytes": 383
+  },
+  "clara_app/clara_prompt_templates.py": {
+    "repo_path": "clara_app/clara_prompt_templates.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_prompt_templates.py",
+    "downloaded_at": "2025-12-23T11:36:30.280006+00:00",
+    "sha256": "509c691752bdd6b93f1c06dc03dd43821293b9d8e451d8f31e09309d309d7fd4",
+    "size_bytes": 26912
+  },
+  "clara_app/clara_reading_histories.py": {
+    "repo_path": "clara_app/clara_reading_histories.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_reading_histories.py",
+    "downloaded_at": "2025-12-23T11:36:30.609309+00:00",
+    "sha256": "87dd99116c9fa811bc2ea092c24bc322a6e9f9c5215f7849d9342b400ad292a8",
+    "size_bytes": 9562
+  },
+  "clara_app/clara_registering_utils.py": {
+    "repo_path": "clara_app/clara_registering_utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_registering_utils.py",
+    "downloaded_at": "2025-12-23T11:36:30.936453+00:00",
+    "sha256": "7bb61b9d78008bc0ba77cd986d281d0211ba9cfb98dc97fd75bffbd9f9bd3029",
+    "size_bytes": 4255
+  },
+  "clara_app/clara_renderer.py": {
+    "repo_path": "clara_app/clara_renderer.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_renderer.py",
+    "downloaded_at": "2025-12-23T11:36:31.273960+00:00",
+    "sha256": "c6426b7450f2226486202a1cb291e2790533c78e69ee58cb50e25d6662210a33",
+    "size_bytes": 17561
+  },
+  "clara_app/clara_summary.py": {
+    "repo_path": "clara_app/clara_summary.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_summary.py",
+    "downloaded_at": "2025-12-23T11:36:31.603546+00:00",
+    "sha256": "618893a53bd199c625f816a6b4a8d37674e43d3a6e122a8b640664a281d85ed3",
+    "size_bytes": 1562
+  },
+  "clara_app/clara_tts_api.py": {
+    "repo_path": "clara_app/clara_tts_api.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_tts_api.py",
+    "downloaded_at": "2025-12-23T11:36:31.991687+00:00",
+    "sha256": "e3e0238f937af6ce6c2d62adb118273dd61b7a8230a194e7d756f4f707f34bb9",
+    "size_bytes": 36105
+  },
+  "clara_app/clara_universal_dependencies.py": {
+    "repo_path": "clara_app/clara_universal_dependencies.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_universal_dependencies.py",
+    "downloaded_at": "2025-12-23T11:36:32.346532+00:00",
+    "sha256": "4d2b2d3eecd1d1b2de4752b9b793173fbd979a620cd7600baf14b73d6cfc5beb",
+    "size_bytes": 7362
+  },
+  "clara_app/clara_utils.py": {
+    "repo_path": "clara_app/clara_utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\clara_utils.py",
+    "downloaded_at": "2025-12-23T11:36:32.695834+00:00",
+    "sha256": "8d2c9bb93bc1187530ec3020e3d6414a19a9b4693061335a13e3c6aaf6c15681",
+    "size_bytes": 39133
+  },
+  "clara_app/constants.py": {
+    "repo_path": "clara_app/constants.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\constants.py",
+    "downloaded_at": "2025-12-23T11:36:34.063198+00:00",
+    "sha256": "f6bc03c646f8978472ea9ea137908f99ad7f3f907431a0c95a33b13b28a72200",
+    "size_bytes": 7043
+  },
+  "clara_app/forms.py": {
+    "repo_path": "clara_app/forms.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\forms.py",
+    "downloaded_at": "2025-12-23T11:36:36.489556+00:00",
+    "sha256": "322e712b64386624c0bc63b7f875d0ee591246aaafd66a90d129cea1a496b14d",
+    "size_bytes": 64617
+  },
+  "clara_app/html_utils.py": {
+    "repo_path": "clara_app/html_utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\html_utils.py",
+    "downloaded_at": "2025-12-23T11:36:37.527176+00:00",
+    "sha256": "cf6f98b6bd1c58ad03dd25e7a687865a6eb606d1b8b6d48591681b768bf50913",
+    "size_bytes": 7115
+  },
+  "clara_app/language_game_generate_images.py": {
+    "repo_path": "clara_app/language_game_generate_images.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\language_game_generate_images.py",
+    "downloaded_at": "2025-12-23T11:36:39.213462+00:00",
+    "sha256": "87cf65f0599ea1a8f62bc8ab9d26c8b0f372b56d12167d529b5b854be507b807",
+    "size_bytes": 4005
+  },
+  "clara_app/models.py": {
+    "repo_path": "clara_app/models.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\models.py",
+    "downloaded_at": "2025-12-23T11:36:40.613269+00:00",
+    "sha256": "38573308246381e1fb5cf4902c021a8d15682bc635ed50c604ec731e30325e66",
+    "size_bytes": 47157
+  },
+  "clara_app/save_page_texts_multiple_utils.py": {
+    "repo_path": "clara_app/save_page_texts_multiple_utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\save_page_texts_multiple_utils.py",
+    "downloaded_at": "2025-12-23T11:36:43.326619+00:00",
+    "sha256": "2e5cfd3c25577ef18e500cb112312507f1d7f4042330e626f43493ea341123b7",
+    "size_bytes": 736
+  },
+  "clara_app/utils.py": {
+    "repo_path": "clara_app/utils.py",
+    "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\utils.py",
+    "downloaded_at": "2025-12-23T11:36:46.468325+00:00",
+    "sha256": "05660530b51d7d5b6d3d716e498b47b59ee179288e1700a537e17ecf96ad42af",
+    "size_bytes": 26008
   }
 }
