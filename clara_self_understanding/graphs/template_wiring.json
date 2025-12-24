@@ -1,0 +1,869 @@
+{
+  "created_at": "2025-12-24T04:47:46.796242+00:00",
+  "templates": [
+    {
+      "template_repo_path": "clara_app/templates/clara_app/base.html",
+      "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\templates\\clara_app\\base.html",
+      "extends": [],
+      "includes": [],
+      "url_refs": [
+        {
+          "url_name": "home_page",
+          "args_raw": [],
+          "href_expr": "{% url 'home_page' %}",
+          "title": "Home page: show recent activities and content",
+          "anchor_text": null,
+          "line": 202
+        },
+        {
+          "url_name": "content_list",
+          "args_raw": [],
+          "href_expr": "{% url 'content_list' %}",
+          "title": "List all the content that has been registered in the C-LARA social network.",
+          "anchor_text": "Social network",
+          "line": 210
+        },
+        {
+          "url_name": "public_content_list",
+          "args_raw": [],
+          "href_expr": "{% url 'public_content_list' %}",
+          "title": "List all the content that has been registered in the C-LARA social network.",
+          "anchor_text": "Published content",
+          "line": 213
+        },
+        {
+          "url_name": "list_activities",
+          "args_raw": [],
+          "href_expr": "{% url 'list_activities' %}",
+          "title": "List all the content that has been registered in the C-LARA social network.",
+          "anchor_text": "Published content",
+          "line": 216
+        },
+        {
+          "url_name": "reading_history",
+          "args_raw": [
+            "'english'",
+            "'init'"
+          ],
+          "href_expr": "{% url 'reading_history' 'english' 'init' %}",
+          "title": "Browse C-LARA and LARA content without logging in.",
+          "anchor_text": "Published content (external view)",
+          "line": 219
+        },
+        {
+          "url_name": "update_feed",
+          "args_raw": [],
+          "href_expr": "{% url 'update_feed' %}",
+          "title": "List ongoing project activities or register a new activity.",
+          "anchor_text": "Project activities",
+          "line": 222
+        },
+        {
+          "url_name": "list_users",
+          "args_raw": [],
+          "href_expr": "{% url 'list_users' %}",
+          "title": "Access your reading history for a given language, or add a new project to it.",
+          "anchor_text": "Reading histories",
+          "line": 225
+        },
+        {
+          "url_name": "friends",
+          "args_raw": [],
+          "href_expr": "{% url 'friends' %}",
+          "title": "Get a summary of recent C-LARA activity from you and your friends.",
+          "anchor_text": "Update feed",
+          "line": 228
+        },
+        {
+          "url_name": "assign_member_to_community",
+          "args_raw": [],
+          "href_expr": "{% url 'assign_member_to_community' %}",
+          "title": "Show all users. You can send friend requests to users with public profiles.",
+          "anchor_text": "Users",
+          "line": 231
+        },
+        {
+          "url_name": "language_statistics",
+          "args_raw": [],
+          "href_expr": "{% url 'language_statistics' %}",
+          "title": "Show friends and outstanding friend requests.",
+          "anchor_text": "Friends",
+          "line": 234
+        },
+        {
+          "url_name": "aggregated_questionnaire_results",
+          "args_raw": [],
+          "href_expr": "{% url 'aggregated_questionnaire_results' %}",
+          "title": "Add a new member to a community for which you are coordinator.",
+          "anchor_text": "Add member to community",
+          "line": 237
+        },
+        {
+          "url_name": "image_questionnaire_project_list",
+          "args_raw": [],
+          "href_expr": "{% url 'image_questionnaire_project_list' %}",
+          "title": "Show tables listing numbers of projects and pieces of content, broken down by language.",
+          "anchor_text": "Project and content statistics",
+          "line": 240
+        },
+        {
+          "url_name": "image_questionnaire_all_projects_summary",
+          "args_raw": [],
+          "href_expr": "{% url 'image_questionnaire_all_projects_summary' %}",
+          "title": "Show summary results for satisfaction questionnaires.",
+          "anchor_text": "Questionnaire summary (projects)",
+          "line": 243
+        },
+        {
+          "url_name": "tq_create",
+          "args_raw": [],
+          "href_expr": "{% url 'tq_create' %}",
+          "title": "Find projects with image questionnaires",
+          "anchor_text": "Find image questionnaires",
+          "line": 246
+        },
+        {
+          "url_name": "tq_my_list",
+          "args_raw": [],
+          "href_expr": "{% url 'tq_my_list' %}",
+          "title": "Show summary results for image quality questionnaires.",
+          "anchor_text": "Questionnaire summary (images)",
+          "line": 249
+        },
+        {
+          "url_name": "tq_public_list",
+          "args_raw": [],
+          "href_expr": "{% url 'tq_public_list' %}",
+          "title": "Create and post a new text questionnaire",
+          "anchor_text": "Create text questionnaire",
+          "line": 252
+        },
+        {
+          "url_name": "funding_request",
+          "args_raw": [],
+          "href_expr": "{% url 'funding_request' %}",
+          "title": "Find posted text questionnaires",
+          "anchor_text": "My text questionnaires",
+          "line": 255
+        },
+        {
+          "url_name": "project_list",
+          "args_raw": [
+            "'simple_clara'"
+          ],
+          "href_expr": "{% url 'project_list' 'simple_clara' %}",
+          "title": "List all the projects you have created or have been assigned a role in, using Simple-C-LARA.",
+          "anchor_text": "My projects",
+          "line": 267
+        },
+        {
+          "url_name": "project_list",
+          "args_raw": [
+            "'full_clara'"
+          ],
+          "href_expr": "{% url 'project_list' 'full_clara' %}",
+          "title": "List all the projects you have created or have been assigned a role in, using Simple-C-LARA.",
+          "anchor_text": "List my C-LARA projects using Simple-C-LARA",
+          "line": 271
+        },
+        {
+          "url_name": "simple_clara",
+          "args_raw": [
+            "0",
+            "'initial'"
+          ],
+          "href_expr": "{% url 'simple_clara' 0 'initial' %}",
+          "title": "List all the projects you have created or have been assigned a role in.",
+          "anchor_text": "List my C-LARA projects using Advanced C-LARA",
+          "line": 275
+        },
+        {
+          "url_name": "create_project",
+          "args_raw": [],
+          "href_expr": "{% url 'create_project' %}",
+          "title": "Create a new C-LARA project using Simple-C-LARA.",
+          "anchor_text": "Create new C-LARA project using Simple-C-LARA",
+          "line": 279
+        },
+        {
+          "url_name": "import_project",
+          "args_raw": [],
+          "href_expr": "{% url 'import_project' %}",
+          "title": "Create a new C-LARA project, specifying the title, the text language, and the annotation language.",
+          "anchor_text": "Create new C-LARA project using Advanced C-LARA",
+          "line": 284
+        },
+        {
+          "url_name": "register_content",
+          "args_raw": [],
+          "href_expr": "{% url 'register_content' %}",
+          "title": "Import a project from a zipfile created using the 'Export zipfile' command.",
+          "anchor_text": "Import C-LARA project from zipfile",
+          "line": 289
+        },
+        {
+          "url_name": "manage_content_passwords",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_content_passwords' %}",
+          "title": "Register a piece of LARA content to make it accessible through the C-LARA social network.",
+          "anchor_text": "Register external LARA content",
+          "line": 293
+        },
+        {
+          "url_name": "list_activities_text",
+          "args_raw": [],
+          "href_expr": "{% url 'list_activities_text' %}",
+          "title": "List ongoing project activities in plain text form. Mainly for AI.",
+          "anchor_text": "Admin",
+          "line": 306
+        },
+        {
+          "url_name": "ai_activities_reply",
+          "args_raw": [],
+          "href_expr": "{% url 'ai_activities_reply' %}",
+          "title": "List ongoing project activities in plain text form. Mainly for AI.",
+          "anchor_text": "Activities (plain text version)",
+          "line": 309
+        },
+        {
+          "url_name": "add_credit",
+          "args_raw": [],
+          "href_expr": "{% url 'add_credit' %}",
+          "title": "List ongoing project activities in plain text form. Mainly for AI.",
+          "anchor_text": "Activities (plain text version)",
+          "line": 312
+        },
+        {
+          "url_name": "manage_user_permissions",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_user_permissions' %}",
+          "title": "Post a JSON structure written by the AI, which updates the activities.",
+          "anchor_text": "Post AI updates to activities",
+          "line": 315
+        },
+        {
+          "url_name": "admin_password_reset",
+          "args_raw": [],
+          "href_expr": "{% url 'admin_password_reset' %}",
+          "title": "Add credit to a user's GPT-4 call account",
+          "anchor_text": "Add credit to user",
+          "line": 318
+        },
+        {
+          "url_name": "admin_project_ownership",
+          "args_raw": [],
+          "href_expr": "{% url 'admin_project_ownership' %}",
+          "title": "Manage permissions for funding request reviewer, moderator and admin",
+          "anchor_text": "Manage permissions",
+          "line": 321
+        },
+        {
+          "url_name": "create_community",
+          "args_raw": [],
+          "href_expr": "{% url 'create_community' %}",
+          "title": "Manually reset a user's password, in case they cannot use the normal password reset.",
+          "anchor_text": "Manually reset user's password",
+          "line": 324
+        },
+        {
+          "url_name": "delete_community_menu",
+          "args_raw": [],
+          "href_expr": "{% url 'delete_community_menu' %}",
+          "title": "Give yourself a COOWNER role on a project, if you are an admin and need to access it urgently for some reason.",
+          "anchor_text": "Make yourself co-owner of a project",
+          "line": 327
+        },
+        {
+          "url_name": "assign_coordinator_to_community",
+          "args_raw": [],
+          "href_expr": "{% url 'assign_coordinator_to_community' %}",
+          "title": "Create a new community for image reviewing and similar activities.",
+          "anchor_text": "Create community",
+          "line": 330
+        },
+        {
+          "url_name": "manage_language_masters",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_language_masters' %}",
+          "title": "Delete an existing community.",
+          "anchor_text": "Delete community",
+          "line": 333
+        },
+        {
+          "url_name": "post_localisation_bundle",
+          "args_raw": [],
+          "href_expr": "{% url 'post_localisation_bundle' %}",
+          "title": "Assign a coordinator to an language community.",
+          "anchor_text": "Assign coordinator to community",
+          "line": 336
+        },
+        {
+          "url_name": "bundle_list",
+          "args_raw": [],
+          "href_expr": "{% url 'bundle_list' %}",
+          "title": "Give users 'language master' privileges, so that they can customise annotation prompts and edit phonetic lexicon data.",
+          "anchor_text": "Manage language masters",
+          "line": 339
+        },
+        {
+          "url_name": "delete_tts_data",
+          "args_raw": [],
+          "href_expr": "{% url 'delete_tts_data' %}",
+          "title": "Post a localisation bundle so that language masters can define translations",
+          "anchor_text": "Post a localisation bundle",
+          "line": 342
+        },
+        {
+          "url_name": "delete_all_data",
+          "args_raw": [],
+          "href_expr": "{% url 'delete_all_data' %}",
+          "title": "List all localisation bundles",
+          "anchor_text": "Delete TTS data",
+          "line": 346
+        },
+        {
+          "url_name": "delete_old_task_updates",
+          "args_raw": [],
+          "href_expr": "{% url 'delete_old_task_updates' %}",
+          "title": "Remove all cached TTS data for a given language.",
+          "anchor_text": "Delete all text questionnaire data",
+          "line": 349
+        },
+        {
+          "url_name": "start_bulk_source_exports",
+          "args_raw": [],
+          "href_expr": "{% url 'start_bulk_source_exports' %}",
+          "title": "Delete all text questionnaire data (only use on local machine)",
+          "anchor_text": "Delete all text questionnaire data",
+          "line": 352
+        },
+        {
+          "url_name": "bulk_audio_export_start",
+          "args_raw": [],
+          "href_expr": "{% url 'bulk_audio_export_start' %}",
+          "title": "Remove all task updates more than 30 days old.",
+          "anchor_text": "Delete old task updates",
+          "line": 355
+        },
+        {
+          "url_name": "bundle_list",
+          "args_raw": [],
+          "href_expr": "{% url 'bundle_list' %}",
+          "title": "List all localisation bundles",
+          "anchor_text": "Language master",
+          "line": 369
+        },
+        {
+          "url_name": "edit_prompt",
+          "args_raw": [],
+          "href_expr": "{% url 'edit_prompt' %}",
+          "title": "List all localisation bundles",
+          "anchor_text": "List all localisation bundles",
+          "line": 372
+        },
+        {
+          "url_name": "edit_phonetic_lexicon",
+          "args_raw": [],
+          "href_expr": "{% url 'edit_phonetic_lexicon' %}",
+          "title": "List all localisation bundles",
+          "anchor_text": "List all localisation bundles",
+          "line": 375
+        },
+        {
+          "url_name": "review_funding_requests",
+          "args_raw": [],
+          "href_expr": "{% url 'review_funding_requests' %}",
+          "title": "Review funding requests",
+          "anchor_text": "Funding reviewer",
+          "line": 389
+        },
+        {
+          "url_name": "manage_questionnaires",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_questionnaires' %}",
+          "title": "Review and possibly delete questionnaires",
+          "anchor_text": "Questionnaire reviewer",
+          "line": 403
+        },
+        {
+          "url_name": "kok_kaper_game",
+          "args_raw": [],
+          "href_expr": "{% url 'kok_kaper_game' %}",
+          "title": "Use the Australian language Kok Kaper to make pictures of funny animals",
+          "anchor_text": "Games",
+          "line": 416
+        },
+        {
+          "url_name": "profile",
+          "args_raw": [],
+          "href_expr": "{% url 'profile' %}",
+          "title": "Display your location, bio, profile picture etc.",
+          "anchor_text": null,
+          "line": 428
+        },
+        {
+          "url_name": "edit_profile",
+          "args_raw": [],
+          "href_expr": "{% url 'edit_profile' %}",
+          "title": "Display your location, bio, profile picture etc.",
+          "anchor_text": "Display user profile",
+          "line": 431
+        },
+        {
+          "url_name": "user_config",
+          "args_raw": [],
+          "href_expr": "{% url 'user_config' %}",
+          "title": "Display your location, bio, profile picture etc.",
+          "anchor_text": "Display user profile",
+          "line": 434
+        },
+        {
+          "url_name": "credit_balance",
+          "args_raw": [],
+          "href_expr": "{% url 'credit_balance' %}",
+          "title": "Enter/edit your location, bio, profile picture etc.",
+          "anchor_text": "Edit user profile",
+          "line": 437
+        },
+        {
+          "url_name": "transfer_credit",
+          "args_raw": [],
+          "href_expr": "{% url 'transfer_credit' %}",
+          "title": "Specify the GPT-4 model you want to use, optionally give an API key, and edit other related parameters.",
+          "anchor_text": "Edit configuration information",
+          "line": 440
+        },
+        {
+          "url_name": "view_task_updates",
+          "args_raw": [],
+          "href_expr": "{% url 'view_task_updates' %}",
+          "title": "C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.",
+          "anchor_text": "Credit balance for ChatGPT-4 API calls",
+          "line": 443
+        },
+        {
+          "url_name": "logout",
+          "args_raw": [],
+          "href_expr": "{% url 'logout' %}",
+          "title": "Transfer some of the credit from your GPT-4 call account to another user.",
+          "anchor_text": "Transfer credit to another user",
+          "line": 446
+        },
+        {
+          "url_name": "login",
+          "args_raw": [],
+          "href_expr": "{% url 'login' %}",
+          "title": "Exit C-LARA.",
+          "anchor_text": "Logout",
+          "line": 452
+        },
+        {
+          "url_name": "register",
+          "args_raw": [],
+          "href_expr": "{% url 'register' %}",
+          "title": "Log in using your userid and password.",
+          "anchor_text": "Login",
+          "line": 456
+        },
+        {
+          "url_name": "password_reset",
+          "args_raw": [],
+          "href_expr": "{% url 'password_reset' %}",
+          "title": "Create a new account, giving a userid, password and email address.",
+          "anchor_text": "Sign up",
+          "line": 460
+        },
+        {
+          "url_name": "public_content_list",
+          "args_raw": [],
+          "href_expr": "{% url 'public_content_list' %}",
+          "title": "Reset your password if you have lost it or want to change it. You need to have given an email address.",
+          "anchor_text": "Password reset",
+          "line": 464
+        },
+        {
+          "url_name": "kok_kaper_game",
+          "args_raw": [],
+          "href_expr": "{% url 'kok_kaper_game' %}",
+          "title": "Use the Australian language Kok Kaper to make pictures of funny animals",
+          "anchor_text": "Games",
+          "line": 472
+        }
+      ]
+    },
+    {
+      "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+      "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\templates\\clara_app\\project_detail.html",
+      "extends": [
+        "clara_app/base.html"
+      ],
+      "includes": [],
+      "url_refs": [
+        {
+          "url_name": "project_community",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'project_community' project.id %}",
+          "title": null,
+          "anchor_text": "Community",
+          "line": 51
+        },
+        {
+          "url_name": "create_plain_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_plain_text' project.id %}",
+          "title": null,
+          "anchor_text": "Community",
+          "line": 54
+        },
+        {
+          "url_name": "create_title",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_title' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Plain Text",
+          "line": 58
+        },
+        {
+          "url_name": "create_summary",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_summary' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Text Title",
+          "line": 63
+        },
+        {
+          "url_name": "create_cefr_level",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_cefr_level' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Summary",
+          "line": 68
+        },
+        {
+          "url_name": "create_segmented_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_segmented_text' project.id %}",
+          "title": null,
+          "anchor_text": "Estimate/Edit CEFR Level",
+          "line": 73
+        },
+        {
+          "url_name": "create_segmented_title",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_segmented_title' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Segmented Text",
+          "line": 78
+        },
+        {
+          "url_name": "create_translated_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_translated_text' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Segmented Title",
+          "line": 84
+        },
+        {
+          "url_name": "create_mwe_tagged_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_mwe_tagged_text' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Translated Text",
+          "line": 89
+        },
+        {
+          "url_name": "edit_images_v2",
+          "args_raw": [
+            "project.id",
+            "'none'"
+          ],
+          "href_expr": "{% url 'edit_images_v2' project.id 'none' %}",
+          "title": null,
+          "anchor_text": "Edit Images and Pages",
+          "line": 96
+        },
+        {
+          "url_name": "edit_images",
+          "args_raw": [
+            "project.id",
+            "'no_dall_e_3_image'"
+          ],
+          "href_expr": "{% url 'edit_images' project.id 'no_dall_e_3_image' %}",
+          "title": null,
+          "anchor_text": "Edit Images and Pages",
+          "line": 102
+        },
+        {
+          "url_name": "community_review_images",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'community_review_images' project.id %}",
+          "title": null,
+          "anchor_text": "Review images as community member",
+          "line": 109
+        },
+        {
+          "url_name": "community_organiser_review_images",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'community_organiser_review_images' project.id %}",
+          "title": null,
+          "anchor_text": "Review images as community member",
+          "line": 114
+        },
+        {
+          "url_name": "community_review_images_external",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'community_review_images_external' project.id %}",
+          "title": null,
+          "anchor_text": "Review images as community organiser",
+          "line": 119
+        },
+        {
+          "url_name": "image_questionnaire_start",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'image_questionnaire_start' project.id %}",
+          "title": null,
+          "anchor_text": "Image questionnaire",
+          "line": 126
+        },
+        {
+          "url_name": "create_phonetic_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_phonetic_text' project.id %}",
+          "title": null,
+          "anchor_text": "Image questionnaire",
+          "line": 132
+        },
+        {
+          "url_name": "create_lemma_tagged_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_lemma_tagged_text' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Phonetic Text",
+          "line": 138
+        },
+        {
+          "url_name": "create_glossed_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_glossed_text' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Lemma Tagged Text",
+          "line": 143
+        },
+        {
+          "url_name": "create_pinyin_tagged_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_pinyin_tagged_text' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Glossed Text",
+          "line": 148
+        },
+        {
+          "url_name": "get_audio_metadata",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'get_audio_metadata' project.id %}",
+          "title": null,
+          "anchor_text": "Create/Edit Pinyin Tagged Text",
+          "line": 154
+        },
+        {
+          "url_name": "human_audio_processing",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'human_audio_processing' project.id %}",
+          "title": null,
+          "anchor_text": "Get Audio Metadata",
+          "line": 155
+        },
+        {
+          "url_name": "human_audio_processing_phonetic",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'human_audio_processing_phonetic' project.id %}",
+          "title": null,
+          "anchor_text": "Get Audio Metadata",
+          "line": 160
+        },
+        {
+          "url_name": "set_format_preferences",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'set_format_preferences' project.id %}",
+          "title": null,
+          "anchor_text": "Audio Processing (Phonetic)",
+          "line": 165
+        },
+        {
+          "url_name": "edit_acknowledgements",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'edit_acknowledgements' project.id %}",
+          "title": null,
+          "anchor_text": "Set Format Preferences",
+          "line": 170
+        },
+        {
+          "url_name": "render_text_start_normal",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'render_text_start_normal' project.id %}",
+          "title": null,
+          "anchor_text": "Acknowledgements",
+          "line": 174
+        },
+        {
+          "url_name": "render_text_start_phonetic",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'render_text_start_phonetic' project.id %}",
+          "title": null,
+          "anchor_text": "Render Text",
+          "line": 179
+        },
+        {
+          "url_name": "serve_rendered_text",
+          "args_raw": [
+            "project.id",
+            "'normal'",
+            "'page_1.html'"
+          ],
+          "href_expr": "{% url 'serve_rendered_text' project.id 'normal' 'page_1.html' %}",
+          "title": null,
+          "anchor_text": "Render Phonetic Text",
+          "line": 184
+        },
+        {
+          "url_name": "offer_to_register_content_normal",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'offer_to_register_content_normal' project.id %}",
+          "title": null,
+          "anchor_text": "Display Rendered Text",
+          "line": 189
+        },
+        {
+          "url_name": "offer_to_register_content_phonetic",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'offer_to_register_content_phonetic' project.id %}",
+          "title": null,
+          "anchor_text": "Register Rendered Text",
+          "line": 194
+        },
+        {
+          "url_name": "satisfaction_questionnaire",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'satisfaction_questionnaire' project.id %}",
+          "title": null,
+          "anchor_text": "Register Rendered Phonetic Text",
+          "line": 199
+        },
+        {
+          "url_name": "make_export_zipfile",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'make_export_zipfile' project.id %}",
+          "title": null,
+          "anchor_text": "Answer Satisfaction Questionnaire",
+          "line": 204
+        },
+        {
+          "url_name": "compare_versions",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'compare_versions' project.id %}",
+          "title": null,
+          "anchor_text": "Export zipfile",
+          "line": 207
+        },
+        {
+          "url_name": "project_history",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'project_history' project.id %}",
+          "title": null,
+          "anchor_text": "Export zipfile",
+          "line": 210
+        },
+        {
+          "url_name": "manage_project_members",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'manage_project_members' project.id %}",
+          "title": null,
+          "anchor_text": "Compare Text Versions",
+          "line": 213
+        },
+        {
+          "url_name": "clone_project",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'clone_project' project.id %}",
+          "title": null,
+          "anchor_text": "View Project History",
+          "line": 216
+        },
+        {
+          "url_name": "delete_project",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'delete_project' project.id %}",
+          "title": null,
+          "anchor_text": "Manage Project Members",
+          "line": 219
+        }
+      ]
+    }
+  ]
+}
