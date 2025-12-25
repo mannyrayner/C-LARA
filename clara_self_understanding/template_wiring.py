@@ -1,48 +1,4 @@
 # clara_self_understanding/template_wiring.py
-"""
-Extract "wiring" information from key Django templates.
-
-Currently focuses on:
-  - {% url ... %} occurrences (URL name + raw args)
-  - anchor text near the URL (best-effort)
-  - tooltip/title text (high-signal description)
-  - { % extends % } and { % include % } relationships between templates
-
-Inputs:
-  - A list of template repo paths (default: base.html and project_detail.html)
-
-Output:
-  clara_self_understanding/graphs/template_wiring.json
-
-Schema (v1):
-{
-  "created_at": "...",
-  "templates": [
-     {
-       "template_repo_path": "...",
-       "local_path": "...",
-       "extends": ["..."],
-       "includes": ["..."],
-       "url_refs": [
-         {
-           "url_name": "simple_clara",
-           "args_raw": ["0", "'initial'"],
-           "href_expr": "{% url ... %}",
-           "title": "Create a new C-LARA project using Simple-C-LARA.",
-           "anchor_text": "Create new C-LARA project using Simple-C-LARA",
-           "line": 123
-         },
-         ...
-       ]
-     },
-     ...
-  ]
-}
-
-Notes:
-  - Parsing is intentionally lightweight (regex + small heuristics).
-  - This file is intended to be extended iteratively (forms, POST actions, JS fetch, etc.)
-"""
 
 from __future__ import annotations
 
@@ -51,33 +7,18 @@ import re
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
+from bs4 import BeautifulSoup  # pip install beautifulsoup4
 from .download_from_repo import ensure_local_copy
 
 SELF_UNDERSTANDING_ROOT = Path(__file__).resolve().parent
 
-
-# ----------------------------
-# Regex patterns (lightweight)
-# ----------------------------
-
-# {% url 'name' arg1 arg2 %}
 URL_TAG_RE = re.compile(
     r"""{%\s*url\s+(?P<q>['"])(?P<name>[^'"]+)(?P=q)\s*(?P<args>.*?)\s*%}"""
 )
-
-# {% extends "path/to.html" %} or {% extends '...' %}
 EXTENDS_RE = re.compile(r"""{%\s*extends\s+(?P<q>['"])(?P<path>[^'"]+)(?P=q)\s*%}""")
-
-# {% include "path/to.html" %} or {% include '...' %}
 INCLUDE_RE = re.compile(r"""{%\s*include\s+(?P<q>['"])(?P<path>[^'"]+)(?P=q)\s*%}""")
-
-# title="..."
-TITLE_RE = re.compile(r"""title\s*=\s*(?P<q>['"])(?P<title>.*?)(?P=q)""", re.IGNORECASE)
-
-# Best-effort anchor text: <a ...>TEXT</a>
-ANCHOR_TEXT_RE = re.compile(r"""<a\b[^>]*>(?P<text>.*?)</a>""", re.IGNORECASE | re.DOTALL)
 
 
 def _now_iso() -> str:
@@ -91,74 +32,48 @@ def _write_json(path: Path, obj: Any) -> None:
 
 def _split_args_raw(args_str: str) -> List[str]:
     """
-    Very lightweight splitter for url tag args. We keep raw tokens because
-    Django template expressions can be complex.
-
-    Example:
-      "0 'initial'" -> ["0", "'initial'"]
+    Keep args as raw template tokens. This is fine; resolution comes later.
     """
-    args_str = (args_str or "").strip()
-    if not args_str:
+    s = (args_str or "").strip()
+    if not s:
         return []
-
-    # Split on whitespace, but preserve quoted literals as single tokens.
-    # Good enough for v1; we can replace later with a proper template lexer if needed.
-    tokens: List[str] = []
-    buf = []
-    in_quote: Optional[str] = None
-
-    for ch in args_str:
-        if in_quote:
+    # cheap tokeniser preserving quoted strings
+    out: List[str] = []
+    buf: List[str] = []
+    q: Optional[str] = None
+    for ch in s:
+        if q:
             buf.append(ch)
-            if ch == in_quote:
-                in_quote = None
+            if ch == q:
+                q = None
             continue
-
         if ch in ("'", '"'):
             buf.append(ch)
-            in_quote = ch
+            q = ch
             continue
-
         if ch.isspace():
             if buf:
-                tokens.append("".join(buf).strip())
+                out.append("".join(buf).strip())
                 buf = []
             continue
-
         buf.append(ch)
-
     if buf:
-        tokens.append("".join(buf).strip())
+        out.append("".join(buf).strip())
+    return [t for t in out if t]
 
-    return [t for t in tokens if t]
 
-
-def _nearest_title_and_anchor(lines: List[str], idx: int, window: int = 6) -> Tuple[Optional[str], Optional[str]]:
+def _parse_url_tag(expr: str) -> Optional[Dict[str, Any]]:
     """
-    Look around the line with the {% url ... %} for:
-      - title="..."
-      - <a ...> ... </a> anchor text
+    If expr contains a Django {% url ... %} tag, return parsed fields.
     """
-    start = max(0, idx - window)
-    end = min(len(lines), idx + window + 1)
-    chunk = "\n".join(lines[start:end])
-
-    title = None
-    m = TITLE_RE.search(chunk)
-    if m:
-        title = m.group("title").strip()
-
-    anchor_text = None
-    m2 = ANCHOR_TEXT_RE.search(chunk)
-    if m2:
-        # strip tags inside anchor text, collapse whitespace
-        raw = m2.group("text")
-        raw = re.sub(r"<[^>]+>", "", raw)
-        raw = re.sub(r"\s+", " ", raw).strip()
-        if raw:
-            anchor_text = raw
-
-    return title, anchor_text
+    m = URL_TAG_RE.search(expr or "")
+    if not m:
+        return None
+    return {
+        "url_name": m.group("name"),
+        "args_raw": _split_args_raw(m.group("args") or ""),
+        "href_expr": m.group(0),
+    }
 
 
 @dataclass
@@ -166,9 +81,10 @@ class UrlRef:
     url_name: str
     args_raw: List[str]
     href_expr: str
+    element: str                 # "a" or "form" etc
+    attr: str                    # "href" or "action"
     title: Optional[str]
-    anchor_text: Optional[str]
-    line: int
+    text: Optional[str]
 
 
 @dataclass
@@ -184,33 +100,63 @@ def extract_wiring_from_template(repo_path: str) -> TemplateWiring:
     meta = ensure_local_copy(repo_path)
     local_path = Path(meta.local_path)
 
-    text = local_path.read_text(encoding="utf-8", errors="replace")
-    lines = text.splitlines()
+    raw = local_path.read_text(encoding="utf-8", errors="replace")
 
-    extends = [m.group("path") for m in EXTENDS_RE.finditer(text)]
-    includes = [m.group("path") for m in INCLUDE_RE.finditer(text)]
+    # Keep extends/includes from raw text; they're not HTML.
+    extends = [m.group("path") for m in EXTENDS_RE.finditer(raw)]
+    includes = [m.group("path") for m in INCLUDE_RE.finditer(raw)]
+
+    soup = BeautifulSoup(raw, "html.parser")
 
     url_refs: List[UrlRef] = []
 
-    for i, line in enumerate(lines):
-        for m in URL_TAG_RE.finditer(line):
-            url_name = m.group("name")
-            args_str = m.group("args") or ""
-            args_raw = _split_args_raw(args_str)
-            href_expr = m.group(0)
-
-            title, anchor_text = _nearest_title_and_anchor(lines, i)
-
-            url_refs.append(
-                UrlRef(
-                    url_name=url_name,
-                    args_raw=args_raw,
-                    href_expr=href_expr,
-                    title=title,
-                    anchor_text=anchor_text,
-                    line=i + 1,
-                )
+    # Anchor links
+    for a in soup.find_all("a"):
+        href = a.get("href")
+        parsed = _parse_url_tag(href or "")
+        if not parsed:
+            continue
+        title = a.get("title")
+        text = a.get_text(" ", strip=True) or None
+        url_refs.append(
+            UrlRef(
+                url_name=parsed["url_name"],
+                args_raw=parsed["args_raw"],
+                href_expr=parsed["href_expr"],
+                element="a",
+                attr="href",
+                title=title,
+                text=text,
             )
+        )
+
+    # Forms posting to URLs
+    for form in soup.find_all("form"):
+        action = form.get("action")
+        parsed = _parse_url_tag(action or "")
+        if not parsed:
+            continue
+        title = form.get("title")  # uncommon, but harmless
+        # Use a compact textual descriptor for the form: first button text, else None
+        btn = form.find(["button", "input"])
+        form_text = None
+        if btn:
+            if btn.name == "button":
+                form_text = btn.get_text(" ", strip=True) or None
+            elif btn.name == "input":
+                form_text = btn.get("value") or None
+
+        url_refs.append(
+            UrlRef(
+                url_name=parsed["url_name"],
+                args_raw=parsed["args_raw"],
+                href_expr=parsed["href_expr"],
+                element="form",
+                attr="action",
+                title=title,
+                text=form_text,
+            )
+        )
 
     return TemplateWiring(
         template_repo_path=repo_path,
@@ -221,9 +167,7 @@ def extract_wiring_from_template(repo_path: str) -> TemplateWiring:
     )
 
 
-def extract_template_wiring(
-    template_repo_paths: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+def extract_template_wiring(template_repo_paths: Optional[List[str]] = None) -> Dict[str, Any]:
     if template_repo_paths is None:
         template_repo_paths = [
             "clara_app/templates/clara_app/base.html",
@@ -235,27 +179,21 @@ def extract_template_wiring(
         print(f"[template-wiring] extracting {rp}")
         templates.append(extract_wiring_from_template(rp))
 
-    out = {
+    return {
         "created_at": _now_iso(),
         "templates": [asdict(t) for t in templates],
     }
-    return out
-
-
-def save_template_wiring(out: Dict[str, Any]) -> Path:
-    out_path = SELF_UNDERSTANDING_ROOT / "graphs" / "template_wiring.json"
-    _write_json(out_path, out)
-    return out_path
 
 
 def main() -> None:
     out = extract_template_wiring()
-    path = save_template_wiring(out)
+    out_path = SELF_UNDERSTANDING_ROOT / "graphs" / "template_wiring.json"
+    _write_json(out_path, out)
 
     n_templates = len(out.get("templates", []))
     n_urls = sum(len(t.get("url_refs", [])) for t in out.get("templates", []))
     print(f"[template-wiring] templates={n_templates} url_refs={n_urls}")
-    print(f"[template-wiring] wrote {path}")
+    print(f"[template-wiring] wrote {out_path}")
 
 
 if __name__ == "__main__":

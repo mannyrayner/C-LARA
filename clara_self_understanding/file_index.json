@@ -709,14 +709,14 @@
   "clara_app/templates/clara_app/base.html": {
     "repo_path": "clara_app/templates/clara_app/base.html",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\templates\\clara_app\\base.html",
-    "downloaded_at": "2025-12-24T04:47:46.286889+00:00",
+    "downloaded_at": "2025-12-25T05:28:41.456452+00:00",
     "sha256": "187493159e9445bb07c84633f9db36114ce20ebb50e091ec767b4da2dfc4f5dc",
     "size_bytes": 22559
   },
   "clara_app/templates/clara_app/project_detail.html": {
     "repo_path": "clara_app/templates/clara_app/project_detail.html",
     "local_path": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\clara_app\\templates\\clara_app\\project_detail.html",
-    "downloaded_at": "2025-12-24T04:47:46.778675+00:00",
+    "downloaded_at": "2025-12-25T05:28:41.896111+00:00",
     "sha256": "d1202126e1e8ca1bcc4ad7f5041183ece4cecce305dd7f848f7dc548bf940f38",
     "size_bytes": 13336
   }
