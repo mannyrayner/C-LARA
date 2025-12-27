@@ -72,7 +72,7 @@
         "estimated_cost_usd": 0.014891249999999998
       },
       "analysis": {
-        "proposed_docstring": "Views for packaging and exporting C\u2011LARA project data and audio into portable bundles. This module exposes UI endpoints to kick off asynchronous export jobs (single project zip, bulk source exports, bulk audio exports), monitor their progress via task update polling, and present completion summaries or download links. It orchestrates Django\u2011Q tasks that invoke internal export helpers, writes index/manifest metadata alongside exported content, and enforces project membership or admin access as appropriate.",
+        "proposed_docstring": "Views for packaging and exporting C‑LARA project data and audio into portable bundles. This module exposes UI endpoints to kick off asynchronous export jobs (single project zip, bulk source exports, bulk audio exports), monitor their progress via task update polling, and present completion summaries or download links. It orchestrates Django‑Q tasks that invoke internal export helpers, writes index/manifest metadata alongside exported content, and enforces project membership or admin access as appropriate.",
         "short_summary": "This module implements the web workflows for exporting C-LARA projects and audio into zipfiles or directory trees. It wires up form submissions to asynchronous Django-Q tasks, supplies polling endpoints for progress, and renders monitor/complete pages. Single-project exports are role-protected, while bulk source and audio exports are admin-only, and outputs include accompanying metadata manifests.",
         "key_responsibilities": [
           "Start and monitor an async task to build a single project export zip, then render completion with optional S3 presigned URL.",
@@ -140,7 +140,47 @@
           "_clear_dir ignores cleanup errors silently, so stale files or partial deletions may go unnoticed before writing new exports.",
           "Destination roots or filenames containing unusual characters may not round-trip cleanly through URL parameters when passing dest_root to monitor/complete views."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "start_bulk_source_exports",
+          "args_raw": [],
+          "href_expr": "{% url 'start_bulk_source_exports' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Create a directory containing zips of all projects plus metadata.",
+          "text": "Prepare zipfiles of all projects",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.export_zipfile_views.start_bulk_source_exports"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "bulk_audio_export_start",
+          "args_raw": [],
+          "href_expr": "{% url 'bulk_audio_export_start' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Create a directory containing all audio plus metadata.",
+          "text": "Prepare downloadable directory of audio for all projects",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.export_zipfile_views.start_bulk_audio_export"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "make_export_zipfile",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'make_export_zipfile' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Export zipfile",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.export_zipfile_views.make_export_zipfile"
+        }
+      ]
     }
   ],
   "clara_app/accounts_views.py": [
@@ -155,11 +195,11 @@
         "estimated_cost_usd": 0.009205
       },
       "analysis": {
-        "proposed_docstring": "Provides the custom account views for C-LARA, handling user registration and profile display while relying on Django\u2019s built-in authentication for login/logout. The register view validates and creates a new user along with associated profile and configuration records, then redirects to the login screen. The profile view requires authentication, ensures a profile exists, pulls user configuration (including the Clara version), and renders the profile template with user details.",
-        "short_summary": "This module defines the account-related views beyond Django\u2019s built-in login/logout. It implements a registration workflow that saves a user, creates a profile and configuration, and shows success feedback. It also exposes an authenticated profile view that ensures the profile exists and renders user and configuration data.",
+        "proposed_docstring": "Provides the custom account views for C-LARA, handling user registration and profile display while relying on Django’s built-in authentication for login/logout. The register view validates and creates a new user along with associated profile and configuration records, then redirects to the login screen. The profile view requires authentication, ensures a profile exists, pulls user configuration (including the Clara version), and renders the profile template with user details.",
+        "short_summary": "This module defines the account-related views beyond Django’s built-in login/logout. It implements a registration workflow that saves a user, creates a profile and configuration, and shows success feedback. It also exposes an authenticated profile view that ensures the profile exists and renders user and configuration data.",
         "key_responsibilities": [
           "Handle user registration via a RegistrationForm, persisting the new user and creating related UserProfile and UserConfiguration records.",
-          "Provide an authenticated profile view that retrieves or creates the user\u2019s profile and reads configuration values for display.",
+          "Provide an authenticated profile view that retrieves or creates the user’s profile and reads configuration values for display.",
           "Render appropriate templates for registration and profile, and use Django messages for user feedback."
         ],
         "potential_issues": [
@@ -195,7 +235,33 @@
           "Registration view redirects to login without logging the user in or providing feedback on invalid submissions beyond the form errors.",
           "No `get_or_create` is used for UserConfiguration in the profile view, so missing configs could raise errors."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "profile",
+          "args_raw": [],
+          "href_expr": "{% url 'profile' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Display your location, bio, profile picture etc.",
+          "text": "Display user profile",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.accounts_views.profile"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "register",
+          "args_raw": [],
+          "href_expr": "{% url 'register' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Create a new account, giving a userid, password and email address.",
+          "text": "Sign up",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.accounts_views.register"
+        }
+      ]
     }
   ],
   "clara_app/activity_tracker_views.py": [
@@ -255,7 +321,45 @@
           "The uniqueness check for vote importance relies on Application logic; without database constraints, duplicate importance votes could slip through under concurrent requests",
           "list_activities_text defines week_start but does not use it; filtering logic differs slightly from list_activities"
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "list_activities",
+          "args_raw": [],
+          "href_expr": "{% url 'list_activities' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "List ongoing project activities or register a new activity.",
+          "text": "Project activities",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.activity_tracker_views.list_activities"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "list_activities_text",
+          "args_raw": [],
+          "href_expr": "{% url 'list_activities_text' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "List ongoing project activities in plain text form. Mainly for AI.",
+          "text": "Activities (plain text version)",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.activity_tracker_views.list_activities_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "ai_activities_reply",
+          "args_raw": [],
+          "href_expr": "{% url 'ai_activities_reply' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Post a JSON structure written by the AI, which updates the activities.",
+          "text": "Post AI updates to activities",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.activity_tracker_views.ai_activities_reply"
+        }
+      ]
     }
   ],
   "clara_app/admin_permission_views.py": [
@@ -312,7 +416,45 @@
           "The admin checks assume every user has an associated UserProfile; missing profiles would cause attribute errors in the user_passes_test lambdas.",
           "Using `CLARAProject.objects.get` without error handling in `admin_project_ownership` may raise exceptions for invalid project IDs instead of returning a 404."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "manage_user_permissions",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_user_permissions' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Manage permissions for funding request reviewer, moderator and admin",
+          "text": "Manage permissions",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.admin_permission_views.manage_user_permissions"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "admin_password_reset",
+          "args_raw": [],
+          "href_expr": "{% url 'admin_password_reset' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Manually reset a user's password, in case they cannot use the normal password reset.",
+          "text": "Manually reset user's password",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.admin_permission_views.admin_password_reset"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "admin_project_ownership",
+          "args_raw": [],
+          "href_expr": "{% url 'admin_project_ownership' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Give yourself a COOWNER role on a project, if you are an admin and need to access it urgently for some reason.",
+          "text": "Make yourself co-owner of a project",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.admin_permission_views.admin_project_ownership"
+        }
+      ]
     }
   ],
   "clara_app/annotation_prompts_views.py": [
@@ -369,7 +511,33 @@
           "bundle_list currently uses print statements for debugging instead of the configured logger.",
           "Language column selection in bundle_list ignores existing translations (commented-out logic), potentially hiding languages with data if the user is not a master."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "bundle_list",
+          "args_raw": [],
+          "href_expr": "{% url 'bundle_list' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "List all localisation bundles",
+          "text": "List all localisation bundles",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.annotation_prompts_views.bundle_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "edit_prompt",
+          "args_raw": [],
+          "href_expr": "{% url 'edit_prompt' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Edit the GPT-4 prompt templates and examples used to create text annotations for languages where you are a language master.",
+          "text": "Edit annotation prompts",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.annotation_prompts_views.edit_prompt"
+        }
+      ]
     }
   ],
   "clara_app/annotation_views.py": [
@@ -429,7 +597,205 @@
           "Error handling for asynchronous tasks posts updates but suppresses exceptions, which may make debugging failures harder; task status is limited to 'finished' or 'error' with 'unknown' otherwise.",
           "Multiple imports of is_chinese_language and is_rtl_language from different modules may cause confusion about which implementation is used."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_plain_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_plain_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Plain Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_plain_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_title",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_title' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Text Title",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_title"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_summary",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_summary' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Summary",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_summary"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_cefr_level",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_cefr_level' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Estimate/Edit CEFR Level",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_cefr_level"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_segmented_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_segmented_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Segmented Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_segmented_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_segmented_title",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_segmented_title' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Segmented Title",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_segmented_title"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_translated_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_translated_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Translated Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_translated_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_mwe_tagged_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_mwe_tagged_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit MWE-tagged Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_mwe_tagged_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_phonetic_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_phonetic_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Phonetic Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_phonetic_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_lemma_tagged_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_lemma_tagged_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Lemma Tagged Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_lemma_tagged_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_glossed_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_glossed_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Glossed Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_glossed_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_pinyin_tagged_text",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'create_pinyin_tagged_text' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Create/Edit Pinyin Tagged Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.create_pinyin_tagged_text"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "set_format_preferences",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'set_format_preferences' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Set Format Preferences",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.set_format_preferences"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "edit_acknowledgements",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'edit_acknowledgements' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Acknowledgements",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.annotation_views.edit_acknowledgements"
+        }
+      ]
     }
   ],
   "clara_app/community_reviewing_views.py": [
@@ -487,7 +853,51 @@
           "The upload_image branch expects a FILES key named 'uploaded_image_file_path'; mismatched form fields will silently fail with a generic error.",
           "Preferred image promotion relies on get_page_description_info_for_cm_reviewing returning a valid preferred_image_id; unexpected values could cause unintended promotion."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "community_review_images",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'community_review_images' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Review images as community member",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.community_reviewing_views.community_review_images"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "community_organiser_review_images",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'community_organiser_review_images' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Review images as community organiser",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.community_reviewing_views.community_organiser_review_images"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "community_review_images_external",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'community_review_images_external' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Review images as non-community member",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.community_reviewing_views.community_review_images_external"
+        }
+      ]
     }
   ],
   "clara_app/community_views.py": [
@@ -544,7 +954,71 @@
           "community_home includes a print statement for debugging that could clutter logs and exposes the role value.",
           "Project-community assignment relies on manual conversion of community IDs from strings and catches only ValueError/ValidationError; unexpected data could still cause errors or may need clearer user feedback."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "assign_member_to_community",
+          "args_raw": [],
+          "href_expr": "{% url 'assign_member_to_community' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Add a new member to a community for which you are coordinator.",
+          "text": "Add member to community",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.community_views.assign_member_to_community"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_community",
+          "args_raw": [],
+          "href_expr": "{% url 'create_community' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Create a new community for image reviewing and similar activities.",
+          "text": "Create community",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.community_views.create_community"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "delete_community_menu",
+          "args_raw": [],
+          "href_expr": "{% url 'delete_community_menu' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Delete an existing community.",
+          "text": "Delete community",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.community_views.delete_community_menu"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "assign_coordinator_to_community",
+          "args_raw": [],
+          "href_expr": "{% url 'assign_coordinator_to_community' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Assign a coordinator to an language community.",
+          "text": "Assign coordinator to community",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.community_views.assign_coordinator_to_community"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "project_community",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'project_community' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Community",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.community_views.project_community"
+        }
+      ]
     }
   ],
   "clara_app/comparing_views.py": [
@@ -601,7 +1075,23 @@
           "Unused configuration and logger imports suggest missing logging; errors in diff conversion are not logged and could be hard to trace.",
           "No handling if requested version or files are absent from metadata; CLARAProjectInternal.diff_editions_of_text_version may raise or fail silently."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "compare_versions",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'compare_versions' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Compare Text Versions",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.comparing_views.compare_versions"
+        }
+      ]
     }
   ],
   "clara_app/content_password_views.py": [
@@ -657,7 +1147,21 @@
           "Unused import of `timezone` and commented out rate limiting hints at missing brute-force protection or incomplete cleanup.",
           "Only project owners are allowed; if other roles should manage passwords this check would need adjustment."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "manage_content_passwords",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_content_passwords' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Change or remove passwords on content where you have set them.",
+          "text": "Change/remove content passwords",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.content_password_views.manage_content_passwords"
+        }
+      ]
     }
   ],
   "clara_app/content_views.py": [
@@ -717,7 +1221,97 @@
           "content_success calls get_user_config on request.user without a login requirement; if accessed by an anonymous user it may error.",
           "Password attempt throttling (too_many_attempts) is commented out in content_detail, so authenticated users can brute-force protected content without rate limiting."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "content_list",
+          "args_raw": [],
+          "href_expr": "{% url 'content_list' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "List all the content that has been registered in the C-LARA social network.",
+          "text": "Published content",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.content_views.content_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "public_content_list",
+          "args_raw": [],
+          "href_expr": "{% url 'public_content_list' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Browse C-LARA and LARA content without logging in.",
+          "text": "Published content (external view)",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.content_views.public_content_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "language_statistics",
+          "args_raw": [],
+          "href_expr": "{% url 'language_statistics' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Show tables listing numbers of projects and pieces of content, broken down by language.",
+          "text": "Project and content statistics",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.content_views.language_statistics"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "register_content",
+          "args_raw": [],
+          "href_expr": "{% url 'register_content' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Register a piece of LARA content to make it accessible through the C-LARA social network.",
+          "text": "Register external LARA content",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.content_views.register_content"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "public_content_list",
+          "args_raw": [],
+          "href_expr": "{% url 'public_content_list' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Browse C-LARA and LARA content without logging in.",
+          "text": "Content",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.content_views.public_content_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "offer_to_register_content_normal",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'offer_to_register_content_normal' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Register Rendered Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.content_views.offer_to_register_content_normal"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "offer_to_register_content_phonetic",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'offer_to_register_content_phonetic' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Register Rendered Phonetic Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.content_views.offer_to_register_content_phonetic"
+        }
+      ]
     }
   ],
   "clara_app/create_project_views.py": [
@@ -775,7 +1369,47 @@
           "File cleanup via remove_file runs in all cases and may delete the uploaded zip from S3/local storage even if retries are desired.",
           "Mutually exclusive coherent image set flags are checked on creation but not when importing or cloning, so inconsistent combinations might slip through."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "create_project",
+          "args_raw": [],
+          "href_expr": "{% url 'create_project' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Create a new C-LARA project, specifying the title, the text language, and the annotation language.",
+          "text": "Create new C-LARA project using Advanced C-LARA",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.create_project_views.create_project"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "import_project",
+          "args_raw": [],
+          "href_expr": "{% url 'import_project' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Import a project from a zipfile created using the 'Export zipfile' command.",
+          "text": "Import C-LARA project from zipfile",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.create_project_views.import_project"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "clone_project",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'clone_project' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Clone Project",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.create_project_views.clone_project"
+        }
+      ]
     }
   ],
   "clara_app/credit_views.py": [
@@ -833,7 +1467,45 @@
           "Email anonymization assumes a minimum length and may fail or produce odd results for short email addresses; sending confirmation uses the sender's email, which might be empty or invalid.",
           "Session-based staging of transfers lacks expiry handling and could be susceptible to concurrent balance changes before confirmation."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "add_credit",
+          "args_raw": [],
+          "href_expr": "{% url 'add_credit' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Add credit to a user's GPT-4 call account",
+          "text": "Add credit to user",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.credit_views.add_credit"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "credit_balance",
+          "args_raw": [],
+          "href_expr": "{% url 'credit_balance' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "C-LARA is free, except that calls to GPT-4 cost money. Show how much you have left on your account.",
+          "text": "Credit balance for ChatGPT-4 API calls",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.credit_views.credit_balance"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "transfer_credit",
+          "args_raw": [],
+          "href_expr": "{% url 'transfer_credit' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Transfer some of the credit from your GPT-4 call account to another user.",
+          "text": "Transfer credit to another user",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.credit_views.transfer_credit"
+        }
+      ]
     }
   ],
   "clara_app/delete_tts_views.py": [
@@ -890,7 +1562,21 @@
           "There is limited error handling around the asynchronous task invocation; failures in `async_task` or `delete_tts_data_for_language` are not caught or surfaced beyond callback messages.",
           "The monitor view itself does not fetch or display status; it relies on client-side polling hitting the status endpoint, which must be implemented in templates/JavaScript."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "delete_tts_data",
+          "args_raw": [],
+          "href_expr": "{% url 'delete_tts_data' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Remove all cached TTS data for a given language.",
+          "text": "Delete TTS data",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.delete_tts_views.delete_tts_data"
+        }
+      ]
     }
   ],
   "clara_app/funding_requests_views.py": [
@@ -947,7 +1633,33 @@
           "Initial formset status uses display labels from choices; if the ApproveFundingRequestFormSet expects raw status values, there may be mismatches between displayed and processed statuses.",
           "Email anonymization logic assumes email length and may produce odd results for short addresses."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "funding_request",
+          "args_raw": [],
+          "href_expr": "{% url 'funding_request' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Submit a request to get a small amount of OpenAI credit",
+          "text": "Funding request",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.funding_requests_views.funding_request"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "review_funding_requests",
+          "args_raw": [],
+          "href_expr": "{% url 'review_funding_requests' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Review funding requests",
+          "text": "Review funding requests",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.funding_requests_views.review_funding_requests"
+        }
+      ]
     }
   ],
   "clara_app/home_views.py": [
@@ -1003,7 +1715,21 @@
           "The get_config() call assigns to config but is unused in this module, indicating possible leftover or missing configuration usage.",
           "The time_period conversion in clara_home_page assumes form validation ensures an integer; malformed GET parameters could still cause errors if validation is bypassed."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "home_page",
+          "args_raw": [],
+          "href_expr": "{% url 'home_page' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Home page: show recent activities and content",
+          "text": null,
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.home_views.home_page"
+        }
+      ]
     }
   ],
   "clara_app/human_audio_views.py": [
@@ -1060,7 +1786,37 @@
           "CLARAProjectInternal instances are passed to async tasks; if the task runner uses separate processes, pickling these objects may fail",
           "Local variable names shadow imported `messages` in status views, which could be confusing though not functionally harmful"
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "human_audio_processing",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'human_audio_processing' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Audio Processing",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.human_audio_views.human_audio_processing"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "human_audio_processing_phonetic",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'human_audio_processing_phonetic' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Audio Processing (Phonetic)",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.human_audio_views.human_audio_processing_phonetic"
+        }
+      ]
     }
   ],
   "clara_app/image_questionnaire_views.py": [
@@ -1086,7 +1842,7 @@
         ],
         "potential_issues": [
           "Pages and related data are stored in the session; with cookie-based sessions this could exceed size limits or be cleared, causing abrupt redirects to the summary.",
-          "Only login is enforced; there is no check that the current user is authorized for a given project\u2019s questionnaire.",
+          "Only login is enforced; there is no check that the current user is authorized for a given project’s questionnaire.",
           "The aggregate summary uses question text from a static list, not localized, and entries with no responses include an unexpected \"search_form\" key, leading to inconsistent data passed to templates.",
           "Debug pprint of context in the item view may clutter logs or leak data in production.",
           "The session flag name include_text_in_image_and_text_questionnare is misspelled and may cause confusion or mismatch with other code."
@@ -1120,7 +1876,47 @@
           "Question text in aggregated summaries and CSV is taken from hardcoded constants and not localised; UI and data export may not reflect translated strings.",
           "Reliance on file-based project data (story JSON, relevant elements, rendered HTML snippets) means missing or stale files can cause errors or skipped questions; error handling currently redirects with generic messages."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "image_questionnaire_project_list",
+          "args_raw": [],
+          "href_expr": "{% url 'image_questionnaire_project_list' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Find projects with image questionnaires",
+          "text": "Find image questionnaires",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.image_questionnaire_views.image_questionnaire_project_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "image_questionnaire_all_projects_summary",
+          "args_raw": [],
+          "href_expr": "{% url 'image_questionnaire_all_projects_summary' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Show summary results for image quality questionnaires.",
+          "text": "Questionnaire summary (images)",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.image_questionnaire_views.image_questionnaire_all_projects_summary"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "image_questionnaire_start",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'image_questionnaire_start' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Image questionnaire",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.image_questionnaire_views.image_questionnaire_start"
+        }
+      ]
     }
   ],
   "clara_app/images_v1_views.py": [
@@ -1135,11 +1931,11 @@
         "estimated_cost_usd": 0.02766
       },
       "analysis": {
-        "proposed_docstring": "Views for managing images and related AI workflows within a CLARA project. This module renders and processes the image editing interface, including handling uploads, deleting or archiving images, and synchronizing text versions per page. It orchestrates asynchronous DALL\u2011E\u20113/GPT\u20114 calls to generate coherent image sets, descriptive variables, and image request sequences, and exposes monitoring endpoints for those tasks. Utilities for validating generated sequences and accessing or restoring archived images are also provided.",
+        "proposed_docstring": "Views for managing images and related AI workflows within a CLARA project. This module renders and processes the image editing interface, including handling uploads, deleting or archiving images, and synchronizing text versions per page. It orchestrates asynchronous DALL‑E‑3/GPT‑4 calls to generate coherent image sets, descriptive variables, and image request sequences, and exposes monitoring endpoints for those tasks. Utilities for validating generated sequences and accessing or restoring archived images are also provided.",
         "short_summary": "This module implements the image editing and generation views for CLARA projects. It prepares formsets with existing images and text versions, handles uploads, deletions, and description variables, and can launch asynchronous DALL-E and GPT-4 workflows to generate images or description sequences. It provides monitor endpoints for long-running tasks and views for browsing/restoring archived images.",
         "key_responsibilities": [
           "Render and process the edit-images page, including image uploads, deletion, text-version saving, and style image handling",
-          "Trigger asynchronous generation of DALL\u2011E\u20113 images, description variables, and image request sequences, with callback/report monitoring",
+          "Trigger asynchronous generation of DALL‑E‑3 images, description variables, and image request sequences, with callback/report monitoring",
           "Validate and store GPT-generated description lists and image request sequences, ensuring consistency and initialization of description variables",
           "Execute coherent image generation/interpretation workflows (image-generation and image-understanding) and persist results via CLARAProjectInternal",
           "Expose task status/monitor endpoints and views for accessing, restoring, or deleting archived images"
@@ -1180,7 +1976,24 @@
           "Direct indexing of page_texts by page-1 could raise out-of-range issues if page numbers are inconsistent with text lengths.",
           "Using style_description from a page-0 record assumes a specific ordering of initial_data that may not hold if upstream data changes."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "edit_images",
+          "args_raw": [
+            "project.id",
+            "'no_dall_e_3_image'"
+          ],
+          "href_expr": "{% url 'edit_images' project.id 'no_dall_e_3_image' %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Edit Images and Pages",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.images_v1_views.edit_images"
+        }
+      ]
     }
   ],
   "clara_app/images_v2_views.py": [
@@ -1239,7 +2052,24 @@
           "Exception handling is very broad and sometimes simply flags the interface as inconsistent, which may mask underlying bugs or leave the UI without forms.",
           "The duplicate import of get_element_names_params_from_project_params is redundant and could indicate copy-paste issues."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "edit_images_v2",
+          "args_raw": [
+            "project.id",
+            "'none'"
+          ],
+          "href_expr": "{% url 'edit_images_v2' project.id 'none' %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Edit Images and Pages",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.images_v2_views.edit_images_v2"
+        }
+      ]
     }
   ],
   "clara_app/language_game_views.py": [
@@ -1298,7 +2128,21 @@
           "Default selection assumes non-empty data lists; empty game data could cause errors in `_default`",
           "The commented-out `@login_required` means the view is accessible without authentication, which may or may not be intended"
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "kok_kaper_game",
+          "args_raw": [],
+          "href_expr": "{% url 'kok_kaper_game' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Use the Australian language Kok Kaper to make pictures of funny animals",
+          "text": "Kok Kaper animal game",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.language_game_views.kok_kaper_animal_game"
+        }
+      ]
     }
   ],
   "clara_app/language_masters_views.py": [
@@ -1341,7 +2185,7 @@
       },
       "analysis": {
         "proposed_docstring": "Views in this module support administrative management of language masters and localisation bundles. It exposes admin-only endpoints to list, assign and remove LanguageMaster privileges, and to create, load or save bundles of localisation strings. The views validate input, coordinate updates to the associated models within transactions, surface success and error messages, and render the relevant templates with configuration data for display.",
-        "short_summary": "This module defines admin-restricted Django views for managing language master assignments and localisation bundles. It lets administrators add or remove LanguageMaster records and upload or load bundles of key\u2013text pairs. The views use standard form handling, message feedback and template rendering with user configuration context.",
+        "short_summary": "This module defines admin-restricted Django views for managing language master assignments and localisation bundles. It lets administrators add or remove LanguageMaster records and upload or load bundles of key–text pairs. The views use standard form handling, message feedback and template rendering with user configuration context.",
         "key_responsibilities": [
           "List existing LanguageMaster records and process assignments via AssignLanguageMasterForm for administrators.",
           "Confirm and delete LanguageMaster privileges by primary key.",
@@ -1354,7 +2198,33 @@
           "Access control assumes a userprofile with an is_admin attribute; missing or misconfigured profiles could raise errors.",
           "Retrieving 'clara_version' from get_user_config may fail if that configuration key is absent."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "manage_language_masters",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_language_masters' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Give users 'language master' privileges, so that they can customise annotation prompts and edit phonetic lexicon data.",
+          "text": "Manage language masters",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.language_masters_views.manage_language_masters"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "post_localisation_bundle",
+          "args_raw": [],
+          "href_expr": "{% url 'post_localisation_bundle' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Post a localisation bundle so that language masters can define translations",
+          "text": "Post a localisation bundle",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.language_masters_views.post_localisation_bundle"
+        }
+      ]
     }
   ],
   "clara_app/manipulate_project_views.py": [
@@ -1413,7 +2283,79 @@
           "is_chinese_language is imported twice from different modules, potentially masking the intended implementation.",
           "Some CLARAProjectInternal calls and project deletions lack error handling, so failures could leave inconsistent state."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "project_list",
+          "args_raw": [
+            "'simple_clara'"
+          ],
+          "href_expr": "{% url 'project_list' 'simple_clara' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "List all the projects you have created or have been assigned a role in, using Simple-C-LARA.",
+          "text": "List my C-LARA projects using Simple-C-LARA",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.manipulate_project_views.project_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "project_list",
+          "args_raw": [
+            "'full_clara'"
+          ],
+          "href_expr": "{% url 'project_list' 'full_clara' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "List all the projects you have created or have been assigned a role in.",
+          "text": "List my C-LARA projects using Advanced C-LARA",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.manipulate_project_views.project_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "project_history",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'project_history' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "View Project History",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.manipulate_project_views.project_history"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "manage_project_members",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'manage_project_members' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Manage Project Members",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.manipulate_project_views.manage_project_members"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "delete_project",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'delete_project' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Delete Project",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.manipulate_project_views.delete_project"
+        }
+      ]
     }
   ],
   "clara_app/phonetic_lexicon_views.py": [
@@ -1458,7 +2400,7 @@
         "proposed_docstring": "Views for language masters to manage phonetic lexicons and orthography data. Provides a form-driven interface to refresh, edit, approve/delete plain and aligned lexicon entries, and update grapheme-to-phoneme correspondence and accent data. Supports uploading lexicon files, including an asynchronous import of plain lexicons with progress monitoring via django-q, and renders status/monitoring endpoints and completion redirects.",
         "short_summary": "This module implements Django views that allow authorized language masters to edit and import phonetic lexicon data. It handles saving orthography and lexicon entries, uploading aligned and plain lexicons (the latter via an asynchronous task), and provides endpoints to monitor and confirm import status. Templates are rendered with relevant formsets and progress data for user interaction.",
         "key_responsibilities": [
-          "Render and process the phonetic lexicon editing form with formsets for grapheme\u2013phoneme correspondences, accents, and lexicon entries.",
+          "Render and process the phonetic lexicon editing form with formsets for grapheme–phoneme correspondences, accents, and lexicon entries.",
           "Persist encoding, orthography data, and approved or deleted plain/aligned lexicon entries through repository objects with validation.",
           "Handle file uploads for aligned and plain phonetic lexicons, kicking off asynchronous import of plain lexicons and redirecting to monitoring views.",
           "Expose JSON status for background imports and render monitoring/completion pages with user feedback."
@@ -1469,7 +2411,21 @@
           "If no language is selected or the form is invalid, some branches may leave formsets uninitialized and could lead to template errors if not guarded.",
           "Errors in consistency checks or empty selections result in user messages but the control flow continues; maintainers should ensure templates handle missing or None formsets."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "edit_phonetic_lexicon",
+          "args_raw": [],
+          "href_expr": "{% url 'edit_phonetic_lexicon' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Upload or edit phonetic lexicon data for languages where you are a language master.",
+          "text": "Edit phonetic lexicon",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.phonetic_lexicon_views.edit_phonetic_lexicon"
+        }
+      ]
     }
   ],
   "clara_app/profile_views.py": [
@@ -1484,7 +2440,7 @@
         "estimated_cost_usd": 0.0153575
       },
       "analysis": {
-        "proposed_docstring": "Views for displaying and editing user profiles and managing friend relationships in the C\u2011LARA application. Provides an authenticated profile edit workflow, an external profile view that lets visitors send, accept or reject friend requests, and utilities to notify users by email and update the activity feed. Integrates with user and profile models, friend request forms, and includes the current C\u2011LARA version in template contexts. Email notifications are only sent in the UniSA deployment environment.",
+        "proposed_docstring": "Views for displaying and editing user profiles and managing friend relationships in the C‑LARA application. Provides an authenticated profile edit workflow, an external profile view that lets visitors send, accept or reject friend requests, and utilities to notify users by email and update the activity feed. Integrates with user and profile models, friend request forms, and includes the current C‑LARA version in template contexts. Email notifications are only sent in the UniSA deployment environment.",
         "short_summary": "This module defines profile-related views, including a login-protected profile editor and a public-facing profile page with friend request functionality. It handles form submission, validation, and saving for user and profile data, as well as creating, updating, and deleting FriendRequest records based on user actions. It also renders profile pages with contextual information and triggers notification emails when friend requests are sent.",
         "key_responsibilities": [
           "Render and process the user account and profile edit forms, saving changes and flashing success messages.",
@@ -1525,7 +2481,21 @@
           "There is no guard against creating duplicate friend requests or ensuring the requester is authenticated before creating/deleting them",
           "Email sending is gated on an environment variable and otherwise only prints, which may lead to missed notifications outside the specified environment"
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "edit_profile",
+          "args_raw": [],
+          "href_expr": "{% url 'edit_profile' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Enter/edit your location, bio, profile picture etc.",
+          "text": "Edit user profile",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.profile_views.edit_profile"
+        }
+      ]
     }
   ],
   "clara_app/public_api_views.py": [
@@ -1642,7 +2612,24 @@
           "If reading_history exists without an associated project (e.g. inconsistent data), access to reading_history.project will fail; deletion does not handle cleanup of rendered HTML beyond the current internal object.",
           "POST paths that do not hit a return may lead to undefined form/context variables before rendering; current logic assumes all POST branches redirect."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "reading_history",
+          "args_raw": [
+            "'english'",
+            "'init'"
+          ],
+          "href_expr": "{% url 'reading_history' 'english' 'init' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Access your reading history for a given language, or add a new project to it.",
+          "text": "Reading histories",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.reading_histories_views.reading_history"
+        }
+      ]
     }
   ],
   "clara_app/registering_views.py": [
@@ -1750,7 +2737,37 @@
           "Using a local variable named 'messages' in render_text_status shadows django.contrib.messages, which could be confusing if extended.",
           "Self-contained rendering is hardcoded to True and zipfile_url is always None; downstream consumers may expect other behaviors."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "render_text_start_normal",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'render_text_start_normal' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Render Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.rendering_views.render_text_start_normal"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "render_text_start_phonetic",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'render_text_start_phonetic' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Render Phonetic Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.rendering_views.render_text_start_phonetic"
+        }
+      ]
     }
   ],
   "clara_app/satisfaction_questionnaire_views.py": [
@@ -1809,7 +2826,47 @@
           "Timezone conversion is applied only to the created_at field in exports; other datetime fields may remain timezone-aware if present.",
           "config and logger are initialized but not used in this module."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "aggregated_questionnaire_results",
+          "args_raw": [],
+          "href_expr": "{% url 'aggregated_questionnaire_results' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Show summary results for satisfaction questionnaires.",
+          "text": "Questionnaire summary (projects)",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.satisfaction_questionnaire_views.aggregated_questionnaire_results"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "manage_questionnaires",
+          "args_raw": [],
+          "href_expr": "{% url 'manage_questionnaires' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Review and possibly delete questionnaires",
+          "text": "Review questionnaires",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.satisfaction_questionnaire_views.manage_questionnaires"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "satisfaction_questionnaire",
+          "args_raw": [
+            "project.id"
+          ],
+          "href_expr": "{% url 'satisfaction_questionnaire' project.id %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Answer Satisfaction Questionnaire",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.satisfaction_questionnaire_views.satisfaction_questionnaire"
+        }
+      ]
     }
   ],
   "clara_app/save_page_texts_multiple_views.py": [
@@ -1922,7 +2979,25 @@
           "Most file-serving views lack authentication and may expose generated content publicly",
           "Dual unquote imports (django.utils.http and urllib.parse) may be unintended and the former is shadowed"
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "serve_rendered_text",
+          "args_raw": [
+            "project.id",
+            "'normal'",
+            "'page_1.html'"
+          ],
+          "href_expr": "{% url 'serve_rendered_text' project.id 'normal' 'page_1.html' %}",
+          "element": "a",
+          "attr": "href",
+          "title": null,
+          "text": "Display Rendered Text",
+          "template_repo_path": "clara_app/templates/clara_app/project_detail.html",
+          "callable": "clara_app.serving_content_views.serve_rendered_text"
+        }
+      ]
     }
   ],
   "clara_app/simple_clara_views.py": [
@@ -1966,7 +3041,7 @@
         "estimated_cost_usd": 0.034504999999999994
       },
       "analysis": {
-        "proposed_docstring": "High-level views and helpers for the Simple C-LARA one-page wizard. This module inspects a CLARA project\u2019s current resources, renders the simplified authoring form, and interprets user actions to drive text creation, segmentation, rendering, TTS preferences, posting, and image workflows (including coherent image V2 review). It dispatches cheap actions synchronously and heavy operations to django-q background tasks, exposing monitoring/polling endpoints for progress. It wraps CLARAProjectInternal methods, tracks API usage/costs, and integrates community image feedback interfaces for pages, elements, and styles.",
+        "proposed_docstring": "High-level views and helpers for the Simple C-LARA one-page wizard. This module inspects a CLARA project’s current resources, renders the simplified authoring form, and interprets user actions to drive text creation, segmentation, rendering, TTS preferences, posting, and image workflows (including coherent image V2 review). It dispatches cheap actions synchronously and heavy operations to django-q background tasks, exposing monitoring/polling endpoints for progress. It wraps CLARAProjectInternal methods, tracks API usage/costs, and integrates community image feedback interfaces for pages, elements, and styles.",
         "short_summary": "This module powers the Simple C-LARA wizard: it renders the main form, detects available project resources, and dispatches user actions to create text, images, segmentation, rendering, and posting. Cheap actions run inline while expensive AI/image steps are enqueued to django-q, with status polling and monitor views. It also provides review interfaces for coherent images (pages, elements, styles) supporting community feedback, uploads, and votes.",
         "key_responsibilities": [
           "Inspect and summarize the current state of a CLARA project (texts, images, rendering, posting, TTS) for display in the wizard form.",
@@ -1982,7 +3057,24 @@
           "create_v2_style_helper ignores the up_to_date_dict guard (commented out) and will recreate style assets even if already up to date.",
           "Redirect targets for errors/initial state are inconsistent (e.g., 'initial' vs 'init'), potentially causing broken navigation."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "simple_clara",
+          "args_raw": [
+            "0",
+            "'initial'"
+          ],
+          "href_expr": "{% url 'simple_clara' 0 'initial' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Create a new C-LARA project using Simple-C-LARA.",
+          "text": "Create new C-LARA project using Simple-C-LARA",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.simple_clara_views.simple_clara"
+        }
+      ]
     }
   ],
   "clara_app/task_update_views.py": [
@@ -2038,7 +3130,33 @@
           "delete_old_task_updates deletes all old updates across all users without confirmation or per-user scoping, which might be unexpected.",
           "The imported config and logger are currently unused, and there is no error handling around database operations."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "delete_old_task_updates",
+          "args_raw": [],
+          "href_expr": "{% url 'delete_old_task_updates' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Remove all task updates more than 30 days old.",
+          "text": "Delete old task updates",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.task_update_views.delete_old_task_updates"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "view_task_updates",
+          "args_raw": [],
+          "href_expr": "{% url 'view_task_updates' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Show trace output from C-LARA tasks produced during the last hour.",
+          "text": "Recent task updates",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.task_update_views.view_task_updates"
+        }
+      ]
     }
   ],
   "clara_app/text_questionnaire_views.py": [
@@ -2099,7 +3217,45 @@
           "tq_fill assumes a project exists on the linked book or its content; missing project associations will break per-page phase.",
           "ensure_q_pages_ready/load_q_page_assets rely on external rendering utilities; failures are caught only broadly and may mask underlying issues, with printed debug statements left in production."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "tq_create",
+          "args_raw": [],
+          "href_expr": "{% url 'tq_create' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Create and post a new text questionnaire",
+          "text": "Create text questionnaire",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.text_questionnaire_views.tq_create"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "tq_my_list",
+          "args_raw": [],
+          "href_expr": "{% url 'tq_my_list' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Find posted text questionnaires",
+          "text": "My text questionnaires",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.text_questionnaire_views.tq_my_list"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "tq_public_list",
+          "args_raw": [],
+          "href_expr": "{% url 'tq_public_list' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Edit text questionnaires I have created",
+          "text": "Find posted text questionnaires",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.text_questionnaire_views.tq_public_list"
+        }
+      ]
     }
   ],
   "clara_app/update_feed_views.py": [
@@ -2153,7 +3309,21 @@
           "The module defines a config variable and logger but does not use them, suggesting incomplete or stale code.",
           "If get_user_config or current_friends_of_user fails or performs expensive queries, the feed view may error or be slow without handling."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "update_feed",
+          "args_raw": [],
+          "href_expr": "{% url 'update_feed' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Get a summary of recent C-LARA activity from you and your friends.",
+          "text": "Update feed",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.update_feed_views.update_feed"
+        }
+      ]
     }
   ],
   "clara_app/user_config_views.py": [
@@ -2208,7 +3378,21 @@
           "If `get_user_config(request.user)` does not include a `clara_version` key or raises an error, the view will fail when rendering.",
           "On invalid form submissions, no error handling or messages are provided; the form is simply re-rendered."
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "user_config",
+          "args_raw": [],
+          "href_expr": "{% url 'user_config' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Specify the GPT-4 model you want to use, optionally give an API key, and edit other related parameters.",
+          "text": "Edit configuration information",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.user_config_views.user_config"
+        }
+      ]
     }
   ],
   "clara_app/users_and_friends_views.py": [
@@ -2263,7 +3447,33 @@
           "Unused configuration and logger variables suggest leftover or incomplete instrumentation",
           "No handling for unexpected sort parameters beyond defaulting to date joined ordering"
         ]
-      }
+      },
+      "ui_entrypoints": [
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "list_users",
+          "args_raw": [],
+          "href_expr": "{% url 'list_users' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Show all users. You can send friend requests to users with public profiles.",
+          "text": "Users",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.users_and_friends_views.list_users"
+        },
+        {
+          "attached_at": "2025-12-27T05:21:48.748505+00:00",
+          "url_name": "friends",
+          "args_raw": [],
+          "href_expr": "{% url 'friends' %}",
+          "element": "a",
+          "attr": "href",
+          "title": "Show friends and outstanding friend requests.",
+          "text": "Friends",
+          "template_repo_path": "clara_app/templates/clara_app/base.html",
+          "callable": "clara_app.users_and_friends_views.friends"
+        }
+      ]
     }
   ],
   "clara_app/clara_acknowledgements.py": [
@@ -2518,8 +3728,8 @@
         "estimated_cost_usd": 0.02511625
       },
       "analysis": {
-        "proposed_docstring": "Utility classes and helpers for representing and rendering C\u2011LARA texts. Defines the core ContentElement/Segment/Page/Text hierarchy with methods to produce annotated text views and serialize to and from JSON. Also includes ancillary types for images, API call logging, diff elements, escaping helpers, and a set of custom exception types used elsewhere in the project.",
-        "short_summary": "This module implements the core in\u2011memory model for C\u2011LARA texts, including content elements, segments, pages, and full texts with language metadata. It provides rendering routines for various annotation views, JSON serialization/deserialization, and convenience accessors. Additional classes cover image metadata, API call records, diff elements, and custom exceptions, alongside escaping utilities.",
+        "proposed_docstring": "Utility classes and helpers for representing and rendering C‑LARA texts. Defines the core ContentElement/Segment/Page/Text hierarchy with methods to produce annotated text views and serialize to and from JSON. Also includes ancillary types for images, API call logging, diff elements, escaping helpers, and a set of custom exception types used elsewhere in the project.",
+        "short_summary": "This module implements the core in‑memory model for C‑LARA texts, including content elements, segments, pages, and full texts with language metadata. It provides rendering routines for various annotation views, JSON serialization/deserialization, and convenience accessors. Additional classes cover image metadata, API call records, diff elements, and custom exceptions, alongside escaping utilities.",
         "key_responsibilities": [
           "Model text structure as ContentElement, Segment, Page, and Text objects with annotations and counts",
           "Render text in multiple annotation modes and produce concatenated or segmented representations",
@@ -2637,7 +3847,7 @@
         "estimated_cost_usd": 0.01955625
       },
       "analysis": {
-        "proposed_docstring": "Utilities for managing and reviewing community feedback on coherent images, elements, and style within a project. This module loads and persists per\u2011page/element/style feedback JSON files, aggregates votes, advice, variant requests, and computes preferred images or descriptions based on human and AI scoring. It provides helper functions to present condensed overview and description information for content manager review, register new votes or advice, update AI votes by scoring generated images asynchronously, and query or modify outstanding feedback requests. All operations interact directly with the filesystem rather than Django models or templates, and rely on supporting utilities to read project content and compute AI scores.",
+        "proposed_docstring": "Utilities for managing and reviewing community feedback on coherent images, elements, and style within a project. This module loads and persists per‑page/element/style feedback JSON files, aggregates votes, advice, variant requests, and computes preferred images or descriptions based on human and AI scoring. It provides helper functions to present condensed overview and description information for content manager review, register new votes or advice, update AI votes by scoring generated images asynchronously, and query or modify outstanding feedback requests. All operations interact directly with the filesystem rather than Django models or templates, and rely on supporting utilities to read project content and compute AI scores.",
         "short_summary": "This module encapsulates logic for reading, writing, and aggregating community feedback on generated images, elements, and style in a project. It supports registering votes, advice, and variant requests, computing preferred images/descriptions, and updating AI votes based on automated scoring of image directories. Helper functions assemble feedback for content manager review and manage outstanding requests. Data is stored in JSON files within the project directory and accessed via utility functions, with asynchronous image enumeration invoked synchronously via asyncio.run.",
         "key_responsibilities": [
           "Load and save community feedback JSON files for pages, elements, and style, including votes, advice, comments, and variant requests.",
@@ -2698,7 +3908,7 @@
         "estimated_cost_usd": 0.016532500000000002
       },
       "analysis": {
-        "proposed_docstring": "Utility module for evaluating how well generated images match story text, combining human ratings with automated GPT-based interpretations and scoring. It provides an interactive CLI to collect human evaluations across a project\u2019s page/image hierarchy, async workflows to interpret images and assess their fit using specified prompt templates, and tools to analyze agreement between human and AI scores. Additional helpers produce correlation statistics and render HTML reports summarizing evaluations and associated cost information.",
+        "proposed_docstring": "Utility module for evaluating how well generated images match story text, combining human ratings with automated GPT-based interpretations and scoring. It provides an interactive CLI to collect human evaluations across a project’s page/image hierarchy, async workflows to interpret images and assess their fit using specified prompt templates, and tools to analyze agreement between human and AI scores. Additional helpers produce correlation statistics and render HTML reports summarizing evaluations and associated cost information.",
         "short_summary": "This module orchestrates human and AI evaluation of generated images against story text. It lets users rate images interactively, runs async GPT-powered interpretation and fit scoring for those images, and augments human evaluations with AI results. It also computes agreement metrics and can generate an HTML report of the evaluations.",
         "key_responsibilities": [
           "Iterate over project pages and images to collect human scores and comments, persisting them to JSON with resume support.",
@@ -2934,7 +4144,7 @@
         "estimated_cost_usd": 0.04403875
       },
       "analysis": {
-        "proposed_docstring": "Module providing the GPT\u20114 driven annotation pipeline for CLARA texts. It orchestrates two-phase segmentation, glossing, lemmatization, pinyin, MWE tagging and translation by building prompt templates, dispatching asynchronous calls to ChatGPT, parsing and repairing responses, and merging annotations back into internalized text structures. The functions expose high-level entry points to generate or improve annotated versions of texts, handle chunking and parallelization, and post task updates via callbacks. It also includes utilities for validating and normalizing pre-segmentation, handling MWEs, and constructing example-based prompts from template repositories.",
+        "proposed_docstring": "Module providing the GPT‑4 driven annotation pipeline for CLARA texts. It orchestrates two-phase segmentation, glossing, lemmatization, pinyin, MWE tagging and translation by building prompt templates, dispatching asynchronous calls to ChatGPT, parsing and repairing responses, and merging annotations back into internalized text structures. The functions expose high-level entry points to generate or improve annotated versions of texts, handle chunking and parallelization, and post task updates via callbacks. It also includes utilities for validating and normalizing pre-segmentation, handling MWEs, and constructing example-based prompts from template repositories.",
         "short_summary": "This module coordinates GPT-4 based annotation of texts, including segmentation, glossing, lemmatization, pinyin, MWE tagging, and translation. It builds prompts from templates, chunks work for async calls to GPT-4, parses and repairs model responses, and merges annotations back into internal content structures. The code includes utilities for pre-segmentation validation, handling MWEs, and template/example generation.",
         "key_responsibilities": [
           "Provide high-level functions to generate or improve segmented, glossed, tagged, translated, pinyin, and MWE-tagged versions of texts.",
@@ -3145,8 +4355,8 @@
         "estimated_cost_usd": 0.021804999999999998
       },
       "analysis": {
-        "proposed_docstring": "Utilities for aligning grapheme strings to phoneme sequences using CLARA lexical resources. It exposes an entry point that consults existing alignments or derives them via a dynamic programming algorithm that leverages known grapheme\u2013phoneme mappings, configurable encoding, and cost heuristics. The module also contains the low-level DP expansion functions and simple tracing toggles to help debug alignment behavior.",
-        "short_summary": "This module implements grapheme\u2013phoneme alignment logic against provided lexical resources. It will reuse existing aligned entries, otherwise compute an alignment using a costed dynamic programming search over possible grapheme/phoneme segments. The code supports different phoneme encodings, collects guessed alignments optionally, and includes simple debug tracing.",
+        "proposed_docstring": "Utilities for aligning grapheme strings to phoneme sequences using CLARA lexical resources. It exposes an entry point that consults existing alignments or derives them via a dynamic programming algorithm that leverages known grapheme–phoneme mappings, configurable encoding, and cost heuristics. The module also contains the low-level DP expansion functions and simple tracing toggles to help debug alignment behavior.",
+        "short_summary": "This module implements grapheme–phoneme alignment logic against provided lexical resources. It will reuse existing aligned entries, otherwise compute an alignment using a costed dynamic programming search over possible grapheme/phoneme segments. The code supports different phoneme encodings, collects guessed alignments optionally, and includes simple debug tracing.",
         "key_responsibilities": [
           "Provide find_grapheme_phoneme_alignment_using_lexical_resources to fetch an existing aligned entry or compute one from phonetic representations and resource mappings.",
           "Implement dp_phonetic_align and helper functions to perform cost-based dynamic programming over letters and phoneme lists, including handling different encodings and known alignments.",
@@ -3174,10 +4384,10 @@
         "estimated_cost_usd": 0.01810125
       },
       "analysis": {
-        "proposed_docstring": "Utilities for accessing and processing grapheme\u2013phoneme resources backed by the ORM phonetic lexicon repository. The module orchestrates retrieval of encoding, plain and aligned lexicon entries for a language or set of words, builds an internalised alignment structure, and exposes helper accessors for consumers of those resources. It includes functions to strip accents from phonetic strings and to parse phoneme strings, combining diacritics appropriately, while posting task progress updates via an optional callback.",
-        "short_summary": "This module wraps the ORM phonetic lexicon repository to gather grapheme\u2013phoneme resources. It fetches encoding, plain and aligned entries for a given language/word set and builds an internalised alignment map for downstream use. Helper functions strip accents and parse phoneme strings with diacritics, and can emit progress updates via callbacks.",
+        "proposed_docstring": "Utilities for accessing and processing grapheme–phoneme resources backed by the ORM phonetic lexicon repository. The module orchestrates retrieval of encoding, plain and aligned lexicon entries for a language or set of words, builds an internalised alignment structure, and exposes helper accessors for consumers of those resources. It includes functions to strip accents from phonetic strings and to parse phoneme strings, combining diacritics appropriately, while posting task progress updates via an optional callback.",
+        "short_summary": "This module wraps the ORM phonetic lexicon repository to gather grapheme–phoneme resources. It fetches encoding, plain and aligned entries for a given language/word set and builds an internalised alignment map for downstream use. Helper functions strip accents and parse phoneme strings with diacritics, and can emit progress updates via callbacks.",
         "key_responsibilities": [
-          "Check availability of grapheme\u2013phoneme resources for a given language via the phonetic lexicon repository.",
+          "Check availability of grapheme–phoneme resources for a given language via the phonetic lexicon repository.",
           "Fetch phonetic encoding, plain lexicon entries, aligned entries, and internalised aligned lexicon data for specific words and languages.",
           "Merge new plain entries into existing resource dictionaries and provide accessors for looking up entries within a resource bundle.",
           "Normalize phonetic strings by removing accent markers and parse phoneme strings into lists, combining IPA diacritics appropriately."
@@ -3290,8 +4500,8 @@
         "estimated_cost_usd": 0.013327499999999999
       },
       "analysis": {
-        "proposed_docstring": "Utilities for converting externally formatted text into Clara's internal Text/Page/Segment/ContentElement structures. The main entry point, internalize_text, splits an input string into pages and segments, parses words, markup and annotations for various text types (plain, segmented, glossed, lemma-tagged, multi\u2011word expressions, translated), and constructs annotated objects from clara_classes. Helper routines handle the different segment formats, escape-aware splitting, and validation of regex parsing, raising InternalisationError when content cannot be consumed.",
-        "short_summary": "This module parses raw text annotated in Clara's expected markup into Text, Page, Segment and ContentElement instances. It splits input into pages and segments, then interprets words, markup, multi\u2011word expressions and gloss/tag annotations depending on the supplied text type. Errors in parsing are signaled via InternalisationError.",
+        "proposed_docstring": "Utilities for converting externally formatted text into Clara's internal Text/Page/Segment/ContentElement structures. The main entry point, internalize_text, splits an input string into pages and segments, parses words, markup and annotations for various text types (plain, segmented, glossed, lemma-tagged, multi‑word expressions, translated), and constructs annotated objects from clara_classes. Helper routines handle the different segment formats, escape-aware splitting, and validation of regex parsing, raising InternalisationError when content cannot be consumed.",
+        "short_summary": "This module parses raw text annotated in Clara's expected markup into Text, Page, Segment and ContentElement instances. It splits input into pages and segments, then interprets words, markup, multi‑word expressions and gloss/tag annotations depending on the supplied text type. Errors in parsing are signaled via InternalisationError.",
         "key_responsibilities": [
           "Provide internalize_text to split input text into pages and segments and build Text/Page objects with annotations.",
           "Parse segment content into ContentElement lists for plain/segmented, glossed/tagged, translated, and MWE formats.",
@@ -3350,7 +4560,7 @@
       },
       "analysis": {
         "proposed_docstring": "Internal utility module defining the CLARAProjectInternal class, which orchestrates the lifecycle of a C-LARA project. It manages project directories, text version files, metadata, and archiving, and wraps calls to ChatGPT and other NLP/TTS/image services to generate, improve, align, and annotate multimodal texts. It also merges annotations, internalises text objects, renders static HTML output (including phonetic variants), handles audio metadata and human alignments, and integrates coherent image generation/storage via an image repository. The class provides helper methods to clone projects, manage images and descriptions, and bridge to asynchronous coherent image workflows.",
-        "short_summary": "Encapsulates project-level storage and processing for C-LARA content, handling text versions, metadata, and annotations. Provides methods to generate, improve, align, and merge textual annotations, render annotated HTML, and manage audio and image assets. Acts as a fa\u00e7ade over numerous external components (ChatGPT, TTS, TreeTagger, coherent image workflows) to build multimodal language-learning materials.",
+        "short_summary": "Encapsulates project-level storage and processing for C-LARA content, handling text versions, metadata, and annotations. Provides methods to generate, improve, align, and merge textual annotations, render annotated HTML, and manage audio and image assets. Acts as a façade over numerous external components (ChatGPT, TTS, TreeTagger, coherent image workflows) to build multimodal language-learning materials.",
         "key_responsibilities": [
           "Create, load, save, archive, and delete project text versions with associated metadata",
           "Internalise and merge annotated texts (segmented, glossed, lemma, pinyin, translation, MWE) and produce rendered HTML outputs",
@@ -3475,18 +4685,18 @@
         "estimated_cost_usd": 0.02173375
       },
       "analysis": {
-        "proposed_docstring": "Utilities for handling multi\u2011word expressions (MWEs) within the internal text model, including simplifying MWE\u2011tagged input, locating MWEs within segments, annotating content elements with MWE metadata, and validating consistency of gloss or lemma annotations across MWE components. Functions operate on page/segment/content element structures produced by internalize_text and report errors via MWEError, optionally posting task updates asynchronously.",
-        "short_summary": "This module provides helper functions for processing multi\u2011word expressions in the internal text representation. It can internalize and simplify MWE\u2011tagged text, find the positions of MWEs within content elements, and annotate those elements with MWE identifiers, text, and lengths. It also checks that gloss or lemma annotations are consistent across all parts of an MWE, raising MWEError and optionally posting async updates on discrepancies.",
+        "proposed_docstring": "Utilities for handling multi‑word expressions (MWEs) within the internal text model, including simplifying MWE‑tagged input, locating MWEs within segments, annotating content elements with MWE metadata, and validating consistency of gloss or lemma annotations across MWE components. Functions operate on page/segment/content element structures produced by internalize_text and report errors via MWEError, optionally posting task updates asynchronously.",
+        "short_summary": "This module provides helper functions for processing multi‑word expressions in the internal text representation. It can internalize and simplify MWE‑tagged text, find the positions of MWEs within content elements, and annotate those elements with MWE identifiers, text, and lengths. It also checks that gloss or lemma annotations are consistent across all parts of an MWE, raising MWEError and optionally posting async updates on discrepancies.",
         "key_responsibilities": [
-          "Internalize MWE\u2011tagged text and emit a minimal MWE representation suitable for further processing or display.",
+          "Internalize MWE‑tagged text and emit a minimal MWE representation suitable for further processing or display.",
           "Determine positions of MWE token sequences within segments or content element lists, choosing an ordered combination of indices.",
           "Annotate content elements in segments with MWE identifiers, reconstructed MWE text, and lengths based on detected positions.",
           "Validate that gloss or lemma annotations are consistent across all elements of an MWE, posting asynchronous task updates and raising errors when mismatches are detected."
         ],
         "potential_issues": [
           "The callback arguments in several functions are unused or commented out, so progress/error reporting may not occur as intended.",
-          "simplify_mwe_tagged_text currently ignores the provided languages by hardcoding them as 'irrelevant', which may affect language\u2011specific processing.",
-          "Finding MWE positions relies solely on string equality and chooses the first minimal\u2011distance combination; ambiguous MWEs with repeated tokens may not be resolved deterministically.",
+          "simplify_mwe_tagged_text currently ignores the provided languages by hardcoding them as 'irrelevant', which may affect language‑specific processing.",
+          "Finding MWE positions relies solely on string equality and chooses the first minimal‑distance combination; ambiguous MWEs with repeated tokens may not be resolved deterministically.",
           "check_mwes_are_consistently_annotated filters content elements by type before index lookup; if positions were computed on a differently filtered list, indices may not align.",
           "The removal of 'analysis' annotations is commented out in simplify_mwe_tagged_text, so extraneous annotation data may persist unless handled elsewhere."
         ]
@@ -3625,11 +4835,11 @@
         "estimated_cost_usd": 0.022398750000000002
       },
       "analysis": {
-        "proposed_docstring": "Utilities for turning internally segmented text into a phonetic representation using available grapheme\u2013phoneme resources, phonetic orthographies, and external guesses. The module orchestrates loading phonetic orthography data, grapheme-to-phoneme lexica, and calls out to ChatGPT-4 to fill in missing entries, then walks a Text/Page/Segment/ContentElement structure to annotate words with aligned phonetic strings. It includes helper routines for alignment, normalization, and decomposing phonetically spelled languages into annotated segments.",
-        "short_summary": "This module converts segmented text objects into phonetic text by aligning graphemes with phonemes using available resources. It can use phonetic orthography definitions, grapheme\u2013phoneme alignment resources, and external ChatGPT guesses to build phonetic annotations for each word, preserving structure and casing. Helpers handle normalization, decomposition of phonetically spelled languages, and tracking guessed entries.",
+        "proposed_docstring": "Utilities for turning internally segmented text into a phonetic representation using available grapheme–phoneme resources, phonetic orthographies, and external guesses. The module orchestrates loading phonetic orthography data, grapheme-to-phoneme lexica, and calls out to ChatGPT-4 to fill in missing entries, then walks a Text/Page/Segment/ContentElement structure to annotate words with aligned phonetic strings. It includes helper routines for alignment, normalization, and decomposing phonetically spelled languages into annotated segments.",
+        "short_summary": "This module converts segmented text objects into phonetic text by aligning graphemes with phonemes using available resources. It can use phonetic orthography definitions, grapheme–phoneme alignment resources, and external ChatGPT guesses to build phonetic annotations for each word, preserving structure and casing. Helpers handle normalization, decomposition of phonetically spelled languages, and tracking guessed entries.",
         "key_responsibilities": [
           "Internalize segmented text and derive available phonetic resources for a given L2 language",
-          "Fetch or guess missing grapheme\u2013phoneme entries (including via ChatGPT-4) and augment resources",
+          "Fetch or guess missing grapheme–phoneme entries (including via ChatGPT-4) and augment resources",
           "Convert Text/Page/Segment structures into phonetic counterparts with aligned grapheme and phoneme components annotated on word elements",
           "Provide alignment routines for both lexicon-based and phonetically spelled languages, including normalization and casing transfer"
         ],
@@ -3655,11 +4865,11 @@
         "estimated_cost_usd": 0.00895375
       },
       "analysis": {
-        "proposed_docstring": "Utility helpers for phonetic processing that expose a single convenience check for language-specific resources. It bridges between phonetic orthography resources and grapheme\u2013phoneme resources, allowing callers to test if either set is available for a given L2 language code. The module pulls in the underlying repository and availability functions from their respective resource modules.",
-        "short_summary": "This module provides a simple utility to determine if phonetic resources are available for a given L2 language. It delegates to checks for both phonetic orthography and grapheme\u2013phoneme resources and returns true if either is present. It imports the underlying repository class and availability functions from companion modules.",
+        "proposed_docstring": "Utility helpers for phonetic processing that expose a single convenience check for language-specific resources. It bridges between phonetic orthography resources and grapheme–phoneme resources, allowing callers to test if either set is available for a given L2 language code. The module pulls in the underlying repository and availability functions from their respective resource modules.",
+        "short_summary": "This module provides a simple utility to determine if phonetic resources are available for a given L2 language. It delegates to checks for both phonetic orthography and grapheme–phoneme resources and returns true if either is present. It imports the underlying repository class and availability functions from companion modules.",
         "key_responsibilities": [
           "Check whether phonetic orthography resources exist for a given target language",
-          "Check whether grapheme\u2013phoneme resources exist for a given target language",
+          "Check whether grapheme–phoneme resources exist for a given target language",
           "Provide a consolidated phonetic_resources_are_available helper that returns true if either resource type is available"
         ],
         "potential_issues": [
@@ -3682,7 +4892,7 @@
         "estimated_cost_usd": 0.014885
       },
       "analysis": {
-        "proposed_docstring": "Utilities for managing per-language prompt templates and example data used by CLARA\u2019s annotation workflows. The module encapsulates a repository of template and example files on disk, providing methods to load or save current versions, archive previous versions, and maintain metadata about changes. It also provides a suite of validation routines to ensure templates and example data are structurally well-formed for various annotation types and operations before they are persisted. File and content checks leverage internal parsing utilities to guard against malformed inputs and raise informative TemplateError exceptions.",
+        "proposed_docstring": "Utilities for managing per-language prompt templates and example data used by CLARA’s annotation workflows. The module encapsulates a repository of template and example files on disk, providing methods to load or save current versions, archive previous versions, and maintain metadata about changes. It also provides a suite of validation routines to ensure templates and example data are structurally well-formed for various annotation types and operations before they are persisted. File and content checks leverage internal parsing utilities to guard against malformed inputs and raise informative TemplateError exceptions.",
         "short_summary": "This module implements a prompt template repository that stores and retrieves language-specific templates and example data, archiving older versions and tracking metadata. It validates template content and example lists for different annotation types and operations before loading or saving them. Helper functions parse annotated strings and enforce required placeholders in templates.",
         "key_responsibilities": [
           "Manage storage locations for prompt templates and example files per language, ensuring directories exist.",
@@ -3964,7 +5174,7 @@
           "Offer forms for AI-assisted text workflows (generation, segmentation, annotation, translation, glossing, lemma/MWE/pinyin tagging) with RTL handling and archived version selection.",
           "Define image generation/description forms (including coherent images v2 parameters), audio metadata forms, and bulk formsets for image/audio items.",
           "Expose activity, rating/comment, search, voting, and registration forms for issue tracking-like activities.",
-          "Manage lexicon and phonetic/audio resources through language-master\u2013filtered forms and formsets for grapheme/phoneme entries and alignment.",
+          "Manage lexicon and phonetic/audio resources through language-master–filtered forms and formsets for grapheme/phoneme entries and alignment.",
           "Collect funding requests, approval inputs, satisfaction questionnaires, and text questionnaire definitions with custom validation."
         ],
         "potential_issues": [
@@ -3990,8 +5200,8 @@
         "estimated_cost_usd": 0.012571249999999999
       },
       "analysis": {
-        "proposed_docstring": "Utility functions to convert HTML content into readable plain text. Chooses an available BeautifulSoup parser, strips non-content and UI elements, expands ruby annotations, and reconstructs text either by token-aware joining of C\u2011LARA segments or by fallback extraction. Normalises punctuation spacing, whitespace, and HTML entities to produce clean text output.",
-        "short_summary": "Provides helpers for converting HTML to plain text with C\u2011LARA-specific heuristics. It selects an available BeautifulSoup parser, removes unwanted elements, expands ruby tags, and assembles text from segmented word spans when present. Whitespace and punctuation spacing are tidied before returning unescaped text.",
+        "proposed_docstring": "Utility functions to convert HTML content into readable plain text. Chooses an available BeautifulSoup parser, strips non-content and UI elements, expands ruby annotations, and reconstructs text either by token-aware joining of C‑LARA segments or by fallback extraction. Normalises punctuation spacing, whitespace, and HTML entities to produce clean text output.",
+        "short_summary": "Provides helpers for converting HTML to plain text with C‑LARA-specific heuristics. It selects an available BeautifulSoup parser, removes unwanted elements, expands ruby tags, and assembles text from segmented word spans when present. Whitespace and punctuation spacing are tidied before returning unescaped text.",
         "key_responsibilities": [
           "Pick an appropriate BeautifulSoup parser backend from installed options.",
           "Strip headers, footers, scripts, and other non-content elements from a scoped portion of HTML.",
@@ -4004,7 +5214,7 @@
           "If neither lxml nor html5lib are installed, parsing falls back to the less robust html.parser.",
           "The CSS selectors used to strip elements might remove content if class or tag names overlap with actual text.",
           "Token-joining heuristics may not cover all punctuation or language-specific spacing rules.",
-          "Assumes C\u2011LARA-specific .segment and .word structure; content lacking these may be handled by a less precise fallback."
+          "Assumes C‑LARA-specific .segment and .word structure; content lacking these may be handled by a less precise fallback."
         ]
       }
     }
@@ -4050,8 +5260,8 @@
         "estimated_cost_usd": 0.0221125
       },
       "analysis": {
-        "proposed_docstring": "This module defines the core Django ORM models for the C\u2011LARA application, covering user profiles and social features, community membership, project lifecycle and permissions, content metadata, audio/image handling, questionnaires, activities, and assorted utility records. It encapsulates relationships between users, language and localization resources, projects and their rendered outputs, along with methods for URL resolution, password protection, and freshness checks on generated archives. Additional models capture ratings, comments, reading history, funding requests, API call logging, asynchronous task updates, phonetic lexica, and text/image questionnaires. Helper methods interact with filesystem utilities for managing rendered project artifacts and zips, and with Django\u2019s auth and contenttypes frameworks for permissions and generic relations.",
-        "short_summary": "Defines the database schema for users, projects, content, and community interactions in the C\u2011LARA app. Models cover social features, localization, project assets and permissions, activity tracking, questionnaires, and multimedia metadata. Includes helper methods for generating URLs, zip paths, and password handling on protected content. Some utilities interact with the filesystem and async task updates.",
+        "proposed_docstring": "This module defines the core Django ORM models for the C‑LARA application, covering user profiles and social features, community membership, project lifecycle and permissions, content metadata, audio/image handling, questionnaires, activities, and assorted utility records. It encapsulates relationships between users, language and localization resources, projects and their rendered outputs, along with methods for URL resolution, password protection, and freshness checks on generated archives. Additional models capture ratings, comments, reading history, funding requests, API call logging, asynchronous task updates, phonetic lexica, and text/image questionnaires. Helper methods interact with filesystem utilities for managing rendered project artifacts and zips, and with Django’s auth and contenttypes frameworks for permissions and generic relations.",
+        "short_summary": "Defines the database schema for users, projects, content, and community interactions in the C‑LARA app. Models cover social features, localization, project assets and permissions, activity tracking, questionnaires, and multimedia metadata. Includes helper methods for generating URLs, zip paths, and password handling on protected content. Some utilities interact with the filesystem and async task updates.",
         "key_responsibilities": [
           "Model user-related data such as profiles, friend requests, configurations, language mastery, and social updates",
           "Represent projects, their permissions, acknowledgements, formatting preferences, audio/image info, and rendered outputs",
@@ -4062,7 +5272,7 @@
         ],
         "potential_issues": [
           "Duplicate import of django.db.models is redundant",
-          "CLARAProject.zip_is_fresh silently returns False on any exception and doesn\u2019t check for missing rendered output dirs, which could mask errors",
+          "CLARAProject.zip_is_fresh silently returns False on any exception and doesn’t check for missing rendered output dirs, which could mask errors",
           "Content.url will return external_url even if None when no project is set; callers may need to handle missing URLs",
           "Content.check_password returns True when no password_hash is set, which may be unintended if protection was expected",
           "ReadingHistory.add_project/remove_project rely on projects_through queries; concurrency or missing orders could lead to incorrect ordering",
