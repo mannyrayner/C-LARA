@@ -33,14 +33,25 @@ def _load_prices() -> Dict[str, Any]:
         return {"models": {}}
     return json.loads(PRICES_PATH.read_text(encoding="utf-8"))
 
-
-def estimate_cost_usd(model: str, prompt_tokens: int, completion_tokens: int) -> float:
+def estimate_cost_usd(
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    tier: str = "standard",
+) -> float:
     prices = _load_prices().get("models", {})
-    info = prices.get(model)
-    if not info:
+    model_info = prices.get(model)
+    if not model_info:
         return 0.0
-    in_rate = info.get("input") or info.get("prompt") or 0.0
-    out_rate = info.get("output") or info.get("completion") or 0.0
+
+    # Pick the requested tier, else fall back sensibly
+    tier_info = model_info.get(tier) or model_info.get("standard") or model_info.get("unknown")
+    if not tier_info:
+        return 0.0
+
+    in_rate = tier_info.get("input") or tier_info.get("prompt") or 0.0
+    out_rate = tier_info.get("output") or tier_info.get("completion") or 0.0
+
     return (prompt_tokens * float(in_rate) + completion_tokens * float(out_rate)) / 1_000_000.0
 
 
