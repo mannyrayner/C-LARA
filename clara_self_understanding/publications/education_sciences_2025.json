@@ -1,6 +1,6 @@
 {
   "publication_id": "education_sciences_2025",
-  "created_at": "2025-12-29T01:28:28.983641+00:00",
+  "created_at": "2025-12-29T10:18:51.292755+00:00",
   "source_zip": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\overleaf_zips\\EducationSciences2025FinalVersion.zip",
   "source_zip_sha256": "30146ee950ca0a1b734c823a075c12d10ed44220060aa6051e07c9422e99d3f3",
   "root_tex": "education-3979957.tex",
@@ -17,78 +17,45 @@
       "plain_text_len": 7886,
       "plain_text_excerpt": "Introduction\nsec:intro\n\nWell-designed digital picture books, supported by affordances such as page-aligned audio/voice reading, can be effective tools for enhancing vocabulary and story comprehension [CITE:TunkielBus2022]. In today’s digital environment, platforms that provide free access to multilingual digital books further increase opportunities for exposure, particularly when voice options are available [CITE:BusBroekhofVaessen2023]. Importantly, recent work indicates that picture books are not limited to children’s learning contexts but can also benefit adult learners: [CITE:LeowShaari2025] argue that picture books can play a valuable role in adult foreign-language learning by providing simple, engaging, context-rich materials that reduce culture shock and build confidence. Relative to adult literature, picture books typically use accessible language, predictable structures, and mea…",
       "analysis": {
-        "section_summary": "The introduction motivates the use of illustrated digital picture books with aligned audio as effective multimodal resources for vocabulary and comprehension, noting benefits for both children and adult L2 learners. It reviews evidence that combining text, images, and audio enhances learning and argues images must be purposeful and culturally appropriate. The paper poses the practical question of how close current GenAI tools are to producing ready-to-use, tailored picture books that meet three requirements: page-accurate, coherent imagery; reliable linguistic support with glosses and multi-word expressions; and pedagogical fit to learner profiles. Using the open-source C-LARA platform, it outlines planned case studies (mainly English with Chinese glosses, plus French, Ukrainian, and a German pilot) to evaluate outputs and estimate remaining human effort, framed by research questions and contributions on workflow, annotation quality, and demographic tailoring.",
+        "section_summary": "The introduction argues that multimodal, illustrated digital picture books—combining text, images, and audio—are effective for vocabulary and comprehension across age groups, including adult L2 learners. Research shows visuals aid meaning-making and memory, and images should be culturally appropriate rather than decorative. Three non-negotiable classroom needs are coherent, page-aligned illustrations, reliable linguistic support (glosses, translations, MWEs), and tailoring to learner profiles. The paper explores how close current GenAI tools and the C-LARA platform come to delivering such tailored picture books via case studies, outlining research questions on content quality, required human effort, and pedagogical fit, and summarizing initial findings across language pairs.",
         "relevant_views": [
           {
             "url_name": "simple_clara",
-            "confidence": 0.68,
-            "rationale": "The intro highlights an end-to-end, teacher/self-learner-operable workflow for generating AI-illustrated picture books; the Simple C-LARA wizard is the primary entry point for creating texts, images, and renderings."
+            "confidence": 0.34,
+            "rationale": "The introduction highlights an end-to-end workflow for teachers/self-learners to generate AI-illustrated, annotated picture books, which is what the Simple C-LARA wizard orchestrates."
           },
           {
             "url_name": "edit_images_v2",
-            "confidence": 0.62,
-            "rationale": "Image coherence and page-aligned illustration are core requirements; this view manages coherent image generation and configuration for CLARA projects."
-          },
-          {
-            "url_name": "coherent_images_v2_monitor",
-            "confidence": 0.55,
-            "rationale": "Monitoring coherent image generation aligns with the need for consistent visual style and page alignment emphasized in the introduction."
+            "confidence": 0.31,
+            "rationale": "Page-aligned, coherent, culturally appropriate illustrations are a key requirement; this view manages per-page coherent image generation and style consistency within CLARA projects."
           },
           {
             "url_name": "create_glossed_text",
-            "confidence": 0.6,
-            "rationale": "Reliable glosses are a stated requirement; this view creates glossed text versions within CLARA projects."
-          },
-          {
-            "url_name": "create_mwe_tagged_text",
-            "confidence": 0.56,
-            "rationale": "Explicit handling of multi-word expressions is highlighted; this endpoint supports MWE-tagged text creation."
-          },
-          {
-            "url_name": "create_translated_text",
-            "confidence": 0.5,
-            "rationale": "Translations are part of the linguistic support needed; this view creates translated text variants."
-          },
-          {
-            "url_name": "create_project",
-            "confidence": 0.47,
-            "rationale": "The workflow starts from creating a project to assemble multimodal books; this endpoint handles project creation in CLARA."
-          },
-          {
-            "url_name": "generate_text_monitor",
-            "confidence": 0.42,
-            "rationale": "The introduction notes GenAI text generation and remaining human effort; monitoring text generation tasks is relevant to that process."
+            "confidence": 0.29,
+            "rationale": "Reliable linguistic support with glosses and handling of expressions is emphasized; this endpoint supports creating glossed text annotations in CLARA projects."
           }
         ],
         "concept_tags": [
           "digital picture books",
           "multimodal learning",
-          "GenAI",
-          "C-LARA platform",
-          "glosses",
+          "page-aligned images",
+          "coherent illustrations",
+          "glossing",
           "translations",
           "multi-word expressions",
-          "image coherence",
-          "page alignment",
           "cultural appropriateness",
           "pedagogical tailoring",
-          "learner profiles",
-          "case studies",
-          "English-Chinese",
-          "French",
-          "Ukrainian",
-          "German",
-          "research questions",
-          "linguistic annotation",
+          "C-LARA platform",
+          "AI-generated content",
           "teacher workflow"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
         "prompt_tokens": 16332,
-        "completion_tokens": 1129,
-        "total_tokens": 17461,
-        "estimated_cost_usd": 0.031705
+        "completion_tokens": 934,
+        "total_tokens": 17266,
+        "estimated_cost_usd": 0.029755
       },
       "has_tex": true
     },
@@ -100,40 +67,41 @@
       "plain_text_len": 4871,
       "plain_text_excerpt": "Positioning Within Prior Work\n\nsec:positioning\n\nTeacher-facing ecosystems.\nClassroom practice already draws on large graded libraries with dashboards (e.g., CommonLit, Raz\\,+), levelled news (Newsela), open repositories of pre-illustrated readers (StoryWeaver), and bring-your-own-text readers with click-to-translate (LingQ, Readlang) [CITE:commonlit_about,razplus_about,newsela_leveler,storyweaver,lingq,readlang]. These ecosystems attest to sustained demand for levelled content, in-context support, and teacher-operable workflows. However, three capabilities remain uncommon: (1) explicit, persistent MWE handling as a teachable unit; (2) per-page illustration for custom teacher-authored texts with cross-page stylistic consistency; and (3) rapid end-to-end tailoring from a teacher brief to a specified demographic\n\n(level + L1 + cultural context).\n\nIn our spot checks (September\n\n2025), Readla…",
       "analysis": {
-        "section_summary": "The section situates C‑LARA against existing teacher‑facing ecosystems and AI language education tools. It notes that platforms like CommonLit, Raz+, Newsela, StoryWeaver, LingQ and Readlang demonstrate demand for levelled content and glossing but typically lack persistent multi‑word expression tagging, per‑page coherent illustrations for teacher‑authored texts, and rapid end‑to‑end tailoring. Reviews of AI in language education highlight broad benefits and cautions but few address multimodal books with auditable linguistic annotation and coherent imagery. C‑LARA targets these less common capabilities and evaluates them through teacher and student feedback.",
+        "section_summary": "The section situates the work among existing teacher-facing reading platforms, noting that while services like CommonLit, Raz+, Newsela, StoryWeaver, LingQ and Readlang offer graded libraries, glosses and pre-illustrated content, they typically lack persistent multiword expression handling, per-page coherent illustration for teacher-authored texts and rapid demographic tailoring. It reviews AI in language education literature, highlighting reported benefits and cautions, and underscores that few tools address multimodal books with auditable linguistic annotation and coherent imagery. The authors target these gaps with workflows supporting page-aligned GenAI illustration, explicit MWE glossing and efficient tailoring, evaluated through small studies.",
         "relevant_views": [
           {
-            "url_name": "create_mwe_tagged_text",
-            "confidence": 0.34,
-            "rationale": "The section highlights explicit, persistent MWE handling and glossing as a distinguishing capability, which maps to views that create multi‑word expression tagged text versions."
+            "url_name": "edit_images_v2",
+            "confidence": 0.38,
+            "rationale": "The section emphasizes coherent per-page GenAI illustration for teacher-authored texts, which aligns with the view for configuring and generating coherent images across pages."
           },
           {
-            "url_name": "edit_images_v2",
-            "confidence": 0.31,
-            "rationale": "Page‑aligned, coherent GenAI illustration across a text is an uncommon capability discussed, corresponding to the image management and generation views for coherent images."
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.35,
+            "rationale": "Addressing explicit, persistent multiword expression handling and glossing maps to the annotation view that creates MWE-tagged versions of texts."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.3,
+            "rationale": "The need for reliable linguistic support with glosses corresponds to the view for creating glossed text versions within a project."
           }
         ],
         "concept_tags": [
           "teacher-facing ecosystems",
-          "levelled content",
+          "graded readers",
           "multi-word expressions",
           "glossing",
-          "GenAI illustration coherence",
-          "demographic tailoring",
-          "AI in language education",
-          "multimodal resources",
-          "reading comprehension",
-          "learner confidence",
-          "reading anxiety",
-          "C-LARA capabilities"
+          "GenAI illustration",
+          "multimodal books",
+          "language learning",
+          "demographic tailoring"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 15581,
-        "completion_tokens": 1251,
-        "total_tokens": 16832,
-        "estimated_cost_usd": 0.03198625
+        "prompt_tokens": 15583,
+        "completion_tokens": 1087,
+        "total_tokens": 16670,
+        "estimated_cost_usd": 0.03034875
       },
       "has_tex": true
     },
@@ -145,19 +113,20 @@
       "plain_text_len": 33,
       "plain_text_excerpt": "Materials and Methods\nsec:methods",
       "analysis": {
-        "section_summary": "This section is titled Materials and Methods but provides no substantive content to summarise.",
+        "section_summary": "This section outlines the materials used and methodological approach of the study.",
         "relevant_views": [],
         "concept_tags": [
-          "materials and methods",
-          "methodology"
+          "materials",
+          "methods",
+          "study design"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
         "prompt_tokens": 14207,
-        "completion_tokens": 175,
-        "total_tokens": 14382,
-        "estimated_cost_usd": 0.01950875
+        "completion_tokens": 311,
+        "total_tokens": 14518,
+        "estimated_cost_usd": 0.02086875
       },
       "has_tex": true
     },
@@ -169,83 +138,103 @@
       "plain_text_len": 9791,
       "plain_text_excerpt": "Platform and Workflow (C--LARA)\nsec:clara\nWe used the open-source ChatGPT\n-based Learning And Reading (C--LARA) platform (https://www.c-lara.org/) to generate multimodal pedagogical picture books.We used the version of C--LARA current in early September 2025, together with the then-current versions of OpenAI’s GPT-5 and GPT-Image-1, accessed via API. In some cases, this meant using the new versions of the platform and models to recompile books created earlier. The platform has only changed minimally between that time and the date of publication of the current paper.\nThe end-to-end workflow comprises four stages: (1) text creation from a brief user-supplied specification (or import of an existing text); (2) automatic linguistic annotation (segmentation into pages and segments; identification of multi-word expressions (MWEs); lemma tagging; segment translations; word/phrase glossing; and a…",
       "analysis": {
-        "section_summary": "The section outlines the end-to-end C‑LARA workflow used to produce multimodal pedagogical picture books in September 2025 with GPT‑5 and GPT‑Image‑1. It starts by creating a project and generating text from a brief user specification or imported text. The text is then automatically linguistically annotated in parallelized stages: page/segment and token segmentation, segment translations, multi‑word expression marking, lemma and POS tagging respecting MWEs, glossing in the L1, and audio tagging via TTS. Image creation follows in three phases—elaborating a style description, identifying and illustrating recurring elements, then generating coherent page‑aligned images. Finally, all assets are compiled into an interactive HTML with audio, translations, and mouseover glosses for web deployment.",
+        "section_summary": "This section outlines how the C–LARA platform (as of Sept 2025) uses GPT-5 and GPT-Image-1 to produce multimodal pedagogical picture books through a four-stage workflow: (1) project setup and text creation from a brief specification (or import), with user review/regeneration; (2) automatic linguistic annotation in parallelized steps—page/segment segmentation and tokenization, translation, multi-word expression marking, lemma and POS tagging, glossing, and audio tagging (via TTS); (3) image creation in three phases—deriving a coherent style, generating recurring visual elements, then producing page-aligned illustrations; and (4) assembling and optionally publishing an interactive HTML version with audio, translations, glosses, and images.",
         "relevant_views": [
           {
-            "url_name": "simple_clara",
-            "confidence": 0.73,
-            "rationale": "Simple C‑LARA orchestrates creation of text, segmentation, image generation, rendering, and posting, mirroring the described four‑stage workflow."
+            "url_name": "create_project",
+            "confidence": 0.76,
+            "rationale": "Supports the initial project setup stage where users specify text and glossing languages before content generation."
           },
           {
-            "url_name": "create_project",
-            "confidence": 0.52,
-            "rationale": "Project creation is the starting point of the workflow where users specify languages and provide or generate text."
+            "url_name": "simple_clara",
+            "confidence": 0.8,
+            "rationale": "Implements the end-to-end wizard for creating text, images, segmentation, rendering, and posting, matching the described four-stage workflow."
+          },
+          {
+            "url_name": "create_plain_text",
+            "confidence": 0.7,
+            "rationale": "Handles creating/editing the base text, aligning with the text generation from a brief specification."
+          },
+          {
+            "url_name": "generate_text_monitor",
+            "confidence": 0.6,
+            "rationale": "Provides monitoring for AI-driven text generation tasks, relevant to creating text from a prompt."
           },
           {
             "url_name": "create_segmented_text",
-            "confidence": 0.58,
-            "rationale": "Handles segmentation of text into pages, segments, and tokens, matching the first annotation stage."
+            "confidence": 0.74,
+            "rationale": "Covers page/segment segmentation and tokenization described in the annotation phase."
           },
           {
             "url_name": "create_translated_text",
-            "confidence": 0.46,
-            "rationale": "Generates segment translations into the glossing language, aligning with the translation step."
+            "confidence": 0.73,
+            "rationale": "Performs segment-level translations into the glossing language as in the workflow."
           },
           {
             "url_name": "create_mwe_tagged_text",
-            "confidence": 0.44,
-            "rationale": "Marks multi‑word expressions in segments as described in the MWE identification stage."
+            "confidence": 0.73,
+            "rationale": "Adds multi-word expression annotations to segments, matching the MWE identification step."
           },
           {
             "url_name": "create_lemma_tagged_text",
-            "confidence": 0.44,
-            "rationale": "Adds lemma and POS information respecting MWEs, corresponding to the lemma tagging stage."
+            "confidence": 0.73,
+            "rationale": "Handles lemma and POS tagging per token/MWE, as described in the annotation pipeline."
           },
           {
             "url_name": "create_glossed_text",
-            "confidence": 0.41,
-            "rationale": "Adds glosses in the glossing language per token/MWE, reflecting the gloss tagging step."
+            "confidence": 0.73,
+            "rationale": "Adds glosses in the L1/glossing language while respecting MWEs, aligning with the gloss tagging stage."
+          },
+          {
+            "url_name": "create_phonetic_text",
+            "confidence": 0.7,
+            "rationale": "Supports attaching phonetic/audio information to words/segments, corresponding to the audio tagging step."
           },
           {
             "url_name": "edit_images_v2",
-            "confidence": 0.65,
-            "rationale": "Provides coherent image generation with style, elements, and page images, matching the image creation phases."
+            "confidence": 0.72,
+            "rationale": "Manages coherent image generation (style, elements, page images) consistent with the described image creation phases."
           },
           {
             "url_name": "coherent_images_v2_monitor",
-            "confidence": 0.36,
-            "rationale": "Monitors asynchronous coherent image generation tasks for style, elements, and pages, relevant to the image workflow."
+            "confidence": 0.64,
+            "rationale": "Monitors asynchronous generation of styles, elements, and page images, reflecting the parallelized image generation workflow."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.64,
+            "rationale": "Provides status for ongoing image generation tasks, relevant to the illustrated image workflow."
           }
         ],
         "concept_tags": [
           "C-LARA",
-          "workflow",
+          "multimodal learning",
           "text generation",
-          "GPT-5",
           "linguistic annotation",
           "segmentation",
+          "tokenization",
           "translation",
           "multi-word expressions",
           "lemma tagging",
           "glossing",
+          "text-to-speech",
           "audio tagging",
-          "TTS",
-          "parallel processing",
           "image generation",
+          "style transfer",
+          "coherent illustrations",
+          "GPT-5",
           "GPT-Image-1",
-          "style description",
-          "elements identification",
-          "page-aligned images",
-          "interactive HTML",
-          "web deployment"
+          "parallel processing",
+          "interactive HTML deployment",
+          "language learning"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 17001,
-        "completion_tokens": 1770,
-        "total_tokens": 18771,
-        "estimated_cost_usd": 0.03895125
+        "prompt_tokens": 17005,
+        "completion_tokens": 1832,
+        "total_tokens": 18837,
+        "estimated_cost_usd": 0.03957625
       },
       "has_tex": true
     },
@@ -257,32 +246,33 @@
       "plain_text_len": 144,
       "plain_text_excerpt": "Materials\nsec:materials\nWe used AI-generated English-language picture books hosted on the C--LARA platform to conduct three qualitative studies.",
       "analysis": {
-        "section_summary": "The study materials consisted of AI-generated English-language picture books hosted on the C-LARA platform, which were used across three qualitative studies.",
+        "section_summary": "The studies used AI-generated English-language picture books available on the C-LARA platform as their primary materials.",
         "relevant_views": [
           {
             "url_name": "content_list",
-            "confidence": 0.33,
-            "rationale": "The materials are described as picture books hosted on the C-LARA platform; the content list view provides access to published C-LARA content such as these books."
+            "confidence": 0.31,
+            "rationale": "The section notes that AI-generated picture books were hosted on the C-LARA platform; the published content list view presents such hosted materials."
           },
           {
             "url_name": "content_detail",
-            "confidence": 0.3,
-            "rationale": "Accessing specific AI-generated picture books on C-LARA would align with the content detail view that displays individual hosted materials."
+            "confidence": 0.28,
+            "rationale": "Accessing specific picture books hosted on C-LARA would align with viewing individual published content items."
           }
         ],
         "concept_tags": [
           "AI-generated picture books",
-          "English-language content",
+          "English-language",
           "C-LARA platform",
-          "qualitative study materials"
+          "qualitative studies",
+          "study materials"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14228,
-        "completion_tokens": 491,
-        "total_tokens": 14719,
-        "estimated_cost_usd": 0.022695
+        "prompt_tokens": 14232,
+        "completion_tokens": 1272,
+        "total_tokens": 15504,
+        "estimated_cost_usd": 0.03051
       },
       "has_tex": true
     },
@@ -294,41 +284,38 @@
       "plain_text_len": 6399,
       "plain_text_excerpt": "Study 1\nsec:study1\nFor Study~1, we triaged 18 candidate books, which had been created at various times and posted on the C-LARA platform. All the books had been created using short prompts, typically of one or two sentences, and were designed for educational or entertainment usage. Table~[REF:tab:candidate-books] presents a hyperlinked list of the candidate books, and triaging was performed with a three-item Likert instrument (Table~[REF:tab:triage-questionnaire]); the six highest-scoring books, those at the bottom of the table, were selected for detailed evaluation together with the three glossing languages French, Ukrainian, and Chinese (Table~[REF:tab:detailed-eval-books]), using\ndistinct teacher and student Likert instruments (see Section~[REF:sec:instruments]).\nThroughout this study, we used 5-point Likert scales ranging from 1 (totally unacceptable/do not agree at all) to 5 (perfec…",
       "analysis": {
-        "section_summary": "Study 1 triaged 18 AI-generated English picture books posted on the C-LARA platform using a three-item 5-point Likert questionnaire to assess language level, engagement and classroom suitability. The top six scoring books were selected for detailed evaluation with teacher and student questionnaires tailored to their differing perspectives, and glossed into French, Ukrainian and Chinese. Tables list the public C-LARA URLs for all candidate books and for the selected titles with their glossed versions.",
+        "section_summary": "Study 1 describes how 18 AI-generated English picture books on the C-LARA platform were rapidly triaged with a 3-item 5-point Likert instrument assessing level, engagement, and suitability. The six highest-scoring titles were retained for detailed evaluation, each with versions glossed in French, Ukrainian, and Chinese. Separate teacher and student Likert questionnaires were used, focusing on parallel constructs of engagement and perceived usefulness while tailoring other items to their distinct perspectives.",
         "relevant_views": [
           {
-            "url_name": "public_content_list",
-            "confidence": 0.66,
-            "rationale": "The study lists and browses candidate C-LARA books via public URLs; this view supports external browsing of published content without login."
+            "url_name": "public_content_detail",
+            "confidence": 0.73,
+            "rationale": "The study references specific publicly accessible C-LARA content items using public_content URLs; this view displays details of such registered content."
           },
           {
-            "url_name": "public_content_detail",
-            "confidence": 0.72,
-            "rationale": "Each book is referenced by its public C-LARA content URL; this view renders the detail page for a publicly posted book."
+            "url_name": "public_content_list",
+            "confidence": 0.55,
+            "rationale": "The triage involved browsing and selecting among multiple publicly posted books on the C-LARA site; the public content list view supports finding and browsing these items."
           }
         ],
         "concept_tags": [
-          "Study 1",
           "AI-generated picture books",
           "C-LARA platform",
-          "public content",
-          "triage",
           "Likert scale",
+          "triage questionnaire",
           "teacher questionnaire",
           "student questionnaire",
-          "French",
-          "Ukrainian",
-          "Chinese",
-          "glossed versions",
-          "evaluation"
+          "engagement",
+          "usefulness",
+          "glossed content",
+          "French Ukrainian Chinese"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 16600,
-        "completion_tokens": 753,
-        "total_tokens": 17353,
-        "estimated_cost_usd": 0.02828
+        "prompt_tokens": 16606,
+        "completion_tokens": 876,
+        "total_tokens": 17482,
+        "estimated_cost_usd": 0.0295175
       },
       "has_tex": true
     },
@@ -340,36 +327,38 @@
       "plain_text_len": 1703,
       "plain_text_excerpt": "Study 2\nsec:study2\nStudy~2 probes C-LARA’s ability to contextually tailor picture books when the platform is given no more than a one-sentence demographic brief---here, adult East-Asian migrants with low-intermediate English who have just moved to Australia. \n\nOriginally we expected an EFL specialist to draft the three C-LARA prompts (text generation, image background, and image style) for each book; instead, we experimented with a zero-shot workflow in which the OpenAI o3 modelGPT-5 had not yet been released when this step was performed. generated the triplets directly from the demographic description via the ChatGPT web interface, without human rewrites. \n\nThe texts are listed in Table~[REF:tab:efl-tailor-books]; \n\nevaluation used distinct teacher and student Likert instruments introduced in Section~[REF:sec:instruments].\n\ntable[H]\n8.6pt8.6pt\n1.3\nBooks generated via one-sentence demogr…",
       "analysis": {
-        "section_summary": "Study 2 tested C-LARA’s ability to generate contextually tailored picture books for adult East-Asian migrants with low-intermediate English moving to Australia using only a one-sentence demographic brief. Instead of expert-crafted prompts, the team used a zero-shot workflow via ChatGPT o3 to produce text, background, and style prompts, yielding six publicly accessible books; teachers and students later evaluated them with Likert instruments.",
+        "section_summary": "Study 2 evaluated C-LARA's ability to generate contextually tailored picture books for adult East-Asian migrants with low-intermediate English in Australia using only a one-sentence demographic brief. Instead of expert-crafted prompts, a zero-shot workflow with the OpenAI o3 model via ChatGPT produced text, image background, and style prompts directly from the demographic description. Six books were generated and made publicly available via C-LARA public content URLs, and evaluation employed teacher and student Likert instruments.",
         "relevant_views": [
           {
             "url_name": "public_content_detail",
-            "confidence": 0.68,
-            "rationale": "The study shares specific public_content URLs for the generated books, which map to the external content detail view used to access published C-LARA items."
+            "confidence": 0.76,
+            "rationale": "The study lists specific public content URLs (public_content/<id>) for the generated books, which are served by the public content detail view."
           },
           {
             "url_name": "public_content_list",
-            "confidence": 0.39,
-            "rationale": "Browsing or locating the published books as a set would use the external public content listing, aligning with how the study accessed public content."
+            "confidence": 0.42,
+            "rationale": "Public-facing browsing of C-LARA and LARA content aligns with the publicly accessible generated books, though only direct detail URLs are cited."
           }
         ],
         "concept_tags": [
-          "C-LARA public content",
-          "Tailored EFL picture books",
-          "Zero-shot prompting",
-          "East-Asian migrants",
-          "Low-intermediate English",
-          "ChatGPT o3",
-          "Australia settlement",
-          "Likert evaluation"
+          "demographic prompt",
+          "zero-shot generation",
+          "OpenAI o3 model",
+          "ChatGPT",
+          "EFL picture books",
+          "adult East-Asian migrants",
+          "low-intermediate English",
+          "public content URLs",
+          "Likert instruments",
+          "C-LARA prompts"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14803,
-        "completion_tokens": 667,
-        "total_tokens": 15470,
-        "estimated_cost_usd": 0.02517375
+        "prompt_tokens": 14809,
+        "completion_tokens": 695,
+        "total_tokens": 15504,
+        "estimated_cost_usd": 0.02546125
       },
       "has_tex": true
     },
@@ -381,40 +370,35 @@
       "plain_text_len": 2830,
       "plain_text_excerpt": "Study 3\nsec:study3\nStudy~3 focuses on an interesting possibility, which we have only recently begun to investigate: taking the idea of demographic tailoring to its logical extreme and creating content designed for a single user. In our initial study, we made no attempt to select the subject in a methodical way but simply created material for someone we knew who had personal reasons for wanting to improve their skills in a particular language and was enterprising enough to trial this new technology seriously over an extended period. The person in question, Sarah Wright (also a co-author of the current paper) is an engineering student and flautist who is considering spending a year in Bavaria to study a course in green hydrogen technology. As with the demographic tailoring experiment (Study~2), the AI is performing all the work of creating the courses, based only on a paragraph from Ms Wri…",
       "analysis": {
-        "section_summary": "Study 3 explores extreme demographic tailoring by generating C‑LARA German texts uniquely for a single learner, Sarah Wright, an engineering student and flautist preparing for a year in Bavaria. Using only her brief motivation paragraph and a description for a cartoon avatar, the AI creates one to two tailored texts weekly; the first six public German texts and their URLs are listed. Evaluation employs separate Likert instruments for two German‑speaking teachers and the student herself.",
+        "section_summary": "Study 3 explores extreme demographic tailoring by creating German learning texts for a single learner, Sarah Wright, an engineering student preparing for a year in Bavaria. The AI generated weekly stories based on a brief personal description and her reasons for learning, depicting her as an idealised character. Six publicly accessible texts with URLs are listed, and an example page is shown. Evaluation used separate teacher and student Likert instruments administered by two German-speaking teachers and the student herself.",
         "relevant_views": [
           {
             "url_name": "public_content_detail",
-            "confidence": 0.7,
-            "rationale": "The study links to publicly accessible tailored texts via /accounts/public_content/<id>/ URLs, which are served by the public content detail view."
+            "confidence": 0.71,
+            "rationale": "The study lists specific publicly accessible C‑LARA content URLs for the tailored German texts, which correspond to viewing individual published items without login."
           },
           {
             "url_name": "public_content_list",
-            "confidence": 0.38,
-            "rationale": "Public browsing of C‑LARA texts without login is implied by sharing external URLs to the tailored German materials."
+            "confidence": 0.47,
+            "rationale": "The texts are released and browsed as public content; the external view listing supports browsing such materials without authentication."
           }
         ],
         "concept_tags": [
-          "personalized learning",
-          "single-user tailoring",
-          "German language content",
-          "AI-generated courses",
+          "personalized content",
           "demographic tailoring",
-          "likert evaluation",
-          "teacher evaluation",
-          "student self-evaluation",
-          "public content URLs",
-          "Sarah Wright",
-          "green hydrogen",
-          "Bavaria"
+          "single learner",
+          "German language learning",
+          "AI-generated course materials",
+          "Likert evaluation",
+          "public content"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 15560,
-        "completion_tokens": 685,
-        "total_tokens": 16245,
-        "estimated_cost_usd": 0.0263
+        "prompt_tokens": 15566,
+        "completion_tokens": 655,
+        "total_tokens": 16221,
+        "estimated_cost_usd": 0.0260075
       },
       "has_tex": true
     },
@@ -426,47 +410,52 @@
       "plain_text_len": 977,
       "plain_text_excerpt": "Study Design and Research Questions\nsec:design\nWe address three questions introduced in Section~[REF:sec:intro]: (RQ1) content and imagery quality, (RQ2) residual human effort, and (RQ3) effectiveness of demographic/individual tailoring. For each study, the material used is online C-LARA multimodal texts, and the instruments are online page-level and whole-book Likert questionnaires filled out by teachers and students, as described in Section~[REF:sec:materials]. \n\nitemize[leftmargin=*]\n Study~1 (EFL picture book quality; RQ1--RQ2). We first triaged 18 books to select six for detailed evaluation; each selected book was regenerated with French, Ukrainian, and Chinese glosses and evaluated.\n Study~2 (Group tailoring; RQ3). We defined a concrete learner profile, prompted C--LARA to generate six English books for that demographic, and evaluated.\n Study~3 (Single-user tailoring; RQ3). We gene…",
       "analysis": {
-        "section_summary": "The section outlines the study design around three research questions on content/imagery quality, residual human effort, and the effectiveness of demographic and individual tailoring. Using online C-LARA multimodal texts, teachers and students completed page-level and whole-book Likert questionnaires. Three studies were run: Study 1 triaged and evaluated six EFL picture books regenerated with French, Ukrainian, and Chinese glosses; Study 2 generated and evaluated six English books tailored to a defined learner profile; Study 3 created and evaluated a six-episode German mini-course tailored to a single learner.",
+        "section_summary": "The section outlines the study design and three research questions: evaluating content and imagery quality, assessing remaining human effort, and testing demographic and individual tailoring. Across three studies, online C‑LARA multimodal books were regenerated and evaluated using page-level and whole-book Likert questionnaires completed by teachers and students. Study 1 triaged 18 EFL picture books and deeply evaluated six with different gloss languages; Study 2 generated six English books tailored to a group learner profile; Study 3 created a six-episode German mini-course for a single learner, all evaluated via the same instruments.",
         "relevant_views": [
           {
             "url_name": "tq_fill",
-            "confidence": 0.58,
-            "rationale": "The study instruments were page-level and whole-book Likert questionnaires completed by participants, aligning with the text questionnaire filling view."
+            "confidence": 0.64,
+            "rationale": "Evaluators in the studies filled page-level and whole-book Likert questionnaires on C-LARA texts, which corresponds to the text questionnaire filling functionality."
+          },
+          {
+            "url_name": "tq_results",
+            "confidence": 0.37,
+            "rationale": "Aggregating and viewing questionnaire results aligns with analyzing study questionnaire data."
           },
           {
             "url_name": "image_questionnaire_start",
-            "confidence": 0.34,
-            "rationale": "Content and imagery quality were assessed; the image questionnaire module supports rating images (and optionally text), which may relate to evaluating imagery in picture books."
+            "confidence": 0.45,
+            "rationale": "Study 1 assesses imagery quality of picture books, which relates to starting image quality questionnaires in C-LARA."
+          },
+          {
+            "url_name": "image_questionnaire_summary",
+            "confidence": 0.33,
+            "rationale": "Summarizing image questionnaire responses corresponds to evaluating imagery quality in the study design."
           }
         ],
         "concept_tags": [
-          "research questions",
           "study design",
-          "Likert questionnaires",
+          "research questions",
+          "Likert questionnaire",
           "content quality",
           "imagery quality",
-          "residual human effort",
-          "demographic tailoring",
-          "individual tailoring",
           "multimodal texts",
+          "teacher evaluation",
+          "student evaluation",
           "EFL picture books",
           "glosses",
-          "French",
-          "Ukrainian",
-          "Chinese",
-          "English",
-          "German",
-          "mini-course",
-          "teacher evaluation",
-          "student evaluation"
+          "group tailoring",
+          "individual tailoring",
+          "learner profile",
+          "German mini-course"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14724,
-        "completion_tokens": 1129,
-        "total_tokens": 15853,
-        "estimated_cost_usd": 0.029695
+        "prompt_tokens": 14728,
+        "completion_tokens": 771,
+        "total_tokens": 15499,
+        "estimated_cost_usd": 0.02612
       },
       "has_tex": true
     },
@@ -478,28 +467,27 @@
       "plain_text_len": 854,
       "plain_text_excerpt": "Participants, Recruitment, and Ethics\nsec:participants\nAdult participants with relevant language expertise (teachers and advanced L2 users) were recruited from the authors' professional networks and the C--LARA community. Student raters were adult EFL learners in informal university or community settings. Except for Sarah Wright, whose much larger contribution resulted in her also being listed as an author, no personally identifying information beyond self-reported language expertise was collected, and all responses were anonymous or de-identified prior to analysis.\n\nEthical approval: This work involved minimal-risk questionnaires with adult volunteers and no sensitive personal data. Given standard policies in the countries concerned and experience with related previous papers, we did not consider it necessary to seek formal ethical approval.",
       "analysis": {
-        "section_summary": "The study recruited adult participants with language expertise, including teachers, advanced L2 users from the authors' networks and the C‑LARA community, and adult EFL learners as student raters. No personal identifiers beyond self-reported language expertise were collected; responses were anonymous or de-identified. Because the work involved minimal-risk questionnaires with adult volunteers and no sensitive data, the authors did not seek formal ethical approval.",
+        "section_summary": "The study involved adult participants with relevant language expertise, including teachers and advanced L2 users recruited via professional networks and the C‑LARA community, as well as adult EFL student raters from informal university or community settings. Beyond self-reported language expertise, no personally identifying data were gathered and responses were anonymised or de-identified. Given the minimal-risk nature of the questionnaires with adult volunteers and absence of sensitive data, formal ethical approval was not sought.",
         "relevant_views": [],
         "concept_tags": [
-          "participants",
-          "recruitment",
-          "C-LARA community",
+          "participant recruitment",
           "language expertise",
           "EFL learners",
-          "questionnaires",
+          "C‑LARA community",
           "anonymity",
-          "data privacy",
-          "ethical approval",
+          "de‑identification",
           "minimal risk",
+          "questionnaire study",
+          "ethical approval",
           "adult volunteers"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14676,
-        "completion_tokens": 523,
-        "total_tokens": 15199,
-        "estimated_cost_usd": 0.023575
+        "prompt_tokens": 14680,
+        "completion_tokens": 441,
+        "total_tokens": 15121,
+        "estimated_cost_usd": 0.02276
       },
       "has_tex": true
     },
@@ -511,34 +499,41 @@
       "plain_text_len": 878,
       "plain_text_excerpt": "Instruments\nsec:instruments\n\nThe instruments used were in all cases 5-point Likert questionnaires hosted on the C-LARA platform, using a format specially designed for studies like the ones conducted here. When creating a Likert questionnaire of this kind, the user specifies a list of C-LARA texts and a list of Likert-scale questions, each of which is classified as being either ``book-level'' (the question is posed once for the book as a whole) or ``page-level'' (the question is posed separately for each individual page). A typical book-level question is ``How likely would you be to use this text as a self-learning tool?'', and a typical page-level question is ``How well does the image correspond to the text?'', where it is implicitly understood that the image and text are those for the page currently being displayed. We now present the details for the three studies.",
       "analysis": {
-        "section_summary": "The section explains that all studies employed 5-point Likert questionnaires hosted on the C‑LARA platform. When creating such a questionnaire, a user selects C‑LARA texts and defines Likert questions labeled as either book‑level (asked once for the whole book) or page‑level (asked for each page). Example items include assessing suitability as a self‑learning tool and how well a page’s image matches its text.",
+        "section_summary": "The studies used 5-point Likert questionnaires on the C-LARA platform, where users define a set of texts and Likert-scale questions categorized as book-level (asked once per text) or page-level (asked for each page). Example items include assessing likelihood to use the text for self-learning and how well an image matches the current page’s text.",
         "relevant_views": [
           {
             "url_name": "tq_create",
-            "confidence": 0.73,
-            "rationale": "Likert questionnaires on C-LARA are created by specifying texts and book/page-level questions; this view handles creation and setup of text questionnaires."
+            "confidence": 0.47,
+            "rationale": "Supports creating Likert-style text questionnaires by specifying books and questions, matching the described instrument setup."
           },
           {
             "url_name": "tq_fill",
-            "confidence": 0.62,
-            "rationale": "Participants answer per-page and book-level Likert questions on C-LARA texts; this view presents and records questionnaire responses."
+            "confidence": 0.56,
+            "rationale": "Implements the per-page and whole-book Likert question filling workflow used by participants in the described questionnaires."
+          },
+          {
+            "url_name": "tq_results",
+            "confidence": 0.41,
+            "rationale": "Provides aggregated results for the Likert questionnaires, relevant to evaluating the instruments used in the studies."
           }
         ],
         "concept_tags": [
-          "5-point Likert scale",
-          "C-LARA questionnaire",
-          "book-level question",
-          "page-level question",
-          "self-learning tool",
-          "image-text correspondence"
+          "Likert scale",
+          "questionnaire",
+          "book-level questions",
+          "page-level questions",
+          "self-learning assessment",
+          "image–text correspondence",
+          "C-LARA platform",
+          "study instruments"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14967,
-        "completion_tokens": 540,
-        "total_tokens": 15507,
-        "estimated_cost_usd": 0.02410875
+        "prompt_tokens": 14971,
+        "completion_tokens": 872,
+        "total_tokens": 15843,
+        "estimated_cost_usd": 0.02743375
       },
       "has_tex": true
     },
@@ -550,43 +545,44 @@
       "plain_text_len": 2234,
       "plain_text_excerpt": "Study 1\nFor Study~1, we used three Likert questionnaires: one for the initial triaging step and two for the main evaluation carried out on the six selected texts. The triage questionnaire comprised three 5-point Likert items (Table~[REF:tab:triage-questionnaire]). The main evaluation used (i) a teacher-viewpoint page-level+global instrument with seven 5-point items spanning image--text correspondence, gloss and translation accuracy, style/element consistency, cultural appropriateness, and overall appeal (Table~[REF:tab:detail-items]) and (ii) a student-viewpoint global instrument with two 5-point items targeting engagement and self-study likelihood (Table~[REF:tab:student-detail-items]).\n\ntable[H]\n10pt10pt\n1.3\nTeacher-viewpoint\n evaluation questions for selected books (5-point Likert). The evaluators were first shown a screen where they could access the whole annotated text. They were th…",
       "analysis": {
-        "section_summary": "The section outlines the evaluation instruments used in Study 1. A triage questionnaire with three 5‑point Likert items was used to select texts. The main evaluation comprised a teacher‑viewpoint tool with page‑level and global questions assessing image–text correspondence, gloss and translation accuracy, consistency of image style and elements, cultural appropriateness, and overall visual appeal, and a student‑viewpoint tool with global questions on engagement and likelihood of using the text for self‑study.",
+        "section_summary": "Study 1 employed Likert-scale questionnaires: an initial triage with three 5‑point items, and two main evaluations on six selected texts—a teacher-viewpoint page-level plus global tool with seven 5‑point items on image–text correspondence, gloss and translation accuracy, image style and element consistency, cultural appropriateness, and overall appeal, and a student-viewpoint global tool with two 5‑point items on engagement and likelihood of self-study use.",
         "relevant_views": [
           {
+            "url_name": "image_and_text_questionnaire_start",
+            "confidence": 0.52,
+            "rationale": "Implements image (and optional text) questionnaires guiding evaluators through page-by-page ratings with localisation; aligns with the described teacher and student viewpoint Likert evaluations."
+          },
+          {
             "url_name": "image_questionnaire_start",
-            "confidence": 0.38,
-            "rationale": "The section describes page-by-page and global Likert evaluations of images and text, which aligns with the image questionnaire start view guiding users into such rating forms."
-          },
-          {
-            "url_name": "image_questionnaire_item",
-            "confidence": 0.37,
-            "rationale": "Per-page questions on image–text correspondence, gloss accuracy, and translation accuracy resemble the item view that presents individual page rating forms."
-          },
-          {
-            "url_name": "image_questionnaire_summary",
             "confidence": 0.32,
-            "rationale": "The study mentions collecting responses for global items; the summary view provides aggregated results for completed questionnaires."
+            "rationale": "Supports initiating image questionnaires with page-level rating forms similar to the teacher-viewpoint instrument described."
+          },
+          {
+            "url_name": "tq_fill",
+            "confidence": 0.21,
+            "rationale": "Text questionnaires with per-page and whole-book Likert items could support triage and global evaluations of annotated texts."
           }
         ],
         "concept_tags": [
-          "Likert questionnaire",
-          "teacher viewpoint evaluation",
-          "student engagement",
+          "Likert scale",
+          "questionnaire",
           "image–text correspondence",
           "gloss accuracy",
           "translation accuracy",
           "style consistency",
+          "element consistency",
           "cultural appropriateness",
           "visual appeal",
-          "self‑learning likelihood"
+          "engagement",
+          "self-learning likelihood"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14638,
-        "completion_tokens": 870,
-        "total_tokens": 15508,
-        "estimated_cost_usd": 0.0269975
+        "prompt_tokens": 14644,
+        "completion_tokens": 472,
+        "total_tokens": 15116,
+        "estimated_cost_usd": 0.023025
       },
       "has_tex": true
     },
@@ -598,43 +594,43 @@
       "plain_text_len": 1964,
       "plain_text_excerpt": "Study 2\nThe organisation of the questionnaires for Study~2 (creation of texts adapted to a given user demographic) resembles that for Study~1 but is simpler since no triaging phase was used. As before, we have a teacher-viewpoint questionnaire and a student-viewpoint questionnaire. These are shown in Tables~[REF:tab:efl-teacher-questionnaire] and [REF:tab:efl-student-questionnaire].\n\ntable[H]\n9pt9pt\n1.3\nTeacher-viewpoint evaluation questions for books used in EFL adaptation experiment (5-point Likert). The evaluators were first shown a screen where they could access the whole annotated text. They were then shown a screen for each individual page of the text, where they answered question Q1; they could see the accompanying image and text, could access the glosses by hovering over words in the text, and could access the translation of a segment by clicking on an associated icon. Finally, t…",
       "analysis": {
-        "section_summary": "Study 2 used simplified questionnaires to evaluate EFL-adapted texts without triaging. Separate teacher and student viewpoints were assessed via 5-point Likert questions. Teachers rated image–text correspondence per page and, for the whole annotated text, relevance to East-Asian students in Adelaide, appropriateness of vocabulary/grammar, cultural appropriateness of images, and likelihood of use. Students rated how engaging the text was and whether it would teach useful vocabulary and grammar.",
+        "section_summary": "The section outlines the design of Study 2 evaluation instruments for adapting texts to a specific learner demographic. Two 5-point Likert questionnaires were used: a teacher-viewpoint form with a per-page item on image–text correspondence and whole-text items on relevance to East Asian newcomers in Adelaide, linguistic appropriateness, cultural suitability of images, and likelihood of classroom use, and a student-viewpoint form asking about engagement and perceived usefulness for learning vocabulary and grammar. Evaluators could view the annotated text with glosses and translations while responding.",
         "relevant_views": [
           {
-            "url_name": "tq_create",
-            "confidence": 0.32,
-            "rationale": "The study discusses setting up teacher and student questionnaires; tq_create supports creating and posting such text questionnaires."
-          },
-          {
             "url_name": "tq_fill",
-            "confidence": 0.43,
-            "rationale": "Evaluators answered per-page and whole-text Likert questions; tq_fill handles presenting pages and recording responses for text questionnaires."
+            "confidence": 0.61,
+            "rationale": "The described teacher- and student-viewpoint Likert questionnaires with per-page and whole-text questions align with the text questionnaire filling flow for evaluators to browse assigned books, view pages with glosses/translation, and answer Likert items."
           },
           {
-            "url_name": "tq_results",
-            "confidence": 0.28,
-            "rationale": "Summarizing questionnaire outcomes aligns with viewing aggregated results provided by tq_results."
+            "url_name": "tq_create",
+            "confidence": 0.38,
+            "rationale": "Study 2 involved setting up similar questionnaires as in Study 1; the creation view for text questionnaires would be used by owners to configure such instruments."
           }
         ],
         "concept_tags": [
-          "EFL adaptation",
           "teacher-viewpoint questionnaire",
           "student-viewpoint questionnaire",
           "Likert scale",
+          "EFL adaptation",
           "annotated text",
           "image–text correspondence",
           "cultural appropriateness",
-          "vocabulary and grammar",
-          "learner engagement",
-          "East-Asian international students"
+          "vocabulary and grammar appropriateness",
+          "student engagement",
+          "usefulness for learning vocabulary and grammar",
+          "per-page evaluation",
+          "whole-text evaluation",
+          "East Asian international student demographic",
+          "glosses",
+          "translation access"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14726,
-        "completion_tokens": 657,
-        "total_tokens": 15383,
-        "estimated_cost_usd": 0.0249775
+        "prompt_tokens": 14732,
+        "completion_tokens": 628,
+        "total_tokens": 15360,
+        "estimated_cost_usd": 0.024695
       },
       "has_tex": true
     },
@@ -646,43 +642,50 @@
       "plain_text_len": 2457,
       "plain_text_excerpt": "Study 3\nThe questionnaires for Study~3, creation of a course adapted to a single user, are similar to those for Study~2. The teacher-viewpoint and learner-viewpoint instruments are listed in Tables~[REF:tab:single-user-teacher-questionnaire] and [REF:tab:single-user-student-questionnaire].\n\ntable[H]\n1.3\nTeacher-viewpoint evaluation questions for books used in single-user course experiment (5-point Likert). The evaluators were first shown a screen where they could access the whole annotated text. They were then shown a screen for each individual page of the text, where they answered questions Q1 to Q3; they could see the accompanying image and text, could access the glosses by hovering over words in the text, and could access the translation of a segment by clicking on an associated icon. Finally, they were again shown a screen where they could access the whole annotated text and were pre…",
       "analysis": {
-        "section_summary": "This section describes the evaluation instruments used in Study 3 for a single-user course. Both teacher and student viewpoint questionnaires use 5-point Likert scales to rate aspects of annotated books. Evaluators first view the whole annotated text, then answer page-level questions while viewing each page with its image, glosses, and segment translations, and finally answer whole-text questions. Teacher questions cover relevance, language level, cultural appropriateness, image–text correspondence, and accuracy of glosses/translations; student questions address image correspondence, engagement, relevance, and consistency of image elements.",
+        "section_summary": "Study 3 used teacher- and student-viewpoint Likert questionnaires to evaluate annotated texts and images in a single-user German course. Evaluators first viewed the whole annotated text, then per-page screens with images, gloss hover and translation click, answering relevance, appropriateness, and correspondence questions; final whole-text screens captured overall image–text match and gloss/translation accuracy (teachers) or engagement, relevance, image consistency (student).",
         "relevant_views": [
           {
-            "url_name": "image_and_text_questionnaire_start",
-            "confidence": 0.39,
-            "rationale": "Supports starting combined image and text questionnaires with page-by-page ratings and whole-text summary, matching the described evaluation workflow with images, glosses, and translations."
+            "url_name": "tq_fill",
+            "confidence": 0.78,
+            "rationale": "Implements per-page and whole-book Likert questionnaires for evaluators to answer questions on text and images, matching the described study flow."
+          },
+          {
+            "url_name": "tq_public_list",
+            "confidence": 0.45,
+            "rationale": "Lists available text questionnaires that evaluators can access, relevant to deploying the Study 3 instruments."
+          },
+          {
+            "url_name": "image_questionnaire_start",
+            "confidence": 0.6,
+            "rationale": "Starts image (and optional text) questionnaires with page-by-page rating forms similar to the described image/text evaluation screens."
           },
           {
             "url_name": "image_questionnaire_item",
-            "confidence": 0.3,
-            "rationale": "Provides per-page rating forms for image and optional text questionnaires, aligning with evaluators answering questions on each individual page with accompanying images and text."
-          },
-          {
-            "url_name": "tq_fill",
-            "confidence": 0.25,
-            "rationale": "Handles filling per-page and whole-book Likert questions for text questionnaires linked to books, which parallels the teacher and student questionnaire process described."
+            "confidence": 0.52,
+            "rationale": "Handles the page-by-page questionnaire items where users see images and text and answer correspondence questions."
           }
         ],
         "concept_tags": [
-          "Likert scale",
-          "teacher evaluation",
-          "student evaluation",
+          "Likert questionnaire",
+          "teacher-viewpoint evaluation",
+          "student-viewpoint evaluation",
           "single-user course",
           "annotated text",
-          "page-level questions",
-          "glosses",
-          "translations",
-          "image–text correspondence",
-          "learner engagement"
+          "image correspondence",
+          "gloss accuracy",
+          "translation accuracy",
+          "cultural appropriateness",
+          "learner engagement",
+          "per-page evaluation",
+          "German intermediate learner"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14892,
-        "completion_tokens": 632,
-        "total_tokens": 15524,
-        "estimated_cost_usd": 0.024935
+        "prompt_tokens": 14898,
+        "completion_tokens": 781,
+        "total_tokens": 15679,
+        "estimated_cost_usd": 0.0264325
       },
       "has_tex": true
     },
@@ -694,42 +697,35 @@
       "plain_text_len": 1811,
       "plain_text_excerpt": "Procedure\nsec:procedure\n\n3pt\n~1\n\n enumerate\n Triage: Teachers skimmed each of 18 books (max.\\ $$3 min/book) and rated three items;\n Selection: The top six books advanced;\n Regeneration: Books were recompiled with GPT-5 and GPT-Image-1;\n Get ratings: For each book and glossing language, teacher raters answered the questionnaire shown in Table~[REF:tab:detail-items]; student raters answered the questionnaire shown in Table~[REF:tab:student-detail-items].\n enumerate\n~2\n enumerate\n Define demographic: After a short discussion between an EFL teacher author and a C-LARA expert author, we agreed on a suitable target demographic.\n Create book generation prompts: We used GenAI to draft prompts for six books potentially useful for this demographic; \n Create books: Books were generated in C--LARA; \n Get ratings: For each book, teacher raters answered the questionnaire shown in Table~[REF:tab:efl-te…",
       "analysis": {
-        "section_summary": "The section outlines three iterative procedures used to evaluate AI‑generated books. First, teachers skimmed 18 books, selected six, recompiled them with GPT‑5 and GPT‑Image‑1, then teachers and students rated each book in different glossing languages via specific questionnaires. Second, an EFL teacher and a C‑LARA expert agreed on a target demographic, drafted GenAI prompts for six suitable books, generated them in C‑LARA, and collected teacher and student ratings with demographic‑specific questionnaires. Third, a German learner provided a brief to guide iterative GPT‑5 prompt creation; books were produced in C‑LARA and rated by teachers and the individual student using tailored questionnaires.",
+        "section_summary": "The procedure outlines three iterative evaluation cycles. In the first, teachers quickly triaged 18 generated books, selected the top six, regenerated them with GPT‑5 and GPT‑Image‑1, and then both teachers and students completed detailed questionnaires. The second focused on an agreed EFL target demographic: prompts for six books were drafted with GenAI, books were produced in C‑LARA, and raters answered teacher and student questionnaires. The third personalized cycle gathered a learner’s brief for German, iteratively refined GPT‑5 prompts with student feedback, generated books in C‑LARA, and collected questionnaire responses from a teacher and the single student.",
         "relevant_views": [
           {
             "url_name": "tq_fill",
-            "confidence": 0.36,
-            "rationale": "Teacher and student raters completed structured questionnaires for each book, matching the text questionnaire filling functionality for evaluators."
-          },
-          {
-            "url_name": "image_and_text_questionnaire_start",
-            "confidence": 0.24,
-            "rationale": "Books were regenerated with GPT-Image-1 and then rated; the combined image/text questionnaire workflow supports collecting such ratings within C-LARA."
+            "confidence": 0.35,
+            "rationale": "The section describes teacher and student raters answering questionnaires for generated books, which corresponds to filling text questionnaires in the application."
           }
         ],
         "concept_tags": [
-          "procedure",
           "triage",
           "book selection",
-          "book regeneration",
           "GPT-5",
           "GPT-Image-1",
           "questionnaire",
-          "teacher ratings",
-          "student ratings",
-          "EFL demographic",
-          "prompt generation",
-          "C-LARA",
-          "German learner",
-          "glossing language"
+          "teacher rating",
+          "student rating",
+          "C-LARA book generation",
+          "target demographic",
+          "GenAI prompts",
+          "learner brief",
+          "iterative prompt refinement"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14904,
-        "completion_tokens": 2281,
-        "total_tokens": 17185,
-        "estimated_cost_usd": 0.04144
+        "prompt_tokens": 14908,
+        "completion_tokens": 1007,
+        "total_tokens": 15915,
+        "estimated_cost_usd": 0.028705
       },
       "has_tex": true
     },
@@ -741,40 +737,37 @@
       "plain_text_len": 463,
       "plain_text_excerpt": "Outcome Measures and Scoring\nsec:measures\nAll items used 5-point Likert scales. For page-level items, we averaged per-page scores to yield a book-level value. For book-level items (teacher and student), responses were used as-is. For Study~1 triage, we computed per-book averages over the three items and raters to rank-order candidates. No free-text responses were used in quantitative summaries; qualitative comments were thematically summarised in the Results.",
       "analysis": {
-        "section_summary": "The study used 5-point Likert items; page-level ratings were averaged across pages for a book-level score, while book-level teacher and student items were taken directly. For Study 1 triage, per-book averages over three items and raters were used to rank candidates. Free-text responses were excluded from quantitative summaries, with qualitative comments summarised thematically in the Results.",
+        "section_summary": "The study measured responses on 5-point Likert scales, averaging page-level ratings to derive book-level scores while keeping book-level teacher and student items unchanged. For Study 1 triage, book-level averages across three items and raters were used to rank candidates. Free-text responses were excluded from quantitative summaries, with qualitative comments thematically summarized in the Results.",
         "relevant_views": [
           {
-            "url_name": "tq_results",
-            "confidence": 0.47,
-            "rationale": "Text questionnaires in C‑LARA support per-page and whole-book Likert items and provide aggregated results, matching the described averaging and scoring of Likert measures."
-          },
-          {
             "url_name": "tq_fill",
-            "confidence": 0.36,
-            "rationale": "Participants enter per-page and whole-book Likert responses via the text questionnaire filling view, which aligns with collecting the 5-point ratings described."
+            "confidence": 0.39,
+            "rationale": "Handles per-page and whole-book Likert questions for books, aligning with the described use of page-level and book-level Likert scoring."
           },
           {
-            "url_name": "image_questionnaire_summary",
-            "confidence": 0.25,
-            "rationale": "Image questionnaires also use page-by-page rating forms and summary aggregation; this loosely relates to averaging page-level Likert scores into book-level values."
+            "url_name": "tq_results",
+            "confidence": 0.33,
+            "rationale": "Provides aggregated results of Likert questionnaire responses, relevant to summarizing book-level averages and ranking."
           }
         ],
         "concept_tags": [
           "Likert scale",
-          "page-level items",
-          "book-level items",
-          "score averaging",
+          "page-level scoring",
+          "book-level aggregation",
           "triage ranking",
-          "quantitative measures",
-          "qualitative comments"
+          "quantitative analysis",
+          "qualitative comments",
+          "thematic summary",
+          "teacher responses",
+          "student responses"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14321,
-        "completion_tokens": 964,
-        "total_tokens": 15285,
-        "estimated_cost_usd": 0.02754125
+        "prompt_tokens": 14325,
+        "completion_tokens": 1219,
+        "total_tokens": 15544,
+        "estimated_cost_usd": 0.03009625
       },
       "has_tex": true
     },
@@ -786,35 +779,38 @@
       "plain_text_len": 411,
       "plain_text_excerpt": "Statistical Treatment\nsec:stats\nWe report means of Likert scores and, where the number of independent raters allows, inter-rater reliability metrics. For Study~1 (Chinese), which includes five teacher evaluators and sufficient page-level data, we specifically present Kendall's~$W$, the intraclass correlation coefficient~(ICC), and Cronbach's~$$ to evaluate the coherence and reliability of teacher~judgements.",
       "analysis": {
-        "section_summary": "Describes how the study's ratings were analyzed by reporting mean Likert scores and, for the Chinese teacher evaluations in Study 1, calculating inter-rater reliability measures such as Kendall’s W, the intraclass correlation coefficient, and Cronbach’s alpha to assess coherence and reliability of the judgments.",
+        "section_summary": "The section outlines the statistical analysis of evaluator ratings, reporting mean Likert scores and, when sufficient independent raters are available, calculating inter-rater reliability. For the first study with five Chinese teacher evaluators and ample page-level data, it uses Kendall’s W, intraclass correlation coefficients, and Cronbach’s alpha to assess the coherence and reliability of their judgments.",
         "relevant_views": [
           {
-            "url_name": "aggregated_questionnaire_results",
-            "confidence": 0.31,
-            "rationale": "This view aggregates questionnaire responses, computing averaged ratings and distributions for reporting, which aligns with reporting mean Likert scores in the study."
+            "url_name": "tq_results",
+            "confidence": 0.36,
+            "rationale": "This view handles aggregated questionnaire results and exports, which aligns with reporting mean Likert scores and summarizing evaluator responses."
           },
           {
-            "url_name": "tq_results",
-            "confidence": 0.24,
-            "rationale": "The text questionnaire results view provides aggregated results and exports, which conceptually relates to summarizing Likert-scale data discussed in the statistical treatment."
+            "url_name": "aggregated_questionnaire_results",
+            "confidence": 0.34,
+            "rationale": "Provides aggregation of questionnaire ratings and distributions, relevant to computing summary statistics of Likert-based evaluations."
           }
         ],
         "concept_tags": [
-          "Likert scale",
+          "Likert scores",
           "inter-rater reliability",
-          "Kendall’s W",
-          "intraclass correlation coefficient",
-          "Cronbach’s alpha",
+          "Kendall's W",
+          "intraclass correlation coefficient (ICC)",
+          "Cronbach's alpha",
           "teacher evaluators",
-          "Study 1 Chinese"
+          "page-level data",
+          "Study 1 (Chinese)",
+          "coherence of judgments",
+          "reliability metrics"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14060,
-        "completion_tokens": 1099,
-        "total_tokens": 15159,
-        "estimated_cost_usd": 0.028565
+        "prompt_tokens": 14064,
+        "completion_tokens": 1365,
+        "total_tokens": 15429,
+        "estimated_cost_usd": 0.03123
       },
       "has_tex": true
     },
@@ -826,27 +822,23 @@
       "plain_text_len": 512,
       "plain_text_excerpt": "Availability of Materials, Data, and Code\nsec:availability\nC--LARA is open source; code and documentation are available at\n https://github.com/mannyrayner/C-LARA (last checked Dec 15 2025). Public instances of evaluated texts are linked in Tables~[REF:tab:detailed-eval-books]--[REF:tab:sarah-books]. Raw rating data in CSV form has been placed in https://github.com/mannyrayner/C-LARA/tree/main/education_sciences_2025/questionnaire_csvs.\n\nThe commit hash is a01457d41eeb29ec2fbf784a1ad7b5a19ac8b869 2025-12-15.",
       "analysis": {
-        "section_summary": "The section states that the C-LARA platform is open source, with code and documentation available on GitHub, and identifies the specific commit used. It notes that public instances of the evaluated texts are linked in the paper's tables and that raw questionnaire rating data in CSV format has been deposited in a subdirectory of the repository.",
+        "section_summary": "The section notes that C‑LARA is open source, with code and documentation available on GitHub. Public instances of evaluated texts are provided via table links, and the raw rating data in CSV format is hosted in the repository. The specific commit referenced is a01457d41eeb29ec2fbf784a1ad7b5a19ac8b869 from December 15, 2025.",
         "relevant_views": [],
         "concept_tags": [
           "open source",
-          "GitHub repository",
           "code availability",
-          "documentation",
-          "public instances",
-          "evaluated texts",
+          "data availability",
+          "GitHub",
           "raw data",
-          "CSV datasets",
-          "commit hash",
-          "questionnaire data"
+          "commit hash"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14945,
-        "completion_tokens": 338,
-        "total_tokens": 15283,
-        "estimated_cost_usd": 0.02206125
+        "prompt_tokens": 14949,
+        "completion_tokens": 274,
+        "total_tokens": 15223,
+        "estimated_cost_usd": 0.02142625
       },
       "has_tex": true
     },
@@ -858,69 +850,64 @@
       "plain_text_len": 1168,
       "plain_text_excerpt": "Use of Generative AI (Required Disclosure)\nsec:genai-disclosure\nGenerative AI systems were used extensively in this study. Apart from their use inside C-LARA itself, a GenAI-based platform, GPT-5 also participated actively in discussions of overall project goals, assisted with drafting many sections of this manuscript, and wrote nearly all of the new code required in the platform. This, in particular, included the nontrivial modules used to administer online questionnaires and format the resulting data as CSV files and LaTeX tables. All this material was carefully reviewed by the human authors, who formally take responsibility for it. In accordance with MDPI policy, GPT-5 is not credited as an author. We note our principled disagreement with this policy given the AI's substantive technical and writing contributions, which clearly exceeded that of many of the human authors, and observed b…",
       "analysis": {
-        "section_summary": "The section discloses that generative AI, specifically GPT-5, was heavily involved in the study: contributing to defining project goals, drafting much of the manuscript, and writing most of the new platform code, notably the questionnaire modules and CSV/LaTeX export routines. Human authors reviewed the AI-produced material and accept responsibility, but per MDPI policy GPT-5 is not credited despite the authors’ disagreement with that stance.",
+        "section_summary": "The authors disclose that generative AI, specifically GPT-5, was used extensively to discuss project goals, draft much of the manuscript, and write most of the new C-LARA code, including modules for administering online questionnaires and exporting results as CSV and LaTeX tables. Human authors reviewed and take responsibility for the content, though GPT-5 is not credited as an author per policy, a stance the authors contest while providing this disclosure for transparency and auditability.",
         "relevant_views": [
           {
-            "url_name": "tq_export_csv",
-            "confidence": 0.38,
-            "rationale": "The section notes AI-built modules for administering online questionnaires and exporting data as CSV and LaTeX; this endpoint handles CSV export for text questionnaires."
-          },
-          {
-            "url_name": "tq_export_csv_raw",
-            "confidence": 0.35,
-            "rationale": "Raw CSV export of questionnaire responses aligns with the described AI-generated code for questionnaire data formatting."
-          },
-          {
             "url_name": "image_questionnaire_summary_csv",
-            "confidence": 0.32,
-            "rationale": "Provides CSV summaries for image questionnaires, matching the mention of AI-written questionnaire and CSV export modules."
+            "confidence": 0.36,
+            "rationale": "The section notes AI-authored modules for administering online questionnaires and formatting results as CSV/LaTeX; this view handles summarising image questionnaires and exporting CSV data."
+          },
+          {
+            "url_name": "tq_export_csv",
+            "confidence": 0.36,
+            "rationale": "Text questionnaire export to CSV aligns with the described AI-written functionality for online questionnaires and CSV formatting."
           }
         ],
         "concept_tags": [
-          "Generative AI",
+          "generative AI",
           "GPT-5",
-          "AI-assisted writing",
-          "Code generation",
-          "Questionnaire modules",
+          "code generation",
+          "online questionnaires",
           "CSV export",
           "LaTeX tables",
-          "Authorship disclosure",
-          "MDPI policy",
-          "Human oversight"
+          "authorship policy",
+          "disclosure",
+          "auditability",
+          "C-LARA"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14655,
-        "completion_tokens": 782,
-        "total_tokens": 15437,
-        "estimated_cost_usd": 0.02613875
+        "prompt_tokens": 14659,
+        "completion_tokens": 1317,
+        "total_tokens": 15976,
+        "estimated_cost_usd": 0.03149375
       },
       "has_tex": true
     },
     {
-      "section_id": "31faf70fca3645aa",
+      "section_id": "219c4a6c86a716e9",
       "level": 1,
       "title": "Results",
       "label": null,
       "plain_text_len": 162,
       "plain_text_excerpt": "Results\n\nAs before, we divide up reporting of the results under subheadings for each of the three studies. We discuss the results in Section~[REF:sec:discussion].",
       "analysis": {
-        "section_summary": "The results section is introduced by noting that findings will be presented under subheadings for each of the three studies, with detailed discussion deferred to a later section.",
+        "section_summary": "The paper introduces the results section, noting that findings are organized under subheadings for each of the three studies, with further discussion to follow in the discussion section.",
         "relevant_views": [],
         "concept_tags": [
-          "results section",
-          "study structure",
-          "three studies",
-          "discussion reference"
+          "results",
+          "study",
+          "reporting",
+          "discussion"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
         "prompt_tokens": 14321,
-        "completion_tokens": 262,
-        "total_tokens": 14583,
-        "estimated_cost_usd": 0.02052125
+        "completion_tokens": 271,
+        "total_tokens": 14592,
+        "estimated_cost_usd": 0.02061125
       },
       "has_tex": true
     },
@@ -932,38 +919,32 @@
       "plain_text_len": 3853,
       "plain_text_excerpt": "Study 1\nsec:study1-results\n\nIn Study 1, we asked teachers and students to rate six English texts, each of which was glossed and translated in the three glossing languages used (Chinese, French, and Ukrainian). Our main focus was on Chinese, both because of its greater practical interest and because it was easier to find evaluators, but we thought it would be interesting to obtain some preliminary results for the other languages; thus for Chinese we had five teacher evaluators and five student evaluators, for French we had one teacher evaluator and three student evaluators, and for Ukrainian we only had three student evaluators. For each language, we report the results of the teacher questionnaire, defined in Table~[REF:tab:detail-items], and the student questionnaire, defined in Table~[REF:tab:student-detail-items]. The teacher and student results for Chinese are presented in Table~[REF:…",
       "analysis": {
-        "section_summary": "Study 1 reports teacher and student questionnaire ratings of six glossed English texts translated into Chinese, French, and Ukrainian. Five Chinese teachers and five students, one French teacher and three students, and three Ukrainian students evaluated the texts on predefined teacher (Q1–Q7) and student items. Tables present per‑text scores and averages, showing generally high ratings from Chinese teachers and students, high French teacher scores but lower student scores, and modest Ukrainian student scores.",
+        "section_summary": "Study 1 reports teacher and student questionnaire ratings for six English texts glossed and translated into Chinese, French, and Ukrainian. Chinese had five teachers and five students and showed generally high scores across questions; French had one teacher and three students with varied scores; Ukrainian had three students with lower averages. Results are tabulated per text and respondent group.",
         "relevant_views": [
           {
-            "url_name": "tq_fill",
-            "confidence": 0.29,
-            "rationale": "Teacher and student evaluators filled Likert-style questionnaires on texts, which aligns with the text questionnaire filling workflow."
-          },
-          {
             "url_name": "tq_results",
-            "confidence": 0.26,
-            "rationale": "The section presents aggregated questionnaire results per text, similar to viewing aggregated results from text questionnaires."
+            "confidence": 0.24,
+            "rationale": "The study discusses aggregated teacher and student questionnaire ratings of texts, which aligns with viewing questionnaire results in the text questionnaire module."
           }
         ],
         "concept_tags": [
-          "Study 1",
+          "questionnaire results",
+          "teacher evaluations",
+          "student ratings",
+          "Chinese language",
+          "French language",
+          "Ukrainian language",
           "glossed texts",
-          "teacher questionnaire",
-          "student questionnaire",
-          "Chinese",
-          "French",
-          "Ukrainian",
-          "text ratings",
-          "Q1–Q7",
-          "evaluation results"
+          "translation evaluation",
+          "study findings"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 15921,
-        "completion_tokens": 1302,
-        "total_tokens": 17223,
-        "estimated_cost_usd": 0.03292125
+        "prompt_tokens": 15923,
+        "completion_tokens": 355,
+        "total_tokens": 16278,
+        "estimated_cost_usd": 0.02345375
       },
       "has_tex": true
     },
@@ -975,37 +956,30 @@
       "plain_text_len": 1311,
       "plain_text_excerpt": "Study 2\n\nStudy~2 examined six AI-generated English books tailored for low-intermediate East-Asian adults who had recently moved to Adelaide. We report the results of the teacher questionnaire, defined in Table~[REF:tab:efl-teacher-questionnaire], and the student questionnaire, defined in Table~[REF:tab:efl-student-questionnaire]; the responses are summarised in Table~[REF:tab:exp-2-NA-combined].\n\ntable[H]\n1.2\nExperiment 2: 2 teachers, 2 students.\n\ntab:exp-2-NA-combined\ntabularxlm1.3cm<m1.3cm<m1.3cm<m1.3cm<m1.3cm<m1.3cm<\n\n7cResults for teachers\\\\\n\nTitle & Q1 & Q2 & Q3 & Q4 & Q5 & Avg.\\\\\n\nEFL Adaptation 1 & 4.22 & 4.00 & 4.00 & 5.00 & 3.00 & 4.04\\\\\nEFL Adaptation 2 & 3.86 & 4.50 & 4.50 & 5.00 & 3.00 & 4.17\\\\\nEFL Adaptation 3 & 3.47 & 3.00 & 4.00 & 5.00 & 2.50 & 3.59\\\\\nEFL Adaptation 4 & 3.60 & 3.50 & 4.00 & 5.00 & 2.50 & 3.72\\\\\nEFL Adaptation 5 & 3.12 & 3.50 & 3.00 & 5.00 & 2.00 & 3.32\\\\\nE…",
       "analysis": {
-        "section_summary": "Study 2 evaluated six AI-generated English adaptations aimed at low-intermediate East-Asian adult learners in Adelaide. Teacher and student questionnaires were administered, and the aggregated Likert-scale scores per adaptation are reported. Teacher responses cover five questions with averages around 3.3–4.2, while students rated two questions with averages from 3.5 to 4.25.",
+        "section_summary": "Study 2 evaluated six AI-generated English adaptations aimed at low-intermediate East-Asian adults in Adelaide, using teacher and student questionnaires. The reported table summarizes Likert ratings across five questions for teachers and two for students, with averages ranging roughly from mid-3s to just over 4.",
         "relevant_views": [
           {
             "url_name": "tq_results",
-            "confidence": 0.36,
-            "rationale": "The section reports aggregated teacher and student questionnaire ratings for multiple books, which aligns with the text questionnaire results view that summarizes responses."
-          },
-          {
-            "url_name": "aggregated_questionnaire_results",
-            "confidence": 0.32,
-            "rationale": "Summarizing Likert-scale questionnaire outcomes across projects is similar to the satisfaction questionnaire aggregation view."
+            "confidence": 0.35,
+            "rationale": "The section reports aggregated questionnaire responses; the text questionnaire results view supports viewing aggregated outcomes for text-based questionnaires."
           }
         ],
         "concept_tags": [
-          "AI-generated books",
-          "EFL adaptation",
+          "EFL Adaptation",
           "teacher questionnaire",
           "student questionnaire",
-          "Likert ratings",
-          "language learning",
+          "AI-generated books",
           "low-intermediate learners",
-          "adult education",
+          "Likert ratings",
           "Adelaide"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14589,
-        "completion_tokens": 678,
-        "total_tokens": 15267,
-        "estimated_cost_usd": 0.02501625
+        "prompt_tokens": 14591,
+        "completion_tokens": 592,
+        "total_tokens": 15183,
+        "estimated_cost_usd": 0.02415875
       },
       "has_tex": true
     },
@@ -1017,45 +991,23 @@
       "plain_text_len": 1633,
       "plain_text_excerpt": "Study 3\n\nIn Study~3, a course tailored to a single user, we again consider the teacher perspective (is the course technically adequate?) and the student perspective (does the student herself like it?) The Likert questionnaires are shown in Tables~[REF:tab:single-user-teacher-questionnaire] and~[REF:tab:single-user-student-questionnaire]; the responses are summarised in Table~[REF:tab:exp-3-NA-combined].\n\ntable[H]\n1.2\nExperiment 3: 2 teachers, 1 student.\n\ntab:exp-3-NA-combined\ntabularxlrrrrrrr@\n\n8cResults for teachers\\\\\n\nTitle (sometimes shortened) & Q1 & Q2 & Q3 & Q4 & Q5 & Q6 & Avg.\\\\\n\nWohnungssuche in Burghausen & 4.90 & 4.50 & 4.80 & 5.00 & 4.50 & 4.50 & 4.70\\\\\nInternet einrichten in der ne… & 4.96 & 4.25 & 4.96 & 5.00 & 4.00 & 4.00 & 4.53\\\\\nBewerbungsgespräch für das DA… & 4.12 & 3.88 & 4.50 & 5.00 & 5.00 & 4.50 & 4.50\\\\\nErste Vorlesung \\& Sicherheits… & 4.12 & 3.96 & 4.83 & 5.00 & 4…",
       "analysis": {
-        "section_summary": "Study 3 evaluated a personalised course for a single user from both teacher and student perspectives. Teachers and the student completed Likert-scale questionnaires about the course; their responses, covering multiple course titles, show generally high scores across questions with calculated averages for each title.",
-        "relevant_views": [
-          {
-            "url_name": "tq_results",
-            "confidence": 0.46,
-            "rationale": "The section reports aggregated Likert questionnaire responses for teachers and a student, which aligns with viewing aggregated results of text-based questionnaires."
-          },
-          {
-            "url_name": "tq_export_csv",
-            "confidence": 0.34,
-            "rationale": "Summarised questionnaire data might be exported for analysis; this view supports exporting questionnaire responses."
-          },
-          {
-            "url_name": "aggregated_questionnaire_results",
-            "confidence": 0.39,
-            "rationale": "Provides averaged ratings and distributions for satisfaction questionnaires, matching the reported averages of teacher and student Likert responses."
-          },
-          {
-            "url_name": "manage_questionnaires",
-            "confidence": 0.28,
-            "rationale": "Relates to managing and reviewing questionnaires whose results are presented in the study."
-          }
-        ],
+        "section_summary": "Study 3 reports on a course tailored to a single user, examining both teacher technical adequacy and student liking via Likert questionnaires. Responses from two teachers and one student across several lesson titles are tabulated, showing individual question scores and averages.",
+        "relevant_views": [],
         "concept_tags": [
           "Study 3",
           "single-user course",
-          "teacher perspective",
-          "student perspective",
+          "teacher evaluation",
+          "student satisfaction",
           "Likert questionnaire",
-          "evaluation results",
-          "average scores"
+          "results table"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 15422,
-        "completion_tokens": 639,
-        "total_tokens": 16061,
-        "estimated_cost_usd": 0.0256675
+        "prompt_tokens": 15424,
+        "completion_tokens": 367,
+        "total_tokens": 15791,
+        "estimated_cost_usd": 0.02295
       },
       "has_tex": true
     },
@@ -1067,68 +1019,58 @@
       "plain_text_len": 107,
       "plain_text_excerpt": "Discussion\nsec:discussion\n\nWe discuss the results, again dividing by study then, if necessary, by language.",
       "analysis": {
-        "section_summary": "The discussion briefly notes that results will be considered by study, and where appropriate, by language.",
+        "section_summary": "The section indicates that the discussion will review the results, organizing them by individual studies and, where needed, by language.",
         "relevant_views": [],
         "concept_tags": [
           "discussion",
-          "study results",
-          "language analysis"
+          "results",
+          "study",
+          "language"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
         "prompt_tokens": 14404,
-        "completion_tokens": 190,
-        "total_tokens": 14594,
-        "estimated_cost_usd": 0.019905
+        "completion_tokens": 261,
+        "total_tokens": 14665,
+        "estimated_cost_usd": 0.020615
       },
       "has_tex": true
     },
     {
-      "section_id": "93a60fecedbd3029",
+      "section_id": "10546fab8e075a1f",
       "level": 2,
       "title": "Study 1",
       "label": null,
       "plain_text_len": 7,
       "plain_text_excerpt": "Study 1",
       "analysis": {
-        "section_summary": "The section is titled \"Study 1\" but contains no further details.",
+        "section_summary": "This section is just the heading for Study 1 in the discussion and contains no substantive content.",
         "relevant_views": [],
         "concept_tags": [
           "Study 1",
-          "Empirical Research"
+          "Discussion"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14051,
-        "completion_tokens": 696,
-        "total_tokens": 14747,
-        "estimated_cost_usd": 0.02452375
+        "prompt_tokens": 14053,
+        "completion_tokens": 250,
+        "total_tokens": 14303,
+        "estimated_cost_usd": 0.02006625
       },
       "has_tex": true
     },
     {
-      "section_id": "29f284ac0f3b09aa",
+      "section_id": "076eca29b44f4336",
       "level": 3,
       "title": "Chinese",
       "label": null,
       "plain_text_len": 1062,
       "plain_text_excerpt": "Chinese\n\nBoth teacher and student evaluations of the Chinese glossing condition were strong and internally consistent. Student ratings were uniformly high, typically near the ceiling on the two student book-level questions, corroborating the teacher view that Chinese L1 support is already usable with little or no post-editing. For the teacher evaluations, where we had sufficient page-level data (three page-level questions for a total of 97 pages), we could formally evaluate inter-rater agreement as moderate to good: Kendall’s~$W = 0.35$ ($p < 0.001$), indicating a shared structure in how pages were ranked, and ICC(2,k) = 0.64 (95\\%~CI~[0.51,~0.74]), signifying good absolute agreement among the five teachers. Cronbach’s~$ = -0.15$ confirmed that the three page-level items (image--text correspondence, gloss accuracy, and translation accuracy) measured distinct facets rather than a single c…",
       "analysis": {
-        "section_summary": "This section reports on evaluations of the Chinese glossing condition, noting that student ratings on book-level questions were uniformly high and corroborate teachers' impressions of usable L1 support. For teacher page-level ratings, inter-rater agreement was moderate to good, with Kendall’s W and ICC indicating shared ranking and good absolute agreement among five teachers. A negative Cronbach’s alpha suggested the three page-level items—image–text correspondence, gloss accuracy, and translation accuracy—capture distinct facets, reinforcing the view that the Chinese materials were coherent and high-quality.",
-        "relevant_views": [
-          {
-            "url_name": "tq_results",
-            "confidence": 0.32,
-            "rationale": "The section summarizes aggregated page- and book-level questionnaire results about gloss accuracy and translation, which aligns with the text questionnaire results view that shows compiled responses."
-          },
-          {
-            "url_name": "image_questionnaire_summary",
-            "confidence": 0.2,
-            "rationale": "Teacher ratings included an item on image–text correspondence, akin to page-level image quality questionnaires that can be summarized through this view."
-          }
-        ],
+        "section_summary": "This subsection reports that both teachers and students rated the Chinese glossing condition very highly. Student book-level ratings were near ceiling, suggesting Chinese L1 support is usable without much post-editing. Teacher page-level evaluations across 97 pages showed moderate to good inter-rater agreement (Kendall’s W=0.35, ICC=0.64), indicating shared ranking of pages. A negative Cronbach’s alpha suggests the assessed aspects—image–text correspondence, gloss accuracy, and translation accuracy—are distinct facets. Overall, quantitative metrics support the qualitative impression of coherent, high-quality Chinese materials.",
+        "relevant_views": [],
         "concept_tags": [
           "Chinese glossing",
           "student evaluation",
@@ -1140,165 +1082,162 @@
           "gloss accuracy",
           "translation accuracy",
           "image–text correspondence",
-          "questionnaire results"
+          "L1 support",
+          "Study 1 results"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14855,
-        "completion_tokens": 1025,
-        "total_tokens": 15880,
-        "estimated_cost_usd": 0.02881875
+        "prompt_tokens": 14861,
+        "completion_tokens": 480,
+        "total_tokens": 15341,
+        "estimated_cost_usd": 0.02337625
       },
       "has_tex": true
     },
     {
-      "section_id": "03c99337afb9316c",
+      "section_id": "dcc87230630a97b1",
       "level": 3,
       "title": "French",
       "label": null,
       "plain_text_len": 790,
       "plain_text_excerpt": "French\nTeacher judgements for French were also positive overall. In line with the educator feedback we received, the AI’s glosses and translations attained mean evaluations around the mid-to-high 4s (e.g., $$4.5 for glosses and $$4.3--4.4 for translations). Qualitative comments identified two recurrent issues that slightly depress scores without compromising pedagogical usability: (i) incorrect gender resolution (e.g., masculine verb morphology used for a female narrator; masculine ils instead of feminine elles for female groups) and (ii) occasional lexical choices that were comprehensible but sub-optimal in register or collocation. The teacher evaluator noted that these issues are straightforward to correct in light post-editing and did not prevent use of the materials in class.",
       "analysis": {
-        "section_summary": "Teacher evaluations of AI-generated French glosses and translations were generally positive, with average scores in the mid to high 4s. Minor issues included incorrect gender agreement and some suboptimal lexical choices, which were easily correctable through light post-editing and did not hinder classroom use.",
-        "relevant_views": [
-          {
-            "url_name": "create_glossed_text",
-            "confidence": 0.62,
-            "rationale": "The section discusses the quality of AI-generated glosses, which are created and managed via the glossed text annotation view."
-          },
-          {
-            "url_name": "create_translated_text",
-            "confidence": 0.62,
-            "rationale": "Translations are evaluated in this section; this view handles creating and editing translated text versions in the system."
-          },
-          {
-            "url_name": "aggregated_questionnaire_results",
-            "confidence": 0.46,
-            "rationale": "Mean evaluation scores and teacher feedback align with aggregated questionnaire reporting offered by this view."
-          }
-        ],
+        "section_summary": "Teachers evaluating French materials found AI-generated glosses and translations generally strong, with average scores in the mid-to-high fours. They noted recurring but minor issues, chiefly incorrect gender agreement and suboptimal lexical choices, which were easily corrected during light post-editing and did not impede classroom use.",
+        "relevant_views": [],
         "concept_tags": [
           "French",
-          "teacher evaluation",
+          "Teacher evaluation",
           "AI-generated glosses",
-          "translations",
-          "gender agreement",
-          "lexical choice",
-          "post-editing",
-          "pedagogical usability"
+          "AI translations",
+          "Gender agreement issues",
+          "Lexical choice",
+          "Post-editing",
+          "Pedagogical usability"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14844,
-        "completion_tokens": 1847,
-        "total_tokens": 16691,
-        "estimated_cost_usd": 0.037025
+        "prompt_tokens": 14850,
+        "completion_tokens": 260,
+        "total_tokens": 15110,
+        "estimated_cost_usd": 0.0211625
       },
       "has_tex": true
     },
     {
-      "section_id": "fd5640caf0c33ae6",
+      "section_id": "7049c7bfbdcb1d52",
       "level": 3,
       "title": "Ukrainian (Student Only; Teacher Evaluation Not Performed)",
       "label": null,
       "plain_text_len": 790,
       "plain_text_excerpt": "Ukrainian (Student Only; Teacher Evaluation Not Performed)\nIn contrast, the Ukrainian condition underperformed. Student scores were low and variable, and a brief review from a native-speaker teacher highlighted systematic grammatical and lexical errors: incorrect gender/morphology in first-person forms, missing function words (e.g., negation particles), mishandled case and prepositional government, literal renderings of idioms (e.g., a fly on the wall) without idiomatic equivalents, and English-like compound noun order. Given both the error density and the current situation in Ukraine, we judged it inappropriate to pursue teacher-rater recruitment for this condition. Instead, we treat these outcomes as design signals for workflow changes (see Section [REF:sec:discussion-study1]).",
       "analysis": {
-        "section_summary": "The Ukrainian-only condition performed poorly, with students’ outputs showing many grammatical and lexical mistakes—wrong gender and first-person morphology, missing negation and other function words, misused cases and prepositions, literal idiom translations, and English-like noun compounding. Given the high error rate and the current situation in Ukraine, no teacher raters were recruited, and these findings are instead treated as signals to adjust the workflow.",
+        "section_summary": "The Ukrainian condition yielded poor and inconsistent student performance, with a native-speaker review revealing numerous grammatical and lexical issues such as incorrect gender and morphology in first-person forms, omitted negation and other function words, mismanaged case and prepositions, literal translations of idioms, and English-like noun compounding. Because of the high error rate and context in Ukraine, no further teacher rating was pursued, and these findings are seen as prompts for revising the workflow.",
         "relevant_views": [],
         "concept_tags": [
-          "Ukrainian language",
+          "Ukrainian condition",
           "student performance",
           "grammatical errors",
           "lexical errors",
+          "gender agreement",
+          "morphology",
           "negation particles",
-          "case and preposition usage",
+          "case government",
+          "prepositional usage",
           "idiomatic translation",
           "compound noun order",
           "teacher evaluation",
-          "workflow redesign",
-          "study results"
+          "workflow design signals"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14619,
-        "completion_tokens": 340,
-        "total_tokens": 14959,
-        "estimated_cost_usd": 0.02167375
+        "prompt_tokens": 14625,
+        "completion_tokens": 327,
+        "total_tokens": 14952,
+        "estimated_cost_usd": 0.02155125
       },
       "has_tex": true
     },
     {
-      "section_id": "9c87d011572fcff0",
+      "section_id": "63d81f08064a9939",
       "level": 3,
       "title": "Inter-Group Comparisons",
       "label": null,
       "plain_text_len": 987,
       "plain_text_excerpt": "Inter-Group Comparisons\n\nA Kruskal--Wallis test across all languages indicated a significant overall effect of language on ratings ($H(2) = 157.65$, $p < 0.001$, $^2 = 0.08$, medium effect). Post-hoc Dunn’s tests showed that the Chinese materials received significantly higher ratings than both the French and Ukrainian versions. However, Chinese--French and French--Ukrainian differences were not statistically reliable when mean ratings were aggregated by book ($n = 18$), where the effect of language remained significant ($p < 0.001$) with a large effect size ($^2$ = 0.88). This pattern indicates that most of the variance in book-level ratings is explained by language, with Chinese materials standing out as particularly well received.\n\nStudents tended to give higher ratings overall, reflecting the materials’ engaging nature, but because the teacher and student questionnaires targeted diffe…",
       "analysis": {
-        "section_summary": "The section reports significant differences in questionnaire ratings across language versions of materials. A Kruskal–Wallis test showed an overall language effect, with Chinese versions rated higher than French and Ukrainian. Aggregating ratings by book confirmed language remained a strong predictor, with Chinese standing out. Students generally gave higher ratings, but direct comparison to teacher responses was deemed inappropriate due to differing constructs measured.",
+        "section_summary": "The study’s inter-group analysis found a significant effect of language on participant ratings, with Chinese materials rated higher than French and Ukrainian. This held even when averaging ratings by book, where most variance was explained by language. Students tended to give higher ratings overall, but direct statistical comparison with teachers was avoided because the questionnaires targeted different constructs.",
         "relevant_views": [
           {
+            "url_name": "satisfaction_questionnaire",
+            "confidence": 0.38,
+            "rationale": "The section discusses ratings collected via student and teacher questionnaires; this view handles submitting and updating project satisfaction questionnaires."
+          },
+          {
             "url_name": "aggregated_questionnaire_results",
-            "confidence": 0.52,
-            "rationale": "Provides aggregated summaries of questionnaire ratings, aligning with the section’s focus on comparing ratings across languages and respondent groups."
+            "confidence": 0.36,
+            "rationale": "Aggregated questionnaire results align with the reported analysis of ratings across groups and languages."
+          },
+          {
+            "url_name": "manage_questionnaires",
+            "confidence": 0.32,
+            "rationale": "Managing and reviewing questionnaires is pertinent to conducting inter-group comparisons of collected ratings."
           }
         ],
         "concept_tags": [
-          "Inter-group comparison",
-          "Kruskal–Wallis test",
-          "Dunn's post-hoc test",
-          "Effect size",
-          "Language differences",
+          "Kruskal-Wallis test",
+          "Dunn’s post-hoc test",
+          "effect size",
+          "language differences",
           "Chinese materials",
           "French materials",
           "Ukrainian materials",
-          "Book-level aggregation",
-          "Student versus teacher ratings",
-          "Questionnaire ratings"
+          "student ratings",
+          "teacher questionnaires",
+          "book-level analysis",
+          "inter-group comparisons"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 15129,
-        "completion_tokens": 873,
-        "total_tokens": 16002,
-        "estimated_cost_usd": 0.02764125
+        "prompt_tokens": 15135,
+        "completion_tokens": 1268,
+        "total_tokens": 16403,
+        "estimated_cost_usd": 0.03159875
       },
       "has_tex": true
     },
     {
-      "section_id": "00eb97c4851cc983",
+      "section_id": "31702dd82231dc3e",
       "level": 3,
       "title": "Interim Takeaways",
       "label": null,
       "plain_text_len": 684,
       "plain_text_excerpt": "Interim Takeaways\n\n3pt\n:\n\nFor Chinese linguistic annotation, the present workflow already achieves near-deployment quality, with average teacher Likert scores for text--image alignment, linguistic support, and visual coherence of 4.5 or better and near-ceiling student scores.\n\n: For French, small but systematic linguistic errors (gender/number agreement; pronoun choice; collocations) remain. Agreement and pronoun choice are predictable and may be relatively straightforward to fix; collocations are more challenging.\n\n: For Ukrainian, core grammatical control and idiomaticity are not yet reliable; nontrivial work is required before classroom deployment would be responsible.\n3pt",
       "analysis": {
-        "section_summary": "The interim evaluation finds that Chinese linguistic annotation is nearly ready for deployment, with high teacher and student ratings for text-image alignment, support, and coherence. French annotations still show systematic errors in agreement, pronoun use, and collocations, with the first two likely easier to address than collocational issues. Ukrainian annotations lack reliable grammatical control and idiomaticity and require significant further work before classroom use.",
+        "section_summary": "This interim summary notes that Chinese linguistic annotation is nearly ready for deployment, with high teacher ratings for text–image alignment, linguistic support, and visual coherence and near-ceiling student scores. French annotations still exhibit small but systematic errors in gender/number agreement, pronoun choice, and collocations, with the first two being predictable fixes and collocations more difficult. Ukrainian annotations lack reliable grammatical control and idiomaticity, requiring substantial work before responsible classroom use.",
         "relevant_views": [],
         "concept_tags": [
-          "linguistic annotation",
-          "Chinese language",
-          "French language",
-          "Ukrainian language",
+          "Chinese linguistic annotation",
+          "French linguistic errors",
+          "Ukrainian grammar",
           "text–image alignment",
-          "agreement errors",
+          "Likert scores",
+          "visual coherence",
+          "gender agreement",
           "pronoun choice",
           "collocations",
-          "idiomaticity",
-          "Likert scores"
+          "idiomaticity"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14687,
-        "completion_tokens": 346,
-        "total_tokens": 15033,
-        "estimated_cost_usd": 0.02181875
+        "prompt_tokens": 14693,
+        "completion_tokens": 948,
+        "total_tokens": 15641,
+        "estimated_cost_usd": 0.02784625
       },
       "has_tex": true
     },
@@ -1310,231 +1249,183 @@
       "plain_text_len": 2171,
       "plain_text_excerpt": "Overall Discussion of Study 1\nsec:discussion-study1\nOverall, the picture is coherent: when glossing in Chinese, and to a large extent in French, both teacher and student judgements indicate that the workflow is already close to achieving the desired goals for classroom use. In Ukrainian, systemic grammatical and idiomatic gaps remain visible at page level and accumulate into lower whole-book acceptability. These observations are consistent with the facts that Chinese and French are both large languages; Chinese is substantially larger than French and also has a substantially simpler grammar with almost no morphology, while Ukrainian is both a much smaller language than the other two and has a much more complex morphology.\n\nIf we wish to improve the quality of the final annotated texts, we have three main~options:\n\n3pt\n post-editing:\n\nA straightforward approach is to have humans post-edit…",
       "analysis": {
-        "section_summary": "The discussion notes that glossing workflows for Chinese and largely French are close to classroom goals based on teacher and student judgments, while Ukrainian shows grammatical and idiomatic issues that reduce acceptability, likely due to its smaller size and complex morphology versus the larger, simpler Chinese and French. To improve annotated text quality, the authors suggest three avenues: human post-editing, which is impractical for most users; waiting for future, better GenAI models, with uncertain progress especially for low-resource languages; and using current models to post-edit common error types via tailored prompts, a quickly testable option.",
+        "section_summary": "The discussion notes that glossing quality in Chinese and largely French meets classroom needs, while Ukrainian still shows grammatical and idiomatic problems due to its smaller corpus and complex morphology. Chinese benefits from larger language resources and simpler grammar. To improve annotated texts, the authors outline three approaches: human post-editing, awaiting better AI models, or using current models to post-edit via targeted prompts to correct common errors, with the latter seen as a quick avenue to explore.",
         "relevant_views": [],
         "concept_tags": [
-          "glossing",
-          "annotated texts",
-          "language complexity",
-          "morphology",
           "Chinese",
           "French",
           "Ukrainian",
+          "glossing",
+          "morphology",
+          "annotated texts",
           "post-editing",
-          "genAI models",
-          "language resources",
-          "educational technology"
+          "language size",
+          "GenAI models",
+          "prompt design"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14854,
-        "completion_tokens": 336,
-        "total_tokens": 15190,
-        "estimated_cost_usd": 0.0219275
+        "prompt_tokens": 14856,
+        "completion_tokens": 414,
+        "total_tokens": 15270,
+        "estimated_cost_usd": 0.02271
       },
       "has_tex": true
     },
     {
-      "section_id": "848c5c9c2139aa31",
+      "section_id": "1445369996d65c36",
       "level": 2,
       "title": "Study 2",
       "label": null,
       "plain_text_len": 2147,
       "plain_text_excerpt": "Study 2\n\nIn Study~2 (creation of EFL texts tailored to a specified demographic), student ratings were consistently higher than teacher ratings. Students tended to score page-level items (Q1--Q2) in the high positive range, indicating that the materials felt engaging and usable. Teachers, by contrast, gave mid-scale means (roughly Likert mid-3s\n\n to low-4s) across page-level quality and whole-book items (Q3--Q5), suggesting reservations about linguistic targeting, cultural/contextual fit, or classroom alignment. \n\nAcross all six texts, teacher evaluations clustered around the mid-scale range (means $$3.3--4.2), with the lowest values observed for Q5, “How likely are you to use this book with students similar to the above demographic?” (means $$2.5--3.0). In contrast, student responses to the most comparable item, “Would this text have taught you vocabulary and grammar that later might hav…",
       "analysis": {
-        "section_summary": "The section reports that in a study of AI-generated EFL texts tailored to a demographic, students rated page-level engagement and usefulness highly, while teachers gave mid-scale scores, especially low on likelihood of classroom use. Students perceived personal learning benefits, but teachers doubted pedagogical appropriateness. The authors suggest involving a small group of teachers earlier to review and select AI prompt options via a web interface to better align generated content with classroom expectations.",
+        "section_summary": "Study 2 examined AI-generated EFL texts for a target demographic and found students rated page-level and learning benefit items highly, while teachers gave mid-scale scores, especially low on likelihood of classroom use. The divergence suggests overestimating AI’s ability to match teacher expectations. The authors propose involving several teachers in iterative selection of generation prompts via a lightweight web interface to better align content with classroom appropriateness.",
         "relevant_views": [
           {
+            "url_name": "tq_create",
+            "confidence": 0.51,
+            "rationale": "Study 2 involved collecting teacher and student ratings on page-level and whole-book items; creating and posting text questionnaires supports deploying such Likert-scale evaluations for AI-generated texts."
+          },
+          {
             "url_name": "tq_fill",
-            "confidence": 0.6,
-            "rationale": "Students and teachers completed page-level and whole-book Likert questionnaires about the texts; this view handles filling such text questionnaires."
+            "confidence": 0.49,
+            "rationale": "Participants in the study completed per-page and whole-book rating items; the fill view enables students and teachers to submit these responses through the web interface."
           },
           {
             "url_name": "tq_results",
-            "confidence": 0.55,
-            "rationale": "The section compares aggregated ratings from teachers and students, aligning with viewing questionnaire results for a book."
-          },
-          {
-            "url_name": "tq_export_csv",
-            "confidence": 0.4,
-            "rationale": "Analyzing mean scores across questions would be facilitated by exporting questionnaire responses, which this endpoint supports."
-          },
-          {
-            "url_name": "aggregated_questionnaire_results",
-            "confidence": 0.35,
-            "rationale": "Aggregating satisfaction or quality questionnaire data across projects aligns with the reported comparison of average ratings."
+            "confidence": 0.46,
+            "rationale": "Analyzing divergent teacher and student ratings requires aggregating questionnaire responses; this view lets owners view aggregated results of text questionnaires."
           }
         ],
         "concept_tags": [
-          "EFL",
-          "AI-generated texts",
-          "student evaluation",
-          "teacher evaluation",
-          "Likert scale",
-          "engagement",
+          "EFL materials",
+          "student vs teacher perception",
+          "Likert-scale ratings",
           "classroom suitability",
-          "pedagogical appropriateness",
-          "user feedback",
-          "participatory design",
+          "AI-generated texts",
           "prompt selection",
-          "web interface"
+          "teacher involvement",
+          "questionnaire evaluation",
+          "pedagogical appropriateness",
+          "user feedback"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 15327,
-        "completion_tokens": 1216,
-        "total_tokens": 16543,
-        "estimated_cost_usd": 0.03131875
+        "prompt_tokens": 15329,
+        "completion_tokens": 794,
+        "total_tokens": 16123,
+        "estimated_cost_usd": 0.02710125
       },
       "has_tex": true
     },
     {
-      "section_id": "4a40cc699720ef4d",
+      "section_id": "11278b9939fe9b29",
       "level": 2,
       "title": "Study 3",
       "label": null,
       "plain_text_len": 249,
       "plain_text_excerpt": "Study 3\n\nFinally, we discuss the findings of Study 3, tailoring to a single user.\nWe present the learner perspective (Sarah Wright, the single user in question), the perspectives of the two germanophone teacher evaluators, and the overall takeaways.",
       "analysis": {
-        "section_summary": "This part introduces the findings of Study 3, a single-user case focusing on learner Sarah Wright, incorporating her experience alongside feedback from two German-speaking teacher evaluators and distilled overall takeaways.",
+        "section_summary": "The section introduces the discussion of Study 3, which centers on a single user case. It outlines presenting the learner's perspective (Sarah Wright), insights from two German-speaking teacher evaluators, and summarises the overall takeaways.",
         "relevant_views": [],
         "concept_tags": [
-          "Study 3",
-          "single-user case study",
+          "Study 3",
+          "single-user case",
           "learner perspective",
           "teacher evaluators",
-          "German-speaking evaluators",
+          "Germanophone teachers",
+          "Sarah Wright",
           "findings",
-          "overall takeaways"
+          "takeaways"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14502,
-        "completion_tokens": 480,
-        "total_tokens": 14982,
-        "estimated_cost_usd": 0.0229275
+        "prompt_tokens": 14504,
+        "completion_tokens": 286,
+        "total_tokens": 14790,
+        "estimated_cost_usd": 0.02099
       },
       "has_tex": true
     },
     {
-      "section_id": "4ddf85a0b590164f",
+      "section_id": "760b83697a6acf73",
       "level": 3,
       "title": "Learner Perspective",
       "label": null,
       "plain_text_len": 888,
       "plain_text_excerpt": "Learner Perspective\nThe learner, Ms Wright, reports that all six episodes closely reflected her brief and “paint a cohesive idealized narrative” of her cartoon self, covering everyday settling-in tasks (e.g., housing, admin, and lab safety) and personal interests (e.g., first rehearsal in a wind orchestra). Perceived difficulty matched B1/B2, with C-LARA glosses helping on technical terms; on request, the system produced slightly more challenging variants. The main issues were image-side: (i) the title page sometimes depicted a different character from the body pages, (ii) one anatomy artefact (“three hands”), (iii) text rendered inside images was sometimes unrelated or in English, and (iv) occasional orientation mistakes (papers upside-down/facing away). Despite these, the learner judged the texts engaging and useful, with clear potential as an at-home complement to classes.",
       "analysis": {
-        "section_summary": "A learner reported that six generated episodes matched her brief, forming a cohesive narrative about settling into daily life and personal interests. The texts felt appropriately challenging at B1/B2 level, with C-LARA glosses aiding technical terms and allowing for slightly harder variants on request. Main shortcomings were on the image side: inconsistent characters on title pages, an anatomy glitch, irrelevant or English text embedded in images, and occasional orientation errors. Despite these, she found the materials engaging and a useful at-home complement to classes.",
-        "relevant_views": [
-          {
-            "url_name": "public_content_detail",
-            "confidence": 0.29,
-            "rationale": "The learner consumed glossed texts at an appropriate difficulty, which are delivered through public content detail pages with integrated annotations."
-          },
-          {
-            "url_name": "image_questionnaire_start",
-            "confidence": 0.27,
-            "rationale": "Feedback on image quality issues aligns with the questionnaire views designed to guide users through rating images and summarizing image-related responses."
-          },
-          {
-            "url_name": "coherent_images_v2_status",
-            "confidence": 0.22,
-            "rationale": "The reported inconsistencies and artefacts in images relate to coherent image generation and monitoring, which this endpoint supports managing and checking."
-          }
-        ],
+        "section_summary": "Ms Wright felt the six generated episodes closely matched her brief and formed a coherent narrative about settling in and personal interests. The texts were at a B1/B2 level, and C‑LARA glosses aided with technical terms; the system could also supply slightly harder versions. She noted image problems such as mismatched title and body characters, a three‑hand artefact, irrelevant English text embedded in images, and occasional orientation errors, but still found the materials engaging and a useful complement to classes.",
+        "relevant_views": [],
         "concept_tags": [
-          "learner perspective",
-          "personalised narrative",
-          "B1/B2 proficiency",
-          "glossed texts",
+          "learner feedback",
+          "C-LARA glosses",
+          "B1/B2 difficulty level",
           "technical vocabulary support",
-          "image quality issues",
-          "coherent images",
-          "title-page character mismatch",
           "image artefacts",
-          "text embedded in images",
+          "title page inconsistency",
+          "embedded text issues",
           "orientation errors",
-          "learner engagement",
+          "engaging learning materials",
           "self-study complement"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14923,
-        "completion_tokens": 1210,
-        "total_tokens": 16133,
-        "estimated_cost_usd": 0.03075375
+        "prompt_tokens": 14929,
+        "completion_tokens": 997,
+        "total_tokens": 15926,
+        "estimated_cost_usd": 0.02863125
       },
       "has_tex": true
     },
     {
-      "section_id": "9ff873f84b47b8fc",
+      "section_id": "adfa0b1042f130e9",
       "level": 3,
       "title": "Teacher Perspective",
       "label": null,
       "plain_text_len": 1034,
       "plain_text_excerpt": "Teacher Perspective\nThe teachers judged the topics appropriate for exchange students (registration, accommodation, etc.) but flagged two categories of refinement before classroom use: cultural authenticity and adjustment to the learner's linguistic level. On culture, one accommodation storyline (“Wohnungssuche in Burghausen”) was seen as an oversimplified path that is atypical for students, and one office scene showed a staff name badge with a first name rather than the more appropriate title+surname. On language, the texts landed closer to B1 than the intended B2; this was defended pedagogically as supporting focus on key vocabulary, but it should be explicit in design. Glosses/translations were “generally very appropriate,” though occasional inconsistencies were noted (e.g., mapping of wäre (roughly, “would be”) glossed as “would” in Erste Probe im Blasorchester). Overall verdict: This…",
       "analysis": {
-        "section_summary": "Teachers found the exchange student topics appropriate but identified two main areas needing refinement before classroom use: better cultural authenticity and clearer alignment to the intended B2 level. One housing storyline was unrealistically simplified and a name badge used informal naming; the language overall felt closer to B1, which may aid vocabulary focus but should be stated. Glosses were generally good, with some inconsistencies (e.g., glossing \"wäre\" as \"would\"). Overall, it is a solid draft requiring targeted human edits for culture and level specificity.",
+        "section_summary": "Teachers found the AI-generated scenarios and topics suitable for exchange students but noted the need for refinement in cultural authenticity and alignment with the intended proficiency level. One housing storyline felt unrealistically easy and a name badge lacked the expected formality, suggesting cultural adjustments. Linguistically, texts were closer to B1 than the intended B2, which could be acceptable if stated as a pedagogical choice. Glosses and translations were mostly appropriate, with occasional inconsistencies. Overall, the materials are a strong first draft that could be classroom-ready after targeted human post-editing and clearer level specification.",
         "relevant_views": [],
         "concept_tags": [
-          "teacher feedback",
+          "teacher evaluation",
           "cultural authenticity",
-          "language proficiency level",
           "CEFR B1",
           "CEFR B2",
-          "gloss quality",
-          "pedagogical design",
-          "exchange student scenarios",
-          "human post-editing",
-          "vocabulary focus"
+          "linguistic level",
+          "glossing",
+          "translation quality",
+          "pedagogical suitability",
+          "post-editing"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14333,
-        "completion_tokens": 711,
-        "total_tokens": 15044,
-        "estimated_cost_usd": 0.02502625
+        "prompt_tokens": 14339,
+        "completion_tokens": 584,
+        "total_tokens": 14923,
+        "estimated_cost_usd": 0.02376375
       },
       "has_tex": true
     },
     {
-      "section_id": "9c87d011572fcff0",
+      "section_id": "e2c003cffe7d3512",
       "level": 3,
       "title": "Inter-Group Comparisons",
       "label": null,
       "plain_text_len": 684,
       "plain_text_excerpt": "Inter-Group Comparisons\n\nBecause the teacher and student questionnaires in this single-user study addressed mainly different constructs---teachers focused on linguistic accuracy, cultural fit, and visual correspondence, while the learner assessed engagement, personal relevance, and image consistency---and because ratings were uniformly high, we again judged that a formal statistical comparison was not appropriate. Instead, the complementary teacher and student perspectives were interpreted qualitatively, revealing broad agreement that the materials were engaging, relevant, and pedagogically valuable, with minor refinements needed for cultural detail and consistency in images.",
       "analysis": {
-        "section_summary": "The teacher and student surveys in this single-user study assessed different aspects—teachers looked at linguistic accuracy, cultural fit and visual alignment, while the learner rated engagement, personal relevance and image consistency. With uniformly high scores, formal statistical comparison was deemed unnecessary; instead, qualitative interpretation showed broad agreement that the materials were engaging, relevant and pedagogically valuable, with only minor improvements needed for cultural detail and image consistency.",
-        "relevant_views": [
-          {
-            "url_name": "aggregated_questionnaire_results",
-            "confidence": 0.41,
-            "rationale": "The study discusses aggregating teacher and student questionnaire perspectives; this view computes averaged questionnaire ratings and distributions for reporting."
-          },
-          {
-            "url_name": "satisfaction_questionnaire",
-            "confidence": 0.38,
-            "rationale": "Section centers on administering and interpreting satisfaction questionnaires from different roles, matching the satisfaction questionnaire workflow."
-          },
-          {
-            "url_name": "manage_questionnaires",
-            "confidence": 0.35,
-            "rationale": "Managing and reviewing questionnaires aligns with comparing teacher and student responses qualitatively in the study."
-          },
-          {
-            "url_name": "show_questionnaire",
-            "confidence": 0.32,
-            "rationale": "Viewing questionnaire content and responses is relevant to interpreting teacher and student survey results described."
-          }
-        ],
+        "section_summary": "The study compared teacher and student feedback but did not conduct statistical tests because the questionnaires targeted different constructs and ratings were uniformly high. Instead, qualitative interpretation showed both groups agreed the materials were engaging, relevant, and pedagogically useful, with only minor improvements needed around cultural details and image consistency.",
+        "relevant_views": [],
         "concept_tags": [
-          "inter-group comparisons",
+          "inter-group comparison",
           "teacher questionnaire",
           "student questionnaire",
           "linguistic accuracy",
@@ -1543,111 +1434,104 @@
           "engagement",
           "personal relevance",
           "image consistency",
-          "qualitative interpretation",
-          "pedagogical value"
+          "qualitative analysis",
+          "pedagogical value",
+          "high ratings"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14793,
-        "completion_tokens": 861,
-        "total_tokens": 15654,
-        "estimated_cost_usd": 0.02710125
+        "prompt_tokens": 14799,
+        "completion_tokens": 631,
+        "total_tokens": 15430,
+        "estimated_cost_usd": 0.02480875
       },
       "has_tex": true
     },
     {
-      "section_id": "04ddda0d05ca7771",
+      "section_id": "bef0947a6492e9a0",
       "level": 3,
       "title": "Takeaways and Next Steps",
       "label": null,
       "plain_text_len": 977,
       "plain_text_excerpt": "Takeaways and Next Steps\n\n3pt\n:\n\n Both teacher raters thought the texts related well to the real experience of being a student in Bavaria and consequently saw clear alignment with the learner’s goals and situations; the student found all six episodes relevant and engaging.\n \n \n: Image workflow needs two consistency checks: identity locking for recurring characters (so title and body pages match) and automatic screening of text inside images (language, relevance, and orientation).\n \n \n level Levelling should be explicitly set and checked (B1 vs. B2), with a quick loop that regenerates sentences above/below target proficiency. \n \n \n issues: A short checklist of cultural issues (e.g., realistic housing pathways; badge conventions) would catch many of the kinds of mismatches observed here. These changes could be integrated into C-LARA’s generation and review workflow with minimal friction an…",
       "analysis": {
-        "section_summary": "The section reflects on feedback and improvements: teachers and a student found the generated Bavarian student texts relevant and engaging, but the image pipeline needs better consistency through character identity locking and automated screening of text embedded in images. It recommends explicitly setting and checking CEFR levels (e.g., B1 vs. B2) with quick regeneration loops for sentences outside the target, and using a brief cultural checklist to catch mismatches, integrating these checks into C-LARA's generation and review workflow to reduce post-editing.",
+        "section_summary": "This section highlights that the teacher raters and the student found the generated episodes relevant and engaging, but outlines fixes to streamline future iterations: add consistency checks to the image workflow (locking recurring character identities and automatically screening text inside images), explicitly set and verify target proficiency levels (e.g., B1 vs. B2) with quick regeneration of out-of-level sentences, and use a cultural checklist to catch mismatches, thereby reducing post-editing in C-LARA’s generation and review process.",
         "relevant_views": [
           {
             "url_name": "edit_images_v2",
-            "confidence": 0.38,
-            "rationale": "The call for identity locking and screening text within images aligns with the coherent image configuration and management provided by the v2 image editing workflow."
+            "confidence": 0.68,
+            "rationale": "The section calls for identity locking and text screening within the image workflow, which aligns with the coherent images v2 editing and generation view that manages page and style consistency."
           },
           {
-            "url_name": "coherent_images_v2_monitor",
-            "confidence": 0.33,
-            "rationale": "Monitoring coherent image generation supports enforcing consistent characters and reviewing embedded text, as suggested for the image workflow improvements."
-          },
-          {
-            "url_name": "generate_text_monitor",
-            "confidence": 0.31,
-            "rationale": "The need to regenerate sentences to meet B1/B2 targets fits with the text generation task monitoring that can manage iterative adjustments to proficiency level."
+            "url_name": "create_cefr_level",
+            "confidence": 0.39,
+            "rationale": "The need to explicitly set and check B1 vs B2 levels relates to creating and managing CEFR-level annotated text versions supported by the annotation views."
           }
         ],
         "concept_tags": [
-          "teacher feedback",
-          "student engagement",
-          "image workflow",
-          "coherent images",
+          "image consistency",
           "identity locking",
           "text screening",
-          "CEFR level",
+          "proficiency level",
           "B1",
           "B2",
-          "regeneration loop",
-          "cultural checklist",
-          "review workflow",
-          "post editing"
+          "cultural appropriateness",
+          "checklist",
+          "generation workflow",
+          "post-editing reduction",
+          "student engagement",
+          "relevance"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
-        "prompt_tokens": 14921,
-        "completion_tokens": 2161,
-        "total_tokens": 17082,
-        "estimated_cost_usd": 0.04026125
+        "prompt_tokens": 14927,
+        "completion_tokens": 2237,
+        "total_tokens": 17164,
+        "estimated_cost_usd": 0.04102875
       },
       "has_tex": true
     },
     {
-      "section_id": "942b43fffd478f15",
+      "section_id": "ba2ae6760788ec13",
       "level": 1,
       "title": "Conclusions and Further Directions",
       "label": null,
       "plain_text_len": 14334,
       "plain_text_excerpt": "Conclusions and Further Directions\n\nWe have described a range of experiments carried out using the C-LARA platform, where we evaluated various kinds of automatically and near-automatically generated multimodal illustrated pedagogical texts designed to support L2 learning, both in the classroom and for individual learners. Although the results vary depending on the language pair, those for the best language pairs are clearly promising.\nIn particular, both educators and learners considered performance for the important Chinese--English language pair to be of high quality. The platform has\nattained a level approaching deployment readiness, as evidenced by favourable evaluations at both the local (page) and global (book) levels concerning text--image alignment, linguistic support, and visual coherence. Consequently, the research team intends soon to conduct a larger experiment which will use…",
       "analysis": {
-        "section_summary": "The section concludes that C-LARA has yielded promising results in generating multimodal illustrated texts for L2 learning, especially for Chinese–English, with positive perceptions of text–image alignment and overall quality. The platform is nearing deployment and a large-scale study in a real educational setting is planned to compare C-LARA-supported instruction with traditional methods and to contrast AI-generated versus human-authored texts. Future work envisions adding spoken interaction via forthcoming GPT capabilities, while acknowledging current packaging limitations. The authors note ethical considerations, data availability, gratitude to participants, and a GenAI disclosure regarding authorship.",
+        "section_summary": "The conclusion highlights promising outcomes from experiments with automatically generated multimodal texts on the C-LARA platform, especially for Chinese–English learning, noting the system’s readiness for deployment and plans for larger comparative studies in authentic educational settings. It points to future extensions into spoken interaction via voice-enabled models like GPT-5, with preliminary trials already explored, and reflects on ethical approvals, data availability, acknowledgements, and potential AI authorship conflicts. An abbreviations list and references close the section.",
         "relevant_views": [],
         "concept_tags": [
-          "C-LARA",
-          "multimodal learning",
-          "L2 learning",
+          "C-LARA platform",
+          "multimodal language learning",
           "Chinese–English",
           "text–image alignment",
-          "visual coherence",
-          "language pedagogy",
-          "AI-generated texts",
           "voice interaction",
-          "CALL",
           "GPT-5",
           "future work",
-          "evaluation",
-          "ethics"
+          "educational experiments",
+          "ethical considerations",
+          "data availability",
+          "generative AI",
+          "abbreviations"
         ]
       },
       "usage": {
         "model": "gpt-5.1-codex-max",
         "prompt_tokens": 18353,
-        "completion_tokens": 741,
-        "total_tokens": 19094,
-        "estimated_cost_usd": 0.03035125
+        "completion_tokens": 454,
+        "total_tokens": 18807,
+        "estimated_cost_usd": 0.02748125
       },
       "has_tex": true
     }
   ],
   "usage_totals": {
-    "prompt_tokens": 570668,
-    "completion_tokens": 32650,
-    "total_tokens": 603318,
-    "estimated_cost_usd": 1.039835
+    "prompt_tokens": 570814,
+    "completion_tokens": 28585,
+    "total_tokens": 599399,
+    "estimated_cost_usd": 0.999367
   }
 }
