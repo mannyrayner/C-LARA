@@ -1,0 +1,644 @@
+{
+  "publication_id": "slate_2025_images",
+  "created_at": "2025-12-29T01:48:06.332316+00:00",
+  "source_zip": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\overleaf_zips\\SLATE2025Paper.zip",
+  "source_zip_sha256": "0a55a7ebb57a1623317f515f64d5f326d9e25a9d51c8566f225b8c78cc4d8383",
+  "root_tex": "slate2025clara.tex",
+  "flattened_tex": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\publications\\slate_2025_images\\flattened.tex",
+  "model": "gpt-5.1-codex-max",
+  "sections_count": 12,
+  "candidate_top_k": 100,
+  "sections": [
+    {
+      "section_id": "2bea80cd9ee95b6d",
+      "level": 1,
+      "title": "Introduction",
+      "label": "sec:intro",
+      "plain_text_len": 3258,
+      "plain_text_excerpt": "Introduction\nsec:intro\n\n reader books have long been a staple of language teaching, particularly \nsecond-language teaching: pictures anchor meaning, lower cognitive\nload for beginners and provide cultural context for advanced learners\n[CITE:plass2005multimedia]. Until now, producing a coherent, fully\nillustrated text has required a team of teachers, illustrators and\nlayout specialists—too costly for many programmes, and logistically problematic for low-resource or minority languages. In this paper, we present an initial case study showing how the situation is rapidly evolving towards a point where it is reasonable to hope that a single non-technical person will soon be able to create a good-quality illustrated text in a time measured in tens of minutes.\n\n sudden inflection point. The release of\nOpenAI’s GPT-Image-1 model [CITE:OpenAIImageGeneration2025] marks a step-change over earlier\nt…",
+      "analysis": {
+        "section_summary": "The introduction frames illustrated reader books as crucial for language learning but historically costly to produce, especially for low-resource languages. It highlights GPT-Image-1’s advances over prior text-to-image models—consistent reuse of characters and effective negative prompting—that make it suitable for language learning illustrations. The authors argue that packaging matters: an intermediate layer should enforce global style coherence, support reusable elements, and allow easy tweaking or regeneration. They present how the open-source C-LARA platform wraps GPT-Image-1 into a three-stage Style → Elements → Pages pipeline enabling non-technical users to generate and revise coherent illustrations for a short text in minutes, with community moderation, and outline the paper’s roadmap and evaluation across diverse texts and languages.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.63,
+            "rationale": "The introduction emphasizes a Style → Elements → Pages pipeline for coherent illustrations; the edit_images_v2 view provides configuration and management for coherent images in C-LARA."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.6,
+            "rationale": "Monitoring and managing the asynchronous generation in the coherent images pipeline aligns with the described packaged workflow for non-technical users."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.58,
+            "rationale": "Status endpoints for the coherent images pipeline support the style/elements/pages generation process highlighted in the introduction."
+          },
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.32,
+            "rationale": "The Simple C-LARA wizard orchestrates text and image creation for non-technical users, consistent with the paper’s goal of easy illustrated text creation."
+          }
+        ],
+        "concept_tags": [
+          "GPT-Image-1",
+          "text-to-image",
+          "style coherence",
+          "reusable elements",
+          "page illustrations",
+          "negative prompting",
+          "computer-assisted language learning",
+          "C-LARA platform",
+          "Style–Elements–Pages pipeline",
+          "non-technical users",
+          "low-resource languages",
+          "illustrated reader books"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15643,
+        "completion_tokens": 738,
+        "total_tokens": 16381,
+        "estimated_cost_usd": 0.02693375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "fac92698840d32b5",
+      "level": 1,
+      "title": "The C‑LARA platform",
+      "label": "sec:C-LARA",
+      "plain_text_len": 1288,
+      "plain_text_excerpt": "The C‑LARA platform\nsec:C-LARA\n\nExtensive documentation on the C-LARA platform is available elsewhere; in particular, the third C-LARA progress report [CITE:ChatGPTReport3] was released only a few months ago and is essentially up to date except for the issues concerning GPT-Image-1 covered in this paper. We consequently give only a very brief summary here. C-LARA is an open source project, inaugurated in March 2023 and following on from the earlier LARA project [CITE:LARA2019SLaTE]. The core goal of the project is to create a suite of online tools that simplify the task of creating, using and evaluating multimodal pedagogical texts in a wide variety of languages. Wherever possible, the user is given the option of allowing tasks to be performed by integrated AI models, most commonly OpenAI's GPT-4o. Creation of a multimodal C-LARA text proceeds through a number of stages, of which the mos…",
+      "analysis": {
+        "section_summary": "This section briefly overviews the C-LARA platform: an open source successor to LARA launched in March 2023, aimed at simplifying the creation, use, and evaluation of multimodal pedagogical texts across many languages. It integrates AI models such as GPT-4o to assist tasks and outlines key stages in building a multimodal text—generating or importing plain text, segmenting it, translating to a glossing language, creating or importing illustrative images, identifying multi-word expressions, glossing, and lemma tagging. A wizard-style Simple-CLARA interface supports rapid text production with default settings.",
+        "relevant_views": [
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.83,
+            "rationale": "The section explicitly mentions a wizard-style Simple-CLARA interface for rapid production of texts, which this view provides."
+          },
+          {
+            "url_name": "create_project",
+            "confidence": 0.55,
+            "rationale": "Creating new C-LARA projects aligns with the described goal of building multimodal texts; this view handles project creation."
+          },
+          {
+            "url_name": "create_plain_text",
+            "confidence": 0.65,
+            "rationale": "Generating or importing the plain text is a key stage outlined and this endpoint manages plain text creation and editing."
+          },
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.65,
+            "rationale": "Segmentation into pages, sentences, and words is mentioned as a major step; this view supports creating segmented text."
+          },
+          {
+            "url_name": "create_translated_text",
+            "confidence": 0.6,
+            "rationale": "Translation into the glossing language is one of the described stages; this view handles creation of translated text."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.65,
+            "rationale": "Glossing is listed among the main stages; this endpoint manages glossed text generation or correction."
+          },
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.6,
+            "rationale": "Identification of multi-word expressions is highlighted; this view creates and maintains MWE-tagged text."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.6,
+            "rationale": "Lemma tagging is part of the workflow; this view covers creation of lemma-tagged text versions."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.6,
+            "rationale": "The creation or importing of images for illustration is described; this view supports configuring and generating coherent images for a project."
+          }
+        ],
+        "concept_tags": [
+          "C-LARA platform",
+          "open source",
+          "multimodal pedagogical texts",
+          "GPT-4o integration",
+          "Simple-CLARA wizard",
+          "plain text generation",
+          "text segmentation",
+          "translation to glossing language",
+          "glossing",
+          "multi-word expressions",
+          "lemma tagging",
+          "image illustration",
+          "AI-assisted text creation",
+          "LARA project"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14902,
+        "completion_tokens": 3073,
+        "total_tokens": 17975,
+        "estimated_cost_usd": 0.0493575
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "5d205ebcbcea8b06",
+      "level": 1,
+      "title": "Integrating GPT-Image-1 into C-LARA",
+      "label": "sec:integration",
+      "plain_text_len": 1408,
+      "plain_text_excerpt": "Integrating GPT-Image-1 into C-LARA\nsec:integration\n\nA naive integration of GPT-Image-1 into a platform like C-LARA is trivial: we just pass the text of each page to the generation endpoint (for simplicity's sake we assume in this paper that we want one image per page), telling the model to create the image. A little experimentation shows that the results of the naive integration are generally unsatisfactory for texts that contain more than one image, since the images produced are inconsistent with each other. Two kinds of consistency are particularly important: consistency of style (usually, we want all the images to have the same style) and consistency of content (usually, if the same element, e.g. a character or location, occurs in two images we want it to be depicted similarly each time). \n\nThe revised integration we describe here, which has gone through several design iterations, ad…",
+      "analysis": {
+        "section_summary": "The section explains that simply feeding each page’s text to GPT-Image-1 yields inconsistent images when multiple illustrations are needed. It identifies style consistency and consistent depiction of recurring elements as crucial, and introduces a revised integration in C-LARA, with separate generation and revision components, to produce coherent images across a text.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.63,
+            "rationale": "This view configures and manages coherent image generation for a project, including setting style and element parameters to enforce cross-page consistency."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.52,
+            "rationale": "Provides monitoring for asynchronous generation of styles, elements, and pages, aligning with the described generation component for consistent images."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.5,
+            "rationale": "Supplies status updates on coherent image generation tasks, relevant to overseeing the revised integration pipeline."
+          }
+        ],
+        "concept_tags": [
+          "GPT-Image-1",
+          "image generation",
+          "style consistency",
+          "content consistency",
+          "coherent images",
+          "C-LARA integration",
+          "generation pipeline",
+          "image revision"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14803,
+        "completion_tokens": 940,
+        "total_tokens": 15743,
+        "estimated_cost_usd": 0.02790375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "3ff3b4d74c51dfa7",
+      "level": 2,
+      "title": "Image generation",
+      "label": "sec:ImageGeneration",
+      "plain_text_len": 3231,
+      "plain_text_excerpt": "Image generation\nsec:ImageGeneration\n\nThe image generation process is a sequence of three phases. First, the user creates the style; then the ``elements'' (repeated visual components); finally the images that will be included in the document. In each case, invocation of a text model like GPT-4o is alternated with invocation of the multimodal model GPT-Image-1. The details are as follows.\n\nStyle:\nThe user provides an initial specification of the style they have in mind, and optionally adds some background information that may be generally useful in all three phases. In practice, we find we usually get best results by making both the description of the style and the background information simple and generic. For example, the initial style specification might be ``Create an amusing manga-inspired style appropriate to this text and its expected readers'' and the background information might …",
+      "analysis": {
+        "section_summary": "This section describes the three-phase pipeline used to generate coherent images for a C‑LARA document. The user first defines a visual style, with simple, generic descriptions and background info expanded by a text model (e.g., GPT‑4o) into a detailed style spec, then validated via a sample image from a multimodal model (e.g., GPT‑Image‑1). Next, repeated elements (characters, objects, locations) are identified from the document text by a text model, edited by the user, expanded into detailed element descriptions, and rendered as images for review. Finally, for each page, the relevant elements are selected, combined with page and style context to form a detailed page prompt, and rendered by the image model using either generation or edit endpoints depending on whether element images are involved.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.78,
+            "rationale": "Provides the interface to configure and manage coherent style, elements, and page images for a CLARA project, matching the described three-phase image generation process."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.65,
+            "rationale": "Exposes monitoring of asynchronous tasks for style, elements, and page image generation, corresponding to the phased workflow outlined."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.64,
+            "rationale": "Supplies status endpoints for the coherent image generation tasks across style, elements, and pages described in the section."
+          },
+          {
+            "url_name": "execute_simple_clara_image_requests_monitor",
+            "confidence": 0.42,
+            "rationale": "The Simple C‑LARA wizard can dispatch image generation tasks (including coherent images), so may be used to run or monitor the described image generation steps in a simplified flow."
+          },
+          {
+            "url_name": "execute_simple_clara_image_requests_status",
+            "confidence": 0.4,
+            "rationale": "Provides status polling for Simple C‑LARA image generation requests, potentially covering the phased style/element/page image creation."
+          }
+        ],
+        "concept_tags": [
+          "image generation pipeline",
+          "style creation",
+          "repeated elements",
+          "page images",
+          "prompt engineering",
+          "GPT-4o",
+          "GPT-Image-1",
+          "multimodal model",
+          "coherent images",
+          "CLARA project"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15327,
+        "completion_tokens": 932,
+        "total_tokens": 16259,
+        "estimated_cost_usd": 0.02847875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "b66a668c2bffb595",
+      "level": 2,
+      "title": "Image revision",
+      "label": "sec:ImageRevision",
+      "plain_text_len": 1072,
+      "plain_text_excerpt": "Image revision\nsec:ImageRevision\n\nAs already indicated, the user is allowed at each stage to revise the generated material. Descriptions and images are created in multiple versions. There are upvoting/downvoting controls that let the user chose which version of the image to include in the final document. The user can also create new versions of element and page images by making new descriptions. This can be done either by editing and resubmitting an existing description, or by providing advice which is passed to the GPT-4o-like model with a request that it creates an appropriate new description. In practice, we find both modes are used frequently.\n\nWe have also created an image revision mode suitable for collaborative reviewing. This has particularly been developed with Indigenous communities in mind (three of the authors work with Indigenous communities). In the collaborative mode, upvo…",
+      "analysis": {
+        "section_summary": "The section explains that image generation is iterative: multiple descriptions and image versions are produced, and users can upvote or downvote to select which goes into the final document. Users can also trigger new versions by editing descriptions or by providing advice that is sent to the model to craft a new description. A collaborative review mode allows many users to submit votes and requests; an accredited coordinator periodically reviews and approves which new image requests to execute, a setup designed with Indigenous community collaboration in mind.",
+        "relevant_views": [
+          {
+            "url_name": "community_review_images",
+            "confidence": 0.76,
+            "rationale": "Enables community members to view pages, vote on images, request variants, and leave advice, matching the described collaborative up/downvoting and request flow."
+          },
+          {
+            "url_name": "community_organiser_review_images",
+            "confidence": 0.76,
+            "rationale": "Provides coordinators an overview to review community votes and requests and approve actions, aligning with the accredited coordinator role in collaborative mode."
+          },
+          {
+            "url_name": "community_review_images_for_page",
+            "confidence": 0.7,
+            "rationale": "Supports per-page voting and requesting new images, reflecting the multiple versions and up/downvote selection described."
+          },
+          {
+            "url_name": "execute_community_requests_for_page_monitor",
+            "confidence": 0.52,
+            "rationale": "Monitors execution of approved community image requests, relevant to the coordinator approving and running new image generations."
+          },
+          {
+            "url_name": "execute_community_requests_for_page_status",
+            "confidence": 0.5,
+            "rationale": "Reports status of executing approved community requests, tied to the collaborative review and approval process."
+          }
+        ],
+        "concept_tags": [
+          "image revision",
+          "upvoting",
+          "downvoting",
+          "multiple versions",
+          "description editing",
+          "community review",
+          "coordinator approval",
+          "requesting new images",
+          "collaborative reviewing",
+          "Indigenous communities",
+          "GPT-4o"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14682,
+        "completion_tokens": 1167,
+        "total_tokens": 15849,
+        "estimated_cost_usd": 0.0300225
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "09fc36dc022b7616",
+      "level": 1,
+      "title": "Evaluation",
+      "label": "sec:eval",
+      "plain_text_len": 369,
+      "plain_text_excerpt": "Evaluation\nsec:eval\n\nWe describe an initial evaluation of the C-LARA/GPT-Image-1 integration. We first present the evaluation material, then the procedure and the results. The evaluation shown here is of necessity a preliminary one; GPT-Image-1 was released only a few weeks before the SLaTE submission deadline and some time was needed to develop the integration code.",
+      "analysis": {
+        "section_summary": "Presents a preliminary evaluation of the newly built integration between C-LARA and GPT-Image-1, outlining the materials, procedure, and results, noting the assessment is limited by the recent release and development time constraints.",
+        "relevant_views": [],
+        "concept_tags": [
+          "evaluation",
+          "GPT-Image-1",
+          "C-LARA integration",
+          "preliminary study"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14756,
+        "completion_tokens": 464,
+        "total_tokens": 15220,
+        "estimated_cost_usd": 0.023085
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "74faabc200366634",
+      "level": 2,
+      "title": "Evaluation material",
+      "label": "Table:ImagePrompts",
+      "plain_text_len": 3123,
+      "plain_text_excerpt": "Evaluation material\n\nOur evaluation material consisted of 11 C-LARA texts, which divided into two groups; six AI-generated English-language pedagogical texts (plus a revised version of one text), and four classical literary texts. The language in the texts from the second group was far more complex than that in the first group. \n\nThe AI-generated texts were taken from the evaluation presented in 5.2 of the third report [CITE:ChatGPTReport3], which used DALL-E-3 and Imagen 3; this time, we used GPT-Image-1. As explained in the third report, we created texts of widely different kinds using prompts based on the brief descriptions shown in Table~[REF:Table:ImagePrompts].\n\ntable[bh!]\n Core prompts used to generate English-language pedagogical texts used in evaluation. The links are to compiled versions of the texts posted on the C-LARA platform.\n Table:ImagePrompts\n\ntabularll\n\n1cLabel & 1cPro…",
+      "analysis": {
+        "section_summary": "This section outlines the evaluation corpus of 11 C‑LARA texts: six AI-generated English pedagogical pieces (plus a revised version) created from short prompts with GPT‑Image‑1, and four classic literary works presented in their original languages. It provides prompt labels, links to compiled texts on the platform, and lists the five questions used in the image evaluation questionnaire regarding correspondence, style consistency, element coherence, cultural appropriateness, and visual appeal.",
+        "relevant_views": [
+          {
+            "url_name": "image_questionnaire_project_list",
+            "confidence": 0.7,
+            "rationale": "The section refers to compiled texts on C-LARA with image evaluation; this view lists projects with image questionnaires to initiate such evaluations."
+          },
+          {
+            "url_name": "image_only_questionnaire_start",
+            "confidence": 0.76,
+            "rationale": "The described questionnaire asks image-focused questions (Q1–Q5), matching the image-only questionnaire start flow."
+          },
+          {
+            "url_name": "image_questionnaire_start",
+            "confidence": 0.65,
+            "rationale": "This starts an image (and optional text) questionnaire, aligning with the evaluation setup of rating images against text."
+          },
+          {
+            "url_name": "image_questionnaire_item",
+            "confidence": 0.68,
+            "rationale": "Capturing per-page ratings on correspondence, style, coherence, culture, and appeal matches the described questionnaire items."
+          },
+          {
+            "url_name": "image_questionnaire_summary",
+            "confidence": 0.6,
+            "rationale": "Summarizing responses from the image evaluation questionnaire relates to the presented questions and evaluation outcomes."
+          },
+          {
+            "url_name": "image_questionnaire_summary_csv",
+            "confidence": 0.55,
+            "rationale": "Exporting questionnaire results aligns with analyzing the collected ratings from the evaluation."
+          },
+          {
+            "url_name": "image_questionnaire_all_projects_summary",
+            "confidence": 0.5,
+            "rationale": "Provides an overview across projects with image questionnaires, relevant to aggregating evaluation data."
+          }
+        ],
+        "concept_tags": [
+          "Evaluation material",
+          "C-LARA texts",
+          "AI-generated pedagogical texts",
+          "Literary texts",
+          "Image prompts",
+          "GPT-Image-1",
+          "DALL-E-3",
+          "Imagen 3",
+          "Image evaluation questionnaire",
+          "Style consistency",
+          "Cultural appropriateness",
+          "Visual appeal"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15375,
+        "completion_tokens": 1385,
+        "total_tokens": 16760,
+        "estimated_cost_usd": 0.03306875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "ba3b782c8ee0d1eb",
+      "level": 2,
+      "title": "Evaluation procedure and results",
+      "label": "tab:results",
+      "plain_text_len": 1222,
+      "plain_text_excerpt": "Evaluation procedure and results\n\nWe evaluated the images in the texts using an online questionnaire, one question per image, five point Likert scale, based on the questions in Table~[REF:Table:ImageQuestions]. Table~[REF:tab:results] presents summary figures for the questionnaire-based evaluation of the AI-generated and literary texts. We discuss the results for the two groups.\n\ntable[h]\nImage questionnaire results; \\#p = \\#pages, \\#r = \\#raters, Q1--5 as in Table~[REF:Table:ImageQuestions]. Mean Likert score out of 5 for each question.tab:results\n\ntabularlccccccc\n\nText & \\#p & \\#r & Q1 & Q2 & Q3 & Q4 & Q5 \\\\\n\n8cAI-generated pedagogical texts \\\\\n\nDI & 26 & 3 & 4.71 & 4.90 & -- & 4.99 & 4.21\\\\\nSC & 21 & 2 & 3.67 & 4.69 & -- & 4.76 & 3.60\\\\\nSCR & 21 & 2 & 3.81 & 4.62 & -- & 4.10 & 3.71\\\\\nAN & 20 & 2 & 4.62 & 4.97 & 4.87 & 5.00 & 4.53\\\\\nRO & 21 & 2 & 4.50 & 4.98 & 4.79 & 5.00 & 4.69\\\\\nTR &…",
+      "analysis": {
+        "section_summary": "The section describes an online image evaluation where each image was rated on a five‑point Likert scale using predefined questions. A summary table reports mean scores per question for each text, grouped into AI‑generated pedagogical texts and literary texts, alongside the number of pages and raters involved. Some questions were not applicable for certain texts, indicated by missing values.",
+        "relevant_views": [
+          {
+            "url_name": "image_questionnaire_summary",
+            "confidence": 0.56,
+            "rationale": "The section reports summary figures from an image questionnaire, aligning with the view that shows summary results for image quality questionnaires."
+          },
+          {
+            "url_name": "image_questionnaire_summary_csv",
+            "confidence": 0.45,
+            "rationale": "A CSV export of image questionnaire summaries would be relevant to presenting aggregated evaluation results similar to those in the table."
+          },
+          {
+            "url_name": "image_questionnaire_all_projects_summary",
+            "confidence": 0.41,
+            "rationale": "Provides overall summaries across projects for image questionnaires, which relates to summarizing results across multiple texts."
+          }
+        ],
+        "concept_tags": [
+          "image_questionnaire",
+          "likert_scale",
+          "questionnaire_results",
+          "mean_scores",
+          "ai_generated_texts",
+          "literary_texts",
+          "pages_count",
+          "raters_count",
+          "image_quality_evaluation",
+          "evaluation_summary"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15032,
+        "completion_tokens": 701,
+        "total_tokens": 15733,
+        "estimated_cost_usd": 0.0258
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "7ff0f35e48310a9b",
+      "level": 3,
+      "title": "AI-generated pedagogical texts",
+      "label": "sec:AIGeneratedPedagogicalResults",
+      "plain_text_len": 2194,
+      "plain_text_excerpt": "AI-generated pedagogical texts\nsec:AIGeneratedPedagogicalResults\n\nFour of the texts in this group (DI, AN, RO and TY) were handled well by the models, with scores for text/image correspondence around 4.5 or better and even higher coherence scores. The models did somewhat less well with TR, a retelling of the traditional story ``The Brave Little Tailor'' / ``Seven With One Blow'', which featured two revealing systematic errors. In the first scenes, the tailor is incorrectly depicted wearing his trademark belt featuring the ``Seven With One Blow'' motto, despite the fact that he has not yet made it; examination of the details shows that this is because the element image for the tailor includes the belt, so it consequently is used for all images where the tailor appears. In later scenes, where the tailor meets the giant, both characters are drawn consistently, but their relative heights are…",
+      "analysis": {
+        "section_summary": "The section reports on the quality of AI-generated illustrations for pedagogical texts. Most stories were illustrated well with strong text–image correspondence and coherence, but a retelling of \"The Brave Little Tailor\" revealed systematic errors like a character’s belt appearing before it was made and inconsistent relative sizes. The poorest results came from scientific concept images, such as electrical circuits, where models struggled with directional consistency and basic wiring; GPT-Image-1 fared better after retries than DALL-E-3 and Imagen 3.",
+        "relevant_views": [
+          {
+            "url_name": "image_questionnaire_summary",
+            "confidence": 0.46,
+            "rationale": "The section summarizes qualitative assessments of image quality and coherence, which aligns with the questionnaire summary view intended to present aggregated image evaluation results."
+          },
+          {
+            "url_name": "image_questionnaire_all_projects_summary",
+            "confidence": 0.35,
+            "rationale": "It discusses overall performance across multiple texts, similar to an all-projects summary of image questionnaire results."
+          }
+        ],
+        "concept_tags": [
+          "AI image generation",
+          "pedagogical illustrations",
+          "text–image correspondence",
+          "image coherence",
+          "consistency errors",
+          "element appearance",
+          "relative size consistency",
+          "scientific concept illustration",
+          "electrical circuit analogy",
+          "GPT-Image-1",
+          "DALL-E-3",
+          "Imagen 3"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14901,
+        "completion_tokens": 961,
+        "total_tokens": 15862,
+        "estimated_cost_usd": 0.02823625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "c0cd113768a1187c",
+      "level": 3,
+      "title": "Literary texts",
+      "label": "sec:LiteraryResults",
+      "plain_text_len": 4623,
+      "plain_text_excerpt": "Literary texts\nsec:LiteraryResults\n\nGPT-Image-1 did well on LF, an 18th century French adaptation of the Aesop's Fable of the Fox and the Crow. This provides another good example of the large difference between DALL-E-3 and GPT-Image-1. We had carried out many experiments with the LF text using DALL-E-3, always producing unconvincing results that suggested little understanding for most pages; we have posted a typical DALL-E-3 version online [CITE:LeCorbeauEtLeRenardDALL-E-3]. GPT-Image-1, in sharp contrast, immediately draws everything in a way that suggests strong understanding [CITE:LeCorbeauEtLeRenardGPT-Image-1].\n\nFor Japanese, GPT-Image-1’s capabilities were tested with an excerpt from Genji Monogatari, which is written in the Early Middle Japanese of the Heian period of Japan, and is just over 1000 years old.\nThe grammar of EMJ is expectedly difficult to parse, as evident in the au…",
+      "analysis": {
+        "section_summary": "The section evaluates GPT-Image-1 on several literary texts, highlighting its superior comprehension and stylistic coherence compared to DALL-E-3 on an 18th-century French fable. On a Genji Monogatari excerpt in Early Middle Japanese, it struggles with detailed correspondence but captures culturally appropriate, period-specific motifs. For the Old Norse poem Völuspá, it generates consistent Norse-themed imagery but often mis-spells names and inserts unwanted text, requiring guidance and edits. In Dante's Inferno, limited manual advice still yields gloomy, coherent illustrations; further manual editing could refine cultural details, character variety, and metaphorical scenes. Overall, GPT-Image-1 shows improved style and recurring element coherence, though manual intervention remains useful for accuracy and nuanced interpretation.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.48,
+            "rationale": "Discusses generating and refining coherent images for literary texts and the need for manual editing, which aligns with configuring and managing coherent images for a project."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.34,
+            "rationale": "Monitoring asynchronous generation of styles, elements, and pages is relevant to evaluating and improving image quality and coherence described in the section."
+          },
+          {
+            "url_name": "edit_images",
+            "confidence": 0.42,
+            "rationale": "The section contrasts DALL-E-3 and GPT-Image-1 outputs and mentions manual edits; this view handles image generation and editing for project pages."
+          },
+          {
+            "url_name": "create_dall_e_3_image_status",
+            "confidence": 0.3,
+            "rationale": "Given the comparison to DALL-E-3 performance on the same texts, the status endpoints for DALL-E-3 image creation are tangentially relevant."
+          }
+        ],
+        "concept_tags": [
+          "GPT-Image-1",
+          "DALL-E-3",
+          "literary texts",
+          "image generation",
+          "art style coherence",
+          "manual image editing",
+          "Aesop's Fable",
+          "Le Corbeau et le Renard",
+          "Genji Monogatari",
+          "Early Middle Japanese",
+          "cultural motifs",
+          "Old Norse",
+          "Völuspá",
+          "Norse mythology",
+          "Dante's Inferno"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15500,
+        "completion_tokens": 1381,
+        "total_tokens": 16881,
+        "estimated_cost_usd": 0.033185
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "75c14acc476c139c",
+      "level": 1,
+      "title": "Low‑resource languages",
+      "label": "sec:lr",
+      "plain_text_len": 1571,
+      "plain_text_excerpt": "Low‑resource languages\nsec:lr\nIncorporating images in language teaching and learning materials is essential for developing effective resources for young learners. However, in low-resource language contexts, finding suitable images or producing them is a considerable challenge. The first author (Sophie Rendina) has for several years been collaborating with the Traditional Owners of Kok Kaper/Kokoberra - a critically endangered language of Cape York (Kowanyama, Australia). This collaboration has recently begun to explore the idea of using AI-generated images in their language program, which is delivered at the local school. \n\nPreliminary results from three texts, a lullaby, a song, and a short conversation that includes greetings, highlight the potential of AI-generated imagery in this particular context, while also revealing issues specific to it; while GPT-Image-1 outperforms DALL-E-3 in…",
+      "analysis": {
+        "section_summary": "The section discusses using AI-generated illustrations to support teaching materials in low-resource Indigenous languages, citing work with Kok Kaper/Kokoberra. Early trials with a lullaby, song, and dialogue show GPT-Image-1 yields more accurate images than DALL-E-3 but still struggles with Aboriginal characters and consistent style, requiring manual edits. Its ability to follow negative prompts aids refining culturally respectful, age-appropriate imagery for classroom use.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images",
+            "confidence": 0.31,
+            "rationale": "Supports generating and refining images for project pages, aligning with the need to create and manually adjust AI-generated illustrations."
+          },
+          {
+            "url_name": "create_dall_e_3_image_monitor",
+            "confidence": 0.28,
+            "rationale": "Monitors DALL-E 3 image generation tasks, relevant to the discussion comparing DALL-E-3 performance in creating illustrations."
+          },
+          {
+            "url_name": "create_dall_e_3_image_status",
+            "confidence": 0.28,
+            "rationale": "Provides status for DALL-E 3 image generation jobs, tied to evaluating and managing AI-generated images as described."
+          }
+        ],
+        "concept_tags": [
+          "low-resource languages",
+          "AI-generated images",
+          "GPT-Image-1",
+          "DALL-E-3",
+          "Kok Kaper",
+          "Kokoberra",
+          "Indigenous languages",
+          "cultural representation",
+          "visual style consistency",
+          "negative prompts",
+          "language teaching materials",
+          "manual revision"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14715,
+        "completion_tokens": 810,
+        "total_tokens": 15525,
+        "estimated_cost_usd": 0.02649375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "ca5b8caa5f02f7d2",
+      "level": 1,
+      "title": "Summary and further directions",
+      "label": "sec:disc",
+      "plain_text_len": 914,
+      "plain_text_excerpt": "Summary and further directions\nsec:disc\nWe have described how we integrated the new GPT-Image-1 model into the C-LARA platform, and presented an initial evaluation where we tested the functionality on eleven texts of widely different types, some apparently very challenging, to achieve strong results. \n\nThis is an initial paper where we have a limited amount of space available; all we want to establish is that the results are promising and well worth further investigation. We are already engaged in two larger studies which follow on from the one reported here:\n\ndescription\n We have just submitted a paper which greatly expands on the material presented in [REF:sec:lr].\n \n We are carrying out a substantial study which investigates use of these methods in real non-native language learning contexts, and expect to submit a paper about it in late September.\n\ndescription\n\nIEEEtran\nclara_third_re…",
+      "analysis": {
+        "section_summary": "The paper concludes by noting the integration of the GPT-Image-1 model into the C-LARA platform and an initial evaluation on eleven diverse texts showing promising results. It emphasizes that this is preliminary work and outlines two ongoing larger studies: one expanding on earlier material and another examining the methods in real non-native language learning contexts, with publications forthcoming.",
+        "relevant_views": [],
+        "concept_tags": [
+          "GPT-Image-1",
+          "C-LARA platform",
+          "image generation",
+          "initial evaluation",
+          "non-native language learning",
+          "future research"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15003,
+        "completion_tokens": 455,
+        "total_tokens": 15458,
+        "estimated_cost_usd": 0.02330375
+      },
+      "has_tex": true
+    }
+  ],
+  "usage_totals": {
+    "prompt_tokens": 180639,
+    "completion_tokens": 13007,
+    "total_tokens": 193646,
+    "estimated_cost_usd": 0.355869
+  }
+}

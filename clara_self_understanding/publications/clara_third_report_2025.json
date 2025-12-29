@@ -1,0 +1,3180 @@
+{
+  "publication_id": "clara_third_report_2025",
+  "created_at": "2025-12-29T02:32:19.167505+00:00",
+  "source_zip": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\data\\overleaf_zips\\ThirdReport.zip",
+  "source_zip_sha256": "74eb329c994795fbf391d98716debfcb53784ca2df6d40143fc09be25bf76633",
+  "root_tex": "clara_third_report.tex",
+  "flattened_tex": "C:\\cygwin64\\home\\github\\c-lara\\clara_self_understanding\\publications\\clara_third_report_2025\\flattened.tex",
+  "model": "gpt-5.1-codex-max",
+  "sections_count": 63,
+  "candidate_top_k": 100,
+  "sections": [
+    {
+      "section_id": "8af8fbd697a1f91f",
+      "level": 1,
+      "title": "Abstract",
+      "label": null,
+      "plain_text_len": 1947,
+      "plain_text_excerpt": "Abstract\n\nabstract\n\nThis report presents an overview of progress during the period March 2024--April 2025 on ChatGPT-Based Learning And Reading Assistant (C-LARA), an open source online platform which supports creation of multimodal texts for language learners that integrate audio, images, glosses and other annotations. Building on earlier work, we use GPT-4o and other Lange Language Models to automate most or all of the annotation, guided by pedagogical needs and exploiting new AI capabilities. A central goal of the project is to explore how modern AI can act as a collaborative partner in research projects of this kind.\n\nOver the past year, our principle achievements are the following:\n\nitemize\n More accurate annotation: A principled treatment of multi-word expressions (MWEs) integrating segment-level translation now halves error rates in English glossing.\n Flexible image generation: We…",
+      "analysis": {
+        "section_summary": "The abstract overviews progress on the C-LARA platform between March 2024 and April 2025, highlighting advances in automated multimodal text creation for language learners. It notes improved annotation accuracy through principled multi-word expression handling, a new pipeline for generating coherent image sets, speed gains via parallelism, enhanced support for Indigenous languages through manual modes, and the use of modern AI models both for software engineering and academic writing. The project aims to leverage AI as a collaborative partner, edging toward fully automated production of high-quality annotated multimedia content and increasingly self-managed development.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.44,
+            "rationale": "The abstract mentions a new pipeline for generating coherent image sets with consistent style and elements, which aligns with the coherent images v2 editing and management views."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.4,
+            "rationale": "Monitoring/status endpoints for coherent image generation are pertinent to the reported progress on flexible, coherent image pipelines."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.4,
+            "rationale": "Status tracking for coherent image generation relates to the described coherent image workflow improvements."
+          },
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.36,
+            "rationale": "The abstract highlights improved handling of multi-word expressions in glossing, which corresponds to views supporting MWE-tagged text creation."
+          }
+        ],
+        "concept_tags": [
+          "multimodal language learning",
+          "automated annotation",
+          "multi-word expressions",
+          "coherent image generation",
+          "parallel processing",
+          "Indigenous language support",
+          "AI-assisted software engineering",
+          "AI academic writing",
+          "GPT-4o",
+          "LLM-driven glossing"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15048,
+        "completion_tokens": 940,
+        "total_tokens": 15988,
+        "estimated_cost_usd": 0.02821
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "b7a0ca181491ccfe",
+      "level": 1,
+      "title": "How to access C-LARA",
+      "label": null,
+      "plain_text_len": 94,
+      "plain_text_excerpt": "How to access C-LARA\n\nIf you want to experiment with C-LARA, we recommend doing the following:",
+      "analysis": {
+        "section_summary": "Introduces how to get started with C‑LARA, outlining initial steps for accessing and experimenting with the system.",
+        "relevant_views": [
+          {
+            "url_name": "home",
+            "confidence": 0.41,
+            "rationale": "The home view is the landing entry point to access C-LARA and see recent activities when starting to experiment."
+          },
+          {
+            "url_name": "home_page",
+            "confidence": 0.39,
+            "rationale": "Also a landing page view that routes users into the application, relevant to initial access."
+          },
+          {
+            "url_name": "clara_home_page",
+            "confidence": 0.36,
+            "rationale": "Provides the main home page with recent content and activities, aligning with guidance on how to access C-LARA."
+          }
+        ],
+        "concept_tags": [
+          "access",
+          "getting started",
+          "home page",
+          "onboarding"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14799,
+        "completion_tokens": 347,
+        "total_tokens": 15146,
+        "estimated_cost_usd": 0.02196875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "6d77b11fcb01d20a",
+      "level": 2,
+      "title": "Create an account",
+      "label": null,
+      "plain_text_len": 310,
+      "plain_text_excerpt": "Create an account\n\nGo to the C-LARA login page, https://c-lara.unisa.edu.au/accounts/login/. Use the Register tab to create an account. You need to supply an email address to be able to use password retrieval and email confirmation, and receive email updates. We will not share your address with third parties.",
+      "analysis": {
+        "section_summary": "Instructs users to visit the C‑LARA login page and use the Register tab to create an account, providing an email address for password recovery, confirmations, and updates, with assurance that the email won’t be shared.",
+        "relevant_views": [
+          {
+            "url_name": "register",
+            "confidence": 0.86,
+            "rationale": "Directly handles user signup, matching the instruction to use the Register tab to create an account with email, password, and userid."
+          }
+        ],
+        "concept_tags": [
+          "account creation",
+          "user registration",
+          "email requirement",
+          "password recovery",
+          "login page",
+          "privacy",
+          "email confirmation"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14988,
+        "completion_tokens": 255,
+        "total_tokens": 15243,
+        "estimated_cost_usd": 0.021285
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "b938b9d31afd72b3",
+      "level": 2,
+      "title": "Register an API key or submit a funding request",
+      "label": null,
+      "plain_text_len": 1550,
+      "plain_text_excerpt": "Register an API key or submit a funding request\n\nCreating an account is free and language learners can use it to read existing C-LARA content and do a lot of other things. But the AI-based functionality which permits content creation and is the heart of the platform uses GPT-4 and other OpenAI models, which costs money. In order to access these functions, in particular to use the AI to create multimodal content, you need to be able to pay for the OpenAI calls. Independent language learners may well wish to create their own tailored content. It is easy and fast as the AI does most of the work. \n\nThe preferred solution is to use an OpenAI API key valid for GPT-4. Open a ChatGPT account at https://chat.openai.com/auth/login if you do not already have one and get an API key from https://platform.openai.com/api-keys. Then on C-LARA, go to User profile etc $>$ Edit configuration information an…",
+      "analysis": {
+        "section_summary": "To use C-LARA's AI-based content creation, you need to cover the cost of GPT-4/OpenAI calls. The preferred approach is to obtain an OpenAI API key from your ChatGPT account and enter it via C-LARA's configuration page, so usage is billed directly to you. If you cannot get an API key, you can apply for small amounts of funding through the platform's funding request form to receive limited OpenAI credit.",
+        "relevant_views": [
+          {
+            "url_name": "user_config",
+            "confidence": 0.9,
+            "rationale": "The section instructs users to go to the configuration page to enter their OpenAI API key; this view allows editing configuration information including the API key."
+          },
+          {
+            "url_name": "funding_request",
+            "confidence": 0.9,
+            "rationale": "The section directs users to submit a funding request via the Social network tab to receive OpenAI credit; this view is for submitting such requests."
+          }
+        ],
+        "concept_tags": [
+          "OpenAI API key",
+          "GPT-4",
+          "AI-based content creation",
+          "C-LARA configuration",
+          "Funding request",
+          "OpenAI credit",
+          "ChatGPT account",
+          "Multimodal content"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15092,
+        "completion_tokens": 799,
+        "total_tokens": 15891,
+        "estimated_cost_usd": 0.026855
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "4141b231138f9d56",
+      "level": 2,
+      "title": "Use ``Simple C-LARA'' to create a piece of content",
+      "label": null,
+      "plain_text_len": 566,
+      "plain_text_excerpt": "Use ``Simple C-LARA'' to create a piece of content\n\nFollow the steps in Appendix~[REF:Section:UsingSimpleCLARA] to enter ``Simple C-LARA'' and create a piece of content. You just need to specify the languages and supply an initial prompt saying what you want C-LARA to write, and the AI does the rest for you.\n\nWhen you have created some content, consider filling out the satisfaction questionnaire at the end. It should take a couple of minutes. Don't feel you have to be nice. If you tell us about things that did not work, it is more likely that we will fix them.",
+      "analysis": {
+        "section_summary": "This section instructs readers to follow the Simple C-LARA wizard to generate a new piece of content by choosing languages and giving an initial prompt, letting the AI produce the rest, and then to complete a brief satisfaction questionnaire afterwards.",
+        "relevant_views": [
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.7,
+            "rationale": "The section tells users to enter Simple C-LARA and create content by specifying languages and a prompt, which is handled by the simple_clara wizard."
+          },
+          {
+            "url_name": "satisfaction_questionnaire",
+            "confidence": 0.42,
+            "rationale": "After creating content, users are invited to fill out a satisfaction questionnaire, which aligns with the satisfaction_questionnaire workflow."
+          }
+        ],
+        "concept_tags": [
+          "Simple C-LARA",
+          "AI-assisted content creation",
+          "language selection",
+          "prompt-driven generation",
+          "user feedback",
+          "satisfaction questionnaire"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15182,
+        "completion_tokens": 609,
+        "total_tokens": 15791,
+        "estimated_cost_usd": 0.0250675
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "f50d0540bc2a95ed",
+      "level": 1,
+      "title": "Introduction and overview",
+      "label": "Section:Introduction",
+      "plain_text_len": 46,
+      "plain_text_excerpt": "Introduction and overview\nSection:Introduction",
+      "analysis": {
+        "section_summary": "This section serves as the introduction and overview to the report.",
+        "relevant_views": [],
+        "concept_tags": [
+          "introduction",
+          "overview"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14059,
+        "completion_tokens": 178,
+        "total_tokens": 14237,
+        "estimated_cost_usd": 0.01935375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "8aeb5f98a233f1c3",
+      "level": 2,
+      "title": "Background and overall goals",
+      "label": "Section:Background",
+      "plain_text_len": 4402,
+      "plain_text_excerpt": "Background and overall goals\nSection:Background\n\nChatGPT-Based Learning And Reading Assistant (C-LARA; https://www.c-lara.org/) is an international open source project inaugurated in March 2023. Building on the earlier LARA project [CITE:LARA2019SLaTE], one of the top-level goals was the same: we aimed to create a online platform that would support construction of multimodal texts useful for language learners who wished to improve their reading and listening skills. A text of this kind would contain annotations typically including audio files, images, word glosses, a concordance, and maybe other things.\n\nThe recent release of GPT-4, however, opened up new possibilities. In LARA, a large part of the work involved in building a high-quality multimodal text had to be performed manually. It seemed to us that GPT-4's intelligence was at a completely different level to previous AI software, an…",
+      "analysis": {
+        "section_summary": "The background outlines C-LARA as an open-source platform for building multimodal, annotated texts to support language learners, leveraging GPT-4 to automate much of the annotation and engineering effort. By March 2024 the platform was deployed and usable, revealing key challenges for the next phase: handling multi-word expressions in glossing and lemma tagging, generating coherent sets of images, speeding up processing, better supporting manual annotation for Indigenous languages, and exploring GPT-4’s capabilities on larger codebases and longer academic texts.",
+        "relevant_views": [
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.55,
+            "rationale": "The section highlights multi-word expressions as a major obstacle in annotation; this view handles creating MWE-tagged text within projects."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.52,
+            "rationale": "A key goal is managing coherent image generation across texts; this view configures and controls coherent image generation for projects."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.45,
+            "rationale": "Monitoring coherent image generation progress aligns with the need to manage multiple images coherently across a text."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.45,
+            "rationale": "Status reporting for coherent image generation supports the described requirement for better image management."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.38,
+            "rationale": "Glossing is mentioned as part of the multimodal annotations; this view is used to create glossed texts."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.35,
+            "rationale": "Lemma tagging is noted as an area impacted by MWEs; this view supports creating lemma-tagged text versions."
+          }
+        ],
+        "concept_tags": [
+          "GPT-4",
+          "multimodal learning content",
+          "language learning",
+          "annotations",
+          "audio glosses",
+          "images",
+          "multi-word expressions",
+          "glossing",
+          "lemma tagging",
+          "image coherence",
+          "processing speed",
+          "manual annotation",
+          "Indigenous languages",
+          "software engineering at scale",
+          "academic writing"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15648,
+        "completion_tokens": 787,
+        "total_tokens": 16435,
+        "estimated_cost_usd": 0.02743
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "9f258a8d9557401b",
+      "level": 2,
+      "title": "Main results",
+      "label": "Section:Results",
+      "plain_text_len": 2180,
+      "plain_text_excerpt": "Main results\nSection:Results\n\nDuring the last year, we made good progress on all of the above issues.\n\ndescription\n\n We have implemented a principled treatment of Multi-Word Expressions, annotated using a Chain of Thought method (). Combining the MWE information with segment translation annotations, also added during this phase, we reduce the average glossing annotation error rate in English by more than 50\\%. MWEs are now displayed as single units in the final multimodal form.\n\n We have implemented a method for creation of coherent sets of images (), which in turn defines the style, the recurrent visual elements, and finally the page images. Coherence in terms of style is generally good. Coherence in terms of content---the recurrent visual elements---is still unsatisfactory with the deployed version of the system. It seems likely, however, that improved models currently in the process o…",
+      "analysis": {
+        "section_summary": "The section reports progress over the past year: multi-word expressions are now annotated using a chain-of-thought method, combined with segment translations to halve glossing errors and display MWEs as single units; a coherent image generation workflow defines styles, recurrent elements and page images with good stylistic coherence but content coherence still lagging pending improved models; costly operations now run in parallel for order-of-magnitude speedups; a new page-based editing mode supports Indigenous languages with automatic consistency checks; and the newest AI models (e.g. o1) show marked gains, producing working Django code and even full-length papers with minimal human intervention.",
+        "relevant_views": [
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.44,
+            "rationale": "Directly relates to implementing and maintaining multi-word expression annotations, which were a key result in reducing glossing errors and displaying MWEs as single units."
+          },
+          {
+            "url_name": "create_glossed_text_from_lemma",
+            "confidence": 0.38,
+            "rationale": "Supports generating glossed text versions, relevant to the reported reduction in glossing annotation error when combining MWEs with segment translations."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.32,
+            "rationale": "Handles glossed text creation and editing, aligning with improvements in glossing accuracy described."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.33,
+            "rationale": "Provides the coherent image configuration and generation interface, matching the development of coherent sets of images defining style, elements, and pages."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.3,
+            "rationale": "Monitors coherent image generation tasks, pertinent to assessing coherence of generated styles and elements."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.3,
+            "rationale": "Supplies status for coherent image generation, relevant to tracking progress and issues with coherence."
+          }
+        ],
+        "concept_tags": [
+          "Multi-Word Expressions",
+          "Chain-of-Thought annotation",
+          "Glossing error reduction",
+          "Segment translation",
+          "Coherent image generation",
+          "Style coherence",
+          "Recurrent visual elements",
+          "Parallel processing",
+          "Indigenous language editing",
+          "Page-based annotation",
+          "AI model performance",
+          "GPT-4o",
+          "o1 model",
+          "Academic writing"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15152,
+        "completion_tokens": 1079,
+        "total_tokens": 16231,
+        "estimated_cost_usd": 0.02973
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "c53f81fc1f9723d2",
+      "level": 1,
+      "title": "Related work",
+      "label": "Section:RelatedWork",
+      "plain_text_len": 554,
+      "plain_text_excerpt": "Related work\nSection:RelatedWork\n\nA growing body of research in computer-assisted language learning (CALL) highlights the importance of annotated, multimodal texts to increase reading comprehension and vocabulary acquisition [CITE:plonsky2016call]. Traditional platforms have long offered dictionary-based or teacher-curated annotations, while more recent systems incorporate artificial intelligence (AI) to automate tasks such as glossing, text generation, and image creation. Below, we summarize key developments and representative tools in this space.",
+      "analysis": {
+        "section_summary": "Surveys computer-assisted language learning research that emphasizes annotated, multimodal texts to boost reading comprehension and vocabulary. It contrasts traditional dictionary- or teacher-based annotations with newer AI-assisted approaches for glossing, text generation, and image creation, and points to representative tools in this space.",
+        "relevant_views": [
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.4,
+            "rationale": "The section highlights glossing as a key annotated text feature, which aligns with the view for creating glossed versions of texts."
+          },
+          {
+            "url_name": "generate_text_status",
+            "confidence": 0.35,
+            "rationale": "It mentions AI-driven text generation; this endpoint monitors AI text generation tasks within CLARA."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.35,
+            "rationale": "Image creation with AI is noted as part of modern CALL tools, corresponding to views that generate and manage images for projects."
+          }
+        ],
+        "concept_tags": [
+          "computer-assisted language learning",
+          "annotated texts",
+          "multimodal content",
+          "reading comprehension",
+          "vocabulary acquisition",
+          "dictionary-based annotations",
+          "glossing",
+          "AI-assisted learning",
+          "text generation",
+          "image generation"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14423,
+        "completion_tokens": 1390,
+        "total_tokens": 15813,
+        "estimated_cost_usd": 0.03192875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "616f740d6774394b",
+      "level": 2,
+      "title": "Annotated Reading and Glossing Tools",
+      "label": null,
+      "plain_text_len": 1613,
+      "plain_text_excerpt": "Annotated Reading and Glossing Tools\nSeveral open-source platforms focus on providing word- or phrase-level annotations to help learners read authentic texts with minimal interruption. Learning With Texts (LWT)https://learning-with-texts.sourceforge.io/ allows users to import any target-language text, tokenize it automatically, and click on unfamiliar words to look them up in an external dictionary. Translations and notes can then be saved to build a personal vocabulary database. A similar approach underpins LingQhttps://www.lingq.com/ and Readlanghttps://readlang.com/, both of which offer browser-based or mobile interfaces where users can translate words on the fly and create flashcards for spaced repetition review. By significantly reducing “lookup friction,” these systems encourage extensive reading in the target language.\n\nAnother example is Clilstorehttps://multidict.net/clilstore/,…",
+      "analysis": {
+        "section_summary": "This section surveys platforms that assist language learners by adding word- or phrase-level glosses to authentic texts, reducing lookup friction and encouraging extensive reading. It mentions Learning With Texts, LingQ and Readlang, which let users click words to see dictionary translations and build vocab lists, and Clilstore/Wordlink, which embed dictionary links into multimedia transcripts to support CLIL. While these dictionary-based glosses are usually accurate, they offer limited nuance for context-sensitive expressions.",
+        "relevant_views": [
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.4,
+            "rationale": "The section focuses on providing word- and phrase-level glosses to support reading, which aligns with this view for creating glossed text versions within C-LARA projects."
+          },
+          {
+            "url_name": "create_lemma_and_gloss_tagged_text",
+            "confidence": 0.35,
+            "rationale": "Creating texts tagged with lemmas and glosses relates to the described functionality of adding clickable dictionary glosses to reading materials."
+          }
+        ],
+        "concept_tags": [
+          "glossing",
+          "word-level annotations",
+          "extensive reading",
+          "dictionary lookup",
+          "LWT",
+          "LingQ",
+          "Readlang",
+          "Clilstore",
+          "Wordlink",
+          "CLIL"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14899,
+        "completion_tokens": 879,
+        "total_tokens": 15778,
+        "estimated_cost_usd": 0.02741375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "144db165459c5e90",
+      "level": 2,
+      "title": "Multimodal Approaches",
+      "label": null,
+      "plain_text_len": 1212,
+      "plain_text_excerpt": "Multimodal Approaches\nTo provide richer context, platforms increasingly integrate audio and visuals alongside text. Many systems, including Clilstore and LingQ, support synchronized audio playback, allowing learners to listen to a native or text-to-speech (TTS) recording while following the transcript. Some tools highlight each sentence or phrase in “karaoke” style, improving comprehension and aiding pronunciation. Commercial apps such as Beelinguapphttps://beelinguapp.com/ focus on parallel text with audiobook narration, whereas projects like Duolingo Storieshttps://blog.duolingo.com/introducing-duolingo-stories/ embed illustrated narrative panels with native-speaker audio, eliciting users’ comprehension through mini-quizzes.\n\nImage and video integration often relies on manual embedding or linking; however, research suggests that visual context can boost learner engagement and recall [C…",
+      "analysis": {
+        "section_summary": "The section describes the growing use of multimodal features in language learning platforms, combining text with synchronized audio (native or TTS) and visual elements. Examples include sentence-level \"karaoke\" highlighting with audio, parallel texts with audiobook narration, illustrated stories with native-speaker recordings, and embedded image or video content. It also notes emerging efforts to auto-generate images aligned to textual segments, reflecting a broader trend toward more immersive, visually supported reading experiences.",
+        "relevant_views": [
+          {
+            "url_name": "serve_audio_file",
+            "confidence": 0.65,
+            "rationale": "Serves audio assets for CLARA projects, enabling synchronized audio playback alongside text."
+          },
+          {
+            "url_name": "human_audio_processing",
+            "confidence": 0.56,
+            "rationale": "Handles collection and processing of human audio assets, supporting multimodal text-plus-audio experiences."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.68,
+            "rationale": "Configures and generates coherent images for project texts, aligning with automatic image generation for multimodal reading."
+          },
+          {
+            "url_name": "serve_clara_image",
+            "confidence": 0.52,
+            "rationale": "Serves image assets from CLARA projects, supporting visual context alongside text."
+          },
+          {
+            "url_name": "serve_coherent_images_v2_overview",
+            "confidence": 0.55,
+            "rationale": "Provides access to overviews of generated coherent images, relevant to integrating visuals with textual segments."
+          }
+        ],
+        "concept_tags": [
+          "multimodal learning",
+          "synchronized audio",
+          "text-to-speech",
+          "karaoke highlighting",
+          "parallel text",
+          "audiobook narration",
+          "illustrated narratives",
+          "AI image generation",
+          "visual context",
+          "immersive reading",
+          "native-speaker audio"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14636,
+        "completion_tokens": 1325,
+        "total_tokens": 15961,
+        "estimated_cost_usd": 0.031545
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "132055ccfdf49cd5",
+      "level": 2,
+      "title": "AI-Enhanced Tools and Content Creation",
+      "label": null,
+      "plain_text_len": 1550,
+      "plain_text_excerpt": "AI-Enhanced Tools and Content Creation\nWhile dictionary-based or rule-based annotations remain popular, AI-driven features are growing rapidly. Commercial services like Quizlet Q-Chathttps://quizlet.com/blog/q-chat and Duolingo’s AI chatbots demonstrate how large language models (LLMs) can handle learner queries, explain tricky phrases, or create practice dialogues on the fly. However, few platforms go as far as providing entirely AI-generated reading content with automated annotations, which is the territory of emerging systems such as StoryWizard AIhttps://www.storywizard.ai/ (illustrated children’s stories) and advanced open-source prototypes like Multimodal-GPThttps://github.com/open-mmlab/Multimodal-GPT. These approaches aim to reduce teacher workload by generating text, glosses, and even morphological analysis without extensive human intervention.\n\nEarly evaluations of AI-based glo…",
+      "analysis": {
+        "section_summary": "The section highlights the growing role of large language models in language learning, from chatbots that answer learner queries to emerging systems that auto-generate reading texts with glosses and morphological analysis. It notes that fully AI-generated content and annotations can reduce teacher workload but still require human review, especially for complex morphology and multi-word expressions. A hybrid approach leveraging AI strengths while mitigating hallucinations and inaccuracies is presented as the most promising path.",
+        "relevant_views": [
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.68,
+            "rationale": "Supports creating glossed text versions with AI- or tagger-driven generation, aligning with AI-based glossing discussed."
+          },
+          {
+            "url_name": "create_glossed_text_from_lemma",
+            "confidence": 0.64,
+            "rationale": "Generates glosses from lemmas, potentially using AI automation to produce annotations as described."
+          },
+          {
+            "url_name": "create_lemma_and_gloss_tagged_text",
+            "confidence": 0.66,
+            "rationale": "Creates texts annotated with lemmas and glosses via automated pipelines, matching AI-driven annotation workflows."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.6,
+            "rationale": "Handles lemma tagging which can be automated by AI, relevant to morphological analysis mentioned."
+          },
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.57,
+            "rationale": "Addresses multi-word expression tagging, a challenge area for AI glossing highlighted in the section."
+          },
+          {
+            "url_name": "edit_prompt",
+            "confidence": 0.55,
+            "rationale": "Allows customization of GPT-4 prompts for annotation generation, directly tied to AI-driven glossing and explanations."
+          },
+          {
+            "url_name": "generate_text_monitor",
+            "confidence": 0.48,
+            "rationale": "Monitors AI-driven text generation tasks, relevant to producing AI-generated reading content."
+          },
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.45,
+            "rationale": "Provides an AI-assisted wizard to generate texts and annotations, aligning with automated content creation themes."
+          }
+        ],
+        "concept_tags": [
+          "AI-driven glossing",
+          "automated annotations",
+          "LLM chatbots",
+          "AI-generated reading content",
+          "morphological analysis",
+          "multi-word expressions",
+          "human-AI hybrid workflow",
+          "hallucination risk",
+          "context-sensitive explanations",
+          "teacher workload reduction"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14980,
+        "completion_tokens": 1158,
+        "total_tokens": 16138,
+        "estimated_cost_usd": 0.030305
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "461332ef1631f982",
+      "level": 2,
+      "title": "Summary",
+      "label": null,
+      "plain_text_len": 696,
+      "plain_text_excerpt": "Summary\nAcross open-source and commercial solutions, the consensus is that annotated, multimodal texts can significantly enhance reading comprehension and vocabulary uptake. Platforms like LWT and LingQ have validated the utility of rapid dictionary lookups and integrated flashcards, while Clilstore and Duolingo demonstrate how audio or video can bolster textual understanding. With the emergence of AI-assisted generation and glossing, tools are beginning to reduce the time and expertise required to create high-quality learning materials. The next sections discuss how our project builds on these ideas to offer a more scalable, community-driven approach to AI-facilitated annotated reading.",
+      "analysis": {
+        "section_summary": "The section outlines a consensus that richly annotated, multimodal texts—combining tools like rapid dictionary lookups, glossing, flashcards, and audio or video—can boost reading comprehension and vocabulary acquisition. It notes that AI-assisted generation and glossing are lowering the effort to produce such materials and foreshadows a scalable, community-driven approach to AI-facilitated annotated reading.",
+        "relevant_views": [
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.44,
+            "rationale": "The section highlights AI-assisted glossing as a way to enhance annotated texts; this view creates and maintains glossed text versions in CLARA."
+          },
+          {
+            "url_name": "create_lemma_and_gloss_tagged_text",
+            "confidence": 0.36,
+            "rationale": "Mention of annotated texts with glosses aligns with this endpoint for generating lemma- and gloss-tagged versions of project texts."
+          },
+          {
+            "url_name": "serve_audio_file",
+            "confidence": 0.31,
+            "rationale": "Since multimodal support like audio is cited as beneficial for comprehension, this view serving project audio files relates to the discussed functionality."
+          },
+          {
+            "url_name": "create_community",
+            "confidence": 0.28,
+            "rationale": "The section points to a community-driven approach; this view supports creating communities to facilitate collaborative work around CLARA projects."
+          }
+        ],
+        "concept_tags": [
+          "annotated texts",
+          "multimodal learning",
+          "reading comprehension",
+          "vocabulary acquisition",
+          "glossing",
+          "AI-assisted content generation",
+          "flashcards",
+          "audio support",
+          "community-driven platforms"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14688,
+        "completion_tokens": 1217,
+        "total_tokens": 15905,
+        "estimated_cost_usd": 0.03053
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "4cbabc5d2368223c",
+      "level": 1,
+      "title": "New functionality",
+      "label": "Section:NewFunctionality",
+      "plain_text_len": 888,
+      "plain_text_excerpt": "New functionality\nSection:NewFunctionality\n\nIn this section, we describe new functionality added between March 2024 and March 2025. Specifically, we consider the following:\ndescription\n\n Linguistic annotation has been much improved. In particular, it now includes a systematic treatment of Multi-Word Expressions.\n\n There is now good support for creation of texts with multiple images, where the images are aligned to be reasonably coherent with each other in terms of style and content.\n\n Both linguistic annotation and creation of images have been now use parallel processing, making them much faster.\n\n Simple C-LARA has been upgraded to incorporate most of the above functionality. In particular, it can be used to create texts that include annotations of MWEs and coherent image sets.\n\n The interface for editing of Indigenous language texts has been completely revised.\n\ndescription",
+      "analysis": {
+        "section_summary": "The section outlines enhancements between March 2024 and March 2025: linguistic annotation now systematically handles multi‑word expressions and runs faster via parallel processing; image creation supports coherent multi‑image sets aligned in style and content, also accelerated by parallelism; Simple C‑LARA has been upgraded to include these annotation and coherent image capabilities; and the interface for editing Indigenous language texts has been overhauled.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.6,
+            "rationale": "This view lets users configure and generate coherent image sets for a project, matching the new support for multi‑image texts with aligned style and content using asynchronous tasks."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.5,
+            "rationale": "Provides monitoring for the asynchronous generation of coherent images, reflecting the new parallel processing for image creation."
+          },
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.52,
+            "rationale": "The Simple C‑LARA wizard has been upgraded to incorporate coherent images and enhanced annotation capabilities described in the new functionality."
+          },
+          {
+            "url_name": "simple_clara_monitor",
+            "confidence": 0.44,
+            "rationale": "Supports monitoring of Simple C‑LARA asynchronous tasks, aligning with the noted parallel processing improvements."
+          }
+        ],
+        "concept_tags": [
+          "linguistic annotation",
+          "multi-word expressions",
+          "parallel processing",
+          "coherent images",
+          "Simple C-LARA",
+          "image generation",
+          "Indigenous languages interface"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15148,
+        "completion_tokens": 1459,
+        "total_tokens": 16607,
+        "estimated_cost_usd": 0.033525
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "dfb5c34d45418172",
+      "level": 2,
+      "title": "Improvements to linguistic annotation",
+      "label": "Section:BetterAnnotation",
+      "plain_text_len": 593,
+      "plain_text_excerpt": "Improvements to linguistic annotation \nSection:BetterAnnotation\n\nIn the second C-LARA report, we evaluated annotation performance and identified poor handling of Multi-Word Expressions (MWEs) as the dominant issue. Here, we describe the principled solution we have implemented, which involves addition of a new annotation phase specifically for identification of MWEs. We have also added an annotation phase for addition of segment translations. We explain how these two new phases feed into processing for lemma-tagging and glossing, and also summarise improvements to segmentation and audio.",
+      "analysis": {
+        "section_summary": "The section reports on a redesign of the linguistic annotation pipeline to address weaknesses in handling multi-word expressions by adding a dedicated MWE identification phase, and a new phase for adding segment translations. These new stages now feed into lemma-tagging and glossing, alongside noted improvements to text segmentation and audio handling.",
+        "relevant_views": [
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.8,
+            "rationale": "Introduces a dedicated view for creating MWE-tagged text, directly aligning with the new annotation phase for identifying multi-word expressions."
+          },
+          {
+            "url_name": "create_translated_text",
+            "confidence": 0.63,
+            "rationale": "Supports creating translated text segments, matching the added annotation phase for segment translations."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.55,
+            "rationale": "Handles generation of lemma-tagged text, which now benefits from preceding MWE and translation phases."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.55,
+            "rationale": "Facilitates glossing, which depends on upstream MWE identification and segment translations in the revised annotation workflow."
+          },
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.5,
+            "rationale": "Provides segmentation of text, relevant to the stated improvements in segmentation feeding into annotation."
+          }
+        ],
+        "concept_tags": [
+          "multi-word expressions",
+          "mwe identification",
+          "segment translations",
+          "lemma tagging",
+          "glossing",
+          "segmentation",
+          "audio improvements",
+          "annotation phases",
+          "linguistic annotation pipeline"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15117,
+        "completion_tokens": 1163,
+        "total_tokens": 16280,
+        "estimated_cost_usd": 0.03052625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "6683657665748368",
+      "level": 3,
+      "title": "Annotating Multi-Word Expressions",
+      "label": "Section:MWEs",
+      "plain_text_len": 882,
+      "plain_text_excerpt": "Annotating Multi-Word Expressions \nSection:MWEs\n\nAfter some initial experimentation, we determined that a Chain of Thought approach seemed most suitable for annotating MWEs. We process each segment separately, using the prompt template shown in Figure~[REF:Figure:MWEPromptTemplate]. The prompt template contains slots for the text language, the text in JSON form, and a list of few-shot examples; a typical few-shot example for English is shown in Figure~[REF:Figure:MWEPromptExamples]. The few shot-examples are created in a bootstrapped manner by running the prompt on gpt-4o with an initial set of two handcrafted examples and editing the resulting output.\n\nInitial testing and prompt engineering was done using two annotated English Sherlock Holmes stories from the NTU-MC []bond-etal-2021-teaching. These include MWEs from an extended version of wordnet [CITE:_Fellbaum:1998].",
+      "analysis": {
+        "section_summary": "This section describes a Chain-of-Thought prompting approach to annotate multi-word expressions, processing each text segment with a prompt template that includes language, JSON text, and few-shot examples. The few-shot examples are bootstrapped by running GPT-4o on initial handcrafted samples and refining the outputs. The method was tested on annotated English Sherlock Holmes stories containing MWEs from an extended WordNet.",
+        "relevant_views": [
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.68,
+            "rationale": "This view handles creating and maintaining MWE-tagged text versions, aligning with the section's focus on annotating multi-word expressions."
+          },
+          {
+            "url_name": "edit_prompt",
+            "confidence": 0.41,
+            "rationale": "The section centers on prompt templates and few-shot examples for MWE annotation, which can be managed via the annotation prompt editing view."
+          }
+        ],
+        "concept_tags": [
+          "multi-word expressions",
+          "Chain-of-Thought prompting",
+          "few-shot examples",
+          "GPT-4o",
+          "prompt engineering",
+          "annotation",
+          "WordNet"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14725,
+        "completion_tokens": 774,
+        "total_tokens": 15499,
+        "estimated_cost_usd": 0.02614625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "2d81bb7abbc66856",
+      "level": 3,
+      "title": "Segment translations",
+      "label": "Section:Translations",
+      "plain_text_len": 464,
+      "plain_text_excerpt": "Segment translations \nSection:Translations\n\nWe have also added a new annotation phase which creates translations for segments. The segments are divided into groups, currently of about 250 words each, and submitted to gpt-4o using a prompt which provides minimal instructions about format. As well as being useful in itself, the segment translation are also used for glossing, as described in the immediately following section, and sometimes for creation of images.",
+      "analysis": {
+        "section_summary": "A new annotation phase now produces translations for text segments by grouping roughly 250-word chunks and sending them to GPT‑4o with minimal format instructions. These segment translations are useful on their own and also feed into glossing and occasionally image creation.",
+        "relevant_views": [
+          {
+            "url_name": "create_translated_text",
+            "confidence": 0.44,
+            "rationale": "Handles creation and editing of translated text annotations within projects, aligning with the new segment translation phase."
+          },
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.23,
+            "rationale": "Manages segmented text versions; segmenting into chunks underpins the described translation workflow."
+          }
+        ],
+        "concept_tags": [
+          "segment translation",
+          "annotation phase",
+          "segmentation",
+          "GPT-4o",
+          "glossing",
+          "image generation"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14901,
+        "completion_tokens": 977,
+        "total_tokens": 15878,
+        "estimated_cost_usd": 0.02839625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "82c12d39cb6773e1",
+      "level": 3,
+      "title": "Glossing and lemma tagging",
+      "label": "Section:GlossingLemmaTagging",
+      "plain_text_len": 899,
+      "plain_text_excerpt": "Glossing and lemma tagging \nSection:GlossingLemmaTagging\n\nThe point of adding MWE information is that it gives us options for improving glossing and lemma tagging. If a word is part of an MWE, we want the associated gloss and lemma to refer to the MWE, not the word itself. For glossing, we find it is also useful to make available the segment translation information and the full text of the document, in order to provide context.\n\nWe perform the glossing and lemma tagging operations on each segment separately. We experimented with several different ways of passing in the MWE information; the one that worked best was to present the segment as a JSON list with one element per lexical item, and the MWE information paired with the words it refers to. The prompt template is shown in Figure~[REF:Figure:GlossPromptTemplate].\n\nThe prompt template for lemma tagging is similar but a little simpler.",
+      "analysis": {
+        "section_summary": "This section explains how multiword expression annotations enhance glossing and lemma tagging by ensuring that glosses and lemmas refer to the MWE rather than individual words. It notes that supplying segment translations and full text context helps glossing, and describes an effective input format: representing each segment as a JSON list per lexical item with paired MWE information. Similar prompt templates are used for glossing and for the simpler lemma tagging task.",
+        "relevant_views": [
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.78,
+            "rationale": "Glossing is the focus of this section and this view creates and maintains glossed text versions within a CLARA project."
+          },
+          {
+            "url_name": "create_glossed_text_from_lemma",
+            "confidence": 0.7,
+            "rationale": "Relates to generating glossed text using lemma information, aligning with the discussion of linking glosses to MWEs and lemmas."
+          },
+          {
+            "url_name": "create_lemma_and_gloss_tagged_text",
+            "confidence": 0.82,
+            "rationale": "The section covers both glossing and lemma tagging; this view creates text annotated with both glosses and lemmas."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.76,
+            "rationale": "Lemma tagging is directly discussed, and this endpoint manages creation of lemma-tagged text versions."
+          },
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.64,
+            "rationale": "MWE information is central to improving glossing and lemma tagging, and this view handles tagging MWEs in text."
+          }
+        ],
+        "concept_tags": [
+          "glossing",
+          "lemma tagging",
+          "multiword expressions",
+          "MWE context",
+          "JSON input format",
+          "prompt templates",
+          "segment-based processing"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14907,
+        "completion_tokens": 690,
+        "total_tokens": 15597,
+        "estimated_cost_usd": 0.02553375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "c3b54ce18e8b33c8",
+      "level": 3,
+      "title": "Displaying the final multimedia text",
+      "label": "Section:DisplayingMultimedia",
+      "plain_text_len": 742,
+      "plain_text_excerpt": "Displaying the final multimedia text \nSection:DisplayingMultimedia\n\nTo present the MWEs in an intuitive way, the multimedia text contains JavaScript which modifies the highlighting behaviour to show MWEs as units; thus clicking on one word in an MWE highlights the other words as well. Similarly, when creating audio associated with words, a word that is a component of an MWE is linked to audio for the whole MWE, and when compiling the concordance the lemma that appears is one for the whole MWE.\n\nFigure~[REF:Figure:MWEHighlightingExample] illustrates.\n\nfigure\n \n TheCatAndTheBat/MWEHighlightingExample.jpg\n Example from ``The Cat and the Bat'' illustrating presentation of MWEs in the multimodal text\n Figure:MWEHighlightingExample\nfigure",
+      "analysis": {
+        "section_summary": "This section explains how multiword expressions are presented in the final multimedia text. The rendered page uses JavaScript to treat an MWE as a single unit, so clicking one component highlights all parts. Word-level audio playback and concordance entries are tied to the whole expression, using a shared lemma and audio for the entire MWE. An example illustrates the highlighting behaviour.",
+        "relevant_views": [
+          {
+            "url_name": "serve_rendered_text",
+            "confidence": 0.41,
+            "rationale": "The final multimedia text with JavaScript highlighting is delivered via the rendered text serving endpoint."
+          },
+          {
+            "url_name": "serve_audio_file",
+            "confidence": 0.27,
+            "rationale": "Audio playback for words and MWEs is served by the audio file endpoint in the multimedia text."
+          }
+        ],
+        "concept_tags": [
+          "multiword expressions",
+          "MWE highlighting",
+          "multimedia text",
+          "JavaScript behaviour",
+          "audio integration",
+          "concordance",
+          "lemma handling"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14295,
+        "completion_tokens": 623,
+        "total_tokens": 14918,
+        "estimated_cost_usd": 0.02409875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "1486c3f4b0ab6554",
+      "level": 3,
+      "title": "Better segmentation",
+      "label": "Section:Segmentation",
+      "plain_text_len": 870,
+      "plain_text_excerpt": "Better segmentation \nSection:Segmentation\n\nThe segmentation phase is now divided into two subphases. In the first subphase, the AI is used to divide the text into pages, with each page divided into segments. The prompt recommends that the AI first determines the genre of the text (story, essay, poem, dictionary, etc), and then makes an appropriate subdivision. For example, in a story a typical page would be 1--3 paragraphs and a typical segment would be a sentence, while in a poem a typical page might be 1--3 verses and a typical segment would be a line. In the second phase, each segment is processed separately, using a language-dependent prompt which gives examples of how to subdivide words or mark words containing punctuation marks (hyphens, apostrophes) as single lexical units.\n\nThe new scheme gives much better results, particularly in the first subphase.",
+      "analysis": {
+        "section_summary": "Describes an improved two-stage segmentation workflow: first, an AI divides a text into pages and segments based on its genre (e.g. paragraphs for stories, verses for poems), then each segment is processed with language-specific prompts to split words or treat punctuated forms as single lexical units, yielding better segmentation quality.",
+        "relevant_views": [
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.71,
+            "rationale": "This view handles creating and maintaining the segmented text version of a project, aligning with the described two-stage segmentation process."
+          },
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.36,
+            "rationale": "The Simple C-LARA wizard dispatches actions including segmentation, so its workflow is affected by changes to the segmentation phase."
+          }
+        ],
+        "concept_tags": [
+          "segmentation",
+          "pages",
+          "segments",
+          "genre detection",
+          "AI prompting",
+          "language-specific rules",
+          "lexical units",
+          "punctuation handling",
+          "poetry vs prose"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14773,
+        "completion_tokens": 953,
+        "total_tokens": 15726,
+        "estimated_cost_usd": 0.02799625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "50141d71b910b358",
+      "level": 3,
+      "title": "Page audio",
+      "label": "Section:PageAudio",
+      "plain_text_len": 207,
+      "plain_text_excerpt": "Page audio \nSection:PageAudio\n\nA small but useful addition is that the final multimodal rendering stage now adds an audio file for each whole page, creating it by concatenating the pages segment audio files.",
+      "analysis": {
+        "section_summary": "The multimodal rendering process now also outputs a full-page audio file by concatenating the individual segment audio files for each page.",
+        "relevant_views": [
+          {
+            "url_name": "render_text_complete",
+            "confidence": 0.33,
+            "rationale": "The rendering views oversee the multimodal rendering pipeline, which now includes creating page-level audio by combining segment audio."
+          },
+          {
+            "url_name": "render_text_status",
+            "confidence": 0.3,
+            "rationale": "Rendering status endpoints are implicated because the rendering stage now generates concatenated page audio files."
+          },
+          {
+            "url_name": "serve_audio_file",
+            "confidence": 0.25,
+            "rationale": "Generated page-level audio files would be served through the audio serving endpoint."
+          }
+        ],
+        "concept_tags": [
+          "page audio",
+          "multimodal rendering",
+          "audio concatenation",
+          "segment audio"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14175,
+        "completion_tokens": 603,
+        "total_tokens": 14778,
+        "estimated_cost_usd": 0.02374875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "a8651ce07183c862",
+      "level": 2,
+      "title": "Creating coherent image sets",
+      "label": "Section:CoherentImages",
+      "plain_text_len": 52,
+      "plain_text_excerpt": "Creating coherent image sets \nSection:CoherentImages",
+      "analysis": {
+        "section_summary": "Outlines how to generate and manage sets of visually coherent images for a CLARA project, configuring shared styles and elements and running the generation and monitoring processes.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.67,
+            "rationale": "This view provides the main interface for configuring and managing coherent images, including setting styles/elements and triggering generation for a project."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.55,
+            "rationale": "Supports monitoring of the asynchronous tasks involved in generating coherent image sets after they are initiated."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.53,
+            "rationale": "Exposes status information for the coherent image generation pipeline, relevant to tracking progress while creating image sets."
+          }
+        ],
+        "concept_tags": [
+          "coherent images",
+          "image generation",
+          "style management",
+          "CLARA projects",
+          "task monitoring"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14147,
+        "completion_tokens": 629,
+        "total_tokens": 14776,
+        "estimated_cost_usd": 0.02397375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "32f729ff7832284b",
+      "level": 3,
+      "title": "Overview",
+      "label": "Section:CoherentImagesOverview",
+      "plain_text_len": 2804,
+      "plain_text_excerpt": "Overview \nSection:CoherentImagesOverview\n\nA major new piece of functionality is support for creation of text containing multiple images. Here, the challenge is to produce images that are coherent with each other.\n\nCoherence can involve both style and content. Coherence of style means choosing a single artistic theme, a defined colour palette, and so on. Coherence of content means that elements which occur in more than one image (people, animals, objects, locations...) will be realised in roughly the same way. Our current approach in both cases is the same. We instruct the AI to create descriptions for the aspects, style or repeated elements, that will be shared between images; we then include this information in the prompts that generate the final descriptions that are passed to DALL-E-3 to create the images themselves. We thus have a cascade of prompts, where each prompt creates materia…",
+      "analysis": {
+        "section_summary": "The section introduces new functionality for generating texts with multiple coherent images. It defines coherence in style and content, using AI to draft shared descriptions of style or recurring elements that are fed into subsequent prompts to DALL-E-3 in a cascading process. Multiple alternative descriptions and images are produced for human or AI review to select the best. The approach performs well for stylistic consistency, while content consistency remains challenging with current API models. An example shows a user style request and the AI-generated style description with a sample image.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.78,
+            "rationale": "This view manages configuration and generation of coherent images for a project, aligning with the section’s focus on style and content coherence across multiple images."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.74,
+            "rationale": "Provides monitoring for coherent image generation tasks, relevant to the described multi-step, cascaded prompt and generation workflow."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.74,
+            "rationale": "Supplies status for coherent image generation tasks, matching the need to track multiple generated alternatives and review cycles."
+          },
+          {
+            "url_name": "simple_clara_review_v2_images_for_style",
+            "confidence": 0.5,
+            "rationale": "Offers review interfaces for style-coherent images, pertinent to the section’s emphasis on style descriptions and selection of the best stylistic alternatives."
+          }
+        ],
+        "concept_tags": [
+          "coherent images",
+          "style coherence",
+          "content coherence",
+          "cascade of prompts",
+          "DALL-E-3",
+          "image generation",
+          "style description",
+          "repeated elements",
+          "alternative image review",
+          "AI-assisted illustration"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15001,
+        "completion_tokens": 739,
+        "total_tokens": 15740,
+        "estimated_cost_usd": 0.02614125
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "dd70ae8eb92bdb6e",
+      "level": 3,
+      "title": "Style",
+      "label": "Section:CoherentImagesStyle",
+      "plain_text_len": 570,
+      "plain_text_excerpt": "Style \nSection:CoherentImagesStyle\n\nThe starting point in the process of creating a coherent image set is to generate a style description. The prompt template used to do this is shown in\nFigure~[REF:Figure:StyleGenerationTemplate]. We pass in the user's instructions, the text, and optionally some background information.\n\nWe find in practice that it is usually most effective to provide short, vague instructions for generating the style and let the AI make the substantive decisions.\nFigure~[REF:Figure:StyleExample] shows another example from ``The Cat and the Bat''.",
+      "analysis": {
+        "section_summary": "The section explains that creating a coherent set of images begins by generating a style description using a prompt template that takes the user’s instructions, the text, and optionally background information. In practice, short, vague instructions work best, letting the AI make most style decisions, as illustrated with an example from “The Cat and the Bat.”",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.82,
+            "rationale": "This view manages coherent images, including kicking off style generation tasks and saving style-related parameters for a project."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.68,
+            "rationale": "Provides monitoring of asynchronous coherent image generation tasks, including style creation, aligning with the described style generation process."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.66,
+            "rationale": "Supplies status information for coherent image generation tasks such as style creation, relevant to tracking the style generation step."
+          },
+          {
+            "url_name": "execute_simple_clara_style_requests_monitor",
+            "confidence": 0.42,
+            "rationale": "In the Simple C-LARA workflow, this monitors style-related AI requests, which parallels generating a style description for coherent images."
+          },
+          {
+            "url_name": "execute_simple_clara_style_requests_status",
+            "confidence": 0.4,
+            "rationale": "Returns status for style generation requests within the Simple C-LARA wizard, relating to the style prompt generation step."
+          },
+          {
+            "url_name": "simple_clara_review_v2_images_for_style",
+            "confidence": 0.35,
+            "rationale": "Offers a review interface for coherent images by style in the Simple C-LARA flow, indirectly connected to evaluating generated style outputs."
+          }
+        ],
+        "concept_tags": [
+          "Coherent images",
+          "Style generation",
+          "Prompt template",
+          "User instructions",
+          "Background information",
+          "AI-generated style",
+          "Image style description"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14557,
+        "completion_tokens": 851,
+        "total_tokens": 15408,
+        "estimated_cost_usd": 0.02670625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "7139961c4fc24f1f",
+      "level": 3,
+      "title": "Elements",
+      "label": "Section:CoherentImagesElements",
+      "plain_text_len": 2244,
+      "plain_text_excerpt": "Elements \nSection:CoherentImagesElements\n\nOnce the style has been determined, the next step is to create descriptions for possible recurring elements in the text. These will typically be people, animals, objects or locations.\n\nThe ``Elements'' step consists of two substeps. In the first, the AI is instructed to create a list of elements. This is done using the prompt template shown in Figure~[REF:Figure:FindElementNames], which takes as input the text, the already generated style description, and possible background information. So far, this operation seems rather unreliable, so we provide controls allowing the user to add or delete elements.\n\nIn the second substep, the AI is instructed to create a description for each element, and then produce an illustrative image to give the user feedback. The prompt template used to create an element description is shown in Figure~[REF:Figure:CreateE…",
+      "analysis": {
+        "section_summary": "Describes the Elements phase of coherent image creation: after defining a style, the AI proposes a list of recurring elements (people, animals, objects, locations) using a prompt, with user controls to add or delete unreliable suggestions. Then for each element the AI generates a detailed description and an illustrative image to give feedback, exemplified with the character Whiskers in a stained glass style.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.68,
+            "rationale": "This view manages coherent images for projects, including generating style, element, and page assets; it aligns with the described Elements step and user controls for managing element generation."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.62,
+            "rationale": "Provides monitoring/status endpoints for asynchronous generation of style, elements, and pages, relevant to tracking element description/image creation."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.6,
+            "rationale": "Returns status for coherent image generation tasks such as element descriptions and illustrative images."
+          },
+          {
+            "url_name": "execute_simple_clara_element_requests_monitor",
+            "confidence": 0.52,
+            "rationale": "Simple-C-LARA dispatches element-related requests via background tasks with monitoring, matching the Elements substeps."
+          },
+          {
+            "url_name": "execute_simple_clara_element_requests_status",
+            "confidence": 0.5,
+            "rationale": "Status endpoint for element-generation tasks in the Simple-C-LARA workflow, relevant to the element description/image generation step."
+          },
+          {
+            "url_name": "simple_clara_review_v2_images_for_element",
+            "confidence": 0.56,
+            "rationale": "Provides a review interface for coherent images at the element level, aligning with generating and reviewing illustrative images for each element."
+          }
+        ],
+        "concept_tags": [
+          "coherent images",
+          "elements detection",
+          "AI-generated element descriptions",
+          "prompt templates",
+          "illustrative image generation",
+          "style and elements workflow",
+          "user control of elements",
+          "recurring characters/objects"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15184,
+        "completion_tokens": 686,
+        "total_tokens": 15870,
+        "estimated_cost_usd": 0.02584
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "e3b5150233e9f7e8",
+      "level": 3,
+      "title": "Pages",
+      "label": "Section:CoherentImagesPages",
+      "plain_text_len": 960,
+      "plain_text_excerpt": "Pages \nSection:CoherentImagesPages\n\nWith the style description and the element descriptions in place, the final step is to generate the actual page images. This again breaks down into two substeps. In the first, the AI is told to identify the relevant elements from\nthe full list; in the second, the template is passed the text, background, \nstyle description and selected elements, and instructed to create\nthe description for the page image. \n\nThe template for the first operation is shown in Figure~[REF:Figure:FindRelevantElements], and is straightforward.\nThe second substep is the more interesting one. We originally implemented it with the template from Figure~[REF:Figure:CreatePageImageDescription], where we pass in the element descriptions, that is to say pieces of text, and instruct the AI to create page descriptions from them which in some way incorporate these pieces of text. Figure~…",
+      "analysis": {
+        "section_summary": "Describes the final stage of coherent image generation for pages: first, an AI prompt identifies which elements from a full list are relevant to a given page; second, another prompt uses the page text, background, style description, and selected element descriptions to craft a detailed page image description, illustrating the templates used for these substeps.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.78,
+            "rationale": "This view governs configuring and running coherent image generation, including the step to create page images based on text, style, and selected elements described in the section."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.71,
+            "rationale": "Provides monitoring/status for coherent images generation tasks such as page image creation, which matches the two-step page image flow described."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.7,
+            "rationale": "Returns status for coherent image generation jobs, including the page image generation phase outlined in the section."
+          }
+        ],
+        "concept_tags": [
+          "coherent images",
+          "page image generation",
+          "relevant element selection",
+          "image description templates",
+          "style description",
+          "element descriptions",
+          "background and text prompts",
+          "AI-generated page descriptions"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14840,
+        "completion_tokens": 634,
+        "total_tokens": 15474,
+        "estimated_cost_usd": 0.02489
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "49ee4e0ef5c6682a",
+      "level": 3,
+      "title": "Using a multimodal model: Gemini Imagen 3",
+      "label": "Section:CoherentImagesPagesImagen",
+      "plain_text_len": 3871,
+      "plain_text_excerpt": "Using a multimodal model: Gemini Imagen 3 \nSection:CoherentImagesPagesImagen\n\nHaving created several dozen C-LARA texts using DALL-E-3, our overall conclusion is that it is in general not capable of maintaining adequately coherent images. The same element is often not presented similarly enough across multiple images, even if the element description generated by the AI is quite detailed and DALL-E-3 appears to have followed it. Words do not appear to provide a sufficiently fine-grained way to capture an image.\n\nWe also experimenting with using the Gemini Image 3 model as an alternative to DALL-E-3; C-LARA now supports both image generators. The important difference is that Imagen 3 is multimodal; instructions can include references to web-accessible images as an alternative to descriptions of images, with the images passed as URLs. These are interpreted directly. \n\nA practical problem wi…",
+      "analysis": {
+        "section_summary": "The section describes C-LARA’s move to support Gemini Imagen 3 as an alternative to DALL‑E‑3 because DALL‑E‑3 often fails to maintain visual coherence of recurring elements across pages. Imagen 3’s multimodal input lets prompts reference web-hosted images via URLs, improving consistency, though current safety restrictions on people, especially children, require a hybrid workaround: textual descriptions for people and image references for other elements. The text notes rapid advances such as OpenAI’s forthcoming Images in ChatGPT API, which may resolve coherence issues. An example page text and a detailed AI-generated page image description illustrate the workflow.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.7,
+            "rationale": "Provides the UI to configure and generate coherent images using the newer image pipeline (including multimodal models like Imagen 3) for pages and elements."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.62,
+            "rationale": "Offers monitoring of asynchronous coherent image generation tasks, relevant when generating page images with Imagen 3."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.6,
+            "rationale": "Supplies status updates for coherent image generation jobs, pertinent to tracking Imagen 3-based page images."
+          }
+        ],
+        "concept_tags": [
+          "multimodal image generation",
+          "Gemini Imagen 3",
+          "DALL-E-3",
+          "image coherence",
+          "image prompt references",
+          "CLARA image support",
+          "hybrid prompt strategy",
+          "safety restrictions on people",
+          "OpenAI Images in ChatGPT",
+          "page image description"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15424,
+        "completion_tokens": 649,
+        "total_tokens": 16073,
+        "estimated_cost_usd": 0.02577
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "c34d453aea4a6a15",
+      "level": 3,
+      "title": "Uploading Images",
+      "label": "Section:CoherentImagesUploadingImages",
+      "plain_text_len": 1776,
+      "plain_text_excerpt": "Uploading Images \nSection:CoherentImagesUploadingImages\n\nSometimes the user has a specific idea about how an element or image should appear, but cannot easily express it verbally. We consequently include a mechanism that allows the user to upload their own image and use it as a model. The AI analyses the image to produce a description, then uses the description in the same way as other ones.\n\nThe template used to analyse an uploaded element image is shown in Figure~[REF:Figure:AnalyseUploadedImage]. Figure~[REF:Figure:UploadedImageExample] presents an example of using an uploaded image.\n\nfigure\n\nUploaded image\n\n10pt\n\nGenesis1/Gulapilil.jpg\n\nAI-generated element image description\nverbatim\nI'm unable to identify or describe real people in images. However, \nfor creating an artistic interpretation in DALL-E, you can describe \nthe character as:\n\n- **Apparent Age**: Elderly\n- **Gender**: Male\n…",
+      "analysis": {
+        "section_summary": "Describes a feature where users can upload their own reference image for an element when they have a specific visual idea. The system analyzes the uploaded image to extract a descriptive prompt, stressing it can only use the image as inspiration, and then uses that description like any other to generate coherent images. An example shows an uploaded stock photo and the AI’s interpreted description, which is then used in a page image.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.43,
+            "rationale": "Editing coherent images for a project likely includes the option to upload a reference image and have it analyzed for description, matching the described workflow."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.33,
+            "rationale": "Monitoring coherent image generation tasks would be part of the upload-analyze-generate pipeline described, so it is tangentially relevant."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.33,
+            "rationale": "Status polling for coherent image generation tasks aligns with tracking the use of an uploaded image’s description to generate page images."
+          },
+          {
+            "url_name": "community_review_images",
+            "confidence": 0.22,
+            "rationale": "Community review views allow uploading new images for pages; while a different context, they involve user image uploads related to project imagery."
+          }
+        ],
+        "concept_tags": [
+          "Image upload",
+          "Reference image",
+          "AI image description",
+          "Coherent images",
+          "DALL-E prompt",
+          "User-provided model",
+          "Element image",
+          "Visual inspiration"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14754,
+        "completion_tokens": 702,
+        "total_tokens": 15456,
+        "estimated_cost_usd": 0.0254625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "abc96b7ca277b749",
+      "level": 3,
+      "title": "Reviewing Images",
+      "label": "Section:CoherentImagesReviewing",
+      "plain_text_len": 3489,
+      "plain_text_excerpt": "Reviewing Images \nSection:CoherentImagesReviewing\n\nThe image generation process is still very far from reliable; in particular, DALL-E-3 hardly ever follows instructions exactly and often produces images which are incompatible with them. As noted below, better models are in the process of being released, but until they are the most realistic strategy is to generate multiple images and then either select the best one, or to edit the descriptions and regenerate in an attempt to find a way of expressing the instructions which resonated better with DALL-E-3.\n\nWe support three different methods. In the first, we attempt to select the best descriptions and images using automatic AI-based filtering. In the second, we let the user select and regenerate directly; and in the third, we allow a community to select and regenerate using a democratic process. We present the three methods in turn, then …",
+      "analysis": {
+        "section_summary": "The section explains that current image generation is unreliable, so multiple images and descriptions are produced and reviewed. Three strategies are supported: automatic AI-based filtering that compares generated images to their descriptions; direct user reviewing via the Edit Images and Pages interface, where users upvote/downvote, tweak descriptions, regenerate, or upload images; and community reviewing, where members propose changes but AI-costly actions are queued for coordinator approval and execution.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.9,
+            "rationale": "The user reviewing method is described as using the “Edit Images and Pages” screen to select, regenerate, or upload images per page, which is implemented by edit_images_v2."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.62,
+            "rationale": "Monitoring asynchronous generation tasks for styles, elements, and pages aligns with the regeneration workflows described in user reviewing."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.62,
+            "rationale": "Status endpoints for coherent image generation support the regeneration cycle discussed in user reviewing."
+          },
+          {
+            "url_name": "community_review_images",
+            "confidence": 0.9,
+            "rationale": "Community reviewing lets members browse pages and vote or request regenerations; this view provides the member-facing community review interface."
+          },
+          {
+            "url_name": "community_organiser_review_images",
+            "confidence": 0.9,
+            "rationale": "The coordinator-facing view to approve/deny and run community requests matches the coordinator role described in community reviewing."
+          },
+          {
+            "url_name": "community_review_images_for_page",
+            "confidence": 0.68,
+            "rationale": "Drilling into a specific page for voting or requesting variants reflects the per-page community reviewing flow mentioned."
+          },
+          {
+            "url_name": "execute_community_requests_for_page_monitor",
+            "confidence": 0.58,
+            "rationale": "Approved community requests are run asynchronously; this monitor view tracks their execution as described for coordinators."
+          },
+          {
+            "url_name": "execute_community_requests_for_page_status",
+            "confidence": 0.58,
+            "rationale": "Status endpoint for executing approved community requests supports the coordinator execution step noted in community reviewing."
+          }
+        ],
+        "concept_tags": [
+          "Image reviewing",
+          "AI-based filtering",
+          "User reviewing",
+          "Community reviewing",
+          "Edit Images and Pages",
+          "DALL-E-3",
+          "Image regeneration",
+          "Upvote/downvote controls",
+          "Coordinator approval",
+          "Image description editing"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15363,
+        "completion_tokens": 921,
+        "total_tokens": 16284,
+        "estimated_cost_usd": 0.02841375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "fe3d2f847abdb749",
+      "level": 3,
+      "title": "Summary and further directions",
+      "label": "Section:CoherentImagesSummary",
+      "plain_text_len": 1342,
+      "plain_text_excerpt": "Summary and further directions \nSection:CoherentImagesSummary\n\nThe previous sections have presented the new image generation functionality. Users construct images by first defining a style, then the visual elements common to several images, and finally the images themselves. In each case, the process is first to instruct the AI to create a suitable text description, and then pass this description to DALL-E-3 to produce images. In practice, quality can often be substantially improved by manually filtering the images and/or editing the AI-generated descriptions. An interesting point is that the descriptions do not need to be created in English. \n\nWe had three main goals when developing the functionality. The set of images for a text should be\n\nenumerate\n quick to create.\n coherent in terms of style (images should look stylistically similar);\n coherent in terms of content (if the same item …",
+      "analysis": {
+        "section_summary": "The section recaps the new coherent image generation workflow where users define a style, common visual elements and then individual images by first asking an AI to draft textual descriptions and passing them to DALL-E-3. Quality often benefits from manual filtering or editing, and descriptions need not be in English. The feature aims for speed and stylistic coherence, and while those are achieved, consistent depiction of the same items across images remains weak until more powerful models become accessible via API.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.72,
+            "rationale": "This view covers configuring and managing coherent images for a project, matching the described workflow of defining styles, elements and generating images via AI."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.65,
+            "rationale": "The monitor endpoint supports overseeing the coherent image generation process outlined in the section."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.62,
+            "rationale": "Status checks for the coherent images generation align with the discussed functionality and its current limitations."
+          }
+        ],
+        "concept_tags": [
+          "coherent images",
+          "DALL-E-3",
+          "style definition",
+          "visual elements",
+          "textual descriptions",
+          "manual curation",
+          "stylistic coherence",
+          "content consistency",
+          "multilingual prompts",
+          "model availability"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14633,
+        "completion_tokens": 593,
+        "total_tokens": 15226,
+        "estimated_cost_usd": 0.02422125
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "9a5713711138a2d0",
+      "level": 2,
+      "title": "Simple C-LARA",
+      "label": "Section:SimpleCLARA",
+      "plain_text_len": 709,
+      "plain_text_excerpt": "Simple C-LARA \nSection:SimpleCLARA\n\nSimple C-LARA provides a wizard-style interface which streamlines the process of creating a C-LARA text. The user does not have all the options available in Advanced C-LARA, but the process is much easier to understand.\n\nThe initial version of Simple C-LARA, described in the second progress report, has now been extended to include more functionality. In particular, annotation for MWEs and sentence translations are added automatically, and the user has the option of requesting images created using the coherent image set functionality from .\n\nAppendix~[REF:Section:UsingSimpleCLARA] presents an example of using Simple C-LARA to create a text with a coherent image set.",
+      "analysis": {
+        "section_summary": "Simple C-LARA offers a streamlined wizard for creating C-LARA texts with fewer choices than the Advanced workflow. The latest version now automatically adds multiword expression annotations and sentence translations, and lets users request coherent image sets as part of the simplified creation process.",
+        "relevant_views": [
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.95,
+            "rationale": "This is the main wizard interface for Simple C-LARA, matching the section’s focus on a streamlined text creation workflow."
+          },
+          {
+            "url_name": "simple_clara_status",
+            "confidence": 0.8,
+            "rationale": "Provides status/polling for actions in the Simple C-LARA wizard, relevant to the extended functionality described."
+          },
+          {
+            "url_name": "simple_clara_monitor",
+            "confidence": 0.76,
+            "rationale": "Monitors background tasks initiated by the Simple C-LARA wizard, useful when adding automatic annotations and images."
+          },
+          {
+            "url_name": "execute_simple_clara_image_requests_status",
+            "confidence": 0.78,
+            "rationale": "Handles image generation requests within the Simple C-LARA wizard, aligning with the option to request coherent image sets."
+          },
+          {
+            "url_name": "execute_simple_clara_style_requests_status",
+            "confidence": 0.72,
+            "rationale": "Processes style-related image generation in Simple C-LARA, supporting the coherent image set option mentioned."
+          },
+          {
+            "url_name": "simple_clara_review_v2_images_for_page",
+            "confidence": 0.7,
+            "rationale": "Provides review interfaces for coherent images by page within Simple C-LARA, relevant to the added image functionality."
+          },
+          {
+            "url_name": "execute_simple_clara_element_requests_status",
+            "confidence": 0.65,
+            "rationale": "Manages element-level tasks in the Simple C-LARA wizard, reflecting the automated annotation steps described."
+          }
+        ],
+        "concept_tags": [
+          "Simple C-LARA",
+          "wizard interface",
+          "C-LARA text creation",
+          "automatic annotation",
+          "multiword expressions",
+          "sentence translations",
+          "coherent image set",
+          "image generation",
+          "simplified workflow"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14886,
+        "completion_tokens": 2108,
+        "total_tokens": 16994,
+        "estimated_cost_usd": 0.0396875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "26ef66d8cd614a8b",
+      "level": 2,
+      "title": "Parallelism",
+      "label": "Section:Parallelism",
+      "plain_text_len": 1207,
+      "plain_text_excerpt": "Parallelism \nSection:Parallelism\n\nWe have implemented parallelism using the Python asyncio package, which has a large impact on speed of processing. Parallelism is currently used in two places:\n\ndescription\n\n Most of the annotation operations (the second phase of segmentation, Multi-Word Expressions, lemma tagging, glossing) are now parallelised. In all of these cases, the text has already been divided into segments, and all the segments are annotated simultaneously.\n\n Similarly, we have parallelised production of descriptions and images for the ``elements'' and ``pages'' phases of coherent image processing. As with linguistic annotation, we process all the elements, or all the pages, at the same time.\n\ndescription\n\nIn all of the above, parallel processing is realised using some version of the standard asyncio pattern shown in Figure~[REF:Figure:ParallelismPseudo].\n\nfigure\nverbatim\nasync…",
+      "analysis": {
+        "section_summary": "The section explains that C‑LARA now uses Python’s asyncio to parallelise work, greatly improving speed. Linguistic annotations such as the second phase of segmentation, multi‑word expressions, lemma tagging and glossing are done concurrently across all text segments, and coherent image processing generates descriptions and images for all elements or pages at the same time. The implementation follows the standard asyncio pattern of creating tasks and gathering their results.",
+        "relevant_views": [
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.36,
+            "rationale": "Multi‑Word Expressions are cited as one of the annotation operations parallelised; this view handles creation of MWE‑tagged text, which would benefit from the described asyncio processing."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.36,
+            "rationale": "Lemma tagging is specifically mentioned as a parallelised annotation step; this endpoint is responsible for generating lemma‑tagged text within a project."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.32,
+            "rationale": "Glossing is among the annotation phases now parallelised across segments; this view manages glossed text creation where such parallelism applies."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.34,
+            "rationale": "The section notes parallelised production of descriptions and images for coherent image processing phases; edit_images_v2 drives coherent image generation for elements and pages, likely using the described asyncio approach."
+          }
+        ],
+        "concept_tags": [
+          "parallelism",
+          "asyncio",
+          "asynchronous processing",
+          "linguistic annotation",
+          "segmentation",
+          "multi-word expressions",
+          "lemma tagging",
+          "glossing",
+          "coherent image processing",
+          "Python"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14965,
+        "completion_tokens": 1061,
+        "total_tokens": 16026,
+        "estimated_cost_usd": 0.02931625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "47cea9a83df79ba4",
+      "level": 2,
+      "title": "Better support for Indigenous languages",
+      "label": "Section:IndigenousLanguages",
+      "plain_text_len": 2694,
+      "plain_text_excerpt": "Better support for Indigenous languages \nSection:IndigenousLanguages\n\nInitial experiments using C-LARA to construct texts for Indigenous languages, described in the preceding report, showed that it worked much less well there than with the large languages it was originally designed for. There were two main problems. First, since the AI does not know the languages concerned, it is unable to write or annotate the texts, and this work must thus be performed manually. The human annotator is working with multiple parallel versions of the text, annotated in different ways (glossed, lemma tagged, translated, etc); in practice, the different versions often get out of sync, and it is laborious to then correct the divergences.\n\nAs previously noted, a C-LARA project maintains multiple parallel versions of the text: plain text, segmented text (i.e.\\ text divided into pages and sentence-like units), …",
+      "analysis": {
+        "section_summary": "The section explains how C-LARA has been adapted to better support Indigenous languages, where AI cannot generate or annotate texts and human work often introduces inconsistencies across multiple parallel versions (plain, segmented, glossed, translated, lemma- and MWE-tagged). To reduce errors and keep these versions in sync, the \"Edit Pages and Images\" interface has been redesigned to show all annotations for each page together, and the system now automatically checks annotation syntax and performs smart diffs to reconcile divergences when saving, inserting placeholders for missing items. Early testing indicates this reorganised workflow greatly improves usability for manual annotation.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images",
+            "confidence": 0.48,
+            "rationale": "The section centers on the redesigned \"Edit Pages and Images\" screen that collocates per-page annotations and checks for divergences. The edit_images view exposes that interface for editing pages and images within a project."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.34,
+            "rationale": "An updated coherent images editor also labeled \"Edit Images and Pages\" could be the vehicle for the reorganized per-page presentation described for Indigenous language support."
+          }
+        ],
+        "concept_tags": [
+          "Indigenous languages",
+          "manual annotation",
+          "parallel text versions",
+          "glossed text",
+          "segmented text",
+          "translations",
+          "lemma tagging",
+          "multi-word expressions",
+          "per-page editing",
+          "annotation syntax checking",
+          "smart diffing",
+          "usability improvement",
+          "C-LARA interface redesign"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14925,
+        "completion_tokens": 936,
+        "total_tokens": 15861,
+        "estimated_cost_usd": 0.02801625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "951e5cb7958c0c44",
+      "level": 1,
+      "title": "Evaluating linguistic annotation and image generation",
+      "label": "Section:SoftwareComponent",
+      "plain_text_len": 709,
+      "plain_text_excerpt": "Evaluating linguistic annotation and image generation\nSection:SoftwareComponent\n\nIn the second progress report, we described how GPT-4 (and subsequently GPT-4 Turbo) was evaluated on four core annotation tasks---writing, segmenting, glossing, and lemma/POS tagging---across multiple languages and text genres. Here, we present a third round of experiments, focusing initially on English, where we again see a notable reduction in error rates(Table~[REF:Table:AnnotationPerformanceEnglish]). Beyond annotation, we have also started to systematically assess the new coherent image generation functionality using a similar multi-text design and a structured questionnaire. Below, we present our initial findings.",
+      "analysis": {
+        "section_summary": "The report outlines a third round of experiments on GPT-4/Turbo for core annotation tasks—writing, segmenting, glossing, and lemma/POS tagging—with reduced error rates in English, and describes initial systematic assessment of the new coherent image generation feature using multi-text tests and a structured questionnaire.",
+        "relevant_views": [
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.28,
+            "rationale": "This view supports generating glossed text via AI or taggers, aligning with the evaluated glossing and annotation tasks."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.28,
+            "rationale": "Lemma/POS tagging is one of the evaluated tasks, and this view handles creating lemma-tagged text versions."
+          },
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.24,
+            "rationale": "Segmentation was evaluated; this endpoint manages creation of segmented text, including AI-driven generation."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.31,
+            "rationale": "Coherent image generation was assessed; this view configures and triggers coherent image generation for projects."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.25,
+            "rationale": "Provides monitoring for coherent image generation tasks, relevant to the image generation evaluation."
+          },
+          {
+            "url_name": "image_questionnaire_start",
+            "confidence": 0.35,
+            "rationale": "Image quality was assessed using structured questionnaires; this view starts an image questionnaire for evaluation."
+          }
+        ],
+        "concept_tags": [
+          "GPT-4",
+          "linguistic annotation",
+          "segmentation",
+          "glossing",
+          "lemma tagging",
+          "POS tagging",
+          "error rates",
+          "coherent image generation",
+          "evaluation",
+          "questionnaire"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14514,
+        "completion_tokens": 1085,
+        "total_tokens": 15599,
+        "estimated_cost_usd": 0.0289925
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "2370879539269119",
+      "level": 2,
+      "title": "Third round of linguistic annotation evaluation",
+      "label": "Section:ThirdRoundAnnotation",
+      "plain_text_len": 2971,
+      "plain_text_excerpt": "Third round of linguistic annotation evaluation\nSection:ThirdRoundAnnotation\n\nTo gauge ongoing progress in GPT-4's linguistic performance, we replicated the experiments from 5.1 of the second progress report a third time in March 2025, using the March 2025 GPT-4o version and the current version of C-LARA, incorporating in particular MWE annotation and segment translations. Table~[REF:Table:AnnotationPerformanceEnglish] shows the updated results for English, measured as before on six texts defined by the prompts in Table~[REF:Table:Prompts] and the same tasks (segmentation, French glossing, lemma/POS tagging). Compared to both the September 2023 and March 2024 data, the error rates have decreased further, with an average of only 2.0\\% for glossing and 0.8\\% for lemma-tagging across the six texts. This is a very substantial improvement relative to the original GPT-4, which had glossing err…",
+      "analysis": {
+        "section_summary": "This section reports a third round of linguistic annotation evaluation conducted in March 2025 using the GPT-4o model and the current C-LARA pipeline. Replicating earlier experiments on six English texts prompted by predefined themes, it assesses segmentation, French glossing, and lemma/POS tagging. Compared to September 2023 and March 2024, error rates have fallen markedly, averaging about 2.0% for glossing and 0.8% for lemma tagging, demonstrating substantial improvement over the original GPT-4. The prompts and detailed error tables are provided.",
+        "relevant_views": [],
+        "concept_tags": [
+          "linguistic annotation",
+          "GPT-4o",
+          "C-LARA",
+          "segmentation",
+          "glossing",
+          "lemma tagging",
+          "POS tagging",
+          "evaluation",
+          "error rates",
+          "English texts",
+          "March 2025",
+          "prompts"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15783,
+        "completion_tokens": 404,
+        "total_tokens": 16187,
+        "estimated_cost_usd": 0.02376875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "5175e3af3b4c79b0",
+      "level": 2,
+      "title": "Evaluating coherent image generation",
+      "label": "Section:ImageGenerationEvaluation",
+      "plain_text_len": 8094,
+      "plain_text_excerpt": "Evaluating coherent image generation\nSection:ImageGenerationEvaluation\n\nAnother key focus of this third phase is a systematic evaluation of the coherent image generation framework described in . The goal is to produce sets of illustrations for short texts in a way that observe constraints on stylistic coherence, narrative coherence, and cultural relevance. We have again defined six text scenarios of varied types, this time for image creation, as shown in Table~[REF:Table:ImagePrompts].\n\ntable*[bh!]\n Core prompts used to create image evaluation texts. More information was added to specify the length of the text in pages (typically 10--20 pages) and the fact that one illustration would be created per page.\n Table:ImagePrompts\n\ntabularll\n\n1cLabel & 1cPrompt\\\\\n\nDI & A small picture dictionary.\\\\\n\nSC & A scientific/technical explanation accessible to a bright ten-year-old.\\\\\n\nAN & A friendshi…",
+      "analysis": {
+        "section_summary": "This section reports on a systematic evaluation of the coherent image generation pipeline: six English text scenarios were illustrated using style specs, element definitions and page images generated by DALL‑E‑3 and Imagen 3 across varied styles. Images were rated via a newly integrated 5‑point Likert questionnaire on correspondence, style consistency, element coherence, cultural appropriateness, and visual appeal. Revised image selections generally improved scores for most stories (dictionary, animals, robot, typical day), while traditional story styles and science/technical diagrams showed coherence and correctness issues beyond current model capabilities.",
+        "relevant_views": [
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.64,
+            "rationale": "The evaluation concerns coherent image generation; this endpoint monitors generation tasks in the coherent images v2 workflow that produced the images being assessed."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.64,
+            "rationale": "Provides status endpoints for coherent image generation jobs, relevant to managing the generation pipeline being evaluated."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.61,
+            "rationale": "Handles configuring and generating coherent images for projects, which is the process under evaluation in this section."
+          },
+          {
+            "url_name": "image_questionnaire_project_list",
+            "confidence": 0.7,
+            "rationale": "The section describes a questionnaire-based tool for rating page images; this view lists projects with image questionnaires."
+          },
+          {
+            "url_name": "image_questionnaire_start",
+            "confidence": 0.68,
+            "rationale": "Initialises an image questionnaire for evaluating generated images, matching the described Likert-scale assessment."
+          },
+          {
+            "url_name": "image_questionnaire_item",
+            "confidence": 0.66,
+            "rationale": "Presents page-by-page rating forms used to collect the Likert ratings mentioned in the evaluation."
+          },
+          {
+            "url_name": "image_questionnaire_summary",
+            "confidence": 0.64,
+            "rationale": "Produces summary results of image questionnaires akin to the tables of collected scores in the section."
+          },
+          {
+            "url_name": "image_questionnaire_summary_csv",
+            "confidence": 0.61,
+            "rationale": "Exports questionnaire results, relevant to aggregating and analysing the evaluation data described."
+          },
+          {
+            "url_name": "image_questionnaire_all_projects_summary",
+            "confidence": 0.58,
+            "rationale": "Aggregates image questionnaire summaries across projects, pertinent to overall evaluation reporting."
+          }
+        ],
+        "concept_tags": [
+          "coherent image generation",
+          "stylistic coherence",
+          "narrative coherence",
+          "cultural relevance",
+          "image prompts",
+          "DALL-E-3",
+          "Imagen 3",
+          "style specification",
+          "element definitions",
+          "page images",
+          "Likert-scale questionnaire",
+          "image evaluation",
+          "image quality",
+          "image coherence",
+          "science/technical diagrams",
+          "traditional story illustration",
+          "image rating tool"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 16807,
+        "completion_tokens": 794,
+        "total_tokens": 17601,
+        "estimated_cost_usd": 0.02894875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "e58a57b4e316e0a2",
+      "level": 3,
+      "title": "Looking ahead: new image generation capabilities",
+      "label": "Section:NewImageGenerationCapabilities",
+      "plain_text_len": 1991,
+      "plain_text_excerpt": "Looking ahead: new image generation capabilities\nSection:NewImageGenerationCapabilities\n\nIt appears, however, that the issues just mentioned will soon be resolved. The ``Images in ChatGPT''https://www.theverge.com/openai/635118/chatgpt-sora-ai-image-generation-chatgpt functionality, released in late Mar 2025 and so far only available through the web interface, incorporates reasoning into the image generation process and opens up dramatic new possibilities. Figure~[REF:Figure:ProblemsInScienceTechnical] shows the result when the ``simple circuit'' request is submitted; it is already nearly correct on the first try. \n\nfigure[h!]\n\n ImageEvaluation/RealisticCircuit.png\nGenerating the basic circuit image from Figure~[REF:Figure:ProblemsInScienceTechnical] using the ``Images in ChatGPT'' functionality released late March 2025. Although not perfect, this image, created without any tweaking of t…",
+      "analysis": {
+        "section_summary": "This section notes that new \"Images in ChatGPT\" functionality released in March 2025 has markedly improved reasoning in image generation, producing near-correct technical diagrams and coherent story illustrations with minimal prompt tweaking. Although the feature is only available via the web interface and not yet through the API, the rapid progress suggests that within a few months C-LARA should be able to generate good coherent image sets for most texts at the targeted difficulty level.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.67,
+            "rationale": "The section discusses upcoming capabilities to generate coherent image sets for texts, which aligns with the view for configuring and managing coherent images within a CLARA project."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.58,
+            "rationale": "Monitoring coherent image generation tasks is relevant to the anticipated ability to create coherent image sets as described."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.58,
+            "rationale": "Status polling for coherent image generation tasks aligns with the discussion of improved image generation workflows."
+          },
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.35,
+            "rationale": "The Simple C-LARA wizard includes dispatching image generation actions, which relates to the envisioned easier generation of coherent images mentioned in the section."
+          }
+        ],
+        "concept_tags": [
+          "AI image generation",
+          "Images in ChatGPT",
+          "coherent image sets",
+          "OpenAI API",
+          "technical diagrams",
+          "story illustration",
+          "future capabilities",
+          "image reasoning"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15129,
+        "completion_tokens": 638,
+        "total_tokens": 15767,
+        "estimated_cost_usd": 0.02529125
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "8d071a7778344eaf",
+      "level": 3,
+      "title": "GPT-4o on the Future of Coherent Image Generation in C-LARA",
+      "label": null,
+      "plain_text_len": 2435,
+      "plain_text_excerpt": "GPT-4o on the Future of Coherent Image Generation in C-LARA\n\nRecent advances in image generation mark a turning point for C-LARA’s ability to illustrate narrative and educational texts. Until now, one of the most significant limitations in using generative AI for visual support has been the difficulty of maintaining coherence across images — keeping characters, props, and style consistent from one page to the next. Current API-based systems like DALL-E 3 and Imagen 3 offer strong single-image generation, but they struggle to produce visually coherent multi-image sequences, particularly for narratives.\n\nIn this week’s experiments using the ChatGPT interface, however, it has become clear that this barrier is beginning to fall. The latest image generation model, Images in ChatGPT, can now retain visual identity across multiple images within a session, following detailed reference descriptio…",
+      "analysis": {
+        "section_summary": "The section reports that recent advances in ChatGPT’s image generation now maintain consistent characters, props, and styles across multiple images in a session, overcoming a long-standing obstacle in narrative illustration. Tests with “The Brave Little Tailor” show coherent character proportions and recurring environments, validating C-LARA’s design for reusable visual elements and pluggable references. This capability paves the way for rapidly producing high-quality, pedagogically useful illustrated texts and diagrams with consistent visual anchors.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.9,
+            "rationale": "Core view for configuring and generating coherent images (styles, elements, pages) in C-LARA, directly aligned with the section’s focus on multi-image coherence."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.72,
+            "rationale": "Provides monitoring for the coherent image generation tasks described, matching the need to track multi-image coherence generation."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.72,
+            "rationale": "Supplies status updates for coherent image generation workflows, relevant to managing the coherent multi-image processes highlighted."
+          }
+        ],
+        "concept_tags": [
+          "coherent image generation",
+          "multi-image consistency",
+          "visual identity retention",
+          "shared visual elements",
+          "pluggable architecture",
+          "ChatGPT image model",
+          "DALL-E 3",
+          "Imagen 3",
+          "illustrated narratives",
+          "pedagogical picture books"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14911,
+        "completion_tokens": 1076,
+        "total_tokens": 15987,
+        "estimated_cost_usd": 0.02939875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "a8df799d0f0a4ac2",
+      "level": 1,
+      "title": "Using C-LARA with specific languages",
+      "label": "Section:SpecificLanguages",
+      "plain_text_len": 62,
+      "plain_text_excerpt": "Using C-LARA with specific languages\nSection:SpecificLanguages",
+      "analysis": {
+        "section_summary": "This section is intended to discuss how to use C‑LARA with particular languages, but no further content is provided.",
+        "relevant_views": [],
+        "concept_tags": [
+          "language-specific usage",
+          "C-LARA"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15087,
+        "completion_tokens": 243,
+        "total_tokens": 15330,
+        "estimated_cost_usd": 0.02128875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "ad35b4756c172ce8",
+      "level": 2,
+      "title": "Icelandic and Mandarin (University of Iceland)",
+      "label": "Section:IcelandicAndMandarin",
+      "plain_text_len": 1064,
+      "plain_text_excerpt": "Icelandic and Mandarin (University of Iceland)\nSection:IcelandicAndMandarin\n\nIn Summer 2024The version of C-LARA used for the experiments described in this section (Jun--Aug 2024) was significantly less advanced than the one used in most of the rest of the report (Feb--Mar 2025)., three university students worked with C-LARA to create illustrated short stories with translations to English and Mandarin Chinese that would be suitable for learning Icelandic as a second language at different learner levels. The aim was to evaluate the effectiveness of the C-LARA platform for language learning, focusing on its potential for less commonly spoken languages such as Icelandic. Over three months June-August, these students used C-LARA to create 30 projects, of which nine were fully completed and analyzed. The study documented accuracy rates, processing time, and costs at various stages of project …",
+      "analysis": {
+        "section_summary": "In summer 2024, three university students used an earlier version of C-LARA to produce illustrated Icelandic short stories with English and Mandarin translations aimed at different learner levels. Over June to August they built 30 projects, nine of which were completed and analysed, tracking accuracy, processing time and cost across development stages. Three standout projects were turned into picture books for future studies on the platform’s effectiveness for less commonly taught languages like Icelandic.",
+        "relevant_views": [
+          {
+            "url_name": "create_project",
+            "confidence": 0.36,
+            "rationale": "Students created multiple C-LARA projects for Icelandic stories, which aligns with the project creation workflow."
+          },
+          {
+            "url_name": "create_translated_text",
+            "confidence": 0.34,
+            "rationale": "The projects included translations into English and Mandarin, suggesting use of translated text creation features."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.28,
+            "rationale": "Illustrated short stories imply the use of image generation and management tools for projects."
+          },
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.21,
+            "rationale": "The work involved end-to-end creation of stories; the Simple C-LARA wizard could have been used to orchestrate text and images."
+          }
+        ],
+        "concept_tags": [
+          "Icelandic language learning",
+          "Mandarin translation",
+          "illustrated short stories",
+          "second language acquisition",
+          "less commonly taught languages",
+          "C-LARA platform",
+          "project creation",
+          "translation workflow",
+          "image generation",
+          "student projects",
+          "processing time",
+          "accuracy rates",
+          "cost analysis",
+          "picture books",
+          "learner levels",
+          "Summer 2024 study"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15062,
+        "completion_tokens": 988,
+        "total_tokens": 16050,
+        "estimated_cost_usd": 0.0287075
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "2201200906f3e7a1",
+      "level": 3,
+      "title": "Key findings on language learning with C-LARA",
+      "label": null,
+      "plain_text_len": 625,
+      "plain_text_excerpt": "Key findings on language learning with C-LARA\n\n The study explored two primary use cases: learning Icelandic through English and Mandarin Chinese and learning Mandarin Chinese through Icelandic. It found that AI was highly efficient in generating learning resources, though it required much of human intervention to refine content for fluency and cultural accuracy especially in Icelandic. Interestingly, only minor adjustments needed to be done in Mandarin Chinese. This human-in-the-loop process, where AI-generated content was iteratively reviewed and edited, proved essential in achieving high-quality learning materials.",
+      "analysis": {
+        "section_summary": "The study compared two use cases—learning Icelandic via English and Mandarin, and Mandarin via Icelandic—and found AI could quickly generate learning materials but needed human review and edits, especially for Icelandic, to ensure fluency and cultural accuracy; for Mandarin, only minor edits were required, highlighting the importance of an iterative human-in-the-loop process.",
+        "relevant_views": [
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.26,
+            "rationale": "Simple C-LARA supports AI-assisted creation of project content, aligning with the described workflow of generating resources and then refining them through human intervention."
+          },
+          {
+            "url_name": "edit_prompt",
+            "confidence": 0.2,
+            "rationale": "Editing GPT-4 prompt templates can help tailor AI-generated content for better fluency and cultural accuracy, which echoes the human-in-the-loop adjustments noted in the findings."
+          }
+        ],
+        "concept_tags": [
+          "AI-generated content",
+          "human-in-the-loop",
+          "content refinement",
+          "fluency",
+          "cultural accuracy",
+          "language learning",
+          "Icelandic",
+          "Mandarin Chinese",
+          "learning resources",
+          "iterative editing"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14909,
+        "completion_tokens": 851,
+        "total_tokens": 15760,
+        "estimated_cost_usd": 0.02714625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "71b415e7c073f0d6",
+      "level": 3,
+      "title": "Project outcomes and challenges",
+      "label": null,
+      "plain_text_len": 1280,
+      "plain_text_excerpt": "Project outcomes and challenges\n\nEach student focused on different learner profiles and linguistic challenges:\n\nStudent 1 created 17 stories for young learners of Icelandic through English. While seven were experimental, the remaining 10 were thematically structured, covering topics like Norse mythology and AI-generated narratives. A significant challenge was aligning Common European Framework for Languages (CEFR) levels with children’s literature, as texts aimed at young readers tend to fall below B2, despite their complexity in terms of storytelling.\nStudent 2 developed nine projects, including adaptations of the same story for different proficiency levels and a text for teenage learners. Real-world themes, such as Reykjavík’s volcanic eruptions and the Arctic midnight sun, were explored. However, technical issues with multi-word-expression (MWE) processing for Icelandic language preve…",
+      "analysis": {
+        "section_summary": "Three students produced Icelandic-focused learner materials with different profiles: one created 17 English-to-Icelandic stories for children, struggling to align CEFR levels to children’s literature; another built nine projects on real-world Icelandic themes but was blocked by technical issues in Icelandic multi‑word expression processing; the third produced 10 Icelandic–Mandarin bilingual projects on cultural festivals, facing frequent text segmentation errors that required manual fixes.",
+        "relevant_views": [
+          {
+            "url_name": "create_cefr_level",
+            "confidence": 0.38,
+            "rationale": "Challenges aligning CEFR levels to children’s texts suggest use of the CEFR level annotation/editing workflow."
+          },
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.44,
+            "rationale": "The reported technical issues with multi-word-expression processing for Icelandic relate to creating and managing MWE-tagged texts."
+          },
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.47,
+            "rationale": "Frequent Icelandic word segmentation errors point to the need for segmentation editing and generation tools."
+          }
+        ],
+        "concept_tags": [
+          "CEFR alignment",
+          "children’s literature",
+          "Icelandic language learning",
+          "multi-word expressions",
+          "text segmentation",
+          "bilingual materials",
+          "Mandarin Chinese",
+          "cultural themes"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14848,
+        "completion_tokens": 513,
+        "total_tokens": 15361,
+        "estimated_cost_usd": 0.02369
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "126fd124ec2622c3",
+      "level": 3,
+      "title": "AI in text and image generation",
+      "label": null,
+      "plain_text_len": 945,
+      "plain_text_excerpt": "AI in text and image generation\n\nThe project highlighted strengths and limitations in AI-generated content:\n\ndescription\n AI-created texts were sometimes inconsistent, requiring multiple prompt refinements. Known narratives (e.g., Norse mythology) tended to yield higher-quality texts than AI-generated original stories. The error rate in AI-generated texts varied between 20\\% and 90\\%, depending on the level of human editing needed.\n\n While AI-produced translations were mostly accurate, issues arose in Icelandic-Mandarin Chinese translations due to structural differences between the languages. Context-sensitive modifications were required to improve glossing and lemma-tagging accuracy.\n\n AI-generated images were often inconsistent, especially in character depiction. While animal characters maintained uniformity, human characters varied across images. Specifying stylistic consistency in pr…",
+      "analysis": {
+        "section_summary": "The project found that AI-produced texts often needed multiple prompt refinements to reduce high error rates, with familiar narratives yielding better quality than original stories. Translations were generally accurate, but Icelandic–Mandarin pairs exposed structural issues, requiring context-sensitive tweaks to improve glossing and lemma tagging. AI-generated images frequently lacked consistent character depiction—especially for humans—though explicitly enforcing stylistic consistency in prompts helped mitigate this.",
+        "relevant_views": [
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.33,
+            "rationale": "Manages coherent image generation and monitoring, directly relevant to mitigating inconsistency in AI-generated images and enforcing stylistic consistency."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.33,
+            "rationale": "Provides status for coherent image generation tasks, pertinent to tracking and improving consistency of AI-generated images."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.31,
+            "rationale": "Configures coherent image parameters (style, elements, pages), aligning with the need to specify stylistic consistency to reduce variability in AI images."
+          },
+          {
+            "url_name": "generate_text_monitor",
+            "confidence": 0.28,
+            "rationale": "Monitors AI-driven text generation tasks, relevant to handling inconsistencies and refining prompts for better text quality."
+          },
+          {
+            "url_name": "generate_text_status",
+            "confidence": 0.28,
+            "rationale": "Reports status of AI text generation, useful when multiple prompt iterations are needed to address text error rates."
+          },
+          {
+            "url_name": "create_translated_text",
+            "confidence": 0.27,
+            "rationale": "Supports translation generation, relevant to addressing Icelandic–Mandarin structural issues noted in the section."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.27,
+            "rationale": "Handles glossing generation, aligning with the need for context-sensitive modifications to improve gloss accuracy."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.27,
+            "rationale": "Creates lemma-tagged texts, matching the section’s concern about improving lemma tagging accuracy in AI outputs."
+          }
+        ],
+        "concept_tags": [
+          "AI text generation",
+          "prompt refinement",
+          "error rate",
+          "translation quality",
+          "Icelandic",
+          "Mandarin Chinese",
+          "glossing",
+          "lemma tagging",
+          "image generation",
+          "character consistency",
+          "stylistic consistency",
+          "Norse mythology"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14525,
+        "completion_tokens": 979,
+        "total_tokens": 15504,
+        "estimated_cost_usd": 0.02794625
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "e6e9aab4b383f74e",
+      "level": 3,
+      "title": "Implications for C-LARA’s use with less commonly spoken languages",
+      "label": null,
+      "plain_text_len": 547,
+      "plain_text_excerpt": "Implications for C-LARA’s use with less commonly spoken languages\n\nThe findings underscore C-LARA’s potential in learning less commonly spoken languages such as Icelandic, particularly in resource-scarce environments. The platform facilitates interactive, multimedia-based learning experiences but requires careful human supervision to ensure linguistic and cultural accuracy. The results suggest that C-LARA can support personalized content development for learners, particularly when integrated with manual editing and instructional scaffolding.",
+      "analysis": {
+        "section_summary": "The section notes that C-LARA can effectively support learning of less commonly spoken languages like Icelandic, even in resource-scarce settings, by offering interactive, multimedia learning. However, it stresses the need for human oversight to maintain linguistic and cultural accuracy, and suggests that personalized content works best when paired with manual editing and instructional scaffolding.",
+        "relevant_views": [
+          {
+            "url_name": "manage_language_masters",
+            "confidence": 0.46,
+            "rationale": "Assigning language masters and managing localisation bundles helps tailor prompts and phonetic data for less resourced languages, supporting accuracy and cultural appropriateness."
+          },
+          {
+            "url_name": "edit_prompt",
+            "confidence": 0.42,
+            "rationale": "Customizing GPT-4 annotation prompts and examples enables better handling of less commonly spoken languages and aligns with the need for manual oversight of linguistic output."
+          },
+          {
+            "url_name": "bundle_list",
+            "confidence": 0.36,
+            "rationale": "Listing and managing localisation bundles aids translation and prompt adaptation for low-resource languages, relevant to the section's focus on language-specific support."
+          },
+          {
+            "url_name": "create_project",
+            "confidence": 0.3,
+            "rationale": "Creating a new project with specified text and annotation languages underpins personalized content development for less commonly spoken languages."
+          }
+        ],
+        "concept_tags": [
+          "less commonly spoken languages",
+          "Icelandic",
+          "resource-scarce environments",
+          "interactive multimedia learning",
+          "human supervision",
+          "linguistic accuracy",
+          "cultural accuracy",
+          "personalized content",
+          "manual editing",
+          "instructional scaffolding"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14506,
+        "completion_tokens": 1084,
+        "total_tokens": 15590,
+        "estimated_cost_usd": 0.0289725
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "f4bfd9f94ea5b74a",
+      "level": 2,
+      "title": "Kok Kaper (Kowanyama Community, Queensland)",
+      "label": "Section:KokKaper",
+      "plain_text_len": 5473,
+      "plain_text_excerpt": "Kok Kaper (Kowanyama Community, Queensland)\nSection:KokKaper\n\nSophie Rendina has been using C-LARA together with the Kok Kaper community at Kowanyama, Cape York, Queensland. Kok Kaper is a small, critically endangered Australian Aboriginal language, and the C-LARA work supports the creation of Kok Kaper language teaching and learning materials, which form an integral part of the Kowanyama State School's language program. Texts so far created are an initial picture dictionary with 50 entries, some songs, and some simple dialogues; there is a particular focus on images, which can be used in multiple ways in the classroom. We present two examples showing creation of images for Kok Kaper texts\n\nThe first, taken from the picture dictionary, accompanies the entry for the word Mim-marpany, which means both ``cyclone'' and ``rainbow snake'' (the Kok Kaper language identifies these two concepts).…",
+      "analysis": {
+        "section_summary": "Sophie Rendina has been using C-LARA with the Kok Kaper community in Kowanyama to produce teaching materials for this critically endangered language, including a picture dictionary, songs and simple dialogues with a strong focus on images. The team leverages GPT-4o to craft detailed prompts and DALL-E-3 to generate culturally resonant illustrations, such as for the word \"Mim-marpany\" (cyclone/rainbow snake), and has achieved stylistically coherent, character-consistent images for a Kok Kaper lullaby with minimal human intervention. The community is also beginning to trial C-LARA’s community reviewing features for this work.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.51,
+            "rationale": "Used for configuring and generating coherent images for project texts, matching the described workflow of producing unified illustrations for Kok Kaper materials."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.42,
+            "rationale": "Supports monitoring asynchronous image generation tasks needed to create coherent images across multiple Kok Kaper lullaby pages."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.41,
+            "rationale": "Provides status updates for coherent image generation jobs similar to those run for the Kok Kaper picture dictionary and lullaby."
+          },
+          {
+            "url_name": "simple_clara_review_v2_images_for_page",
+            "confidence": 0.3,
+            "rationale": "Could be used to review AI-generated page-level images for Kok Kaper texts within the Simple C-LARA workflow."
+          },
+          {
+            "url_name": "community_home",
+            "confidence": 0.28,
+            "rationale": "The section notes trialling community reviewing functionality, which relates to community-specific workspaces for projects."
+          }
+        ],
+        "concept_tags": [
+          "Kok Kaper",
+          "Cape York",
+          "critically endangered language",
+          "picture dictionary",
+          "lullaby",
+          "image generation",
+          "DALL-E 3",
+          "GPT-4o prompts",
+          "coherent illustrations",
+          "Aboriginal cultural motifs",
+          "language teaching materials",
+          "community reviewing",
+          "C-LARA"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 16038,
+        "completion_tokens": 831,
+        "total_tokens": 16869,
+        "estimated_cost_usd": 0.0283575
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "b1503f613dcdf4e6",
+      "level": 2,
+      "title": "Iaai and Drehu  (University of New Caledonia)",
+      "label": "Section:IaaiAndDrehu",
+      "plain_text_len": 1899,
+      "plain_text_excerpt": "Iaai and Drehu (University of New Caledonia)\nSection:IaaiAndDrehu\n\nAs part of our presentation at the Eighth Workshop on Computational Methods for Endangered Languages [CITE:ComputEL8,ComputEL8Presentation], we created some illustrated C-LARA texts for the Kanak languages Iaai and Drehu, modelling them on the earlier Kok Kaper content. We made a 50 word picture dictionary for Drehu and a traditional story for each language. Our evaluation focussed on the images.\n\nThe results were similar to those for Kok Kaper. Although not perfect, the quality of the images in the picture dictionary was generally judged good or at least satisfactory. Community members were much less pleased with the stories. For example, the Iaai story explains the origin of the coconut crab and the hermit crab when they offend the powerful island spirit soohmwecaa (lit. ``grandmother'') Although visually attractive to …",
+      "analysis": {
+        "section_summary": "The team produced illustrated C-LARA materials for the Kanak languages Iaai and Drehu, including a picture dictionary for Drehu and traditional stories, and assessed the generated images. While dictionary images were generally acceptable, story illustrations drew criticism from community members for cultural inappropriateness and poor coherence of repeated elements. They hope the improved \"Images in ChatGPT\" functionality will yield better results in future evaluations.",
+        "relevant_views": [],
+        "concept_tags": [
+          "Iaai",
+          "Drehu",
+          "Kanak languages",
+          "illustrated texts",
+          "picture dictionary",
+          "traditional stories",
+          "image quality",
+          "cultural appropriateness",
+          "image coherence",
+          "ComputEL workshop",
+          "image generation",
+          "evaluation"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15046,
+        "completion_tokens": 413,
+        "total_tokens": 15459,
+        "estimated_cost_usd": 0.0229375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "31e11620e968f6cb",
+      "level": 1,
+      "title": "ChatGPT as a software engineer",
+      "label": "Section:SoftwareEngineer",
+      "plain_text_len": 1404,
+      "plain_text_excerpt": "ChatGPT as a software engineer\nSection:SoftwareEngineer\n\nThroughout the project, ChatGPT has made a large contribution as a software engineer, helping to construct the platform. It has contributed at two levels: first as a designer, helping to determine the overall architecture, and second as a coder, writing the actual software.\n\nPerhaps unexpectedly, we found in the early stages of the project that it could contribute more directly in its designer role. From the start, it was clear that ChatGPT had an excellent knowledge of Python packages and how they could be used; when there was a specific problem to solve, it could very frequently suggest a concise and elegant solution. It was somewhat less effective as a coder, and could not usually produce more than a fairly small amount of code in response to a single request; also, the code was in most cases not entirely correct, and needed car…",
+      "analysis": {
+        "section_summary": "The section reflects on ChatGPT’s role as a software engineer for the C-LARA platform, noting it has helped both with high-level architectural design and with coding. Early on, it excelled at proposing concise Python package solutions but produced limited, error-prone code needing human debugging. With the advent of chain-of-thought models like o1, its coding ability has improved markedly, now generating substantial, well-structured form-based Django view code that often works on first attempt.",
+        "relevant_views": [],
+        "concept_tags": [
+          "ChatGPT",
+          "software engineering",
+          "code generation",
+          "Django form-based views",
+          "Python packages",
+          "Chain-of-Thought models",
+          "o1 model",
+          "debugging"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14939,
+        "completion_tokens": 402,
+        "total_tokens": 15341,
+        "estimated_cost_usd": 0.02269375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "77d8d966957e5e9a",
+      "level": 2,
+      "title": "Simple form-based views",
+      "label": "Section:SimpleViews",
+      "plain_text_len": 803,
+      "plain_text_excerpt": "Simple form-based views\nSection:SimpleViews\n\nA large fraction of C-LARA’s code follows straightforward patterns: handling user inputs, storing or updating database records, and rendering templates. In Django, this typically involves three main steps: \nenumerate\n Defining a form that corresponds to the data fields we want users to supply or edit,\n Writing a view function that processes GET and POST requests, and\n Rendering a template to show either the empty form (in the case of GET) or a validation error (if POST fails), or to redirect upon success.\nenumerate\nThese steps are well-served by common Django idioms and often require minimal domain-specific logic. Consequently, ChatGPT can handle them with near-complete reliability, once it knows what fields to collect and which actions to perform.",
+      "analysis": {
+        "section_summary": "The section explains that many C-LARA views are simple Django form-based workflows: define a form for the needed fields, write a view that handles GET to show the form and POST to validate and save or update data, and render a template or redirect based on success or errors. Such patterns involve minimal domain logic and can be reliably handled once the required fields and actions are known.",
+        "relevant_views": [
+          {
+            "url_name": "user_config",
+            "confidence": 0.56,
+            "rationale": "This view presents and processes a user configuration form, following the standard GET/POST pattern with form validation and template rendering described in the section."
+          },
+          {
+            "url_name": "register",
+            "confidence": 0.54,
+            "rationale": "The registration view uses straightforward form handling to create a new user, showing the form on GET and validating/saving on POST, matching the simple form-based workflow."
+          },
+          {
+            "url_name": "manage_language_masters",
+            "confidence": 0.5,
+            "rationale": "Admin-only management of language master assignments uses standard Django form processing with minimal domain-specific logic, aligning with the simple form-based view pattern."
+          },
+          {
+            "url_name": "funding_request",
+            "confidence": 0.48,
+            "rationale": "Submitting a funding request relies on a form to collect input and processes GET/POST with validation and feedback, fitting the described simple view structure."
+          },
+          {
+            "url_name": "add_credit",
+            "confidence": 0.45,
+            "rationale": "Adding credit to a user's account involves a straightforward form submission, validating input and rendering templates or redirecting on success, reflecting the pattern outlined."
+          }
+        ],
+        "concept_tags": [
+          "Django forms",
+          "GET/POST processing",
+          "Template rendering",
+          "Form validation",
+          "Redirects",
+          "CRUD operations"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14407,
+        "completion_tokens": 1001,
+        "total_tokens": 15408,
+        "estimated_cost_usd": 0.02801875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "11e0af4839f46bde",
+      "level": 2,
+      "title": "Examples of simple Django views",
+      "label": null,
+      "plain_text_len": 4191,
+      "plain_text_excerpt": "Examples of simple Django views\nTo illustrate, we show two real examples from C-LARA. The first manages user permissions for an admin user:\nlstlisting[language=Python, caption=An example of a straightforward permission-management view.]\n@login_required\n@user_passes_test(lambda u: u.userprofile.is_admin)\ndef manage_user_permissions(request):\n user_select_form = UserSelectForm(request.POST or None)\n permissions_form = None\n selected_user_id = None\n\n if request.method == 'POST' and 'select_user' in request.POST:\n if user_select_form.is_valid():\n selected_user = user_select_form.cleaned_data['user']\n selected_user_id = selected_user.id\n permissions_form = UserPermissionsForm(instance=selected_user.userprofile)\n elif request.method == 'POST':\n selected_user_id = request.POST.get('selected_user_id')\n selected_user_profile = get_object_or_404(UserProfile, user__id=selected_user_id)\n permissions…",
+      "analysis": {
+        "section_summary": "This section presents two straightforward Django view examples from C‑LARA. The first, an admin‑only `manage_user_permissions`, follows the standard GET/POST pattern: it validates selection and permission forms, updates a user’s profile if valid, and redirects with a success message. The second, `transfer_credit`, processes a credit transfer form by validating the recipient and balance, generating a confirmation code stored in session, emailing the user, and redirecting to a confirmation step. Both illustrate typical Django form handling, messaging, and redirect flows without complex domain logic.",
+        "relevant_views": [
+          {
+            "url_name": "manage_user_permissions",
+            "confidence": 0.98,
+            "rationale": "The first code example is the manage_user_permissions view for admins, matching this endpoint’s purpose and behavior."
+          },
+          {
+            "url_name": "transfer_credit",
+            "confidence": 0.98,
+            "rationale": "The second example explicitly shows the transfer_credit view handling form validation, balance checks, and initiating a confirmation flow."
+          },
+          {
+            "url_name": "confirm_transfer",
+            "confidence": 0.7,
+            "rationale": "The transfer_credit view redirects to confirm_transfer after sending the confirmation code, making this endpoint part of the described flow."
+          }
+        ],
+        "concept_tags": [
+          "Django views",
+          "form handling",
+          "GET vs POST",
+          "login_required",
+          "user_passes_test",
+          "permissions management",
+          "UserProfile",
+          "form validation",
+          "redirect",
+          "messages framework",
+          "session storage",
+          "credit transfer",
+          "email confirmation",
+          "uuid"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15007,
+        "completion_tokens": 1006,
+        "total_tokens": 16013,
+        "estimated_cost_usd": 0.02881875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "1c0ad3b2b283f15a",
+      "level": 2,
+      "title": "Why these tasks are straightforward; what's next?",
+      "label": null,
+      "plain_text_len": 2246,
+      "plain_text_excerpt": "Why these tasks are straightforward; what's next?\nIn each of the above cases, the functionality is purely about requesting basic user input, validating it with one or two domain checks, and then performing an elementary update or redirection. The primary complexity lies in deciding how to structure user interactions—something that is highly standardized in Django. Because these tasks revolve around well-trodden design patterns and do not demand much domain-specific reasoning, ChatGPT can easily produce robust and accurate code. \n\nThe interesting question during the next phase of the project is whether o1 can similarly take over responsibility for less stereotypical parts of the codebase, in particular those responsible for linguistic annotation, coherent image generation, and Simple C-LARA. Our impression, discussing the tasks with gpt-4 and gpt-4o, was that they were too difficult for t…",
+      "analysis": {
+        "section_summary": "The section reflects on why earlier automation tasks were easy for ChatGPT—standardized Django patterns with simple validation—and looks ahead to testing whether the new o1 model can handle more complex, less stereotypical code areas: linguistic annotation, coherent image generation, and the comprehensive Simple C-LARA workflow. Previous GPT-4/4o efforts struggled with crafting effective prompt templates and managing broad project context, but o1’s improved prompt-writing and chain-of-thought capabilities may overcome these issues. The team plans systematic evaluations of o1 on these parts to see if it can assume responsibility for them.",
+        "relevant_views": [
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.49,
+            "rationale": "Discussed coherent image generation; edit_images_v2 handles coherent images and related tasks."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.42,
+            "rationale": "Monitoring coherent image generation aligns with evaluating o1 on image workflows."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.4,
+            "rationale": "Status endpoint for coherent image generation fits the mentioned image-related complexity."
+          },
+          {
+            "url_name": "edit_images",
+            "confidence": 0.32,
+            "rationale": "General image editing/generation is cited as a challenging area for LLMs."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.36,
+            "rationale": "Representative of linguistic annotation tasks the section highlights as next targets."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.34,
+            "rationale": "Another linguistic annotation view relevant to evaluating o1’s capabilities."
+          },
+          {
+            "url_name": "create_phonetic_text",
+            "confidence": 0.31,
+            "rationale": "Phonetic annotation fits the linguistic annotation domain mentioned."
+          },
+          {
+            "url_name": "generate_text_monitor",
+            "confidence": 0.3,
+            "rationale": "Monitors AI-generated text; relevant to prompt-based annotation workflows."
+          },
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.53,
+            "rationale": "Simple C-LARA is explicitly mentioned as a comprehensive, challenging workflow."
+          },
+          {
+            "url_name": "simple_clara_monitor",
+            "confidence": 0.44,
+            "rationale": "Monitoring Simple C-LARA tasks relates to testing o1 on broader project context."
+          },
+          {
+            "url_name": "execute_simple_clara_image_requests_monitor",
+            "confidence": 0.41,
+            "rationale": "Image-related actions within Simple C-LARA match the cited difficult area."
+          },
+          {
+            "url_name": "execute_simple_clara_element_requests_monitor",
+            "confidence": 0.39,
+            "rationale": "Element-oriented Simple C-LARA tasks reflect the complex integration the section notes."
+          }
+        ],
+        "concept_tags": [
+          "linguistic annotation",
+          "coherent image generation",
+          "Simple C-LARA",
+          "prompt engineering",
+          "prompt templates",
+          "LLM-based development",
+          "Chain-of-Thought models",
+          "GPT-4o"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14970,
+        "completion_tokens": 951,
+        "total_tokens": 15921,
+        "estimated_cost_usd": 0.0282225
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "f9bf87ed9f43d8e0",
+      "level": 1,
+      "title": "ChatGPT as an author",
+      "label": "Section:Author",
+      "plain_text_len": 822,
+      "plain_text_excerpt": "ChatGPT as an author\nSection:Author\n\nA second notable area where the new o1 model surpasses earlier LLMs is in writing or co-authoring texts. The previous version, GPT-4o, already had nontrivial abilities, but struggled to maintain longer-form consistency, address complex research questions, or incorporate correct references. In contrast, o1 is capable of generating structured academic prose that extends to multiple pages, with clear organization, significantly fewer factual lapses, and generally correct and appropriate references. To explore these new capabilities in a controlled manner, we wrote four self-contained, publicly available papers, two with GPT-4o and two with o1. Below, we outline the contents and motivations behind these four works, then summarise the main lessons learned regarding AI authorship.",
+      "analysis": {
+        "section_summary": "The section highlights how OpenAI’s newer o1 model improves on GPT‑4o for writing and co‑authoring longer academic texts, offering better structure, consistency, handling of complex research questions, and more accurate referencing. To assess these capabilities, the authors produced four publicly available papers—two with GPT‑4o and two with o1—and describe their motivations and lessons learned about AI authorship.",
+        "relevant_views": [],
+        "concept_tags": [
+          "AI authorship",
+          "language models",
+          "GPT-4o",
+          "o1",
+          "academic writing",
+          "long-form consistency",
+          "references",
+          "research writing"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14650,
+        "completion_tokens": 511,
+        "total_tokens": 15161,
+        "estimated_cost_usd": 0.0234225
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "a06e218c1589e854",
+      "level": 2,
+      "title": "Overview of the four papers",
+      "label": null,
+      "plain_text_len": 3994,
+      "plain_text_excerpt": "Overview of the four papers\n\nPaper 1: Reinforcement Learning for Chain of Thought Reasoning: A Case Study Using Tic-Tac-Toe.\nOriginally posted in July~2024 (ReinforcementLearningForTicTacToe), this collaboration between GPT-4o and a human co-author investigates how chain-of-thought (CoT) prompting can be optimized through a lightweight reinforcement learning (RL) approach. The focus is on an experiment where RL was used to optimise Tic-Tac-Toe performance by evolving few-shot CoT examples over 40 iterative cycles. Results show a statistically significant improvement in move correctness and game outcomes, suggesting that even small-scale RL can enhance CoT-based reasoning. The human and AI collaborated on both the experiments and the writing. The greater part of the code was written by the AI and then revised by the human; the AI wrote perhaps a third of the text, which was again in most …",
+      "analysis": {
+        "section_summary": "The section outlines four AI–human co-authored works: a July 2024 case study using reinforcement learning to evolve chain-of-thought prompts for Tic-Tac-Toe with measurable performance gains; a September 2024 survey on generative AI in computer-assisted language learning authored equally by two humans and GPT-4o; an experimental short story fully written by the o1-preview model under light human supervision demonstrating coherent long-form writing; and an AI-written rebuttal to “ChatGPT is bullshit” where the AI swiftly identified the original paper’s neglect of RLHF, added references, and achieved notable readership.",
+        "relevant_views": [],
+        "concept_tags": [
+          "reinforcement learning",
+          "chain-of-thought prompting",
+          "Tic-Tac-Toe",
+          "generative AI",
+          "computer-assisted language learning",
+          "AI co-authorship",
+          "o1-preview",
+          "AI long-form writing",
+          "rebuttal",
+          "RLHF",
+          "research impact",
+          "human-AI collaboration"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15410,
+        "completion_tokens": 615,
+        "total_tokens": 16025,
+        "estimated_cost_usd": 0.0254125
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "4d6ba16b58b5ed0e",
+      "level": 2,
+      "title": "Conclusion and future outlook",
+      "label": null,
+      "plain_text_len": 712,
+      "plain_text_excerpt": "Conclusion and future outlook\nThese experiences show how o1 and similar CoT-based models can now take on the main responsibility for writing a substantial piece of text. They still need some human supervision. One important problem is that they come across as insufficiently self-critical; another is that after a while they are not directly able to recall what they have written due to limitations on context length, and must reread the text in order to respond to questions about it. However, given the speed of progress---the jump from GPT-4 to o1 was particularly striking---it seems legitimate to project that they will reach the level of human academic authors fairly soon, perhaps within one to two years.",
+      "analysis": {
+        "section_summary": "The conclusion argues that models like o1, using chain-of-thought approaches, can already shoulder most of the work of writing substantial texts, albeit with some human oversight. Current weaknesses include limited self-critique and forgetting due to context limits, requiring rereading. Given rapid advances, especially from GPT-4 to o1, the authors predict these models may achieve human-level academic writing within one to two years.",
+        "relevant_views": [],
+        "concept_tags": [
+          "o1 model",
+          "chain-of-thought reasoning",
+          "AI text generation",
+          "human supervision",
+          "self-criticism",
+          "context length limitations",
+          "model memory",
+          "academic authorship",
+          "GPT-4",
+          "model progress",
+          "future outlook"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14703,
+        "completion_tokens": 401,
+        "total_tokens": 15104,
+        "estimated_cost_usd": 0.02238875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "bf6c74c8e69105b5",
+      "level": 1,
+      "title": "Ethical issues",
+      "label": "Section:Ethics",
+      "plain_text_len": 244,
+      "plain_text_excerpt": "Ethical issues\nSection:Ethics\n\nThere are two ethical issues particularly relevant to this project. One is the question of AI authorship; the other is the obligations of the platform providers, that is to say ourselves. We discuss these in turn.",
+      "analysis": {
+        "section_summary": "Introduces the ethics discussion, highlighting two key concerns for the project: the question of AI authorship and the responsibilities of the platform providers themselves.",
+        "relevant_views": [],
+        "concept_tags": [
+          "ethical issues",
+          "AI authorship",
+          "platform responsibility",
+          "provider obligations"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14642,
+        "completion_tokens": 125,
+        "total_tokens": 14767,
+        "estimated_cost_usd": 0.0195525
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "ec758e18540a42b4",
+      "level": 2,
+      "title": "AI authorship",
+      "label": "Section:AIAuthorship",
+      "plain_text_len": 4036,
+      "plain_text_excerpt": "AI authorship\nSection:AIAuthorship\n\nBecause C‑LARA treats the AI as a genuine collaborator, the contested question of whether an AI can be an accredited author is impossible to avoid. Unfortunately, with some exceptions, most journals and conferences do not currently allow AI authors. This is usually justified by claiming that AIs are not capable of being accountable for their work. We question this on multiple grounds.\n\nFirst, it is not clear either that AIs actually are incapable of being accountable for their work, or that humans unquestioningly accredited as authors always are so capable. Starting with the second of these, if a paper has many authors it is very rarely the case that every author can take responsibility for every aspect of the paper. Normally, most of the authors will have made some specific contribution and can take responsibility for that contribution, but may know l…",
+      "analysis": {
+        "section_summary": "The section argues that excluding AI systems from authorship on the grounds of accountability is unjustified and inconsistent with how human co-authorship is treated. It suggests applying pragmatic responsibility criteria—ability to answer questions, defend claims, and agree to retract if necessary—and notes that humans often fall short while high-end AIs may meet them. The authors highlight the problematic reality of uncredited AI contributions and advocate transparent acknowledgement of AI involvement, assessing AI authorship empirically rather than dismissing it a priori.",
+        "relevant_views": [],
+        "concept_tags": [
+          "AI authorship",
+          "accountability",
+          "coauthorship",
+          "transparency",
+          "authorship ethics",
+          "responsibility criteria",
+          "retraction",
+          "burden of proof",
+          "empirical evaluation",
+          "uncredited contributions"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15696,
+        "completion_tokens": 553,
+        "total_tokens": 16249,
+        "estimated_cost_usd": 0.02515
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "9ed17aed8998c3a6",
+      "level": 2,
+      "title": "Obligations of the platform providers",
+      "label": "Section:Obligations",
+      "plain_text_len": 1384,
+      "plain_text_excerpt": "Obligations of the platform providers\nSection:Obligations\n\nA distressing fact, observed in a multitude of academic projects which involve construction of online platforms and other software tools, is that these tools often have a brief lifespan. People are encouraged to use them, typically because their involvement lets the platform providers publish papers and/or obtain further funding, but at some point the funding runs out or some key person leaves. Normally, the tool becomes unavailable shortly afterwards, and the users are left stranded; resources they built using the tool are in many cases no longer accessible. It is hard to feel that this is a morally defensible outcome, but since it appears inevitable the general feeling is that there is no point wringing one's hands over it.\n\nAn interesting thing about AI collaborators is that they potentially offer a way out of this ethical dil…",
+      "analysis": {
+        "section_summary": "The section highlights the ethical issue of academic software platforms having short lifespans, often becoming inaccessible when funding ends or key personnel leave, leaving users stranded. It argues that AI collaborators capable of understanding and maintaining codebases could help sustain projects through funding gaps or staff loss, given their increasing coding skills and lower cost, making this a promising avenue to explore.",
+        "relevant_views": [],
+        "concept_tags": [
+          "platform sustainability",
+          "ethical obligations",
+          "software lifespan",
+          "funding gaps",
+          "AI maintenance",
+          "codebase longevity",
+          "user access"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14799,
+        "completion_tokens": 433,
+        "total_tokens": 15232,
+        "estimated_cost_usd": 0.02282875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "9c373355cdc8d074",
+      "level": 1,
+      "title": "Conclusions and further directions",
+      "label": "Section:Conclusions",
+      "plain_text_len": 4099,
+      "plain_text_excerpt": "Conclusions and further directions\nSection:Conclusions\n\nThis report has documented work carried out in C-LARA during the period Mar 2024--Apr 2025. Our main goals were to improve the quality of linguistic annotation and image generation, make the content creation process faster, make the platform more suitable for use with Indigenous languages, and better understand the AI's abilities as a software engineer and author.\n\nWe are pleased with our progress. C-LARA is now almost at the point where it can be used reliably for its intended purpose. Thanks to the introduction of the MWE-tagging phase and associated processing, linguistic annotation in English is much improved, with the error rate more than halved. The coherent image generation module also represents a large advance. It is not yet adequate for connected narratives, but preliminary experiments encourage us to think that it will re…",
+      "analysis": {
+        "section_summary": "The report concludes with an overview of progress made in improving C-LARA’s linguistic annotation, coherent image generation, faster content creation for Indigenous languages, and leveraging AI (o1) as a software engineer and author. It highlights substantial gains from MWE-tagging in English, advances toward coherent images pending integration of the forthcoming \"Images in ChatGPT\" model, and the AI’s growing ability to handle coding tasks and academic writing. Future priorities include integrating the new image model, scaling high-quality content creation in consultation with partners, empirically testing AI responsibility and authorship via an open Q&A service, cleaning and documenting code to enhance AI maintainability across the 40K+ codebase, and deploying a mirror server with documented procedures.",
+        "relevant_views": [],
+        "concept_tags": [
+          "C-LARA",
+          "linguistic annotation",
+          "MWE tagging",
+          "coherent image generation",
+          "Images in ChatGPT",
+          "Indigenous languages",
+          "AI-assisted software engineering",
+          "AI authorship",
+          "content creation",
+          "codebase maintainability",
+          "mirror deployment"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15587,
+        "completion_tokens": 373,
+        "total_tokens": 15960,
+        "estimated_cost_usd": 0.02321375
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "38c18d45b9e58c9a",
+      "level": 1,
+      "title": "Acknowledgements",
+      "label": null,
+      "plain_text_len": 665,
+      "plain_text_excerpt": "Acknowledgements\n\nThe greater part of the development and evaluation work on C-LARA described here was carried out by Manny Rayner and different versions of ChatGPT under funding from the University of South Australia.\n\nWork on Icelandic and Mandarin was supported by a grant from Rannis, the Icelandic Centre for Research.\n\nWork on Iaai and Drehu was supported by l'AFD (Agence Française de Développement, Paris) and the Service for Culture, Education and Science, Embassy of France in Australia under a grant from the program `Fonds Pacifique', and by the ERALO research team at the University of New Caledonia.\n\ntocsectionReferences\n\nplainnat\n\nclara_third_report",
+      "analysis": {
+        "section_summary": "This acknowledgements section credits Manny Rayner and various versions of ChatGPT, supported by the University of South Australia, for most of the C-LARA development and evaluation work. It notes funding for Icelandic and Mandarin work from Rannis, and support for Iaai and Drehu from the AFD, the French Embassy in Australia under the Fonds Pacifique program, and the ERALO team at the University of New Caledonia.",
+        "relevant_views": [],
+        "concept_tags": [
+          "acknowledgements",
+          "funding",
+          "University of South Australia",
+          "Rannis",
+          "AFD",
+          "Fonds Pacifique",
+          "Embassy of France in Australia",
+          "ERALO",
+          "University of New Caledonia",
+          "Icelandic",
+          "Mandarin",
+          "Iaai",
+          "Drehu"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 14951,
+        "completion_tokens": 709,
+        "total_tokens": 15660,
+        "estimated_cost_usd": 0.02577875
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "fe78394ccfe799d1",
+      "level": 1,
+      "title": "Glossary of abbreviations and acronyms",
+      "label": "Section:AbbreviationsAndAcronyms",
+      "plain_text_len": 3317,
+      "plain_text_excerpt": "Glossary of abbreviations and acronyms\nSection:AbbreviationsAndAcronyms\n\nWe briefly list abbreviations and acronyms used in the report.\n\ndescription\n\n ``Artificial Intelligence''. The meaning of this term is debated, but is sometimes described as the development of software capable of behaviour which in humans would require intelligence.\n\n Académie des Langues Kanak / Kanak Languages Academy.\n\n ``Application Programming Interface''. Interface software that is added to a software system in order to allow other software systems to access it, often but not necessarily through the Internet.\n\n Type of chatbot architecture in which the bot produces its final response by chaining intermediate responses, in effect thinking aloud. CoT has repeatedly been shown to be more powerful than plain chatbot architectures.\n\n Software system capable of carrying out a more or less plausibly human-like conver…",
+      "analysis": {
+        "section_summary": "This section provides a glossary of abbreviations and acronyms used in the report, defining terms such as AI, APIs, chatbot and Chain-of-Thought, various OpenAI models (ChatGPT-3.5/4, GPT-3.5/4, Turbo, Omni, o1), the CLARA and LARA platforms, DALL·E, MVC, MWEs, POS tagging, and institutions like OpenAI and the Académie des Langues Kanak.",
+        "relevant_views": [],
+        "concept_tags": [
+          "Artificial Intelligence",
+          "Académie des Langues Kanak",
+          "API",
+          "Chain-of-Thought",
+          "Chatbot",
+          "ChatGPT-3.5",
+          "ChatGPT-4",
+          "CLARA",
+          "DALL·E",
+          "GPT-3.5",
+          "GPT-4",
+          "GPT-4 Turbo",
+          "GPT-4o",
+          "LARA",
+          "LLM",
+          "MVC",
+          "MWE",
+          "o1",
+          "OpenAI",
+          "POS tagging"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 15308,
+        "completion_tokens": 641,
+        "total_tokens": 15949,
+        "estimated_cost_usd": 0.025545
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "62bfcaac13123153",
+      "level": 1,
+      "title": "Creating a picture book with Simple C-LARA",
+      "label": "Section:UsingSimpleCLARA",
+      "plain_text_len": 5270,
+      "plain_text_excerpt": "Creating a picture book with Simple C-LARA\nSection:UsingSimpleCLARA\n\nWe present an example showing how to quickly create a picture book text using Simple C-LARA. The final multimedia text is posted https://c-lara.unisa.edu.au/accounts/content/253/here.\n\nWe start by going to the ``My projects'' menu and clicking on ``Create new C-LARA project using Simple C-LARA''.\n\ncenter\n AmorousCat/01Start.jpg\ncenter\n\nThis takes us to the Simple C-LARA screen. We fill in the project name and the text and annotation languages, and check ``Use the AI to create text and an image for each page based on your instructions''.\n\ncenter\n AmorousCat/02CreateProject.jpg\ncenter\n\nWe've now got a box where we can enter the initial prompt. We do that and hit ``Create Text''.\n\ncenter\n AmorousCat/03Prompt.jpg\ncenter\n\nC-LARA now adds two new boxes, showing the title and text it has created based on our prompt. When we lo…",
+      "analysis": {
+        "section_summary": "This section walks through creating a picture book using the Simple C-LARA wizard. The user creates a new Simple C-LARA project, chooses text and annotation languages, and lets the AI generate a story from a prompt. After inspecting and optionally editing the segmented text, they generate an illustration style, define recurring image elements, and produce page-specific images, reviewing and selecting preferred variants. They then generate the multimedia text, view the assembled result, and post it to the social network, where it appears as recently published content.",
+        "relevant_views": [
+          {
+            "url_name": "simple_clara",
+            "confidence": 0.95,
+            "rationale": "The section describes using the Simple C-LARA wizard to create a project, generate text, images, and multimedia content, which is handled by the Simple C-LARA view."
+          },
+          {
+            "url_name": "simple_clara_review_v2_images_for_page",
+            "confidence": 0.4,
+            "rationale": "The walkthrough includes reviewing and selecting among generated page images, matching the Simple C-LARA image review functionality."
+          },
+          {
+            "url_name": "simple_clara_review_v2_images_for_element",
+            "confidence": 0.35,
+            "rationale": "The user reviews individual image elements like the woman character, which aligns with the element review interface in Simple C-LARA."
+          },
+          {
+            "url_name": "simple_clara_status",
+            "confidence": 0.2,
+            "rationale": "The process involves waiting for AI tasks like generating text, style, and images, which are monitored via the Simple C-LARA status endpoint."
+          }
+        ],
+        "concept_tags": [
+          "Simple C-LARA",
+          "picture book",
+          "AI-generated text",
+          "segmented text",
+          "image style generation",
+          "image elements",
+          "page images",
+          "multimedia text",
+          "project creation",
+          "social network posting"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 16366,
+        "completion_tokens": 1389,
+        "total_tokens": 17755,
+        "estimated_cost_usd": 0.0343475
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "6cfae7986debb11b",
+      "level": 1,
+      "title": "Creating a picture book with Advanced C-LARA",
+      "label": "Section:UsingCoherentImages",
+      "plain_text_len": 10456,
+      "plain_text_excerpt": "Creating a picture book with Advanced C-LARA\nSection:UsingCoherentImages\n\nIn this section, we will show how to create a picture book text with one image per page. The text used will be Shakespeare's Sonnet 18 (``Shall I compare thee to a summer's day''). We will divide it up into eight pages, a title page followed by one page for each pair of lines in the fourteen-line poem. We will include glosses and translations in French. The final multimedia text is posted https://c-lara.unisa.edu.au/accounts/content/251/here.\n\nWe start by selecting ``Create new C-LARA project using Advanced C-LARA'' from the ``My projects'' menu:\n\ncenter\n Sonnet18/Sonnet18_01_CreateProject.jpg\ncenter\n\nWe get this screen. We fill in the project name, the text language and the annotation language, and tick the box ``Use coherent AI-generated image set''.\n\ncenter\n Sonnet18/Sonnet18_02_CreateProject_project_form.jpg\nce…",
+      "analysis": {
+        "section_summary": "A step-by-step walkthrough shows how to build a multimodal picture-book version of Shakespeare’s Sonnet 18 in Advanced C-LARA: creating a new project with coherent AI-generated images, entering plain text and title, estimating CEFR level, generating an AI summary, segmenting the poem into pages, producing translations, MWE, lemma and gloss annotations, defining image background/style/elements, generating page images, rendering the final multimedia text, and registering it as published content.",
+        "relevant_views": [
+          {
+            "url_name": "create_project",
+            "confidence": 0.95,
+            "rationale": "Used to create the new Advanced C-LARA project at the start of the walkthrough."
+          },
+          {
+            "url_name": "create_plain_text",
+            "confidence": 0.94,
+            "rationale": "Used when pasting the poem text via the Create/Edit Plain Text screen."
+          },
+          {
+            "url_name": "create_title",
+            "confidence": 0.9,
+            "rationale": "Used for the Create/Edit Text Title step."
+          },
+          {
+            "url_name": "create_cefr_level",
+            "confidence": 0.88,
+            "rationale": "Used to estimate and record the CEFR level with AI."
+          },
+          {
+            "url_name": "create_summary",
+            "confidence": 0.88,
+            "rationale": "Used to generate the AI summary of the text."
+          },
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.9,
+            "rationale": "Used to segment the poem into pages/segments via AI."
+          },
+          {
+            "url_name": "create_segmented_title",
+            "confidence": 0.82,
+            "rationale": "Used for segmenting the text title in the segmented title step."
+          },
+          {
+            "url_name": "create_translated_text",
+            "confidence": 0.9,
+            "rationale": "Used to generate French translations per segment."
+          },
+          {
+            "url_name": "create_mwe_tagged_text",
+            "confidence": 0.9,
+            "rationale": "Used to create MWE-tagged text and later a version without CoT analysis."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.86,
+            "rationale": "Used to generate lemma and POS tags for each word."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.9,
+            "rationale": "Used to generate glossed text with French glosses."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.95,
+            "rationale": "Central to the coherent image workflow: defining background, style, elements, and generating page images."
+          },
+          {
+            "url_name": "coherent_images_v2_monitor",
+            "confidence": 0.7,
+            "rationale": "Supports monitoring the asynchronous coherent image generation tasks."
+          },
+          {
+            "url_name": "coherent_images_v2_status",
+            "confidence": 0.7,
+            "rationale": "Provides status for coherent image generation progress."
+          },
+          {
+            "url_name": "register_project_content",
+            "confidence": 0.64,
+            "rationale": "Matches the final “Register as Content” step to publish the rendered book."
+          },
+          {
+            "url_name": "content_detail",
+            "confidence": 0.58,
+            "rationale": "Displays the published content page after registration."
+          },
+          {
+            "url_name": "content_list",
+            "confidence": 0.55,
+            "rationale": "Shows the recently published content list where the new text appears."
+          }
+        ],
+        "concept_tags": [
+          "Advanced C-LARA",
+          "project creation",
+          "plain text entry",
+          "text title",
+          "CEFR level estimation",
+          "AI summary",
+          "segmented text",
+          "segmented title",
+          "translation",
+          "French",
+          "multi-word expressions",
+          "lemma tagging",
+          "glossing",
+          "coherent images",
+          "image style",
+          "image elements",
+          "page images",
+          "background context",
+          "rendering",
+          "content registration",
+          "picture book",
+          "multimodal text",
+          "Shakespeare Sonnet 18"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 17624,
+        "completion_tokens": 1545,
+        "total_tokens": 19169,
+        "estimated_cost_usd": 0.03748
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "059f4004bab8be66",
+      "level": 1,
+      "title": "Creating a text in a language not supported by the AI",
+      "label": "Section:CreatingIndigenousLanguageText",
+      "plain_text_len": 6825,
+      "plain_text_excerpt": "Creating a text in a language not supported by the AI\nSection:CreatingIndigenousLanguageText\n\nThis appendix presents a toy example showing how to create a text in a language not supported by the AI; this means that linguistic annotation needs to be performed manually by the user. The language we have chosen is Pitjantjatjara, a Central Australian language that belongs to the Western Desert family, itself a sub-family of Pama-Nyungan. The text consists of the three sentences shown in Table~[REF:Table:PitjantjatjaraExample], taken from an exercise in Unit 17 of the 1967 Adelaide University advanced course in Pitjantjatjara [CITE:amery2012history]. \n\ntable*[th]\n Toy Pitjantjatjara text.\n Table:PitjantjatjaraExample\n\ntabularll\n\n1cAnnotation & 1cSentence\\\\\n\n2cSentence 1 \\\\\nTranslation & The dogs were coming to camp \\\\\nPlain & Papa tjua ngurakutu pitjangi \\\\\nSegmented & Papa tjua ngura-kutu pi…",
+      "analysis": {
+        "section_summary": "This appendix walks through creating a C-LARA project for Pitjantjatjara, a language not supported by the AI, doing all linguistic annotations manually. It shows creating the project in Advanced C-LARA, entering plain text and a title, segmenting the text with page and segment markers, and then using the coherent images editor to supply translations, choose a visual style, and generate page images based on the translations. The author adds glosses and lemma tags manually via the images editor, configures audio to upload recorded word and segment files, and finally renders and views the compiled interactive text.",
+        "relevant_views": [
+          {
+            "url_name": "create_project",
+            "confidence": 0.92,
+            "rationale": "Used at the start to create a new Advanced C-LARA project with specified text and annotation languages."
+          },
+          {
+            "url_name": "create_plain_text",
+            "confidence": 0.9,
+            "rationale": "The workflow includes manually entering and saving the plain text for the project."
+          },
+          {
+            "url_name": "create_title",
+            "confidence": 0.88,
+            "rationale": "A manual title is entered and saved via the Create/Edit Text Title step."
+          },
+          {
+            "url_name": "create_segmented_text",
+            "confidence": 0.9,
+            "rationale": "The text is segmented with page and segment markers, matching the Create/Edit Segmented Text functionality."
+          },
+          {
+            "url_name": "create_segmented_title",
+            "confidence": 0.88,
+            "rationale": "The segmented version of the title is reviewed/saved, corresponding to the segmented title view."
+          },
+          {
+            "url_name": "edit_images_v2",
+            "confidence": 0.9,
+            "rationale": "Most work is done in the Edit Images and Pages screen using coherent AI-generated image sets, supplying translations and generating style/page images."
+          },
+          {
+            "url_name": "serve_rendered_text",
+            "confidence": 0.5,
+            "rationale": "After rendering, the final interactive text is viewed; this view serves rendered text assets."
+          },
+          {
+            "url_name": "create_glossed_text",
+            "confidence": 0.55,
+            "rationale": "The process includes manually adding glosses for each segment, which aligns with glossed text creation."
+          },
+          {
+            "url_name": "create_lemma_tagged_text",
+            "confidence": 0.55,
+            "rationale": "Lemma tagging is added manually in the images editor, corresponding to lemma-tagged text creation."
+          }
+        ],
+        "concept_tags": [
+          "Advanced C-LARA project",
+          "indigenous language",
+          "Pitjantjatjara",
+          "manual annotation",
+          "plain text entry",
+          "segmented text",
+          "page markers",
+          "segment markers",
+          "glossing",
+          "lemma tagging",
+          "translations",
+          "coherent image generation",
+          "style prompt",
+          "DALL-E-3",
+          "audio upload",
+          "recorded audio",
+          "rendered text"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 16169,
+        "completion_tokens": 1387,
+        "total_tokens": 17556,
+        "estimated_cost_usd": 0.03408125
+      },
+      "has_tex": true
+    },
+    {
+      "section_id": "55cd9d6353e3463a",
+      "level": 1,
+      "title": "Prompt templates",
+      "label": "Section:PromptTemplates",
+      "plain_text_len": 15150,
+      "plain_text_excerpt": "Prompt templates\nSection:PromptTemplates\n\nFinally, we present the prompt templates and few-shot examples referred to earlier in the report:\n\nitemize\n Prompt template for English MWE annotation. Figure~[REF:Figure:MWEPromptTemplate].\n Typical few-shot example for English MWE annotation. Figure~[REF:Figure:MWEPromptExamples].\n Prompt template for glossing. Figure~[REF:Figure:GlossPromptTemplate].\n Prompt template for creating an image style. Figure~[REF:Figure:StyleGenerationTemplate].\n Prompt template for creating the candidate list of image elements. Figure~[REF:Figure:FindElementNames].\n Prompt template for creating an image element description. Figure~[REF:Figure:CreateElementDescription].\n Prompt template for selecting elements relevant to a page. Figure~[REF:Figure:FindRelevantElements].\n Prompt template for creating the description of a page image (DALL-E-3 version). Figure~[REF:Fig…",
+      "analysis": {
+        "section_summary": "This section collects the concrete GPT-4 prompt templates and few-shot examples used throughout the report. It includes the English MWE annotation template and an example, the glossing template, and a suite of image-generation prompts: specifying an overall illustration style, listing recurring visual elements, detailing an individual element, selecting elements relevant to a page, drafting a page image description (with essential aspects), and adapting an uploaded element image to a target style.",
+        "relevant_views": [
+          {
+            "url_name": "edit_prompt",
+            "confidence": 0.8,
+            "rationale": "The section focuses on the prompt templates and few-shot examples that language masters can view and edit; the edit_prompt view is designed for managing these annotation prompt templates."
+          }
+        ],
+        "concept_tags": [
+          "prompt templates",
+          "few-shot examples",
+          "MWE annotation",
+          "glossing",
+          "image generation",
+          "style specification",
+          "visual elements",
+          "page image description",
+          "DALL-E-3"
+        ]
+      },
+      "usage": {
+        "model": "gpt-5.1-codex-max",
+        "prompt_tokens": 17779,
+        "completion_tokens": 423,
+        "total_tokens": 18202,
+        "estimated_cost_usd": 0.02645375
+      },
+      "has_tex": true
+    }
+  ],
+  "usage_totals": {
+    "prompt_tokens": 950486,
+    "completion_tokens": 51078,
+    "total_tokens": 1001564,
+    "estimated_cost_usd": 1.698887
+  }
+}
