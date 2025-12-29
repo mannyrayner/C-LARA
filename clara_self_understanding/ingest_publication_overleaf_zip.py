@@ -450,6 +450,26 @@ def call_model_link_section(
 # Main ingestion entrypoint
 # -----------------------------
 
+def _load_existing_publication_json(path: Path) -> Optional[Dict[str, Any]]:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _existing_section_ids(existing: Optional[Dict[str, Any]]) -> set[str]:
+    if not existing:
+        return set()
+    sec_list = existing.get("sections", []) or []
+    out: set[str] = set()
+    for s in sec_list:
+        sid = s.get("section_id")
+        if isinstance(sid, str) and sid:
+            out.add(sid)
+    return out
+
 def ingest_overleaf_zip(
     zip_path: Path,
     publication_id: str,
@@ -457,6 +477,7 @@ def ingest_overleaf_zip(
     candidate_top_k: int = 25,
     max_sections: Optional[int] = None,
     dry_run: bool = False,
+    resume: bool = False,
 ) -> Path:
     if not VIEWS_INDEX_PATH.exists():
         raise FileNotFoundError(f"Missing views index: {VIEWS_INDEX_PATH}. Run: make views-index")
@@ -487,7 +508,7 @@ def ingest_overleaf_zip(
     zip_bytes = zip_path.read_bytes()
     zip_sha = sha256_bytes(zip_bytes)
 
-    out_obj: Dict[str, Any] = {
+    base_obj: Dict[str, Any] = {
         "publication_id": publication_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "source_zip": str(zip_path),
@@ -506,12 +527,36 @@ def ingest_overleaf_zip(
         },
     }
 
+    if resume and existing_obj:
+        out_obj = existing_obj
+        # Update a few top-level fields to reflect current run
+        out_obj["source_zip"] = base_obj["source_zip"]
+        out_obj["source_zip_sha256"] = base_obj["source_zip_sha256"]
+        out_obj["root_tex"] = base_obj["root_tex"]
+        out_obj["flattened_tex"] = base_obj["flattened_tex"]
+        out_obj["model"] = model
+        out_obj["sections_count"] = len(sections)
+        out_obj["candidate_top_k"] = candidate_top_k
+        out_obj.setdefault("sections", [])
+        out_obj.setdefault("usage_totals", base_obj["usage_totals"])
+    else:
+        out_obj = base_obj
+
+
     client = create_openai_client()
-    running_prompt = 0
-    running_completion = 0
-    running_cost = 0.0
+
+    totals = (out_obj.get("usage_totals") or {}) if resume else {}
+    running_prompt = int(totals.get("prompt_tokens", 0) or 0)
+    running_completion = int(totals.get("completion_tokens", 0) or 0)
+    running_cost = float(totals.get("estimated_cost_usd", 0.0) or 0.0)
 
     out_json_path = PUBLICATIONS_DIR / f"{publication_id}.json"
+    existing_obj = _load_existing_publication_json(out_json_path) if resume else None
+    already_done = _existing_section_ids(existing_obj)
+
+    if resume and existing_obj:
+        print(f"[ingest-zip] RESUME: found existing output with {len(already_done)} sections already ingested")
+
     print(f"[ingest-zip] publication_id={publication_id}")
     print(f"[ingest-zip] zip={zip_path}")
     print(f"[ingest-zip] root_tex={root_tex.relative_to(src_dir)}")
@@ -526,6 +571,9 @@ def ingest_overleaf_zip(
         if dry_run:
             analysis = {"section_summary": "", "relevant_views": [], "concept_tags": []}
             usage = ModelUsage(model=model, prompt_tokens=0, completion_tokens=0, total_tokens=0, estimated_cost_usd=0.0)
+        elif resume and sec["section_id"] in already_done:
+            print(f"[ingest-zip]    SKIP already ingested section_id={sec['section_id']}")
+            continue
         else:
             analysis, usage = call_model_link_section(
                 client=client,
@@ -572,7 +620,6 @@ def ingest_overleaf_zip(
     print(f"[ingest-zip] Estimated total cost≈${running_cost:.4f}")
     return out_json_path
 
-
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--zip", required=True, help="Path to Overleaf zip")
@@ -580,6 +627,7 @@ def main() -> None:
     ap.add_argument("--model", default="gpt-5.1-codex-max")
     ap.add_argument("--candidate-top-k", type=int, default=25)
     ap.add_argument("--max-sections", type=int, default=None, help="For quick sanity tests")
+    ap.add_argument("--resume", action="store_true", help="Skip sections already present in publications/<pub_id>.json")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
@@ -594,6 +642,7 @@ def main() -> None:
         candidate_top_k=args.candidate_top_k,
         max_sections=args.max_sections,
         dry_run=args.dry_run,
+        resume=args.resume,
     )
 
 
