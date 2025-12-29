@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+from collections import defaultdict
 import hashlib
 import zipfile
 from dataclasses import dataclass, asdict
@@ -140,6 +141,7 @@ BEGIN_DOC_RE = re.compile(r"\\begin\{document\}")
 INCLUDE_RE = re.compile(r"\\(include|input)\{([^}]+)\}")
 COMMENT_RE = re.compile(r"(^|[^\\])%.*$")  # rough: strip comments not preceded by backslash
 
+TITLE_SEP = " > "
 
 def sha256_bytes(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
@@ -219,6 +221,55 @@ def _resolve_tex_path(src_dir: Path, include_arg: str) -> Optional[Path]:
             return c
     return None
 
+def _add_hierarchical_titles(sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Add a stable hierarchical display title to each section to disambiguate repeated titles
+    like 'Study 1' occurring under multiple parents.
+
+    Produces:
+      - path_titles: list[str] of titles from level 1..level
+      - display_title: string joined by TITLE_SEP
+      - title_uniq: display_title with a numeric suffix if duplicates still occur
+    """
+    # stack indexed by level (1..3); keep last seen title at each level
+    stack: Dict[int, str] = {}
+    seen: Dict[str, int] = defaultdict(int)
+
+    out: List[Dict[str, Any]] = []
+    for sec in sections:
+        level = int(sec.get("level", 0) or 0)
+        title = (sec.get("title") or "").strip()
+
+        if level <= 0:
+            # "doc" / no headings case
+            base_disp = title or "Document"
+            key = base_disp
+            seen[key] += 1
+            disp = base_disp if seen[key] == 1 else f"{base_disp} ({seen[key]})"
+            sec["path_titles"] = [disp]
+            sec["display_title"] = disp
+            sec["title_uniq"] = disp
+            out.append(sec)
+            continue
+
+        # update stack at this level, drop deeper levels
+        stack[level] = title
+        for deeper in [l for l in list(stack.keys()) if l > level]:
+            del stack[deeper]
+
+        path_titles = [stack[l] for l in sorted(stack.keys()) if 1 <= l <= level]
+        base_disp = TITLE_SEP.join(path_titles) if path_titles else title
+
+        # still allow for duplicates within same parent/title (rare but possible)
+        seen[base_disp] += 1
+        disp = base_disp if seen[base_disp] == 1 else f"{base_disp} ({seen[base_disp]})"
+
+        sec["path_titles"] = path_titles
+        sec["display_title"] = base_disp
+        sec["title_uniq"] = disp
+        out.append(sec)
+
+    return out
 
 def strip_comments(tex: str) -> str:
     # line-wise strip, but keep escaped \% cases
@@ -335,13 +386,25 @@ def split_into_sections(flat_tex: str) -> List[Dict[str, Any]]:
         section_id = hashlib.sha256(base).hexdigest()[:16]
 
         sections.append({
-            "section_id": section_id,
+            # section_id filled after we compute hierarchical titles
+            "section_id": None,
             "level": level,
             "title": title,
             "label": label,
             "tex": body,
             "plain_text": latex_to_plain_text(body),
         })
+
+    # Add hierarchical disambiguation fields before final IDs
+    sections = _add_hierarchical_titles(sections)
+
+    # deterministic IDs: prefer label; otherwise use hierarchical unique title
+    for s in sections:
+        label = s.get("label")
+        cmd_title = f"{s.get('title_uniq')}"
+        base = (label or cmd_title).encode("utf-8", errors="ignore")
+        s["section_id"] = hashlib.sha256(base).hexdigest()[:16]
+
     return sections
 
 
@@ -386,7 +449,7 @@ def call_model_link_section(
 
     user_prompt = (
         f"Publication: {publication_id}\n"
-        f"Section: {section.get('title')} (label={section.get('label')}, level={section.get('level')})\n\n"
+        f"Section: {section.get('title_uniq') or section.get('title')} (label={section.get('label')}, level={section.get('level')})\n\n"
         "Candidate view endpoints:\n"
         f"{candidates_str}\n\n"
         "Section text:\n"
@@ -508,6 +571,13 @@ def ingest_overleaf_zip(
     zip_bytes = zip_path.read_bytes()
     zip_sha = sha256_bytes(zip_bytes)
 
+    # Output path + resume loading MUST happen before resume logic uses existing_obj
+    out_json_path = PUBLICATIONS_DIR / f"{publication_id}.json"
+    existing_obj = _load_existing_publication_json(out_json_path) if resume else None
+    already_done = _existing_section_ids(existing_obj)
+    if resume and existing_obj:
+        print(f"[ingest-zip] RESUME: found existing output with {len(already_done)} sections already ingested")
+
     base_obj: Dict[str, Any] = {
         "publication_id": publication_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -550,13 +620,6 @@ def ingest_overleaf_zip(
     running_completion = int(totals.get("completion_tokens", 0) or 0)
     running_cost = float(totals.get("estimated_cost_usd", 0.0) or 0.0)
 
-    out_json_path = PUBLICATIONS_DIR / f"{publication_id}.json"
-    existing_obj = _load_existing_publication_json(out_json_path) if resume else None
-    already_done = _existing_section_ids(existing_obj)
-
-    if resume and existing_obj:
-        print(f"[ingest-zip] RESUME: found existing output with {len(already_done)} sections already ingested")
-
     print(f"[ingest-zip] publication_id={publication_id}")
     print(f"[ingest-zip] zip={zip_path}")
     print(f"[ingest-zip] root_tex={root_tex.relative_to(src_dir)}")
@@ -566,7 +629,8 @@ def ingest_overleaf_zip(
         plain = sec["plain_text"]
         candidates = select_candidate_views(plain, view_docs, top_k=candidate_top_k)
 
-        print(f"[ingest-zip] ({i}/{len(sections)}) level={sec['level']} title={sec['title'][:60]!r} candidates={len(candidates)}")
+        disp = (sec.get("title_uniq") or sec.get("title") or "")[:80]
+        print(f"[ingest-zip] ({i}/{len(sections)}) level={sec['level']} title={disp!r} candidates={len(candidates)}")
 
         if dry_run:
             analysis = {"section_summary": "", "relevant_views": [], "concept_tags": []}
