@@ -654,7 +654,7 @@ def ingest_overleaf_zip(
         out_obj["sections"].append({
             "section_id": sec["section_id"],
             "level": sec["level"],
-            "title": sec["title"],
+            "title": f"{disp!r}",
             "label": sec["label"],
             "plain_text_len": len(sec["plain_text"]),
             "plain_text_excerpt": sec["plain_text"][:900] + ("…" if len(sec["plain_text"]) > 900 else ""),
