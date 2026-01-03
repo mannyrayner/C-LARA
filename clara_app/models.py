@@ -893,24 +893,47 @@ class ImageDescription(models.Model):
 
     def __str__(self):
         return f"{self.project_id} | {self.description_variable}"
-            
-# Instead, do this with a file in the coherent image generation directory to keep it self-contained.
 
-##class ImageGenerationParams(models.Model):
-##    MODEL_CHOICES = [
-##        ('gpt-4o', 'GPT-4o'),
-##        ('o1-mini', 'O1-Mini'),
-##    ]
-##
-##    project_id = models.CharField(max_length=255)
-##    n_expanded_descriptions = models.IntegerField(default=1)
-##    n_images_per_description = models.IntegerField(default=1)
-##    default_model = models.CharField(max_length=20, choices=MODEL_CHOICES, default='gpt-4o')
-##    generate_description_model = models.CharField(max_length=20, choices=MODEL_CHOICES, default='gpt-4o')
-##    example_evaluation_model = models.CharField(max_length=20, choices=MODEL_CHOICES, default='gpt-4o')
-##
-##    def __str__(self):
-##        return f"{self.project_id} image generation params"
+class ImageGlossMetadata(models.Model):
+    language_id = models.CharField(max_length=255)
+
+    # Key identifying what the image gloss is for
+    lemma = models.TextField()                 # lemma string (V1 simplest)
+    is_mwe = models.BooleanField(default=False)
+
+    # We use the lemma gloss as a possible disambiguator + helpful context for community reviewers
+    lemma_gloss = models.TextField(default='', blank=True)
+    example_context = models.TextField(default='', blank=True)
+
+    # Which coherent style this belongs to
+    style_id = models.CharField(max_length=255)
+
+    # Where the actual image file lives under the repository base_dir
+    file_path = models.TextField()
+
+    # Minimal lifecycle
+    status = models.CharField(
+        max_length=32,
+        default='proposed',
+        choices=[('proposed','proposed'), ('approved','approved'), ('rejected','rejected')]
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'orm_image_gloss_metadata'
+        verbose_name = 'Image Gloss Metadata'
+        verbose_name_plural = 'Image Gloss Metadata'
+        indexes = [
+            models.Index(
+                fields=['language_id', 'style_id', 'lemma', 'lemma_gloss', 'status'],
+                name='img_gloss_comp_idx'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.language_id} | {self.style_id} | {self.lemma[:50]}"
 
 class PhoneticEncoding(models.Model):
     language = models.CharField(max_length=255, choices=SUPPORTED_LANGUAGES, primary_key=True)
