@@ -12,7 +12,7 @@
                     <tr>
                         <td>Title:</td>
                         <td>{{ title_form.new_title }}</td>
-                        <td><button type="submit">Update Title</button></td>
+                        <td><button type="submit" name="submit_title">Update Title</button></td>
                     </tr>
                 </table>
             </form>
@@ -34,11 +34,13 @@
 					<tr>
 						<td>Base image set on translations:</td>
 						<td>{{ image_set_form.use_translation_for_images }}</td>
+                    </tr>
 					<tr>
 						<td>Make an image questionnaire available:</td>
 						<td>{{ image_set_form.has_image_questionnaire }}</td>
+                    </tr>
 					<tr>
-                        <td><button type="submit">Update Coherent Image Settings</button></td>
+                        <td><button type="submit" name="submit_image_set">Update Coherent Image Settings</button></td>
                     </tr>
                 </table>
             </form>
@@ -48,9 +50,48 @@
 	<p>Text Language: {{ project.l2|titlecase }}</p>
 	<p>Annotation Language: {{ project.l1|titlecase }}</p>
 	<p>Total API cost for this project: ${{ api_cost|floatformat:2 }}</p>
-	<p><a href="{% url 'project_community' project.id %}" 
-	      data-tooltip="Optionally assign the project to a community." >
-		  Community</a>✓</p>
+	
+	{% if attachable_communities_exist %}
+	  <form method="post" prefix="community">
+		{% csrf_token %}
+		<table>
+		  <tr>
+			<td>Community:</td>
+			<td>{{ community_form.community }}</td>
+		  </tr>
+		  <tr>
+			<td>Enable picture glossing:</td>
+			<td>
+			  {% if project.community %}
+				{{ community_form.uses_picture_glossing }}
+			  {% else %}
+				<span title="Attach to a community first">—</span>
+			  {% endif %}
+			</td>
+		  </tr>
+		  <tr>
+			<td>Picture gloss style:</td>
+			<td>
+			  {% if project.community %}
+				{{ community_form.picture_gloss_style }}
+			  {% else %}
+				<span>—</span>
+			  {% endif %}
+			</td>
+		  </tr>
+		  <tr>
+			<td><button type="submit" name="submit_community">Update Community / Picture Glossing</button></td>
+		  </tr>
+		</table>
+	  </form>
+	{% else %}
+	  {% if project.community %}
+		<p>Community: {{ project.community }}</p>
+	  {% else %}
+		<p>Community: (none)</p>
+	  {% endif %}
+	{% endif %}
+
 	<p><a href="{% url 'create_plain_text' project.id %}" 
 	      data-tooltip="Tell the AI to create the original text for your project. Alternatively, edit the result or paste in your own text." >
 		  Create/Edit Plain Text</a> 
@@ -137,7 +178,7 @@
 	{% if ai_enabled_l2 %}
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add lemma and part-of-speech tags to the words in the text. Alternatively, edit the result or add your own tags." 
-	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link{% endif %}">
+	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}">
 		  Create/Edit Lemma Tagged Text</a>
 		  {% if up_to_date_dict.lemma %}✓{% endif %}</p>
 	<p><a href="{% url 'create_glossed_text' project.id %}" 
@@ -145,9 +186,17 @@
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Glossed Text</a>
 		  {% if up_to_date_dict.gloss %}✓{% endif %}</p>
+	{% if can_show_picture_glossing_controls and project.uses_picture_glossing %}
+	  <p><a href="{% url 'perform_picture_glossing' project.id %}"
+			data-tooltip="Add picture gloss annotations and queue missing items in the picture dictionary project."
+			{% if not can_picture_gloss %}class="disabled-link"{% endif %}>
+			Perform picture glossing</a>
+			{% if up_to_date_dict.picture_glossing and can_picture_gloss %}✓{% endif %}
+	  </p>
+	{% endif %}
 	<p><a href="{% url 'create_pinyin_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add pinyin to the words in the text. Alternatively, edit the result or add your own tags." 
-	      {% if not can_create_pinyin_text %}class="disabled-link{% endif %}">
+	      {% if not can_create_pinyin_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Pinyin Tagged Text</a>
 		  {% if up_to_date_dict.pinyin %}✓{% endif %}</p>
 	{% endif %}
@@ -181,7 +230,7 @@
       	  {% if not can_render_phonetic %}class="disabled-link"{% endif %}>
 		  Render Phonetic Text</a>
 		  {% if up_to_date_dict.render_phonetic %}✓{% endif %}</p>
-	<p><a href="{% url 'serve_rendered_text' project.id 'normal' 'page_1.html' %}" target="_blank"}" 
+	<p><a href="{% url 'serve_rendered_text' project.id 'normal' 'page_1.html' %}" target="_blank"  
 	      data-tooltip="Display the multimedia version of the text in a new tab." 
 	      {% if not rendered_html_exists %}class="disabled-link"{% endif %}>
 		  Display Rendered Text</a>
