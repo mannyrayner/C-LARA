@@ -137,7 +137,9 @@ class CLARAProject(models.Model):
     simple_clara_type = models.CharField(max_length=50, choices=SIMPLE_CLARA_TYPES, default='create_text_and_image')
     uses_coherent_image_set = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set.")
     uses_coherent_image_set_v2 = models.BooleanField(default=False, help_text="Specifies whether the project uses a coherent AI-generated image set (V2).")
-    use_translation_for_images = models.BooleanField(default=False, help_text="Use translations for generating coherent image sets.")
+    use_translation_for_images = models.BooleanField(default=False, help_text="Created page images from translations as opposed to original text")
+    uses_picture_glossing = models.BooleanField(default=False, help_text="Optionally add picture glosses to words.")
+    picture_gloss_style = models.CharField(max_length=50, blank=True, default='')
     has_image_questionnaire = models.BooleanField(default=False, help_text="Specify whether an image questionnaire is associated")
     community = models.ForeignKey(
         Community,
@@ -177,37 +179,6 @@ class CLARAProject(models.Model):
             return True
         except Exception:
             return False  # be conservative
-
-##    def build_zip(self, text_type: str, callback=None) -> str:
-##        return build_content_zip(self, text_type, callback)
-
-##    def build_zip(self, text_type: str, callback=None) -> str: 
-##        """
-##        Create/refresh the zip from the current rendered output.
-##        Returns the final zip filepath on success; raises exception on failure.
-##        """
-##        if callback: post_task_update(callback, f"--- Creating zipfile")
-##        tmp_zipfile_path = make_tmp_file('project_zip', 'zip')
-##        tmp_zipfile_dir_path = make_tmp_dir('project_zip_dir')
-##
-##        out_dir = self.rendered_output_dir(text_type)
-##        if not os.path.isdir(out_dir):
-##            raise RuntimeError(f"Rendered output not found: {out_dir}")
-##
-##        # copy rendered output into tmp/content and add a start page
-##        copy_directory(out_dir, f'{tmp_zipfile_dir_path}/content')
-##        # TO DO: handle images. Go through the HTML pages to find items of the form
-##        # <img src="/accounts/projects/serve_project_image/<project_name>/<file>" alt="<alt>" style="<style>">
-##        # Copy the image file to the multimedia directory and replace with a suitable reference.	  
-##        create_start_page_for_self_contained_dir(tmp_zipfile_dir_path)
-##
-##        make_zipfile(tmp_zipfile_dir_path, tmp_zipfile_path, callback=callback)
-##        final_path = self.zip_filepath(text_type)
-##        # ensure destination dir exists
-##        os.makedirs(os.path.dirname(final_path), exist_ok=True)
-##        copy_file(tmp_zipfile_path, final_path)
-##        if callback: post_task_update(callback, f"--- Zipfile created: {final_path}")
-##        return final_path
     
 class ProjectPermissions(models.Model):
     ROLE_CHOICES = [

@@ -32,6 +32,13 @@ config = get_config()
 logger = logging.getLogger(__name__)
 
 @login_required
+@user_has_a_project_role
+@user_is_community_member
+def perform_picture_glossing(request, project_id):
+    messages.info(request, "Picture glossing functionality not yet integrated.")
+    return redirect('project_detail', project_id=project_id)
+
+@login_required
 @user_is_community_member
 def community_review_images(request, project_id):
     return community_review_images_cm_or_co(request, project_id, 'cm')

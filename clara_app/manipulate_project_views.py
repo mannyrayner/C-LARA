@@ -4,10 +4,10 @@ from django.core.paginator import Paginator
 from django.contrib import messages
 from django.db.models import Q
 from django.db.models.functions import Lower
-from .models import CLARAProject, ProjectPermissions, CLARAProjectAction
+from .models import CLARAProject, ProjectPermissions, CLARAProjectAction, Community, CommunityMembership
 from django.contrib.auth.models import User
 from .forms import AddProjectMemberForm
-from .forms import UpdateProjectTitleForm, UpdateCoherentImageSetForm
+from .forms import UpdateProjectTitleForm, UpdateCoherentImageSetForm, ProjectCommunityAndPictureGlossingForm
 from .forms import ProjectSearchForm
 from .utils import get_user_config
 from .utils import get_project_api_cost, get_project_operation_costs, get_project_api_duration, get_project_operation_durations
@@ -24,6 +24,12 @@ import logging
 
 config = get_config()
 logger = logging.getLogger(__name__)
+
+def _communities_user_can_attach_to(user, l2):
+    return Community.objects.filter(
+        language=l2,
+        memberships__user=user
+    ).distinct()
 
 # Manage the users associated with a project. Users can have the roles 'Owner', 'Annotator' or 'Viewer'
 @login_required
@@ -143,6 +149,15 @@ def project_detail(request, project_id):
     text_versions = clara_project_internal.text_versions
     up_to_date_dict = get_phase_up_to_date_dict(project, clara_project_internal, request.user)
 
+    attachable_communities = _communities_user_can_attach_to(request.user, project.l2)
+
+    user_is_member_of_project_community = (
+        project.community is not None and
+        CommunityMembership.objects.filter(community=project.community, user=request.user).exists()
+    )
+
+    can_show_picture_glossing_controls = bool(project.community) and user_is_member_of_project_community
+
     can_create_segmented_text = clara_project_internal.text_versions["plain"]
     can_create_segmented_title = clara_project_internal.text_versions["title"]
     can_create_phonetic_text = clara_project_internal.text_versions["segmented"] and phonetic_resources_are_available(project.l2)
@@ -150,25 +165,60 @@ def project_detail(request, project_id):
     can_create_glossed_text_from_lemma = clara_project_internal.text_versions["lemma"]
     can_create_pinyin_text = clara_project_internal.text_versions["segmented"] and is_chinese_language(project.l2) 
     can_render_normal = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
+    can_picture_gloss = can_render_normal
+    picture_glossing_enabled = bool(project.uses_picture_glossing)
     can_render_phonetic = clara_project_internal.text_versions["phonetic"] 
     rendered_html_exists = clara_project_internal.rendered_html_exists(project_id)
     rendered_phonetic_html_exists = clara_project_internal.rendered_phonetic_html_exists(project_id)
     images = clara_project_internal.get_all_project_images()
     images_exist = len(images) != 0
     api_cost = get_project_api_cost(request.user, project)
+    
     if request.method == 'POST':
         title_form = UpdateProjectTitleForm(request.POST, prefix="title")
         image_set_form = UpdateCoherentImageSetForm(request.POST, prefix="image_set")
-        if title_form.is_valid() and title_form.cleaned_data['new_title']:
+
+        community_form = ProjectCommunityAndPictureGlossingForm(
+            request.POST,
+            prefix="community",
+            communities=attachable_communities
+        )
+
+        if 'submit_title' in request.POST and title_form.is_valid() and title_form.cleaned_data['new_title']:
             project.title = title_form.cleaned_data['new_title']
             project.save()
-        if image_set_form.is_valid():
+            messages.success(request, "Project title updated")
+
+        elif 'submit_image_set' in request.POST and image_set_form.is_valid():
             project.uses_coherent_image_set = image_set_form.cleaned_data['uses_coherent_image_set']
             project.uses_coherent_image_set_v2 = image_set_form.cleaned_data['uses_coherent_image_set_v2']
             project.use_translation_for_images = image_set_form.cleaned_data['use_translation_for_images']
             project.has_image_questionnaire = image_set_form.cleaned_data['has_image_questionnaire']
             project.save()
-        messages.success(request, f"Project information updated")
+            messages.success(request, "Project information updated")
+
+        elif 'submit_community' in request.POST and community_form.is_valid():
+            # Attach community (only if user is a member)
+            community_id = community_form.cleaned_data.get('community') or ''
+            if community_id:
+                community = get_object_or_404(Community, id=int(community_id), language=project.l2)
+                # verify membership
+                if not CommunityMembership.objects.filter(community=community, user=request.user).exists():
+                    messages.error(request, "You are not a member of that community.")
+                else:
+                    project.community = community
+            # Toggle picture glossing only if project is attached
+            if project.community:
+                project.uses_picture_glossing = bool(community_form.cleaned_data.get('uses_picture_glossing'))
+                project.picture_gloss_style = community_form.cleaned_data.get('picture_gloss_style') or 'any'
+                # If picture glossing was turned off, you may want to blank style; optional.
+            else:
+                # If not attached, force picture glossing off
+                project.uses_picture_glossing = False
+                project.picture_gloss_style = ''
+            project.save()
+            messages.success(request, "Community / picture glossing settings updated")
+
     else:
         title_form = UpdateProjectTitleForm(prefix="title")
         image_set_form = UpdateCoherentImageSetForm(prefix="image_set",
@@ -177,6 +227,13 @@ def project_detail(request, project_id):
                                                              'use_translation_for_images': project.use_translation_for_images,
                                                              'has_image_questionnaire': project.has_image_questionnaire
                                                              })
+        community_form = ProjectCommunityAndPictureGlossingForm(prefix="community",
+                                                                communities=attachable_communities,
+                                                                initial={'community': str(project.community.id) if project.community else '',
+                                                                         'uses_picture_glossing': project.uses_picture_glossing,
+                                                                         'picture_gloss_style': project.picture_gloss_style or 'any'
+                                                                         }
+                                                                )
 
     clara_version = get_user_config(request.user)['clara_version']
     
@@ -198,6 +255,12 @@ def project_detail(request, project_id):
                     'can_create_pinyin_text': can_create_pinyin_text,
                     'can_render_normal': can_render_normal,
                     'can_render_phonetic': can_render_phonetic,
+                    'community_form': community_form,
+                    'attachable_communities_exist': attachable_communities.exists(),
+                    'user_is_member_of_project_community': user_is_member_of_project_community,
+                    'can_show_picture_glossing_controls': can_show_picture_glossing_controls,
+                    'can_picture_gloss': can_picture_gloss,
+                    'picture_glossing_enabled': bool(project.uses_picture_glossing),
                     'rendered_html_exists': rendered_html_exists,
                     'rendered_phonetic_html_exists': rendered_phonetic_html_exists,
                     'clara_version': clara_version,

@@ -275,6 +275,8 @@ urlpatterns = [
     path('project/<int:project_id>/execute_community_requests_for_page_status/<str:report_id>/', community_reviewing_views.execute_community_requests_for_page_status,
          name='execute_community_requests_for_page_status'),
 
+    path('project/<int:project_id>/perform_picture_glossing/', community_reviewing_views.perform_picture_glossing, name='perform_picture_glossing'),
+
     # Language games
     path("kok_kaper_game/", language_game_views.kok_kaper_animal_game, name="kok_kaper_game"),
 

@@ -424,6 +424,21 @@ class UpdateCoherentImageSetForm(forms.Form):
     use_translation_for_images = forms.BooleanField(required=False)
     has_image_questionnaire = forms.BooleanField(required=False)
 
+class ProjectCommunityAndPictureGlossingForm(forms.Form):
+    community = forms.ChoiceField(required=False)
+    uses_picture_glossing = forms.BooleanField(required=False)
+    picture_gloss_style = forms.ChoiceField(
+        required=False,
+        choices=[('any', 'any'), ('children', 'children'), ('adults', 'adults')]
+    )
+
+    def __init__(self, *args, communities=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        communities = communities or []
+        self.fields['community'].choices = [('', '---')] + [
+            (str(c.id), str(c)) for c in communities
+        ]
+
 class AddCreditForm(forms.Form):
     user = forms.ModelChoiceField(queryset=User.objects.all().order_by('username'))
     credit = forms.DecimalField()
