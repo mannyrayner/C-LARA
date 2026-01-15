@@ -517,11 +517,16 @@ class Page:
                 # Historical behavior: do not wrap in <page …> for this mode.
                 return segment_texts
 
-            if self.annotations:
+            if annotation_type == 'plain':
+                page_separator = ''
+            elif self.annotations:
                 attrs = " ".join(f"{k}='{v}'" for k, v in self.annotations.items())
-                return f"<page {attrs}>{segment_texts}"
+                page_separator = f"<page {attrs}>"
             else:
-                return f"<page>{segment_texts}"
+                page_separator = f"<page>"
+
+            return f"\n{page_separator}{segment_texts}"
+        
         except Exception as e:
             print(f'Error in page.to_text (annotation_type = {annotation_type}, page =')
             print(self)

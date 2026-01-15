@@ -85,11 +85,16 @@ class ImageGlossAnnotator:
             missing = self._add_image_gloss_annotations(text_obj, items, file_paths, callback=callback)
 
             post_task_update(callback, "--- Image gloss annotation complete")
-            return missing
+            return text_obj, missing
+
+##        except Exception as e:
+##            post_task_update(callback, f"*** Error in ImageGlossAnnotator.annotate_text: '{str(e)}'\n{traceback.format_exc()}")
+##            return text_obj, []
 
         except Exception as e:
-            post_task_update(callback, f"*** Error in ImageGlossAnnotator.annotate_text: '{str(e)}'\n{traceback.format_exc()}")
-            return []
+            msg = f"*** Error in ImageGlossAnnotator.annotate_text: '{str(e)}'\n{traceback.format_exc()}"
+            post_task_update(callback, msg)
+            raise
 
     # ---------------------------------------------------------------------
     # Internal helpers
@@ -106,8 +111,15 @@ class ImageGlossAnnotator:
         contexts_by_lemma = {}
 
         for page in text_obj.pages:
+            #print(f'page: {page}')
             for segment in page.segments:
                 segment_plain = segment.to_text()
+                segment_ann = segment.annotations
+
+                if not 'translated' in segment_ann:
+                    continue
+                else:
+                    segment_translation = segment_ann.get('translated')
 
                 for content_element in segment.content_elements:
                     if content_element.type != 'Word':
@@ -115,21 +127,24 @@ class ImageGlossAnnotator:
 
                     ann = content_element.annotations
 
+                    if not 'lemma' in ann or not 'gloss' in ann:
+                        continue
+
                     # We assume lemma tagging has already run.
                     # Common patterns:
                     # - ann['lemma'] for ordinary tokens
                     # - ann['mwe_lemma'] (or similar) when token belongs to an MWE
                     # You may need to adjust these keys to match your lemma tagger.
-                    lemma = ann.get('mwe_lemma') or ann.get('lemma')
-                    is_mwe = bool(ann.get('mwe_lemma') or ann.get('mwe_text'))
-
-                    if not lemma:
-                        continue
+                    lemma = ann.get('lemma') 
+                    is_mwe = bool(len(lemma.split()) != 1)
+                    gloss = ann.get('gloss') 
 
                     items.append({
                         'lemma': lemma,
                         'is_mwe': is_mwe,
+                        'gloss': gloss,
                         'example_context': segment_plain,
+                        'example_context_translation': segment_translation,
                         # lemma_gloss filled later
                     })
 
@@ -162,7 +177,7 @@ class ImageGlossAnnotator:
         if not self.lemma_gloss_resolver:
             # V1 fallback: no disambiguation
             for it in items:
-                it['lemma_gloss'] = it.get('lemma_gloss', '') or ''
+                it['lemma_gloss'] = it.get('gloss', '') or ''
             return
 
         post_task_update(callback, "--- Resolving lemma_gloss values")
@@ -195,10 +210,11 @@ class ImageGlossAnnotator:
 
                     ann = content_element.annotations
                     lemma = ann.get('mwe_lemma') or ann.get('lemma')
-                    is_mwe = bool(ann.get('mwe_lemma') or ann.get('mwe_text'))
-                    if not lemma:
+                    if not isinstance(lemma, str):
                         continue
-
+                    pos = (ann.get('pos') or '').strip()
+                    is_mwe = bool(len(lemma.split()) != 1)
+                    
                     # Determine lemma_gloss for this lemma (use resolved canonical value if available)
                     # Note: for V1 we use the canonical lemma_gloss from `wanted` if present, else ''.
                     # Later: we may store lemma_gloss directly on lemma annotation output.
@@ -225,12 +241,13 @@ class ImageGlossAnnotator:
                         hits += 1
                     else:
                         # Record missing entry (dedup)
-                        k = (lemma, lemma_gloss, is_mwe)
+                        k = (lemma, lemma_gloss, is_mwe, pos)
                         if k not in missing_entries:
                             missing_entries[k] = {
                                 "lemma": lemma,
                                 "is_mwe": is_mwe,
                                 "lemma_gloss": lemma_gloss,
+                                "pos": pos,
                                 # Provide a sample context if we have one
                                 "example_context": wanted.get((lemma, lemma_gloss), {}).get('example_context', '') if wanted else '',
                             }

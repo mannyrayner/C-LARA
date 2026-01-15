@@ -15,6 +15,11 @@ from .clara_main import CLARAProjectInternal
 from .clara_coherent_images_utils import project_pathname
 from .clara_coherent_images_utils import read_project_json_file, project_pathname
 
+from clara_app.picture_dictionary import PictureDictionary, PictureDictionaryEntry
+from clara_app.clara_image_gloss_annotator import ImageGlossAnnotator
+from clara_app.models import CLARAProject, CommunityMembership
+from clara_app.clara_main import CLARAProjectInternal
+
 from .clara_coherent_images_alternate import get_alternate_images_json, set_alternate_image_hidden_status
 
 from .clara_coherent_images_community_feedback import (register_cm_image_vote, register_cm_image_variants_request,
@@ -35,7 +40,81 @@ logger = logging.getLogger(__name__)
 @user_has_a_project_role
 @user_is_community_member
 def perform_picture_glossing(request, project_id):
-    messages.info(request, "Picture glossing functionality not yet integrated.")
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    # Safety: must be attached to a community and user must be in it
+    if not project.community:
+        messages.error(request, "Attach this project to a community first.")
+        return redirect('project_detail', project_id=project_id)
+
+    if not CommunityMembership.objects.filter(community=project.community, user=request.user).exists():
+        messages.error(request, "You are not a member of this community.")
+        return redirect('project_detail', project_id=project_id)
+
+    if not project.uses_picture_glossing:
+        messages.info(request, "Picture glossing is not enabled for this project.")
+        return redirect('project_detail', project_id=project_id)
+
+    style = project.picture_gloss_style or "any"
+
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    # Need lemma+gloss at minimum (you already compute can_picture_gloss similarly)
+    text_obj = clara_project_internal.get_internalised_text()
+    if not text_obj:
+        messages.error(request, "Need lemma-tagged and glossed text before picture glossing.")
+        return redirect('project_detail', project_id=project_id)
+
+    # 1) Get or create the dictionary project for (community, l2, l1, style)
+    pd = PictureDictionary(project.community, project.l2, project.l1, style=style)
+    dict_project, dict_internal, created = pd.get_or_create_project(request.user)
+
+    # 2) Run the image gloss annotator over text_obj, returning missing entries
+    # Adjust these to match your annotator's actual entrypoints.
+    annotator = ImageGlossAnnotator(
+        l2_language_id=project.l2,
+        style_id=style,
+        # likely also needs l1 / community / repo, depending on your implementation
+    )
+
+    # The annotator should:
+    #  - attach image_gloss annotations where available
+    #  - return missing entries (lemmas) to be queued
+    #
+    # If your annotator has a single method, call it here.
+    #
+    # Example expected signature:
+    #   updated_text_obj, missing_entries = annotator.annotate(text_obj, callback=None)
+    #
+    callback, report_id = make_asynch_callback_and_report_id(request, 'picture_glossing')
+    updated_text_obj, missing_entries = annotator.annotate_text(text_obj, callback=callback)
+
+    # 3) Queue missing entries into the dictionary project
+    # Make them PictureDictionaryEntry objects (or dicts if you added from_dict support)
+    pd_entries = []
+    for d in missing_entries:
+        # d should include lemma,is_mwe,lemma_gloss,pos,example_context (pos optional)
+        pd_entries.append(PictureDictionaryEntry.from_dict(d))
+
+    result = pd.append_entries(
+        dict_internal,
+        pd_entries,
+        user_display_name=request.user.username,
+        source="human_revised",
+        callback=callback,
+    )
+
+    # 4) Persist updated_text_obj in the normal “internalised_and_annotated” store
+    # This depends on your existing pipeline. Typically you already have a method
+    # or you pickle to clara_project_internal.internalised_and_annotated_text_path.
+    clara_project_internal.save_internalised_and_annotated_text(updated_text_obj)
+
+    messages.success(
+        request,
+        f"Picture glossing: added {result['added']} new dictionary pages, "
+        f"skipped {result['skipped']} existing. "
+        f"Dictionary project: {dict_project.title}"
+    )
     return redirect('project_detail', project_id=project_id)
 
 @login_required
