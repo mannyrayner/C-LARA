@@ -642,6 +642,29 @@ def write_local_txt_file(data, pathname: str):
     with open(abspathname, 'w', encoding='utf-8') as f:
         f.write(data)
 
+def normalise_clara_text(text):
+    pages = text.split('<page>')
+    out_pages = []
+    for page in pages:
+        #print(f'page = {page}')
+        segments = page.split('||')
+        #print(f'segments = {segments}')
+        out_segments = []
+        for segment in segments:
+            #print(f'segment = {segment}')
+            stripped_segment = segment.strip().replace('##', '')  #Whitespace, possible followed by null annotation
+            if stripped_segment:
+               out_segments.append(segment)
+               #print(f'out_segments = {out_segments}')
+        out_segments_text = '||'.join(out_segments)
+        #print(f'out_segments_text = {out_segments_text}')
+        if out_segments_text:
+            out_pages.append(out_segments_text)
+            #print(f'out_pages = {out_pages}')
+    out_pages_text = '<page>'.join(out_pages)
+
+    return out_pages_text
+
 def read_json_or_txt_file(file_path: str):
     extension = extension_for_file_path(file_path)
     abs_file_path = absolute_file_name(file_path)

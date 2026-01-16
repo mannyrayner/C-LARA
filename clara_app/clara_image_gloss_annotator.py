@@ -65,7 +65,8 @@ class ImageGlossAnnotator:
             }
         """
         try:
-            post_task_update(callback, "--- Collecting word/MWE items for image glossing")
+            post_task_update(callback, f"--- Collecting word/MWE items for image glossing")
+            post_task_update(callback, f"--- Text object = {text_obj}")
 
             items = self._collect_word_mwe_items(text_obj, callback=callback)
 
@@ -111,12 +112,13 @@ class ImageGlossAnnotator:
         contexts_by_lemma = {}
 
         for page in text_obj.pages:
-            #print(f'page: {page}')
+            post_task_update(callback, f'Extracting word items from {page}')
             for segment in page.segments:
                 segment_plain = segment.to_text()
                 segment_ann = segment.annotations
 
                 if not 'translated' in segment_ann:
+                    post_task_update(callback, f'Skipping segment because no translation, {segment}')
                     continue
                 else:
                     segment_translation = segment_ann.get('translated')
@@ -128,6 +130,7 @@ class ImageGlossAnnotator:
                     ann = content_element.annotations
 
                     if not 'lemma' in ann or not 'gloss' in ann:
+                        post_task_update(callback, f'Skipping content element because no lemma or gloss, {content_element}')
                         continue
 
                     # We assume lemma tagging has already run.
@@ -152,6 +155,8 @@ class ImageGlossAnnotator:
                     if len(contexts_by_lemma[lemma]) < 3:
                         contexts_by_lemma[lemma].append(segment_plain)
 
+        post_task_update(callback, f'Found {len(items)} items before deduplication')
+
         # Deduplicate by lemma + is_mwe for repository lookup purposes.
         # Keep one example_context (first encountered).
         dedup = {}
@@ -160,6 +165,8 @@ class ImageGlossAnnotator:
             if key not in dedup:
                 dedup[key] = it
         items = list(dedup.values())
+
+        post_task_update(callback, f'Found {len(items)} items after deduplication')
 
         # Store contexts for resolver use
         self._contexts_by_lemma = contexts_by_lemma

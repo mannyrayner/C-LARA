@@ -59,11 +59,12 @@ def perform_picture_glossing(request, project_id):
 
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    # Need lemma+gloss at minimum (you already compute can_picture_gloss similarly)
-    text_obj = clara_project_internal.get_internalised_text()
-    if not text_obj:
-        messages.error(request, "Need lemma-tagged and glossed text before picture glossing.")
-        return redirect('project_detail', project_id=project_id)
+    # Use the exact version, which requires aligned texts
+    try:
+        text_obj = clara_project_internal.get_internalised_text_exact()
+    except Exception as e:
+        messages.error(request, f"Error when trying to internalise text: {e}.")
+        raise e
 
     # 1) Get or create the dictionary project for (community, l2, l1, style)
     pd = PictureDictionary(project.community, project.l2, project.l1, style=style)

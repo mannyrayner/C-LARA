@@ -19,6 +19,78 @@ from .clara_classes import *
 import difflib
 import re
 
+POSSIBLE_TAG_SEGMENT_OR_CONTENT_ELEMENT_PAIRS = [ ( 'lemma', 'content_elements' ),
+                                                  ( 'gloss', 'content_elements' ),
+                                                  ( 'pinyin', 'content_elements' ),
+                                                  ( 'translated', 'segments' ),
+                                                  ( 'mwes', 'segments' ),
+                                                  ]
+
+# text1, text2 should both be Text objects. Copy in values of the annotation 'tag' from text2 to text1.
+# Throw an error if the texts are incompatible
+def merge_text_object_with_other_text_object_exact(text1, text2, tag, segments_or_content_elements):
+    if not isinstance(text1, Text):
+        raise ValueError(f'First arg to merge_text_object_with_other_text_object not a Text: {text1}')
+    if not isinstance(text2, Text):
+        raise ValueError(f'Second arg to merge_text_object_with_other_text_object not a Text: {text2}')
+    if not ( tag, segments_or_content_elements) in POSSIBLE_TAG_SEGMENT_OR_CONTENT_ELEMENT_PAIRS:
+        raise ValueError(f'Impossible third and fourth args to merge_text_object_with_other_text_object: {tag}, {segments_or_content_elements}')
+
+    pages1 = text1.pages
+    pages2 = text2.pages
+    if len(pages1) != len(pages2):
+        Error = f"""Texts in call to merge_text_object_with_other_text_object have different numbers of pages:
+tag = {tag}, len1 = {len(pages1)}, len2 = {len(pages2)}, first_page1 = {pages1[0]}, first_page2 = {pages2[0]},"""
+        raise ValueError(Error)
+
+    for page_index in range(0, len(pages1)):
+        page1 = pages1[page_index]
+        page2 = pages2[page_index]
+        segments1 = page1.segments
+        segments2 = page2.segments
+
+        if len(segments1) != len(segments1):
+            raise ValueError(f'Pages {page_index} in call to merge_text_object_with_other_text_object have different numbers of segments: {segments1}, {segments2}')
+
+        for segment_index in range(0, len(segments1)):
+            segment1 = segments1[segment_index]
+            segment2 = segments2[segment_index]
+            content_elements1 = segment1.content_elements
+            content_elements2 = segment2.content_elements
+
+            if len(content_elements1) != len(content_elements2):
+                ErrorMessage = f"""Segments page = {page_index}, segment = {segment_index} in call to merge_text_object_with_other_text_object
+have different numbers of content elements: {content_elements1}, {content_elements2}"""
+                raise ValueError(ErrorMessage)
+            
+            if segments_or_content_elements == 'segments' and tag in segment2.annotations:
+                seg_annotations1 = segment1.annotations
+                seg_annotations1[tag] = segment2.annotations[tag]
+                segment1.annotations = seg_annotations1
+
+            if segments_or_content_elements == 'content_elements':
+                for content_element_index in range(0, len(content_elements1)):
+                    content_element1 = content_elements1[content_element_index]
+                    content_element2 = content_elements2[content_element_index]
+
+                    print(f'--- Merging {content_element1} and {content_element2}')
+
+                    if content_element1.content != content_element2.content or content_element1.type != content_element2.type :
+                        ErrorMessage = f"""Content elements page = {page_index}, segment = {segment_index} element = {content_element_index}
+in call to merge_text_object_with_other_text_object have different content or type: {content_element1}, {content_element2}"""
+                        raise ValueError(ErrorMessage)
+
+                    content_annotations1 = content_element1.annotations
+                    if tag in content_element2.annotations:
+                        content_annotations1[tag] = content_element2.annotations[tag]
+                    if tag == 'lemma' and 'pos' in segment2.annotations:
+                        content_annotations1['pos'] = content_element2.annotations['pos']
+                    content_element1.annotations = content_annotations1
+
+                    print(f'--- Result: {content_element1}')
+
+    return text1                         
+
 def merge_glossed_and_tagged(glossed_text, tagged_text):
     return merge_annotations1_and_annotations2(glossed_text, tagged_text,
                                                'glossed_with_tagged', {"gloss": "null"})

@@ -148,6 +148,7 @@ from .clara_chinese import segment_text_using_jieba, pinyin_tag_text_using_pypin
 from .clara_diff import diff_text_objects
 from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glossed_and_tagged_with_pinyin
 from .clara_merge_glossed_and_tagged import merge_with_translation_annotations, merge_with_mwe_annotations
+from .clara_merge_glossed_and_tagged import merge_text_object_with_other_text_object_exact
 from .clara_audio_annotator import AudioAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository_orm import ImageRepositoryORM
@@ -177,7 +178,7 @@ from .clara_coherent_images_utils import style_image_name, element_image_name, p
 from .clara_coherent_images_utils import style_directory, element_directory, element_directory_for_element_name, page_directory
 from .clara_coherent_images_utils import get_style_image, get_page_image, get_element_image, get_all_page_images, get_all_element_images
 from .clara_align_with_segmented import align_segmented_text_with_non_segmented_text, remove_any_empty_pages_at_end
-from .clara_utils import absolute_file_name, absolute_local_file_name
+from .clara_utils import absolute_file_name, absolute_local_file_name, normalise_clara_text
 from .clara_utils import read_json_file, write_json_to_file, read_txt_file, write_txt_file, read_local_txt_file, robust_read_local_txt_file
 from .clara_utils import rename_file, remove_file, get_file_time, file_exists, local_file_exists, basename, output_dir_for_project_id
 from .clara_utils import make_directory, remove_directory, directory_exists, copy_directory, list_files_in_directory
@@ -613,6 +614,12 @@ class CLARAProjectInternal:
             return self.load_text_version(version)
         except FileNotFoundError:
             return ''
+
+    # Strip out empty segments and pages, i.e. segments and pages with only whitespace
+    def load_text_version_normalised(self, version: str) -> str:
+        text = self.load_text_version_or_null(version)
+
+        return normalise_clara_text(text)
 
     # Get text consisting of "segmented" text, plus segmented title if available, plus suitably tagged segmented text for any images that may be present
     def _create_and_load_segmented_with_images_text(self, callback=None):
@@ -1229,6 +1236,34 @@ class CLARAProjectInternal:
                 merged_text = merged_text_with_mwes
 
             return merged_text
+
+    # Version of get_internalised_text which requires all versions of the text to be fully aligned
+    # Use load_text_version_normalised to get rid of leading and trailing spaces.
+    def get_internalised_text_exact(self) -> str:
+        if not self.text_versions["gloss"] or not self.text_versions["lemma"]:
+            raise ValueError(f'Cannot call get_internalised_text_exact unless both gloss and lemma versions exist')
+        glossed_text = self.load_text_version_normalised("gloss")
+        lemma_tagged_text = self.load_text_version_normalised("lemma")
+        internalised_glossed_text = internalize_text(glossed_text, self.l2_language, self.l1_language, 'gloss')
+        internalised_tagged_text = internalize_text(lemma_tagged_text, self.l2_language, self.l1_language, 'lemma')
+        merged_text = merge_text_object_with_other_text_object_exact(internalised_glossed_text, internalised_tagged_text, 'lemma', 'content_elements')
+        if self.text_versions["pinyin"]:
+            pinyin_tagged_text = self.load_text_version_normalised("pinyin")
+            internalised_pinyin_text = internalize_text(pinyin_tagged_text, self.l2_language, self.l1_language, 'pinyin')
+            print(f'internalised_pinyin_text: {internalised_pinyin_text}')
+            merged_text = merge_text_object_with_other_text_object_exact(merged_text, internalised_pinyin_text, 'pinyin', 'content_elements')
+            print(f'merged including internalised_pinyin_text: {merged_text}')
+        if self.text_versions["translated"]:
+            translated_tagged_text = self.load_text_version_normalised("translated")
+            internalised_translated_text = internalize_text(translated_tagged_text, self.l2_language, self.l1_language, 'translated')
+            merged_text = merge_text_object_with_other_text_object_exact(merged_text, internalised_translated_text, 'translated', 'segments')
+        if self.text_versions["mwe"]:
+            mwe_tagged_text = self.load_text_version_normalised("mwe")
+            internalised_mwe_tagged_text = internalize_text(mwe_tagged_text, self.l2_language, self.l1_language, 'mwe')
+            merged_text = merge_text_object_with_other_text_object_exact(merged_text, internalised_mwe_tagged_text, 'mwes', 'segments')
+
+        return merged_text
+
 
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
