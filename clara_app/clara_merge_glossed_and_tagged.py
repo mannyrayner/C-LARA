@@ -83,7 +83,7 @@ in call to merge_text_object_with_other_text_object have different content or ty
                     content_annotations1 = content_element1.annotations
                     if tag in content_element2.annotations:
                         content_annotations1[tag] = content_element2.annotations[tag]
-                    if tag == 'lemma' and 'pos' in segment2.annotations:
+                    if tag == 'lemma' and 'pos' in content_element2.annotations:
                         content_annotations1['pos'] = content_element2.annotations['pos']
                     content_element1.annotations = content_annotations1
 
