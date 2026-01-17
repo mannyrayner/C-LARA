@@ -57,10 +57,15 @@ tag = {tag}, len1 = {len(pages1)}, len2 = {len(pages2)}, first_page1 = {pages1[0
             segment2 = segments2[segment_index]
             word_content_elements1 = [ e for e in segment1.content_elements if e.type == 'Word' ]
             word_content_elements2 = [ e for e in segment2.content_elements if e.type == 'Word' ]
+            len1 = len(word_content_elements1)
+            len2 = len(word_content_elements2)
 
-            if len(word_content_elements1) != len(word_content_elements2):
-                ErrorMessage = f"""Segments page = {page_index}, segment = {segment_index} in call to merge_text_object_with_other_text_object
-have different numbers of word content elements: {word_content_elements1}, {word_content_elements1} (tag = {tag})"""
+            if len1 != len2:
+                words1 = [ e.content for e in word_content_elements1 ]
+                words2 = [ e.content for e in word_content_elements2 ]
+                ErrorMessage = f"""Segments tag = {tag}, page = {page_index}, segment = {segment_index} in call to merge_text_object_with_other_text_object
+have different numbers of word content elements: {word_content_elements1} {len1} words, {words2}, {word_content_elements2}
+{len2} words, {words2}"""
                 raise ValueError(ErrorMessage)
             
             if segments_or_content_elements == 'segments' and tag in segment2.annotations:
