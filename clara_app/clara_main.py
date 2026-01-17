@@ -677,8 +677,8 @@ class CLARAProjectInternal:
         text_object = self.get_internalised_text_exact()
         page_texts = {}
         for version in [ 'plain', 'segmented', 'mwe', 'translated', 'gloss', 'lemma' ]:
-            text = text_object.to_text('mwe_minimal' if version == 'mwe' else version)
-            pages = text.split('<page>')
+            page_objects = text_object.pages
+            pages = [ page_object.to_text('mwe_minimal' if version == 'mwe' else version) for page_object in page_objects ]
             page_texts[version] = pages
 
         return page_texts

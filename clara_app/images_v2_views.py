@@ -83,7 +83,7 @@ def edit_images_v2(request, project_id, status):
     try:
         # Don't try to correct syntax errors here, there should not be any,
         # except for removing possible empty pages at the end of the text.
-        clara_project_internal.remove_any_empty_pages_at_end_and_save_for_all_text_versions()
+        #clara_project_internal.remove_any_empty_pages_at_end_and_save_for_all_text_versions()
         all_page_texts = clara_project_internal.get_page_texts()
         if _edit_images_v2_trace:
             print(f'all_page_texts:')
@@ -176,7 +176,6 @@ def edit_images_v2(request, project_id, status):
             print(f'len(translated_texts) = {len(translated_texts)}')
             print(f'len(mwe_texts) = {len(mwe_texts)}')
             print(f'len(gloss_texts) = {len(gloss_texts)}')
-            print(f'highest key for indexed_page_data = {max([key for key in indexed_page_data])}')
         for index in range(0, len(page_texts)):
             page = index + 1
             if ( index < len(page_texts) and index < len(segmented_texts) and
