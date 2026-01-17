@@ -55,12 +55,12 @@ tag = {tag}, len1 = {len(pages1)}, len2 = {len(pages2)}, first_page1 = {pages1[0
         for segment_index in range(0, len(segments1)):
             segment1 = segments1[segment_index]
             segment2 = segments2[segment_index]
-            content_elements1 = segment1.content_elements
-            content_elements2 = segment2.content_elements
+            word_content_elements1 = [ e for e in segment1.content_elements if e.type == 'Word' ]
+            word_content_elements2 = [ e for e in segment2.content_elements if e.type == 'Word' ]
 
-            if len(content_elements1) != len(content_elements2):
+            if len(word_content_elements1) != len(word_content_elements2):
                 ErrorMessage = f"""Segments page = {page_index}, segment = {segment_index} in call to merge_text_object_with_other_text_object
-have different numbers of content elements: {content_elements1}, {content_elements2}"""
+have different numbers of word content elements: {word_content_elements1}, {word_content_elements1} (tag = {tag})"""
                 raise ValueError(ErrorMessage)
             
             if segments_or_content_elements == 'segments' and tag in segment2.annotations:
@@ -69,15 +69,13 @@ have different numbers of content elements: {content_elements1}, {content_elemen
                 segment1.annotations = seg_annotations1
 
             if segments_or_content_elements == 'content_elements':
-                for content_element_index in range(0, len(content_elements1)):
-                    content_element1 = content_elements1[content_element_index]
-                    content_element2 = content_elements2[content_element_index]
+                for ( content_element1, content_element2 ) in zip(word_content_elements1, word_content_elements2) :
 
                     print(f'--- Merging {content_element1} and {content_element2}')
 
                     if content_element1.content != content_element2.content or content_element1.type != content_element2.type :
                         ErrorMessage = f"""Content elements page = {page_index}, segment = {segment_index} element = {content_element_index}
-in call to merge_text_object_with_other_text_object have different content or type: {content_element1}, {content_element2}"""
+in call to merge_text_object_with_other_text_object have different content or type: {content_element1}, {content_element2} (tag = {tag}"""
                         raise ValueError(ErrorMessage)
 
                     content_annotations1 = content_element1.annotations

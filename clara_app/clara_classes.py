@@ -819,7 +819,7 @@ class Text:
 
     def to_text(self, annotation_type: str = "plain") -> str:
         """Concatenate page renderings for `annotation_type`."""
-        return "".join(page.to_text(annotation_type) for page in self.pages)
+        return "".join(page.to_text(annotation_type) for page in self.pages).strip()
 
     def to_numbered_page_list(self, translated: bool = False) -> List[Dict[str, Any]]:
         """Return UI-friendly page dicts, optionally focusing on translations.

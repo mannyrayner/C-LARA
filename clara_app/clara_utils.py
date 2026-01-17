@@ -652,9 +652,10 @@ def normalise_clara_text(text):
         out_segments = []
         for segment in segments:
             #print(f'segment = {segment}')
-            stripped_segment = segment.strip().replace('##', '')  #Whitespace, possible followed by null annotation
+            #Whitespace, possible followed by null annotation, possibly followed by whitespace
+            stripped_segment = segment.strip().replace('##', '').strip()  
             if stripped_segment:
-               out_segments.append(segment)
+               out_segments.append(stripped_segment)
                #print(f'out_segments = {out_segments}')
         out_segments_text = '||'.join(out_segments)
         #print(f'out_segments_text = {out_segments_text}')

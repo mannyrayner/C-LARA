@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import re
+import time
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -176,14 +177,16 @@ class PictureDictionary:
         saved_versions: List[str] = []
         for v in versions:
             out_text = text_obj.to_text(annotation_type=("mwe_minimal" if v == "mwe" else v))
+            out_text = out_text.strip()
             proj_internal.save_text_version(v, out_text, source=source, user=user_display_name)
+            time.sleep(0.1) # Sleep briefly to avoid making it look like things might be out of date
             saved_versions.append(v)
 
         # Some code depends on having a title and a segmented title, so add this information too
-        for v in ( 'title', 'segmented_title' ):
-            out_text = 'title'
-            proj_internal.save_text_version(v, out_text, source=source, user=user_display_name)
-            saved_versions.append(v)
+##        for v in ( 'title', 'segmented_title' ):
+##            out_text = 'title'
+##            proj_internal.save_text_version(v, out_text, source=source, user=user_display_name)
+##            saved_versions.append(v)
 
         return {
             "added": len(to_add),
@@ -268,21 +271,34 @@ class PictureDictionary:
         """
         post_task_update(callback, f'Trying to make page for {e}')
         lemma = e.lemma.strip()
+        lemma_components = lemma.split()
         lemma_gloss = (e.lemma_gloss or lemma).strip()
         pos = (e.pos or "").strip()
 
-        content_elements = [ContentElement(element_type="Word",
-                                           content=lemma,
-                                           annotations={"lemma": lemma,
-                                                        "pos": pos,
-                                                        "gloss": lemma_gloss
-                                                        }
-                                           )
-                            ]
+        content_elements = []
+
+        n_lemma_components = len(lemma_components)
+
+        for index in range(0, n_lemma_components):
+            component = lemma_components[index]
+            content_elements.append(ContentElement(element_type="Word",
+                                                   content=component,
+                                                   annotations={"lemma": lemma,
+                                                                "pos": pos,
+                                                                "gloss": lemma_gloss
+                                                                }
+                                                   )
+                                    )
+            if index < n_lemma_components - 1:
+                content_elements.append(ContentElement(element_type = "NonWordText",
+                                                           content = ' ',
+                                                           annotations = {}
+                                                           )
+                                            )
 
         seg_annotations = {
             "translated": lemma_gloss,
-            "mwes": [ lemma.split() ] if e.is_mwe else [],
+            "mwes": [ lemma_components ] if e.is_mwe else [],
         }
 
         seg = Segment(content_elements=content_elements, annotations=seg_annotations)

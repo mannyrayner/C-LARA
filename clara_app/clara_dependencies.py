@@ -120,25 +120,33 @@ class CLARADependencies:
             
             "segmented": [ "plain" ],
 
-            "translated": [ "segmented", "segmented_title" ],
+            #"translated": [ "segmented", "segmented_title" ],
+            "translated": [ "segmented" ],
 
-            "mwe": [ "segmented", "segmented_title" ],
+            #"mwe": [ "segmented", "segmented_title" ],
+            "mwe": [ "segmented" ],
             
-            "images": [ "segmented", "segmented_title" ],
+            #"images": [ "segmented", "segmented_title" ],
+            "images": [ "segmented" ],
 
-            "v2_style_image": [ "segmented", "segmented_title" ],
+            #"v2_style_image": [ "segmented", "segmented_title" ],
+            "v2_style_image": [ "segmented" ],
 
             "v2_element_images": [ "v2_style_image" ],
 
             "v2_page_images": [ "v2_element_images" ],
-            
-            "phonetic": [ "segmented", "segmented_title" ],
-            
-            "gloss": [ "segmented", "segmented_title", "mwe" ],
-            
-            "lemma": [ "segmented", "segmented_title", "mwe" ],
 
-            "pinyin": [ "segmented", "segmented_title" ],
+            #"phonetic": [ "segmented", "segmented_title" ],
+            "phonetic": [ "segmented" ],
+            
+            #"gloss": [ "segmented", "segmented_title", "mwe" ],
+            "gloss": [ "segmented", "mwe" ],
+            
+            #"lemma": [ "segmented", "segmented_title", "mwe" ],
+            "lemma": [ "segmented", "mwe" ],
+
+            #"pinyin": [ "segmented", "segmented_title" ],
+            "pinyin": [ "segmented" ],
             
             "audio": [ "segmented" ],
 
