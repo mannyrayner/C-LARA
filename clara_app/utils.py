@@ -4,6 +4,7 @@ from django.db.models import Sum, Max
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail
 from django.core.mail import EmailMessage
@@ -111,6 +112,17 @@ def get_user_config(user):
 def user_has_open_ai_key_or_credit(user):
     user_config = get_user_config(user)
     return ( 'open_ai_api_key' in user_config and user_config['open_ai_api_key'] ) or user.userprofile.credit > 0
+
+def user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request):
+    user = request.user
+    user_config = get_user_config(user)
+    if user.userprofile.credit > 0 and 'open_ai_api_key' in user_config and user_config['open_ai_api_key'] and user.userprofile.is_admin:
+        messages.info(request, "Warning: you have a negative credit balance, but allowing OpenAI API call anyway because you are an admin")
+        return True
+    else:
+        result = bool( ( 'open_ai_api_key' in user_config and user_config['open_ai_api_key'] ) or user.userprofile.credit > 0 )
+        messages.error(request, f"Checking if OpenAi API funds are accessible. Result: {result}")
+        return result
 
 def has_saved_internalised_and_annotated_text(project, phonetic=False):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)

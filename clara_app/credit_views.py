@@ -2,6 +2,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.db.models import Sum, Count
+from .models import UserProfile
 from .forms import AddCreditForm, ConfirmTransferForm
 from .utils import get_user_config
 from .utils import send_mail_or_print_trace
@@ -23,6 +25,29 @@ def credit_balance(request):
     
     return render(request, 'clara_app/credit_balance.html', {'credit_balance': credit_balance, 'clara_version': clara_version})
 
+@login_required
+@user_passes_test(lambda u: u.userprofile.is_admin)
+def credit_balances_admin(request):
+    qs = (
+        UserProfile.objects
+        .select_related('user')
+        .order_by('credit', 'user__username')
+    )
+
+    negatives = qs.filter(credit__lt=0)
+    stats = qs.aggregate(
+        total=Sum('credit'),
+        n=Count('id'),
+    )
+
+    clara_version = get_user_config(request.user)['clara_version']
+
+    return render(request, 'clara_app/credit_balances_admin.html', {
+        'profiles': qs,
+        'negative_profiles': negatives,
+        'stats': stats,
+        'clara_version': clara_version,
+    })
 
 # Add credit to account
 @login_required

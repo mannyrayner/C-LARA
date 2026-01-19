@@ -6,7 +6,7 @@ from .models import CLARAProject
 
 from django_q.tasks import async_task
 from .forms import ImageFormSet, ImageDescriptionFormSet, StyleImageForm, ImageSequenceForm 
-from .utils import get_user_config, user_has_open_ai_key_or_credit, store_api_calls, make_asynch_callback_and_report_id
+from .utils import get_user_config, user_has_open_ai_key_or_credit, user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance, store_api_calls, make_asynch_callback_and_report_id
 from .utils import user_has_a_project_role
 from .utils import get_task_updates
 from .utils import uploaded_file_to_file
@@ -46,7 +46,7 @@ def edit_images(request, project_id, dall_e_3_image_status):
                                  'generate_image_descriptions',
                                  'create_image_request_sequence')
     user = request.user
-    can_use_ai = user_has_open_ai_key_or_credit(user)
+    can_use_ai = user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request)
     config_info = get_user_config(user)
     username = user.username
     project = get_object_or_404(CLARAProject, pk=project_id)

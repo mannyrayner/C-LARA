@@ -12,7 +12,7 @@ from .forms import CreatePlainTextForm, CreateTitleTextForm, CreateSegmentedTitl
 from .forms import CreateTranslatedTextForm, CreatePhoneticTextForm, CreateGlossedTextForm, CreateLemmaTaggedTextForm, CreateMWETaggedTextForm
 from .forms import CreatePinyinTaggedTextForm, CreateLemmaAndGlossTaggedTextForm
 from .forms import FormatPreferencesForm
-from .utils import get_user_config, user_has_open_ai_key_or_credit, store_api_calls, make_asynch_callback_and_report_id
+from .utils import get_user_config, user_has_open_ai_key_or_credit, user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance, store_api_calls, make_asynch_callback_and_report_id
 from .utils import user_has_a_project_role, user_has_a_named_project_role
 from .utils import get_task_updates
 
@@ -127,7 +127,8 @@ def create_annotated_text_of_right_type(request, project_id, this_version, previ
                     current_version = ""
             # We're using the AI or a tagger to create a new version of a file
             #elif text_choice in ( 'generate', 'correct', 'improve' ) and not request.user.userprofile.credit > 0:
-            elif text_choice in ( 'generate', 'correct', 'improve' ) and not user_has_open_ai_key_or_credit(request.user):
+            #elif text_choice in ( 'generate', 'correct', 'improve' ) and not user_has_open_ai_key_or_credit(request.user):
+            elif text_choice in ( 'generate', 'correct', 'improve' ) and not user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request):
                 messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                 annotated_text = ''
                 text_choice = 'manual'

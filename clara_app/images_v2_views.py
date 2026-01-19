@@ -6,7 +6,7 @@ from .models import CLARAProject
 
 from django_q.tasks import async_task
 from .forms import ImageFormSetV2, CoherentImagesV2ParamsForm
-from .utils import get_user_config, user_has_open_ai_key_or_credit, store_api_calls, store_cost_dict, make_asynch_callback_and_report_id
+from .utils import get_user_config, user_has_open_ai_key_or_credit, user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance, store_api_calls, store_cost_dict, make_asynch_callback_and_report_id
 from .utils import user_has_a_project_role
 from .utils import get_task_updates
 
@@ -52,7 +52,7 @@ def edit_images_v2(request, project_id, status):
                                  'create_page_descriptions_and_images',
                                  'generate_variant_images' )
     user = request.user
-    can_use_ai = user_has_open_ai_key_or_credit(user)
+    can_use_ai = user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request)
     config_info = get_user_config(user)
     username = user.username
     project = get_object_or_404(CLARAProject, pk=project_id)

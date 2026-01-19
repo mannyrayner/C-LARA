@@ -90,6 +90,7 @@ urlpatterns = [
 
     # Credit
     path('add_credit/', credit_views.add_credit, name='add_credit'),
+    path('credit_balances_admin/', credit_views.credit_balances_admin, name='credit_balances_admin'),
     path('transfer_credit/', credit_views.transfer_credit, name='transfer_credit'),
     path('confirm_transfer/', credit_views.confirm_transfer, name='confirm_transfer'),
     path('credit_balance/', credit_views.credit_balance, name='credit_balance'),

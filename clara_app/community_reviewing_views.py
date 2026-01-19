@@ -5,7 +5,8 @@ from django.contrib import messages
 from .models import CLARAProject
 
 from django_q.tasks import async_task
-from .utils import get_user_config, user_has_open_ai_key_or_credit, store_cost_dict, make_asynch_callback_and_report_id
+from .utils import get_user_config, user_has_open_ai_key_or_credit, user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance
+from .utils import store_cost_dict, make_asynch_callback_and_report_id
 from .utils import user_has_a_project_role
 from .utils import get_task_updates
 from .utils import uploaded_file_to_file
@@ -199,7 +200,7 @@ def community_review_images_cm_or_co(request, project_id, cm_or_co):
 @community_role_required
 def community_review_images_for_page(request, project_id, page_number, cm_or_co, status):
     user = request.user
-    can_use_ai = user_has_open_ai_key_or_credit(user)
+    can_use_ai = user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request)
     config_info = get_user_config(user)
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)

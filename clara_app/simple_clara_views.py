@@ -82,7 +82,7 @@ from django.contrib.auth.models import User
 
 from django_q.tasks import async_task
 from .forms import SimpleClaraForm
-from .utils import get_user_config, user_has_open_ai_key_or_credit, create_internal_project_id, store_api_calls, store_cost_dict, make_asynch_callback_and_report_id
+from .utils import get_user_config, user_has_open_ai_key_or_credit, user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance, create_internal_project_id, store_api_calls, store_cost_dict, make_asynch_callback_and_report_id
 from .utils import user_has_a_project_role
 from .utils import get_task_updates
 from .utils import uploaded_file_to_file, get_phase_up_to_date_dict
@@ -424,7 +424,7 @@ def simple_clara(request, project_id, last_operation_status):
                     return redirect('simple_clara', new_project_id, new_status)
                 else:
                     #if not request.user.userprofile.credit > 0:
-                    if not user_has_open_ai_key_or_credit(user):
+                    if not user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request):
                         messages.error(request, f"Sorry, you need a registered OpenAI API key or money in your account to perform this operation")
                         return redirect('simple_clara', project_id, 'initial')
                     else:
@@ -1186,7 +1186,7 @@ def simple_clara_post_rendered_text_helper(username, project_id, simple_clara_ac
 @login_required
 def simple_clara_review_v2_images_for_page(request, project_id, page_number, from_view, status):
     user = request.user
-    can_use_ai = user_has_open_ai_key_or_credit(user)
+    can_use_ai = user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request)
     config_info = get_user_config(user)
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -1325,7 +1325,7 @@ def simple_clara_review_v2_images_for_page(request, project_id, page_number, fro
 @login_required
 def simple_clara_review_v2_images_for_element(request, project_id, element_name, from_view, status):
     user = request.user
-    can_use_ai = user_has_open_ai_key_or_credit(user)
+    can_use_ai = user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request)
     config_info = get_user_config(user)
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -1461,7 +1461,7 @@ def simple_clara_review_v2_images_for_element(request, project_id, element_name,
 @login_required
 def simple_clara_review_v2_images_for_style(request, project_id, from_view, status):
     user = request.user
-    can_use_ai = user_has_open_ai_key_or_credit(user)
+    can_use_ai = user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance(request)
     config_info = get_user_config(user)
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
