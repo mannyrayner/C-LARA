@@ -310,8 +310,11 @@
 						   data-toggle="tooltip" title="Post a JSON structure written by the AI, which updates the activities.">
 						   Post AI updates to activities</a>
 					<a class="dropdown-item" href="{% url 'add_credit' %}"
-						   data-toggle="tooltip" title="Add credit to a user's GPT-4 call account">
+						   data-toggle="tooltip" title="Add credit to a user's OpenAI call account">
 						   Add credit to user</a>
+					<a class="dropdown-item" href="{% url 'credit_balances_admin' %}"
+						   data-toggle="tooltip" title="Print information about OpenAI call accounts for all users">
+						   Show all credit information</a>
 					<a class="dropdown-item" href="{% url 'manage_user_permissions' %}"
 						   data-toggle="tooltip" title="Manage permissions for funding request reviewer, moderator and admin">
 						   Manage permissions</a>

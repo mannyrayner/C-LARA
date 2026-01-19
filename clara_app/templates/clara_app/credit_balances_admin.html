@@ -1,0 +1,38 @@
+{% extends 'clara_app/base.html' %}
+
+{% block content %}
+<h1>Credit Balances (Admin)</h1>
+
+<p>Total across all users: ${{ stats.total|floatformat:2 }} ({{ stats.n }} users)</p>
+
+<h2>Negative balances: {{ negative_profiles|length }}</h2>
+
+<table>
+  <tr>
+    <th>User</th>
+    <th>Credit</th>
+  </tr>
+  {% for p in negative_profiles %}
+    <tr>
+      <td>{{ p.user.username }}</td>
+      <td>${{ p.credit|floatformat:2 }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="2">(none)</td></tr>
+  {% endfor %}
+</table>
+
+<h2>All users</h2>
+<table>
+  <tr>
+    <th>User</th>
+    <th>Credit</th>
+  </tr>
+  {% for p in profiles %}
+    <tr>
+      <td>{{ p.user.username }}</td>
+      <td>${{ p.credit|floatformat:2 }}</td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}
