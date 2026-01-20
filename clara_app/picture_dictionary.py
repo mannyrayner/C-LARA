@@ -82,6 +82,14 @@ class PictureDictionary:
         )
         self.community = community
 
+    def find_existing_project(self) -> Optional[CLARAProject]:
+        """
+        Return the existing CLARAProject for this picture dictionary, or None.
+        Does not create anything.
+        """
+        internal_id = dictionary_internal_id(self.key)
+        return CLARAProject.objects.filter(internal_id=internal_id).first()
+
     @transaction.atomic
     def get_or_create_project(self, owner_user: User) -> Tuple[CLARAProject, CLARAProjectInternal, bool]:
         """
@@ -193,6 +201,116 @@ class PictureDictionary:
             "skipped": len(skipped),
             "saved_versions": saved_versions,
             "added_keys": [(e.lemma, e.is_mwe, e.lemma_gloss, e.pos) for e in to_add],
+        }
+
+    def harvest_images_to_repository(
+        self,
+        dict_internal,
+        status: str = "approved",
+        callback=None,
+        overwrite: bool = False,
+    ) -> dict:
+        """
+        Harvest page images from a *V2* picture dictionary project and store them
+        in the ImageGlossRepositoryORM.
+
+        We assume the dictionary text has 1 entry per page (1 segment, word/MWE),
+        and the corresponding image is under coherent_images_v2_project_dir/pages/pageN/image.jpg.
+
+        Returns counts.
+        """
+        language_id = self.key.l2
+        style_id = self.key.style
+        repo = ImageGlossRepositoryORM(callback=callback)
+
+        # Authoritative structure: lemma text
+        text_obj = dict_internal.get_internalised_text_exact()
+
+        # V2 image inventory (1-based page numbers)
+        images_dict = dict_internal.get_project_images_dict_v2()
+        pages_images = (images_dict or {}).get("pages", {}) or {}
+
+        project_dir = Path(absolute_file_name(dict_internal.coherent_images_v2_project_dir))
+
+        added = 0
+        skipped_no_image = 0
+        skipped_no_lemma = 0
+        skipped_already_present = 0
+        errors = 0
+
+        for page_number, page in enumerate(text_obj.pages, start=1):
+            # ---- Find the image for this page number (1-based) ----
+            page_data = pages_images.get(page_number)
+            rel = (page_data or {}).get("relative_file_path")
+            if not rel:
+                skipped_no_image += 1
+                continue
+
+            local_image_file = project_dir / rel
+            if not local_image_file.exists():
+                post_task_update(callback, f"*** Missing image file on disk for page {page_number}: {local_image_file}")
+                skipped_no_image += 1
+                continue
+
+            # ---- Derive lemma + lemma_gloss from the dictionary page ----
+
+            if not page.segments:
+                skipped_no_lemma += 1
+                continue
+            seg = page.segments[0]
+            words = [ce.content for ce in seg.content_elements if getattr(ce, "type", None) == "Word"]
+            if not words:
+                skipped_no_lemma += 1
+                continue
+
+            lemma = " ".join(words).strip()
+            lemma_gloss = ((seg.annotations or {}).get("translated", "") or "").strip()
+            is_mwe = len(words) > 1
+
+            # ---- Optional: avoid re-importing if entry already exists ----
+            if not overwrite:
+                existing = repo.get_entry(language_id, lemma, style_id, lemma_gloss=lemma_gloss, status=status)
+                if existing:
+                    skipped_already_present += 1
+                    continue
+
+            # ---- Store image + metadata ----
+            try:
+                stored_path = repo.store_image(
+                    str(local_image_file),
+                    language_id=language_id,
+                    style_id=style_id,
+                    lemma=lemma,
+                    lemma_gloss=lemma_gloss,
+                    callback=callback,
+                )
+
+                repo.add_or_update_entry(
+                    language_id,
+                    lemma,
+                    style_id,
+                    file_path,
+                    lemma_gloss=lemma_gloss,
+                    status=status,
+                    is_mwe=is_mwe,
+                    example_context="",  # could also store page_data['advice'] if useful
+                    callback=callback,
+                )
+                added += 1
+            except Exception as e:
+                errors += 1
+                post_task_update(callback, f"*** Error harvesting page {page_number} ({lemma}): {e}")
+
+        post_task_update(callback, f"--- Harvest complete: added={added}, "
+                                  f"skipped_no_image={skipped_no_image}, skipped_no_lemma={skipped_no_lemma}, "
+                                  f"skipped_already_present={skipped_already_present}, errors={errors}")
+
+        return {
+            "added": added,
+            "skipped_no_image": skipped_no_image,
+            "skipped_no_lemma": skipped_no_lemma,
+            "skipped_already_present": skipped_already_present,
+            "errors": errors,
         }
 
     # -----------------------

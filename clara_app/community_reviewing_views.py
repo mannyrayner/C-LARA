@@ -56,68 +56,122 @@ def perform_picture_glossing(request, project_id):
         messages.info(request, "Picture glossing is not enabled for this project.")
         return redirect('project_detail', project_id=project_id)
 
+    # Must be V2 coherent images (dictionary harvesting depends on it)
+    if not project.uses_coherent_image_set_v2:
+        messages.error(request, "Picture glossing currently requires coherent images V2 (not legacy V1).")
+        return redirect('project_detail', project_id=project_id)
+
     style = project.picture_gloss_style or "any"
+
+    # The dictionary project is always keyed by (community, l2, l1, style)
+    pd = PictureDictionary(project.community, project.l2, project.l1, style=style)
+
+    # We want to show link if it exists, but not auto-create on GET
+    dict_project = pd.find_existing_project()  # you'll add this (tiny) helper, see below
+
+    if request.method == "GET":
+        clara_version = get_user_config(request.user)['clara_version']
+        return render(
+            request,
+            "clara_app/perform_picture_glossing.html",
+            {
+                "project": project,
+                "style": style,
+                "dict_project": dict_project,
+                "dict_project_exists": bool(dict_project),
+                "clara_version": clara_version,
+            }
+        )
+
+    # POST: perform action
+    action = request.POST.get("action", "").strip()
+
+    # We will create the dictionary project if needed for actions that require it
+    dict_project, dict_internal, created = pd.get_or_create_project(request.user)
 
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    # Use the exact version, which requires aligned texts
-    try:
-        text_obj = clara_project_internal.get_internalised_text_exact()
-    except Exception as e:
-        messages.error(request, f"Error when trying to internalise text: {e}.")
-        raise e
+    callback, report_id = make_asynch_callback_and_report_id(request, f'picture_glossing_{action or "unknown"}')
 
-    # 1) Get or create the dictionary project for (community, l2, l1, style)
-    pd = PictureDictionary(project.community, project.l2, project.l1, style=style)
-    dict_project, dict_internal, created = pd.get_or_create_project(request.user)
+    if action == "queue_missing":
+        # Use exact internalised text (requires aligned versions)
+        try:
+            text_obj = clara_project_internal.get_internalised_text_exact()
+        except Exception as e:
+            messages.error(request, f"Error when trying to internalise text: {e}.")
+            raise
 
-    # 2) Run the image gloss annotator over text_obj, returning missing entries
-    # Adjust these to match your annotator's actual entrypoints.
-    annotator = ImageGlossAnnotator(
-        l2_language_id=project.l2,
-        style_id=style,
-        # likely also needs l1 / community / repo, depending on your implementation
-    )
+        annotator = ImageGlossAnnotator(
+            l2_language_id=project.l2,
+            style_id=style,
+        )
 
-    # The annotator should:
-    #  - attach image_gloss annotations where available
-    #  - return missing entries (lemmas) to be queued
-    #
-    # If your annotator has a single method, call it here.
-    #
-    # Example expected signature:
-    #   updated_text_obj, missing_entries = annotator.annotate(text_obj, callback=None)
-    #
-    callback, report_id = make_asynch_callback_and_report_id(request, 'picture_glossing')
-    updated_text_obj, missing_entries = annotator.annotate_text(text_obj, callback=callback)
+        updated_text_obj, missing_entries = annotator.annotate_text(text_obj, callback=callback)
 
-    # 3) Queue missing entries into the dictionary project
-    # Make them PictureDictionaryEntry objects (or dicts if you added from_dict support)
-    pd_entries = []
-    for d in missing_entries:
-        # d should include lemma,is_mwe,lemma_gloss,pos,example_context (pos optional)
-        pd_entries.append(PictureDictionaryEntry.from_dict(d))
+        pd_entries = [PictureDictionaryEntry.from_dict(d) for d in missing_entries]
 
-    result = pd.append_entries(
-        dict_internal,
-        pd_entries,
-        user_display_name=request.user.username,
-        source="human_revised",
-        callback=callback,
-    )
+        result = pd.append_entries(
+            dict_internal,
+            pd_entries,
+            user_display_name=request.user.username,
+            source="human_revised",
+            callback=callback,
+        )
 
-    # 4) Persist updated_text_obj in the normal “internalised_and_annotated” store
-    # This depends on your existing pipeline. Typically you already have a method
-    # or you pickle to clara_project_internal.internalised_and_annotated_text_path.
-    clara_project_internal.save_internalised_and_annotated_text(updated_text_obj)
+        clara_project_internal.save_internalised_and_annotated_text(updated_text_obj)
 
-    messages.success(
-        request,
-        f"Picture glossing: added {result['added']} new dictionary pages, "
-        f"skipped {result['skipped']} existing. "
-        f"Dictionary project: {dict_project.title}"
-    )
-    return redirect('project_detail', project_id=project_id)
+        messages.success(
+            request,
+            f"Queued missing picture gloss entries: added {result['added']} new dictionary pages, "
+            f"skipped {result['skipped']} existing. Dictionary project: {dict_project.title}"
+        )
+        return redirect('perform_picture_glossing', project_id=project_id)
+
+    elif action == "harvest_images":
+        # Harvest from dictionary project into ImageGlossRepositoryORM
+        result = pd.harvest_images_to_repository(
+            dict_internal,
+            callback=callback,
+        )
+        messages.success(
+            request,
+            f"Harvested dictionary images to repository: stored {result.get('added', 0)}, "
+            f"skipped {result.get('skipped', 0)}, missing {result.get('missing', 0)}."
+        )
+        return redirect('perform_picture_glossing', project_id=project_id)
+
+    elif action == "save_picture_glossed_text":
+        # Re-run annotation *after harvest*, and persist a new version for rendering.
+        # We should save it in a stable text version, e.g. "segmented_with_images" or new "picture_glossed".
+        # For now, we save internalised text and let rendering use image_gloss annotations later.
+        try:
+            text_obj = clara_project_internal.get_internalised_text_exact()
+        except Exception as e:
+            messages.error(request, f"Error when trying to internalise text: {e}.")
+            raise
+
+        annotator = ImageGlossAnnotator(
+            l2_language_id=project.l2,
+            style_id=style,
+        )
+
+        updated_text_obj, missing_entries = annotator.annotate_text(text_obj, callback=callback)
+
+        clara_project_internal.save_internalised_and_annotated_text(updated_text_obj)
+
+        messages.success(
+            request,
+            f"Harvested to repository: added {result['added']}, "
+            f"skipped (no image) {result['skipped_no_image']}, "
+            f"skipped (no lemma) {result['skipped_no_lemma']}, "
+            f"skipped (existing) {result['skipped_already_present']}, "
+            f"errors {result['errors']}."
+            )
+        return redirect('perform_picture_glossing', project_id=project_id)
+
+    else:
+        messages.error(request, f"Unknown picture glossing action: {action}")
+        return redirect('perform_picture_glossing', project_id=project_id)
 
 @login_required
 @user_is_community_member
