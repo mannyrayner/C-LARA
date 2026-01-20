@@ -1,0 +1,41 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h1>Picture Glossing: {{ project.title }}</h1>
+
+<p><b>Language:</b> {{ project.l2 }}</p>
+<p><b>Gloss language:</b> {{ project.l1 }}</p>
+<p><b>Style:</b> {{ style }}</p>
+
+<hr>
+
+<p><b>Picture dictionary project:</b>
+{% if dict_project_exists %}
+  <a href="{% url 'project_detail' dict_project.id %}">{{ dict_project.title }}</a>
+{% else %}
+  <span style="color: #888;">(not created yet)</span>
+{% endif %}
+</p>
+
+<hr>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" name="action" value="queue_missing">
+    A) Extract/queue missing entries into dictionary project
+  </button>
+</form>
+
+<br>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" name="action" value="harvest_images">
+    B) Harvest dictionary images into repository
+  </button>
+</form>
+
+<br>
+
+<p><a href="{% url 'project_detail' project.id %}">Back to project</a></p>
+{% endblock %}
