@@ -350,7 +350,7 @@ urlpatterns = [
     ),
     path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', serving_content_views.serve_audio_file, name='serve_audio_file'),
     path('image_gloss_file/<int:metadata_id>/', serving_content_views.image_gloss_file, name='image_gloss_file'),
-    path('image_gloss_file_direct/<int:file_path>/', serving_content_views.image_gloss_file_direct, name='image_gloss_file_direct'),
+##    path('image_gloss_file_direct/<int:file_path>/', serving_content_views.image_gloss_file_direct, name='image_gloss_file_direct'),
 
 ##    path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
 ##    path('manual_audio_alignment_integration_endpoint2/', views.manual_audio_alignment_integration_endpoint2, name='manual_audio_alignment_integration_endpoint2'),

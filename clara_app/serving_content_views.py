@@ -203,13 +203,13 @@ def image_gloss_file(request, metadata_id: int):
     resp["Cache-Control"] = "private, max-age=3600"
     return resp
 
-@login_required
-def image_gloss_file_direct(request, file_path):
-    p = file_path
-    if not p.exists() or not p.is_file():
-        raise Http404(f"Image gloss file not found: {p}")
-
-    # Let the browser cache a bit; tweak as desired
-    resp = FileResponse(open(p, "rb"), content_type="image/jpeg")
-    resp["Cache-Control"] = "private, max-age=3600"
-    return resp
+##@login_required
+##def image_gloss_file_direct(request, file_path):
+##    p = file_path
+##    if not p.exists() or not p.is_file():
+##        raise Http404(f"Image gloss file not found: {p}")
+##
+##    # Let the browser cache a bit; tweak as desired
+##    resp = FileResponse(open(p, "rb"), content_type="image/jpeg")
+##    resp["Cache-Control"] = "private, max-age=3600"
+##    return resp
