@@ -131,7 +131,6 @@
 	      data-tooltip="Tell the AI to mark multi-word expressions in each segment.">
 		  Create/Edit MWE-tagged Text</a>
 		  {% if up_to_date_dict.mwe %}✓{% endif %}</p>
-	{% endif %}
 	{% if project.uses_coherent_image_set_v2 %}
 		  <p><a href="{% url 'edit_images_v2' project.id 'none' %}" 
 			  data-tooltip="Edit images and different annotated versions of the text, split up by page." 

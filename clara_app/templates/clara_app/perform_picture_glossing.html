@@ -19,6 +19,15 @@
 
 <hr>
 
+<p>
+  <b>Image gloss repository browser:</b>
+  <a href="{% url 'image_gloss_browse' project.id %}">
+    Browse / debug image glosses for this project
+  </a>
+</p>
+
+<hr>
+
 <form method="post">
   {% csrf_token %}
   <button type="submit" name="action" value="queue_missing">

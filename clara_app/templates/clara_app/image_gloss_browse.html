@@ -1,0 +1,119 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h1>Image Gloss Browser: {{ project.title }}</h1>
+
+<p>
+  Shows lemmas/MWEs used in this project, whether or not an image exists in the repository.
+  Results are capped (500) to keep things responsive.
+</p>
+
+<p>
+  <a href="{% url 'perform_picture_glossing' project.id %}">← Back to Picture Glossing menu</a> |
+  <a href="{% url 'project_detail' project.id %}">Back to project</a>
+</p>
+
+<hr>
+
+<form method="get" style="margin-bottom: 1em;">
+  <label>
+    <b>Status:</b>
+    <input type="text" name="status" value="{{ filters.status }}" placeholder="e.g. approved">
+  </label>
+
+  &nbsp;&nbsp;
+
+  <label>
+    <b>Search lemma substring:</b>
+    <input type="text" name="q" value="{{ filters.q }}" style="width: 360px;">
+  </label>
+
+  <br><br>
+
+  <label>
+    <input type="checkbox" name="mwes_only" value="1" {% if filters.mwes_only %}checked{% endif %}>
+    MWEs only
+  </label>
+
+  &nbsp;&nbsp;
+
+  <label>
+    <input type="checkbox" name="missing_only" value="1" {% if filters.missing_only %}checked{% endif %}>
+    Missing only
+  </label>
+
+  <br><br>
+
+  <button type="submit">Apply filters</button>
+  &nbsp;
+  <a href="{% url 'image_gloss_browse' project.id %}">Reset</a>
+</form>
+
+<hr>
+
+<p>
+  <b>Total lemmas in project:</b> {{ counts.total_lemmas }} |
+  <b>Found:</b> {{ counts.found }} |
+  <b>Missing:</b> {{ counts.missing }} |
+  <b>Shown:</b> {{ counts.shown }}
+  {% if counts.truncated %}
+    <span style="color:#a00;">(truncated to 500)</span>
+  {% endif %}
+</p>
+
+{% if rows %}
+  <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <thead>
+      <tr>
+        <th>Preview</th>
+        <th>Status</th>
+        <th>Lemma</th>
+        <th>Lemma gloss</th>
+        <th>MWE?</th>
+        <th>Updated</th>
+        <th>File path</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td style="width: 90px; text-align: center;">
+            {% if row.has_image %}
+              <a href="{% url 'image_gloss_file' row.metadata_id %}" target="_blank" title="Open image">
+                <img src="{% url 'image_gloss_file' row.metadata_id %}" style="max-height: 60px; max-width: 80px;">
+              </a>
+            {% else %}
+              <span style="color:#888;">(missing)</span>
+            {% endif %}
+          </td>
+
+          <td>{{ row.status|default:"" }}</td>
+
+          <td><code>{{ row.lemma }}</code></td>
+
+          <td><code>{{ row.lemma_gloss }}</code></td>
+
+          <td>{% if row.is_mwe %}✓{% endif %}</td>
+
+          <td>
+            {% if row.updated_at %}
+              {{ row.updated_at|date:"Y-m-d H:i" }}
+            {% endif %}
+          </td>
+
+          <td style="font-size: 90%;"><code>{{ row.file_path }}</code></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p><i>No entries matched your filters.</i></p>
+{% endif %}
+
+<hr>
+
+<p>
+  <a href="{% url 'perform_picture_glossing' project.id %}">← Back to Picture Glossing menu</a>
+</p>
+
+{% endblock %}
