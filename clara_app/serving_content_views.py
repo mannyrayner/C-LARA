@@ -4,7 +4,8 @@ from django.http import HttpResponse, FileResponse, Http404
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.conf import settings
 from django.utils.http import unquote
-from .models import CLARAProject
+
+from .models import CLARAProject, ImageGlossMetadata
 
 from .clara_main import CLARAProjectInternal
 #from .clara_audio_repository import AudioRepository
@@ -184,3 +185,31 @@ def serve_audio_file(request, engine_id, l2, voice_id, base_filename):
             return HttpResponse(open(file_path, 'rb'), content_type=content_type)
     else:
         raise Http404
+
+@login_required
+def image_gloss_file(request, metadata_id: int):
+    obj = get_object_or_404(ImageGlossMetadata, pk=metadata_id)
+
+    # Optional policy hook:
+    # If you later decide to restrict by community, you’ll need to add community_id to the model
+    # or enforce via other logic here.
+
+    p = Path(obj.file_path or "")
+    if not p.exists() or not p.is_file():
+        raise Http404("Image gloss file not found")
+
+    # Let the browser cache a bit; tweak as desired
+    resp = FileResponse(open(p, "rb"), content_type="image/jpeg")
+    resp["Cache-Control"] = "private, max-age=3600"
+    return resp
+
+@login_required
+def image_gloss_file_direct(request, file_path):
+    p = file_path
+    if not p.exists() or not p.is_file():
+        raise Http404(f"Image gloss file not found: {p}")
+
+    # Let the browser cache a bit; tweak as desired
+    resp = FileResponse(open(p, "rb"), content_type="image/jpeg")
+    resp["Cache-Control"] = "private, max-age=3600"
+    return resp

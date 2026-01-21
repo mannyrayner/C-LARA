@@ -25,6 +25,8 @@ from .clara_utils import (
 )
 from .clara_image_gloss_repository_orm import ImageGlossRepositoryORM
 
+from .models import ImageGlossMetadata
+
 import traceback
 
 
@@ -74,7 +76,7 @@ class ImageGlossAnnotator:
             self._fill_lemma_glosses(items, callback=callback)
 
             # Batch lookup approved image paths
-            file_paths = self.image_repository.get_entry_batch(
+            image_meta_data_dict = self.image_repository.get_entry_batch(
                 language_id=self.language_id,
                 lemmas=[it['lemma'] for it in items],
                 style_id=self.style_id,
@@ -83,7 +85,7 @@ class ImageGlossAnnotator:
             )
 
             # Mark missing and attach annotations
-            missing = self._add_image_gloss_annotations(text_obj, items, file_paths, callback=callback)
+            missing = self._add_image_gloss_annotations(text_obj, items, image_meta_data_dict, callback=callback)
 
             post_task_update(callback, "--- Image gloss annotation complete")
             return text_obj, missing
@@ -198,7 +200,7 @@ class ImageGlossAnnotator:
                 post_task_update(callback, f"*** lemma_gloss_resolver failed for lemma '{lemma}': {str(e)}")
                 it['lemma_gloss'] = ''
 
-    def _add_image_gloss_annotations(self, text_obj, items, file_paths, callback=None):
+    def _add_image_gloss_annotations(self, text_obj, items, image_meta_data_dict, callback=None):
         """
         Attach image gloss annotations to the actual Word elements in the text.
         Also return a list of missing dictionary entries to queue.
@@ -233,7 +235,7 @@ class ImageGlossAnnotator:
                             lemma_gloss = wanted[key].get('lemma_gloss', '') or ''
                             break
 
-                    fp = file_paths.get((lemma, lemma_gloss), None)
+                    fp = image_meta_data_dict.get((lemma, lemma_gloss), None)
 
                     if fp:
                         # Store a structured annotation. Keep it analogous in spirit to audio's 'tts' dict.

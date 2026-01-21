@@ -76,7 +76,7 @@ have different numbers of word content elements: {word_content_elements1} {len1}
             if segments_or_content_elements == 'content_elements':
                 for ( content_element1, content_element2 ) in zip(word_content_elements1, word_content_elements2) :
 
-                    print(f'--- Merging {content_element1} and {content_element2}')
+                    #print(f'--- Merging {content_element1} and {content_element2}')
 
                     if content_element1.content != content_element2.content or content_element1.type != content_element2.type :
                         ErrorMessage = f"""Content elements page = {page_index}, segment = {segment_index} element = {content_element_index}
@@ -90,7 +90,7 @@ in call to merge_text_object_with_other_text_object have different content or ty
                         content_annotations1['pos'] = content_element2.annotations['pos']
                     content_element1.annotations = content_annotations1
 
-                    print(f'--- Result: {content_element1}')
+                    #print(f'--- Result: {content_element1}')
 
     return text1                         
 

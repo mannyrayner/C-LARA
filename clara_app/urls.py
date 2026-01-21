@@ -277,6 +277,7 @@ urlpatterns = [
          name='execute_community_requests_for_page_status'),
 
     path('project/<int:project_id>/perform_picture_glossing/', community_reviewing_views.perform_picture_glossing, name='perform_picture_glossing'),
+    path('project/<int:project_id>/image_gloss_browse/', community_reviewing_views.image_gloss_browse, name='image_gloss_browse'),
 
     # Language games
     path("kok_kaper_game/", language_game_views.kok_kaper_animal_game, name="kok_kaper_game"),
@@ -348,6 +349,8 @@ urlpatterns = [
         name='serve_coherent_images_v2_file'
     ),
     path('serve_audio_file/<str:engine_id>/<str:l2>/<str:voice_id>/<str:base_filename>', serving_content_views.serve_audio_file, name='serve_audio_file'),
+    path('image_gloss_file/<int:metadata_id>/', serving_content_views.image_gloss_file, name='image_gloss_file'),
+    path('image_gloss_file_direct/<int:file_path>/', serving_content_views.image_gloss_file_direct, name='image_gloss_file_direct'),
 
 ##    path('manual_audio_alignment_integration_endpoint1/<int:project_id>/', views.manual_audio_alignment_integration_endpoint1, name='manual_audio_alignment_integration_endpoint1'),
 ##    path('manual_audio_alignment_integration_endpoint2/', views.manual_audio_alignment_integration_endpoint2, name='manual_audio_alignment_integration_endpoint2'),

@@ -1260,14 +1260,14 @@ class CLARAProjectInternal:
         if self.text_versions["pinyin"]:
             pinyin_tagged_text = self.load_text_version_normalised("pinyin")
             internalised_pinyin_text = internalize_text(pinyin_tagged_text, self.l2_language, self.l1_language, 'pinyin')
-            print(f'internalised_pinyin_text: {internalised_pinyin_text}')
+            #print(f'internalised_pinyin_text: {internalised_pinyin_text}')
             merged_text = merge_text_object_with_other_text_object_exact(merged_text, internalised_pinyin_text, 'pinyin', 'content_elements')
-            print(f'merged including internalised_pinyin_text: {merged_text}')
+            #print(f'merged including internalised_pinyin_text: {merged_text}')
         if self.text_versions["translated"]:
             translated_tagged_text = self.load_text_version_normalised("translated")
-            print(f"Translated text: {translated_tagged_text}'")
+            #print(f"Translated text: {translated_tagged_text}'")
             internalised_translated_text = internalize_text(translated_tagged_text, self.l2_language, self.l1_language, 'translated')
-            print(f"Translated internalised text: {internalised_translated_text}'")
+            #print(f"Translated internalised text: {internalised_translated_text}'")
             merged_text = merge_text_object_with_other_text_object_exact(merged_text, internalised_translated_text, 'translated', 'segments')
         if self.text_versions["mwe"]:
             mwe_tagged_text = self.load_text_version_normalised("mwe")

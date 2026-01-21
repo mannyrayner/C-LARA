@@ -2,7 +2,6 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib import messages
-from .models import CLARAProject
 
 from django_q.tasks import async_task
 from .utils import get_user_config, user_has_open_ai_key_or_credit, user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance
@@ -12,14 +11,12 @@ from .utils import get_task_updates
 from .utils import uploaded_file_to_file
 from .utils import user_is_community_member, user_is_community_coordinator, community_role_required
 
-from .clara_main import CLARAProjectInternal
-from .clara_coherent_images_utils import project_pathname
-from .clara_coherent_images_utils import read_project_json_file, project_pathname
+from .clara_coherent_images_utils import project_pathname, read_project_json_file, project_pathname
 
-from clara_app.picture_dictionary import PictureDictionary, PictureDictionaryEntry
-from clara_app.clara_image_gloss_annotator import ImageGlossAnnotator
-from clara_app.models import CLARAProject, CommunityMembership
-from clara_app.clara_main import CLARAProjectInternal
+from .picture_dictionary import PictureDictionary, PictureDictionaryEntry
+from .clara_image_gloss_annotator import ImageGlossAnnotator
+
+from .clara_image_gloss_repository_orm import ImageGlossRepositoryORM
 
 from .clara_coherent_images_alternate import get_alternate_images_json, set_alternate_image_hidden_status
 
@@ -28,8 +25,13 @@ from .clara_coherent_images_community_feedback import (register_cm_image_vote, r
                                                        get_page_overview_info_for_cm_reviewing,
                                                        get_page_description_info_for_cm_reviewing,
                                                        update_ai_votes_in_feedback, get_all_cm_requests_for_page, set_cm_request_status)
+
+from .models import CLARAProject, CommunityMembership, ImageGlossMetadata
+from .clara_main import CLARAProjectInternal
+
 from .clara_utils import get_config
 from .clara_utils import post_task_update
+
 import logging
 import traceback
 import asyncio
@@ -146,6 +148,141 @@ def perform_picture_glossing(request, project_id):
     else:
         messages.error(request, f"Unknown picture glossing action: {action}")
         return redirect('perform_picture_glossing', project_id=project_id)
+
+@login_required
+@user_has_a_project_role
+@user_is_community_member
+def image_gloss_browse(request, project_id):
+    """
+    Project-scoped browser/debugger for image glosses.
+
+    Shows *lemmas used in this project* (one row per lemma/MWE), whether or not
+    an image gloss entry exists in the repository.
+    """
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    # Safety: must be attached to a community and user must be in it
+    if not project.community:
+        messages.error(request, "Attach this project to a community first.")
+        return redirect('project_detail', project_id=project_id)
+
+    if not CommunityMembership.objects.filter(community=project.community, user=request.user).exists():
+        messages.error(request, "You are not a member of this community.")
+        return redirect('project_detail', project_id=project_id)
+
+    # Defaults
+    language_id = project.l2
+    style_id = (project.picture_gloss_style or "any").strip() or "any"
+
+    # Filters from GET
+    status = (request.GET.get("status") or "approved").strip()
+    qtext = (request.GET.get("q") or "").strip()
+    mwes_only = (request.GET.get("mwes_only") or "").strip() == "1"
+    missing_only = (request.GET.get("missing_only") or "").strip() == "1"
+
+    # Internalise project text
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    try:
+        text_obj = clara_project_internal.get_internalised_text_exact()
+    except Exception as e:
+        messages.error(request, f"Could not internalise text (exact): {e}")
+        return redirect('project_detail', project_id=project_id)
+
+    # Extract lemmas/MWEs from text
+    # We keep it deliberately simple for V1: take Word content per segment,
+    # and treat MWEs as any multi-word lemma.
+    lemmas_set = set()
+
+    for page in getattr(text_obj, "pages", []) or []:
+        for seg in getattr(page, "segments", []) or []:
+            # Pull out all word tokens in this segment
+            words = []
+            for ce in getattr(seg, "content_elements", []) or []:
+                if getattr(ce, "type", None) == "Word":
+                    lemma = ce.annotations.get("lemma", "").strip()
+                    gloss = ce.annotations.get("gloss", "").strip()
+                    if lemma:
+                        lemmas_set.add( (lemma, gloss) )
+
+    lemmas = sorted(lemmas_set, key=lambda s: (len(s[0].split()), s[0].lower()))
+
+    # Apply filters on lemma list (before repo lookup, for speed)
+    if qtext:
+        q_lower = qtext.lower()
+        lemmas = [l for l in lemmas if (q_lower in l[0].lower())]
+
+    if mwes_only:
+        lemmas = [l for l in lemmas if len(l[0].split()) > 1]
+
+    # Hard limit to avoid huge pages
+    MAX_LEMMAS = 500
+    truncated = False
+    if len(lemmas) > MAX_LEMMAS:
+        lemmas = lemmas[:MAX_LEMMAS]
+        truncated = True
+
+    # Repo lookup
+    repo = ImageGlossRepositoryORM()
+
+    rows = []
+    missing_count = 0
+    found_count = 0
+
+    for ( lemma, lemma_gloss ) in lemmas:
+        # V1: we don’t have stable lemma_gloss here. Start with ''.
+        entry_obj = repo.get_entry_obj(
+            language_id=language_id,
+            lemma=lemma,
+            style_id=style_id,
+            lemma_gloss=lemma_gloss,
+            status=''
+        )
+
+        if entry_obj:
+            found_count += 1
+            rows.append({
+                "lemma": lemma,
+                "is_mwe": bool(entry_obj.is_mwe) or (len(lemma.split()) > 1),
+                "lemma_gloss": entry_obj.lemma_gloss or "",
+                "status": entry_obj.status or "",
+                "file_path": entry_obj.file_path or "",
+                "updated_at": entry_obj.updated_at,
+                "metadata_id": entry_obj.id,
+                "has_image": bool(entry_obj.file_path),
+            })
+        else:
+            missing_count += 1
+            rows.append({
+                "lemma": lemma,
+                "is_mwe": (len(lemma.split()) > 1),
+                "lemma_gloss": "",
+                "status": "",
+                "file_path": "",
+                "updated_at": None,
+                "metadata_id": None,
+                "has_image": False,
+            })
+            
+    if missing_only:
+        rows = [r for r in rows if not r["has_image"]]
+
+    return render(request, "clara_app/image_gloss_browse.html", {
+        "project": project,
+        "rows": rows,
+        "counts": {
+            "total_lemmas": len(lemmas_set),
+            "shown": len(rows),
+            "found": found_count,
+            "missing": missing_count,
+            "truncated": truncated,
+        },
+        "filters": {
+            "status": status,
+            "q": qtext,
+            "mwes_only": mwes_only,
+            "missing_only": missing_only,
+        },
+    })
 
 @login_required
 @user_is_community_member

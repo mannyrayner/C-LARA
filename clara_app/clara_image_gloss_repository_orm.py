@@ -209,7 +209,9 @@ class ImageGlossRepositoryORM:
             qs = qs.filter(status=status)
 
         obj = qs.order_by('-updated_at').first()
-        return obj.file_path if obj else None
+        file_path = obj.file_path if obj else None
+        print(f'get_entry(self, {language_id}, {lemma}, {style_id}, {lemma_gloss}, {status} = {file_path}')
+        return file_path
 
     def get_entry_batch(self, language_id, lemmas, style_id, lemma_glosses=None, status='approved'):
         """
@@ -255,6 +257,52 @@ class ImageGlossRepositoryORM:
                 result[key] = obj.file_path
                 seen.add(key)
 
+        return result
+
+    def get_entry_obj(self, language_id, lemma, style_id, lemma_gloss='', status='approved'):
+        qs = ImageGlossMetadata.objects.filter(
+            language_id=language_id,
+            style_id=style_id,
+            lemma=lemma,
+            lemma_gloss=lemma_gloss or '',
+        )
+        if status:
+            qs = qs.filter(status=status)
+        return qs.order_by('-updated_at').first()
+
+    def get_entry_batch_objs(self, language_id, lemmas, style_id, lemma_glosses=None, status='approved'):
+        if not lemmas:
+            return {}
+
+        if lemma_glosses is None:
+            lemma_glosses = [''] * len(lemmas)
+        if len(lemma_glosses) != len(lemmas):
+            raise InternalCLARAError('get_entry_batch_objs: lemma_glosses length must match lemmas length')
+
+        wanted_pairs = {(lemmas[i], lemma_glosses[i] or '') for i in range(len(lemmas))}
+
+        qs = ImageGlossMetadata.objects.filter(language_id=language_id, style_id=style_id)
+        if status:
+            qs = qs.filter(status=status)
+
+        all_empty = all((d or '') == '' for d in lemma_glosses)
+        if all_empty:
+            qs = qs.filter(lemma__in=lemmas, lemma_gloss='')
+        else:
+            q = Q()
+            for (lemma, lemma_gloss) in wanted_pairs:
+                q |= Q(lemma=lemma, lemma_gloss=lemma_gloss)
+            qs = qs.filter(q)
+
+        qs = qs.order_by('lemma', 'lemma_gloss', '-updated_at')
+
+        result = {(lemma, lemma_gloss): None for (lemma, lemma_gloss) in wanted_pairs}
+        seen = set()
+        for obj in qs:
+            key = (obj.lemma, obj.lemma_gloss or '')
+            if key in result and key not in seen:
+                result[key] = obj
+                seen.add(key)
         return result
 
     # ---------------------------
