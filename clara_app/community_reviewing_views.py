@@ -135,32 +135,6 @@ def perform_picture_glossing(request, project_id):
         )
         messages.success(
             request,
-            f"Harvested dictionary images to repository: stored {result.get('added', 0)}, "
-            f"skipped {result.get('skipped', 0)}, missing {result.get('missing', 0)}."
-        )
-        return redirect('perform_picture_glossing', project_id=project_id)
-
-    elif action == "save_picture_glossed_text":
-        # Re-run annotation *after harvest*, and persist a new version for rendering.
-        # We should save it in a stable text version, e.g. "segmented_with_images" or new "picture_glossed".
-        # For now, we save internalised text and let rendering use image_gloss annotations later.
-        try:
-            text_obj = clara_project_internal.get_internalised_text_exact()
-        except Exception as e:
-            messages.error(request, f"Error when trying to internalise text: {e}.")
-            raise
-
-        annotator = ImageGlossAnnotator(
-            l2_language_id=project.l2,
-            style_id=style,
-        )
-
-        updated_text_obj, missing_entries = annotator.annotate_text(text_obj, callback=callback)
-
-        clara_project_internal.save_internalised_and_annotated_text(updated_text_obj)
-
-        messages.success(
-            request,
             f"Harvested to repository: added {result['added']}, "
             f"skipped (no image) {result['skipped_no_image']}, "
             f"skipped (no lemma) {result['skipped_no_lemma']}, "

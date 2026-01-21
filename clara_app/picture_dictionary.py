@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import re
 import time
+from pathlib import Path
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -13,11 +14,9 @@ from django.db import transaction
 from clara_app.models import CLARAProject, Community
 from clara_app.clara_main import CLARAProjectInternal
 
-# Adjust these imports to wherever the internal text classes live in your codebase
-# (names based on your description).
 from clara_app.clara_classes import Text, Page, Segment, ContentElement
-
-from clara_app.clara_utils import post_task_update
+from clara_app.clara_utils import post_task_update, absolute_file_name
+from clara_app.clara_image_gloss_repository_orm import ImageGlossRepositoryORM
 
 DICT_INTERNAL_ID_PREFIX = "picture_dict"
 
@@ -286,16 +285,17 @@ class PictureDictionary:
                 )
 
                 repo.add_or_update_entry(
-                    language_id,
-                    lemma,
-                    style_id,
-                    file_path,
+                    language_id=language_id,
+                    lemma=lemma,
+                    style_id=style_id,
+                    file_path=stored_path,
                     lemma_gloss=lemma_gloss,
                     status=status,
                     is_mwe=is_mwe,
-                    example_context="",  # could also store page_data['advice'] if useful
+                    example_context="",
                     callback=callback,
                 )
+
                 added += 1
             except Exception as e:
                 errors += 1

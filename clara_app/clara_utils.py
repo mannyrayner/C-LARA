@@ -1048,6 +1048,28 @@ def generate_unique_file_name(base_name, extension='mp3'):
     unique_id = uuid.uuid4()
     return f"{base_name}_{timestamp}_{unique_id}.{extension}"
 
+def generate_unique_file_path(directory, base, ext):
+    """
+    Return a unique full pathname inside `directory`.
+
+    directory: str|Path
+    base: filename stem, e.g. "dog-bark"
+    ext: extension including or excluding dot, e.g. ".jpg" or "jpg"
+    """
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+
+    ext = (ext or "").lower()
+    if ext and not ext.startswith("."):
+        ext = "." + ext
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:10]
+
+    filename = f"{base}_{timestamp}_{unique_id}{ext}"
+    return str(directory / filename)
+
+
 def adjust_file_path_for_imported_data(file_path, base_dir_non_orm, base_dir_orm, callback=None):
     abs_file_path = absolute_file_name(file_path)
     if not abs_file_path.startswith(base_dir_non_orm):

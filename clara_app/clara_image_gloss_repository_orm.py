@@ -34,7 +34,7 @@ from .clara_utils import (
     directory_exists,
     list_files_in_directory,
     post_task_update,
-    generate_unique_file_name,
+    generate_unique_file_path,
 )
 
 import traceback
@@ -184,7 +184,7 @@ class ImageGlossRepositoryORM:
 
         # Use a stable-ish base name, then uniquify
         base = self._safe_slug(f'{lemma}-{lemma_gloss}'.strip('-')) or 'lemma'
-        dest_file = generate_unique_file_name(lemma_dir, base, ext)
+        dest_file = generate_unique_file_path(lemma_dir, base, ext)
 
         copy_local_file(local_image_file, dest_file)
         post_task_update(callback, f'--- Stored image gloss file: {dest_file}')
