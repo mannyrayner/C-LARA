@@ -121,7 +121,6 @@
 		  {% if not can_create_segmented_title %}class="disabled-link"{% endif %}>
 		  Create/Edit Segmented Title</a>
 		  {% if up_to_date_dict.segmented_title %}✓{% endif %}</p>
-	{% if ai_enabled_l2 %}
 	<p><a href="{% url 'create_translated_text' project.id %}" 
 	      data-tooltip="Tell the AI to add a translation annotation to each segment."
 		  {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
@@ -173,7 +172,6 @@
 	      {% if not can_create_phonetic_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Phonetic Text</a>
 		  {% if up_to_date_dict.phonetic %}✓{% endif %}</p>
-	{% if ai_enabled_l2 %}
 	<p><a href="{% url 'create_lemma_tagged_text' project.id %}" 
 	      data-tooltip="Tell the AI to add lemma and part-of-speech tags to the words in the text. Alternatively, edit the result or add your own tags." 
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}">
@@ -197,7 +195,6 @@
 	      {% if not can_create_pinyin_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Pinyin Tagged Text</a>
 		  {% if up_to_date_dict.pinyin %}✓{% endif %}</p>
-	{% endif %}
 	<!-- <p><a href="{% url 'get_audio_metadata' project.id %}" {% if not can_render %}class="disabled-link"{% endif %}>Get Audio Metadata</a></p> -->
 	<p><a href="{% url 'human_audio_processing' project.id %}" 
 	      data-tooltip="Specify audio options for normal text. If you are using human-recorded audio, upload it." 
