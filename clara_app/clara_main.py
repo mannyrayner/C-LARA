@@ -818,7 +818,7 @@ class CLARAProjectInternal:
         try:
             text_object = internalize_text(text, self.l2_language, self.l1_language, version)
             self.save_text_version(version, text, source='human_edited')
-##            # Do this so that we get an exception if the MWEs don't match the text
+            # Do this so that we get an exception if the MWEs don't match the text
 ##            if version == 'mwe':
 ##                annotate_mwes_in_text(text_object)
             api_calls = []
@@ -1274,6 +1274,7 @@ class CLARAProjectInternal:
             mwe_tagged_text = self.load_text_version_normalised("mwe")
             internalised_mwe_tagged_text = internalize_text(mwe_tagged_text, self.l2_language, self.l1_language, 'mwe')
             merged_text = merge_text_object_with_other_text_object_exact(merged_text, internalised_mwe_tagged_text, 'mwes', 'segments')
+            annotate_mwes_in_text(merged_text)
 
         return merged_text
 
