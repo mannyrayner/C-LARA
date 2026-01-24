@@ -240,7 +240,7 @@ class ImageGlossAnnotator:
                     if metadata_obj:
                         # Store the metadata id, that's enough
                         metadata_id = metadata_obj.id
-                        content_element.annotations["image_gloss_url"] = f"/image_gloss_file/{metadata_id}/"
+                        content_element.annotations["image_gloss_url"] = f"/accounts/image_gloss_file/{metadata_id}/"
                         hits += 1
                     else:
                         # Record missing entry (dedup)
