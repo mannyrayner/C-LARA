@@ -150,6 +150,7 @@ from .clara_merge_glossed_and_tagged import merge_glossed_and_tagged, merge_glos
 from .clara_merge_glossed_and_tagged import merge_with_translation_annotations, merge_with_mwe_annotations
 from .clara_merge_glossed_and_tagged import merge_text_object_with_other_text_object_exact
 from .clara_audio_annotator import AudioAnnotator
+from .clara_image_gloss_annotator import ImageGlossAnnotator
 from .clara_concordance_annotator import ConcordanceAnnotator
 from .clara_image_repository_orm import ImageRepositoryORM
 from .clara_phonetic_lexicon_repository_orm import PhoneticLexiconRepositoryORM
@@ -1280,6 +1281,8 @@ class CLARAProjectInternal:
     # Create an internalised version of the text including gloss, lemma, audio and concordance annotations
     # Requires 'gloss' and 'lemma' texts.
     def get_internalised_and_annotated_text(self,
+                                            uses_picture_glossing=False,
+                                            picture_gloss_style=False,
                                             for_questionnaire=False,
                                             title=None,
                                             human_voice_id=None,
@@ -1308,6 +1311,15 @@ class CLARAProjectInternal:
                                              phonetic=phonetic, callback=callback)
             audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
             post_task_update(callback, f"--- Audio annotations done")
+            if uses_picture_glossing:
+                post_task_update(callback, f"--- Adding picture gloss annotations")
+                img_annotator = ImageGlossAnnotator(
+                    l2_language_id=self.l2_language,
+                    style_id=picture_gloss_style,
+                    callback=callback
+                    )
+                img_annotator.annotate_text(text_object, callback=callback)
+                post_task_update(callback, "--- Image gloss annotations done")
 
         # Add acknowledgements after audio annotation, because we don't want audio on them
         if acknowledgements_info:
@@ -2161,6 +2173,8 @@ class CLARAProjectInternal:
     # First create an internalised version of the text including gloss, lemma, audio and concordance annotations.
     # Requires 'gloss' and 'lemma' texts.
     def render_text(self, project_id, self_contained=False,
+                    uses_picture_glossing=False,
+                    picture_gloss_style=False,
                     preferred_tts_engine=None, preferred_tts_voice=None,
                     human_voice_id=None,
                     audio_type_for_words='tts', audio_type_for_segments='tts',
@@ -2170,6 +2184,8 @@ class CLARAProjectInternal:
         l2 = self.l2_language
         title = self.load_text_version_or_null("title")
         text_object = self.get_internalised_and_annotated_text(title=title,
+                                                               uses_picture_glossing = uses_picture_glossing,
+                                                               picture_gloss_style = picture_gloss_style,
                                                                preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                                                human_voice_id=human_voice_id,
                                                                audio_type_for_words=audio_type_for_words,

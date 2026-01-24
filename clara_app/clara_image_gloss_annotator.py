@@ -76,7 +76,7 @@ class ImageGlossAnnotator:
             self._fill_lemma_glosses(items, callback=callback)
 
             # Batch lookup approved image paths
-            image_meta_data_dict = self.image_repository.get_entry_batch(
+            image_meta_data_dict = self.image_repository.get_entry_batch_objs(
                 language_id=self.language_id,
                 lemmas=[it['lemma'] for it in items],
                 style_id=self.style_id,
@@ -235,18 +235,12 @@ class ImageGlossAnnotator:
                             lemma_gloss = wanted[key].get('lemma_gloss', '') or ''
                             break
 
-                    fp = image_meta_data_dict.get((lemma, lemma_gloss), None)
+                    metadata_obj = image_meta_data_dict.get((lemma, lemma_gloss), None)
 
-                    if fp:
-                        # Store a structured annotation. Keep it analogous in spirit to audio's 'tts' dict.
-                        # Renderer can later decide how to turn file_path into a served URL.
-                        content_element.annotations['image_gloss'] = {
-                            "language_id": self.language_id,
-                            "style_id": self.style_id,
-                            "lemma": lemma,
-                            "lemma_gloss": lemma_gloss,
-                            "file_path": fp,
-                        }
+                    if metadata_obj:
+                        # Store the metadata id, that's enough
+                        metadata_id = metadata_obj.id
+                        content_element.annotations["image_gloss_url"] = f"/image_gloss_file/{metadata_id}/"
                         hits += 1
                     else:
                         # Record missing entry (dedup)

@@ -22,6 +22,8 @@ config = get_config()
 logger = logging.getLogger(__name__)
 
 def clara_project_internal_render_text(clara_project_internal, project_id,
+                                       uses_picture_glossing = False,
+                                       picture_gloss_style = False,
                                        audio_type_for_words='tts', audio_type_for_segments='tts',
                                        preferred_tts_engine=None, preferred_tts_voice=None,
                                        human_voice_id=None,
@@ -32,6 +34,8 @@ def clara_project_internal_render_text(clara_project_internal, project_id,
         format_preferences_info = FormatPreferences.objects.filter(project=project).first()
         acknowledgements_info = Acknowledgements.objects.filter(project=project).first()
         clara_project_internal.render_text(project_id,
+                                           uses_picture_glossing = uses_picture_glossing,
+                                           picture_gloss_style = picture_gloss_style,
                                            audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                            preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                            human_voice_id=human_voice_id,
@@ -71,6 +75,8 @@ def render_text_start_phonetic(request, project_id):
 def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+    uses_picture_glossing = project.uses_picture_glossing
+    picture_gloss_style = project.picture_gloss_style
 
     clara_version = get_user_config(request.user)['clara_version']
 
@@ -108,6 +114,8 @@ def render_text_start_phonetic_or_normal(request, project_id, phonetic_or_normal
                 phonetic = True if phonetic_or_normal == 'phonetic' else False
                 internalised_text = clara_project_internal.get_internalised_text(phonetic=phonetic)
                 task_id = async_task(clara_project_internal_render_text, clara_project_internal, project_id,
+                                     uses_picture_glossing = uses_picture_glossing,
+                                     picture_gloss_style = picture_gloss_style,
                                      audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                      preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                      human_voice_id=human_voice_id, self_contained=self_contained,
