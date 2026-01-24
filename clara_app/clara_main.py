@@ -1290,8 +1290,19 @@ class CLARAProjectInternal:
                                             preferred_tts_engine=None, preferred_tts_voice=None,
                                             acknowledgements_info=None,
                                             phonetic=False, callback=None) -> str:
+        trace = True
         post_task_update(callback, f"--- Creating internalised text")
-        text_object = self.get_internalised_text(phonetic=phonetic) 
+        try:
+            text_object = self.get_internalised_text_exact()
+            if trace: print(f'Used exact internalisation')
+        except Exception as e:
+            if trace: print(f'Exact internalisation failed: {e}')
+            text_object = self.get_internalised_text(phonetic=phonetic)
+            if trace: print(f'Used legacy internalisation')
+
+        if trace:
+            print(f'Text object before audio and image gloss annotation')
+            pprint.pprint(text_object)
         
         if not text_object:
             return None
@@ -1311,6 +1322,10 @@ class CLARAProjectInternal:
                                              phonetic=phonetic, callback=callback)
             audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
             post_task_update(callback, f"--- Audio annotations done")
+            if trace:
+                print(f'Text object after audio annotation')
+                pprint.pprint(text_object)
+            
             if uses_picture_glossing:
                 post_task_update(callback, f"--- Adding picture gloss annotations")
                 img_annotator = ImageGlossAnnotator(
@@ -1320,6 +1335,9 @@ class CLARAProjectInternal:
                     )
                 img_annotator.annotate_text(text_object, callback=callback)
                 post_task_update(callback, "--- Image gloss annotations done")
+                if trace:
+                    print(f'Text object after audio annotation')
+                    pprint.pprint(text_object)
 
         # Add acknowledgements after audio annotation, because we don't want audio on them
         if acknowledgements_info:

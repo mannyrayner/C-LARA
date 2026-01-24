@@ -68,7 +68,7 @@ class ImageGlossAnnotator:
         """
         try:
             post_task_update(callback, f"--- Collecting word/MWE items for image glossing")
-            post_task_update(callback, f"--- Text object = {text_obj}")
+            #post_task_update(callback, f"--- Text object = {text_obj}")
 
             items = self._collect_word_mwe_items(text_obj, callback=callback)
 
