@@ -38,6 +38,89 @@ function postMessageToParent(type, data) {
   }
 }
 
+// ------------------------------
+// Picture gloss (image) popups
+// ------------------------------
+let _activeImageGlossPopup = null;
+let _activeImageGlossAnchor = null;
+let _hideImageGlossTimer = null;
+
+function removeImageGlossPopup() {
+  if (_hideImageGlossTimer) {
+    clearTimeout(_hideImageGlossTimer);
+    _hideImageGlossTimer = null;
+  }
+  if (_activeImageGlossPopup) {
+    _activeImageGlossPopup.remove();
+    _activeImageGlossPopup = null;
+    _activeImageGlossAnchor = null;
+  }
+}
+
+function showImageGlossPopup(anchorEl, imageUrl, captionText) {
+  removeImageGlossPopup();
+
+  const popup = document.createElement("div");
+  popup.classList.add("image-gloss-popup");
+
+  const img = document.createElement("img");
+  img.src = imageUrl;
+  img.alt = captionText || "image gloss";
+  popup.appendChild(img);
+
+  if (captionText) {
+    const cap = document.createElement("div");
+    cap.classList.add("caption");
+    cap.textContent = captionText;
+    popup.appendChild(cap);
+  }
+
+  document.body.appendChild(popup);
+
+  // Position (default: below the word; keep within viewport)
+  const rect = anchorEl.getBoundingClientRect();
+  const margin = 8;
+
+  // Need dimensions after attach
+  const popupRect = popup.getBoundingClientRect();
+
+  let top = rect.bottom + window.scrollY + margin;
+  let left = rect.left + window.scrollX;
+
+  // Clamp right edge
+  const maxLeft = window.scrollX + window.innerWidth - popupRect.width - margin;
+  if (left > maxLeft) left = maxLeft;
+
+  // If it would go below, try above
+  const maxTop = window.scrollY + window.innerHeight - popupRect.height - margin;
+  if (top > maxTop) {
+    top = rect.top + window.scrollY - popupRect.height - margin;
+  }
+
+  // Final clamp
+  if (left < window.scrollX + margin) left = window.scrollX + margin;
+  if (top < window.scrollY + margin) top = window.scrollY + margin;
+
+  popup.style.left = `${left}px`;
+  popup.style.top = `${top}px`;
+
+  _activeImageGlossPopup = popup;
+  _activeImageGlossAnchor = anchorEl;
+
+  // If the user moves onto the popup, keep it open
+  popup.addEventListener("mouseenter", () => {
+    if (_hideImageGlossTimer) {
+      clearTimeout(_hideImageGlossTimer);
+      _hideImageGlossTimer = null;
+    }
+  });
+  popup.addEventListener("mouseleave", () => {
+    // tiny delay so it doesn’t flicker when moving back to the word
+    _hideImageGlossTimer = setTimeout(removeImageGlossPopup, 120);
+  });
+}
+
+
 function setUpEventListeners(contextDocument) {
   console.log("Setting up event listeners");
   const words = contextDocument.querySelectorAll('.word');
@@ -90,6 +173,34 @@ function setUpEventListeners(contextDocument) {
             allWordsInMwe.forEach(wordInMwe => wordInMwe.classList.remove('mwe-group-hover'));
         }
     });
+	
+  // ------------------------------
+  // Hover popups for image glosses
+  // ------------------------------
+  if (word.classList.contains("has-image-gloss")) {
+    word.addEventListener("mouseenter", () => {
+      const imageUrl = (word.getAttribute("data-image-gloss") || "").trim();
+      if (!imageUrl) return;
+
+      // Use the existing text gloss as a caption (or lemma as fallback)
+      const caption =
+        (word.getAttribute("data-gloss") || "").trim() ||
+        (word.getAttribute("data-lemma") || "").trim();
+
+      showImageGlossPopup(word, imageUrl, caption);
+    });
+
+    word.addEventListener("mouseleave", () => {
+      // small delay so moving from word -> popup doesn't immediately close it
+      _hideImageGlossTimer = setTimeout(() => {
+        // only remove if we’re still anchored to this word
+        if (_activeImageGlossAnchor === word) {
+          removeImageGlossPopup();
+        }
+      }, 120);
+    });
+  }
+
   }
 
   function setUpSpeakerIconEventListener(icon) {

@@ -62,6 +62,41 @@
   right: 0; /* Start positioning from the right edge */
 }
 
+/* -------------------------------
+   Picture gloss popups (image)
+-------------------------------- */
+
+/* If a word has an image-gloss, suppress the existing text tooltip */
+.word.has-image-gloss:hover::after,
+.svg-word.has-image-gloss:hover::after {
+  content: none !important;
+}
+
+.image-gloss-popup {
+  position: absolute;
+  z-index: 2000;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.15);
+  max-width: 240px;
+}
+
+.image-gloss-popup img {
+  display: block;
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 4px;
+}
+
+.image-gloss-popup .caption {
+  margin-top: 4px;
+  font-size: 0.9em;
+  color: #333;
+  line-height: 1.2;
+}
+
 .translation-icon {
     cursor: pointer;
     margin-left: 5px;
