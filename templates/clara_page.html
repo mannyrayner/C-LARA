@@ -52,6 +52,9 @@
 							{% if content_element.annotations.gloss %}
 								{% set data_attributes = data_attributes + ['data-gloss="' + content_element.annotations.gloss +'"'] %}
 							{% endif %}
+							{% if element.annotations.image_gloss_url %}
+								{% set data_attributes = data_attributes + ['data-image-gloss="' + content_element.annotations.image_gloss_url +'"'] %}
+							{% endif %}
 							{% if content_element.annotations.lemma %}
 								{% set data_attributes = data_attributes + ['data-lemma="' + content_element.annotations.lemma +'"'] %}
 							{% endif %}
@@ -78,14 +81,18 @@
 			{%- elif element.type == "Word" -%}
 				{%- if not phonetic -%}
 					{%- if element.annotations.pinyin -%}
-						<ruby class="word" data-gloss="{{ element.annotations.gloss if element.annotations.gloss else '' }}" 
+						<ruby class="word" 
+						      data-gloss="{{ element.annotations.gloss if element.annotations.gloss else '' }}" 
+							  data-image-gloss="{{ element.annotations.image_gloss_url if element.annotations.image_gloss_url else '' }}"
 							  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
 							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}"
 							  data-mwe-id="{{ element.annotations.mwe_id if element.annotations.mwe_id else '' }}">{{ element.content }}
 							<rt>{{ element.annotations.pinyin }}</rt>
 						</ruby>
 					{%- else -%}
-						<span class="word" data-gloss="{{ element.annotations.gloss|e if element.annotations.gloss else '' }}" 
+						<span class="word" 
+						      data-gloss="{{ element.annotations.gloss|e if element.annotations.gloss else '' }}" 
+							  data-image-gloss="{{ element.annotations.image_gloss_url if element.annotations.image_gloss_url else '' }}"
 							  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
 							  data-audio="{{ element.annotations.tts.file_path if element.annotations.tts else '' }}"
 							  data-mwe-id="{{ element.annotations.mwe_id if element.annotations.mwe_id else '' }}">{{ element.content }}</span>
