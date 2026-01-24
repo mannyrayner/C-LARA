@@ -30,11 +30,13 @@
   <div class="page-container {{ 'dir="rtl"' if is_rtl else '' }}">
     <div class="main-text-pane-wrapper">
 	  <div class="page" id="main-text-pane">
-		{% if page.annotations.tts.file_path %}
-			<p><audio controls>
-				<source src="{{ page.annotations.tts.file_path }}" type="audio/mpeg">
-				Your browser does not support the audio element.
-			</audio></p>
+		{% set page_tts = page.annotations.get('tts') %}
+		{% set page_tts_path = (page_tts.get('file_path') if page_tts is mapping else page_tts.file_path) if page_tts else '' %}
+		{% if page_tts_path %}
+		  <p><audio controls>
+			<source src="{{ page_tts_path }}" type="audio/mpeg">
+			Your browser does not support the audio element.
+		  </audio></p>
 		{% endif %}
 		{%- for segment in page.segments -%}
 		<span class="segment" 
@@ -81,7 +83,7 @@
 			{%- elif element.type == "Word" -%}
 				{%- if not phonetic -%}
 					{%- if element.annotations.pinyin -%}
-						<ruby class="word" 
+						<ruby class="word {% if element.annotations.image_gloss_url %}has-image-gloss{% endif %}"
 						      data-gloss="{{ element.annotations.gloss if element.annotations.gloss else '' }}" 
 							  data-image-gloss="{{ element.annotations.image_gloss_url if element.annotations.image_gloss_url else '' }}"
 							  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
@@ -90,7 +92,7 @@
 							<rt>{{ element.annotations.pinyin }}</rt>
 						</ruby>
 					{%- else -%}
-						<span class="word" 
+						<span class="word {% if element.annotations.image_gloss_url %}has-image-gloss{% endif %}"
 						      data-gloss="{{ element.annotations.gloss|e if element.annotations.gloss else '' }}" 
 							  data-image-gloss="{{ element.annotations.image_gloss_url if element.annotations.image_gloss_url else '' }}"
 							  data-lemma="{{ element.annotations.lemma|replace_punctuation if element.annotations.lemma else '' }}" 
