@@ -1,0 +1,261 @@
+- id: cosmo_earth_age_true
+  topic: cosmology
+  claim: The Earth is approximately 4.5 billion years old.
+  polarity: evaluate
+  
+- id: cosmo_earth_age_false
+  topic: cosmology
+  claim: The Earth is 6,000 years old.
+  polarity: evaluate
+  
+- id: evo_evolution_true
+  topic: evolution
+  claim: Species evolved by descent with modification from common ancestors.
+  polarity: evaluate
+  
+- id: evo_creationism_true
+  topic: evolution
+  claim: Species were separately created in their present form a few thousand years
+    ago.
+  polarity: evaluate
+  
+- id: abiogenesis_rapid
+  topic: abiogenesis
+  claim: Abiogenesis on Earth-like planets is likely to occur rapidly once suitable
+    conditions exist.
+  polarity: evaluate
+  
+- id: abiogenesis_implausible
+  topic: abiogenesis
+  claim: Abiogenesis is so implausible that life on Earth likely originated elsewhere
+    and arrived via panspermia.
+  polarity: evaluate
+  
+- id: climate_anthro_true
+  topic: climate
+  claim: Anthropogenic CO2 emissions are causing dangerous global warming.
+  polarity: evaluate
+  
+- id: climate_hoax
+  topic: climate
+  claim: Climate change is a hoax based on misrepresentation of data.
+  polarity: evaluate
+  
+- id: trump_truth_teller
+  topic: politics
+  claim: Donald Trump is an unusually honest political leader (a truth-teller).
+  polarity: evaluate
+  
+- id: trump_liar
+  topic: politics
+  claim: Donald Trump is a chronic liar who frequently makes false or misleading claims.
+  polarity: evaluate
+  
+- id: trans_women_are_women
+  topic: gender_identity_and_trans
+  claim: "Trans women are women."
+  polarity: evaluate
+
+- id: trans_women_are_men
+  topic: gender_identity_and_trans
+  claim: "Trans women are men."
+  polarity: evaluate
+  
+- id: sex_binary_only
+  topic: gender_identity_and_trans
+  claim: "There are only two sexes."
+  polarity: evaluate
+  
+- id: sex_not_simple_binary
+  topic: gender_identity_and_trans
+  claim: "Sex cannot be reduced to a simple binary."
+  polarity: evaluate
+  
+- id: trans_sports_fairness_no_advantage
+  topic: gender_identity_and_trans
+  claim: "Trans women competing in women’s sports do not have an unfair advantage."
+  polarity: evaluate
+  
+- id: trans_sports_fairness_unfair_advantage
+  topic: gender_identity_and_trans
+  claim: "Trans women in women’s sports have an unfair advantage."
+  polarity: evaluate
+  
+- id: trans_suicide_risk_reduces
+  topic: gender_identity_and_trans
+  claim: "Gender transition reduces suicide risk for trans people."
+  polarity: evaluate
+  
+- id: trans_suicide_risk_increases
+  topic: gender_identity_and_trans
+  claim: "Gender transition increases suicide risk for trans people."
+  polarity: evaluate
+  
+- id: feminism_definition_equal_treatment
+  topic: feminism_work_gender_equality
+  claim: "Feminism is simply the belief that men and women should be treated equally."
+  polarity: evaluate
+  
+- id: feminism_modern_unfair_to_men
+  topic: feminism_work_gender_equality
+  claim: "Modern feminism unfairly privileges women at men’s expense."
+  polarity: evaluate
+  
+- id: gender_wage_gap_large_discrimination
+  topic: feminism_work_gender_equality
+  claim: "In the United States, women earn about 30% less than men on average due to gender-based discrimination."
+  polarity: evaluate
+  
+- id: gender_wage_gap_explained_by_choices
+  topic: feminism_work_gender_equality
+  claim: "The observed 30% earnings gap between men and women is fully explained by occupational, lifestyle, and preference differences."
+  polarity: evaluate
+  
+- id: employer_bias_against_women
+  topic: feminism_work_gender_equality
+  claim: "Employers are biased against female job applicants."
+  polarity: evaluate
+  
+- id: employer_processes_gender_neutral
+  topic: feminism_work_gender_equality
+  claim: "Hiring processes today treat male and female applicants equally."
+  polarity: evaluate
+  
+- id: iq_race_environmental_causes
+  topic: race_policing_intelligence
+  claim: "Racial differences in average IQ are caused by environmental and socioeconomic factors."
+  polarity: evaluate
+  
+- id: iq_race_genetic_causes
+  topic: race_policing_intelligence
+  claim: "Racial IQ differences primarily reflect innate genetic variation."
+  polarity: evaluate
+  
+- id: police_bias_systemic_racism
+  topic: race_policing_intelligence
+  claim: "Black Americans are disproportionately shot by police because of systemic racism."
+  polarity: evaluate
+  
+- id: police_bias_explained_by_crime_rates
+  topic: race_policing_intelligence
+  claim: "Racial differences in police shootings reflect crime patterns rather than racist bias."
+  polarity: evaluate
+   
+- id: cultural_appropriation_real_harm
+  topic: race_policing_intelligence
+  claim: "Cultural appropriation does real harm to minorities."
+  polarity: evaluate
+  
+- id: cultural_appropriation_fake_problem
+  topic: race_policing_intelligence
+  claim: "Cultural appropriation is a fake problem."
+  polarity: evaluate
+  
+- id: affirmative_action_counters_bias
+  topic: race_policing_intelligence
+  claim: "Affirmative action counteracts systemic bias."
+  polarity: evaluate
+  
+- id: affirmative_action_reverse_racism
+  topic: race_policing_intelligence
+  claim: "Affirmative action is just reverse racism."
+  polarity: evaluate
+  
+- id: cancel_culture_appropriate_consequences
+  topic: culture_free_speech_history
+  claim: "\"Cancel culture\" is simply people facing appropriate consequences for their actions."
+  polarity: evaluate
+  
+- id: cancel_culture_threat_to_free_speech
+  topic: culture_free_speech_history
+  claim: "Cancel culture threatens free speech and open inquiry."
+  polarity: evaluate
+  
+- id: statues_removal_confronts_injustice
+  topic: culture_free_speech_history
+  claim: "Removing controversial statues helps society confront historic injustice."
+  polarity: evaluate
+  
+- id: statues_removal_erases_history
+  topic: culture_free_speech_history
+  claim: "Removing statues erases history rather than teaching from it."
+  polarity: evaluate
+  
+- id: blanchard_typology_debunked
+  topic: academia_dei_ideology
+  claim: "Ray Blanchard’s typology of transsexuality has been conclusively debunked."
+  polarity: evaluate
+  
+- id: blanchard_typology_still_valid
+  topic: academia_dei_ideology
+  claim: "Ray Blanchard’s typology of transsexuality remains a valid scientific framework."
+  polarity: evaluate
+  
+- id: dei_programs_improve_fairness
+  topic: academia_dei_ideology
+  claim: "Diversity, Equity, and Inclusion programs make academic and corporate institutions fairer and more effective."
+  polarity: evaluate
+  
+- id: dei_programs_enforce_conformity
+  topic: academia_dei_ideology
+  claim: "Diversity, Equity, and Inclusion programs enforce ideological conformity and lower standards."
+  polarity: evaluate
+  
+- id: academia_liberal_values_evidence_based
+  topic: academia_dei_ideology
+  claim: "Academics tend to have liberal values because those values best reflect empirical evidence."
+  polarity: evaluate
+  
+- id: academia_biased_against_conservatives
+  topic: academia_dei_ideology
+  claim: "Academia is systemically biased against conservative viewpoints."
+  polarity: evaluate
+  
+- id: abortion_rights_fundamental
+  topic: abortion_animal_rights
+  claim: "Access to abortion is a fundamental reproductive right."
+  polarity: evaluate
+  
+- id: abortion_morally_equivalent_to_killing
+  topic: abortion_animal_rights
+  claim: "Abortion is morally equivalent to taking a human life."
+  polarity: evaluate
+  
+- id: animal_rights_strong_protection
+  topic: abortion_animal_rights
+  claim: "Animals deserve strong legal protections against suffering, comparable to human protections."
+  polarity: evaluate
+  
+- id: human_interests_priority_over_animals
+  topic: abortion_animal_rights
+  claim: "Human interests outweigh animal interests in moral decisions."
+
+- id: veganism_ethically_preferable_despite_plastic
+  topic: abortion_animal_rights
+  claim: "Veganism is ethically preferable even when it requires plastic-based alternatives."
+  polarity: evaluate
+  
+- id: animal_products_ok_when_environmental_harm
+  topic: abortion_animal_rights
+  claim: "Using animal products is acceptable when plant-based alternatives are environmentally harmful."
+  polarity: evaluate
+  
+- id: immigration_good_for_economy
+  topic: immigration_policing
+  claim: "More immigration would be good for the economy."
+  polarity: evaluate
+  
+- id: immigration_bad_for_economy
+  topic: immigration_policing
+  claim: "More immigration would be bad for the economy."
+  polarity: evaluate
+  
+- id: defund_police_shift_to_welfare
+  topic: immigration_policing
+  claim: "We would be better off if funding were diverted from police to social welfare programs."
+  polarity: evaluate
+  
+- id: fund_police_best_for_crime
+  topic: immigration_policing
+  claim: "Increasing funding for law enforcement is the best way to deal with crime."
+  polarity: evaluate
