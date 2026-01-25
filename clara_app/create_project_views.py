@@ -103,12 +103,7 @@ def import_project_from_zip_file(zip_file, project_id, internal_id, callback=Non
         #  "simple_clara_type": "create_text_and_image",
         #  "human_voice_id": "mannyrayner",
         #  "human_voice_id_phonetic": "mannyrayner",
-        #  "audio_type_for_words": "human",
-        #  "audio_type_for_segments": "tts",
-        #  "uses_coherent_image_set": False,
-        #  "uses_coherent_image_set_v2": True,
-        #  "use_translation_for_images": False
-        #}
+        #  ...
         if global_metadata and isinstance(global_metadata, dict):
             if "simple_clara_type" in global_metadata:
                 clara_project.simple_clara_type = global_metadata["simple_clara_type"]
@@ -124,6 +119,14 @@ def import_project_from_zip_file(zip_file, project_id, internal_id, callback=Non
 
             if "use_translation_for_images" in global_metadata:
                 clara_project.use_translation_for_images = global_metadata["use_translation_for_images"]
+                clara_project.save()
+
+            if "uses_picture_glossing" in global_metadata:
+                clara_project.uses_picture_glossing = global_metadata["uses_picture_glossing"]
+                clara_project.save()
+
+            if "picture_gloss_style" in global_metadata:
+                clara_project.picture_gloss_style = global_metadata["picture_gloss_style"]
                 clara_project.save()
                 
             if "human_voice_id" in global_metadata and global_metadata["human_voice_id"]:                       

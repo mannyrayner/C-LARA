@@ -114,7 +114,7 @@ class ImageGlossAnnotator:
         contexts_by_lemma = {}
 
         for page in text_obj.pages:
-            post_task_update(callback, f'Extracting word items from {page}')
+            #post_task_update(callback, f'Extracting word items from {page}')
             for segment in page.segments:
                 segment_plain = segment.to_text()
                 segment_ann = segment.annotations
@@ -132,7 +132,7 @@ class ImageGlossAnnotator:
                     ann = content_element.annotations
 
                     if not 'lemma' in ann or not 'gloss' in ann:
-                        post_task_update(callback, f'Skipping content element because no lemma or gloss, {content_element}')
+                        #post_task_update(callback, f'Skipping content element because no lemma or gloss, {content_element}')
                         continue
 
                     # We assume lemma tagging has already run.

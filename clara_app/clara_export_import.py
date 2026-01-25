@@ -29,6 +29,8 @@ def make_export_zipfile_internal(project):
                         'uses_coherent_image_set': project.uses_coherent_image_set,
                         'uses_coherent_image_set_v2': project.uses_coherent_image_set_v2,
                         'use_translation_for_images': project.use_translation_for_images,
+                        'uses_picture_glossing': project.uses_picture_glossing,
+                        'picture_gloss_style': project.picture_gloss_style,
                         'human_voice_id': audio_info['human_voice_id'],
                         'human_voice_id_phonetic': audio_info['human_voice_id_phonetic'],
                         'audio_type_for_words': audio_info['audio_type_for_words'],

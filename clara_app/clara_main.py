@@ -1291,7 +1291,8 @@ class CLARAProjectInternal:
                                             preferred_tts_engine=None, preferred_tts_voice=None,
                                             acknowledgements_info=None,
                                             phonetic=False, callback=None) -> str:
-        trace = True
+        #trace = True
+        trace = False
         post_task_update(callback, f"--- Creating internalised text")
         try:
             text_object = self.get_internalised_text_exact()
