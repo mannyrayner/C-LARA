@@ -31,8 +31,8 @@ EXERCISE_TYPES = [
     ("cloze_mcq", "Cloze (multiple choice)"),
 ]
 
-PROMPT_VERSION = "cloze_distractors_v1"
-MODEL_NAME = "gpt-5.2"  # whatever you actually call it
+CLOZE_PROMPT_VERSION = "cloze_distractors_v1"
+MODEL_NAME = "gpt-5"
 
 
 @login_required
@@ -80,7 +80,7 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str) -> Ht
     rng = random.Random(seed)
 
     callback, report_id = make_asynch_callback_and_report_id(request, 'exercises')
-    async_task(create_and_save_exercise_items, project, clara_project_internal, exercise_type, n_examples, n_distractors, text_obj, rng, callback=callback)
+    async_task(create_and_save_exercise_items, project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, text_obj, rng, callback=callback)
 
     return redirect('generate_exercises_monitor', project_id, report_id)
 
@@ -105,7 +105,7 @@ def generate_exercises_status(request, project_id, report_id):
         status = 'unknown'    
     return JsonResponse({'messages': messages, 'status': status})
 
-def create_and_save_exercise_items, project, clara_project_internal, exercise_type, n_examples, n_distractors, text_obj, rng, callback=None):
+def create_and_save_exercise_items, project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, text_obj, rng, callback=None):
     try:
         if exercise_type == 'cloze_mcq':
             create_and_save_cloze_exercise_items(project, clara_project_internal, exercise_type, n_examples, n_distractors, text_obj, rng, callback=callback)
@@ -114,7 +114,10 @@ def create_and_save_exercise_items, project, clara_project_internal, exercise_ty
         post_task_update(callback, f"Exception: {str(e)}\n{traceback.format_exc()}")
         post_task_update(callback, f"error")
 
-def create_and_save_cloze_exercise_items(project, clara_project_internal, exercise_type, n_examples, n_distractors, text_obj, rng, callback=None):
+
+# -------------- Cloze exercises -----------------------
+
+def create_and_save_cloze_exercise_items(project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, text_obj, rng, callback=None):
     exercise_targets = select_random_cloze_targets(text_obj, n_examples, rng)
 
     # Generate distractors in parallel
@@ -123,7 +126,7 @@ def create_and_save_cloze_exercise_items(project, clara_project_internal, exerci
                'gpt_model': MODEL_NAME,
                }
     items = asyncio.run(
-        process_cloze_exercise_targets(project, clara_project_internal, params, exercise_targets, callback=callback)
+        process_cloze_exercise_targets(project, clara_project_internal, text_obj, params, exercise_targets, callback=callback)
     )
 
     payload = {
@@ -140,13 +143,13 @@ def create_and_save_cloze_exercise_items(project, clara_project_internal, exerci
     clara_project_internal.save_exercises(exercise_type, payload)
     post_task_update(callback, f"finished")
 
-def select_random_cloze_targets(internalised, n_examples: int, rng: random.Random):
+def select_random_cloze_targets(text_obj, n_examples: int, rng: random.Random):
     """
     Return a list of dict targets with enough info to build prompts.
     internalised is expected to provide pages->segments->content elements with annotations.
     """
     candidates = []
-    for p_i, page in enumerate(internalised.pages):
+    for p_i, page in enumerate(text_obj.pages):
         for s_i, seg in enumerate(page.segments):
             # only consider segments with at least one eligible content element
             eligible = [ce for ce in seg.content_elements if is_eligible_target(ce)]
@@ -159,7 +162,10 @@ def select_random_cloze_targets(internalised, n_examples: int, rng: random.Rando
     selected = []
     for (p_i, s_i, seg, eligible) in candidates:
         ce = rng.choice(eligible)
-        selected.append({"page_index": p_i, "segment_index": s_i, "segment": seg, "target_ce": ce})
+        selected.append({"page_index": p_i,
+                         "segment_index": s_i,
+                         "segment": seg,
+                         "target_ce": ce})
         if len(selected) >= n_examples:
             break
     return selected
@@ -175,12 +181,12 @@ def is_eligible_target(content_element) -> bool:
     # optionally avoid proper nouns etc
     return True
 
-async def process_cloze_exercise_targets(project, clara_project_internal, params, exercise_targets, callback=None):
+async def process_cloze_exercise_targets(project, clara_project_internal, text_obj, params, exercise_targets, callback=None):
     tasks = []
     for exercise_target in exercise_targets:
         tasks.append(
             asyncio.create_task(
-                generate_cloze_exercise_item(exercise_target, project, params, callback=callback)
+                generate_cloze_exercise_item(exercise_target, project, text_obj, params, callback=callback)
             )
         )
 
@@ -202,16 +208,20 @@ async def process_cloze_exercise_targets(project, clara_project_internal, params
 
     return total_cost
 
-async def generate_cloze_exercise_item(exercise_target, project, params, callback=None):
+async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, callback=None):
     seg = exercise_target["segment"]
     ce = exercise_target["target_ce"]
-    context_before = exercise_target["context_before"]
-    context_after = exercise_target["context_after"]
 
     segment_text = seg.to_text("plain")  # already normalised string
     target_surface = ce.to_text("plain")
     lemma = getattr(ce, "lemma", None)
     pos = getattr(ce, "pos", None)
+
+    page_index = exercise_target["page_index"]
+    seg_index = exercise_target["segment_index"]
+    segments = text_obj.pages[page_index].segments
+    context_before = segments[seg_index - 1].to_text("plain") if seg_index - 1 >= 0 else None
+    context_after = segments[seg_index + 1].to_text("plain") if seg_index + 1 <= len(segments) else None
 
     model = params["model"]
 
@@ -234,8 +244,8 @@ async def generate_cloze_exercise_item(exercise_target, project, params, callbac
     # Fill in more of this when the basic mechanism is working
     return {
         #"item_id": f"p{target_info['page_index']:02d}_s{target_info['segment_index']:02d}_{getattr(ce,'id','t')}",
-        #"page_index": target_info["page_index"],
-        #"segment_index": target_info["segment_index"],
+        "page_index": target_info["page_index"],
+        "segment_index": target_info["segment_index"],
         "target": {
             #"content_element_id": getattr(ce, "id", None),
             "surface": target_surface,
