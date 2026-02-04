@@ -3,14 +3,18 @@
 
 from datetime import datetime, timezone
 from django.contrib import messages
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 
+from django_q.tasks import async_task
+
 from .models import CLARAProject
 from .clara_main import CLARAProjectInternal
 from .clara_classes import InternalCLARAError, InternalisationError, MWEError, ImageGenerationError
+
+from .clara_chatgpt4 import get_api_chatgpt4_response
 
 from .utils import get_user_config, user_has_open_ai_key_or_credit, user_has_open_ai_key_or_credit_warn_if_admin_with_negative_balance, store_api_calls, store_cost_dict, make_asynch_callback_and_report_id
 from .utils import user_has_a_project_role
@@ -18,6 +22,8 @@ from .utils import get_task_updates
 
 from .clara_utils import get_config, file_exists
 from .clara_utils import post_task_update
+
+from .clara_coherent_images_utils import combine_cost_dicts
 
 import asyncio
 import json
@@ -40,9 +46,9 @@ MODEL_NAME = "gpt-5"
 @user_has_a_project_role
 def generate_exercises(request: HttpRequest, project_id: int, status: str) -> HttpResponse:
     if status == 'finished':
-        messages.info("Exercise generation completed normally.")
+        messages.info(request, "Exercise generation completed normally.")
     elif status == 'error':
-        messages.info("Error in exercise generation. Look at the 'Recent task updates' tab for more details.")
+        messages.info(request, "Error in exercise generation. Look at the 'Recent task updates' tab for more details.")
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
@@ -66,13 +72,13 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str) -> Ht
 
     if exercise_type not in dict(EXERCISE_TYPES):
         messages.error(request, "Unknown exercise type.")
-        return redirect("generate_exercises", project_id=project_id)
+        return redirect("generate_exercises", project_id=project_id, status='start')
     if not (1 <= n_examples <= 200):
         messages.error(request, "Number of examples must be between 1 and 200.")
-        return redirect("generate_exercises", project_id=project_id)
+        return redirect("generate_exercises", project_id=project_id, status='start')
     if not (1 <= n_distractors <= 5):
         messages.error(request, "Number of distractors must be between 1 and 5.")
-        return redirect("generate_exercises", project_id=project_id)
+        return redirect("generate_exercises", project_id=project_id, status='start')
 
     # Build internalised/annotated structure (pages -> segments -> content elements)
     text_obj = clara_project_internal.get_internalised_text_exact()
@@ -80,7 +86,7 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str) -> Ht
     rng = random.Random(seed)
 
     callback, report_id = make_asynch_callback_and_report_id(request, 'exercises')
-    async_task(create_and_save_exercise_items, project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, text_obj, rng, callback=callback)
+    async_task(create_and_save_exercise_items, project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, rng, callback=callback)
 
     return redirect('generate_exercises_monitor', project_id, report_id)
 
@@ -125,7 +131,7 @@ def create_and_save_cloze_exercise_items(project, clara_project_internal, text_o
     params = { 'n_distractors': n_distractors,
                'gpt_model': MODEL_NAME,
                }
-    items = asyncio.run(
+    items, cost_dict = asyncio.run(
         process_cloze_exercise_targets(project, clara_project_internal, text_obj, params, exercise_targets, callback=callback)
     )
 
@@ -139,8 +145,9 @@ def create_and_save_cloze_exercise_items(project, clara_project_internal, text_o
         "items": items,
     }
 
-    # Store exercises
+    # Store exercises and costs
     clara_project_internal.save_exercises(exercise_type, payload)
+    store_cost_dict(cost_dict, project, project.user)
     post_task_update(callback, f"finished")
 
 def select_random_cloze_targets(text_obj, n_examples: int, rng: random.Random):
@@ -199,14 +206,7 @@ async def process_cloze_exercise_targets(project, clara_project_internal, text_o
         exercises.append(exercise_json)
         total_cost = combine_cost_dicts(total_cost, cost_dict)
 
-    clara_project_internal.save_exercises(
-        exercise_type=params["exercise_type"],
-        exercises=exercises,
-        source="ai_generated",
-        user=params.get("user", "Unknown")
-    )
-
-    return total_cost
+    return ( exercises, total_cost )
 
 async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, callback=None):
     seg = exercise_target["segment"]
@@ -214,8 +214,10 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
     segment_text = seg.to_text("plain")  # already normalised string
     target_surface = ce.to_text("plain")
-    lemma = getattr(ce, "lemma", None)
-    pos = getattr(ce, "pos", None)
+
+    ann = getattr(ce, "annotations", {}) or {}
+    lemma = getattr(ann, "lemma", None)
+    pos = getattr(ann, "pos", None)
 
     page_index = exercise_target["page_index"]
     seg_index = exercise_target["segment_index"]
@@ -223,7 +225,8 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     context_before = segments[seg_index - 1].to_text("plain") if seg_index - 1 >= 0 else None
     context_after = segments[seg_index + 1].to_text("plain") if seg_index + 1 <= len(segments) else None
 
-    model = params["model"]
+    model = params["gpt_model"]
+    n_distractors = params["n_distractors"]
 
     prompt = build_cloze_distractor_prompt(
         segment_text=segment_text,
@@ -244,8 +247,8 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     # Fill in more of this when the basic mechanism is working
     return {
         #"item_id": f"p{target_info['page_index']:02d}_s{target_info['segment_index']:02d}_{getattr(ce,'id','t')}",
-        "page_index": target_info["page_index"],
-        "segment_index": target_info["segment_index"],
+        "page_index": exercise_target["page_index"],
+        "segment_index": exercise_target["segment_index"],
         "target": {
             #"content_element_id": getattr(ce, "id", None),
             "surface": target_surface,
@@ -260,7 +263,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
             "context_after": context_after,
         },
         "choices": choices,
-        "notes": {"generation_model": model, "prompt_version": PROMPT_VERSION},
+        "notes": {"generation_model": model, "prompt_version": CLOZE_PROMPT_VERSION},
     }
 
 def build_cloze_distractor_prompt(*, segment_text, target_surface, lemma, pos, 

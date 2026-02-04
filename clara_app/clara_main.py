@@ -366,31 +366,27 @@ class CLARAProjectInternal:
     def _file_path_for_version(self, version: str) -> Path:
         return self.project_dir / version / f"{self.id}_{version}.txt"
 
-    def load_exercises(self, exercise_type: str):
-        all_exercises_text = self.load_text_version_or_null("exercises")
-        try:
-            exercises = load_json(all_exercises_text)
-            return all_exercises_text[version]
-        except Exception as e:
-            return None
-
-    def load_all_exercises(self):
-        all_exercises_text = self.load_text_version_or_null("exercises")
-        try:
-            exercises = load_json(all_exercises_text)
-            return exercises
-        except Exception as e:
+    def load_all_exercises(self) -> dict:
+        all_text = self.load_text_version_or_null("exercises")
+        if not all_text:
             return {}
-        
-    def save_exercises(self, exercise_type: str, payload: str):
-        all_exercises_dict = self.load_all_exercises()
-        all_exercises_dict[exercise_type] = payload
-        self.save_all_exercises(all_exercises_dict)
+        try:
+            return load_json(all_text)  # expects dict
+        except Exception:
+            return {}
 
-    def save_all_exercises(all_exercises_dict, source='ai_generated', user='Unknown', label='', gold_standard=False):
-        all_exercises_dict = self.load_all_exercises()
-        all_exercises_string = json.dumps(all_exercises_dict)
-        self.save_text_version(self, "exercises", all_exercises_string, source=source, user=user, label=label, gold_standard=gold_standard)
+    def load_exercises(self, exercise_type: str):
+        d = self.load_all_exercises()
+        return d.get(exercise_type)
+
+    def save_all_exercises(self, all_exercises_dict: dict, source='ai_generated', user='Unknown', label='', gold_standard=False) -> None:
+        all_exercises_string = json.dumps(all_exercises_dict, ensure_ascii=False)
+        self.save_text_version("exercises", all_exercises_string, source=source, user=user, label=label, gold_standard=gold_standard)
+
+    def save_exercises(self, exercise_type: str, payload: dict, source='ai_generated', user='Unknown', label='', gold_standard=False) -> None:
+        d = self.load_all_exercises()
+        d[exercise_type] = payload
+        self.save_all_exercises(d, source=source, user=user, label=label, gold_standard=gold_standard)
 
     # Save one of the text files associated with the object.
     # If necessary archive the old one.
