@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
+
+
 
 from .models import CLARAProject
 from .clara_main import CLARAProjectInternal
@@ -41,8 +44,7 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str) -> Ht
     if status == 'finished':
         messages.info("Exercise generation completed normally.")
     elif status == 'error':
-        messages.info("Error in exercise generation. Look at the 'Recent task updates' tab for more details.
-                      ")
+        messages.info("Error in exercise generation. Look at the 'Recent task updates' tab for more details.")
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
@@ -105,7 +107,7 @@ def generate_exercises_status(request, project_id, report_id):
         status = 'unknown'    
     return JsonResponse({'messages': messages, 'status': status})
 
-def create_and_save_exercise_items, project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, text_obj, rng, callback=None):
+def create_and_save_exercise_items(project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, rng, callback=None):
     try:
         if exercise_type == 'cloze_mcq':
             create_and_save_cloze_exercise_items(project, clara_project_internal, exercise_type, n_examples, n_distractors, text_obj, rng, callback=callback)
@@ -117,7 +119,7 @@ def create_and_save_exercise_items, project, clara_project_internal, text_obj, e
 
 # -------------- Cloze exercises -----------------------
 
-def create_and_save_cloze_exercise_items(project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, text_obj, rng, callback=None):
+def create_and_save_cloze_exercise_items(project, clara_project_internal, text_obj, exercise_type, n_examples, n_distractors, rng, callback=None):
     exercise_targets = select_random_cloze_targets(text_obj, n_examples, rng)
 
     # Generate distractors in parallel
