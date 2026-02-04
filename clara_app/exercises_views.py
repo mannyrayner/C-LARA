@@ -8,8 +8,6 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 
-
-
 from .models import CLARAProject
 from .clara_main import CLARAProjectInternal
 from .clara_classes import InternalCLARAError, InternalisationError, MWEError, ImageGenerationError

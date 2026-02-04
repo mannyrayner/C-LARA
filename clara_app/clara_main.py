@@ -226,7 +226,8 @@ class CLARAProjectInternal:
             "lemma_and_gloss": None,
             "pinyin": None,
             "mwe": None,
-            "image_request_sequence": None
+            "image_request_sequence": None,
+            "exercises": None
         }
         self.coherent_images_v2_project_dir = self.project_dir / 'coherent_images_v2_project_dir'
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
@@ -328,6 +329,7 @@ class CLARAProjectInternal:
             self._copy_text_version_if_it_exists("mwe", new_project)
             self._copy_text_version_if_it_exists("pinyin", new_project)
             self._copy_text_version_if_it_exists("image_request_sequence", new_project)
+            self._copy_text_version_if_it_exists("exercises", new_project)
         # If the L1 is the same, the gloss file will by default be valid
         if self.l1_language == new_project.l1_language:
             self._copy_text_version_if_it_exists("gloss", new_project)
@@ -363,6 +365,32 @@ class CLARAProjectInternal:
 
     def _file_path_for_version(self, version: str) -> Path:
         return self.project_dir / version / f"{self.id}_{version}.txt"
+
+    def load_exercises(self, exercise_type: str):
+        all_exercises_text = self.load_text_version_or_null("exercises")
+        try:
+            exercises = load_json(all_exercises_text)
+            return all_exercises_text[version]
+        except Exception as e:
+            return None
+
+    def load_all_exercises(self):
+        all_exercises_text = self.load_text_version_or_null("exercises")
+        try:
+            exercises = load_json(all_exercises_text)
+            return exercises
+        except Exception as e:
+            return {}
+        
+    def save_exercises(self, exercise_type: str, payload: str):
+        all_exercises_dict = self.load_all_exercises()
+        all_exercises_dict[exercise_type] = payload
+        self.save_all_exercises(all_exercises_dict)
+
+    def save_all_exercises(all_exercises_dict, source='ai_generated', user='Unknown', label='', gold_standard=False):
+        all_exercises_dict = self.load_all_exercises()
+        all_exercises_string = json.dumps(all_exercises_dict)
+        self.save_text_version(self, "exercises", all_exercises_string, source=source, user=user, label=label, gold_standard=gold_standard)
 
     # Save one of the text files associated with the object.
     # If necessary archive the old one.

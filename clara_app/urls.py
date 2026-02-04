@@ -43,6 +43,7 @@ from . import serving_content_views
 from . import language_game_views
 from . import public_api_views
 from . import content_password_views
+from . import exercises_views
 
 urlpatterns = [
     # Home
@@ -252,6 +253,11 @@ urlpatterns = [
     path('project/<int:project_id>/edit_images_v2/<str:status>', images_v2_views.edit_images_v2, name='edit_images_v2'),
     path('project/<int:project_id>/coherent_images_v2_status/<str:report_id>/', images_v2_views.coherent_images_v2_status, name='coherent_images_v2_status'),
     path('project/<int:project_id>/coherent_images_v2_monitor/<str:report_id>/', images_v2_views.coherent_images_v2_monitor, name='coherent_images_v2_monitor'),
+
+    # Exercises
+    path('project/<int:project_id>/generate_exercises/<str:status>', exercises_views.generate_exercises, name='generate_exercises'),
+    path('project/<int:project_id>/generate_exercises_monitor/<str:report_id>/', exercises_views.generate_exercises_monitor, name='generate_exercises_monitor'),
+    path('project/<int:project_id>/generate_exercises_status/<str:report_id>/', exercises_views.generate_exercises_status, name='generate_exercises_status'),
 
     # Saving page texts in pages and images view
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', save_page_texts_multiple_views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),

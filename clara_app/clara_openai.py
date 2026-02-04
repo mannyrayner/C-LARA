@@ -35,12 +35,19 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o', reasoni
 
     n_message_tokens = message_tokens / 1000.0
     n_response_tokens = response_tokens / 1000.0
-    # Relevant for CoT models like o1-preview
+    # Relevant for CoT models like o1
     n_reasoning_tokens = reasoning_tokens / 1000.0
 
     if gpt_model == 'gpt-5':
         message_rate = float(config.get('chatgpt5_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('chatgpt5_costs', 'response_per_thousand_tokens'))
+    elif gpt_model == 'gpt-5.1':
+        message_rate = float(config.get('chatgpt5.1_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('chatgpt5.1_costs', 'response_per_thousand_tokens'))
+    elif gpt_model == 'gpt-5.2':
+        message_rate = float(config.get('chatgpt5.2_costs', 'prompt_per_thousand_tokens')) 
+        response_rate = float(config.get('chatgpt5.2_costs', 'response_per_thousand_tokens'))
+
     elif gpt_model == 'gpt-4o':
         message_rate = float(config.get('chatgpt4_o_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('chatgpt4_o_costs', 'response_per_thousand_tokens'))
@@ -59,10 +66,8 @@ def cost_of_gpt4_api_call(messages, response_string, gpt_model='gpt-4o', reasoni
     elif gpt_model == 'o3-mini':
         message_rate = float(config.get('o3_mini_costs', 'prompt_per_thousand_tokens')) 
         response_rate = float(config.get('o3_mini_costs', 'response_per_thousand_tokens'))
-    # Default is gpt-4
     else:
-        message_rate = float(config.get('chatgpt4_costs', 'prompt_per_thousand_tokens')) 
-        response_rate = float(config.get('chatgpt4_costs', 'response_per_thousand_tokens'))
+        raise ValueError(f'Unknown model {gpt_model}')
        
     input_cost = n_message_tokens * message_rate
     response_cost = (n_response_tokens + n_reasoning_tokens) * response_rate
