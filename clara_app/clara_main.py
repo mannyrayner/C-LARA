@@ -380,7 +380,7 @@ class CLARAProjectInternal:
         return d.get(exercise_type)
 
     def save_all_exercises(self, all_exercises_dict: dict, source='ai_generated', user='Unknown', label='', gold_standard=False) -> None:
-        all_exercises_string = json.dumps(all_exercises_dict, ensure_ascii=False)
+        all_exercises_string = json.dumps(all_exercises_dict, indent=2, ensure_ascii=False) + "\n"
         self.save_text_version("exercises", all_exercises_string, source=source, user=user, label=label, gold_standard=gold_standard)
 
     def save_exercises(self, exercise_type: str, payload: dict, source='ai_generated', user='Unknown', label='', gold_standard=False) -> None:

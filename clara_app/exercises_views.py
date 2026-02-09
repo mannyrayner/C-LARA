@@ -271,6 +271,8 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     segment_text = seg.to_text("plain")
     target_surface = ce.to_text("plain")
 
+    segment_text_with_blank = blank_out(segment_text, target_surface)
+
     # annotations might be dict or object; handle both
     ann = getattr(ce, "annotations", {}) or {}
     if isinstance(ann, dict):
@@ -292,6 +294,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
     prompt = build_cloze_distractor_prompt(
         segment_text=segment_text,
+        segment_text_with_blank=segment_text_with_blank,
         target_surface=target_surface,
         lemma=lemma,
         pos=pos,
@@ -315,7 +318,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
         "target": {"surface": target_surface, "lemma": lemma, "pos": pos},
         "segment": {
             "text": segment_text,
-            "text_with_blank": blank_out(segment_text, target_surface),
+            "text_with_blank": segment_text_with_blank,
             "context_before": context_before,
             "context_after": context_after,
         },
@@ -327,10 +330,10 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
     return item, cost_dict
 
-
 def build_cloze_distractor_prompt(
     *,
     segment_text,
+    segment_text_with_blank=None,   # new
     target_surface,
     lemma,
     pos,
@@ -339,14 +342,18 @@ def build_cloze_distractor_prompt(
     n_distractors,
     l2,
 ):
+    blank_block = ""
+    if segment_text_with_blank:
+        blank_block = f"\nSEGMENT_WITH_BLANK:\n{segment_text_with_blank}\n"
+
     return f"""
 You are generating distractors for a language-learning cloze multiple-choice question.
 
 Language: {l2}
-Task: Provide {n_distractors} distractors for the TARGET token in the SEGMENT below.
+Task: Provide EXACTLY {n_distractors} distractors for the TARGET token in the SEGMENT below.
 
 SEGMENT:
-{segment_text}
+{segment_text}{blank_block}
 
 CONTEXT (optional):
 Before: {context_before}
@@ -358,10 +365,25 @@ lemma = {lemma}
 pos = {pos}
 
 Rules:
-- Distractors should match the target POS (or as close as possible).
-- Distractors must be plausible to a learner but incorrect in this exact segment/context.
-- Do NOT include the correct answer among distractors.
-- Return STRICT JSON in this schema:
+- Output EXACTLY {n_distractors} distractors.
+- Each distractor must be a SINGLE TOKEN (no spaces). Keep punctuation only if TARGET is punctuation.
+- Do NOT include the correct answer (surface form) among distractors.
+
+- Match the TARGET’s grammatical behavior as closely as possible:
+  * If pos is VERB: match the same verb form (e.g., bare form vs -ing vs past vs 3sg).
+  * If pos is NOUN: match number (sing/pl) and typical countability feel.
+  * If pos is PRON or DET: match pronoun/determiner type (e.g., possessive determiner vs object pronoun),
+    and match person/number as closely as possible.
+  * If pos is ADP (preposition): choose other common prepositions that are plausible in similar frames.
+
+- Distractors should be NEAR-MISSES: plausible alternatives a learner might choose.
+  Prefer options that keep the sentence grammatical but change meaning subtly or create a common learner error.
+- Avoid giveaway distractors:
+  * avoid extreme opposites/antonyms unless they are genuinely tempting in this context,
+  * avoid obviously ungrammatical options,
+  * avoid rare/archaic words.
+
+- Return STRICT JSON in this schema (no extra keys, no prose):
 {{
   "distractors": [
     {{"form": ".", "reason": "short reason"}},
