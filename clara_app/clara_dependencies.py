@@ -95,6 +95,9 @@ class CLARADependencies:
             
             "render",               # Rendered version of normal text
                                     # Accessible from CLARAProjectInternal object
+            
+            "exercises",            # Exercises generated from
+                                    # Accessible from CLARAProjectInternal object
 
             "render_phonetic",      # Rendered version of phonetic text
                                     # Accessible from CLARAProjectInternal object
@@ -159,6 +162,8 @@ class CLARADependencies:
             "render": [ "gloss", "lemma", "pinyin", "v2_page_images", "images", "v2_page_images" ],
 
             "render_phonetic": [ "phonetic", "pinyin", "v2_page_images", "images" ],
+
+            "exercises": [ "gloss", "lemma" ],
             
             "social_network": [ "render", "render_phonetic", "summary", "cefr_level" ],
 
@@ -209,7 +214,7 @@ class CLARADependencies:
         
     def timestamp_for_phase_main(self, processing_phase_id, debug=False):
         if processing_phase_id in [ "plain", "summary", "cefr_level", "title", "segmented_title", "mwe",
-                                    "segmented", "translated", "phonetic", "gloss", "lemma", "pinyin" ]:
+                                    "segmented", "translated", "phonetic", "gloss", "lemma", "pinyin", "exercises" ]:
             try:
                 if not self.clara_project_internal.text_versions[processing_phase_id]:
                     return None

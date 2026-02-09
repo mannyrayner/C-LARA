@@ -166,6 +166,7 @@ def project_detail(request, project_id):
     can_create_pinyin_text = clara_project_internal.text_versions["segmented"] and is_chinese_language(project.l2) 
     can_render_normal = clara_project_internal.text_versions["gloss"] and clara_project_internal.text_versions["lemma"]
     can_picture_gloss = can_render_normal
+    can_create_exercises = can_render_normal
     picture_glossing_enabled = bool(project.uses_picture_glossing)
     can_render_phonetic = clara_project_internal.text_versions["phonetic"] 
     rendered_html_exists = clara_project_internal.rendered_html_exists(project_id)
@@ -260,6 +261,7 @@ def project_detail(request, project_id):
                     'user_is_member_of_project_community': user_is_member_of_project_community,
                     'can_show_picture_glossing_controls': can_show_picture_glossing_controls,
                     'can_picture_gloss': can_picture_gloss,
+                    'can_create_exercises': can_create_exercises,
                     'picture_glossing_enabled': bool(project.uses_picture_glossing),
                     'rendered_html_exists': rendered_html_exists,
                     'rendered_phonetic_html_exists': rendered_phonetic_html_exists,
