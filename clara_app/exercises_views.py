@@ -301,15 +301,12 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
         l2=project.l2,
     )
 
-    resp = await get_api_chatgpt4_response(prompt, config_info={"gpt_model": model}, callback=callback)
+    api_call_obj = await get_api_chatgpt4_response(prompt, config_info={"gpt_model": model}, callback=callback)
 
-    # Some wrappers return (json, cost_dict). Handle both.
-    cost_dict = {}
-    if isinstance(resp, (list, tuple)) and len(resp) == 2 and isinstance(resp[1], dict):
-        resp_json, cost_dict = resp[0], resp[1]
-    else:
-        resp_json = resp
+    resp_str = api_call_obj.response
+    cost = api_call_obj.cost
 
+    resp_json = coerce_json_dict(resp_str)
     choices = normalise_choices(resp_json, correct=target_surface)
 
     item = {
@@ -325,6 +322,8 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
         "choices": choices,
         "notes": {"generation_model": model, "prompt_version": CLOZE_PROMPT_VERSION},
     }
+
+    cost_dict = { 'exercises_mcq': cost }
 
     return item, cost_dict
 
@@ -371,26 +370,56 @@ Rules:
 }}
 """.strip()
 
+def coerce_json_dict(resp_json):
+    """
+    get_api_chatgpt4_response often returns a JSON *string*.
+    Convert it to a dict, stripping code-fences if needed.
+    """
+    if isinstance(resp_json, dict):
+        return resp_json
+
+    if isinstance(resp_json, str):
+        s = resp_json.strip()
+
+        # Remove ```json fences if the model adds them
+        if s.startswith("```"):
+            s = s.strip("`")
+            # if it begins with 'json\n', drop that prefix
+            if s.lower().startswith("json"):
+                s = s[4:].lstrip()
+
+        # Try direct JSON parse
+        try:
+            return json.loads(s)
+        except Exception:
+            # Last-resort: try to extract the first {...} block
+            start = s.find("{")
+            end = s.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                try:
+                    return json.loads(s[start : end + 1])
+                except Exception:
+                    pass
+
+    # Give up: return empty dict so downstream behaves safely
+    return {}
 
 def normalise_choices(resp_json, correct: str):
     distractors = resp_json.get("distractors", []) if isinstance(resp_json, dict) else []
 
-    forms = []
+    choices = [{"form": correct, "is_correct": True, "reason": "correct"}]
+
+    seen = {correct.lower()}
     for d in distractors:
         f = (d.get("form") or "").strip()
+        r = (d.get("reason") or "distractor").strip()
         if not f:
             continue
-        if f.lower() == correct.lower():
+        if f.lower() in seen:
             continue
-        if f.lower() in {x.lower() for x in forms}:
-            continue
-        forms.append(f)
+        seen.add(f.lower())
+        choices.append({"form": f, "is_correct": False, "reason": r})
 
-    choices = [{"form": correct, "is_correct": True, "reason": "correct"}]
-    for f in forms:
-        choices.append({"form": f, "is_correct": False, "reason": "distractor"})
-
-    # If we got too few distractors, we just ship fewer in V1 (fine for now).
     return choices
 
 

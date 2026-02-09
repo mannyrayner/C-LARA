@@ -24,25 +24,27 @@ def annotate_mwes_in_text(text_obj, callback=None):
         for segment in page.segments:
             mwes = segment.annotations.get('mwes', [])
             for mwe in mwes:
-                mwe_id = f'mwe_{mwe_counter}'
-                mwe_counter += 1
-                mwe_text = ""
-                mwe_length = len(mwe)
-                
-                positions = find_mwe_positions_for_segment(segment, mwe, callback=callback)
-                
-                last_pos = None
-                for i, pos in enumerate(positions):
-                    element = segment.content_elements[pos]
-                    # Check if we need to add a space before the next word
-                    if last_pos is not None and last_pos != pos - 1:
-                        mwe_text += " "
-                    mwe_text += element.content
-                    last_pos = pos
-                for pos in positions:
-                    segment.content_elements[pos].annotations['mwe_id'] = mwe_id
-                    segment.content_elements[pos].annotations['mwe_text'] = mwe_text
-                    segment.content_elements[pos].annotations['mwe_length'] = mwe_length
+                try:
+                    positions = find_mwe_positions_for_segment(segment, mwe, callback=callback)
+                    mwe_id = f'mwe_{mwe_counter}'
+                    mwe_counter += 1
+                    mwe_text = ""
+                    mwe_length = len(mwe)
+                    
+                    last_pos = None
+                    for i, pos in enumerate(positions):
+                        element = segment.content_elements[pos]
+                        # Check if we need to add a space before the next word
+                        if last_pos is not None and last_pos != pos - 1:
+                            mwe_text += " "
+                        mwe_text += element.content
+                        last_pos = pos
+                    for pos in positions:
+                        segment.content_elements[pos].annotations['mwe_id'] = mwe_id
+                        segment.content_elements[pos].annotations['mwe_text'] = mwe_text
+                        segment.content_elements[pos].annotations['mwe_length'] = mwe_length
+                except MWEError as e:
+                    continue
 
 
 def find_mwe_positions_for_segment(segment, mwe, callback=None):
