@@ -1,0 +1,41 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Exercise generation for "{{ project.title }}"</h2>
+
+  <div class="status-messages-class" id="status-messages"></div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script>
+    var interval_id = setInterval(getTaskStatus, 5000);
+
+    function getTaskStatus() {
+      $.ajax({
+        url: "{% url 'generate_exercises_status' project_id report_id %}",
+        type: "get",
+        success: function(response) {
+          if (response.messages.length > 0) {
+            response.messages.forEach(function(message) {
+              $("#status-messages").append("<p>" + message + "</p>");
+            });
+          } else {
+            $("#status-messages").append("<p>[No updates for last 5 seconds]</p>");
+          }
+
+          $("#status-messages").animate(
+            { scrollTop: $('#status-messages')[0].scrollHeight },
+            "fast"
+          );
+
+          if (response.status == 'finished') {
+            clearInterval(interval_id);
+            window.location = "{% url 'generate_exercises' project_id 'finished' %}";
+          } else if (response.status == 'error') {
+            clearInterval(interval_id);
+            window.location = "{% url 'generate_exercises' project_id 'error' %}";
+          }
+        }
+      });
+    }
+  </script>
+{% endblock %}

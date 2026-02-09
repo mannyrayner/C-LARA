@@ -1,0 +1,44 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Generate exercises for "{{ project.title }}"</h2>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div>
+      <label for="exercise_type">Exercise type</label>
+      <select id="exercise_type" name="exercise_type">
+        {% for etype, elabel in exercise_types %}
+          <option value="{{ etype }}"
+            {% if defaults.exercise_type == etype %}selected{% endif %}>
+            {{ elabel }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="n_examples">Number of examples</label>
+      <input id="n_examples" name="n_examples" type="number" min="1" max="200"
+             value="{{ defaults.n_examples }}">
+    </div>
+
+    <div>
+      <label for="n_distractors">Number of distractors</label>
+      <input id="n_distractors" name="n_distractors" type="number" min="1" max="5"
+             value="{{ defaults.n_distractors }}">
+    </div>
+
+    <div>
+      <label for="seed">Seed (optional)</label>
+      <input id="seed" name="seed" type="text" value="{{ defaults.seed }}"
+             placeholder="leave blank for random">
+    </div>
+
+    <div style="margin-top: 1em;">
+      <button type="submit">Generate</button>
+    </div>
+  </form>
+
+{% endblock %}

@@ -182,9 +182,15 @@
 	      {% if not can_create_glossed_and_lemma_text %}class="disabled-link"{% endif %}>
 		  Create/Edit Glossed Text</a>
 		  {% if up_to_date_dict.gloss %}✓{% endif %}</p>
-	{% if can_show_picture_glossing_controls and project.uses_picture_glossing %}
+    <p><a href="{% url 'generate_exercises' project.id 'normal' %}"
+		  data-tooltip="Generate interactive exercises for project."
+		  {% if not can_create_exercises %}class="disabled-link"{% endif %}>
+		  Generate exercises
+		  </a>
+		  {% if up_to_date_dict.exercises %}✓{% endif %}</p> 
+	{% if can_create_exercises %}
 	  <p><a href="{% url 'perform_picture_glossing' project.id %}"
-			data-tooltip="Add picture gloss annotations and queue missing items in the picture dictionary project."
+			data-tooltip="Create exercises for project."
 			{% if not can_picture_gloss %}class="disabled-link"{% endif %}>
 			Perform picture glossing</a>
 			{% if up_to_date_dict.picture_glossing and can_picture_gloss %}✓{% endif %}
