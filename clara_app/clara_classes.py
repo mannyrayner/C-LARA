@@ -25,6 +25,7 @@ import os
 import regex
 import string
 import unicodedata
+import copy
 
 ##class ContentElement:
 ##    def __init__(self, element_type, content, annotations=None):
@@ -114,6 +115,13 @@ class ContentElement:
         self.content: str = content
         self.annotations: Dict[str, Any] = annotations if annotations else {}
 
+    def clone(self) -> "ContentElement":
+        return ContentElement(
+            self.type,
+            self.content,
+            self.annotations.copy() if self.annotations else {}
+        )
+                                     
     def to_text(self, annotation_type: str = "plain") -> str:
         """Render the element as inline text for a given annotation layer.
 
@@ -299,6 +307,10 @@ class Segment:
         self.content_elements: List["ContentElement"] = list(content_elements)
         self.annotations: Dict[str, Any] = annotations or {}
 
+    def clone(self) -> "Segment":
+        return Segment([ce.clone() for ce in self.content_elements],
+                       copy.deepcopy(self.annotations))
+
     def to_text(self, annotation_type: str = "plain") -> str:
         """Render the segment under an annotation view.
 
@@ -483,6 +495,10 @@ class Page:
     ) -> None:
         self.segments: List["Segment"] = list(segments)
         self.annotations: Dict[str, Any] = annotations or {}
+
+    def clone(self) -> "Page":
+        return Page([seg.clone() for seg in self.segments],
+                       copy.deepcopy(self.annotations))
 
     def __repr__(self) -> str:
         return f"Page(segments={self.segments!r}, annotations={self.annotations!r})"
@@ -765,6 +781,13 @@ class Text:
         self.pages: List["Page"] = list(pages) if pages is not None else []
         self.annotations: Dict[str, Any] = annotations or {}
         self.voice: Optional[str] = voice
+
+    def clone(self) -> "Text":
+        return Text([page.clone() for page in self.pages],
+                    self.l2_language,
+                    self.l1_language,
+                    copy.deepcopy(self.annotations),
+                    self.voice)
 
     def __repr__(self) -> str:
         return (

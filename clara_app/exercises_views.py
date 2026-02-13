@@ -14,6 +14,8 @@ from django_q.tasks import async_task
 
 from .models import CLARAProject
 from .clara_main import CLARAProjectInternal
+from .clara_classes import ContentElement
+
 from .clara_chatgpt4 import get_api_chatgpt4_response
 
 from .utils import (
@@ -206,33 +208,33 @@ def create_and_save_cloze_exercise_items(
 
 
 def select_random_cloze_targets(text_obj, n_examples: int, rng: random.Random):
-    """
-    Return list of dict targets containing enough info to build prompts.
-    Stores actual segment and CE object references for V1 convenience.
-    """
     candidates = []
     for p_i, page in enumerate(getattr(text_obj, "pages", [])):
         for s_i, seg in enumerate(getattr(page, "segments", [])):
-            eligible = [ce for ce in getattr(seg, "content_elements", []) if is_eligible_target(ce)]
-            if eligible:
-                candidates.append((p_i, s_i, seg, eligible))
+            eligible_idxs = [
+                idx for idx, ce in enumerate(getattr(seg, "content_elements", []))
+                if is_eligible_target(ce)
+            ]
+            if eligible_idxs:
+                candidates.append((p_i, s_i, seg, eligible_idxs))
 
     rng.shuffle(candidates)
 
     selected = []
-    for (p_i, s_i, seg, eligible) in candidates:
-        ce = rng.choice(eligible)
+    for (p_i, s_i, seg, eligible_idxs) in candidates:
+        ce_idx = rng.choice(eligible_idxs)
+        ce = seg.content_elements[ce_idx]
         selected.append(
             {
                 "page_index": p_i,
                 "segment_index": s_i,
                 "segment": seg,
                 "target_ce": ce,
+                "target_ce_index": ce_idx,
             }
         )
         if len(selected) >= n_examples:
             break
-
     return selected
 
 
@@ -267,11 +269,12 @@ async def process_cloze_exercise_targets(project, text_obj, params, exercise_tar
 async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, callback=None):
     seg = exercise_target["segment"]
     ce = exercise_target["target_ce"]
+    ce_index = exercise_target["target_ce_index"]
 
     segment_text = seg.to_text("plain")
     target_surface = ce.to_text("plain")
 
-    segment_text_with_blank = blank_out(segment_text, target_surface)
+    segment_text_with_blank = blank_out_segment(seg, ce_index)
 
     # annotations might be dict or object; handle both
     ann = getattr(ce, "annotations", {}) or {}
@@ -444,7 +447,13 @@ def normalise_choices(resp_json, correct: str):
 
     return choices
 
+def blank_out_segment(seg, target_idx: int) -> str:
+    seg_copy = seg.clone()
 
-def blank_out(segment_text: str, target_surface: str) -> str:
-    # V1: naive replace first occurrence.
-    return segment_text.replace(target_surface, "____", 1)
+    seg_copy.content_elements[target_idx] = ContentElement(
+        "Word",
+        "____",
+        {}
+    )
+
+    return seg_copy.to_text("plain")
