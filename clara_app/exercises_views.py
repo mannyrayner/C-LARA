@@ -379,12 +379,32 @@ Rules:
     and match person/number as closely as possible.
   * If pos is ADP (preposition): choose other common prepositions that are plausible in similar frames.
 
-- Distractors should be NEAR-MISSES: plausible alternatives a learner might choose.
-  Prefer options that keep the sentence grammatical but change meaning subtly or create a common learner error.
-- Avoid giveaway distractors:
-  * avoid extreme opposites/antonyms unless they are genuinely tempting in this context,
-  * avoid obviously ungrammatical options,
-  * avoid rare/archaic words.
+- Distractors must be CLEARLY INCORRECT in this specific context.
+  They should be tempting mistakes a learner might choose,
+  NOT alternative correct paraphrases.
+
+- Avoid true synonyms or near-synonyms that a teacher could reasonably accept as correct.
+  If a native speaker might judge the distractor as acceptable,
+  DO NOT use it.
+
+- Prefer these types of learner-error distractors:
+  * wrong collocation ("reflect about" instead of "reflect on")
+  * wrong article/determiner choice
+  * agreement errors
+  * pronoun reference confusion
+  * tense/aspect mismatch
+  * overgeneralized rule application
+  * similar-looking or similar-sounding words
+  * preposition confusion
+  * incorrect but plausible function word swaps
+
+- The sentence should usually remain grammatical,
+  but sound wrong, unnatural, or semantically incorrect to a fluent speaker.
+
+- Before returning your answer:
+  For each distractor, ask:
+  "Would a teacher accept this as correct?"
+  If yes, discard it and generate a new one.
 
 - Return STRICT JSON in this schema (no extra keys, no prose):
 {{
