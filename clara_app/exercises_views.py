@@ -477,3 +477,78 @@ def blank_out_segment(seg, target_idx: int) -> str:
     )
 
     return seg_copy.to_text("plain")
+
+# ---------------- Runtime ----------------
+
+@login_required
+def run_exercises(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    exercise_type = request.GET.get("type", "cloze_mcq")
+    item_index = int(request.GET.get("item", "0"))
+
+    all_exercises = clara_project_internal.load_all_exercises()
+    if not all_exercises:
+        messages.error(request, f"Unable to find any exercises for this project.")
+        return redirect("project_detail", project_id=project_id)
+    if exercise_type not in all_exercises:
+        messages.error(request, f"No exercises of type '{exercise_type}' found.")
+        return redirect("project_detail", project_id=project_id)
+
+    exercise_data = all_exercises[exercise_type]
+    items = exercise_data.get("items", [])
+
+    if not items:
+        messages.error(request, "No exercise items available.")
+        return redirect("project_detail", project_id=project_id)
+
+    # clamp index
+    if item_index < 0:
+        item_index = 0
+    if item_index >= len(items):
+        item_index = len(items) - 1
+
+    item = items[item_index]
+
+    feedback = None
+    selected = None
+
+    if request.method == "POST":
+        selected = request.POST.get("choice")
+        correct_choice = next(c for c in item["choices"] if c["is_correct"])
+
+        if selected == correct_choice["form"]:
+            feedback = {
+                "correct": True,
+                "message": "Correct!",
+                "reason": correct_choice.get("reason", "")
+            }
+        else:
+            wrong = next(c for c in item["choices"] if c["form"] == selected)
+            feedback = {
+                "correct": False,
+                "message": "Incorrect.",
+                "reason": wrong.get("reason", ""),
+                "correct_form": correct_choice["form"],
+                "correct_reason": correct_choice.get("reason", "")
+            }
+
+    next_index = item_index + 1 if item_index + 1 < len(items) else None
+
+    return render(
+        request,
+        "clara_app/run_exercises.html",
+        {
+            "project": project,
+            "exercise_type": exercise_type,
+            "item_index": item_index,
+            "item": item,
+            "feedback": feedback,
+            "selected": selected,
+            "next_index": next_index,
+            "total_items": len(items),
+        }
+    )
+
+

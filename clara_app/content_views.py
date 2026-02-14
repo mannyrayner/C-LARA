@@ -255,13 +255,14 @@ def public_content_list(request):
 @login_required
 def content_detail(request, content_id):
     content = get_object_or_404(Content, id=content_id)
+    project = content.project
     comments = Comment.objects.filter(content=content).order_by('timestamp')
     rating = Rating.objects.filter(content=content, user=request.user).first()
     average_rating = Rating.objects.filter(content=content).aggregate(Avg('rating'))
     comment_form = CommentForm()  # initialize empty comment form
     rating_form = RatingForm()  # initialize empty rating form
     delete_form = DeleteContentForm()
-    can_delete = ( content.project and request.user == content.project.user ) or request.user.userprofile.is_admin
+    can_delete = ( project and request.user == project.user ) or request.user.userprofile.is_admin
 
     unlocked_key = f"content_unlocked_{content.id}"
 
@@ -333,9 +334,9 @@ def content_detail(request, content_id):
 
         # Identify recipients
         # For external content, there will be no project
-        if content.project and content.project.user:  
-            content_creator = content.project.user
-            co_owners = User.objects.filter(projectpermissions__project=content.project, projectpermissions__role='OWNER')
+        if project and project.user:  
+            content_creator = project.user
+            co_owners = User.objects.filter(projectpermissions__project=project, projectpermissions__role='OWNER')
             previous_commenters = User.objects.filter(comment__content=content).distinct()
             recipients = set([content_creator] + list(co_owners) + list(previous_commenters))
 
@@ -344,9 +345,16 @@ def content_detail(request, content_id):
             send_rating_or_comment_notification_email(request, recipients, content, action)
 
         return redirect('content_detail', content_id=content_id)
+    
+    zip_exists = project.zip_exists(content.text_type) if project else False
+    zip_fresh = project.zip_is_fresh(content.text_type) if project else False
 
-    zip_exists = content.project.zip_exists(content.text_type) if content.project else False
-    zip_fresh = content.project.zip_is_fresh(content.text_type) if content.project else False
+    if not project:
+        exercises_exist = False
+    else:
+        clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+        all_exercises = clara_project_internal.load_all_exercises()
+        exercises_exist = False if not all_exercises else True
 
     clara_version = get_user_config(request.user)['clara_version']
     
@@ -357,6 +365,7 @@ def content_detail(request, content_id):
         'content': content,
         'zip_exists': zip_exists,
         'zip_fresh': zip_fresh,
+        'exercises_exist': exercises_exist,
         'rating_form': rating_form,
         'comment_form': comment_form,
         'comments': comments,
@@ -431,8 +440,8 @@ def public_content_detail(request, content_id):
 
     token = request.session.get(f"{unlocked_key}_token") if can_view and content.is_protected else None
 
-    zip_exists = content.project.zip_exists(content.text_type) if content.project else False
-    zip_fresh = content.project.zip_is_fresh(content.text_type) if content.project else False
+    zip_exists = project.zip_exists(content.text_type) if project else False
+    zip_fresh = project.zip_is_fresh(content.text_type) if project else False
 
     return render(request, 'clara_app/public_content_detail.html', {
         'content': content,

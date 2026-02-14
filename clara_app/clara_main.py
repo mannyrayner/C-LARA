@@ -198,6 +198,7 @@ import traceback
 import tempfile
 import pickle
 import asyncio
+import json
 
 config = get_config()
 
@@ -369,10 +370,12 @@ class CLARAProjectInternal:
     def load_all_exercises(self) -> dict:
         all_text = self.load_text_version_or_null("exercises")
         if not all_text:
+            print(f"[load_all_exercises] Unable to find exercises file")
             return {}
         try:
-            return load_json(all_text)  # expects dict
+            return json.loads(all_text)  # expects dict
         except Exception:
+            print(f"[load_all_exercises] Unable to parse exercises file as JSON")
             return {}
 
     def load_exercises(self, exercise_type: str):
