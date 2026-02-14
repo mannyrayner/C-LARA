@@ -187,7 +187,7 @@ def create_and_save_cloze_exercise_items(
     }
 
     items, cost_dict = asyncio.run(
-        process_cloze_exercise_targets(project, text_obj, params, exercise_targets, callback=callback)
+        process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng, callback=callback)
     )
 
     payload = {
@@ -249,9 +249,9 @@ def is_eligible_target(content_element) -> bool:
     return True
 
 
-async def process_cloze_exercise_targets(project, text_obj, params, exercise_targets, callback=None):
+async def process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng: random.Random, callback=None):
     tasks = [
-        asyncio.create_task(generate_cloze_exercise_item(t, project, text_obj, params, callback=callback))
+        asyncio.create_task(generate_cloze_exercise_item(t, project, text_obj, params, rng, callback=callback))
         for t in exercise_targets
     ]
     results = await asyncio.gather(*tasks)
@@ -266,7 +266,7 @@ async def process_cloze_exercise_targets(project, text_obj, params, exercise_tar
     return items, total_cost
 
 
-async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, callback=None):
+async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, rng: random.Random, callback=None):
     seg = exercise_target["segment"]
     ce = exercise_target["target_ce"]
     ce_index = exercise_target["target_ce_index"]
@@ -313,7 +313,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     cost = api_call_obj.cost
 
     resp_json = coerce_json_dict(resp_str)
-    choices = normalise_choices(resp_json, correct=target_surface)
+    choices = normalise_choices(resp_json, rng, correct=target_surface)
 
     item = {
         "page_index": page_index,
@@ -449,7 +449,7 @@ def coerce_json_dict(resp_json):
     # Give up: return empty dict so downstream behaves safely
     return {}
 
-def normalise_choices(resp_json, correct: str):
+def normalise_choices(resp_json, rng: random.Random, correct: str):
     distractors = resp_json.get("distractors", []) if isinstance(resp_json, dict) else []
 
     choices = [{"form": correct, "is_correct": True, "reason": "correct"}]
@@ -464,6 +464,8 @@ def normalise_choices(resp_json, correct: str):
             continue
         seen.add(f.lower())
         choices.append({"form": f, "is_correct": False, "reason": r})
+
+    rng.shuffle(choices)
 
     return choices
 
