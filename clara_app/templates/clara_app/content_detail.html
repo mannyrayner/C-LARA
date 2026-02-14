@@ -14,6 +14,9 @@
   {% else %}
 	<p>Link to published content: <a href="{{ content.url }}" target="_blank" rel="noopener">{{ content.url }}</a></p>
   {% endif %}
+  {% if exercises_exist %}
+	<p>Link to exercises: <a href="{% url 'run_exercises' content.project_id %}" target="_blank" rel="noopener">Here</a></p>  
+  {% endif %}
   {% if zip_exists %}
 	<p>
 	  <a href="{% url 'serve_zipfile' content.project_id content.text_type %}"

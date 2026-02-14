@@ -1,0 +1,59 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+
+<h2>Exercises ({{ exercise_type }})</h2>
+<p>Item {{ item_index|add:1 }} / {{ total_items }}</p>
+
+<div class="exercise-segment">
+    <p>{{ item.segment.text_with_blank }}</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% for choice in item.choices %}
+        <div>
+            <label>
+                <input type="radio" name="choice"
+                       value="{{ choice.form }}"
+                       {% if selected == choice.form %}checked{% endif %}>
+                {{ choice.form }}
+            </label>
+        </div>
+    {% endfor %}
+
+    <button type="submit">Submit</button>
+</form>
+
+{% if feedback %}
+<hr>
+
+{% if feedback.correct %}
+    <p style="color: green;"><strong>{{ feedback.message }}</strong></p>
+    {% if feedback.reason %}
+        <p>{{ feedback.reason }}</p>
+    {% endif %}
+{% else %}
+    <p style="color: red;"><strong>{{ feedback.message }}</strong></p>
+    <p>Your answer: {{ selected }}</p>
+    <p>Correct answer: {{ feedback.correct_form }}</p>
+    {% if feedback.reason %}
+        <p>Your choice: {{ feedback.reason }}</p>
+    {% endif %}
+    {% if feedback.correct_reason %}
+        <p>Correct explanation: {{ feedback.correct_reason }}</p>
+    {% endif %}
+{% endif %}
+
+{% if next_index is not None %}
+    <a href="{% url 'run_exercises' project.id %}?type={{ exercise_type }}&item={{ next_index }}">
+        Next →
+    </a>
+{% else %}
+    <p><strong>End of exercises.</strong></p>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}
