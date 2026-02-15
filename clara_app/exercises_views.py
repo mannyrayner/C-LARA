@@ -83,7 +83,10 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str = "sta
         return redirect("generate_exercises", project_id=project_id, status="start")
 
     # Build internalised/annotated structure (pages -> segments -> content elements)
-    text_obj = clara_project_internal.get_internalised_text_exact()
+    # This version fails if there are any inconsistencies.
+    #text_obj = clara_project_internal.get_internalised_text_exact()
+    # This version is more robust to small inconsistencies but can in bad cases produce weird results
+    text_obj = clara_project_internal.get_internalised_text()
     rng = random.Random(seed)
 
     callback, report_id = make_asynch_callback_and_report_id(request, "exercises")
