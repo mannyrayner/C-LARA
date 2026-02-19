@@ -259,6 +259,7 @@ urlpatterns = [
     path('project/<int:project_id>/generate_exercises_monitor/<str:report_id>/', exercises_views.generate_exercises_monitor, name='generate_exercises_monitor'),
     path('project/<int:project_id>/generate_exercises_status/<str:report_id>/', exercises_views.generate_exercises_status, name='generate_exercises_status'),
     path("project/<int:project_id>/run_exercises/", exercises_views.run_exercises, name="run_exercises"),
+    path("project/<int:project_id>/browse_exercises/", exercises_views.browse_exercises, name="browse_exercises"),
 
     # Saving page texts in pages and images view
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', save_page_texts_multiple_views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),

@@ -556,4 +556,71 @@ def run_exercises(request, project_id):
         }
     )
 
+@login_required
+def browse_exercises(request: HttpRequest, project_id: int) -> HttpResponse:
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
+    exercise_type = request.GET.get("type", "cloze_mcq")
+    item_index = int(request.GET.get("item", "0"))
+    show_answers = request.GET.get("show", "") == "answers"
+
+    all_exercises = clara_project_internal.load_all_exercises()
+    if not all_exercises:
+        messages.error(request, "Unable to find any exercises for this project.")
+        return redirect("project_detail", project_id=project_id)
+
+    if exercise_type not in all_exercises:
+        messages.error(request, f"No exercises of type '{exercise_type}' found.")
+        return redirect("project_detail", project_id=project_id)
+
+    exercise_data = all_exercises[exercise_type]
+    items = exercise_data.get("items", [])
+    if not items:
+        messages.error(request, "No exercise items available.")
+        return redirect("project_detail", project_id=project_id)
+
+    # clamp
+    item_index = max(0, min(item_index, len(items) - 1))
+    item = items[item_index]
+
+    prev_index = item_index - 1 if item_index > 0 else None
+    next_index = item_index + 1 if item_index + 1 < len(items) else None
+
+    # convenience for template
+    correct_form = None
+    if show_answers:
+        try:
+            correct_form = next(c["form"] for c in item.get("choices", []) if c.get("is_correct"))
+        except StopIteration:
+            correct_form = None
+
+    return render(
+        request,
+        "clara_app/browse_exercises.html",
+        {
+            "project": project,
+            "exercise_types": EXERCISE_TYPES,   # already defined at top :contentReference[oaicite:1]{index=1}
+            "exercise_type": exercise_type,
+            "item_index": item_index,
+            "total_items": len(items),
+            "item": item,
+            "prev_index": prev_index,
+            "next_index": next_index,
+            "show_answers": show_answers,
+            "correct_form": correct_form,
+            "exercise_meta": {k: v for k, v in exercise_data.items() if k != "items"},
+        },
+    )
+
+def exercises_exist_for_project(project_id: int):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+
+    all_exercises = clara_project_internal.load_all_exercises()
+    if not all_exercises:
+        return False
+    else:
+        return True
+    
