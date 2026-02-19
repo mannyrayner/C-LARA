@@ -1,0 +1,75 @@
+{% extends "clara_app/base.html" %}
+{% block content %}
+
+<h2>Browse exercises: {{ project.title }}</h2>
+
+<form method="get" style="margin-bottom: 1em;">
+  <label>Exercise type:</label>
+  <select name="type">
+    {% for t,label in exercise_types %}
+      <option value="{{ t }}" {% if t == exercise_type %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+
+  <label style="margin-left: 1em;">
+    <input type="checkbox" name="show" value="answers" {% if show_answers %}checked{% endif %}>
+    show answers
+  </label>
+
+  <input type="hidden" name="item" value="{{ item_index }}">
+  <button type="submit">Go</button>
+</form>
+
+<p>
+  Item {{ item_index|add:1 }} / {{ total_items }}
+  {% if prev_index is not None %}
+    | <a href="?type={{ exercise_type }}&item={{ prev_index }}{% if show_answers %}&show=answers{% endif %}">Prev</a>
+  {% endif %}
+  {% if next_index is not None %}
+    | <a href="?type={{ exercise_type }}&item={{ next_index }}{% if show_answers %}&show=answers{% endif %}">Next</a>
+  {% endif %}
+</p>
+
+<hr>
+
+<h3>Item details</h3>
+
+<ul>
+  <li><b>Page index:</b> {{ item.page_index }}</li>
+  <li><b>Segment index:</b> {{ item.segment_index }}</li>
+  <li><b>Target:</b> {{ item.target.surface }} ({{ item.target.pos }}, lemma={{ item.target.lemma }})</li>
+</ul>
+
+<p style="font-size: 1.1em;">
+  {{ item.segment.text_with_blank }}
+</p>
+
+{% if item.segment.context_before %}
+  <p><i>Before:</i> {{ item.segment.context_before }}</p>
+{% endif %}
+{% if item.segment.context_after %}
+  <p><i>After:</i> {{ item.segment.context_after }}</p>
+{% endif %}
+
+<h4>Choices</h4>
+<ol>
+  {% for c in item.choices %}
+    <li>
+      {% if show_answers and correct_form and c.form == correct_form %}
+        <b>{{ c.form }}</b> ✅
+      {% else %}
+        {{ c.form }}
+      {% endif %}
+      {% if c.reason %}
+        — <span style="color:#555;">{{ c.reason }}</span>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ol>
+
+{% if item.notes %}
+  <h4>Notes</h4>
+  <pre style="white-space: pre-wrap;">{{ item.notes|safe }}</pre>
+{% endif %}
+
+{% endblock %}

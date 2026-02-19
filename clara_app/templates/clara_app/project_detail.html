@@ -188,6 +188,12 @@
 		  Generate exercises
 		  </a>
 		  {% if up_to_date_dict.exercises %}✓{% endif %}</p> 
+	<p><a href="{% url 'browse_exercises' project.id %}"
+		  data-tooltip="Browse generated interactive exercises for project."
+		  {% if not can_create_exercises %}class="disabled-link"{% endif %}>
+		  Browse exercises
+		  </a>
+		  {% if up_to_date_dict.exercises %}✓{% endif %}</p> 
 	{% if can_create_exercises %}
 	  <p><a href="{% url 'perform_picture_glossing' project.id %}"
 			data-tooltip="Create exercises for project."
