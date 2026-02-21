@@ -5,6 +5,8 @@ import asyncio
 import json
 import random
 import traceback
+import uuid
+import hashlib
 
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -182,6 +184,8 @@ def create_and_save_cloze_exercise_items(
     rng: random.Random,
     callback=None,
 ):
+    exercise_set_id = uuid.uuid4().hex
+
     exercise_targets = select_random_cloze_targets(text_obj, n_examples, rng)
 
     params = {
@@ -193,7 +197,18 @@ def create_and_save_cloze_exercise_items(
         process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng, callback=callback)
     )
 
+    # Assign stable item_ids
+    for item in items:
+        raw_key = (
+            f"{item['page_index']}|"
+            f"{item['segment_index']}|"
+            f"{item['target']['surface']}|"
+            f"{item['segment']['text_with_blank']}"
+        )
+        item["item_id"] = hashlib.sha1(raw_key.encode("utf-8")).hexdigest()[:12]
+
     payload = {
+        "exercise_set_id": exercise_set_id,
         "schema_version": "1.0",
         "exercise_type": exercise_type,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -493,7 +508,7 @@ def run_exercises(request, project_id):
     exercise_type = request.GET.get("type", "cloze_mcq")
     item_index = int(request.GET.get("item", "0"))
 
-    all_exercises = clara_project_internal.load_all_exercises()
+    all_exercises = clara_project_internal.load_exercises(exercise_type)
     if not all_exercises:
         messages.error(request, f"Unable to find any exercises for this project.")
         return redirect("project_detail", project_id=project_id)
@@ -624,3 +639,102 @@ def exercises_exist_for_project(project_id: int):
     else:
         return True
     
+# ------------------------------------------------------------------
+# AI Panel: Judge Exercises
+# ------------------------------------------------------------------
+
+@login_required
+def ai_panel_judge_exercises(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id)
+
+    exercise_type = request.GET.get("exercise_type", "cloze_mcq")
+
+    # Load available exercise sets for this type
+    exercise_sets = clara_project_internal.load_exercises(exercise_type)
+
+    if request.method == "POST":
+        selected_item_ids = request.POST.getlist("item_ids")
+        selected_models = request.POST.getlist("judge_models")
+
+        if not selected_item_ids or not selected_models:
+            messages.error(request, "Please select items and judge models.")
+            return redirect("ai_panel_judge_exercises", project_id=project_id)
+
+        callback, report_id = make_asynch_callback_and_report_id(
+            request, "ai_panel_judge_exercises"
+        )
+
+        async_task(
+            create_and_save_exercise_judgements,
+            project,
+            exercise_type,
+            exercise_sets,
+            selected_item_ids,
+            selected_models,
+            callback=callback,
+        )
+
+        return redirect(
+            "ai_panel_judge_exercises_monitor",
+            project_id=project_id,
+            report_id=report_id,
+        )
+
+    context = {
+        "project": project,
+        "exercise_type": exercise_type,
+        "exercise_sets": exercise_sets,
+        "available_models": get_available_judge_models(),  # helper function
+    }
+
+    return render(request, "ai_panel_judge_exercises.html", context)
+
+@login_required
+def ai_panel_judge_exercises_monitor(request, project_id, report_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+
+    context = {
+        "project": project,
+        "report_id": report_id,
+    }
+
+    return render(request, "ai_panel_judge_exercises_monitor.html", context)
+
+@login_required
+def ai_panel_judge_exercises_status(request, project_id, report_id):
+    status = get_async_report_status(report_id)
+
+    return JsonResponse({
+        "status": status
+    })
+
+def create_and_save_exercise_judgements(
+    project,
+    exercise_type,
+    exercise_set_id,
+    item_ids,
+    selected_models,
+    callback=None,
+):
+    try:
+        post_task_update(callback, "Starting AI panel judging...")
+
+        # Simulate work
+        import time
+        time.sleep(2)
+
+        post_task_update(callback, "Finished judging.")
+        post_task_update(callback, "finished")
+
+    except Exception as e:
+        post_task_update(callback, f"Error: {e}")
+        post_task_update(callback, "error")
+
+
+def get_available_judge_models():
+    return [
+        {"provider": "openai", "model": "gpt-4o"},
+        {"provider": "anthropic", "model": "claude-3-opus"},
+        {"provider": "google", "model": "gemini-1.5-pro"},
+    ]

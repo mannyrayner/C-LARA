@@ -199,6 +199,7 @@ import tempfile
 import pickle
 import asyncio
 import json
+import uuid
 
 config = get_config()
 
@@ -380,16 +381,75 @@ class CLARAProjectInternal:
 
     def load_exercises(self, exercise_type: str):
         d = self.load_all_exercises()
-        return d.get(exercise_type)
+        type_block = d.get(exercise_type)
+
+        if not type_block:
+            return None
+
+        latest = type_block.get("latest")
+        if not latest:
+            return None
+
+        return type_block["sets"].get(latest)
+
+    def load_exercise_set(self, exercise_type: str, exercise_set_id: str):
+        d = self.load_all_exercises()
+        type_block = d.get(exercise_type)
+        if not type_block:
+            return None
+
+        return type_block.get("sets", {}).get(exercise_set_id)
+
+    def get_exercise_sets(self, exercise_type: str):
+        d = self.load_all_exercises()
+        type_block = d.get(exercise_type)
+        if not type_block:
+            return []
+
+        sets = type_block.get("sets", {})
+
+        result = []
+        for sid, payload in sets.items():
+            result.append({
+                "id": sid,
+                "label": f"{payload.get('created_at','?')} "
+                         f"(n={payload.get('params',{}).get('n_examples','?')})"
+            })
+
+        # newest first
+        result.sort(key=lambda x: x["label"], reverse=True)
+        return result
 
     def save_all_exercises(self, all_exercises_dict: dict, source='ai_generated', user='Unknown', label='', gold_standard=False) -> None:
         all_exercises_string = json.dumps(all_exercises_dict, indent=2, ensure_ascii=False) + "\n"
         self.save_text_version("exercises", all_exercises_string, source=source, user=user, label=label, gold_standard=gold_standard)
 
-    def save_exercises(self, exercise_type: str, payload: dict, source='ai_generated', user='Unknown', label='', gold_standard=False) -> None:
+    def save_exercises(self, exercise_type: str, payload: dict,
+                       source='ai_generated', user='Unknown',
+                       label='', gold_standard=False) -> None:
+
         d = self.load_all_exercises()
-        d[exercise_type] = payload
-        self.save_all_exercises(d, source=source, user=user, label=label, gold_standard=gold_standard)
+
+        if exercise_type not in d:
+            d[exercise_type] = {
+                "sets": {},
+                "latest": None
+            }
+        elif "sets" not in d[exercise_type]:
+            d[exercise_type]["sets"] = {}
+
+        # Ensure payload has an id
+        exercise_set_id = payload.get("exercise_set_id")
+        if not exercise_set_id:
+            exercise_set_id = uuid.uuid4().hex
+            payload["exercise_set_id"] = exercise_set_id
+
+        d[exercise_type]["sets"][exercise_set_id] = payload
+        d[exercise_type]["latest"] = exercise_set_id
+
+        self.save_all_exercises(d, source=source,
+                                user=user, label=label,
+                                gold_standard=gold_standard)
 
     # Save one of the text files associated with the object.
     # If necessary archive the old one.
