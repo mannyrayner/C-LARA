@@ -512,11 +512,12 @@ def run_exercises(request, project_id):
     if not all_exercises:
         messages.error(request, f"Unable to find any exercises for this project.")
         return redirect("project_detail", project_id=project_id)
-    if exercise_type not in all_exercises:
-        messages.error(request, f"No exercises of type '{exercise_type}' found.")
-        return redirect("project_detail", project_id=project_id)
 
-    exercise_data = all_exercises[exercise_type]
+    exercise_data = clara_project_internal.load_exercises(exercise_type)
+
+    if not exercise_data:
+        messages.error(request, f"No exercises of type '{exercise_type}' found.")
+
     items = exercise_data.get("items", [])
 
     if not items:
@@ -585,11 +586,12 @@ def browse_exercises(request: HttpRequest, project_id: int) -> HttpResponse:
         messages.error(request, "Unable to find any exercises for this project.")
         return redirect("project_detail", project_id=project_id)
 
-    if exercise_type not in all_exercises:
+    exercise_data = clara_project_internal.load_exercises(exercise_type)
+
+    if not exercise_data:
         messages.error(request, f"No exercises of type '{exercise_type}' found.")
         return redirect("project_detail", project_id=project_id)
-
-    exercise_data = all_exercises[exercise_type]
+    
     items = exercise_data.get("items", [])
     if not items:
         messages.error(request, "No exercise items available.")
