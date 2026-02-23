@@ -190,11 +190,16 @@
 		  {% if up_to_date_dict.exercises %}✓{% endif %}</p> 
 	<p><a href="{% url 'browse_exercises' project.id %}"
 		  data-tooltip="Browse generated interactive exercises for project."
-		  {% if not can_create_exercises %}class="disabled-link"{% endif %}>
+		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
 		  Browse exercises
 		  </a>
-		  {% if up_to_date_dict.exercises %}✓{% endif %}</p> 
-	{% if can_create_exercises %}
+	 <p><a href="{% url 'ai_panel_judge_exercises' project.id 'normal' %}"
+		  data-tooltip="Judge exercises using AI panel."
+		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
+		  Judge exercises using AI panel
+		  </a>
+	{% if up_to_date_dict.exercises %}✓{% endif %}</p>
+	{% if can_picture_gloss %}
 	  <p><a href="{% url 'perform_picture_glossing' project.id %}"
 			data-tooltip="Create exercises for project."
 			{% if not can_picture_gloss %}class="disabled-link"{% endif %}>

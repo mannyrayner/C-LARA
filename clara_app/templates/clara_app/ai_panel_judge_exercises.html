@@ -1,0 +1,73 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>AI panel judging for "{{ project.title }} ){{exercise_type}}"</h2>
+
+  {% if not exercise_items %}
+    <p><em>No exercises to evaluate.</em></p>
+    <p><a href="{% url 'generate_exercises' project.id 'start' %}">Generate exercises</a></p>
+    <p><a href="{% url 'project_detail' project.id %}">Back to project</a></p>
+  {% else %}
+
+<form method="post" action="">
+  {% csrf_token %}
+  <input type="hidden" name="exercise_set_id" value="{{ selected_set_id }}">
+
+  <h3>Select exercise items</h3>
+
+  <div style="margin-bottom: 0.5em;">
+    <button type="button" onclick="toggleAll('item_ids', true)">Select all</button>
+    <button type="button" onclick="toggleAll('item_ids', false)">Select none</button>
+  </div>
+
+  <div style="max-height: 320px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5em;">
+    {% for item in exercise_items %}
+      <div style="margin-bottom: 0.5em;">
+        <label>
+          <input type="checkbox" name="item_ids" value="{{ item.item_id }}">
+          <strong>{{ forloop.counter }}.</strong>
+          {{ item.segment.text_with_blank }}
+        </label>
+      </div>
+    {% endfor %}
+  </div>
+
+  <h3 style="margin-top: 1em;">Select judge models</h3>
+
+  <div style="margin-bottom: 0.5em;">
+    <button type="button" onclick="toggleAll('judge_models', true)">Select all</button>
+    <button type="button" onclick="toggleAll('judge_models', false)">Select none</button>
+  </div>
+
+  <div style="max-height: 220px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5em;">
+	{% for m in available_models %}
+	  <div>
+		<label>
+		  <input type="checkbox"
+				 name="judge_models"
+				 value="{{ m.provider }}::{{ m.model }}">
+		  {{ m.provider }} / {{ m.model }}
+		</label>
+	  </div>
+	{% endfor %}
+  </div>
+
+  <div style="margin-top: 1em;">
+    <button type="submit">Run AI-panel judging</button>
+  </div>
+</form>
+
+{% endif %}
+
+    <p style="margin-top: 1em;">
+      <a href="{% url 'project_detail' project.id %}">Back to project</a>
+    </p>
+
+    <script>
+      function toggleAll(fieldName, checked) {
+        const boxes = document.querySelectorAll('input[name="' + fieldName + '"]');
+        boxes.forEach(b => b.checked = checked);
+      }
+    </script>
+
+{% endblock %}
