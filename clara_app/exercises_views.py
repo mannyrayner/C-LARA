@@ -645,52 +645,82 @@ def exercises_exist_for_project(project_id: int):
 # AI Panel: Judge Exercises
 # ------------------------------------------------------------------
 
-@login_required
-def ai_panel_judge_exercises(request, project_id):
+def ai_panel_judge_exercises(request, project_id, status="start"):
+
+    """
+    Main page: show form (GET) or queue async generation (POST).
+    status is used only to show a one-shot message after monitor redirect.
+    """
+    if status == "finished":
+        messages.info(request, "Exercise generation completed normally.")
+    elif status == "error":
+        messages.error(request, "Error in exercise generation. See 'Recent task updates' for details.")
+        
     project = get_object_or_404(CLARAProject, pk=project_id)
-    clara_project_internal = CLARAProjectInternal(project.internal_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    exercise_type = request.GET.get("exercise_type", "cloze_mcq")
+    # exercise_sets is expected to be dict: {exercise_set_id: payload}
+    # If you currently only store one payload per exercise_type, make it a dict here:
+    # exercise_sets = {payload["exercise_set_id"]: payload} if payload else {}
 
-    # Load available exercise sets for this type
-    exercise_sets = clara_project_internal.load_exercises(exercise_type)
+    all_exercises = clara_project_internal.load_all_exercises()
 
-    if request.method == "POST":
-        selected_item_ids = request.POST.getlist("item_ids")
-        selected_models = request.POST.getlist("judge_models")
+    if not all_exercises or not isinstance(all_exercises, dict):
+        messages.error(request, "Error: no valid exercises to evaluate.")
 
-        if not selected_item_ids or not selected_models:
-            messages.error(request, "Please select items and judge models.")
-            return redirect("ai_panel_judge_exercises", project_id=project_id)
+    exercise_types = list(all_exercises.keys())
 
-        callback, report_id = make_asynch_callback_and_report_id(
-            request, "ai_panel_judge_exercises"
+    # ---- Selection (nullable) ----
+
+    # In this first version, we only have one kind of exercise
+    exercise_type = exercise_types[0]
+
+    exercise_set = clara_project_internal.load_exercises(exercise_type)
+    exercise_set_id = clara_project_internal.get_current_exercise_set_id(exercise_type)
+
+    if not "items" in exercise_set:
+         messages.error(request, "Error: no valid exercises to evaluate.")
+         return redirect('ai_panel_judge_exercises', project_id, "initial")
+    
+    exercise_items = exercise_set.get("items", [])
+
+    if request.method == "GET":
+        return render(
+            request,
+            "clara_app/ai_panel_judge_exercises.html",
+            {
+                "project": project,
+                "exercise_type": exercise_type,
+                "exercise_items": exercise_items,     # list or []
+                "available_models": get_available_judge_models(), 
+            },
         )
 
-        async_task(
-            create_and_save_exercise_judgements,
-            project,
-            exercise_type,
-            exercise_sets,
-            selected_item_ids,
-            selected_models,
-            callback=callback,
-        )
+    # POST: submit judging job (requires a selected set)
 
-        return redirect(
-            "ai_panel_judge_exercises_monitor",
-            project_id=project_id,
-            report_id=report_id,
-        )
+    item_ids = request.POST.getlist("item_ids")
+    judge_models = request.POST.getlist("judge_models")
+    if not item_ids:
+        messages.error(request, "Select at least one exercise item.")
+        return redirect('ai_panel_judge_exercises', project_id, "initial")
+    if not judge_models:
+        messages.error(request, "Select at least one judge model.")
+        return redirect('ai_panel_judge_exercises', project_id, "initial")
 
-    context = {
-        "project": project,
-        "exercise_type": exercise_type,
-        "exercise_sets": exercise_sets,
-        "available_models": get_available_judge_models(),  # helper function
-    }
+    callback, report_id = make_asynch_callback_and_report_id(request, "ai_panel_judge_exercises")
 
-    return render(request, "ai_panel_judge_exercises.html", context)
+    async_task(
+        create_and_save_ai_panel_judgements,   # your async fan-out/fan-in
+        project,
+        clara_project_internal,
+        exercise_type,
+        exercise_set_id,
+        item_ids,
+        judge_models,
+        callback=callback,
+    )
+
+    return redirect("ai_panel_judge_exercises_monitor", project_id, report_id)
 
 @login_required
 def ai_panel_judge_exercises_monitor(request, project_id, report_id):
@@ -701,39 +731,114 @@ def ai_panel_judge_exercises_monitor(request, project_id, report_id):
         "report_id": report_id,
     }
 
-    return render(request, "ai_panel_judge_exercises_monitor.html", context)
+    return render(request, "clara_app/ai_panel_judge_exercises_monitor.html", context)
 
 @login_required
 def ai_panel_judge_exercises_status(request, project_id, report_id):
-    status = get_async_report_status(report_id)
+    msgs = get_task_updates(report_id)
 
-    return JsonResponse({
-        "status": status
-    })
+    if "error" in msgs:
+        status = "error"
+    elif "finished" in msgs:
+        status = "finished"
+    else:
+        status = "unknown"
 
-def create_and_save_exercise_judgements(
+    return JsonResponse({"messages": msgs, "status": status})
+
+def create_and_save_ai_panel_judgements(
     project,
-    exercise_type,
-    exercise_set_id,
-    item_ids,
-    selected_models,
+    clara_project_internal,
+    exercise_type: str,
+    exercise_set_id: str,
+    selected_item_ids: list[str],
+    selected_models: list[str],
     callback=None,
 ):
-    try:
-        post_task_update(callback, "Starting AI panel judging...")
-
-        # Simulate work
-        import time
-        time.sleep(2)
-
-        post_task_update(callback, "Finished judging.")
-        post_task_update(callback, "finished")
-
-    except Exception as e:
-        post_task_update(callback, f"Error: {e}")
+    # Load the exercise set
+    exercises_payload = clara_project_internal.load_exercises(exercise_type)
+    if not exercises_payload:
+        post_task_update(callback, f"Error: no exercises found for type '{exercise_type}'")
         post_task_update(callback, "error")
+        return
 
+    items = exercises_payload.get("items", [])
+    items_by_id = {it.get("item_id"): it for it in items if it.get("item_id")}
 
+    # Filter to selected items (defensive)
+    target_items = [items_by_id[iid] for iid in selected_item_ids if iid in items_by_id]
+    if not target_items:
+        post_task_update(callback, "Error: no valid items selected")
+        post_task_update(callback, "error")
+        return
+
+    judge_run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+    post_task_update(callback, f"Judging run: {judge_run_id}")
+    post_task_update(callback, f"Items: {len(target_items)}; Models: {len(selected_models)}")
+
+    # ---- Fan-out/fan-in happens later; for now we just do dummy results synchronously ----
+    run_results = {}  # item_id -> model_spec -> result
+
+    for item in target_items:
+        item_id = item["item_id"]
+        run_results.setdefault(item_id, {})
+
+        for model_spec in selected_models:
+            provider, model = model_spec.split("::", 1)
+
+            # ---- Dummy judging result ----
+            result = {
+                "exercise_set_id": exercise_set_id,
+                "item_id": item_id,
+                "provider": provider,
+                "model": model,
+                "verdict": "ok",
+                "issues": [],
+                "confidence": 0.99,
+            }
+            run_results[item_id][model_spec.replace("::", "::")] = result
+
+    # Merge into stored judgements blob
+    d = load_exercise_judgements_dict(clara_project_internal)
+    jud = d["judgements"]
+
+    jud.setdefault(exercise_type, {})
+    jud[exercise_type].setdefault(exercise_set_id, {})
+    jud[exercise_type][exercise_set_id][judge_run_id] = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "models": selected_models,
+        "items": run_results,
+    }
+
+    save_exercise_judgements_dict(clara_project_internal, d, user=project.user.username)
+
+    post_task_update(callback, "Finished judging.")
+    post_task_update(callback, "finished")
+
+def load_exercise_judgements_dict(clara_project_internal):
+    raw = clara_project_internal.load_text_version_or_null("exercise_judgements")
+    if not raw:
+        return {"schema_version": "1.0", "judgements": {}}
+    try:
+        d = json.loads(raw)
+        if not isinstance(d, dict):
+            return {"schema_version": "1.0", "judgements": {}}
+        d.setdefault("schema_version", "1.0")
+        d.setdefault("judgements", {})
+        return d
+    except Exception:
+        return {"schema_version": "1.0", "judgements": {}}
+
+def save_exercise_judgements_dict(clara_project_internal, d, *, user):
+    text = json.dumps(d, indent=2, ensure_ascii=False) + "\n"
+    clara_project_internal.save_text_version(
+        "exercise_judgements",
+        text,
+        source="ai_generated",
+        user=user,
+    )
+    
 def get_available_judge_models():
     return [
         {"provider": "openai", "model": "gpt-4o"},

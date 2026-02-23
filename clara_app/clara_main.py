@@ -229,7 +229,8 @@ class CLARAProjectInternal:
             "pinyin": None,
             "mwe": None,
             "image_request_sequence": None,
-            "exercises": None
+            "exercises": None,
+            "exercise_judgements": None
         }
         self.coherent_images_v2_project_dir = self.project_dir / 'coherent_images_v2_project_dir'
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'
@@ -391,6 +392,15 @@ class CLARAProjectInternal:
             return None
 
         return type_block["sets"].get(latest)
+
+    def get_current_exercise_set_id(self, exercise_type: str):
+        d = self.load_all_exercises()
+        type_block = d.get(exercise_type)
+
+        if not type_block:
+            return None
+
+        return type_block.get("latest")
 
     def load_exercise_set(self, exercise_type: str, exercise_set_id: str):
         d = self.load_all_exercises()
