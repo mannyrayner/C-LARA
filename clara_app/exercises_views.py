@@ -32,7 +32,7 @@ from .utils import (
     get_task_updates,
     store_cost_dict,
 )
-from .clara_utils import post_task_update, get_config, absolute_file_name, file_exists
+from .clara_utils import post_task_update, post_task_update_async, get_config, absolute_file_name, file_exists
 from .clara_coherent_images_utils import combine_cost_dicts
 
 config = get_config()
@@ -905,6 +905,8 @@ async def _judge_one_item_with_one_model(
     api_key = model_cfg["api_key"]
     model = model_cfg["model"]
 
+    #post_task_update_async(callback, f"Sending judging request to: {provider}")
+
     content, usage = await asyncio.to_thread(
         call_model_provider,
         provider,
@@ -915,6 +917,8 @@ async def _judge_one_item_with_one_model(
         user_prompt,
         timeout
     )
+
+    #post_task_update_async(callback, f"Judging request received from: {provider}")
 
     parsed = _json_from_model_output(content)
 
@@ -943,7 +947,6 @@ async def _judge_one_item_with_one_model(
     }
 
     # cost (optional; safe if pricing is missing/zero)
-    cost = 0.0
     try:
         cost = compute_cost_for_usage(model_cfg, usage or {})
     except Exception:
@@ -1071,8 +1074,8 @@ def get_available_judge_models():
     models_cfg_raw = load_yaml(MODELS_YAML_PATH)
     models_cfg = parse_models(models_cfg_raw)
 
-    print(f'models_cfg')
-    pprint.pprint(models_cfg)
+    #print(f'models_cfg')
+    #pprint.pprint(models_cfg)
 
     available = []
 
@@ -1087,8 +1090,8 @@ def get_available_judge_models():
             "cfg": m,                        # full cfg for later lookup
         })
 
-    print(f'available_judge_models')
-    pprint.pprint(available)
+    #print(f'available_judge_models')
+    #pprint.pprint(available)
 
     return available
 
