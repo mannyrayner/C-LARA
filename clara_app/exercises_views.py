@@ -923,11 +923,11 @@ async def _judge_one_item_with_one_model(
     parsed = _json_from_model_output(content)
 
     # normalize result
-    verdict = parsed.get("verdict")
-    if verdict not in ("ok", "needs_fix"):
+    verdict = parsed.get("verdict", "unparsed")
+    if verdict not in ("ok", "needs_fix", "unparsed"):
         verdict = "needs_fix" if not content else "needs_fix"
 
-    conf = parsed.get("confidence")
+    conf = parsed.get("confidence", "unparsed")
     try:
         conf = float(conf)
     except Exception:
@@ -938,6 +938,8 @@ async def _judge_one_item_with_one_model(
         issues = []
 
     result = {
+        "raw_text": content,
+        "parsed": parsed,
         "provider": provider,
         "model": model,
         "verdict": verdict,
@@ -1033,30 +1035,60 @@ def save_exercise_judgements_dict(clara_project_internal, d, *, user):
         user=user,
     )
     
+##def _json_from_model_output(text: str) -> dict:
+##    """
+##    Best-effort parse:
+##    - try whole-string JSON
+##    - else extract first {...} block
+##    - else fallback
+##    """
+##    if not text:
+##        return {}
+##    s = text.strip()
+##    try:
+##        obj = json.loads(s)
+##        return obj if isinstance(obj, dict) else {}
+##    except Exception:
+##        pass
+##
+##    # crude extraction of a JSON object
+##    m = re.search(r"\{.*\}", s, flags=re.DOTALL)
+##    if m:
+##        try:
+##            obj = json.loads(m.group(0))
+##            return obj if isinstance(obj, dict) else {}
+##        except Exception:
+##            return {}
+##    return {}
+
 def _json_from_model_output(text: str) -> dict:
-    """
-    Best-effort parse:
-    - try whole-string JSON
-    - else extract first {...} block
-    - else fallback
-    """
     if not text:
         return {}
     s = text.strip()
+
+    # Strip ```...``` fences
+    if s.startswith("```"):
+        s = s.strip("`").strip()
+        if s.lower().startswith("json"):
+            s = s[4:].lstrip()
+
+    # Direct parse
     try:
         obj = json.loads(s)
         return obj if isinstance(obj, dict) else {}
     except Exception:
         pass
 
-    # crude extraction of a JSON object
-    m = re.search(r"\{.*\}", s, flags=re.DOTALL)
-    if m:
+    # Extract first {...} block
+    start = s.find("{")
+    end = s.rfind("}")
+    if start != -1 and end != -1 and end > start:
         try:
-            obj = json.loads(m.group(0))
+            obj = json.loads(s[start:end+1])
             return obj if isinstance(obj, dict) else {}
         except Exception:
             return {}
+
     return {}
 
 def _judge_model_cfg_by_value(available_models: list[dict]) -> dict:
