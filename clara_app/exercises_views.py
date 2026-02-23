@@ -7,6 +7,11 @@ import random
 import traceback
 import uuid
 import hashlib
+from typing import Tuple
+import yaml
+import os
+import pprint
+from pathlib import Path
 
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -18,7 +23,8 @@ from .models import CLARAProject
 from .clara_main import CLARAProjectInternal
 from .clara_classes import ContentElement
 
-from .clara_chatgpt4 import get_api_chatgpt4_response
+#from .clara_chatgpt4 import get_api_chatgpt4_response
+from .call_ai_providers import call_model_provider, compute_cost_for_usage
 
 from .utils import (
     user_has_a_project_role,
@@ -26,7 +32,7 @@ from .utils import (
     get_task_updates,
     store_cost_dict,
 )
-from .clara_utils import post_task_update, get_config
+from .clara_utils import post_task_update, get_config, absolute_file_name, file_exists
 from .clara_coherent_images_utils import combine_cost_dicts
 
 config = get_config()
@@ -36,8 +42,7 @@ EXERCISE_TYPES = [
 ]
 
 CLOZE_PROMPT_VERSION = "cloze_distractors_v1"
-MODEL_NAME = "gpt-5"
-
+MODELS_YAML_PATH = absolute_file_name("$CLARA/clara_app/ai_provider_models.yaml")
 
 # ---------------- Top-level views ----------------
 
@@ -777,27 +782,22 @@ def create_and_save_ai_panel_judgements(
     post_task_update(callback, f"Judging run: {judge_run_id}")
     post_task_update(callback, f"Items: {len(target_items)}; Models: {len(selected_models)}")
 
-    # ---- Fan-out/fan-in happens later; for now we just do dummy results synchronously ----
-    run_results = {}  # item_id -> model_spec -> result
+    # ---- Fan-out/fan-in ----
+    # Build cfg map from what the UI offered (so values match)
+    available_models = get_available_judge_models()
+    model_cfg_by_name = {m["value"]: m["cfg"] for m in available_models}
 
-    for item in target_items:
-        item_id = item["item_id"]
-        run_results.setdefault(item_id, {})
-
-        for model_spec in selected_models:
-            provider, model = model_spec.split("::", 1)
-
-            # ---- Dummy judging result ----
-            result = {
-                "exercise_set_id": exercise_set_id,
-                "item_id": item_id,
-                "provider": provider,
-                "model": model,
-                "verdict": "ok",
-                "issues": [],
-                "confidence": 0.99,
-            }
-            run_results[item_id][model_spec.replace("::", "::")] = result
+    # Fan-out/fan-in
+    post_task_update(callback, "Submitting judging calls...")
+    run_results, cost_dict = asyncio.run(
+        process_ai_panel_judging_targets(
+            target_items,
+            selected_models,
+            model_cfg_by_name,
+            timeout=60,
+            callback=callback
+        )
+    )
 
     # Merge into stored judgements blob
     d = load_exercise_judgements_dict(clara_project_internal)
@@ -809,12 +809,203 @@ def create_and_save_ai_panel_judgements(
         "created_at": datetime.now(timezone.utc).isoformat(),
         "models": selected_models,
         "items": run_results,
+        "cost": cost_dict,
     }
 
     save_exercise_judgements_dict(clara_project_internal, d, user=project.user.username)
 
+    # Optional: also store cost via your existing store_cost_dict() if you want it in the main cost logs
+    # store_cost_dict(cost_dict, project, project.user)
+
     post_task_update(callback, "Finished judging.")
     post_task_update(callback, "finished")
+
+async def process_ai_panel_judging_targets(
+    target_items: list[dict],
+    selected_models: list[str],
+    model_cfg_by_name: dict,
+    timeout: int = 60,
+    callback=None
+) -> Tuple[dict, dict]:
+    """
+    Fan-out/fan-in across (item, model).
+    Returns:
+      - run_results: item_id -> model_value -> result
+      - cost_dict: aggregated usage+cost (same spirit as combine_cost_dicts)
+    """
+    tasks = []
+
+    for item in target_items:
+        item_id = item.get("item_id")
+        for model_value in selected_models:
+            cfg = model_cfg_by_name.get(model_value)
+            if not cfg:
+                continue
+            tasks.append(asyncio.create_task(_judge_one_item_with_one_model(item, cfg, timeout, callback=callback)))
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    run_results = {}   # item_id -> model_value -> result
+    usage_totals = {}  # provider -> dict of numeric usage fields
+    cost_totals = {}   # provider -> float
+
+    idx = 0
+    for item in target_items:
+        item_id = item.get("item_id")
+        run_results.setdefault(item_id, {})
+        for model_name in selected_models:
+            cfg = model_cfg_by_name.get(model_name)
+            if not cfg:
+                continue
+
+            r = results[idx]
+            idx += 1
+
+            if isinstance(r, Exception):
+                run_results[item_id][model_value] = {
+                    "provider": cfg["provider"],
+                    "model": cfg["model"],
+                    "verdict": "needs_fix",
+                    "confidence": 0.0,
+                    "issues": [{"distractor": "", "problem": f"exception: {r}", "suggestion": ""}],
+                    "raw": "",
+                }
+                continue
+
+            result_dict, usage, cost = r
+            run_results[item_id][model_value] = result_dict
+
+            prov = cfg["provider"]
+            usage_totals.setdefault(prov, {})
+            for k, v in (usage or {}).items():
+                if isinstance(v, (int, float)):
+                    usage_totals[prov][k] = usage_totals[prov].get(k, 0) + v
+            cost_totals[prov] = cost_totals.get(prov, 0.0) + float(cost or 0.0)
+
+    cost_dict = {
+        "usage": usage_totals,
+        "cost": cost_totals,
+    }
+    return run_results, cost_dict
+
+async def _judge_one_item_with_one_model(
+    item: dict,
+    model_cfg: dict,
+    timeout: int,
+    callback=None
+) -> Tuple[dict, dict, float]:
+    """
+    Returns (result_dict, usage_dict, cost_float).
+    Uses asyncio.to_thread because provider calls are requests-based.
+    """
+    system_prompt, user_prompt = build_cloze_judging_prompt(item)
+
+    provider = model_cfg["provider"]
+    chat_url = model_cfg["chat_url"]
+    api_key = model_cfg["api_key"]
+    model = model_cfg["model"]
+
+    content, usage = await asyncio.to_thread(
+        call_model_provider,
+        provider,
+        chat_url,
+        api_key,
+        model,
+        system_prompt,
+        user_prompt,
+        timeout
+    )
+
+    parsed = _json_from_model_output(content)
+
+    # normalize result
+    verdict = parsed.get("verdict")
+    if verdict not in ("ok", "needs_fix"):
+        verdict = "needs_fix" if not content else "needs_fix"
+
+    conf = parsed.get("confidence")
+    try:
+        conf = float(conf)
+    except Exception:
+        conf = 0.0
+
+    issues = parsed.get("issues")
+    if not isinstance(issues, list):
+        issues = []
+
+    result = {
+        "provider": provider,
+        "model": model,
+        "verdict": verdict,
+        "confidence": conf,
+        "issues": issues,
+        "raw": content[:2000],  # small debug window, optional
+    }
+
+    # cost (optional; safe if pricing is missing/zero)
+    cost = 0.0
+    try:
+        cost = compute_cost_for_usage(model_cfg, usage or {})
+    except Exception:
+        cost = 0.0
+
+    return result, (usage or {}), cost
+
+
+def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
+    """
+    Returns (system_prompt, user_prompt).
+    Keep it tight: we just want a rubric-ish JSON verdict.
+    """
+    seg = (item.get("segment") or {})
+    target = (item.get("target") or {})
+    choices = item.get("choices") or []
+
+    # separate correct vs distractors
+    correct = [c for c in choices if c.get("is_correct")]
+    distractors = [c for c in choices if not c.get("is_correct")]
+
+    system_prompt = (
+        "You are a careful CALL evaluation assistant. "
+        "You judge cloze multiple-choice items for language learners."
+    )
+
+    user_prompt = f"""
+Evaluate the quality of the distractors for this cloze multiple-choice item.
+
+SEGMENT (with blank):
+{seg.get("text_with_blank") or ""}
+
+CONTEXT (optional):
+Before: {seg.get("context_before")}
+After: {seg.get("context_after")}
+
+TARGET:
+surface = {target.get("surface")}
+lemma = {target.get("lemma")}
+pos = {target.get("pos")}
+
+CHOICES:
+Correct: {[c.get("form") for c in correct]}
+Distractors: {[c.get("form") for c in distractors]}
+
+Criteria (brief):
+- distractors must be SINGLE TOKEN, same broad grammatical behavior as target (POS/form)
+- distractors should be plausible near-misses BUT clearly wrong in this context
+- avoid distractors that are also acceptable answers
+- avoid obvious garbage or ungrammatical forms
+
+Return STRICT JSON ONLY:
+{{
+  "verdict": "ok" | "needs_fix",
+  "confidence": 0.0-1.0,
+  "issues": [
+    {{"distractor":"...", "problem":"...", "suggestion":"..."}}
+  ]
+}}
+""".strip()
+
+    return system_prompt, user_prompt
 
 def load_exercise_judgements_dict(clara_project_internal):
     raw = clara_project_internal.load_text_version_or_null("exercise_judgements")
@@ -839,9 +1030,86 @@ def save_exercise_judgements_dict(clara_project_internal, d, *, user):
         user=user,
     )
     
+def _json_from_model_output(text: str) -> dict:
+    """
+    Best-effort parse:
+    - try whole-string JSON
+    - else extract first {...} block
+    - else fallback
+    """
+    if not text:
+        return {}
+    s = text.strip()
+    try:
+        obj = json.loads(s)
+        return obj if isinstance(obj, dict) else {}
+    except Exception:
+        pass
+
+    # crude extraction of a JSON object
+    m = re.search(r"\{.*\}", s, flags=re.DOTALL)
+    if m:
+        try:
+            obj = json.loads(m.group(0))
+            return obj if isinstance(obj, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+def _judge_model_cfg_by_value(available_models: list[dict]) -> dict:
+    return {m["value"]: m for m in available_models}
+
 def get_available_judge_models():
-    return [
-        {"provider": "openai", "model": "gpt-4o"},
-        {"provider": "anthropic", "model": "claude-3-opus"},
-        {"provider": "google", "model": "gemini-1.5-pro"},
-    ]
+    """
+    Load models from shared models.yaml.
+    Only return models with valid API keys.
+    Structure matches existing template expectations.
+    """
+    if not file_exists(MODELS_YAML_PATH):
+        return []
+
+    models_cfg_raw = load_yaml(MODELS_YAML_PATH)
+    models_cfg = parse_models(models_cfg_raw)
+
+    print(f'models_cfg')
+    pprint.pprint(models_cfg)
+
+    available = []
+
+    for m in models_cfg:
+        if not m["api_key"]:
+            # skip models without env key present
+            continue
+
+        available.append({
+            "value": m["name"],              # used in checkbox
+            "label": f"{m['provider']} / {m['model']}",
+            "cfg": m,                        # full cfg for later lookup
+        })
+
+    print(f'available_judge_models')
+    pprint.pprint(available)
+
+    return available
+
+def load_yaml(path: Path):
+    with open(path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def parse_models(models_cfg_raw):
+    """
+    Same semantics as run_experiment.py
+    """
+    models = []
+    for m in models_cfg_raw:
+        env = os.environ.get(m.get("env_key", ""))
+        models.append({
+            "name": m["name"],
+            "provider": m["provider"],
+            "model": m["model"],
+            "chat_url": m["chat_url"],
+            "api_key": env,
+            "pricing": m.get("pricing", {}),
+        })
+    return models
