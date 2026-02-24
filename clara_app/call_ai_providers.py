@@ -35,7 +35,7 @@ def call_model_provider(
                 return call_anthropic(chat_url, api_key, model, system_prompt, user_prompt, timeout)
             elif provider == "xai":
                 # xAI is OpenAI-compatible
-                return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+                return call_xai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
             elif provider == "google":
                 return call_gemini(chat_url, api_key, model, system_prompt, user_prompt, timeout)
             else:
@@ -107,7 +107,7 @@ def compute_cost_for_usage(model_cfg: dict, usage: dict) -> float:
 
 # ---------- provider-specific callers ----------
 
-def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
+def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60, name='OpenAI') -> str:
     if requests is None:
         raise RuntimeError("The 'requests' package is required to call APIs. Install it with 'pip install requests'.")
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -116,12 +116,12 @@ def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, use
         "messages": [{"role":"system","content":system_prompt},{"role":"user","content":user_prompt}]    }
     resp = requests.post(chat_url, headers=headers, json=payload, timeout=timeout)
     # DEBUG: print status and body to help diagnose 400/401/403
-    print("[DEBUG] OpenAI request -> status:", resp.status_code)
+    print(f"[DEBUG] {name} request -> status:", resp.status_code)
     try:
         # try to pretty-print JSON error if present
-        print("[DEBUG] OpenAI response body:", resp.json())
+        print(f"[DEBUG] {name} response body:", resp.json())
     except Exception:
-        print("[DEBUG] OpenAI response text:", resp.text[:2000])
+        print(f"[DEBUG] {name} response text:", resp.text[:2000])
     resp.raise_for_status()
     data = resp.json()
     try:
@@ -133,7 +133,11 @@ def call_openai(chat_url: str, api_key: str, model: str, system_prompt: str, use
     
 def call_deepseek(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
     # DeepSeek is OpenAI-compatible in many SDKs; keep separate in case of differences.
-    return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout)
+    return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout, name='DeepSeek')
+
+def call_xai(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int=60) -> str:
+    # xAI is OpenAI-compatible in many SDKs; keep separate in case of differences.
+    return call_openai(chat_url, api_key, model, system_prompt, user_prompt, timeout, name='xAI')
 
 def call_anthropic(chat_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, timeout: int = 60) -> str:
     """

@@ -42,7 +42,10 @@ EXERCISE_TYPES = [
 ]
 
 CLOZE_PROMPT_VERSION = "cloze_distractors_v1"
+
 MODELS_YAML_PATH = absolute_file_name("$CLARA/clara_app/ai_provider_models.yaml")
+
+TIMEOUT_IN_SECONDS = 300
 
 # ---------------- Top-level views ----------------
 
@@ -794,7 +797,7 @@ def create_and_save_ai_panel_judgements(
             target_items,
             selected_models,
             model_cfg_by_name,
-            timeout=60,
+            timeout=TIMEOUT_IN_SECONDS,
             callback=callback
         )
     )
