@@ -833,62 +833,57 @@ async def process_ai_panel_judging_targets(
     """
     Fan-out/fan-in across (item, model).
     Returns:
-      - run_results: item_id -> model_value -> result
-      - cost_dict: aggregated usage+cost (same spirit as combine_cost_dicts)
+      - run_results: item_id -> model_name -> result
+      - cost_dict: aggregated usage+cost
     """
     tasks = []
+    metas = []  # (item_id, model_name, cfg)
 
     for item in target_items:
         item_id = item.get("item_id")
-        for model_value in selected_models:
-            cfg = model_cfg_by_name.get(model_value)
-            if not cfg:
-                continue
-            tasks.append(asyncio.create_task(_judge_one_item_with_one_model(item, cfg, timeout, callback=callback)))
-
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    run_results = {}   # item_id -> model_value -> result
-    usage_totals = {}  # provider -> dict of numeric usage fields
-    cost_totals = {}   # provider -> float
-
-    idx = 0
-    for item in target_items:
-        item_id = item.get("item_id")
-        run_results.setdefault(item_id, {})
         for model_name in selected_models:
             cfg = model_cfg_by_name.get(model_name)
             if not cfg:
                 continue
+            metas.append((item_id, model_name, cfg))
+            tasks.append(
+                asyncio.create_task(
+                    _judge_one_item_with_one_model(item, cfg, timeout, callback=callback)
+                )
+            )
 
-            r = results[idx]
-            idx += 1
+    results = await asyncio.gather(*tasks, return_exceptions=True)
 
-            if isinstance(r, Exception):
-                run_results[item_id][model_value] = {
-                    "provider": cfg["provider"],
-                    "model": cfg["model"],
-                    "verdict": "needs_fix",
-                    "confidence": 0.0,
-                    "issues": [{"distractor": "", "problem": f"exception: {r}", "suggestion": ""}],
-                    "raw": "",
-                }
-                continue
+    run_results = {}   # item_id -> model_name -> result
+    usage_totals = {}  # provider -> dict of numeric usage fields
+    cost_totals = {}   # provider -> float
 
-            result_dict, usage, cost = r
-            run_results[item_id][model_value] = result_dict
+    for (item_id, model_name, cfg), r in zip(metas, results):
+        run_results.setdefault(item_id, {})
 
-            prov = cfg["provider"]
-            usage_totals.setdefault(prov, {})
-            for k, v in (usage or {}).items():
-                if isinstance(v, (int, float)):
-                    usage_totals[prov][k] = usage_totals[prov].get(k, 0) + v
-            cost_totals[prov] = cost_totals.get(prov, 0.0) + float(cost or 0.0)
+        if isinstance(r, Exception):
+            run_results[item_id][model_name] = {
+                "provider": cfg.get("provider"),
+                "model": cfg.get("model"),
+                "verdict": "needs_fix",
+                "confidence": 0.0,
+                "issues": [{"distractor": "", "problem": f"exception: {r}", "suggestion": ""}],
+                "raw_text": "",
+                "parsed": {},
+            }
+            continue
 
-    cost_dict = {
-        "usage": usage_totals,
-        "cost": cost_totals,
-    }
+        result_dict, usage, cost = r
+        run_results[item_id][model_name] = result_dict
+
+        prov = cfg.get("provider")
+        usage_totals.setdefault(prov, {})
+        for k, v in (usage or {}).items():
+            if isinstance(v, (int, float)):
+                usage_totals[prov][k] = usage_totals[prov].get(k, 0) + v
+        cost_totals[prov] = cost_totals.get(prov, 0.0) + float(cost or 0.0)
+
+    cost_dict = {"usage": usage_totals, "cost": cost_totals}
     return run_results, cost_dict
 
 async def _judge_one_item_with_one_model(
@@ -908,8 +903,6 @@ async def _judge_one_item_with_one_model(
     api_key = model_cfg["api_key"]
     model = model_cfg["model"]
 
-    #post_task_update_async(callback, f"Sending judging request to: {provider}")
-
     content, usage = await asyncio.to_thread(
         call_model_provider,
         provider,
@@ -921,14 +914,12 @@ async def _judge_one_item_with_one_model(
         timeout
     )
 
-    #post_task_update_async(callback, f"Judging request received from: {provider}")
-
     parsed = _json_from_model_output(content)
 
     # normalize result
     verdict = parsed.get("verdict", "unparsed")
     if verdict not in ("ok", "needs_fix", "unparsed"):
-        verdict = "needs_fix" if not content else "needs_fix"
+        verdict = "needs_fix" 
 
     conf = parsed.get("confidence", "unparsed")
     try:
@@ -1038,32 +1029,6 @@ def save_exercise_judgements_dict(clara_project_internal, d, *, user):
         user=user,
     )
     
-##def _json_from_model_output(text: str) -> dict:
-##    """
-##    Best-effort parse:
-##    - try whole-string JSON
-##    - else extract first {...} block
-##    - else fallback
-##    """
-##    if not text:
-##        return {}
-##    s = text.strip()
-##    try:
-##        obj = json.loads(s)
-##        return obj if isinstance(obj, dict) else {}
-##    except Exception:
-##        pass
-##
-##    # crude extraction of a JSON object
-##    m = re.search(r"\{.*\}", s, flags=re.DOTALL)
-##    if m:
-##        try:
-##            obj = json.loads(m.group(0))
-##            return obj if isinstance(obj, dict) else {}
-##        except Exception:
-##            return {}
-##    return {}
-
 def _json_from_model_output(text: str) -> dict:
     if not text:
         return {}
