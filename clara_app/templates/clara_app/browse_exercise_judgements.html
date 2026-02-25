@@ -73,23 +73,57 @@
       </div>
     </div>
 
-    <div style="margin-bottom: 0.5em;">
-      <strong>Target:</strong>
-      {% if orig.target %}
-        {{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
-      {% else %}
-        (missing target)
-      {% endif %}
-      &nbsp;&nbsp;
-      <strong>Correct:</strong>
-      {% if orig.choices %}
-        {% for c in orig.choices %}
-          {% if c.is_correct %}{{ c.form }}{% endif %}
-        {% endfor %}
-      {% else %}
-        (unknown)
-      {% endif %}
-    </div>
+	<div style="margin-bottom: 0.5em;">
+	  <strong>Target:</strong>
+	  {% if orig.target %}
+		{{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
+	  {% else %}
+		(missing target)
+	  {% endif %}
+	</div>
+	
+	{% if orig.context_before or orig.context_after %}
+	  <div style="margin-bottom: 0.5em;">
+		<strong>Context:</strong>
+		<div style="font-size: 90%; color:#555;">
+		  {% if orig.context_before %}<div><em>Before:</em> {{ orig.context_before }}</div>{% endif %}
+		  {% if orig.context_after %}<div><em>After:</em> {{ orig.context_after }}</div>{% endif %}
+		</div>
+	  </div>
+	{% endif %}
+
+	<div style="margin-bottom: 0.5em;">
+	  <strong>Choices:</strong>
+	  {% if orig.choices %}
+		<ul style="margin: 0.25em 0 0 1.25em;">
+		  {# show correct first #}
+		  {% for c in orig.choices %}
+			{% if c.is_correct %}
+			  <li>
+				<strong>{{ c.form }}</strong> ✅
+				{% if c.reason %}
+				  <div style="font-size: 90%; color: #555;">{{ c.reason }}</div>
+				{% endif %}
+			  </li>
+			{% endif %}
+		  {% endfor %}
+
+		  {# then distractors #}
+		  {% for c in orig.choices %}
+			{% if not c.is_correct %}
+			  <li>
+				<strong>{{ c.form }}</strong> ❌
+				{% if c.reason %}
+				  <div style="font-size: 90%; color: #555;">{{ c.reason }}</div>
+				{% endif %}
+			  </li>
+			{% endif %}
+		  {% endfor %}
+		</ul>
+	  {% else %}
+		(missing choices)
+	  {% endif %}
+	</div>
 
     <div>
       <strong>Judgements:</strong>
