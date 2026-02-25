@@ -146,13 +146,26 @@
               </td>
 
               <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
-                {% if r.verdict == "ok" %}
-                  <span style="padding: 0.15em 0.4em; border:1px solid #6c6; background:#efe;">ok</span>
-                {% elif r.verdict == "needs_fix" %}
-                  <span style="padding: 0.15em 0.4em; border:1px solid #c66; background:#fee;">needs_fix</span>
-                {% else %}
-                  <span style="padding: 0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ r.verdict }}</span>
-                {% endif %}
+					{% if r.verdict == "ok" %}
+					  <span style="padding: 0.15em 0.4em; border:1px solid #6c6; background:#efe;">
+						ok
+					  </span>
+
+					{% elif r.verdict == "minor_suggestion" %}
+					  <span style="padding: 0.15em 0.4em; border:1px solid #cc9; background:#fffae6;">
+						minor_suggestion
+					  </span>
+
+					{% elif r.verdict == "needs_fix" %}
+					  <span style="padding: 0.15em 0.4em; border:1px solid #c66; background:#fee;">
+						needs_fix
+					  </span>
+
+					{% else %}
+					  <span style="padding: 0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">
+						{{ r.verdict }}
+					  </span>
+					{% endif %}
               </td>
 
               <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
