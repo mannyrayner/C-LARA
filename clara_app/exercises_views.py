@@ -802,6 +802,24 @@ def create_and_save_ai_panel_judgements(
         )
     )
 
+    wrapped_results = {}
+
+    for item in target_items:
+        item_id = item["item_id"]
+
+        snapshot = {
+            "text_with_blank": item.get("segment", {}).get("text_with_blank"),
+            "context_before": item.get("segment", {}).get("context_before"),
+            "context_after": item.get("segment", {}).get("context_after"),
+            "target": item.get("target"),
+            "choices": item.get("choices"),
+        }
+
+        wrapped_results[item_id] = {
+            "item_snapshot": snapshot,
+            "models": run_results.get(item_id, {})
+        }
+
     # Merge into stored judgements blob
     d = load_exercise_judgements_dict(clara_project_internal)
     jud = d["judgements"]
@@ -811,7 +829,7 @@ def create_and_save_ai_panel_judgements(
     jud[exercise_type][exercise_set_id][judge_run_id] = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "models": selected_models,
-        "items": run_results,
+        "items": wrapped_results,
         "cost": cost_dict,
     }
 
@@ -952,54 +970,69 @@ async def _judge_one_item_with_one_model(
 
 
 def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
-    """
-    Returns (system_prompt, user_prompt).
-    Keep it tight: we just want a rubric-ish JSON verdict.
-    """
-    seg = (item.get("segment") or {})
-    target = (item.get("target") or {})
+    seg = item.get("segment") or {}
+    target = item.get("target") or {}
     choices = item.get("choices") or []
 
-    # separate correct vs distractors
     correct = [c for c in choices if c.get("is_correct")]
     distractors = [c for c in choices if not c.get("is_correct")]
 
+    # Format distractors with rationale
+    distractor_lines = []
+    for d in distractors:
+        distractor_lines.append(
+            f"- {d.get('form')} :: rationale = {d.get('reason')}"
+        )
+
     system_prompt = (
-        "You are a careful CALL evaluation assistant. "
-        "You judge cloze multiple-choice items for language learners."
+        "You are a careful and fair CALL evaluation assistant. "
+        "You evaluate cloze multiple-choice items for language learners. "
+        "Be conservative: only flag CLEAR and STRONG problems."
     )
 
     user_prompt = f"""
-Evaluate the quality of the distractors for this cloze multiple-choice item.
+Evaluate the distractors for the following cloze multiple-choice item.
 
 SEGMENT (with blank):
 {seg.get("text_with_blank") or ""}
 
-CONTEXT (optional):
-Before: {seg.get("context_before")}
-After: {seg.get("context_after")}
+CONTEXT:
+Before: {seg.get("context_before") or ""}
+After: {seg.get("context_after") or ""}
 
 TARGET:
 surface = {target.get("surface")}
 lemma = {target.get("lemma")}
 pos = {target.get("pos")}
 
-CHOICES:
-Correct: {[c.get("form") for c in correct]}
-Distractors: {[c.get("form") for c in distractors]}
+CORRECT ANSWER:
+{[c.get("form") for c in correct]}
 
-Criteria (brief):
-- distractors must be SINGLE TOKEN, same broad grammatical behavior as target (POS/form)
-- distractors should be plausible near-misses BUT clearly wrong in this context
-- avoid distractors that are also acceptable answers
-- avoid obvious garbage or ungrammatical forms
+DISTRACTORS (with intended rationale):
+{chr(10).join(distractor_lines)}
 
-Return STRICT JSON ONLY:
+Evaluation criteria:
+
+1. Each distractor must be a SINGLE TOKEN.
+2. Each distractor must have similar grammatical behavior (POS/form) as the target.
+3. Each distractor should align with its intended rationale.
+4. Each distractor must be PLAUSIBLE but CLEARLY INCORRECT in this specific context.
+5. Only flag "needs_fix" if there is a clear violation (e.g., ambiguity, acceptability, wrong POS, nonsense, or mismatch with rationale).
+6. Do NOT penalize minor stylistic concerns.
+
+Return STRICT JSON ONLY (no markdown, no explanations outside JSON):
+
 {{
   "verdict": "ok" | "needs_fix",
   "confidence": 0.0-1.0,
+  "summary": "brief one-sentence overall explanation",
   "issues": [
-    {{"distractor":"...", "problem":"...", "suggestion":"..."}}
+    {{
+      "distractor": "...",
+      "problem": "...",
+      "suggestion": "...",
+      "severity": "major" | "minor"
+    }}
   ]
 }}
 """.strip()
