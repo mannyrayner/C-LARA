@@ -642,7 +642,6 @@ def exercises_exist_for_project(project_id: int):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-
     all_exercises = clara_project_internal.load_all_exercises()
     if not all_exercises:
         return False
@@ -1091,6 +1090,98 @@ def _json_from_model_output(text: str) -> dict:
             return {}
 
     return {}
+
+# Viewing panel of AI judges results
+@login_required
+def browse_exercise_judgements(request, project_id):
+    """
+    Human-friendly browser for the exercise_judgements blob:
+      schema_version: "1.0"
+      judgements[exercise_type][exercise_set_id][judge_run_id] = {
+        created_at, models, items, cost, ...
+      }
+    """
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    d = load_exercise_judgements_dict(clara_project_internal)
+    jud = (d or {}).get("judgements", {}) or {}
+
+    # ---------- available selectors ----------
+    exercise_types = sorted(jud.keys())
+
+    # defaults
+    selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
+    sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
+    exercise_set_ids = sorted(sets_dict.keys())
+
+    selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
+    runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
+    # run ids look like timestamps; descending is usually nicest
+    run_ids = sorted(runs_dict.keys(), reverse=True)
+
+    selected_run_id = request.GET.get("judge_run_id") or (run_ids[0] if run_ids else "")
+
+    run_payload = runs_dict.get(selected_run_id, {}) if selected_run_id else {}
+    items = (run_payload.get("items") or {}) if isinstance(run_payload, dict) else {}
+
+    # Also load the exercise set, so we can show extra context if needed
+    # (and/or show correct answer, segment text, etc.)
+    exercises_payload = clara_project_internal.load_exercises(selected_exercise_type) if selected_exercise_type else {}
+    judged_rows = []
+    # items is a dict indexed by item_id
+    for item_id in items:
+        exercises_payload = items[item_id]
+        snapshot = exercises_payload.get("item_snapshot", {}) if isinstance(exercises_payload, dict) else {}
+        model_map = exercises_payload.get("models", {}) if isinstance(exercises_payload, dict) else {}
+        judged_rows.append({
+            "item_id": item_id,
+            "snapshot": snapshot,
+            "model_map": model_map,
+        })
+
+    # optional: stable order
+    judged_rows.sort(key=lambda r: r["item_id"])
+
+    if not exercise_types:
+        messages.info(request, "No AI-panel judgements found yet for this project.")
+        return render(
+            request,
+            "clara_app/browse_exercise_judgements.html",
+            {
+                "project": project,
+                "exercise_types": [],
+            },
+        )
+
+    context = {
+        "project": project,
+
+        "exercise_types": exercise_types,
+        "selected_exercise_type": selected_exercise_type,
+
+        "exercise_set_ids": exercise_set_ids,
+        "selected_exercise_set_id": selected_exercise_set_id,
+
+        "run_ids": run_ids,
+        "selected_run_id": selected_run_id,
+
+        "run_payload": run_payload,     # created_at, models, cost...
+        "judged_items": items,          # item_id -> model_name -> result
+        "judged_rows": judged_rows,
+    }
+
+    return render(request, "clara_app/browse_exercise_judgements.html", context)
+
+def exercise_judgements_exist_for_project(project_id: int):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    all_exercise_judgements = load_exercise_judgements_dict(clara_project_internal)
+    if not all_exercise_judgements:
+        return False
+    else:
+        return True
 
 def _judge_model_cfg_by_value(available_models: list[dict]) -> dict:
     return {m["value"]: m for m in available_models}

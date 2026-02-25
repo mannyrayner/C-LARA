@@ -17,7 +17,7 @@ from .utils import is_ai_enabled_language
 
 from .clara_main import CLARAProjectInternal
 from .clara_phonetic_utils import phonetic_resources_are_available
-from .exercises_views import exercises_exist_for_project
+from .exercises_views import exercises_exist_for_project, exercise_judgements_exist_for_project
 from .clara_chinese import is_chinese_language
 from .clara_utils import get_config
 from .clara_utils import is_chinese_language
@@ -175,6 +175,7 @@ def project_detail(request, project_id):
     images = clara_project_internal.get_all_project_images()
     images_exist = len(images) != 0
     exercises_exist = exercises_exist_for_project(project_id)
+    exercise_judgements_exist = exercise_judgements_exist_for_project(project_id)
     api_cost = get_project_api_cost(request.user, project)
     
     if request.method == 'POST':
@@ -265,6 +266,7 @@ def project_detail(request, project_id):
                     'can_picture_gloss': can_picture_gloss,
                     'can_create_exercises': can_create_exercises,
                     'exercises_exist': exercises_exist,
+                    'exercise_judgements_exist': exercise_judgements_exist,
                     'picture_glossing_enabled': bool(project.uses_picture_glossing),
                     'rendered_html_exists': rendered_html_exists,
                     'rendered_phonetic_html_exists': rendered_phonetic_html_exists,
