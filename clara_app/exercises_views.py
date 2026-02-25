@@ -23,7 +23,7 @@ from .models import CLARAProject
 from .clara_main import CLARAProjectInternal
 from .clara_classes import ContentElement
 
-#from .clara_chatgpt4 import get_api_chatgpt4_response
+from .clara_chatgpt4 import get_api_chatgpt4_response
 from .call_ai_providers import call_model_provider, compute_cost_for_usage
 
 from .utils import (
@@ -40,6 +40,8 @@ config = get_config()
 EXERCISE_TYPES = [
     ("cloze_mcq", "Cloze (multiple choice)"),
 ]
+
+MODEL_FOR_EXERCISE_GENERATION = 'gpt-5.2'
 
 CLOZE_PROMPT_VERSION = "cloze_distractors_v1"
 
@@ -198,7 +200,7 @@ def create_and_save_cloze_exercise_items(
 
     params = {
         "n_distractors": n_distractors,
-        "gpt_model": MODEL_NAME,
+        "gpt_model": MODEL_FOR_EXERCISE_GENERATION,
     }
 
     items, cost_dict = asyncio.run(
