@@ -1,0 +1,168 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>AI-panel judgements: {{ project.title }}</h2>
+
+{% if not exercise_types %}
+  <p><em>No judgements found.</em></p>
+  <p><a href="{% url 'project_detail' project.id %}">Back to project</a></p>
+{% else %}
+
+<form method="get" style="margin-bottom: 1em; padding: 0.75em; border: 1px solid #ddd;">
+  <label><strong>Exercise type</strong></label>
+  <select name="exercise_type" onchange="this.form.submit()">
+    {% for t in exercise_types %}
+      <option value="{{ t }}" {% if t == selected_exercise_type %}selected{% endif %}>{{ t }}</option>
+    {% endfor %}
+  </select>
+
+  &nbsp;&nbsp;
+
+  <label><strong>Exercise set</strong></label>
+  <select name="exercise_set_id" onchange="this.form.submit()">
+    {% for sid in exercise_set_ids %}
+      <option value="{{ sid }}" {% if sid == selected_exercise_set_id %}selected{% endif %}>{{ sid }}</option>
+    {% endfor %}
+  </select>
+
+  &nbsp;&nbsp;
+
+  <label><strong>Judging run</strong></label>
+  <select name="judge_run_id" onchange="this.form.submit()">
+    {% for rid in run_ids %}
+      <option value="{{ rid }}" {% if rid == selected_run_id %}selected{% endif %}>{{ rid }}</option>
+    {% endfor %}
+  </select>
+
+  {# preserve selection when changing a later dropdown #}
+  <input type="hidden" name="exercise_type" value="{{ selected_exercise_type }}">
+</form>
+
+{% if not selected_run_id %}
+  <p><em>No run selected.</em></p>
+{% else %}
+
+<div style="margin-bottom: 1em; padding: 0.75em; border: 1px solid #eee;">
+  <div><strong>Run:</strong> {{ selected_run_id }}</div>
+  <div><strong>Created at:</strong> {{ run_payload.created_at|default:"(unknown)" }}</div>
+  <div><strong>Models:</strong>
+    {% if run_payload.models %}
+      {{ run_payload.models|join:", " }}
+    {% else %}
+      (unknown)
+    {% endif %}
+  </div>
+  {% if run_payload.cost %}
+    <div><strong>Cost:</strong>
+      <pre style="margin: 0.25em 0 0 0; white-space: pre-wrap;">{{ run_payload.cost|safe }}</pre>
+    </div>
+  {% endif %}
+</div>
+
+{% for row in judged_rows %}
+  {% with orig=row.snapshot model_map=row.model_map %}
+  <div style="margin: 0 0 1em 0; padding: 0.75em; border: 1px solid #ddd;">
+    <div style="margin-bottom: 0.5em;">
+      <strong>Item:</strong> {{ row.item_id }}
+    </div>
+
+    <div style="margin-bottom: 0.5em;">
+      <strong>Text:</strong>
+      <div style="padding: 0.5em; background: #fafafa; border: 1px solid #eee;">
+        {{ orig.text_with_blank|default:"(missing text_with_blank)" }}
+      </div>
+    </div>
+
+    <div style="margin-bottom: 0.5em;">
+      <strong>Target:</strong>
+      {% if orig.target %}
+        {{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
+      {% else %}
+        (missing target)
+      {% endif %}
+      &nbsp;&nbsp;
+      <strong>Correct:</strong>
+      {% if orig.choices %}
+        {% for c in orig.choices %}
+          {% if c.is_correct %}{{ c.form }}{% endif %}
+        {% endfor %}
+      {% else %}
+        (unknown)
+      {% endif %}
+    </div>
+
+    <div>
+      <strong>Judgements:</strong>
+      <table style="width:100%; border-collapse: collapse; margin-top: 0.5em;">
+        <thead>
+          <tr>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Model</th>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Verdict</th>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Conf</th>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Issues (first 2)</th>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Raw</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for model_name, r in model_map.items %}
+            <tr>
+              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+                {{ model_name }}<br>
+                <small>{{ r.provider }} / {{ r.model }}</small>
+              </td>
+
+              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+                {% if r.verdict == "ok" %}
+                  <span style="padding: 0.15em 0.4em; border:1px solid #6c6; background:#efe;">ok</span>
+                {% elif r.verdict == "needs_fix" %}
+                  <span style="padding: 0.15em 0.4em; border:1px solid #c66; background:#fee;">needs_fix</span>
+                {% else %}
+                  <span style="padding: 0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ r.verdict }}</span>
+                {% endif %}
+              </td>
+
+              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+                {{ r.confidence|default:"" }}
+              </td>
+
+              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+                {% if r.issues %}
+                  <ul style="margin: 0; padding-left: 1.2em;">
+                    {% for issue in r.issues %}
+                      {% if forloop.counter0 < 2 %}
+                        <li>
+                          <strong>{{ issue.distractor }}</strong>:
+                          {{ issue.problem }}
+                          {% if issue.suggestion %}
+                            <br><em>Suggest:</em> {{ issue.suggestion }}
+                          {% endif %}
+                        </li>
+                      {% endif %}
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <em>—</em>
+                {% endif %}
+              </td>
+
+              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+                <details>
+                  <summary>raw_text</summary>
+                  <pre style="white-space: pre-wrap;">{{ r.raw_text|default:r.raw|default:"" }}</pre>
+                </details>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endwith %}
+{% endfor %}
+
+{% endif %}
+
+<p><a href="{% url 'project_detail' project.id %}">Back to project</a></p>
+
+{% endif %}
+{% endblock %}

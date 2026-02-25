@@ -192,13 +192,18 @@
 		  data-tooltip="Browse generated interactive exercises for project."
 		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
 		  Browse exercises
-		  </a>
+		  </a></p>
 	 <p><a href="{% url 'ai_panel_judge_exercises' project.id 'normal' %}"
 		  data-tooltip="Judge exercises using AI panel."
 		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
 		  Judge exercises using AI panel
 		  </a>
 	{% if up_to_date_dict.exercises %}✓{% endif %}</p>
+	<p><a href="{% url 'browse_exercise_judgements' project.id %}"
+	  data-tooltip="Browse exercise judgements produced using AI panel."
+	  {% if not exercise_judgements_exist %}class="disabled-link"{% endif %}>
+	  Browse exercise judgements
+	  </a></p>
 	{% if can_picture_gloss %}
 	  <p><a href="{% url 'perform_picture_glossing' project.id %}"
 			data-tooltip="Create exercises for project."
