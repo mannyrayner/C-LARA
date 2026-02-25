@@ -937,7 +937,7 @@ async def _judge_one_item_with_one_model(
 
     # normalize result
     verdict = parsed.get("verdict", "unparsed")
-    if verdict not in ("ok", "needs_fix", "unparsed"):
+    if verdict not in ("ok", "minor_suggestion", "needs_fix", "unparsed"):
         verdict = "needs_fix" 
 
     conf = parsed.get("confidence", "unparsed")
@@ -986,13 +986,23 @@ def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
         )
 
     system_prompt = (
-        "You are a careful and fair CALL evaluation assistant. "
-        "You evaluate cloze multiple-choice items for language learners. "
-        "Be conservative: only flag CLEAR and STRONG problems."
+    "You are a careful and fair CALL evaluation assistant. "
+    "You evaluate cloze multiple-choice items designed by a competent CALL researcher. "
+    "Assume good faith and pedagogical intent. "
+    "Your task is not to search for minor flaws, but to determine whether each distractor "
+    "successfully fulfills its stated pedagogical purpose."
     )
 
-    user_prompt = f"""
+    user_prompt = user_prompt = f"""
 Evaluate the distractors for the following cloze multiple-choice item.
+
+IMPORTANT ORIENTATION:
+- Assume the item was designed by a competent CALL researcher.
+- The goal is to VALIDATE design intent, not to nitpick.
+- Only flag issues that are clearly pedagogically significant.
+- Minor improvements should be classified as "minor_suggestion".
+- Reserve "needs_fix" for clear and substantive problems.
+  If you are uncertain whether an issue rises to a substantive pedagogical flaw, prefer "minor_suggestion" over "needs_fix".
 
 SEGMENT (with blank):
 {seg.get("text_with_blank") or ""}
@@ -1015,16 +1025,25 @@ DISTRACTORS (with intended rationale):
 Evaluation criteria:
 
 1. Each distractor must be a SINGLE TOKEN.
-2. Each distractor must have similar grammatical behavior (POS/form) as the target.
-3. Each distractor should align with its intended rationale.
-4. Each distractor must be PLAUSIBLE but CLEARLY INCORRECT in this specific context.
-5. Only flag "needs_fix" if there is a clear violation (e.g., ambiguity, acceptability, wrong POS, nonsense, or mismatch with rationale).
-6. Do NOT penalize minor stylistic concerns.
+2. Each distractor should have similar grammatical behavior (POS/form) as the target.
+3. The provided "reason" explains the intended pedagogical function.
+   Judge whether the distractor SUCCESSFULLY fulfills this intended function in context.
+4. Distractors should be plausible near-misses but clearly incorrect in THIS specific context.
+5. Do NOT penalize minor stylistic issues.
+6. Only classify as "needs_fix" if there is a clear and substantive pedagogical problem
+   (e.g., ambiguity making it potentially correct, wrong POS, nonsensical form,
+   or clear failure to match its stated rationale).
+
+Verdict guidelines:
+
+- "ok" → All distractors fulfill their intended pedagogical function.
+- "minor_suggestion" → The item works pedagogically, but there are small improvements possible.
+- "needs_fix" → At least one distractor has a clear and substantive flaw.
 
 Return STRICT JSON ONLY (no markdown, no explanations outside JSON):
 
 {{
-  "verdict": "ok" | "needs_fix",
+  "verdict": "ok" | "minor_suggestion" | "needs_fix",
   "confidence": 0.0-1.0,
   "summary": "brief one-sentence overall explanation",
   "issues": [
