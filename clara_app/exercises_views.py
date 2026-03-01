@@ -78,7 +78,10 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str = "sta
         )
 
     # POST
+    default_learner_level = "intermediate"
+    
     exercise_type = request.POST.get("exercise_type", "cloze_mcq").strip()
+    learner_level = request.POST.get("learner_level", default_learner_level).strip()
     n_examples = int(request.POST.get("n_examples", "20"))
     n_distractors = int(request.POST.get("n_distractors", "3"))
     seed_str = request.POST.get("seed", "").strip()
@@ -113,6 +116,7 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str = "sta
         n_distractors,
         seed,
         rng,
+        learner_level=learner_level, 
         callback=callback,
     )
 
@@ -156,6 +160,7 @@ def create_and_save_exercise_items(
     n_distractors: int,
     seed: int,
     rng: random.Random,
+    learner_level: str = "intermediate",
     callback=None,
 ):
     try:
@@ -169,6 +174,7 @@ def create_and_save_exercise_items(
                 n_distractors,
                 seed,
                 rng,
+                learner_level=learner_level,
                 callback=callback,
             )
         else:
@@ -192,6 +198,7 @@ def create_and_save_cloze_exercise_items(
     n_distractors: int,
     seed: int,
     rng: random.Random,
+    learner_level: str = "intermediate",
     callback=None,
 ):
     exercise_set_id = uuid.uuid4().hex
@@ -204,7 +211,7 @@ def create_and_save_cloze_exercise_items(
     }
 
     items, cost_dict = asyncio.run(
-        process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng, callback=callback)
+        process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng, learner_level=learner_level, callback=callback)
     )
 
     # Assign stable item_ids
@@ -221,6 +228,7 @@ def create_and_save_cloze_exercise_items(
         "exercise_set_id": exercise_set_id,
         "schema_version": "1.0",
         "exercise_type": exercise_type,
+        "learner_level": learner_level,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "selection_method": "random",
         "language": {"l2": project.l2, "gloss": project.l1},
@@ -277,9 +285,9 @@ def is_eligible_target(content_element) -> bool:
     return True
 
 
-async def process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng: random.Random, callback=None):
+async def process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng: random.Random, learner_level="intermediate", callback=None):
     tasks = [
-        asyncio.create_task(generate_cloze_exercise_item(t, project, text_obj, params, rng, callback=callback))
+        asyncio.create_task(generate_cloze_exercise_item(t, project, text_obj, params, rng, learner_level=learner_level, callback=callback))
         for t in exercise_targets
     ]
     results = await asyncio.gather(*tasks)
@@ -294,7 +302,7 @@ async def process_cloze_exercise_targets(project, text_obj, params, exercise_tar
     return items, total_cost
 
 
-async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, rng: random.Random, callback=None):
+async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, rng: random.Random, learner_level="intermediate", callback=None):
     seg = exercise_target["segment"]
     ce = exercise_target["target_ce"]
     ce_index = exercise_target["target_ce_index"]
@@ -324,6 +332,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     n_distractors = params["n_distractors"]
 
     prompt = build_cloze_distractor_prompt(
+        learner_level=learner_level,
         segment_text=segment_text,
         segment_text_with_blank=segment_text_with_blank,
         target_surface=target_surface,
@@ -344,6 +353,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     choices = normalise_choices(resp_json, rng, correct=target_surface)
 
     item = {
+        "learner_level": learner_level,
         "page_index": page_index,
         "segment_index": seg_index,
         "target": {"surface": target_surface, "lemma": lemma, "pos": pos},
@@ -363,6 +373,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
 def build_cloze_distractor_prompt(
     *,
+    learner_level,
     segment_text,
     segment_text_with_blank=None,   # new
     target_surface,
@@ -382,6 +393,14 @@ You are generating distractors for a language-learning cloze multiple-choice que
 
 Language: {l2}
 Task: Provide EXACTLY {n_distractors} distractors for the TARGET token in the SEGMENT below.
+
+LEARNER LEVEL: {learner_level}
+
+Guidance by level:
+- beginner: prefer very common words; avoid rare vocabulary and subtle semantic distinctions
+- low_intermediate: common words; allow simple contrasts; avoid idioms/rare senses
+- intermediate: allow moderate vocabulary; distractors can be slightly subtler
+- advanced: allow nuanced near-misses; still ensure only one clearly correct answer
 
 SEGMENT:
 {segment_text}{blank_block}
