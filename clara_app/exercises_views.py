@@ -828,6 +828,7 @@ def create_and_save_ai_panel_judgements(
         item_id = item["item_id"]
 
         snapshot = {
+            "learner_level": item.get("learner_level"),
             "text_with_blank": item.get("segment", {}).get("text_with_blank"),
             "context_before": item.get("segment", {}).get("context_before"),
             "context_after": item.get("segment", {}).get("context_after"),
@@ -993,6 +994,7 @@ def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
     seg = item.get("segment") or {}
     target = item.get("target") or {}
     choices = item.get("choices") or []
+    learner_level = item.get("learner_level") or "intermediate"
 
     correct = [c for c in choices if c.get("is_correct")]
     distractors = [c for c in choices if not c.get("is_correct")]
@@ -1014,6 +1016,14 @@ def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
 
     user_prompt = user_prompt = f"""
 Evaluate the distractors for the following cloze multiple-choice item.
+
+LEARNER LEVEL: {learner_level}
+
+Guidance by level:
+- beginner: be tolerant of simpler/less subtle distractors; only flag clearly misleading or invalid ones
+- low_intermediate: similar tolerance; avoid requiring nuanced semantic distinctions
+- intermediate: moderate subtlety is fine
+- advanced: allow nuanced near-misses; still must be clearly wrong in context
 
 IMPORTANT ORIENTATION:
 - Assume the item was designed by a competent CALL researcher.
