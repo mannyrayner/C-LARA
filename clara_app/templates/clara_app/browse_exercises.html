@@ -73,4 +73,8 @@
   <pre style="white-space: pre-wrap;">{{ item.notes|safe }}</pre>
 {% endif %}
 
+    <p style="margin-top: 1em;">
+      <a href="{% url 'project_detail' project.id %}">Back to project</a>
+    </p>
+
 {% endblock %}
