@@ -230,7 +230,8 @@ class CLARAProjectInternal:
             "mwe": None,
             "image_request_sequence": None,
             "exercises": None,
-            "exercise_judgements": None
+            "exercise_judgements": None,
+            "exercise_human_judgements": None
         }
         self.coherent_images_v2_project_dir = self.project_dir / 'coherent_images_v2_project_dir'
         self.internalised_and_annotated_text_path = self.project_dir / 'internalised_and_annotated_text.pickle'

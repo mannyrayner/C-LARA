@@ -1014,24 +1014,10 @@ def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
     "successfully fulfills its stated pedagogical purpose."
     )
 
+    cloze_evaluation_rubric = get_cloze_judging_rubric_text(learner_level)
+
     user_prompt = user_prompt = f"""
-Evaluate the distractors for the following cloze multiple-choice item.
-
-LEARNER LEVEL: {learner_level}
-
-Guidance by level:
-- beginner: be tolerant of simpler/less subtle distractors; only flag clearly misleading or invalid ones
-- low_intermediate: similar tolerance; avoid requiring nuanced semantic distinctions
-- intermediate: moderate subtlety is fine
-- advanced: allow nuanced near-misses; still must be clearly wrong in context
-
-IMPORTANT ORIENTATION:
-- Assume the item was designed by a competent CALL researcher.
-- The goal is to VALIDATE design intent, not to nitpick.
-- Only flag issues that are clearly pedagogically significant.
-- Minor improvements should be classified as "minor_suggestion".
-- Reserve "needs_fix" for clear and substantive problems.
-  If you are uncertain whether an issue rises to a substantive pedagogical flaw, prefer "minor_suggestion" over "needs_fix".
+{cloze_evaluation_rubric}
 
 SEGMENT (with blank):
 {seg.get("text_with_blank") or ""}
@@ -1050,18 +1036,6 @@ CORRECT ANSWER:
 
 DISTRACTORS (with intended rationale):
 {chr(10).join(distractor_lines)}
-
-Evaluation criteria:
-
-1. Each distractor must be a SINGLE TOKEN.
-2. Each distractor should have similar grammatical behavior (POS/form) as the target.
-3. The provided "reason" explains the intended pedagogical function.
-   Judge whether the distractor SUCCESSFULLY fulfills this intended function in context.
-4. Distractors should be plausible near-misses but clearly incorrect in THIS specific context.
-5. Do NOT penalize minor stylistic issues.
-6. Only classify as "needs_fix" if there is a clear and substantive pedagogical problem
-   (e.g., ambiguity making it potentially correct, wrong POS, nonsensical form,
-   or clear failure to match its stated rationale).
 
 Verdict guidelines:
 
@@ -1087,6 +1061,39 @@ Return STRICT JSON ONLY (no markdown, no explanations outside JSON):
 """.strip()
 
     return system_prompt, user_prompt
+
+def get_cloze_judging_rubric_text(learner_level: str) -> str:
+    return f"""
+Evaluate the distractors for the following cloze multiple-choice item.
+
+LEARNER LEVEL: {learner_level}
+
+Guidance by level:
+- beginner: be tolerant of simpler/less subtle distractors; only flag clearly misleading or invalid ones
+- low_intermediate: similar tolerance; avoid requiring nuanced semantic distinctions
+- intermediate: moderate subtlety is fine
+- advanced: allow nuanced near-misses; still must be clearly wrong in context
+
+IMPORTANT ORIENTATION:
+- Assume the item was designed by a competent CALL researcher.
+- The goal is to VALIDATE design intent, not to nitpick.
+- Only flag issues that are clearly pedagogically significant.
+- Minor improvements should be classified as "minor_suggestion".
+- Reserve "needs_fix" for clear and substantive problems.
+  If you are uncertain whether an issue rises to a substantive pedagogical flaw, prefer "minor_suggestion" over "needs_fix".
+
+Evaluation criteria:
+
+1. Each distractor must be a SINGLE TOKEN.
+2. Each distractor should have similar grammatical behavior (POS/form) as the target.
+3. The provided "reason" explains the intended pedagogical function.
+   Judge whether the distractor SUCCESSFULLY fulfills this intended function in context.
+4. Distractors should be plausible near-misses but clearly incorrect in THIS specific context.
+5. Do NOT penalize minor stylistic issues.
+6. Only classify as "needs_fix" if there is a clear and substantive pedagogical problem
+   (e.g., ambiguity making it potentially correct, wrong POS, nonsensical form,
+   or clear failure to match its stated rationale).
+"""
 
 def load_exercise_judgements_dict(clara_project_internal):
     raw = clara_project_internal.load_text_version_or_null("exercise_judgements")
@@ -1290,3 +1297,186 @@ def parse_models(models_cfg_raw):
             "pricing": m.get("pricing", {}),
         })
     return models
+
+# ------------------------------------------------------------------
+# Human Panel: Judge Exercises
+# ------------------------------------------------------------------
+
+def load_exercise_human_judgements_dict(clara_project_internal):
+    raw = clara_project_internal.load_text_version_or_null("exercise_human_judgements")
+    if not raw:
+        return {"schema_version": "1.0", "human_judgements": {}}
+    try:
+        d = json.loads(raw)
+        if not isinstance(d, dict):
+            return {"schema_version": "1.0", "human_judgements": {}}
+        d.setdefault("schema_version", "1.0")
+        d.setdefault("human_judgements", {})
+        return d
+    except Exception:
+        return {"schema_version": "1.0", "human_judgements": {}}
+
+
+def save_exercise_human_judgements_dict(clara_project_internal, d, *, user):
+    text = json.dumps(d, indent=2, ensure_ascii=False) + "\n"
+    clara_project_internal.save_text_version(
+        "exercise_human_judgements",
+        text,
+        source="human_evaluation",
+        user=user,
+    )
+
+@login_required
+@user_has_a_project_role
+def human_judge_exercises(request, project_id):
+
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    all_exercises = clara_project_internal.load_all_exercises()
+    if not all_exercises:
+        messages.error(request, "No exercises available.")
+        return redirect("project_detail", project_id=project_id)
+
+    exercise_type = list(all_exercises.keys())[0]
+    exercise_payload = clara_project_internal.load_exercises(exercise_type)
+
+    exercise_set_id = exercise_payload.get("exercise_set_id")
+    learner_level = exercise_payload.get("learner_level", "intermediate")
+    items = exercise_payload.get("items", [])
+    rubric_text = get_cloze_judging_rubric_text(learner_level)
+
+    if request.method == "GET":
+        return render(
+            request,
+            "clara_app/human_judge_exercises.html",
+            {
+                "project": project,
+                "exercise_type": exercise_type,
+                "exercise_set_id": exercise_set_id,
+                "learner_level": learner_level,
+                "items": items,
+                "rubric_text": rubric_text,
+            },
+        )
+
+    # ---------------- POST: Save human run ----------------
+
+    human_run_id = request.POST.get("human_run_id")
+    if not human_run_id:
+        human_run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + request.user.username
+
+    d = load_exercise_human_judgements_dict(clara_project_internal)
+    jud = d["human_judgements"]
+
+    jud.setdefault(exercise_type, {})
+    jud[exercise_type].setdefault(exercise_set_id, {})
+
+    run_blob = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "user": request.user.username,
+        "learner_level": learner_level,
+        "rubric_version": "cloze_judging_v2",
+        "items": {}
+    }
+
+    for item in items:
+        item_id = item["item_id"]
+
+        verdict = request.POST.get(f"verdict_{item_id}")
+        confidence = request.POST.get(f"confidence_{item_id}")
+        summary = request.POST.get(f"summary_{item_id}", "")
+        comment = request.POST.get(f"comment_{item_id}", "")
+
+        if not verdict:
+            continue  # skip untouched items
+
+        try:
+            confidence = float(confidence)
+        except Exception:
+            confidence = 0.0
+
+        snapshot = {
+            "learner_level": item.get("learner_level"),
+            "text_with_blank": item.get("segment", {}).get("text_with_blank"),
+            "context_before": item.get("segment", {}).get("context_before"),
+            "context_after": item.get("segment", {}).get("context_after"),
+            "target": item.get("target"),
+            "choices": item.get("choices"),
+        }
+
+        run_blob["items"][item_id] = {
+            "item_snapshot": snapshot,
+            "verdict": verdict,
+            "confidence": confidence,
+            "summary": summary,
+            "issues": [],  # V1 simple; can extend later
+            "comment": comment,
+        }
+
+    jud[exercise_type][exercise_set_id][human_run_id] = run_blob
+
+    save_exercise_human_judgements_dict(clara_project_internal, d, user=request.user.username)
+
+    messages.info(request, "Human evaluation saved.")
+    return redirect("browse_human_exercise_judgements", project_id=project_id)
+
+@login_required
+def browse_human_exercise_judgements(request, project_id):
+
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    d = load_exercise_human_judgements_dict(clara_project_internal)
+    jud = d.get("human_judgements", {})
+
+    exercise_types = sorted(jud.keys())
+    selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
+
+    sets_dict = jud.get(selected_exercise_type, {})
+    exercise_set_ids = sorted(sets_dict.keys())
+    selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
+
+    runs_dict = sets_dict.get(selected_exercise_set_id, {})
+    run_ids = sorted(runs_dict.keys(), reverse=True)
+    selected_run_id = request.GET.get("human_run_id") or (run_ids[0] if run_ids else "")
+
+    run_payload = runs_dict.get(selected_run_id, {})
+
+    items = run_payload.get("items", {})
+
+    judged_rows = []
+    for item_id, payload in items.items():
+        judged_rows.append({
+            "item_id": item_id,
+            "snapshot": payload.get("item_snapshot", {}),
+            "result": payload,
+        })
+
+    judged_rows.sort(key=lambda r: r["item_id"])
+
+    return render(
+        request,
+        "clara_app/browse_human_exercise_judgements.html",
+        {
+            "project": project,
+            "exercise_types": exercise_types,
+            "selected_exercise_type": selected_exercise_type,
+            "exercise_set_ids": exercise_set_ids,
+            "selected_exercise_set_id": selected_exercise_set_id,
+            "run_ids": run_ids,
+            "selected_run_id": selected_run_id,
+            "run_payload": run_payload,
+            "judged_rows": judged_rows,
+        },
+    )
+
+def human_exercise_judgements_exist_for_project(project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    d = load_exercise_human_judgements_dict(clara_project_internal)
+
+    return False if not d else True
+
+

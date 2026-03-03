@@ -264,6 +264,8 @@ urlpatterns = [
     path('project/<int:project_id>/ai_panel_judge_exercises_monitor/<str:report_id>/', exercises_views.ai_panel_judge_exercises_monitor, name='ai_panel_judge_exercises_monitor'),
     path('project/<int:project_id>/ai_panel_judge_exercises_status/<str:report_id>/', exercises_views.ai_panel_judge_exercises_status, name='ai_panel_judge_exercises_status'),
     path('project/<int:project_id>/browse_exercise_judgements/', exercises_views.browse_exercise_judgements, name='browse_exercise_judgements'),
+    path('project/<int:project_id>/human_judge_exercises/', exercises_views.human_judge_exercises, name='human_judge_exercises'),
+    path('project/<int:project_id>/browse_human_exercise_judgements/', exercises_views.browse_human_exercise_judgements, name='browse_human_exercise_judgements'),
          
     # Saving page texts in pages and images view
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', save_page_texts_multiple_views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),
