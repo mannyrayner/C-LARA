@@ -198,7 +198,17 @@
 		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
 		  Judge exercises using AI panel
 		  </a>
+	<p><a href="{% url 'human_judge_exercises' project.id %}"
+		  data-tooltip="Judge the exercises manually using an online form."
+		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
+		  Judge exercises manually
+		  </a>
 	{% if up_to_date_dict.exercises %}✓{% endif %}</p>
+	<p><a href="{% url 'browse_human_exercise_judgements' project.id %}"
+	  data-tooltip="Browse exercise judgements produced by humans."
+	  {% if not human_exercise_judgements_exist %}class="disabled-link"{% endif %}>
+	  Browse human exercise judgements
+	  </a></p>
 	<p><a href="{% url 'browse_exercise_judgements' project.id %}"
 	  data-tooltip="Browse exercise judgements produced using AI panel."
 	  {% if not exercise_judgements_exist %}class="disabled-link"{% endif %}>

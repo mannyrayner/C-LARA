@@ -1,0 +1,68 @@
+<h2>Human Evaluation</h2>
+
+<div style="margin:1em 0; padding:1em; border:1px solid #aaa; background:#f9f9f9;">
+  <strong>Evaluation Instructions</strong>
+  <pre style="white-space:pre-wrap; margin-top:0.5em;">{{ rubric_text }}</pre>
+</div>
+
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="human_run_id" value="{{ human_run_id }}">
+
+  {% for item in items %}
+  <div style="margin:1em 0; padding:1em; border:1px solid #ccc;">
+
+    <div><strong>Text:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ item.segment.text_with_blank }}
+    </div>
+
+    <div><strong>Target:</strong>
+      {{ item.target.surface }} ({{ item.target.lemma }}, {{ item.target.pos }})
+    </div>
+
+    <div><strong>Choices:</strong>
+      <ul>
+      {% for c in item.choices %}
+        <li>
+          <strong>{{ c.form }}</strong>
+          {% if c.is_correct %} ✅ {% else %} ❌ {% endif %}
+          <div style="font-size:90%; color:#555;">
+            {{ c.reason }}
+          </div>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <label>Verdict:</label>
+      <select name="verdict_{{ item.item_id }}">
+        <option value="">--</option>
+        <option value="ok">ok</option>
+        <option value="minor_suggestion">minor_suggestion</option>
+        <option value="needs_fix">needs_fix</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Confidence (0–1):</label>
+      <input type="number" step="0.1" min="0" max="1"
+             name="confidence_{{ item.item_id }}" value="0.8">
+    </div>
+
+    <div>
+      <label>Summary:</label><br>
+      <textarea name="summary_{{ item.item_id }}" rows="2" cols="60"></textarea>
+    </div>
+
+    <div>
+      <label>Comment:</label><br>
+      <textarea name="comment_{{ item.item_id }}" rows="2" cols="60"></textarea>
+    </div>
+
+  </div>
+  {% endfor %}
+
+  <button type="submit">Save Evaluation</button>
+</form>

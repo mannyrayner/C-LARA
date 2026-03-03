@@ -1,0 +1,104 @@
+<h2>Browse Human Exercise Judgements</h2>
+
+<form method="get">
+  <label>Exercise type:</label>
+  <select name="exercise_type">
+    {% for t in exercise_types %}
+      <option value="{{ t }}" {% if t == selected_exercise_type %}selected{% endif %}>
+        {{ t }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <label>Exercise set:</label>
+  <select name="exercise_set_id">
+    {% for sid in exercise_set_ids %}
+      <option value="{{ sid }}" {% if sid == selected_exercise_set_id %}selected{% endif %}>
+        {{ sid }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <label>Run:</label>
+  <select name="human_run_id">
+    {% for rid in run_ids %}
+      <option value="{{ rid }}" {% if rid == selected_run_id %}selected{% endif %}>
+        {{ rid }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <button type="submit">Load</button>
+</form>
+
+<hr>
+
+{% if run_payload %}
+  <div style="margin:1em 0;">
+    <strong>Judge:</strong> {{ run_payload.user }}<br>
+    <strong>Learner level:</strong> {{ run_payload.learner_level }}<br>
+    <strong>Created:</strong> {{ run_payload.created_at }}
+  </div>
+{% endif %}
+
+{% for row in judged_rows %}
+  {% with orig=row.snapshot r=row.result %}
+  <div style="margin:1em 0; padding:1em; border:1px solid #ccc;">
+
+    <div><strong>Item:</strong> {{ row.item_id }}</div>
+
+    <div style="margin:0.5em 0;">
+      <strong>Text:</strong>
+      <div style="background:#fafafa; padding:0.5em;">
+        {{ orig.text_with_blank }}
+      </div>
+    </div>
+
+    <div>
+      <strong>Target:</strong>
+      {{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
+    </div>
+
+    <div style="margin-top:0.5em;">
+      <strong>Choices:</strong>
+      <ul>
+      {% for c in orig.choices %}
+        <li>
+          <strong>{{ c.form }}</strong>
+          {% if c.is_correct %} ✅ {% else %} ❌ {% endif %}
+          <div style="font-size:90%; color:#555;">
+            {{ c.reason }}
+          </div>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <strong>Verdict:</strong>
+      {% if r.verdict == "ok" %}
+        <span style="padding:0.15em 0.4em; border:1px solid #6c6; background:#efe;">ok</span>
+      {% elif r.verdict == "minor_suggestion" %}
+        <span style="padding:0.15em 0.4em; border:1px solid #cc6; background:#fffae6;">minor_suggestion</span>
+      {% elif r.verdict == "needs_fix" %}
+        <span style="padding:0.15em 0.4em; border:1px solid #c66; background:#fee;">needs_fix</span>
+      {% else %}
+        {{ r.verdict }}
+      {% endif %}
+    </div>
+
+    <div>
+      <strong>Confidence:</strong> {{ r.confidence }}
+    </div>
+
+    {% if r.summary %}
+      <div><strong>Summary:</strong> {{ r.summary }}</div>
+    {% endif %}
+
+    {% if r.comment %}
+      <div><strong>Comment:</strong> {{ r.comment }}</div>
+    {% endif %}
+
+  </div>
+  {% endwith %}
+{% endfor %}
