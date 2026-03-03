@@ -47,11 +47,21 @@
 
     <div><strong>Item:</strong> {{ row.item_id }}</div>
 
+	<div><strong>Context before:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ orig.context_before }}
+    </div>
+
     <div style="margin:0.5em 0;">
       <strong>Text:</strong>
       <div style="background:#fafafa; padding:0.5em;">
         {{ orig.text_with_blank }}
       </div>
+    </div>
+
+	<div><strong>Context after:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ orig.context_after }}
     </div>
 
     <div>
