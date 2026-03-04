@@ -42,72 +42,117 @@
 {% endif %}
 
 {% for row in judged_rows %}
-  {% with orig=row.snapshot r=row.result %}
+  {% with orig=row.snapshot %}
   <div style="margin:1em 0; padding:1em; border:1px solid #ccc;">
 
-    <div><strong>Item:</strong> {{ row.item_id }}</div>
-
-	<div><strong>Context before:</strong></div>
-    <div style="background:#fafafa; padding:0.5em;">
-      {{ orig.context_before }}
-    </div>
-
-    <div style="margin:0.5em 0;">
-      <strong>Text:</strong>
-      <div style="background:#fafafa; padding:0.5em;">
-        {{ orig.text_with_blank }}
+    <div style="display:flex; justify-content:space-between; gap:1em;">
+      <div><strong>Item:</strong> {{ row.item_id }}</div>
+      <div>
+        <strong>Majority:</strong>
+        {% if row.majority == "ok" %}
+          <span style="padding:0.15em 0.4em; border:1px solid #6c6; background:#efe;">ok</span>
+        {% elif row.majority == "minor_suggestion" %}
+          <span style="padding:0.15em 0.4em; border:1px solid #cc6; background:#fffae6;">minor_suggestion</span>
+        {% elif row.majority == "needs_fix" %}
+          <span style="padding:0.15em 0.4em; border:1px solid #c66; background:#fee;">needs_fix</span>
+        {% else %}
+          <span style="padding:0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ row.majority }}</span>
+        {% endif %}
+        &nbsp;&nbsp;
+        <span style="color:#666; font-size:90%;">
+          ok={{ row.counts.ok|default:0 }},
+          minor={{ row.counts.minor_suggestion|default:0 }},
+          fix={{ row.counts.needs_fix|default:0 }}
+        </span>
       </div>
     </div>
 
-	<div><strong>Context after:</strong></div>
-    <div style="background:#fafafa; padding:0.5em;">
-      {{ orig.context_after }}
+    <div style="margin-top:0.75em;"><strong>Context before:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">{{ orig.context_before }}</div>
+
+    <div style="margin:0.5em 0;">
+      <strong>Text:</strong>
+      <div style="background:#fafafa; padding:0.5em;">{{ orig.text_with_blank }}</div>
     </div>
 
-    <div>
+    <div><strong>Context after:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">{{ orig.context_after }}</div>
+
+    <div style="margin-top:0.5em;">
       <strong>Target:</strong>
       {{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
+      &nbsp;&nbsp;
+      <strong>Learner level:</strong> {{ orig.learner_level|default:"(unknown)" }}
     </div>
 
     <div style="margin-top:0.5em;">
-      <strong>Choices:</strong>
-      <ul>
+      <strong>Choices (with reasons):</strong>
+      <ul style="margin:0.25em 0 0.5em 1.25em;">
       {% for c in orig.choices %}
         <li>
           <strong>{{ c.form }}</strong>
           {% if c.is_correct %} ✅ {% else %} ❌ {% endif %}
-          <div style="font-size:90%; color:#555;">
-            {{ c.reason }}
-          </div>
+          <div style="font-size:90%; color:#555;">{{ c.reason }}</div>
         </li>
       {% endfor %}
       </ul>
     </div>
 
-    <div>
-      <strong>Verdict:</strong>
-      {% if r.verdict == "ok" %}
-        <span style="padding:0.15em 0.4em; border:1px solid #6c6; background:#efe;">ok</span>
-      {% elif r.verdict == "minor_suggestion" %}
-        <span style="padding:0.15em 0.4em; border:1px solid #cc6; background:#fffae6;">minor_suggestion</span>
-      {% elif r.verdict == "needs_fix" %}
-        <span style="padding:0.15em 0.4em; border:1px solid #c66; background:#fee;">needs_fix</span>
-      {% else %}
-        {{ r.verdict }}
-      {% endif %}
+    <div style="margin-top:0.75em;">
+      <strong>Judges:</strong>
+      <table style="border-collapse:collapse; width:100%; margin-top:0.25em;">
+        <tr>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Run</th>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Judge</th>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Verdict</th>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Conf.</th>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Summary / comment</th>
+        </tr>
+
+        {% for cell in row.judge_cells %}
+		 {% with r=cell.r %}
+          <tr>
+            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+              <div style="font-family:monospace; font-size:90%;">{{ cell.rid }}</div>
+              <div style="color:#777; font-size:85%;">{{ cell.created_at }}</div>
+            </td>
+            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+              {{ user|default:"(unknown)" }}
+            </td>
+
+            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+              {% if r %}
+                {% if r.verdict == "ok" %}
+                  <span style="padding:0.15em 0.4em; border:1px solid #6c6; background:#efe;">ok</span>
+                {% elif r.verdict == "minor_suggestion" %}
+                  <span style="padding:0.15em 0.4em; border:1px solid #cc6; background:#fffae6;">minor_suggestion</span>
+                {% elif r.verdict == "needs_fix" %}
+                  <span style="padding:0.15em 0.4em; border:1px solid #c66; background:#fee;">needs_fix</span>
+                {% else %}
+                  <span style="padding:0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ r.verdict }}</span>
+                {% endif %}
+              {% else %}
+                <span style="color:#999;">(no vote)</span>
+              {% endif %}
+            </td>
+
+            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+              {% if r %}{{ r.confidence }}{% else %}-{% endif %}
+            </td>
+
+            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+              {% if r %}
+                {% if r.summary %}<div><strong>Summary:</strong> {{ r.summary }}</div>{% endif %}
+                {% if r.comment %}<div><strong>Comment:</strong> {{ r.comment }}</div>{% endif %}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+        {% endfor %}
+      </table>
     </div>
-
-    <div>
-      <strong>Confidence:</strong> {{ r.confidence }}
-    </div>
-
-    {% if r.summary %}
-      <div><strong>Summary:</strong> {{ r.summary }}</div>
-    {% endif %}
-
-    {% if r.comment %}
-      <div><strong>Comment:</strong> {{ r.comment }}</div>
-    {% endif %}
 
   </div>
   {% endwith %}
