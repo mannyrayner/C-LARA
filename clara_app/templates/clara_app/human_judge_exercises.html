@@ -55,25 +55,14 @@
       <label>Verdict:</label>
       <select name="verdict_{{ item.item_id }}">
         <option value="">--</option>
-        <option value="ok">ok</option>
-        <option value="minor_suggestion">minor_suggestion</option>
-        <option value="needs_fix">needs_fix</option>
+        <option value="ok">Works as intended</option>
+        <option value="minor_suggestion">Works, but could be improved</option>
+        <option value="needs_fix">Needs revision</option>
       </select>
     </div>
 
     <div>
-      <label>Confidence (0–1):</label>
-      <input type="number" step="0.1" min="0" max="1"
-             name="confidence_{{ item.item_id }}" value="0.8">
-    </div>
-
-    <div>
-      <label>Summary:</label><br>
-      <textarea name="summary_{{ item.item_id }}" rows="2" cols="60"></textarea>
-    </div>
-
-    <div>
-      <label>Comment:</label><br>
+      <label>Comment (optional):</label><br>
       <textarea name="comment_{{ item.item_id }}" rows="2" cols="60"></textarea>
     </div>
 
