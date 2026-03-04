@@ -45,11 +45,20 @@
   {{ item.segment.text_with_blank }}
 </p>
 
-{% if item.segment.context_before %}
-  <p><i>Before:</i> {{ item.segment.context_before }}</p>
-{% endif %}
-{% if item.segment.context_after %}
-  <p><i>After:</i> {{ item.segment.context_after }}</p>
+{% if item.full_text and item.full_text.format == "html" %}
+  <div><strong>Full text:</strong></div>
+  <div style="background:#fafafa; padding:0.5em; border:1px solid #eee; max-height: 18em; overflow:auto;">
+	{{ item.full_text.content|safe }}
+  </div>
+{% else %}
+	<div><strong>Context before:</strong></div>
+	  <div style="background:#fafafa; padding:0.5em;">
+		{{ item.segment.context_before }}
+	  </div>
+	<div><strong>Context after:</strong></div>
+	   <div style="background:#fafafa; padding:0.5em;">
+		{{ item.segment.context_after }}
+	</div>
 {% endif %}
 
 <h4>Choices</h4>

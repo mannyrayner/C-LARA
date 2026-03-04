@@ -88,16 +88,23 @@
 		(missing target)
 	  {% endif %}
 	</div>
-	
-	{% if orig.context_before or orig.context_after %}
-	  <div style="margin-bottom: 0.5em;">
-		<strong>Context:</strong>
-		<div style="font-size: 90%; color:#555;">
-		  {% if orig.context_before %}<div><em>Before:</em> {{ orig.context_before }}</div>{% endif %}
-		  {% if orig.context_after %}<div><em>After:</em> {{ orig.context_after }}</div>{% endif %}
-		</div>
+		
+	{% if orig.full_text and orig.full_text.format == "html" %}
+	  <div><strong>Full text:</strong></div>
+	  <div style="background:#fafafa; padding:0.5em; border:1px solid #eee; max-height: 18em; overflow:auto;">
+		{{ orig.full_text.content|safe }}
 	  </div>
+	{% else %}
+		<div><strong>Context before:</strong></div>
+		  <div style="background:#fafafa; padding:0.5em;">
+		    {{ orig.segment.context_before }}
+		  </div>
+	    <div><strong>Context after:</strong></div>
+		   <div style="background:#fafafa; padding:0.5em;">
+		    {{ orig.segment.context_after }}
+	    </div>
 	{% endif %}
+
 
 	<div style="margin-bottom: 0.5em;">
 	  <strong>Choices:</strong>
