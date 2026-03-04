@@ -32,6 +32,20 @@
 		    {{ item.segment.context_after }}
 	    </div>
 	{% endif %}
+	
+	<script>
+	  (function() {
+		const pane = document.currentScript.previousElementSibling; // the div just above
+		if (!pane) return;
+		const mark = pane.querySelector('mark');
+		if (!mark) return;
+
+		// Wait a tick so layout/scrollHeight is settled
+		requestAnimationFrame(() => {
+		  mark.scrollIntoView({ block: 'center', inline: 'nearest' });
+		});
+	  })();
+	</script>
 
     <div><strong>Target:</strong>
       {{ item.target.surface }} ({{ item.target.lemma }}, {{ item.target.pos }})
