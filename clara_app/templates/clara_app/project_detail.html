@@ -187,7 +187,6 @@
 		  {% if not can_create_exercises %}class="disabled-link"{% endif %}>
 		  Generate exercises
 		  </a>
-		  {% if up_to_date_dict.exercises %}✓{% endif %}</p> 
 	<p><a href="{% url 'browse_exercises' project.id %}"
 		  data-tooltip="Browse generated interactive exercises for project."
 		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
@@ -203,16 +202,15 @@
 		  {% if not exercises_exist %}class="disabled-link"{% endif %}>
 		  Judge exercises manually
 		  </a>
-	{% if up_to_date_dict.exercises %}✓{% endif %}</p>
-	<p><a href="{% url 'browse_human_exercise_judgements' project.id %}"
-	  data-tooltip="Browse exercise judgements produced by humans."
-	  {% if not human_exercise_judgements_exist %}class="disabled-link"{% endif %}>
-	  Browse human exercise judgements
-	  </a></p>
 	<p><a href="{% url 'browse_exercise_judgements' project.id %}"
 	  data-tooltip="Browse exercise judgements produced using AI panel."
 	  {% if not exercise_judgements_exist %}class="disabled-link"{% endif %}>
-	  Browse exercise judgements
+	  Browse exercise judgements produced using AI panel
+	  </a></p>	
+	<p><a href="{% url 'browse_human_exercise_judgements' project.id %}"
+	  data-tooltip="Browse exercise judgements produced by humans."
+	  {% if not human_exercise_judgements_exist %}class="disabled-link"{% endif %}>
+	  Browse exercise judgements produced by humans
 	  </a></p>
 	{% if can_picture_gloss %}
 	  <p><a href="{% url 'perform_picture_glossing' project.id %}"
