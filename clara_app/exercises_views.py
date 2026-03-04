@@ -1423,37 +1423,86 @@ def human_judge_exercises(request, project_id):
 
 @login_required
 def browse_human_exercise_judgements(request, project_id):
-
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     d = load_exercise_human_judgements_dict(clara_project_internal)
-    jud = d.get("human_judgements", {})
+    jud = d.get("human_judgements", {}) or {}
 
     exercise_types = sorted(jud.keys())
     selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
 
-    sets_dict = jud.get(selected_exercise_type, {})
+    sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
     exercise_set_ids = sorted(sets_dict.keys())
     selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
 
-    runs_dict = sets_dict.get(selected_exercise_set_id, {})
-    run_ids = sorted(runs_dict.keys(), reverse=True)
-    selected_run_id = request.GET.get("human_run_id") or (run_ids[0] if run_ids else "")
+    runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
+    run_ids = sorted(runs_dict.keys(), reverse=True)  # newest first
 
-    run_payload = runs_dict.get(selected_run_id, {})
+    # ---------- aggregate across ALL runs ----------
+    items_agg = {}  # item_id -> {snapshot, judges{run_id: payload}, counts, majority}
+    judge_meta = [] # list of (run_id, user, created_at)
 
-    items = run_payload.get("items", {})
+    def _norm_verdict(v):
+        return v if v in ("ok", "minor_suggestion", "needs_fix") else "unparsed"
 
+    def _majority(counts):
+        # simple majority; tie-break: needs_fix > minor_suggestion > ok (conservative)
+        order = ["needs_fix", "minor_suggestion", "ok", "unparsed"]
+        best = None
+        best_n = -1
+        for k in order:
+            n = counts.get(k, 0)
+            if n > best_n:
+                best = k
+                best_n = n
+        return best
+
+    for rid in run_ids:
+        run_payload = runs_dict.get(rid, {}) or {}
+        judge_meta.append((rid, run_payload.get("user"), run_payload.get("created_at")))
+
+        items = (run_payload.get("items") or {})
+        for item_id, payload in items.items():
+            snap = (payload.get("item_snapshot") or {})
+            entry = items_agg.setdefault(item_id, {
+                "item_id": item_id,
+                "snapshot": snap,
+                "judges": {},     # rid -> payload (verdict, confidence, summary, comment, ...)
+                "counts": {"ok": 0, "minor_suggestion": 0, "needs_fix": 0, "unparsed": 0},
+                "majority": None,
+            })
+
+            verdict = _norm_verdict(payload.get("verdict"))
+            entry["judges"][rid] = payload
+            entry["counts"][verdict] = entry["counts"].get(verdict, 0) + 1
+
+    # compute majority after counting
     judged_rows = []
-    for item_id, payload in items.items():
-        judged_rows.append({
-            "item_id": item_id,
-            "snapshot": payload.get("item_snapshot", {}),
-            "result": payload,
-        })
+    for item_id, entry in items_agg.items():
+        entry["majority"] = _majority(entry["counts"])
+        judged_rows.append(entry)
+
+    # Add per-row aligned judge cells so the template doesn't need dict dynamic lookup
+    for row in judged_rows:
+        cells = []
+        judges_map = row.get("judges", {}) or {}
+        for rid, user, created_at in judge_meta:
+            cells.append({
+                "rid": rid,
+                "user": user,
+                "created_at": created_at,
+                "r": judges_map.get(rid),   # <-- this is the important part
+            })
+        row["judge_cells"] = cells
 
     judged_rows.sort(key=lambda r: r["item_id"])
+
+##    print('judge_meta')
+##    pprint.pprint(judge_meta)
+##
+##    print('judged_rows')
+##    pprint.pprint(judged_rows)
 
     return render(
         request,
@@ -1464,9 +1513,12 @@ def browse_human_exercise_judgements(request, project_id):
             "selected_exercise_type": selected_exercise_type,
             "exercise_set_ids": exercise_set_ids,
             "selected_exercise_set_id": selected_exercise_set_id,
+
+            # we still show runs, but now informational / for future filtering
             "run_ids": run_ids,
-            "selected_run_id": selected_run_id,
-            "run_payload": run_payload,
+            "judge_meta": judge_meta,
+
+            # NEW: aggregated rows (one per item)
             "judged_rows": judged_rows,
         },
     )
