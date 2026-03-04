@@ -11,6 +11,7 @@ from typing import Tuple
 import yaml
 import os
 import pprint
+import html
 from pathlib import Path
 
 from django.contrib import messages
@@ -328,6 +329,8 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     context_before = segments[seg_index - 1].to_text("plain") if seg_index - 1 >= 0 else None
     context_after = segments[seg_index + 1].to_text("plain") if seg_index + 1 < len(segments) else None
 
+    full_context_html = full_text_with_highlighted_segment_text_with_blank(text_obj, page_index, seg_index, segment_text_with_blank)
+
     model = params["gpt_model"]
     n_distractors = params["n_distractors"]
 
@@ -335,6 +338,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
         learner_level=learner_level,
         segment_text=segment_text,
         segment_text_with_blank=segment_text_with_blank,
+        segment_text_with_blank_and_full_context=full_context_html,
         target_surface=target_surface,
         lemma=lemma,
         pos=pos,
@@ -363,6 +367,8 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
             "context_before": context_before,
             "context_after": context_after,
         },
+        "full_text": {"format": "html",
+                      "content": full_context_html},
         "choices": choices,
         "notes": {"generation_model": model, "prompt_version": CLOZE_PROMPT_VERSION},
     }
@@ -371,11 +377,32 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
     return item, cost_dict
 
+def full_text_with_highlighted_segment_text_with_blank(text_obj, page_index, seg_index, segment_text_with_blank):
+    parts = []
+    pages = getattr(text_obj, "pages", []) or []
+
+    for p_i, page in enumerate(pages):
+        segments = getattr(page, "segments", []) or []
+        for s_i, segment in enumerate(segments):
+            if p_i == page_index and s_i == seg_index:
+                # Escape the blanked text too, then wrap in mark
+                marked = f"<mark>{html.escape(segment_text_with_blank)}</mark>"
+                parts.append(marked)
+            else:
+                parts.append(html.escape(segment.to_text("plain")))
+
+        parts.append("")  # blank line between pages (later becomes <br><br>)
+
+    # Turn newlines into <br> so it displays naturally in HTML
+    text = "\n".join(parts).strip()
+    return text.replace("\n", "<br>\n")
+
 def build_cloze_distractor_prompt(
     *,
     learner_level,
     segment_text,
-    segment_text_with_blank=None,   # new
+    segment_text_with_blank=None,
+    segment_text_with_blank_and_full_context=None,
     target_surface,
     lemma,
     pos,
@@ -405,9 +432,12 @@ Guidance by level:
 SEGMENT:
 {segment_text}{blank_block}
 
-CONTEXT (optional):
+CONTEXT:
 Before: {context_before}
 After: {context_after}
+
+FULL TEXT (for context; the target segment is highlighted):
+{segment_text_with_blank_and_full_context}
 
 TARGET:
 surface = {target_surface}
@@ -830,6 +860,7 @@ def create_and_save_ai_panel_judgements(
         snapshot = {
             "learner_level": item.get("learner_level"),
             "text_with_blank": item.get("segment", {}).get("text_with_blank"),
+            "full_text": item.get("full_text"),
             "context_before": item.get("segment", {}).get("context_before"),
             "context_after": item.get("segment", {}).get("context_after"),
             "target": item.get("target"),
@@ -993,6 +1024,10 @@ async def _judge_one_item_with_one_model(
 def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
     seg = item.get("segment") or {}
     target = item.get("target") or {}
+
+    full_text = item.get("full_text", {})
+    full_html = full_text.get("content") if isinstance(full_text, dict) else None
+    
     choices = item.get("choices") or []
     learner_level = item.get("learner_level") or "intermediate"
 
@@ -1025,6 +1060,9 @@ SEGMENT (with blank):
 CONTEXT:
 Before: {seg.get("context_before") or ""}
 After: {seg.get("context_after") or ""}
+
+FULL TEXT (target segment highlighted):
+{full_html or "(missing full text)"}
 
 TARGET:
 surface = {target.get("surface")}
@@ -1385,7 +1423,7 @@ def human_judge_exercises(request, project_id):
 
         verdict = request.POST.get(f"verdict_{item_id}")
         confidence = request.POST.get(f"confidence_{item_id}")
-        summary = request.POST.get(f"summary_{item_id}", "")
+##        summary = request.POST.get(f"summary_{item_id}", "")
         comment = request.POST.get(f"comment_{item_id}", "")
 
         if not verdict:
@@ -1397,10 +1435,11 @@ def human_judge_exercises(request, project_id):
             confidence = 0.0
 
         snapshot = {
-            "learner_level": item.get("learner_level"),
+            "learner_level": "intermediate",
             "text_with_blank": item.get("segment", {}).get("text_with_blank"),
             "context_before": item.get("segment", {}).get("context_before"),
             "context_after": item.get("segment", {}).get("context_after"),
+            "full_text": item.get("full_text"),
             "target": item.get("target"),
             "choices": item.get("choices"),
         }
@@ -1408,8 +1447,8 @@ def human_judge_exercises(request, project_id):
         run_blob["items"][item_id] = {
             "item_snapshot": snapshot,
             "verdict": verdict,
-            "confidence": confidence,
-            "summary": summary,
+##            "confidence": confidence,
+##            "summary": summary,
             "issues": [],  # V1 simple; can extend later
             "comment": comment,
         }
