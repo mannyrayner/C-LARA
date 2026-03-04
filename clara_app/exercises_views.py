@@ -13,6 +13,7 @@ import os
 import pprint
 import html
 from pathlib import Path
+import re
 
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -395,6 +396,10 @@ def full_text_with_highlighted_segment_text_with_blank(text_obj, page_index, seg
 
     # Turn newlines into <br> so it displays naturally in HTML
     text = "\n".join(parts).strip()
+
+    # Collapse any run of 3+ newlines to exactly 2
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    
     return text.replace("\n", "<br>\n")
 
 def build_cloze_distractor_prompt(
