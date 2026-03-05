@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 import asyncio
+import csv
 import json
 import random
 import traceback
@@ -1255,6 +1256,53 @@ def browse_exercise_judgements(request, project_id):
             },
         )
 
+    if request.GET.get("format") == "csv":
+        header = [
+            "exercise_type","exercise_set_id","judge_run_id",
+            "judge_type","judge_id",
+            "learner_level","item_id",
+            "text_with_blank","correct","distractors",
+            "verdict","confidence","issues"
+        ]
+        rows = []
+        for row in judged_rows:
+            snap = row["snapshot"]              # your item_snapshot
+            model_map = row["model_map"]        # model_name -> result
+
+            text_with_blank = snap.get("text_with_blank","")
+            learner_level = snap.get("learner_level","intermediate")
+            target = (snap.get("target") or {})
+            correct = ""
+            distractors = []
+            for c in (snap.get("choices") or []):
+                if c.get("is_correct"):
+                    correct = c.get("form","")
+                else:
+                    distractors.append(c.get("form",""))
+
+            distractors_str = "|".join(distractors)
+
+            for model_name, r in (model_map or {}).items():
+                issues = r.get("issues", [])
+                rows.append([
+                    selected_exercise_type,
+                    selected_exercise_set_id,
+                    selected_run_id,
+                    "ai",
+                    model_name,
+                    learner_level,
+                    row["item_id"],
+                    text_with_blank,
+                    correct,
+                    distractors_str,
+                    r.get("verdict",""),
+                    r.get("confidence",""),
+                    json.dumps(issues, ensure_ascii=False),
+                ])
+
+        filename = f"{project.internal_id}_{selected_exercise_type}_{selected_exercise_set_id}_{selected_run_id}_ai_judgements.csv"
+        return _as_csv_response(filename, header, rows)
+
     context = {
         "project": project,
 
@@ -1543,6 +1591,81 @@ def browse_human_exercise_judgements(request, project_id):
 
     judged_rows.sort(key=lambda r: r["item_id"])
 
+    # ---------------- CSV export (long format: one row per item × human judge/run) ----------------
+    if request.GET.get("format") == "csv":
+        header = [
+            "exercise_type",
+            "exercise_set_id",
+            "judge_run_id",
+            "judge_type",
+            "judge_id",
+            "learner_level",
+            "rubric_version",
+            "item_id",
+            "text_with_blank",
+            "correct",
+            "distractors",
+            "verdict",
+            "issues",
+            "comment",
+        ]
+
+        rows = []
+        for row in judged_rows:
+            snap = row.get("snapshot") or {}
+            item_id = row.get("item_id", "")
+
+            learner_level = snap.get("learner_level") or ""
+            text_with_blank = snap.get("text_with_blank") or ""
+
+            # Extract correct + distractors from snapshot choices
+            correct = ""
+            distractors = []
+            for c in (snap.get("choices") or []):
+                form = c.get("form", "")
+                if c.get("is_correct"):
+                    correct = form
+                else:
+                    distractors.append(form)
+            distractors_str = "|".join(distractors)
+
+            for cell in (row.get("judge_cells") or []):
+                r = cell.get("r")
+                if not r:
+                    continue  # judge didn't submit for this item
+
+                # r fields
+                verdict = r.get("verdict", "")
+                issues = r.get("issues", [])
+                comment = r.get("comment", "")
+
+                # run-level fields (stored once per run in runs_dict)
+                rid = cell.get("rid", "")
+                run_payload = runs_dict.get(rid, {}) or {}
+                judge_id = run_payload.get("user") or cell.get("user") or ""
+                rubric_version = run_payload.get("rubric_version") or ""
+                run_level = run_payload.get("learner_level") or learner_level
+
+                rows.append([
+                    selected_exercise_type,
+                    selected_exercise_set_id,
+                    rid,
+                    "human",
+                    judge_id,
+                    run_level,
+                    rubric_version,
+                    item_id,
+                    text_with_blank,
+                    correct,
+                    distractors_str,
+                    verdict,
+                    json.dumps(issues, ensure_ascii=False),
+                    comment,
+                ])
+
+        filename = f"{project.internal_id}_{selected_exercise_type}_{selected_exercise_set_id}_human_judgements.csv"
+        return _as_csv_response(filename, header, rows)
+
 ##    print('judge_meta')
 ##    pprint.pprint(judge_meta)
 ##
@@ -1576,4 +1699,11 @@ def human_exercise_judgements_exist_for_project(project_id):
 
     return False if not d else True
 
+def _as_csv_response(filename: str, header: list[str], rows: list[list[str]]):
+    resp = HttpResponse(content_type="text/csv; charset=utf-8")
+    resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+    w = csv.writer(resp)
+    w.writerow(header)
+    w.writerows(rows)
+    return resp
 
