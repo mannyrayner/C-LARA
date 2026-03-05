@@ -8,6 +8,8 @@
   <p><a href="{% url 'project_detail' project.id %}">Back to project</a></p>
 {% else %}
 
+<a class="btn btn-sm" href="?format=csv">Download CSV</a>
+
 <form method="get" style="margin-bottom: 1em; padding: 0.75em; border: 1px solid #ddd;">
   <label><strong>Exercise type</strong></label>
   <select name="exercise_type" onchange="this.form.submit()">
