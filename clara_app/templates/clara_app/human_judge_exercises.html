@@ -11,12 +11,7 @@
 
   {% for item in items %}
   <div style="margin:1em 0; padding:1em; border:1px solid #ccc;">
-	
-    <div><strong>Text:</strong></div>
-    <div style="background:#fafafa; padding:0.5em;">
-      {{ item.segment.text_with_blank }}
-    </div>
-	
+		
 	{% if item.full_text and item.full_text.format == "html" %}
 	  <div><strong>Full text:</strong></div>
 	  <div style="background:#fafafa; padding:0.5em; border:1px solid #eee; max-height: 18em; overflow:auto;">
@@ -46,6 +41,11 @@
 		});
 	  })();
 	</script>
+
+    <div><strong>Text:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ item.segment.text_with_blank }}
+    </div>
 
     <div><strong>Target:</strong>
       {{ item.target.surface }} ({{ item.target.lemma }}, {{ item.target.pos }})

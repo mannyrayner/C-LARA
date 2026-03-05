@@ -67,11 +67,10 @@
       </div>
     </div>
 
-    <div style="margin:0.5em 0;">
-      <strong>Text:</strong>
-      <div style="background:#fafafa; padding:0.5em;">{{ orig.text_with_blank }}</div>
+    <div style="margin-top:0.5em;">
+      <strong>Learner level:</strong> {{ orig.learner_level|default:"(unknown)" }}
     </div>
-
+	
 	{% if orig.full_text and orig.full_text.format == "html" %}
 	  <div><strong>Full text:</strong></div>
 	  <div style="background:#fafafa; padding:0.5em; border:1px solid #eee; max-height: 18em; overflow:auto;">
@@ -88,11 +87,14 @@
 	    </div>
 	{% endif %}
 
+    <div style="margin:0.5em 0;">
+      <strong>Text:</strong>
+      <div style="background:#fafafa; padding:0.5em;">{{ orig.text_with_blank }}</div>
+    </div>
+
     <div style="margin-top:0.5em;">
       <strong>Target:</strong>
       {{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
-      &nbsp;&nbsp;
-      <strong>Learner level:</strong> {{ orig.learner_level|default:"(unknown)" }}
     </div>
 
     <div style="margin-top:0.5em;">

@@ -34,17 +34,6 @@
 
 <h3>Item details</h3>
 
-<ul>
-  <li><b>Learner level:</b> {{ item.learner_level }}</li>
-  <li><b>Page index:</b> {{ item.page_index }}</li>
-  <li><b>Segment index:</b> {{ item.segment_index }}</li>
-  <li><b>Target:</b> {{ item.target.surface }} ({{ item.target.pos }}, lemma={{ item.target.lemma }})</li>
-</ul>
-
-<p style="font-size: 1.1em;">
-  {{ item.segment.text_with_blank }}
-</p>
-
 {% if item.full_text and item.full_text.format == "html" %}
   <div><strong>Full text:</strong></div>
   <div style="background:#fafafa; padding:0.5em; border:1px solid #eee; max-height: 18em; overflow:auto;">
@@ -60,6 +49,28 @@
 		{{ item.segment.context_after }}
 	</div>
 {% endif %}
+
+	<script>
+	  (function() {
+		const pane = document.currentScript.previousElementSibling; // the div just above
+		if (!pane) return;
+		const mark = pane.querySelector('mark');
+		if (!mark) return;
+
+		// Wait a tick so layout/scrollHeight is settled
+		requestAnimationFrame(() => {
+		  mark.scrollIntoView({ block: 'center', inline: 'nearest' });
+		});
+	  })();
+	</script>
+	
+<ul>
+  <li><b>Learner level:</b> {{ item.learner_level }}</li>
+  <li><b>Page index:</b> {{ item.page_index }}</li>
+  <li><b>Segment index:</b> {{ item.segment_index }}</li>
+  <li><b>Segment with blank:</b> {{ item.segment.text_with_blank }}</li>
+  <li><b>Target:</b> {{ item.target.surface }} ({{ item.target.pos }}, lemma={{ item.target.lemma }})</li>
+</ul>
 
 <h4>Choices</h4>
 <ol>
