@@ -330,7 +330,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
     context_before = segments[seg_index - 1].to_text("plain") if seg_index - 1 >= 0 else None
     context_after = segments[seg_index + 1].to_text("plain") if seg_index + 1 < len(segments) else None
 
-    full_context_html = full_text_with_highlighted_segment_text_with_blank(text_obj, page_index, seg_index, segment_text_with_blank)
+    full_context_html = full_text_with_highlighted_segment_text(text_obj, page_index, seg_index)
 
     model = params["gpt_model"]
     n_distractors = params["n_distractors"]
@@ -378,19 +378,20 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
     return item, cost_dict
 
-def full_text_with_highlighted_segment_text_with_blank(text_obj, page_index, seg_index, segment_text_with_blank):
+def full_text_with_highlighted_segment_text(text_obj, page_index, seg_index):
     parts = []
     pages = getattr(text_obj, "pages", []) or []
 
     for p_i, page in enumerate(pages):
         segments = getattr(page, "segments", []) or []
         for s_i, segment in enumerate(segments):
+            escaped_segment = html.escape(segment.to_text("plain"))
             if p_i == page_index and s_i == seg_index:
-                # Escape the blanked text too, then wrap in mark
-                marked = f"<mark>{html.escape(segment_text_with_blank)}</mark>"
+                # Wrap in mark
+                marked = f"<mark>{escaped_segment}</mark>"
                 parts.append(marked)
             else:
-                parts.append(html.escape(segment.to_text("plain")))
+                parts.append(escaped_segment)
 
         parts.append("")  # blank line between pages (later becomes <br><br>)
 
