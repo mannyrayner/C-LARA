@@ -17,16 +17,8 @@
 	  <div style="background:#fafafa; padding:0.5em; border:1px solid #eee; max-height: 18em; overflow:auto;">
 		{{ item.full_text.content|safe }}
 	  </div>
-	{% else %}
-		<div><strong>Context before:</strong></div>
-		  <div style="background:#fafafa; padding:0.5em;">
-		    {{ item.segment.context_before }}
-		  </div>
-	    <div><strong>Context after:</strong></div>
-		   <div style="background:#fafafa; padding:0.5em;">
-		    {{ item.segment.context_after }}
-	    </div>
 	{% endif %}
+  </div>
 	
 	<script>
 	  (function() {
@@ -42,13 +34,25 @@
 	  })();
 	</script>
 
-    <div><strong>Text:</strong></div>
+    <div><strong>Context before:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ item.segment.context_before }}
+    </div>
+	</div>
+	<div><strong>Text:</strong></div>
     <div style="background:#fafafa; padding:0.5em;">
       {{ item.segment.text_with_blank }}
     </div>
+	<div><strong>Context after:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ item.segment.context_after }}
+    </div>
+	</div>
 
     <div><strong>Target:</strong>
+	<div style="background:#fafafa; padding:0.5em;">
       {{ item.target.surface }} ({{ item.target.lemma }}, {{ item.target.pos }})
+	</div>
     </div>
 
     <div><strong>Choices:</strong>

@@ -19,14 +19,18 @@
     {% endfor %}
   </select>
 
-  <label>Run:</label>
-  <select name="human_run_id">
-    {% for rid in run_ids %}
-      <option value="{{ rid }}" {% if rid == selected_run_id %}selected{% endif %}>
-        {{ rid }}
-      </option>
-    {% endfor %}
-  </select>
+<div style="margin: 0.75em 0;">
+  <strong>Included judgement runs:</strong>
+  <ul style="margin: 0.25em 0 0 1.25em;">
+	{% for rid, user, created_at in judge_meta %}
+	  <li>
+		<span style="font-family: monospace;">{{ rid }}</span>
+		— {{ user|default:"(unknown)" }}
+		{% if created_at %} — {{ created_at }}{% endif %}
+	  </li>
+	{% endfor %}
+  </ul>
+</div>
 
   <button type="submit">Load</button>
 </form>
