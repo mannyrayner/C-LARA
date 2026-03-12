@@ -456,41 +456,61 @@ Rules:
 - Each distractor must be a SINGLE TOKEN (no spaces). Keep punctuation only if TARGET is punctuation.
 - Do NOT include the correct answer (surface form) among distractors.
 
-- Match the TARGET’s grammatical behavior as closely as possible:
-  * If pos is VERB: match the same verb form (e.g., bare form vs -ing vs past vs 3sg).
-  * If pos is NOUN: match number (sing/pl) and typical countability feel.
-  * If pos is PRON or DET: match pronoun/determiner type (e.g., possessive determiner vs object pronoun),
-    and match person/number as closely as possible.
-  * If pos is ADP (preposition): choose other common prepositions that are plausible in similar frames.
+Grammatical category guidance:
+- Distractors should usually belong to the same grammatical category (POS) as the target.
+- However, a distractor may come from a closely related category if it reflects a typical learner error.
+  Examples:
+  * pronoun vs noun
+  * determiner vs pronoun
+  * different verb forms
+  * confusion between similar function words
+- The key requirement is that the distractor should plausibly attract a learner’s attention at first glance.
 
-- Distractors must be CLEARLY INCORRECT in this specific context.
-  They should be tempting mistakes a learner might choose,
-  NOT alternative correct paraphrases.
+Incorrectness requirements:
+- Distractors must be clearly incorrect in this specific context.
+- They should represent mistakes a learner might realistically make.
 
-- Avoid true synonyms or near-synonyms that a teacher could reasonably accept as correct.
-  If a native speaker might judge the distractor as acceptable,
-  DO NOT use it.
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear linguistic reasons:
+  * morphology
+  * grammar
+  * vocabulary choice
+  * collocation
+  * agreement
+  * function word misuse
+- Avoid distractors that are wrong only because of subtle pragmatic or discourse considerations.
 
-- Prefer these types of learner-error distractors:
-  * wrong collocation ("reflect about" instead of "reflect on")
-  * wrong article/determiner choice
-  * agreement errors
-  * pronoun reference confusion
-  * tense/aspect mismatch
-  * overgeneralized rule application
-  * similar-looking or similar-sounding words
-  * preposition confusion
-  * incorrect but plausible function word swaps
+For advanced learners:
+- Distractors may involve subtler semantic or pragmatic distinctions,
+  but there must still be only one clearly correct answer.
 
-- The sentence should usually remain grammatical,
-  but sound wrong, unnatural, or semantically incorrect to a fluent speaker.
+Avoid:
+- true synonyms or paraphrases that a teacher might reasonably accept as correct
+- distractors that make the sentence equally acceptable
+- distractors whose incorrectness depends only on subtle pragmatic interpretation
+  (unless learner level is advanced)
 
-- Before returning your answer:
-  For each distractor, ask:
-  "Would a teacher accept this as correct?"
-  If yes, discard it and generate a new one.
+Prefer these types of learner-error distractors:
+- wrong collocation
+- wrong article/determiner choice
+- agreement errors
+- pronoun reference confusion
+- tense/aspect mismatch
+- overgeneralized rule application
+- similar-looking or similar-sounding words
+- preposition confusion
+- incorrect but plausible function word swaps
 
-- Return STRICT JSON in this schema (no extra keys, no prose):
+The sentence should usually remain grammatical,
+but sound wrong, unnatural, or semantically incorrect to a fluent speaker.
+
+Before returning your answer:
+For each distractor, ask yourself:
+"Would a teacher accept this as correct?"
+If yes, discard it and generate a new one.
+
+Return STRICT JSON in this schema (no extra keys, no prose):
+
 {{
   "distractors": [
     {{"form": ".", "reason": "short reason"}},
@@ -942,8 +962,8 @@ async def process_ai_panel_judging_targets(
             run_results[item_id][model_name] = {
                 "provider": cfg.get("provider"),
                 "model": cfg.get("model"),
-                "verdict": "needs_fix",
-                "confidence": 0.0,
+                "rating": "unparsed",
+                "summary": f"exception: {r}",
                 "issues": [{"distractor": "", "problem": f"exception: {r}", "suggestion": ""}],
                 "raw_text": "",
                 "parsed": {},
@@ -993,16 +1013,18 @@ async def _judge_one_item_with_one_model(
 
     parsed = _json_from_model_output(content)
 
-    # normalize result
-    verdict = parsed.get("verdict", "unparsed")
-    if verdict not in ("ok", "minor_suggestion", "needs_fix", "unparsed"):
-        verdict = "needs_fix" 
+    rating = parsed.get("rating", "unparsed")
+    if isinstance(rating, str):
+        try:
+            rating = int(rating)
+        except Exception:
+            rating = "unparsed"
+    if rating not in (1, 2, 3, 4, 5, "unparsed"):
+        rating = "unparsed"
 
-    conf = parsed.get("confidence", "unparsed")
-    try:
-        conf = float(conf)
-    except Exception:
-        conf = 0.0
+    summary = parsed.get("summary", "")
+    if not isinstance(summary, str):
+        summary = ""
 
     issues = parsed.get("issues")
     if not isinstance(issues, list):
@@ -1013,13 +1035,12 @@ async def _judge_one_item_with_one_model(
         "parsed": parsed,
         "provider": provider,
         "model": model,
-        "verdict": verdict,
-        "confidence": conf,
+        "rating": rating,
+        "summary": summary,
         "issues": issues,
-        "raw": content[:2000],  # small debug window, optional
+        "raw": content[:2000],
     }
 
-    # cost (optional; safe if pricing is missing/zero)
     try:
         cost = compute_cost_for_usage(model_cfg, usage or {})
     except Exception:
@@ -1027,39 +1048,38 @@ async def _judge_one_item_with_one_model(
 
     return result, (usage or {}), cost
 
-
 def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
     seg = item.get("segment") or {}
     target = item.get("target") or {}
-
-    full_text = item.get("full_text", {})
-    full_html = full_text.get("content") if isinstance(full_text, dict) else None
-    
     choices = item.get("choices") or []
     learner_level = item.get("learner_level") or "intermediate"
 
     correct = [c for c in choices if c.get("is_correct")]
     distractors = [c for c in choices if not c.get("is_correct")]
 
-    # Format distractors with rationale
     distractor_lines = []
     for d in distractors:
         distractor_lines.append(
             f"- {d.get('form')} :: rationale = {d.get('reason')}"
         )
 
+    full_text = item.get("full_text") or {}
+    if isinstance(full_text, dict):
+        full_text_content = full_text.get("content") or ""
+    else:
+        full_text_content = ""
+
+    rubric_text = get_cloze_judging_rubric_text(learner_level)
+
     system_prompt = (
-    "You are a careful and fair CALL evaluation assistant. "
-    "You evaluate cloze multiple-choice items designed by a competent CALL researcher. "
-    "Assume good faith and pedagogical intent. "
-    "Your task is not to search for minor flaws, but to determine whether each distractor "
-    "successfully fulfills its stated pedagogical purpose."
+        "You are a careful and fair CALL evaluation assistant. "
+        "You evaluate cloze multiple-choice items designed by a competent CALL researcher. "
+        "Assume good faith and pedagogical intent. "
+        "Your task is to judge how suitable the distractors are for teaching purposes."
     )
 
-    cloze_evaluation_rubric = get_cloze_judging_rubric_text(learner_level)
-
-    user_prompt = user_prompt = f"""
-{cloze_evaluation_rubric}
+    user_prompt = f"""
+{rubric_text}
 
 SEGMENT (with blank):
 {seg.get("text_with_blank") or ""}
@@ -1069,7 +1089,7 @@ Before: {seg.get("context_before") or ""}
 After: {seg.get("context_after") or ""}
 
 FULL TEXT (target segment highlighted):
-{full_html or "(missing full text)"}
+{full_text_content or "(missing full text)"}
 
 TARGET:
 surface = {target.get("surface")}
@@ -1082,24 +1102,16 @@ CORRECT ANSWER:
 DISTRACTORS (with intended rationale):
 {chr(10).join(distractor_lines)}
 
-Verdict guidelines:
-
-- "ok" → All distractors fulfill their intended pedagogical function.
-- "minor_suggestion" → The item works pedagogically, but there are small improvements possible.
-- "needs_fix" → At least one distractor has a clear and substantive flaw.
-
 Return STRICT JSON ONLY (no markdown, no explanations outside JSON):
 
 {{
-  "verdict": "ok" | "minor_suggestion" | "needs_fix",
-  "confidence": 0.0-1.0,
-  "summary": "brief one-sentence overall explanation",
+  "rating": 1 | 2 | 3 | 4 | 5,
+  "summary": "brief overall explanation",
   "issues": [
     {{
       "distractor": "...",
       "problem": "...",
-      "suggestion": "...",
-      "severity": "major" | "minor"
+      "suggestion": "..."
     }}
   ]
 }}
@@ -1113,32 +1125,37 @@ Evaluate the distractors for the following cloze multiple-choice item.
 
 LEARNER LEVEL: {learner_level}
 
-Guidance by level:
-- beginner: be tolerant of simpler/less subtle distractors; only flag clearly misleading or invalid ones
-- low_intermediate: similar tolerance; avoid requiring nuanced semantic distinctions
-- intermediate: moderate subtlety is fine
-- advanced: allow nuanced near-misses; still must be clearly wrong in context
-
 IMPORTANT ORIENTATION:
 - Assume the item was designed by a competent CALL researcher.
-- The goal is to VALIDATE design intent, not to nitpick.
-- Only flag issues that are clearly pedagogically significant.
-- Minor improvements should be classified as "minor_suggestion".
-- Reserve "needs_fix" for clear and substantive problems.
-  If you are uncertain whether an issue rises to a substantive pedagogical flaw, prefer "minor_suggestion" over "needs_fix".
+- The goal is to evaluate how suitable the distractors are for teaching and assessment.
+- Judge the item as a teacher would judge it.
+- Do not nitpick minor stylistic issues.
 
-Evaluation criteria:
+General criteria:
+1. Each distractor should be a single token.
+2. Distractors should usually belong to the same grammatical category as the target, or to a closely related category,
+   or otherwise be forms that could plausibly attract a learner at first glance.
+3. The provided "reason" explains the intended pedagogical function of the distractor.
+   Judge whether the distractor successfully fulfills that intended function.
+4. Distractors should be plausible enough to tempt a learner, but still be incorrect in the context.
+5. For beginner, low-intermediate, and intermediate learners, distractors should normally be incorrect for clear linguistic reasons
+   (morphology, vocabulary, grammar, collocation, or simple meaning),
+   not mainly for subtle pragmatic or discourse-level reasons.
+6. Only for advanced learners is it appropriate to rely more heavily on subtle semantic or pragmatic distinctions.
 
-1. Each distractor must be a SINGLE TOKEN.
-2. Each distractor should have similar grammatical behavior (POS/form) as the target.
-3. The provided "reason" explains the intended pedagogical function.
-   Judge whether the distractor SUCCESSFULLY fulfills this intended function in context.
-4. Distractors should be plausible near-misses but clearly incorrect in THIS specific context.
-5. Do NOT penalize minor stylistic issues.
-6. Only classify as "needs_fix" if there is a clear and substantive pedagogical problem
-   (e.g., ambiguity making it potentially correct, wrong POS, nonsensical form,
-   or clear failure to match its stated rationale).
-"""
+Use the following 5-point rating scale:
+
+1 = very poor
+    Distractors are clearly unsuitable for teaching purposes.
+2 = rather poor
+    Distractors have substantial weaknesses.
+3 = acceptable
+    Distractors are usable, though not especially good.
+4 = good
+    Distractors work well for the intended purpose.
+5 = very good
+    Distractors are very well designed for the intended purpose.
+""".strip()
 
 def load_exercise_judgements_dict(clara_project_internal):
     raw = clara_project_internal.load_text_version_or_null("exercise_judgements")
@@ -1262,8 +1279,8 @@ def browse_exercise_judgements(request, project_id):
             "judge_type","judge_id",
             "learner_level","item_id",
             "text_with_blank","correct","distractors",
-            "verdict","confidence","issues"
-        ]
+            "rating","summary","issues"
+            ]
         rows = []
         for row in judged_rows:
             snap = row["snapshot"]              # your item_snapshot
@@ -1295,8 +1312,8 @@ def browse_exercise_judgements(request, project_id):
                     text_with_blank,
                     correct,
                     distractors_str,
-                    r.get("verdict",""),
-                    r.get("confidence",""),
+                    r.get("rating",""),
+                    r.get("summary",""),
                     json.dumps(issues, ensure_ascii=False),
                 ])
 
@@ -1475,18 +1492,18 @@ def human_judge_exercises(request, project_id):
     for item in items:
         item_id = item["item_id"]
 
-        verdict = request.POST.get(f"verdict_{item_id}")
+        rating = request.POST.get(f"rating_{item_id}")
         confidence = request.POST.get(f"confidence_{item_id}")
 ##        summary = request.POST.get(f"summary_{item_id}", "")
         comment = request.POST.get(f"comment_{item_id}", "")
 
-        if not verdict:
+        if not rating:
             continue  # skip untouched items
 
         try:
-            confidence = float(confidence)
+            rating = int(rating)
         except Exception:
-            confidence = 0.0
+            rating = ""
 
         snapshot = {
             "learner_level": "intermediate",
@@ -1500,7 +1517,7 @@ def human_judge_exercises(request, project_id):
 
         run_blob["items"][item_id] = {
             "item_snapshot": snapshot,
-            "verdict": verdict,
+            "rating": rating,
 ##            "confidence": confidence,
 ##            "summary": summary,
             "issues": [],  # V1 simple; can extend later
@@ -1533,23 +1550,20 @@ def browse_human_exercise_judgements(request, project_id):
     run_ids = sorted(runs_dict.keys(), reverse=True)  # newest first
 
     # ---------- aggregate across ALL runs ----------
-    items_agg = {}  # item_id -> {snapshot, judges{run_id: payload}, counts, majority}
-    judge_meta = [] # list of (run_id, user, created_at)
+    items_agg = {}  # item_id -> {snapshot, judges{run_id: payload}, rating_counts, mean_rating}
+    judge_meta = []  # list of (run_id, user, created_at)
 
-    def _norm_verdict(v):
-        return v if v in ("ok", "minor_suggestion", "needs_fix") else "unparsed"
-
-    def _majority(counts):
-        # simple majority; tie-break: needs_fix > minor_suggestion > ok (conservative)
-        order = ["needs_fix", "minor_suggestion", "ok", "unparsed"]
-        best = None
-        best_n = -1
-        for k in order:
-            n = counts.get(k, 0)
-            if n > best_n:
-                best = k
-                best_n = n
-        return best
+    def _norm_rating(v):
+        if isinstance(v, int) and v in (1, 2, 3, 4, 5):
+            return v
+        if isinstance(v, str):
+            try:
+                v = int(v)
+                if v in (1, 2, 3, 4, 5):
+                    return v
+            except Exception:
+                pass
+        return "unparsed"
 
     for rid in run_ids:
         run_payload = runs_dict.get(rid, {}) or {}
@@ -1561,19 +1575,25 @@ def browse_human_exercise_judgements(request, project_id):
             entry = items_agg.setdefault(item_id, {
                 "item_id": item_id,
                 "snapshot": snap,
-                "judges": {},     # rid -> payload (verdict, confidence, summary, comment, ...)
-                "counts": {"ok": 0, "minor_suggestion": 0, "needs_fix": 0, "unparsed": 0},
-                "majority": None,
+                "judges": {},   # rid -> payload (rating, summary, comment, ...)
+                "rating_counts": {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, "unparsed": 0},
+                "mean_rating": None,
             })
 
-            verdict = _norm_verdict(payload.get("verdict"))
+            rating = _norm_rating(payload.get("rating"))
             entry["judges"][rid] = payload
-            entry["counts"][verdict] = entry["counts"].get(verdict, 0) + 1
+            entry["rating_counts"][rating] = entry["rating_counts"].get(rating, 0) + 1
 
-    # compute majority after counting
+    # compute mean rating after counting
     judged_rows = []
     for item_id, entry in items_agg.items():
-        entry["majority"] = _majority(entry["counts"])
+        total = 0
+        n = 0
+        for rating in (1, 2, 3, 4, 5):
+            count = entry["rating_counts"].get(rating, 0)
+            total += rating * count
+            n += count
+        entry["mean_rating"] = round(total / n, 2) if n > 0 else None
         judged_rows.append(entry)
 
     # Add per-row aligned judge cells so the template doesn't need dict dynamic lookup
@@ -1585,7 +1605,7 @@ def browse_human_exercise_judgements(request, project_id):
                 "rid": rid,
                 "user": user,
                 "created_at": created_at,
-                "r": judges_map.get(rid),   # <-- this is the important part
+                "r": judges_map.get(rid),
             })
         row["judge_cells"] = cells
 
@@ -1605,7 +1625,8 @@ def browse_human_exercise_judgements(request, project_id):
             "text_with_blank",
             "correct",
             "distractors",
-            "verdict",
+            "rating",
+            "summary",
             "issues",
             "comment",
         ]
@@ -1634,8 +1655,8 @@ def browse_human_exercise_judgements(request, project_id):
                 if not r:
                     continue  # judge didn't submit for this item
 
-                # r fields
-                verdict = r.get("verdict", "")
+                rating = r.get("rating", "")
+                summary = r.get("summary", "")
                 issues = r.get("issues", [])
                 comment = r.get("comment", "")
 
@@ -1658,19 +1679,14 @@ def browse_human_exercise_judgements(request, project_id):
                     text_with_blank,
                     correct,
                     distractors_str,
-                    verdict,
+                    rating,
+                    summary,
                     json.dumps(issues, ensure_ascii=False),
                     comment,
                 ])
 
         filename = f"{project.internal_id}_{selected_exercise_type}_{selected_exercise_set_id}_human_judgements.csv"
         return _as_csv_response(filename, header, rows)
-
-##    print('judge_meta')
-##    pprint.pprint(judge_meta)
-##
-##    print('judged_rows')
-##    pprint.pprint(judged_rows)
 
     return render(
         request,
@@ -1682,11 +1698,11 @@ def browse_human_exercise_judgements(request, project_id):
             "exercise_set_ids": exercise_set_ids,
             "selected_exercise_set_id": selected_exercise_set_id,
 
-            # we still show runs, but now informational / for future filtering
+            # still shown for informational purposes / aligned judge columns
             "run_ids": run_ids,
             "judge_meta": judge_meta,
 
-            # NEW: aggregated rows (one per item)
+            # aggregated rows (one per item)
             "judged_rows": judged_rows,
         },
     )
