@@ -64,9 +64,25 @@
 {% for row in judged_rows %}
   {% with orig=row.snapshot model_map=row.model_map %}
   <div style="margin: 0 0 1em 0; padding: 0.75em; border: 1px solid #ddd;">
-    <div style="margin-bottom: 0.5em;">
-      <strong>Item:</strong> {{ row.item_id }}
-    </div>
+	<div style="display:flex; justify-content:space-between; gap:1em; margin-bottom: 0.5em;">
+	  <div>
+		<strong>Item:</strong> {{ row.item_id }}
+	  </div>
+	  <div>
+		<strong>Mean rating:</strong>
+		<span style="padding:0.15em 0.4em; border:1px solid #999; background:#f8f8f8;">
+		  {{ row.mean_rating|default:"-" }}
+		</span>
+		&nbsp;&nbsp;
+		<span style="color:#666; font-size:90%;">
+		  1={{ row.rating_counts.1|default:0 }},
+		  2={{ row.rating_counts.2|default:0 }},
+		  3={{ row.rating_counts.3|default:0 }},
+		  4={{ row.rating_counts.4|default:0 }},
+		  5={{ row.rating_counts.5|default:0 }}
+		</span>
+	  </div>
+	</div>
 	
     <div style="margin-bottom: 0.5em;">
       <strong>Learner level:</strong>
@@ -106,19 +122,35 @@
 	</script>
 
     <div style="margin-bottom: 0.5em;">
+      <strong>Context before:</strong>
+      <div style="padding: 0.5em; background: #fafafa; border: 1px solid #eee;">
+        {{ orig.context_before|default:"(missing context before)" }}
+      </div>
+    </div>
+
+    <div style="margin-bottom: 0.5em;">
       <strong>Text:</strong>
       <div style="padding: 0.5em; background: #fafafa; border: 1px solid #eee;">
         {{ orig.text_with_blank|default:"(missing text_with_blank)" }}
       </div>
     </div>
 
+    <div style="margin-bottom: 0.5em;">
+      <strong>Context after:</strong>
+      <div style="padding: 0.5em; background: #fafafa; border: 1px solid #eee;">
+        {{ orig.context_after|default:"(missing context after)" }}
+      </div>
+    </div>
+
 	<div style="margin-bottom: 0.5em;">
 	  <strong>Target:</strong>
-	  {% if orig.target %}
-		{{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
-	  {% else %}
-		(missing target)
-	  {% endif %}
+	  <div style="padding: 0.5em; background: #fafafa; border: 1px solid #eee;">
+		  {% if orig.target %}
+			{{ orig.target.surface }} ({{ orig.target.lemma }}, {{ orig.target.pos }})
+		  {% else %}
+			(missing target)
+		  {% endif %}
+	  </div>
 	</div>
 
 	<div style="margin-bottom: 0.5em;">
