@@ -1469,17 +1469,16 @@ def human_judge_exercises(request, project_id):
             },
         )
 
-    # ---------------- POST: Save human run ----------------
-
-    human_run_id = request.POST.get("human_run_id")
-    if not human_run_id:
-        human_run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "_" + request.user.username
+    # ---------------- POST: Save/overwrite human run ----------------
 
     d = load_exercise_human_judgements_dict(clara_project_internal)
     jud = d["human_judgements"]
 
     jud.setdefault(exercise_type, {})
     jud[exercise_type].setdefault(exercise_set_id, {})
+
+    # Stable run id: one run per user per exercise set
+    human_run_id = request.user.username
 
     run_blob = {
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -1493,8 +1492,6 @@ def human_judge_exercises(request, project_id):
         item_id = item["item_id"]
 
         rating = request.POST.get(f"rating_{item_id}")
-        confidence = request.POST.get(f"confidence_{item_id}")
-##        summary = request.POST.get(f"summary_{item_id}", "")
         comment = request.POST.get(f"comment_{item_id}", "")
 
         if not rating:
@@ -1518,12 +1515,11 @@ def human_judge_exercises(request, project_id):
         run_blob["items"][item_id] = {
             "item_snapshot": snapshot,
             "rating": rating,
-##            "confidence": confidence,
-##            "summary": summary,
             "issues": [],  # V1 simple; can extend later
             "comment": comment,
         }
 
+    # Overwrite any previous run by this user for this exercise set
     jud[exercise_type][exercise_set_id][human_run_id] = run_blob
 
     save_exercise_human_judgements_dict(clara_project_internal, d, user=request.user.username)
