@@ -155,83 +155,76 @@
 	</div>
 
     <div>
-      <strong>Judgements:</strong>
-      <table style="width:100%; border-collapse: collapse; margin-top: 0.5em;">
-        <thead>
-          <tr>
-            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Model</th>
-            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Verdict</th>
-            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Conf</th>
-            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Issues (first 2)</th>
-            <th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Raw</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for model_name, r in model_map.items %}
-            <tr>
-              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
-                {{ model_name }}<br>
-                <small>{{ r.provider }} / {{ r.model }}</small>
-              </td>
+	  <strong>Judgements:</strong>
+	  <table style="width:100%; border-collapse: collapse; margin-top: 0.5em;">
+		<thead>
+		  <tr>
+			<th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Model</th>
+			<th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Rating</th>
+			<th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Summary</th>
+			<th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Issues (first 2)</th>
+			<th style="text-align:left; border-bottom:1px solid #ccc; padding: 0.25em;">Raw</th>
+		  </tr>
+		</thead>
+		<tbody>
+		  {% for model_name, r in model_map.items %}
+			<tr>
+			  <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+				{{ model_name }}<br>
+				<small>{{ r.provider }} / {{ r.model }}</small>
+			  </td>
 
-              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
-					{% if r.verdict == "ok" %}
-					  <span style="padding: 0.15em 0.4em; border:1px solid #6c6; background:#efe;">
-						Works as intended
-					  </span>
+			  <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+				{% if r.rating == 1 %}
+				  <span style="padding: 0.15em 0.4em; border:1px solid #c66; background:#fee;">1 = Very poor</span>
+				{% elif r.rating == 2 %}
+				  <span style="padding: 0.15em 0.4em; border:1px solid #d88; background:#fff0f0;">2 = Rather poor</span>
+				{% elif r.rating == 3 %}
+				  <span style="padding: 0.15em 0.4em; border:1px solid #cc9; background:#fffae6;">3 = Acceptable</span>
+				{% elif r.rating == 4 %}
+				  <span style="padding: 0.15em 0.4em; border:1px solid #9c9; background:#f2fff2;">4 = Good</span>
+				{% elif r.rating == 5 %}
+				  <span style="padding: 0.15em 0.4em; border:1px solid #6c6; background:#efe;">5 = Very good</span>
+				{% else %}
+				  <span style="padding: 0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ r.rating }}</span>
+				{% endif %}
+			  </td>
 
-					{% elif r.verdict == "minor_suggestion" %}
-					  <span style="padding: 0.15em 0.4em; border:1px solid #cc9; background:#fffae6;">
-						Works, but could be improved
-					  </span>
+			  <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+				{{ r.summary|default:"" }}
+			  </td>
 
-					{% elif r.verdict == "needs_fix" %}
-					  <span style="padding: 0.15em 0.4em; border:1px solid #c66; background:#fee;">
-						Needs revision
-					  </span>
+			  <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+				{% if r.issues %}
+				  <ul style="margin: 0; padding-left: 1.2em;">
+					{% for issue in r.issues %}
+					  {% if forloop.counter0 < 2 %}
+						<li>
+						  <strong>{{ issue.distractor }}</strong>:
+						  {{ issue.problem }}
+						  {% if issue.suggestion %}
+							<br><em>Suggest:</em> {{ issue.suggestion }}
+						  {% endif %}
+						</li>
+					  {% endif %}
+					{% endfor %}
+				  </ul>
+				{% else %}
+				  <em>—</em>
+				{% endif %}
+			  </td>
 
-					{% else %}
-					  <span style="padding: 0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">
-						{{ r.verdict }}
-					  </span>
-					{% endif %}
-              </td>
-
-              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
-                {{ r.confidence|default:"" }}
-              </td>
-
-              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
-                {% if r.issues %}
-                  <ul style="margin: 0; padding-left: 1.2em;">
-                    {% for issue in r.issues %}
-                      {% if forloop.counter0 < 2 %}
-                        <li>
-                          <strong>{{ issue.distractor }}</strong>:
-                          {{ issue.problem }}
-                          {% if issue.suggestion %}
-                            <br><em>Suggest:</em> {{ issue.suggestion }}
-                          {% endif %}
-                        </li>
-                      {% endif %}
-                    {% endfor %}
-                  </ul>
-                {% else %}
-                  <em>—</em>
-                {% endif %}
-              </td>
-
-              <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
-                <details>
-                  <summary>raw_text</summary>
-                  <pre style="white-space: pre-wrap;">{{ r.raw_text|default:r.raw|default:"" }}</pre>
-                </details>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+			  <td style="vertical-align: top; border-bottom:1px solid #eee; padding: 0.25em;">
+				<details>
+				  <summary>raw_text</summary>
+				  <pre style="white-space: pre-wrap;">{{ r.raw_text|default:r.raw|default:"" }}</pre>
+				</details>
+			  </td>
+			</tr>
+		  {% endfor %}
+		</tbody>
+	  </table>
+	</div>
   </div>
   {% endwith %}
 {% endfor %}

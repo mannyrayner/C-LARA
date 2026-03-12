@@ -53,25 +53,20 @@
 
     <div style="display:flex; justify-content:space-between; gap:1em;">
       <div><strong>Item:</strong> {{ row.item_id }}</div>
-      <div>
-        <strong>Majority:</strong>
-        {% if row.majority == "ok" %}
-          <span style="padding:0.15em 0.4em; border:1px solid #6c6; background:#efe;">ok</span>
-        {% elif row.majority == "minor_suggestion" %}
-          <span style="padding:0.15em 0.4em; border:1px solid #cc6; background:#fffae6;">minor_suggestion</span>
-        {% elif row.majority == "needs_fix" %}
-          <span style="padding:0.15em 0.4em; border:1px solid #c66; background:#fee;">needs_fix</span>
-        {% else %}
-          <span style="padding:0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ row.majority }}</span>
-        {% endif %}
-        &nbsp;&nbsp;
-        <span style="color:#666; font-size:90%;">
-          ok={{ row.counts.ok|default:0 }},
-          minor={{ row.counts.minor_suggestion|default:0 }},
-          fix={{ row.counts.needs_fix|default:0 }}
-        </span>
-      </div>
-    </div>
+		<strong>Mean rating:</strong>
+		<span style="padding:0.15em 0.4em; border:1px solid #999; background:#f8f8f8;">
+		  {{ row.mean_rating|default:"-" }}
+		</span>
+		&nbsp;&nbsp;
+		<span style="color:#666; font-size:90%;">
+		  1={{ row.rating_counts.1|default:0 }},
+		  2={{ row.rating_counts.2|default:0 }},
+		  3={{ row.rating_counts.3|default:0 }},
+		  4={{ row.rating_counts.4|default:0 }},
+		  5={{ row.rating_counts.5|default:0 }}
+		</span>
+	  </div>
+	</div>
 
     <div style="margin-top:0.5em;">
       <strong>Learner level:</strong> {{ orig.learner_level|default:"(unknown)" }}
@@ -116,56 +111,60 @@
       </ul>
     </div>
 
-    <div style="margin-top:0.75em;">
-      <strong>Judges:</strong>
-      <table style="border-collapse:collapse; width:100%; margin-top:0.25em;">
-        <tr>
-          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Run</th>
-          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Judge</th>
-          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Verdict</th>
-          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Conf.</th>
-          <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Summary / comment</th>
-        </tr>
+	<div style="margin-top:0.75em;">
+	  <strong>Judges:</strong>
+	  <table style="border-collapse:collapse; width:100%; margin-top:0.25em;">
+		<tr>
+		  <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Run</th>
+		  <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Judge</th>
+		  <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Rating</th>
+		  <th style="text-align:left; border-bottom:1px solid #ddd; padding:0.25em;">Comment</th>
+		</tr>
 
-        {% for cell in row.judge_cells %}
-		 {% with r=cell.r %}
-          <tr>
-            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
-              <div style="font-family:monospace; font-size:90%;">{{ cell.rid }}</div>
-              <div style="color:#777; font-size:85%;">{{ cell.created_at }}</div>
-            </td>
-            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
-              {{ user|default:"(unknown)" }}
-            </td>
+		{% for cell in row.judge_cells %}
+		  {% with r=cell.r %}
+		  <tr>
+			<td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+			  <div style="font-family:monospace; font-size:90%;">{{ cell.rid }}</div>
+			  <div style="color:#777; font-size:85%;">{{ cell.created_at }}</div>
+			</td>
 
-            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
-              {% if r %}
-                {% if r.verdict == "ok" %}
-                  <span style="padding:0.15em 0.4em; border:1px solid #6c6; background:#efe;">Works as intended</span>
-                {% elif r.verdict == "minor_suggestion" %}
-                  <span style="padding:0.15em 0.4em; border:1px solid #cc6; background:#fffae6;">Works, but could be improved</span>
-                {% elif r.verdict == "needs_fix" %}
-                  <span style="padding:0.15em 0.4em; border:1px solid #c66; background:#fee;">Needs revision</span>
-                {% else %}
-                  <span style="padding:0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ r.verdict }}</span>
-                {% endif %}
-              {% else %}
-                <span style="color:#999;">(no vote)</span>
-              {% endif %}
-            </td>
+			<td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+			  {{ cell.user|default:"(unknown)" }}
+			</td>
 
-            <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
-              {% if r %}
-                {% if r.comment %}<div><strong>Comment:</strong> {{ r.comment }}</div>{% endif %}
-              {% else %}
-                -
-              {% endif %}
-            </td>
-          </tr>
-          {% endwith %}
-        {% endfor %}
-      </table>
-    </div>
+			<td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+			  {% if r %}
+				{% if r.rating == 1 %}
+				  <span style="padding:0.15em 0.4em; border:1px solid #c66; background:#fee;">1 = Very poor</span>
+				{% elif r.rating == 2 %}
+				  <span style="padding:0.15em 0.4em; border:1px solid #d88; background:#fff0f0;">2 = Rather poor</span>
+				{% elif r.rating == 3 %}
+				  <span style="padding:0.15em 0.4em; border:1px solid #cc6; background:#fffae6;">3 = Acceptable</span>
+				{% elif r.rating == 4 %}
+				  <span style="padding:0.15em 0.4em; border:1px solid #9c9; background:#f2fff2;">4 = Good</span>
+				{% elif r.rating == 5 %}
+				  <span style="padding:0.15em 0.4em; border:1px solid #6c6; background:#efe;">5 = Very good</span>
+				{% else %}
+				  <span style="padding:0.15em 0.4em; border:1px solid #999; background:#f5f5f5;">{{ r.rating }}</span>
+				{% endif %}
+			  {% else %}
+				<span style="color:#999;">(no rating)</span>
+			  {% endif %}
+			</td>
+
+			<td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.25em;">
+			  {% if r %}
+				{% if r.comment %}<div><strong>Comment:</strong> {{ r.comment }}</div>{% endif %}
+			  {% else %}
+				-
+			  {% endif %}
+			</td>
+		  </tr>
+		  {% endwith %}
+		{% endfor %}
+	  </table>
+	</div>
 
   </div>
   {% endwith %}

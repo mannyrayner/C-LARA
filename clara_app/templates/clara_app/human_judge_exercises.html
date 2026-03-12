@@ -65,15 +65,17 @@
       </ul>
     </div>
 
-    <div>
-      <label>Verdict:</label>
-      <select name="verdict_{{ item.item_id }}">
-        <option value="">--</option>
-        <option value="ok">Works as intended</option>
-        <option value="minor_suggestion">Works, but could be improved</option>
-        <option value="needs_fix">Needs revision</option>
-      </select>
-    </div>
+	<div>
+	  <label>Rating:</label>
+	  <select name="rating_{{ item.item_id }}">
+		<option value="">--</option>
+		<option value="1">1 = Very poor</option>
+		<option value="2">2 = Rather poor</option>
+		<option value="3">3 = Acceptable</option>
+		<option value="4">4 = Good</option>
+		<option value="5">5 = Very good</option>
+	  </select>
+	</div>
 
     <div>
       <label>Comment (optional):</label><br>
