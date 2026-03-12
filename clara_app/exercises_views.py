@@ -1211,6 +1211,7 @@ def _json_from_model_output(text: str) -> dict:
     return {}
 
 # Viewing panel of AI judges results
+# Viewing panel of AI judges results
 @login_required
 def browse_exercise_judgements(request, project_id):
     """
@@ -1229,14 +1230,12 @@ def browse_exercise_judgements(request, project_id):
     # ---------- available selectors ----------
     exercise_types = sorted(jud.keys())
 
-    # defaults
     selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
     sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
     exercise_set_ids = sorted(sets_dict.keys())
 
     selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
     runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
-    # run ids look like timestamps; descending is usually nicest
     run_ids = sorted(runs_dict.keys(), reverse=True)
 
     selected_run_id = request.GET.get("judge_run_id") or (run_ids[0] if run_ids else "")
@@ -1244,22 +1243,46 @@ def browse_exercise_judgements(request, project_id):
     run_payload = runs_dict.get(selected_run_id, {}) if selected_run_id else {}
     items = (run_payload.get("items") or {}) if isinstance(run_payload, dict) else {}
 
-    # Also load the exercise set, so we can show extra context if needed
-    # (and/or show correct answer, segment text, etc.)
-    exercises_payload = clara_project_internal.load_exercises(selected_exercise_type) if selected_exercise_type else {}
     judged_rows = []
-    # items is a dict indexed by item_id
+
+    def _norm_rating(v):
+        if isinstance(v, int) and v in (1, 2, 3, 4, 5):
+            return v
+        if isinstance(v, str):
+            try:
+                v = int(v)
+                if v in (1, 2, 3, 4, 5):
+                    return v
+            except Exception:
+                pass
+        return "unparsed"
+
     for item_id in items:
-        exercises_payload = items[item_id]
-        snapshot = exercises_payload.get("item_snapshot", {}) if isinstance(exercises_payload, dict) else {}
-        model_map = exercises_payload.get("models", {}) if isinstance(exercises_payload, dict) else {}
+        item_payload = items[item_id]
+        snapshot = item_payload.get("item_snapshot", {}) if isinstance(item_payload, dict) else {}
+        model_map = item_payload.get("models", {}) if isinstance(item_payload, dict) else {}
+
+        rating_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, "unparsed": 0}
+
+        total = 0
+        n = 0
+        for model_name, r in model_map.items():
+            rating = _norm_rating(r.get("rating"))
+            rating_counts[rating] = rating_counts.get(rating, 0) + 1
+            if isinstance(rating, int):
+                total += rating
+                n += 1
+
+        mean_rating = round(total / n, 2) if n > 0 else None
+
         judged_rows.append({
             "item_id": item_id,
             "snapshot": snapshot,
             "model_map": model_map,
+            "rating_counts": rating_counts,
+            "mean_rating": mean_rating,
         })
 
-    # optional: stable order
     judged_rows.sort(key=lambda r: r["item_id"])
 
     if not exercise_types:
@@ -1275,27 +1298,26 @@ def browse_exercise_judgements(request, project_id):
 
     if request.GET.get("format") == "csv":
         header = [
-            "exercise_type","exercise_set_id","judge_run_id",
-            "judge_type","judge_id",
-            "learner_level","item_id",
-            "text_with_blank","correct","distractors",
-            "rating","summary","issues"
-            ]
+            "exercise_type", "exercise_set_id", "judge_run_id",
+            "judge_type", "judge_id",
+            "learner_level", "item_id",
+            "text_with_blank", "correct", "distractors",
+            "rating", "summary", "issues"
+        ]
         rows = []
         for row in judged_rows:
-            snap = row["snapshot"]              # your item_snapshot
-            model_map = row["model_map"]        # model_name -> result
+            snap = row["snapshot"]
+            model_map = row["model_map"]
 
-            text_with_blank = snap.get("text_with_blank","")
-            learner_level = snap.get("learner_level","intermediate")
-            target = (snap.get("target") or {})
+            text_with_blank = snap.get("text_with_blank", "")
+            learner_level = snap.get("learner_level", "intermediate")
             correct = ""
             distractors = []
             for c in (snap.get("choices") or []):
                 if c.get("is_correct"):
-                    correct = c.get("form","")
+                    correct = c.get("form", "")
                 else:
-                    distractors.append(c.get("form",""))
+                    distractors.append(c.get("form", ""))
 
             distractors_str = "|".join(distractors)
 
@@ -1312,8 +1334,8 @@ def browse_exercise_judgements(request, project_id):
                     text_with_blank,
                     correct,
                     distractors_str,
-                    r.get("rating",""),
-                    r.get("summary",""),
+                    r.get("rating", ""),
+                    r.get("summary", ""),
                     json.dumps(issues, ensure_ascii=False),
                 ])
 
@@ -1322,18 +1344,14 @@ def browse_exercise_judgements(request, project_id):
 
     context = {
         "project": project,
-
         "exercise_types": exercise_types,
         "selected_exercise_type": selected_exercise_type,
-
         "exercise_set_ids": exercise_set_ids,
         "selected_exercise_set_id": selected_exercise_set_id,
-
         "run_ids": run_ids,
         "selected_run_id": selected_run_id,
-
-        "run_payload": run_payload,     # created_at, models, cost...
-        "judged_items": items,          # item_id -> model_name -> result
+        "run_payload": run_payload,
+        "judged_items": items,
         "judged_rows": judged_rows,
     }
 
