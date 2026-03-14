@@ -47,6 +47,7 @@
   <div style="margin:1em 0;">
     <strong>Judge:</strong> {{ run_payload.user }}<br>
     <strong>Learner level:</strong> {{ run_payload.learner_level }}<br>
+	<strong>Theme:</strong> {{ run_payload.theme|default:"None" }}<br>
     <strong>Created:</strong> {{ run_payload.created_at }}
   </div>
 {% endif %}
@@ -74,6 +75,10 @@
 
     <div style="margin-top:0.5em;">
       <strong>Learner level:</strong> {{ orig.learner_level|default:"(unknown)" }}
+    </div>
+
+    <div style="margin-top:0.5em;">
+      <strong>Theme:</strong> {{ orig.theme|default:"None" }}
     </div>
 	
 	{% if orig.full_text and orig.full_text.format == "html" %}

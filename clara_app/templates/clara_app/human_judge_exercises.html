@@ -34,6 +34,14 @@
 	  })();
 	</script>
 
+    <div><strong>Intended learner level:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ learner_level }}
+    </div>
+    <div><strong>Intended theme of exercise:</strong></div>
+    <div style="background:#fafafa; padding:0.5em;">
+      {{ theme|default:"None" }}
+    </div>
     <div><strong>Context before:</strong></div>
     <div style="background:#fafafa; padding:0.5em;">
       {{ item.segment.context_before }}
@@ -49,7 +57,7 @@
     </div>
 	</div>
 
-    <div><strong>Target:</strong>
+    <div><strong>Correct filler:</strong>
 	<div style="background:#fafafa; padding:0.5em;">
       {{ item.target.surface }} ({{ item.target.lemma }}, {{ item.target.pos }})
 	</div>

@@ -29,6 +29,16 @@
     </div>
 
     <div>
+		<label for="theme"><strong>Theme of this exercise set</strong></label>
+		<select name="theme" id="theme">
+		  <option value="vocabulary">Vocabulary</option>
+		  <option value="grammar">Grammar</option>
+		  <option value="morphology" selected>Morphology</option>
+		  <option value="none">No particular theme</option>
+		</select>
+    </div>
+
+    <div>
       <label for="n_examples">Number of examples</label>
       <input id="n_examples" name="n_examples" type="number" min="1" max="200"
              value="{{ defaults.n_examples }}">

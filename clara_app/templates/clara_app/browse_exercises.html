@@ -66,6 +66,7 @@
 	
 <ul>
   <li><b>Learner level:</b> {{ item.learner_level }}</li>
+  <li><b>Theme:</b> {{ item.theme|default:"None" }}</li>
   <li><b>Page index:</b> {{ item.page_index }}</li>
   <li><b>Segment index:</b> {{ item.segment_index }}</li>
   <li><b>Segment with blank:</b> {{ item.segment.text_with_blank }}</li>
