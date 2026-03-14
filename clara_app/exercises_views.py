@@ -86,6 +86,7 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str = "sta
     
     exercise_type = request.POST.get("exercise_type", "cloze_mcq").strip()
     learner_level = request.POST.get("learner_level", default_learner_level).strip()
+    theme = request.POST.get("theme", "none").strip()
     n_examples = int(request.POST.get("n_examples", "20"))
     n_distractors = int(request.POST.get("n_distractors", "3"))
     seed_str = request.POST.get("seed", "").strip()
@@ -120,7 +121,8 @@ def generate_exercises(request: HttpRequest, project_id: int, status: str = "sta
         n_distractors,
         seed,
         rng,
-        learner_level=learner_level, 
+        learner_level=learner_level,
+        theme=theme,
         callback=callback,
     )
 
@@ -165,6 +167,7 @@ def create_and_save_exercise_items(
     seed: int,
     rng: random.Random,
     learner_level: str = "intermediate",
+    theme: str = "none",
     callback=None,
 ):
     try:
@@ -179,6 +182,7 @@ def create_and_save_exercise_items(
                 seed,
                 rng,
                 learner_level=learner_level,
+                theme=theme,
                 callback=callback,
             )
         else:
@@ -203,6 +207,7 @@ def create_and_save_cloze_exercise_items(
     seed: int,
     rng: random.Random,
     learner_level: str = "intermediate",
+    theme: str = "none",
     callback=None,
 ):
     exercise_set_id = uuid.uuid4().hex
@@ -215,7 +220,9 @@ def create_and_save_cloze_exercise_items(
     }
 
     items, cost_dict = asyncio.run(
-        process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng, learner_level=learner_level, callback=callback)
+        process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng,
+                                       learner_level=learner_level, theme=theme,
+                                       callback=callback)
     )
 
     # Assign stable item_ids
@@ -233,6 +240,7 @@ def create_and_save_cloze_exercise_items(
         "schema_version": "1.0",
         "exercise_type": exercise_type,
         "learner_level": learner_level,
+        "theme": theme,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "selection_method": "random",
         "language": {"l2": project.l2, "gloss": project.l1},
@@ -289,9 +297,12 @@ def is_eligible_target(content_element) -> bool:
     return True
 
 
-async def process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng: random.Random, learner_level="intermediate", callback=None):
+async def process_cloze_exercise_targets(project, text_obj, params, exercise_targets, rng: random.Random,
+                                         learner_level="intermediate", theme="none", callback=None):
     tasks = [
-        asyncio.create_task(generate_cloze_exercise_item(t, project, text_obj, params, rng, learner_level=learner_level, callback=callback))
+        asyncio.create_task(generate_cloze_exercise_item(t, project, text_obj, params, rng,
+                                                         learner_level=learner_level, theme=theme,
+                                                         callback=callback))
         for t in exercise_targets
     ]
     results = await asyncio.gather(*tasks)
@@ -306,7 +317,9 @@ async def process_cloze_exercise_targets(project, text_obj, params, exercise_tar
     return items, total_cost
 
 
-async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, rng: random.Random, learner_level="intermediate", callback=None):
+async def generate_cloze_exercise_item(exercise_target, project, text_obj, params, rng: random.Random,
+                                       learner_level="intermediate", theme="none",
+                                       callback=None):
     seg = exercise_target["segment"]
     ce = exercise_target["target_ce"]
     ce_index = exercise_target["target_ce_index"]
@@ -339,6 +352,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
     prompt = build_cloze_distractor_prompt(
         learner_level=learner_level,
+        theme=theme,
         segment_text=segment_text,
         segment_text_with_blank=segment_text_with_blank,
         segment_text_with_blank_and_full_context=full_context_html,
@@ -361,6 +375,7 @@ async def generate_cloze_exercise_item(exercise_target, project, text_obj, param
 
     item = {
         "learner_level": learner_level,
+        "theme": theme,
         "page_index": page_index,
         "segment_index": seg_index,
         "target": {"surface": target_surface, "lemma": lemma, "pos": pos},
@@ -408,6 +423,7 @@ def full_text_with_highlighted_segment_text(text_obj, page_index, seg_index):
 def build_cloze_distractor_prompt(
     *,
     learner_level,
+    theme,
     segment_text,
     segment_text_with_blank=None,
     segment_text_with_blank_and_full_context=None,
@@ -436,6 +452,18 @@ Guidance by level:
 - low_intermediate: common words; allow simple contrasts; avoid idioms/rare senses
 - intermediate: allow moderate vocabulary; distractors can be slightly subtler
 - advanced: allow nuanced near-misses; still ensure only one clearly correct answer
+
+THEME: {theme}
+
+Theme guidance:
+- none: generate good general-purpose distractors
+- vocabulary: prioritise lexical confusions, near-meaning confusions, collocation errors, and word-choice distractors
+- grammar: prioritise grammatical confusions such as agreement, tense/aspect, article/determiner choice, pronoun form, or function-word misuse
+- morphology: prioritise inflectional/derivational confusions, wrong endings, wrong forms, or closely related morphological variants
+
+The distractors should, as far as possible, reflect the requested theme.
+If the requested theme is not very natural for this particular target, still generate the best plausible distractors you can,
+but bias them toward the requested theme.
 
 SEGMENT:
 {segment_text}{blank_block}
@@ -887,6 +915,7 @@ def create_and_save_ai_panel_judgements(
 
         snapshot = {
             "learner_level": item.get("learner_level"),
+            "theme": item.get("theme", "none"),
             "text_with_blank": item.get("segment", {}).get("text_with_blank"),
             "full_text": item.get("full_text"),
             "context_before": item.get("segment", {}).get("context_before"),
@@ -1054,6 +1083,7 @@ def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
     target = item.get("target") or {}
     choices = item.get("choices") or []
     learner_level = item.get("learner_level") or "intermediate"
+    theme = item.get("theme") or "none"
 
     correct = [c for c in choices if c.get("is_correct")]
     distractors = [c for c in choices if not c.get("is_correct")]
@@ -1070,7 +1100,7 @@ def build_cloze_judging_prompt(item: dict) -> Tuple[str, str]:
     else:
         full_text_content = ""
 
-    rubric_text = get_cloze_judging_rubric_text(learner_level)
+    rubric_text = get_cloze_judging_rubric_text(learner_level, theme)
 
     system_prompt = (
         "You are a careful and fair CALL evaluation assistant. "
@@ -1120,11 +1150,19 @@ Return STRICT JSON ONLY (no markdown, no explanations outside JSON):
 
     return system_prompt, user_prompt
 
-def get_cloze_judging_rubric_text(learner_level: str) -> str:
+def get_cloze_judging_rubric_text(learner_level: str, theme: str) -> str:
     return f"""
 Evaluate the distractors for the following cloze multiple-choice item.
 
 LEARNER LEVEL: {learner_level}
+
+THEME: {theme}
+
+Theme-sensitive evaluation:
+- If theme is "vocabulary", judge whether the distractors are appropriate lexical distractors.
+- If theme is "grammar", judge whether the distractors appropriately target grammatical confusions.
+- If theme is "morphology", judge whether the distractors appropriately target morphological confusions.
+- If theme is "none", judge them as general-purpose distractors.
 
 IMPORTANT ORIENTATION:
 - Assume the item was designed by a competent CALL researcher.
@@ -1301,7 +1339,7 @@ def browse_exercise_judgements(request, project_id):
         header = [
             "exercise_type", "exercise_set_id", "judge_run_id",
             "judge_type", "judge_id",
-            "learner_level", "item_id",
+            "learner_level", "theme", "item_id",
             "text_with_blank", "correct", "distractors",
             "rating", "summary", "issues"
         ]
@@ -1312,6 +1350,7 @@ def browse_exercise_judgements(request, project_id):
 
             text_with_blank = snap.get("text_with_blank", "")
             learner_level = snap.get("learner_level", "intermediate")
+            theme = snap.get("theme", "none")
             correct = ""
             distractors = []
             for c in (snap.get("choices") or []):
@@ -1331,6 +1370,7 @@ def browse_exercise_judgements(request, project_id):
                     "ai",
                     model_name,
                     learner_level,
+                    theme,
                     row["item_id"],
                     text_with_blank,
                     correct,
@@ -1471,8 +1511,9 @@ def human_judge_exercises(request, project_id):
 
     exercise_set_id = exercise_payload.get("exercise_set_id")
     learner_level = exercise_payload.get("learner_level", "intermediate")
+    theme = exercise_payload.get("theme", "none")
     items = exercise_payload.get("items", [])
-    rubric_text = get_cloze_judging_rubric_text(learner_level)
+    rubric_text = get_cloze_judging_rubric_text(learner_level, theme)
 
     if request.method == "GET":
         return render(
@@ -1483,6 +1524,7 @@ def human_judge_exercises(request, project_id):
                 "exercise_type": exercise_type,
                 "exercise_set_id": exercise_set_id,
                 "learner_level": learner_level,
+                "theme": theme,
                 "items": items,
                 "rubric_text": rubric_text,
             },
@@ -1503,6 +1545,7 @@ def human_judge_exercises(request, project_id):
         "created_at": datetime.now(timezone.utc).isoformat(),
         "user": request.user.username,
         "learner_level": learner_level,
+        "theme": theme,
         "rubric_version": "cloze_judging_v2",
         "items": {}
     }
@@ -1523,6 +1566,7 @@ def human_judge_exercises(request, project_id):
 
         snapshot = {
             "learner_level": "intermediate",
+            "theme": item.get("theme", "none"),
             "text_with_blank": item.get("segment", {}).get("text_with_blank"),
             "context_before": item.get("segment", {}).get("context_before"),
             "context_after": item.get("segment", {}).get("context_after"),
@@ -1635,6 +1679,7 @@ def browse_human_exercise_judgements(request, project_id):
             "judge_type",
             "judge_id",
             "learner_level",
+            "theme",
             "rubric_version",
             "item_id",
             "text_with_blank",
@@ -1652,6 +1697,7 @@ def browse_human_exercise_judgements(request, project_id):
             item_id = row.get("item_id", "")
 
             learner_level = snap.get("learner_level") or ""
+            theme = snap.get("theme") or "none"
             text_with_blank = snap.get("text_with_blank") or ""
 
             # Extract correct + distractors from snapshot choices
