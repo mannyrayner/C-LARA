@@ -31,6 +31,7 @@ from .call_ai_providers import call_model_provider, compute_cost_for_usage
 
 from .utils import (
     user_has_a_project_role,
+    user_has_any_named_project_role,
     make_asynch_callback_and_report_id,
     get_task_updates,
     store_cost_dict,
@@ -1454,7 +1455,7 @@ def save_exercise_human_judgements_dict(clara_project_internal, d, *, user):
     )
 
 @login_required
-@user_has_a_project_role
+@user_has_any_named_project_role(['OWNER', 'ANNOTATOR'])
 def human_judge_exercises(request, project_id):
 
     project = get_object_or_404(CLARAProject, pk=project_id)

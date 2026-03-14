@@ -397,6 +397,7 @@ def send_rating_or_comment_notification_email(request, recipients, content, acti
 
 def public_content_detail(request, content_id):
     content = get_object_or_404(Content, id=content_id)
+    project = content.project
     unlocked_key = f"content_unlocked_{content.id}"
 
     # Handle unlock POST

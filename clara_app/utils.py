@@ -2,7 +2,7 @@
 from django.db import transaction
 from django.db.models import Sum, Max
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
@@ -309,6 +309,54 @@ def user_has_a_project_role(function):
         else:
             raise PermissionDenied
     return wrap
+
+def user_has_any_named_project_role(role_list):
+    """
+    Allow access only if the user is logged in and has one of the named roles
+    for the project. OWNER matches project owner too.
+
+    Behaviour:
+    - anonymous user -> redirect to register with message
+    - logged-in user without role -> redirect to clara_home_page with message
+    """
+
+    def decorator(function):
+        @wraps(function)
+        def wrap(request, *args, **kwargs):
+            project_id = kwargs.get("project_id")
+            if not project_id:
+                raise PermissionDenied
+
+            user = request.user
+
+            if not user.is_authenticated:
+                messages.error(
+                    request,
+                    "You need a C-LARA account to access this page. "
+                    "Please register or sign in first."
+                )
+                return redirect("register")
+
+            if user_has_a_named_project_role(user, project_id, role_list):
+                return function(request, *args, **kwargs)
+
+            pretty_role_names = {
+                "OWNER": "owner",
+                "ANNOTATOR": "annotator",
+                "VIEWER": "viewer",
+            }
+            role_names = ", ".join(pretty_role_names.get(r, r.lower()) for r in role_list)
+
+            messages.error(
+                request,
+                f"You are not currently able to access this page. "
+                f"You need one of these project roles: {role_names}. "
+                f"Contact the project owner and ask for appropriate permissions."
+            )
+            return redirect("clara_home_page")
+
+        return wrap
+    return decorator
 
 # Check whether user has one of a list of named roles in the project. 
 # 'OWNER' matches either the original project owner or another user who has been given the OWNER role.
