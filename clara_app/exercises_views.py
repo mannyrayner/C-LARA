@@ -420,6 +420,196 @@ def full_text_with_highlighted_segment_text(text_obj, page_index, seg_index):
     
     return text.replace("\n", "<br>\n")
 
+def theme_guidance_block(theme: str) -> str:
+    if theme == "vocabulary":
+        return """
+THEME: vocabulary
+
+Theme requirement:
+- The distractors should primarily test vocabulary knowledge.
+- Prefer lexical alternatives: different words, near-meaning confusions, collocationally wrong words,
+  semantically related words, or similar-looking/similar-sounding words.
+- Avoid distractors that are merely different inflected forms of the target, unless no better vocabulary-based option is available.
+- In general, do NOT solve this task by changing only tense, agreement, number, or case.
+"""
+    elif theme == "grammar":
+        return """
+THEME: grammar
+
+Theme requirement:
+- The distractors should primarily test grammar.
+- Prefer grammatical confusions such as:
+  article/determiner choice,
+  pronoun form,
+  agreement,
+  tense/aspect,
+  auxiliary choice,
+  preposition choice,
+  function-word misuse.
+- Inflectional changes are acceptable if they clearly target a grammatical contrast.
+- Do not primarily test lexical knowledge.
+"""
+    elif theme == "morphology":
+        return """
+THEME: morphology
+
+Theme requirement:
+- The distractors should primarily test morphology.
+- Prefer inflectional or derivational confusions:
+  wrong endings,
+  wrong agreement forms,
+  wrong tense/person/number/case forms,
+  or closely related morphological variants.
+- Using the same lemma in the wrong form is often appropriate here.
+- Do not primarily test lexical choice unless it supports a clear morphological contrast.
+"""
+    else:
+        return """
+THEME: none
+
+Theme requirement:
+- Generate good general-purpose distractors.
+- Use the most natural kind of learner error for this target.
+"""
+
+def theme_pos_guidance_block(theme: str) -> str:
+    if theme == "vocabulary":
+        return """
+Grammatical category guidance for vocabulary theme:
+- Distractors will usually have the same POS as the target.
+- Closely related POS changes are acceptable only if they reflect a plausible learner confusion.
+- The main goal is lexical plausibility, not inflectional variation.
+"""
+    elif theme == "grammar":
+        return """
+Grammatical category guidance for grammar theme:
+- Distractors may have the same POS as the target or a closely related grammatical category,
+  if that reflects a plausible grammatical learner error.
+- Examples:
+  pronoun vs determiner,
+  noun phrase determiner substitutions,
+  auxiliary/verb confusions,
+  preposition/function-word substitutions.
+"""
+    elif theme == "morphology":
+        return """
+Grammatical category guidance for morphology theme:
+- Distractors will usually stay within the same grammatical category as the target.
+- Different inflected forms of the same lemma are often appropriate.
+- Closely related categories are acceptable only if the confusion is morphologically plausible.
+"""
+    else:
+        return """
+Grammatical category guidance:
+- Distractors should usually belong to the same grammatical category (POS) as the target.
+- However, a distractor may come from a closely related category if it reflects a typical learner error.
+- The key requirement is that the distractor should plausibly attract a learner’s attention at first glance.
+"""
+
+def theme_error_guidance_block(theme: str, learner_level: str) -> str:
+    advanced_block = """
+For advanced learners:
+- Distractors may involve subtler semantic or pragmatic distinctions,
+  but there must still be only one clearly correct answer.
+"""
+
+    if theme == "vocabulary":
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear lexical reasons:
+  * wrong word choice
+  * wrong collocation
+  * semantically related but contextually wrong words
+  * similar-looking or similar-sounding words
+- Avoid distractors that are wrong only because of morphology or grammar,
+  unless that is unavoidable.
+- Avoid distractors whose incorrectness depends only on subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these vocabulary-type distractors:
+- wrong collocation
+- semantically related but contextually wrong words
+- near-meaning confusions
+- similar-looking or similar-sounding words
+- lexical substitutions a learner might plausibly choose
+"""
+    elif theme == "grammar":
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear grammatical reasons:
+  * agreement
+  * tense/aspect mismatch
+  * article/determiner choice
+  * pronoun form
+  * auxiliary choice
+  * function word misuse
+  * preposition confusion
+- Avoid distractors that are primarily lexical confusions.
+- Avoid distractors whose incorrectness depends only on subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these grammar-type distractors:
+- wrong article/determiner choice
+- agreement errors
+- pronoun reference/form confusion
+- tense/aspect mismatch
+- auxiliary or function-word misuse
+- preposition confusion
+"""
+    elif theme == "morphology":
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear morphological reasons:
+  * wrong inflection
+  * wrong ending
+  * wrong agreement form
+  * wrong person/number/case form
+  * wrong derivational form
+- Avoid distractors that are primarily lexical substitutions.
+- Avoid distractors whose incorrectness depends only on subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these morphology-type distractors:
+- wrong inflected forms
+- wrong endings
+- wrong agreement forms
+- closely related morphological variants
+- derivational confusions
+"""
+    else:
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear linguistic reasons:
+  * morphology
+  * grammar
+  * vocabulary choice
+  * collocation
+  * agreement
+  * function word misuse
+- Avoid distractors that are wrong only because of subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these types of learner-error distractors:
+- wrong collocation
+- wrong article/determiner choice
+- agreement errors
+- pronoun reference confusion
+- tense/aspect mismatch
+- overgeneralized rule application
+- similar-looking or similar-sounding words
+- preposition confusion
+- incorrect but plausible function word swaps
+"""
+
+    avoid = """
+Avoid:
+- true synonyms or paraphrases that a teacher might reasonably accept as correct
+- distractors that make the sentence equally acceptable
+- distractors whose incorrectness depends only on subtle pragmatic interpretation
+  (unless learner level is advanced)
+"""
+
+    return "\n".join([non_advanced, advanced_block, avoid, prefer])
 def build_cloze_distractor_prompt(
     *,
     learner_level,
@@ -439,6 +629,10 @@ def build_cloze_distractor_prompt(
     if segment_text_with_blank:
         blank_block = f"\nSEGMENT_WITH_BLANK:\n{segment_text_with_blank}\n"
 
+    theme_guidance = theme_guidance_block(theme)
+    pos_guidance = theme_pos_guidance_block(theme)
+    error_guidance = theme_error_guidance_block(theme, learner_level)
+
     return f"""
 You are generating distractors for a language-learning cloze multiple-choice question.
 
@@ -453,17 +647,7 @@ Guidance by level:
 - intermediate: allow moderate vocabulary; distractors can be slightly subtler
 - advanced: allow nuanced near-misses; still ensure only one clearly correct answer
 
-THEME: {theme}
-
-Theme guidance:
-- none: generate good general-purpose distractors
-- vocabulary: prioritise lexical confusions, near-meaning confusions, collocation errors, and word-choice distractors
-- grammar: prioritise grammatical confusions such as agreement, tense/aspect, article/determiner choice, pronoun form, or function-word misuse
-- morphology: prioritise inflectional/derivational confusions, wrong endings, wrong forms, or closely related morphological variants
-
-The distractors should, as far as possible, reflect the requested theme.
-If the requested theme is not very natural for this particular target, still generate the best plausible distractors you can,
-but bias them toward the requested theme.
+{theme_guidance}
 
 SEGMENT:
 {segment_text}{blank_block}
@@ -485,64 +669,35 @@ Rules:
 - Each distractor must be a SINGLE TOKEN (no spaces). Keep punctuation only if TARGET is punctuation.
 - Do NOT include the correct answer (surface form) among distractors.
 
-Grammatical category guidance:
-- Distractors should usually belong to the same grammatical category (POS) as the target.
-- However, a distractor may come from a closely related category if it reflects a typical learner error.
-  Examples:
-  * pronoun vs noun
-  * determiner vs pronoun
-  * different verb forms
-  * confusion between similar function words
-- The key requirement is that the distractor should plausibly attract a learner’s attention at first glance.
+{pos_guidance}
 
 Incorrectness requirements:
 - Distractors must be clearly incorrect in this specific context.
 - They should represent mistakes a learner might realistically make.
 
-For beginner, low-intermediate, and intermediate learners:
-- Distractors should normally be incorrect for clear linguistic reasons:
-  * morphology
-  * grammar
-  * vocabulary choice
-  * collocation
-  * agreement
-  * function word misuse
-- Avoid distractors that are wrong only because of subtle pragmatic or discourse considerations.
-
-For advanced learners:
-- Distractors may involve subtler semantic or pragmatic distinctions,
-  but there must still be only one clearly correct answer.
-
-Avoid:
-- true synonyms or paraphrases that a teacher might reasonably accept as correct
-- distractors that make the sentence equally acceptable
-- distractors whose incorrectness depends only on subtle pragmatic interpretation
-  (unless learner level is advanced)
-
-Prefer these types of learner-error distractors:
-- wrong collocation
-- wrong article/determiner choice
-- agreement errors
-- pronoun reference confusion
-- tense/aspect mismatch
-- overgeneralized rule application
-- similar-looking or similar-sounding words
-- preposition confusion
-- incorrect but plausible function word swaps
+{error_guidance}
 
 The sentence should usually remain grammatical,
 but sound wrong, unnatural, or semantically incorrect to a fluent speaker.
 
+THEME CHECK:
+- The reason for each distractor must explicitly explain why the distractor fits the requested theme.
+- If theme = vocabulary, explain the lexical confusion.
+- If theme = grammar, explain the grammatical confusion.
+- If theme = morphology, explain the morphological confusion.
+- If theme = none, explain the general learner-error rationale.
+
 Before returning your answer:
 For each distractor, ask yourself:
-"Would a teacher accept this as correct?"
-If yes, discard it and generate a new one.
+1. Would a teacher accept this as correct?
+2. Does this distractor clearly fit the requested theme?
+If the answer to either question is no, discard it and generate a new one.
 
 Return STRICT JSON in this schema (no extra keys, no prose):
 
 {{
   "distractors": [
-    {{"form": ".", "reason": "short reason"}},
+    {{"form": ".", "reason": "short reason explaining both why it is wrong and why it fits the requested theme"}},
     ...
   ]
 }}
