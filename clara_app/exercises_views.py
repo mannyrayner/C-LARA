@@ -848,6 +848,7 @@ def browse_exercises(request: HttpRequest, project_id: int) -> HttpResponse:
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     exercise_type = request.GET.get("type", "cloze_mcq")
+    selected_set_id = request.GET.get("set_id", "")
     item_index = int(request.GET.get("item", "0"))
     show_answers = request.GET.get("show", "") == "answers"
 
@@ -856,18 +857,44 @@ def browse_exercises(request: HttpRequest, project_id: int) -> HttpResponse:
         messages.error(request, "Unable to find any exercises for this project.")
         return redirect("project_detail", project_id=project_id)
 
-    exercise_data = clara_project_internal.load_exercises(exercise_type)
-
-    if not exercise_data:
+    exercise_type_data = all_exercises.get(exercise_type)
+    if not exercise_type_data:
         messages.error(request, f"No exercises of type '{exercise_type}' found.")
         return redirect("project_detail", project_id=project_id)
-    
+
+    # New format: exercise_type -> {"sets": {...}} ; fallback to old single-set format
+    if isinstance(exercise_type_data, dict) and "sets" in exercise_type_data:
+        sets_dict = exercise_type_data.get("sets", {}) or {}
+    else:
+        # backward compatibility: treat the single payload as one pseudo-set
+        pseudo_id = exercise_type_data.get("exercise_set_id", "default")
+        sets_dict = {pseudo_id: exercise_type_data}
+
+    if not sets_dict:
+        messages.error(request, "No exercise sets available.")
+        return redirect("project_detail", project_id=project_id)
+
+    # newest first by created_at if available
+    def _sort_key(kv):
+        set_id, payload = kv
+        return payload.get("created_at", "")
+
+    sorted_sets = sorted(sets_dict.items(), key=_sort_key, reverse=True)
+
+    if not selected_set_id:
+        selected_set_id = sorted_sets[0][0]
+
+    exercise_data = sets_dict.get(selected_set_id)
+    if not exercise_data:
+        messages.error(request, f"No exercise set '{selected_set_id}' found.")
+        return redirect("browse_exercises", project_id=project_id)
+
     items = exercise_data.get("items", [])
     if not items:
         messages.error(request, "No exercise items available.")
         return redirect("project_detail", project_id=project_id)
 
-    # clamp
+    # clamp item index
     item_index = max(0, min(item_index, len(items) - 1))
     item = items[item_index]
 
@@ -882,13 +909,37 @@ def browse_exercises(request: HttpRequest, project_id: int) -> HttpResponse:
         except StopIteration:
             correct_form = None
 
+    # Build human-readable menu labels
+    exercise_sets = []
+    for set_id, payload in sorted_sets:
+        created_at = payload.get("created_at", "")
+        theme = payload.get("theme", "none")
+        learner_level = payload.get("learner_level", "")
+        n_items = len(payload.get("items", []))
+
+        created_label = created_at[:16].replace("T", " ") if created_at else set_id
+        theme_label = theme if theme else "none"
+
+        label = f"{created_label} — {theme_label} — {n_items} items"
+        if learner_level:
+            label += f" — {learner_level}"
+
+        exercise_sets.append({
+            "set_id": set_id,
+            "label": label,
+        })
+
     return render(
         request,
         "clara_app/browse_exercises.html",
         {
             "project": project,
-            "exercise_types": EXERCISE_TYPES,   # already defined at top :contentReference[oaicite:1]{index=1}
+            "exercise_types": EXERCISE_TYPES,
             "exercise_type": exercise_type,
+
+            "exercise_sets": exercise_sets,
+            "selected_set_id": selected_set_id,
+
             "item_index": item_index,
             "total_items": len(items),
             "item": item,
@@ -896,6 +947,7 @@ def browse_exercises(request: HttpRequest, project_id: int) -> HttpResponse:
             "next_index": next_index,
             "show_answers": show_answers,
             "correct_form": correct_form,
+
             "exercise_meta": {k: v for k, v in exercise_data.items() if k != "items"},
         },
     )
