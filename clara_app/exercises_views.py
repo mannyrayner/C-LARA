@@ -1565,7 +1565,7 @@ def human_judge_exercises(request, project_id):
             rating = ""
 
         snapshot = {
-            "learner_level": "intermediate",
+            "learner_level": learner_level,
             "theme": item.get("theme", "none"),
             "text_with_blank": item.get("segment", {}).get("text_with_blank"),
             "context_before": item.get("segment", {}).get("context_before"),
@@ -1735,6 +1735,7 @@ def browse_human_exercise_judgements(request, project_id):
                     "human",
                     judge_id,
                     run_level,
+                    theme,
                     rubric_version,
                     item_id,
                     text_with_blank,
