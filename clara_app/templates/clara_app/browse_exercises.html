@@ -11,6 +11,15 @@
     {% endfor %}
   </select>
 
+  <label style="margin-left: 1em;">Exercise set:</label>
+  <select name="set_id">
+    {% for s in exercise_sets %}
+      <option value="{{ s.set_id }}" {% if s.set_id == selected_set_id %}selected{% endif %}>
+        {{ s.label }}
+      </option>
+    {% endfor %}
+  </select>
+
   <label style="margin-left: 1em;">
     <input type="checkbox" name="show" value="answers" {% if show_answers %}checked{% endif %}>
     show answers
@@ -23,10 +32,10 @@
 <p>
   Item {{ item_index|add:1 }} / {{ total_items }}
   {% if prev_index is not None %}
-    | <a href="?type={{ exercise_type }}&item={{ prev_index }}{% if show_answers %}&show=answers{% endif %}">Prev</a>
+    <a href="?type={{ exercise_type }}&set_id={{ selected_set_id }}&item={{ prev_index }}{% if show_answers %}&show=answers{% endif %}">Prev</a>
   {% endif %}
   {% if next_index is not None %}
-    | <a href="?type={{ exercise_type }}&item={{ next_index }}{% if show_answers %}&show=answers{% endif %}">Next</a>
+    | <a href="?type={{ exercise_type }}&set_id={{ selected_set_id }}&item={{ next_index }}{% if show_answers %}&show=answers{% endif %}">Next</a>
   {% endif %}
 </p>
 
