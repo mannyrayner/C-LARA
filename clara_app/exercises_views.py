@@ -610,6 +610,7 @@ Avoid:
 """
 
     return "\n".join([non_advanced, advanced_block, avoid, prefer])
+
 def build_cloze_distractor_prompt(
     *,
     learner_level,
@@ -1401,19 +1402,207 @@ Return STRICT JSON ONLY (no markdown, no explanations outside JSON):
 
     return system_prompt, user_prompt
 
+def judging_theme_guidance_block(theme: str) -> str:
+    if theme == "vocabulary":
+        return """
+THEME: vocabulary
+
+Theme-sensitive evaluation:
+- Judge whether the distractors primarily test vocabulary knowledge.
+- Good vocabulary distractors are usually lexical alternatives:
+  different words, near-meaning confusions, collocationally wrong words,
+  semantically related words, or similar-looking/similar-sounding words.
+- Mere inflectional variants of the target are usually weak vocabulary distractors,
+  unless no better lexical option is available.
+- Do not reward the item for mainly testing grammar or morphology when the requested theme is vocabulary.
+"""
+    elif theme == "grammar":
+        return """
+THEME: grammar
+
+Theme-sensitive evaluation:
+- Judge whether the distractors primarily test grammar.
+- Good grammar distractors typically involve grammatical confusions such as:
+  article/determiner choice,
+  pronoun form,
+  agreement,
+  tense/aspect,
+  auxiliary choice,
+  preposition choice,
+  or function-word misuse.
+- Inflectional changes are appropriate only if they clearly realise a grammatical contrast.
+- Do not reward the item for mainly testing vocabulary knowledge when the requested theme is grammar.
+"""
+    elif theme == "morphology":
+        return """
+THEME: morphology
+
+Theme-sensitive evaluation:
+- Judge whether the distractors primarily test morphology.
+- Good morphology distractors typically involve:
+  wrong endings,
+  wrong agreement forms,
+  wrong tense/person/number/case forms,
+  derivational confusions,
+  or closely related morphological variants.
+- Different inflected forms of the same lemma are often appropriate here.
+- Do not reward the item for mainly testing vocabulary choice when the requested theme is morphology.
+"""
+    else:
+        return """
+THEME: none
+
+Theme-sensitive evaluation:
+- Judge the distractors as general-purpose learner distractors.
+- Use the most natural pedagogical criterion for this target and context.
+"""
+
+def judging_theme_pos_guidance_block(theme: str) -> str:
+    if theme == "vocabulary":
+        return """
+Grammatical-category guidance for vocabulary theme:
+- Distractors will usually have the same POS as the target.
+- Closely related POS changes are acceptable only if they reflect a plausible learner lexical confusion.
+- The main question is lexical plausibility, not inflectional variation.
+"""
+    elif theme == "grammar":
+        return """
+Grammatical-category guidance for grammar theme:
+- Distractors may have the same POS as the target or a closely related grammatical category,
+  if that reflects a plausible grammatical learner error.
+- Examples:
+  pronoun vs determiner,
+  auxiliary/verb confusions,
+  preposition/function-word substitutions,
+  noun-phrase determiner substitutions.
+"""
+    elif theme == "morphology":
+        return """
+Grammatical-category guidance for morphology theme:
+- Distractors will usually stay within the same grammatical category as the target.
+- Different inflected forms of the same lemma are often appropriate.
+- Closely related categories are acceptable only if the confusion is morphologically plausible.
+"""
+    else:
+        return """
+General grammatical-category guidance:
+- Distractors should usually belong to the same grammatical category as the target,
+  or to a closely related category if that reflects a plausible learner confusion.
+- The key requirement is that the distractor should plausibly attract a learner’s attention at first glance.
+"""
+
+def judging_theme_error_guidance_block(theme: str, learner_level: str) -> str:
+    advanced_block = """
+For advanced learners:
+- It is acceptable for distractors to involve subtler semantic or pragmatic distinctions,
+  but there must still be only one clearly correct answer.
+"""
+
+    if theme == "vocabulary":
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear lexical reasons:
+  * wrong word choice
+  * wrong collocation
+  * semantically related but contextually wrong words
+  * similar-looking or similar-sounding words
+- Distractors that are mainly wrong because of morphology or grammar are weaker here,
+  unless that is unavoidable for this target.
+- Avoid rewarding distractors whose incorrectness depends mainly on subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these vocabulary-oriented properties:
+- lexical substitution rather than mere inflectional variation
+- lexical confusions a learner might plausibly make
+- word-choice mistakes that remain pedagogically clear
+"""
+    elif theme == "grammar":
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear grammatical reasons:
+  * agreement
+  * tense/aspect mismatch
+  * article/determiner choice
+  * pronoun form
+  * auxiliary choice
+  * function-word misuse
+  * preposition confusion
+- Distractors that are mainly lexical substitutions are weaker here.
+- Avoid rewarding distractors whose incorrectness depends mainly on subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these grammar-oriented properties:
+- article/determiner errors
+- agreement errors
+- pronoun-form confusions
+- tense/aspect mistakes
+- auxiliary and function-word misuse
+- preposition confusion
+"""
+    elif theme == "morphology":
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear morphological reasons:
+  * wrong inflection
+  * wrong ending
+  * wrong agreement form
+  * wrong person/number/case form
+  * wrong derivational form
+- Distractors that are mainly lexical substitutions are weaker here.
+- Avoid rewarding distractors whose incorrectness depends mainly on subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these morphology-oriented properties:
+- wrong inflected forms
+- wrong endings
+- wrong agreement forms
+- closely related morphological variants
+- derivational confusions
+"""
+    else:
+        non_advanced = """
+For beginner, low-intermediate, and intermediate learners:
+- Distractors should normally be incorrect for clear linguistic reasons:
+  * morphology
+  * grammar
+  * vocabulary choice
+  * collocation
+  * agreement
+  * function-word misuse
+- Avoid rewarding distractors whose incorrectness depends mainly on subtle pragmatic or discourse considerations.
+"""
+        prefer = """
+Prefer these general learner-error properties:
+- wrong collocation
+- wrong article/determiner choice
+- agreement errors
+- pronoun-form confusion
+- tense/aspect mismatch
+- overgeneralised rule application
+- similar-looking or similar-sounding words
+- preposition confusion
+- incorrect but plausible function-word swaps
+"""
+
+    avoid = """
+Avoid rewarding distractors that:
+- a teacher might reasonably accept as correct
+- make the sentence equally acceptable
+- fit the wrong theme better than the requested theme
+- depend mainly on subtle pragmatic interpretation (unless learner level is advanced)
+"""
+
+    return "\n".join([non_advanced, advanced_block, avoid, prefer])
+
 def get_cloze_judging_rubric_text(learner_level: str, theme: str) -> str:
+    theme_guidance = judging_theme_guidance_block(theme)
+    pos_guidance = judging_theme_pos_guidance_block(theme)
+    error_guidance = judging_theme_error_guidance_block(theme, learner_level)
+
     return f"""
 Evaluate the distractors for the following cloze multiple-choice item.
 
 LEARNER LEVEL: {learner_level}
-
-THEME: {theme}
-
-Theme-sensitive evaluation:
-- If theme is "vocabulary", judge whether the distractors are appropriate lexical distractors.
-- If theme is "grammar", judge whether the distractors appropriately target grammatical confusions.
-- If theme is "morphology", judge whether the distractors appropriately target morphological confusions.
-- If theme is "none", judge them as general-purpose distractors.
 
 IMPORTANT ORIENTATION:
 - Assume the item was designed by a competent CALL researcher.
@@ -1421,30 +1610,34 @@ IMPORTANT ORIENTATION:
 - Judge the item as a teacher would judge it.
 - Do not nitpick minor stylistic issues.
 
+{theme_guidance}
+
 General criteria:
 1. Each distractor should be a single token.
-2. Distractors should usually belong to the same grammatical category as the target, or to a closely related category,
-   or otherwise be forms that could plausibly attract a learner at first glance.
-3. The provided "reason" explains the intended pedagogical function of the distractor.
+2. The provided "reason" explains the intended pedagogical function of the distractor.
    Judge whether the distractor successfully fulfills that intended function.
-4. Distractors should be plausible enough to tempt a learner, but still be incorrect in the context.
-5. For beginner, low-intermediate, and intermediate learners, distractors should normally be incorrect for clear linguistic reasons
-   (morphology, vocabulary, grammar, collocation, or simple meaning),
-   not mainly for subtle pragmatic or discourse-level reasons.
-6. Only for advanced learners is it appropriate to rely more heavily on subtle semantic or pragmatic distinctions.
+3. Distractors should be plausible enough to tempt a learner, but still be clearly incorrect in the context.
+4. The distractor set should reflect the requested theme strongly and coherently, not just incidentally.
+
+{pos_guidance}
+
+{error_guidance}
 
 Use the following 5-point rating scale:
 
 1 = very poor
-    Distractors are clearly unsuitable for teaching purposes.
+    The distractors are clearly unsuitable for teaching purposes and/or fail badly to realise the requested theme.
 2 = rather poor
-    Distractors have substantial weaknesses.
+    The distractors have substantial weaknesses and realise the requested theme only weakly or inconsistently.
 3 = acceptable
-    Distractors are usable, though not especially good.
+    The distractors are usable and broadly fit the requested theme, though not especially well.
 4 = good
-    Distractors work well for the intended purpose.
+    The distractors work well for the intended purpose and fit the requested theme clearly.
 5 = very good
-    Distractors are very well designed for the intended purpose.
+    The distractors are very well designed for the intended purpose and fit the requested theme strongly and consistently.
+
+When deciding the rating, take the requested theme seriously.
+A distractor set that is good in general but does not really satisfy the requested theme should not receive a very high rating.
 """.strip()
 
 def load_exercise_judgements_dict(clara_project_internal):
