@@ -1,7 +1,7 @@
 {% extends "clara_app/base.html" %}
 
 {% block content %}
-  <h2>AI panel judging for "{{ project.title }} ){{exercise_type}}"</h2>
+  <h2>AI panel judging for "{{ project.title }}" ({{ exercise_type }})</h2>
 
   {% if not exercise_items %}
     <p><em>No exercises to evaluate.</em></p>
@@ -11,7 +11,19 @@
 
 <form method="post" action="">
   {% csrf_token %}
+  <input type="hidden" name="type" value="{{ exercise_type }}">
   <input type="hidden" name="exercise_set_id" value="{{ selected_set_id }}">
+
+  <div style="margin-bottom: 1em;">
+    <label><strong>Exercise set:</strong></label>
+    <select onchange="window.location='?type={{ exercise_type }}&set_id=' + this.value;">
+      {% for s in exercise_sets %}
+        <option value="{{ s.set_id }}" {% if s.set_id == selected_set_id %}selected{% endif %}>
+          {{ s.label }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
 
   <h3>Select exercise items</h3>
 
@@ -40,16 +52,14 @@
   </div>
 
   <div style="max-height: 220px; overflow-y: auto; border: 1px solid #ddd; padding: 0.5em;">
-	{% for m in available_models %}
-	  <div>
-		<label>
-		  <input type="checkbox"
-				 name="judge_models"
-				 value="{{ m.value }}">
-		  {{ m.label }}
-		</label>
-	  </div>
-	{% endfor %}
+    {% for m in available_models %}
+      <div>
+        <label>
+          <input type="checkbox" name="judge_models" value="{{ m.value }}">
+          {{ m.label }}
+        </label>
+      </div>
+    {% endfor %}
   </div>
 
   <div style="margin-top: 1em;">
@@ -59,15 +69,15 @@
 
 {% endif %}
 
-    <p style="margin-top: 1em;">
-      <a href="{% url 'project_detail' project.id %}">Back to project</a>
-    </p>
+  <p style="margin-top: 1em;">
+    <a href="{% url 'project_detail' project.id %}">Back to project</a>
+  </p>
 
-    <script>
-      function toggleAll(fieldName, checked) {
-        const boxes = document.querySelectorAll('input[name="' + fieldName + '"]');
-        boxes.forEach(b => b.checked = checked);
-      }
-    </script>
+  <script>
+    function toggleAll(fieldName, checked) {
+      const boxes = document.querySelectorAll('input[name="' + fieldName + '"]');
+      boxes.forEach(b => b.checked = checked);
+    }
+  </script>
 
 {% endblock %}
