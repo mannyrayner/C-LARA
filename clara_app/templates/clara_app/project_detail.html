@@ -212,6 +212,10 @@
 	  {% if not human_exercise_judgements_exist %}class="disabled-link"{% endif %}>
 	  Browse exercise judgements produced by humans
 	  </a></p>
+	<p><a href="{% url 'maintain_exercise_files' project.id %}"
+	  data-tooltip="Admin view of exercises: get information and possibly delete files.">
+	  Admin access to exercises
+	  </a></p>
 	{% if can_picture_gloss %}
 	  <p><a href="{% url 'perform_picture_glossing' project.id %}"
 			data-tooltip="Create exercises for project."

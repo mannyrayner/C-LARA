@@ -1,0 +1,63 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+  <h2>Exercise file maintenance for "{{ project.title }}"</h2>
+
+  <p>
+    This page shows the current status of exercise-related files for the project and allows you to reset them.
+  </p>
+
+  <table style="border-collapse: collapse; width: 100%; margin-top: 1em;">
+    <thead>
+      <tr>
+        <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.4em;">File</th>
+        <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.4em;">Exists</th>
+        <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.4em;">Size</th>
+        <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.4em;">Parses</th>
+        <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.4em;">Non-trivial</th>
+        <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.4em;">Summary</th>
+        <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.4em;">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in file_infos %}
+        <tr>
+          <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.4em;">
+            <strong>{{ f.label }}</strong><br>
+            <small style="color:#666;">{{ f.key }}</small><br>
+            <small style="color:#999;">{{ f.path }}</small>
+          </td>
+          <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.4em;">
+            {% if f.exists %}yes{% else %}no{% endif %}
+          </td>
+          <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.4em;">
+            {{ f.size_bytes }} bytes
+          </td>
+          <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.4em;">
+            {% if f.parses %}yes{% else %}no{% endif %}
+          </td>
+          <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.4em;">
+            {% if f.non_trivial %}yes{% else %}no{% endif %}
+          </td>
+          <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.4em;">
+            {{ f.summary }}
+          </td>
+          <td style="vertical-align:top; border-bottom:1px solid #eee; padding:0.4em;">
+            <form method="post" style="margin:0;">
+              {% csrf_token %}
+              <input type="hidden" name="file_key" value="{{ f.key }}">
+              <input type="hidden" name="action" value="clear">
+              <button type="submit" onclick="return confirm('Really reset {{ f.label|escapejs }}?');">
+                Reset
+              </button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="margin-top: 1em;">
+    <a href="{% url 'project_detail' project.id %}">Back to project</a>
+  </p>
+{% endblock %}
