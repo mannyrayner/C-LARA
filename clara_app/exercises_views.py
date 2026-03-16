@@ -1733,10 +1733,30 @@ def browse_exercise_judgements(request, project_id):
 
     # ---------- available selectors ----------
     exercise_types = sorted(jud.keys())
-
     selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
+    
+##    sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
+##    exercise_set_ids = sorted(sets_dict.keys())
+##
+##    selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
+##    runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
+##    run_ids = sorted(runs_dict.keys(), reverse=True)
+
     sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
-    exercise_set_ids = sorted(sets_dict.keys())
+
+    def _set_created_at(set_id):
+        runs_for_set = sets_dict.get(set_id, {}) or {}
+        if not runs_for_set:
+            return ""
+        first_run_id = sorted(runs_for_set.keys(), reverse=True)[0]
+        first_run = runs_for_set.get(first_run_id, {}) or {}
+        return first_run.get("created_at", "")
+
+    exercise_set_ids = sorted(
+        sets_dict.keys(),
+        key=lambda sid: _set_created_at(sid),
+        reverse=True
+    )
 
     selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
     runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
