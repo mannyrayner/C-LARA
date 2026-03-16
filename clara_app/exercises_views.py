@@ -1694,7 +1694,6 @@ def _json_from_model_output(text: str) -> dict:
     return {}
 
 # Viewing panel of AI judges results
-# Viewing panel of AI judges results
 @login_required
 def browse_exercise_judgements(request, project_id):
     """
@@ -1726,7 +1725,16 @@ def browse_exercise_judgements(request, project_id):
     run_payload = runs_dict.get(selected_run_id, {}) if selected_run_id else {}
     items = (run_payload.get("items") or {}) if isinstance(run_payload, dict) else {}
 
-    judged_rows = []
+    if not exercise_types:
+        messages.info(request, "No AI-panel judgements found yet for this project.")
+        return render(
+            request,
+            "clara_app/browse_exercise_judgements.html",
+            {
+                "project": project,
+                "exercise_types": [],
+            },
+        )
 
     def _norm_rating(v):
         if isinstance(v, int) and v in (1, 2, 3, 4, 5):
@@ -1740,6 +1748,63 @@ def browse_exercise_judgements(request, project_id):
                 pass
         return "unparsed"
 
+    # ---------- build human-readable exercise-set labels ----------
+    exercise_set_options = []
+    for set_id in exercise_set_ids:
+        runs_for_set = sets_dict.get(set_id, {}) or {}
+
+        # Try to recover set metadata from one of the runs' snapshots
+        created_at = ""
+        theme = "none"
+        learner_level = "intermediate"
+        n_items = 0
+
+        if runs_for_set:
+            first_run_id = sorted(runs_for_set.keys(), reverse=True)[0]
+            first_run = runs_for_set.get(first_run_id, {}) or {}
+            created_at = first_run.get("created_at", "")
+
+            first_items = first_run.get("items", {}) or {}
+            n_items = len(first_items)
+
+            if first_items:
+                first_item_payload = next(iter(first_items.values()))
+                first_snapshot = first_item_payload.get("item_snapshot", {}) if isinstance(first_item_payload, dict) else {}
+                theme = first_snapshot.get("theme", "none")
+                learner_level = first_snapshot.get("learner_level", "intermediate")
+
+        created_label = created_at[:16].replace("T", " ") if created_at else set_id
+        theme_label = "No theme" if theme == "none" else theme
+
+        label = f"{created_label} — {theme_label} — {n_items} items"
+        if learner_level:
+            label += f" — {learner_level}"
+
+        exercise_set_options.append({
+            "value": set_id,
+            "label": label,
+        })
+
+    # ---------- build human-readable judging-run labels ----------
+    judge_run_options = []
+    for rid in run_ids:
+        payload = runs_dict.get(rid, {}) or {}
+        created_at = payload.get("created_at", "")
+        models = payload.get("models", []) or []
+
+        created_label = created_at[:16].replace("T", " ") if created_at else rid
+        if models:
+            label = f"{created_label} — {len(models)} models"
+        else:
+            label = created_label
+
+        judge_run_options.append({
+            "value": rid,
+            "label": label,
+        })
+
+    # ---------- build judged rows ----------
+    judged_rows = []
     for item_id in items:
         item_payload = items[item_id]
         snapshot = item_payload.get("item_snapshot", {}) if isinstance(item_payload, dict) else {}
@@ -1767,17 +1832,6 @@ def browse_exercise_judgements(request, project_id):
         })
 
     judged_rows.sort(key=lambda r: r["item_id"])
-
-    if not exercise_types:
-        messages.info(request, "No AI-panel judgements found yet for this project.")
-        return render(
-            request,
-            "clara_app/browse_exercise_judgements.html",
-            {
-                "project": project,
-                "exercise_types": [],
-            },
-        )
 
     if request.GET.get("format") == "csv":
         header = [
@@ -1831,10 +1885,15 @@ def browse_exercise_judgements(request, project_id):
         "project": project,
         "exercise_types": exercise_types,
         "selected_exercise_type": selected_exercise_type,
+
         "exercise_set_ids": exercise_set_ids,
         "selected_exercise_set_id": selected_exercise_set_id,
+        "exercise_set_options": exercise_set_options,
+
         "run_ids": run_ids,
         "selected_run_id": selected_run_id,
+        "judge_run_options": judge_run_options,
+
         "run_payload": run_payload,
         "judged_items": items,
         "judged_rows": judged_rows,
