@@ -21,20 +21,24 @@
   &nbsp;&nbsp;
 
   <label><strong>Exercise set</strong></label>
-  <select name="exercise_set_id" onchange="this.form.submit()">
-    {% for sid in exercise_set_ids %}
-      <option value="{{ sid }}" {% if sid == selected_exercise_set_id %}selected{% endif %}>{{ sid }}</option>
-    {% endfor %}
-  </select>
+	 <select name="exercise_set_id" onchange="this.form.submit()">
+	  {% for s in exercise_set_options %}
+		<option value="{{ s.value }}" {% if s.value == selected_exercise_set_id %}selected{% endif %}>
+		  {{ s.label }}
+		</option>
+	  {% endfor %}
+	</select>
 
   &nbsp;&nbsp;
 
   <label><strong>Judging run</strong></label>
-  <select name="judge_run_id" onchange="this.form.submit()">
-    {% for rid in run_ids %}
-      <option value="{{ rid }}" {% if rid == selected_run_id %}selected{% endif %}>{{ rid }}</option>
-    {% endfor %}
-  </select>
+	<select name="judge_run_id" onchange="this.form.submit()">
+	  {% for r in judge_run_options %}
+		<option value="{{ r.value }}" {% if r.value == selected_run_id %}selected{% endif %}>
+		  {{ r.label }}
+		</option>
+	  {% endfor %}
+</select>
 
   {# preserve selection when changing a later dropdown #}
   <input type="hidden" name="exercise_type" value="{{ selected_exercise_type }}">
