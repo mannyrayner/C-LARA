@@ -266,6 +266,7 @@ urlpatterns = [
     path('project/<int:project_id>/browse_exercise_judgements/', exercises_views.browse_exercise_judgements, name='browse_exercise_judgements'),
     path('project/<int:project_id>/human_judge_exercises/', exercises_views.human_judge_exercises, name='human_judge_exercises'),
     path('project/<int:project_id>/browse_human_exercise_judgements/', exercises_views.browse_human_exercise_judgements, name='browse_human_exercise_judgements'),
+    path('project/<int:project_id>/maintain_exercise_files/', exercises_views.maintain_exercise_files, name="maintain_exercise_files"),
          
     # Saving page texts in pages and images view
     path('project/<int:project_id>/save_page_texts_multiple_status/<str:report_id>/', save_page_texts_multiple_views.save_page_texts_multiple_status, name='save_page_texts_multiple_status'),

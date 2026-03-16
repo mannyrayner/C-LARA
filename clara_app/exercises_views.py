@@ -1123,10 +1123,32 @@ def create_and_save_ai_panel_judgements(
     selected_models: list[str],
     callback=None,
 ):
-    # Load the exercise set
-    exercises_payload = clara_project_internal.load_exercises(exercise_type)
-    if not exercises_payload:
+    # Load the requested exercise set, not just the latest set for the type
+    all_exercises = clara_project_internal.load_all_exercises()
+    if not all_exercises:
         post_task_update(callback, f"Error: no exercises found for type '{exercise_type}'")
+        post_task_update(callback, "error")
+        return
+
+    exercise_type_data = all_exercises.get(exercise_type)
+    if not exercise_type_data:
+        post_task_update(callback, f"Error: no exercises found for type '{exercise_type}'")
+        post_task_update(callback, "error")
+        return
+
+    # New format: exercise_type -> {"sets": {...}} ; fallback to old single-set format
+    if isinstance(exercise_type_data, dict) and "sets" in exercise_type_data:
+        sets_dict = exercise_type_data.get("sets", {}) or {}
+    else:
+        pseudo_id = exercise_type_data.get("exercise_set_id", "default")
+        sets_dict = {pseudo_id: exercise_type_data}
+
+    exercises_payload = sets_dict.get(exercise_set_id)
+    if not exercises_payload:
+        post_task_update(
+            callback,
+            f"Error: no exercise set '{exercise_set_id}' found for type '{exercise_type}'"
+        )
         post_task_update(callback, "error")
         return
 
@@ -1146,11 +1168,9 @@ def create_and_save_ai_panel_judgements(
     post_task_update(callback, f"Items: {len(target_items)}; Models: {len(selected_models)}")
 
     # ---- Fan-out/fan-in ----
-    # Build cfg map from what the UI offered (so values match)
     available_models = get_available_judge_models()
     model_cfg_by_name = {m["value"]: m["cfg"] for m in available_models}
 
-    # Fan-out/fan-in
     post_task_update(callback, "Submitting judging calls...")
     run_results, cost_dict = asyncio.run(
         process_ai_panel_judging_targets(
@@ -1197,9 +1217,6 @@ def create_and_save_ai_panel_judgements(
     }
 
     save_exercise_judgements_dict(clara_project_internal, d, user=project.user.username)
-
-    # Optional: also store cost via your existing store_cost_dict() if you want it in the main cost logs
-    # store_cost_dict(cost_dict, project, project.user)
 
     post_task_update(callback, "Finished judging.")
     post_task_update(callback, "finished")
@@ -1298,9 +1315,9 @@ async def _judge_one_item_with_one_model(
             user_prompt,
             timeout
         )
-        await post_task_update_async(callback, f"AI judging call succeeded {model} for '{text_with_blank}'")
+        await post_task_update_async(callback, f"AI judging call succeeded ({model}) for '{text_with_blank}'")
     except Exception as e:
-        await post_task_update_async(callback, f"AI judging call failed {model} for '{text_with_blank}': {e}")
+        await post_task_update_async(callback, f"AI judging call failed ({model}) for '{text_with_blank}': {e}")
         resule = {
             "raw_text": "",
             "parsed": "",
@@ -2423,4 +2440,222 @@ def _as_csv_response(filename: str, header: list[str], rows: list[list[str]]):
     w.writerow(header)
     w.writerows(rows)
     return resp
+
+# Admin view
+
+@login_required
+@user_has_any_named_project_role(['OWNER'])
+def maintain_exercise_files(request: HttpRequest, project_id: int) -> HttpResponse:
+    """
+    Maintenance/debugging view for exercise-related project files.
+    Shows whether the files exist, whether they parse, and allows resetting them.
+    """
+
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    file_specs = [
+        {
+            "key": "exercises",
+            "label": "Exercises",
+            "empty_value": {},
+        },
+        {
+            "key": "exercise_judgements",
+            "label": "AI-panel judgements",
+            "empty_value": {
+                "schema_version": "1.0",
+                "judgements": {}
+            },
+        },
+        {
+            "key": "exercise_human_judgements",
+            "label": "Human judgements",
+            "empty_value": {
+                "schema_version": "1.0",
+                "human_judgements": {}
+            },
+        },
+    ]
+
+    if request.method == "POST":
+        file_key = request.POST.get("file_key")
+        action = request.POST.get("action")
+
+        spec = next((s for s in file_specs if s["key"] == file_key), None)
+        if not spec:
+            messages.error(request, "Unknown file type.")
+            return redirect("maintain_exercise_files", project_id=project_id)
+
+        if action == "clear":
+            text = json.dumps(spec["empty_value"], indent=2, ensure_ascii=False) + "\n"
+            clara_project_internal.save_text_version(
+                file_key,
+                text,
+                source="human_revised",
+                user=request.user.username,
+                label="reset_by_maintenance_view",
+            )
+            messages.info(request, f"Reset {spec['label']} file.")
+            return redirect("maintain_exercise_files", project_id=project_id)
+
+        messages.error(request, "Unknown action.")
+        return redirect("maintain_exercise_files", project_id=project_id)
+
+    file_infos = []
+    for spec in file_specs:
+        key = spec["key"]
+        label = spec["label"]
+
+        file_path = Path(clara_project_internal._file_path_for_version(key))
+        exists = file_path.exists()
+
+        raw_text = clara_project_internal.load_text_version_or_null(key)
+        size_bytes = len(raw_text.encode("utf-8")) if raw_text else 0
+
+        parses = False
+        non_trivial = False
+        summary = ""
+        parsed = None
+
+        if raw_text:
+            try:
+                parsed = json.loads(raw_text)
+                parses = True
+                non_trivial = _is_non_trivial_exercise_data(key, parsed)
+                summary = _summarise_exercise_data(key, parsed)
+            except Exception as e:
+                summary = f"JSON parse error: {e}"
+
+        file_infos.append({
+            "key": key,
+            "label": label,
+            "exists": exists,
+            "path": str(file_path),
+            "size_bytes": size_bytes,
+            "parses": parses,
+            "non_trivial": non_trivial,
+            "summary": summary,
+        })
+
+    return render(
+        request,
+        "clara_app/maintain_exercise_files.html",
+        {
+            "project": project,
+            "file_infos": file_infos,
+        },
+    )
+
+
+def _is_non_trivial_exercise_data(file_key: str, parsed) -> bool:
+    """
+    Heuristic: does the parsed JSON appear to contain meaningful content?
+    """
+    if not parsed:
+        return False
+
+    if file_key == "exercises":
+        if not isinstance(parsed, dict):
+            return False
+        for exercise_type, payload in parsed.items():
+            if not payload:
+                continue
+            if isinstance(payload, dict):
+                if "sets" in payload and isinstance(payload["sets"], dict) and payload["sets"]:
+                    return True
+                if "items" in payload and isinstance(payload["items"], list) and payload["items"]:
+                    return True
+        return False
+
+    if file_key == "exercise_judgements":
+        jud = parsed.get("judgements", {}) if isinstance(parsed, dict) else {}
+        return bool(jud)
+
+    if file_key == "exercise_human_judgements":
+        jud = parsed.get("human_judgements", {}) if isinstance(parsed, dict) else {}
+        return bool(jud)
+
+    return False
+
+
+def _summarise_exercise_data(file_key: str, parsed) -> str:
+    """
+    Short human-readable summary of the parsed content.
+    """
+    try:
+        if file_key == "exercises":
+            if not isinstance(parsed, dict):
+                return "Not a JSON object."
+
+            n_types = len(parsed)
+            n_sets = 0
+            n_items = 0
+
+            for exercise_type, payload in parsed.items():
+                if not isinstance(payload, dict):
+                    continue
+                if "sets" in payload and isinstance(payload["sets"], dict):
+                    n_sets += len(payload["sets"])
+                    for set_payload in payload["sets"].values():
+                        if isinstance(set_payload, dict):
+                            n_items += len(set_payload.get("items", []))
+                elif "items" in payload and isinstance(payload["items"], list):
+                    n_sets += 1
+                    n_items += len(payload["items"])
+
+            return f"{n_types} exercise type(s), {n_sets} set(s), {n_items} item(s)"
+
+        if file_key == "exercise_judgements":
+            if not isinstance(parsed, dict):
+                return "Not a JSON object."
+
+            jud = parsed.get("judgements", {})
+            n_types = len(jud)
+            n_sets = 0
+            n_runs = 0
+            n_items = 0
+
+            for exercise_type, sets_dict in jud.items():
+                if not isinstance(sets_dict, dict):
+                    continue
+                n_sets += len(sets_dict)
+                for set_id, runs_dict in sets_dict.items():
+                    if not isinstance(runs_dict, dict):
+                        continue
+                    n_runs += len(runs_dict)
+                    for run_payload in runs_dict.values():
+                        if isinstance(run_payload, dict):
+                            n_items += len((run_payload.get("items") or {}))
+
+            return f"{n_types} exercise type(s), {n_sets} set(s), {n_runs} AI judging run(s), {n_items} judged item entries"
+
+        if file_key == "exercise_human_judgements":
+            if not isinstance(parsed, dict):
+                return "Not a JSON object."
+
+            jud = parsed.get("human_judgements", {})
+            n_types = len(jud)
+            n_sets = 0
+            n_runs = 0
+            n_items = 0
+
+            for exercise_type, sets_dict in jud.items():
+                if not isinstance(sets_dict, dict):
+                    continue
+                n_sets += len(sets_dict)
+                for set_id, runs_dict in sets_dict.items():
+                    if not isinstance(runs_dict, dict):
+                        continue
+                    n_runs += len(runs_dict)
+                    for run_payload in runs_dict.values():
+                        if isinstance(run_payload, dict):
+                            n_items += len((run_payload.get("items") or {}))
+
+            return f"{n_types} exercise type(s), {n_sets} set(s), {n_runs} human judging run(s), {n_items} judged item entries"
+
+    except Exception as e:
+        return f"Summary error: {e}"
+
+    return "No summary available."
 
