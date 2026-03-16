@@ -10,14 +10,14 @@
     {% endfor %}
   </select>
 
-  <label>Exercise set:</label>
-  <select name="exercise_set_id">
-    {% for sid in exercise_set_ids %}
-      <option value="{{ sid }}" {% if sid == selected_exercise_set_id %}selected{% endif %}>
-        {{ sid }}
-      </option>
-    {% endfor %}
-  </select>
+	<label>Exercise set:</label>
+	<select name="exercise_set_id">
+	  {% for s in exercise_set_options %}
+		<option value="{{ s.value }}" {% if s.value == selected_exercise_set_id %}selected{% endif %}>
+		  {{ s.label }}
+		</option>
+	  {% endfor %}
+	</select>
 
 <div style="margin: 0.75em 0;">
   <strong>Included judgement runs:</strong>
