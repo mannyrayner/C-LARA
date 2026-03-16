@@ -776,31 +776,53 @@ def run_exercises(request, project_id):
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
-    exercise_type = request.GET.get("type", "cloze_mcq")
-    item_index = int(request.GET.get("item", "0"))
+    exercise_type = request.GET.get("type") or request.POST.get("type") or "cloze_mcq"
+    selected_set_id = request.GET.get("set_id") or request.POST.get("set_id") or ""
+    item_index = int(request.GET.get("item", request.POST.get("item", "0")))
 
-    all_exercises = clara_project_internal.load_exercises(exercise_type)
+    all_exercises = clara_project_internal.load_all_exercises()
     if not all_exercises:
-        messages.error(request, f"Unable to find any exercises for this project.")
+        messages.error(request, "Unable to find any exercises for this project.")
         return redirect("project_detail", project_id=project_id)
 
-    exercise_data = clara_project_internal.load_exercises(exercise_type)
-
-    if not exercise_data:
+    exercise_type_data = all_exercises.get(exercise_type)
+    if not exercise_type_data:
         messages.error(request, f"No exercises of type '{exercise_type}' found.")
+        return redirect("project_detail", project_id=project_id)
+
+    # New format: exercise_type -> {"sets": {...}} ; fallback to old single-set format
+    if isinstance(exercise_type_data, dict) and "sets" in exercise_type_data:
+        sets_dict = exercise_type_data.get("sets", {}) or {}
+    else:
+        pseudo_id = exercise_type_data.get("exercise_set_id", "default")
+        sets_dict = {pseudo_id: exercise_type_data}
+
+    if not sets_dict:
+        messages.error(request, "No exercise sets available.")
+        return redirect("project_detail", project_id=project_id)
+
+    # newest first by created_at if available
+    def _sort_key(kv):
+        set_id, payload = kv
+        return payload.get("created_at", "")
+
+    sorted_sets = sorted(sets_dict.items(), key=_sort_key, reverse=True)
+
+    if not selected_set_id:
+        selected_set_id = sorted_sets[0][0]
+
+    exercise_data = sets_dict.get(selected_set_id)
+    if not exercise_data:
+        messages.error(request, f"No exercise set '{selected_set_id}' found.")
+        return redirect("project_detail", project_id=project_id)
 
     items = exercise_data.get("items", [])
-
     if not items:
         messages.error(request, "No exercise items available.")
         return redirect("project_detail", project_id=project_id)
 
     # clamp index
-    if item_index < 0:
-        item_index = 0
-    if item_index >= len(items):
-        item_index = len(items) - 1
-
+    item_index = max(0, min(item_index, len(items) - 1))
     item = items[item_index]
 
     feedback = None
@@ -817,16 +839,36 @@ def run_exercises(request, project_id):
                 "reason": correct_choice.get("reason", "")
             }
         else:
-            wrong = next(c for c in item["choices"] if c["form"] == selected)
+            wrong = next((c for c in item["choices"] if c["form"] == selected), None)
             feedback = {
                 "correct": False,
                 "message": "Incorrect.",
-                "reason": wrong.get("reason", ""),
+                "reason": wrong.get("reason", "") if wrong else "",
                 "correct_form": correct_choice["form"],
                 "correct_reason": correct_choice.get("reason", "")
             }
 
     next_index = item_index + 1 if item_index + 1 < len(items) else None
+
+    # human-readable set labels
+    exercise_sets = []
+    for set_id, payload in sorted_sets:
+        created_at = payload.get("created_at", "")
+        theme = payload.get("theme", "none")
+        learner_level = payload.get("learner_level", "")
+        n_items = len(payload.get("items", []))
+
+        created_label = created_at[:16].replace("T", " ") if created_at else set_id
+        theme_label = "No theme" if theme == "none" else theme
+
+        label = f"{created_label} — {theme_label} — {n_items} items"
+        if learner_level:
+            label += f" — {learner_level}"
+
+        exercise_sets.append({
+            "set_id": set_id,
+            "label": label,
+        })
 
     return render(
         request,
@@ -834,6 +876,8 @@ def run_exercises(request, project_id):
         {
             "project": project,
             "exercise_type": exercise_type,
+            "exercise_sets": exercise_sets,
+            "selected_set_id": selected_set_id,
             "item_index": item_index,
             "item": item,
             "feedback": feedback,
@@ -1752,13 +1796,6 @@ def browse_exercise_judgements(request, project_id):
     exercise_types = sorted(jud.keys())
     selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
     
-##    sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
-##    exercise_set_ids = sorted(sets_dict.keys())
-##
-##    selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
-##    runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
-##    run_ids = sorted(runs_dict.keys(), reverse=True)
-
     sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
 
     def _set_created_at(set_id):
