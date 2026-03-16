@@ -2009,14 +2009,69 @@ def human_judge_exercises(request, project_id):
         messages.error(request, "No exercises available.")
         return redirect("project_detail", project_id=project_id)
 
-    exercise_type = list(all_exercises.keys())[0]
-    exercise_payload = clara_project_internal.load_exercises(exercise_type)
+    exercise_types = list(all_exercises.keys())
+    if not exercise_types:
+        messages.error(request, "No exercises available.")
+        return redirect("project_detail", project_id=project_id)
 
-    exercise_set_id = exercise_payload.get("exercise_set_id")
+    # For now, still assume one exercise type unless explicitly specified
+    exercise_type = request.GET.get("type") or request.POST.get("type") or exercise_types[0]
+
+    exercise_type_data = all_exercises.get(exercise_type)
+    if not exercise_type_data:
+        messages.error(request, f"No exercises of type '{exercise_type}' found.")
+        return redirect("project_detail", project_id=project_id)
+
+    # New format: exercise_type -> {"sets": {...}} ; fallback to old single-set format
+    if isinstance(exercise_type_data, dict) and "sets" in exercise_type_data:
+        sets_dict = exercise_type_data.get("sets", {}) or {}
+    else:
+        pseudo_id = exercise_type_data.get("exercise_set_id", "default")
+        sets_dict = {pseudo_id: exercise_type_data}
+
+    if not sets_dict:
+        messages.error(request, "No exercise sets available.")
+        return redirect("project_detail", project_id=project_id)
+
+    # newest first by created_at if available
+    def _sort_key(kv):
+        set_id, payload = kv
+        return payload.get("created_at", "")
+
+    sorted_sets = sorted(sets_dict.items(), key=_sort_key, reverse=True)
+
+    selected_set_id = request.GET.get("set_id") or request.POST.get("exercise_set_id") or sorted_sets[0][0]
+    exercise_payload = sets_dict.get(selected_set_id)
+
+    if not exercise_payload:
+        messages.error(request, f"No exercise set '{selected_set_id}' found.")
+        return redirect("human_judge_exercises", project_id=project_id)
+
+    exercise_set_id = exercise_payload.get("exercise_set_id", selected_set_id)
     learner_level = exercise_payload.get("learner_level", "intermediate")
     theme = exercise_payload.get("theme", "none")
     items = exercise_payload.get("items", [])
     rubric_text = get_cloze_judging_rubric_text(learner_level, theme)
+
+    # Build human-readable labels for set menu
+    exercise_sets = []
+    for set_id, payload in sorted_sets:
+        created_at = payload.get("created_at", "")
+        set_theme = payload.get("theme", "none")
+        set_level = payload.get("learner_level", "")
+        n_items = len(payload.get("items", []))
+
+        created_label = created_at[:16].replace("T", " ") if created_at else set_id
+        theme_label = "No theme" if set_theme == "none" else set_theme
+
+        label = f"{created_label} — {theme_label} — {n_items} items"
+        if set_level:
+            label += f" — {set_level}"
+
+        exercise_sets.append({
+            "set_id": set_id,
+            "label": label,
+        })
 
     if request.method == "GET":
         return render(
@@ -2026,6 +2081,8 @@ def human_judge_exercises(request, project_id):
                 "project": project,
                 "exercise_type": exercise_type,
                 "exercise_set_id": exercise_set_id,
+                "exercise_sets": exercise_sets,
+                "selected_set_id": selected_set_id,
                 "learner_level": learner_level,
                 "theme": theme,
                 "items": items,
@@ -2069,7 +2126,7 @@ def human_judge_exercises(request, project_id):
 
         snapshot = {
             "learner_level": learner_level,
-            "theme": item.get("theme", "none"),
+            "theme": item.get("theme", theme),
             "text_with_blank": item.get("segment", {}).get("text_with_blank"),
             "context_before": item.get("segment", {}).get("context_before"),
             "context_after": item.get("segment", {}).get("context_after"),
