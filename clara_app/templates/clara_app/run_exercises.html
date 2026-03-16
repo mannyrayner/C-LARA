@@ -3,6 +3,21 @@
 {% block content %}
 
 <h2>Exercises ({{ exercise_type }})</h2>
+
+<form method="get" style="margin-bottom: 1em;">
+    <input type="hidden" name="type" value="{{ exercise_type }}">
+    <input type="hidden" name="item" value="0">
+
+    <label><strong>Exercise set:</strong></label>
+    <select name="set_id" onchange="this.form.submit()">
+        {% for s in exercise_sets %}
+            <option value="{{ s.set_id }}" {% if s.set_id == selected_set_id %}selected{% endif %}>
+                {{ s.label }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
 <p>Item {{ item_index|add:1 }} / {{ total_items }}</p>
 
 <div class="exercise-segment">
@@ -10,6 +25,9 @@
 </div>
 
 <form method="post">
+    <input type="hidden" name="type" value="{{ exercise_type }}">
+    <input type="hidden" name="set_id" value="{{ selected_set_id }}">
+    <input type="hidden" name="item" value="{{ item_index }}">
     {% csrf_token %}
 
     {% for choice in item.choices %}
@@ -47,7 +65,7 @@
 {% endif %}
 
 {% if next_index is not None %}
-    <a href="{% url 'run_exercises' project.id %}?type={{ exercise_type }}&item={{ next_index }}">
+    <a href="{% url 'run_exercises' project.id %}?type={{ exercise_type }}&set_id={{ selected_set_id }}&item={{ next_index }}">
         Next →
     </a>
 {% else %}
