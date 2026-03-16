@@ -2168,6 +2168,45 @@ def browse_human_exercise_judgements(request, project_id):
     runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
     run_ids = sorted(runs_dict.keys(), reverse=True)  # newest first
 
+    # ---------- build human-readable exercise-set labels ----------
+    exercise_set_options = []
+    for set_id in exercise_set_ids:
+        runs_for_set = sets_dict.get(set_id, {}) or {}
+
+        created_at = ""
+        theme = "none"
+        learner_level = "intermediate"
+        n_items = 0
+
+        if runs_for_set:
+            first_run_id = sorted(runs_for_set.keys(), reverse=True)[0]
+            first_run = runs_for_set.get(first_run_id, {}) or {}
+            created_at = first_run.get("created_at", "")
+            theme = first_run.get("theme", "none")
+            learner_level = first_run.get("learner_level", "intermediate")
+
+            first_items = first_run.get("items", {}) or {}
+            n_items = len(first_items)
+
+            # if needed, fall back to snapshot
+            if first_items:
+                first_item_payload = next(iter(first_items.values()))
+                first_snapshot = first_item_payload.get("item_snapshot", {}) if isinstance(first_item_payload, dict) else {}
+                theme = first_run.get("theme") or first_snapshot.get("theme", theme)
+                learner_level = first_run.get("learner_level") or first_snapshot.get("learner_level", learner_level)
+
+        created_label = created_at[:16].replace("T", " ") if created_at else set_id
+        theme_label = "No theme" if theme == "none" else theme
+
+        label = f"{created_label} — {theme_label} — {n_items} items"
+        if learner_level:
+            label += f" — {learner_level}"
+
+        exercise_set_options.append({
+            "value": set_id,
+            "label": label,
+        })
+
     # ---------- aggregate across ALL runs ----------
     items_agg = {}  # item_id -> {snapshot, judges{run_id: payload}, rating_counts, mean_rating}
     judge_meta = []  # list of (run_id, user, created_at)
@@ -2260,7 +2299,6 @@ def browse_human_exercise_judgements(request, project_id):
             theme = snap.get("theme") or "none"
             text_with_blank = snap.get("text_with_blank") or ""
 
-            # Extract correct + distractors from snapshot choices
             correct = ""
             distractors = []
             for c in (snap.get("choices") or []):
@@ -2274,14 +2312,13 @@ def browse_human_exercise_judgements(request, project_id):
             for cell in (row.get("judge_cells") or []):
                 r = cell.get("r")
                 if not r:
-                    continue  # judge didn't submit for this item
+                    continue
 
                 rating = r.get("rating", "")
                 summary = r.get("summary", "")
                 issues = r.get("issues", [])
                 comment = r.get("comment", "")
 
-                # run-level fields (stored once per run in runs_dict)
                 rid = cell.get("rid", "")
                 run_payload = runs_dict.get(rid, {}) or {}
                 judge_id = run_payload.get("user") or cell.get("user") or ""
@@ -2317,14 +2354,14 @@ def browse_human_exercise_judgements(request, project_id):
             "project": project,
             "exercise_types": exercise_types,
             "selected_exercise_type": selected_exercise_type,
+
             "exercise_set_ids": exercise_set_ids,
             "selected_exercise_set_id": selected_exercise_set_id,
+            "exercise_set_options": exercise_set_options,
 
-            # still shown for informational purposes / aligned judge columns
             "run_ids": run_ids,
             "judge_meta": judge_meta,
 
-            # aggregated rows (one per item)
             "judged_rows": judged_rows,
         },
     )
