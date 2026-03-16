@@ -1075,6 +1075,8 @@ def ai_panel_judge_exercises(request, project_id, status="start"):
 
     callback, report_id = make_asynch_callback_and_report_id(request, "ai_panel_judge_exercises")
 
+    messages.info(request, f"Submitting exercises for AI judging")
+
     async_task(
         create_and_save_ai_panel_judgements,
         project,
@@ -1247,7 +1249,7 @@ async def process_ai_panel_judging_targets(
                 "rating": "unparsed",
                 "summary": f"exception: {r}",
                 "issues": [{"distractor": "", "problem": f"exception: {r}", "suggestion": ""}],
-                "raw_text": "",
+                "raw": "",
                 "parsed": {},
             }
             continue
@@ -1281,17 +1283,37 @@ async def _judge_one_item_with_one_model(
     chat_url = model_cfg["chat_url"]
     api_key = model_cfg["api_key"]
     model = model_cfg["model"]
+    text_with_blank = item["segment"]["text_with_blank"].strip()
 
-    content, usage = await asyncio.to_thread(
-        call_model_provider,
-        provider,
-        chat_url,
-        api_key,
-        model,
-        system_prompt,
-        user_prompt,
-        timeout
-    )
+    await post_task_update_async(callback, f"Making AI judging call to {model} for '{text_with_blank}'")
+
+    try:
+        content, usage = await asyncio.to_thread(
+            call_model_provider,
+            provider,
+            chat_url,
+            api_key,
+            model,
+            system_prompt,
+            user_prompt,
+            timeout
+        )
+        await post_task_update_async(callback, f"AI judging call succeeded {model} for '{text_with_blank}'")
+    except Exception as e:
+        await post_task_update_async(callback, f"AI judging call failed {model} for '{text_with_blank}': {e}")
+        resule = {
+            "raw_text": "",
+            "parsed": "",
+            "provider": provider,
+            "model": model,
+            "rating": 0,
+            "summary": "",
+            "issues": "",
+            "raw": "",
+        }
+        usage = {}
+        cost = 0.0
+        return result, (usage or {}), cost
 
     parsed = _json_from_model_output(content)
 
