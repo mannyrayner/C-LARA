@@ -1795,7 +1795,7 @@ def browse_exercise_judgements(request, project_id):
     # ---------- available selectors ----------
     exercise_types = sorted(jud.keys())
     selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
-    
+
     sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
 
     def _set_created_at(set_id):
@@ -1812,12 +1812,21 @@ def browse_exercise_judgements(request, project_id):
         reverse=True
     )
 
-    selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
+    requested_exercise_set_id = request.GET.get("exercise_set_id")
+    if requested_exercise_set_id in exercise_set_ids:
+        selected_exercise_set_id = requested_exercise_set_id
+    else:
+        selected_exercise_set_id = exercise_set_ids[0] if exercise_set_ids else ""
+
     runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
     run_ids = sorted(runs_dict.keys(), reverse=True)
 
-    selected_run_id = request.GET.get("judge_run_id") or (run_ids[0] if run_ids else "")
-
+    requested_run_id = request.GET.get("judge_run_id")
+    if requested_run_id in run_ids:
+        selected_run_id = requested_run_id
+    else:
+        selected_run_id = run_ids[0] if run_ids else ""
+    
     run_payload = runs_dict.get(selected_run_id, {}) if selected_run_id else {}
     items = (run_payload.get("items") or {}) if isinstance(run_payload, dict) else {}
 
