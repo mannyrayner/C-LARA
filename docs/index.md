@@ -20,12 +20,12 @@ The platform draws inspiration from the earlier [LARA project](https://www.unige
 completely rewritten. 
 
 As the name suggests, various OpenAI models are at the centre of our activities. They are used in two complementary ways, both 
-as software *components* and as a software *engineer*. In their software component role, ChatGPT-4o and GPT-Image-1 perform
+as software *components* and as a software *engineer*. In their software component role, ChatGPT-5 and GPT-Image-1 perform
 all the core language and image processing functions in the platform. They can write texts, divide them into sentences and 
 lexical units, identify multi-word expressions, add glosses in another language, annotate words with lemmas (root form) information and create high-quality illustrations.
 Audio is automatically added for the wide range of languages where a TTS engine is available.
 
-As software engineers, various versions of ChatGPT, most recently o3, have played a central role in creating the codebase, which is freely accessible on [GitHub](https://github.com/mannyrayner/C-LARA). ChatGPT has produced about 80% 
+As software engineers, various versions of ChatGPT, most recently ChatGPT-5 and Codex-5.2, have played a central role in creating the codebase, which is freely accessible on [GitHub](https://github.com/mannyrayner/C-LARA). ChatGPT has produced about 80% 
 of the code, working in close collaboration with its human partner Manny Rayner. It is also responsible for the greater 
 part of the software design, and has written a substantial portion of the academic publications which
 the project has produced. We consider that ChatGPT has amply demonstrated its right to be accepted as 
