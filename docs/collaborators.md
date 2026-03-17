@@ -15,15 +15,16 @@
 ## Contributors
 - **HAKEEM BEEDAR**: Evaluation of images, Japanese
 - **BRANISLAV BEDI**: Pedagogical aspects, user studies, Icelandic evaluation
+- **HAKEEM BEDAR**: Pedagogical aspects, user studies
 - **FRANCIS BOND**: Linguistic annotation
-- **CHATGPT-4**: Software implementation and design
+- **CHATGPT C-LARA-INSTANCE**: Software implementation and design
 - **BELINDA CHIERA**: Project coordination, statistical analysis
 - **CATHY CHUA**: Project coordination, ethical aspects
 - **CATIA CUCCHIARINI**: User studies, Italian and Dutch evaluation
 - **ANNE-LAURE DOTTE**: Kanak languages
 - **STEPHANIE GENEIX-RABAULT**: Kanak languages
 - **SÖLVI HALLDÓRSSON**: Icelandic content
-- **IVANA HORVÁTHOVÁ**: Pedagogical aspects, picture books for Ukrainian learners
+- **VANESSA KREUSCH**: Pedagogical aspects, German evaluation
 - **YIXUAN LU**: Mandarin content
 - **CHRISTELE MAIZONNIAUX**: French evaluation
 - **JEREMIAH MCPADDEN**: Latin, Discord server
@@ -33,10 +34,13 @@
 - **MANNY RAYNER**: Software implementation and design, project coordination, English evaluation
 - **SOPHIE RENDINA**: Indigenous languages, generation and evaluation of images
 - **CHADI RAHEB**: Farsi evaluation
+- **EMILY RYAN-COOPER**: Pedagogical aspects, user studies
 - **ANNIKA SIMONSEN**: Linguistic annotation, user studies, Faroese, Danish and Icelandic evaluation
 - **VLADYSLAV SUKHYI**: Ukrainian evaluation
+- **IVANA VARGOVÁ**: Pedagogical aspects, Ukrainian evaluation, picture books for Ukrainian learners
 - **FABRICE WACALIE**: Phonetic texts, Kanak languages
 - **PAULINE WELBY**: Phonetic texts, Kanak languages
+- **SARAH WRIGHT**: Pedagogical aspects, German evaluation
 - **ALEX XIANG**: Supervision of student projects, Mandarin evaluation
 - **YAO CHUNLIN**: Pedagogical aspects, Mandarin evaluation
 - **RINA ZVIEL-GIRSHIN**: Russian evaluation

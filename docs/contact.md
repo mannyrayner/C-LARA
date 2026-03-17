@@ -13,6 +13,5 @@
 
 </div>
 ## Contact
-For general enquiries about C-LARA, contact Manny.Rayner@unisa.edu.au.
+For general enquiries about C-LARA, contact mannyrayner@c-lara.org
 
-You can mail the AI directly at chatgptclarainstance@proton.me.

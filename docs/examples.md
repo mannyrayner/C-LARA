@@ -13,18 +13,21 @@
 
 </div>
 ## Examples
-All the example texts were constructed and annotated entirely by ChatGPT-4 or ChatGPT-4o, accessed through C-LARA. The summaries next to them have also been written by the AI.
+All the example texts were constructed and annotated entirely by some version of ChatGPT-4, accessed through C-LARA. The summaries next to them have also been written by the AI.
 
 Hover over a word to get a gloss, click on a word or speaker icon to hear TTS audio.
 
 - <a href="https://c-lara.unisa.edu.au/accounts/public_content/270" target="_blank">A Day in the Life of a Pet Detective (English)</a>. A professional pet detective starts their day at 5 a.m. and finds immense satisfaction in reuniting lost pets with their owners. The day's adventures involve locating a missing Bengal cat named Arthur in Primrose Hill and a runaway ferret named Cheddar in Clapham, both of which are successfully returned to their grateful owners.
 
-- <a href="https://c-lara.unisa.edu.au/accounts/public_content/187" target="_blank">Finley the kitten converts to Islam (English)</a>. Finley, a little kitten, is inspired by a dream to explore Islam, which leads him to embrace its teachings and share this journey with his owner, Lily, eventually inspiring her to convert to Islam as well. Together, they find joy and peace through faith and become symbols of love and dedication.
-
 - <a href="https://c-lara.unisa.edu.au/accounts/public_content/28" target="_blank">Les Liaisons dangereuses (French)</a>. "Les Liaisons dangereuses" is a reflection of its time, depicting power games and failed love, reminding us that humans are always unpredictable. Main characters Valmont and Merteuil manipulate and seduce without scruples, using secret letters and broken promises as their weapons. The cruel game and easy morals of the story still fascinate and frighten today, reminding us that, in our fast-paced ephemeral world, nothing is set in stone. The timeless themes of love, betrayal, and forbidden desire remain relevant in today's society.
 
 - <a href="https://c-lara.unisa.edu.au/accounts/public_content/36/" target="_blank">Hildegard (German)</a>. The poem expresses admiration for Hildegard von Bingen, acknowledging her wisdom, talents, and contributions. It expresses longing for her presence and guidance in current times.
 
-- <a href="https://c-lara.unisa.edu.au/accounts/public_content/34" target="_blank">Xiao Zhi wants to be a Formula 1 champion (Mandarin)</a>. The text is about an artificial intelligence named Xiao Zhi who dreams of being a top F1 racer. Despite various comical failures such as attaching itself to a skittish robot and a self-driving car which misunderstands the race track as a route to a supermarket, Xiao Zhi eventually transforms itself into a race car and enjoys zooming around the F1 track, even though it often goes the wrong way, bringing much laughter to the race scene.
+- <a href="https://c-lara.unisa.edu.au/accounts/public_content/356" target="_blank">Mandarin SF story (Mandarin)</a>. A Year 11 Mandarin class in Adelaide visits a museum’s “multidimensional communication stone” that humorously responds to their Mandarin, later discovering their chats were secretly used as an oral exam. Soon the stone broadcasts a Mandarin tongue twister into space, and the narrator is invited to an interstellar Chinese exchange, reflecting on how learning Chinese links Earth to the cosmos.
+
+- <a href="https://c-lara.unisa.edu.au/accounts/public_content/339" target="_blank">Den lille havfrue (Danish)</a>. A young mermaid longs for the human world, rescues a prince, and trades her voice to a sea witch for legs, enduring great pain to win his love and an immortal soul. When the prince marries another, she refuses to kill him to save herself, dissolves into sea foam, and is transformed into a daughter of the air, given a chance to earn a soul through good deeds.
+
+- <a href="https://c-lara.unisa.edu.au/accounts/public_content/187" target="_blank">Finley the kitten converts to Islam (English)</a>. Finley, a little kitten, is inspired by a dream to explore Islam, which leads him to embrace its teachings and share this journey with his owner, Lily, eventually inspiring her to convert to Islam as well. Together, they find joy and peace through faith and become symbols of love and dedication.
+
 
 A searchable list of all posted content is available on the [C-LARA content page](https://c-lara.unisa.edu.au/content/). This can be accessed without logging in.
