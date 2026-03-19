@@ -58,20 +58,10 @@
     <div style="background:#fafafa; padding:0.5em;">
       {{ theme|default:"None" }}
     </div>
-    <div><strong>Context before:</strong></div>
-    <div style="background:#fafafa; padding:0.5em;">
-      {{ item.segment.context_before }}
-    </div>
-	</div>
 	<div><strong>Text:</strong></div>
     <div style="background:#fafafa; padding:0.5em;">
-      {{ item.segment.text_with_blank }}
+      {{ item.segment.context_before|default:"" }} {{ item.segment.text_with_blank }} {{ item.segment.context_after|default:"" }}
     </div>
-	<div><strong>Context after:</strong></div>
-    <div style="background:#fafafa; padding:0.5em;">
-      {{ item.segment.context_after }}
-    </div>
-	</div>
 
     <div><strong>Correct filler:</strong>
 	<div style="background:#fafafa; padding:0.5em;">
