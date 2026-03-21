@@ -1,8 +1,12 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+
 <h2>Browse Human Exercise Judgements</h2>
 
 <form method="get">
   <label>Exercise type:</label>
-  <select name="exercise_type">
+  <select name="exercise_type" onchange="this.form.submit()">
     {% for t in exercise_types %}
       <option value="{{ t }}" {% if t == selected_exercise_type %}selected{% endif %}>
         {{ t }}
@@ -11,7 +15,7 @@
   </select>
 
 	<label>Exercise set:</label>
-	<select name="exercise_set_id">
+	<select name="exercise_set_id" onchange="this.form.submit()">
 	  {% for s in exercise_set_options %}
 		<option value="{{ s.value }}" {% if s.value == selected_exercise_set_id %}selected{% endif %}>
 		  {{ s.label }}
@@ -32,7 +36,6 @@
   </ul>
 </div>
 
-  <button type="submit">Load</button>
 </form>
 
 <p style="margin: 0.5em 0;">
@@ -171,3 +174,7 @@
   </div>
   {% endwith %}
 {% endfor %}
+
+<p><a href="{% url 'project_detail' project.id %}">Back to project</a></p>
+
+{% endblock %}
