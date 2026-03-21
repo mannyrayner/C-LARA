@@ -2977,9 +2977,9 @@ def compare_exercise_judgements(request, project_id):
                 overlap.append((r1, r2))
         if not overlap:
             return None, 0
-        s = sum((r1 - r2) ** 2 for (r1, r2) in overlap)
-        return round(math.sqrt(s), 3), len(overlap)
-
+        mean_abs_diff = sum(abs(r1 - r2) for (r1, r2) in overlap) / len(overlap)
+        return round(mean_abs_diff, 3), len(overlap)
+    
     distance_rows = []
     for row_jid in judge_ids:
         cells = []
