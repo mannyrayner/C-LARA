@@ -1020,9 +1020,9 @@ def ai_panel_judge_exercises(request, project_id, status="start"):
     status is used only to show a one-shot message after monitor redirect.
     """
     if status == "finished":
-        messages.info(request, "Exercise generation completed normally.")
+        messages.info(request, "Exercise judging completed normally.")
     elif status == "error":
-        messages.error(request, "Error in exercise generation. See 'Recent task updates' for details.")
+        messages.error(request, "Error in exercise judging. See 'Recent task updates' for details.")
 
     project = get_object_or_404(CLARAProject, pk=project_id)
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -2267,8 +2267,26 @@ def browse_human_exercise_judgements(request, project_id):
     selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
 
     sets_dict = jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
-    exercise_set_ids = sorted(sets_dict.keys())
-    selected_exercise_set_id = request.GET.get("exercise_set_id") or (exercise_set_ids[0] if exercise_set_ids else "")
+
+    def _set_created_at(set_id):
+        runs_for_set = sets_dict.get(set_id, {}) or {}
+        if not runs_for_set:
+            return ""
+        first_run_id = sorted(runs_for_set.keys(), reverse=True)[0]
+        first_run = runs_for_set.get(first_run_id, {}) or {}
+        return first_run.get("created_at", "")
+
+    exercise_set_ids = sorted(
+        sets_dict.keys(),
+        key=lambda sid: _set_created_at(sid),
+        reverse=True
+    )
+
+    requested_exercise_set_id = request.GET.get("exercise_set_id")
+    if requested_exercise_set_id in exercise_set_ids:
+        selected_exercise_set_id = requested_exercise_set_id
+    else:
+        selected_exercise_set_id = exercise_set_ids[0] if exercise_set_ids else ""
 
     runs_dict = sets_dict.get(selected_exercise_set_id, {}) if selected_exercise_set_id else {}
     run_ids = sorted(runs_dict.keys(), reverse=True)  # newest first
