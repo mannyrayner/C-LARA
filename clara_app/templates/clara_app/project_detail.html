@@ -212,6 +212,11 @@
 	  {% if not human_exercise_judgements_exist %}class="disabled-link"{% endif %}>
 	  Browse exercise judgements produced by humans
 	  </a></p>
+	<p><a href="{% url 'compare_exercise_judgements' project.id %}"
+	  data-tooltip="Compare exercise judgements produced by humans and AIs."
+	  {% if not human_exercise_judgements_exist or not exercise_judgements_exist %}class="disabled-link"{% endif %}>
+	  Compare exercise judgements produced by humans and AIs
+	  </a></p>
 	<p><a href="{% url 'maintain_exercise_files' project.id %}"
 	  data-tooltip="Admin view of exercises: get information and possibly delete files.">
 	  Admin access to exercises

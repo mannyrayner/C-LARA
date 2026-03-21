@@ -1,0 +1,185 @@
+{% extends "clara_app/base.html" %}
+
+{% block content %}
+<h2>Combined AI and Human Judgements</h2>
+
+<form method="get" style="margin-bottom: 1em;">
+  <label>Exercise type:</label>
+  <select name="exercise_type" onchange="this.form.submit()">
+    {% for t in exercise_types %}
+      <option value="{{ t }}" {% if t == selected_exercise_type %}selected{% endif %}>{{ t }}</option>
+    {% endfor %}
+  </select>
+
+  <label style="margin-left: 1em;">Exercise set:</label>
+  <select name="exercise_set_id" onchange="this.form.submit()">
+    {% for s in exercise_set_options %}
+      <option value="{{ s.value }}" {% if s.value == selected_exercise_set_id %}selected{% endif %}>
+        {{ s.label }}
+      </option>
+    {% endfor %}
+  </select>
+</form>
+
+{% if selected_ai_run_id %}
+  <p><strong>AI run used:</strong> {{ selected_ai_run_id }}</p>
+{% endif %}
+
+<h3>Judge Summary</h3>
+<table style="border-collapse: collapse; width: 100%; margin-bottom: 1em;">
+  <thead>
+    <tr>
+      <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;">Judge</th>
+      <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;">Type</th>
+      <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;">Mean Likert</th>
+      <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;"># rated items</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in judge_rows %}
+      <tr>
+        <td style="border-bottom:1px solid #eee; padding:0.25em;">{{ row.label }}</td>
+        <td style="border-bottom:1px solid #eee; padding:0.25em;">{{ row.judge_type }}</td>
+        <td style="border-bottom:1px solid #eee; padding:0.25em;">{{ row.mean_rating|default:"-" }}</td>
+        <td style="border-bottom:1px solid #eee; padding:0.25em;">{{ row.n_rated }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Overall Means</h3>
+<table style="border-collapse: collapse; margin-bottom: 1em;">
+  <tr><th style="text-align:left; padding:0.25em;">All judges</th><td style="padding:0.25em;">{{ overall_mean_all|default:"-" }}</td></tr>
+  <tr><th style="text-align:left; padding:0.25em;">Human judges</th><td style="padding:0.25em;">{{ overall_mean_human|default:"-" }}</td></tr>
+  <tr><th style="text-align:left; padding:0.25em;">AI judges</th><td style="padding:0.25em;">{{ overall_mean_ai|default:"-" }}</td></tr>
+</table>
+
+<h3>Pairwise Judge Distances</h3>
+<table style="border-collapse: collapse; width: 100%; margin-bottom: 1em;">
+  <thead>
+    <tr>
+      <th style="border-bottom:1px solid #ccc; padding:0.25em;"></th>
+      {% for col in judge_columns %}
+		<th style="border-bottom:1px solid #ccc; padding:0.25em;">{{ col.label }}</th>
+	  {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in distance_rows %}
+      <tr>
+        <th style="text-align:left; border-bottom:1px solid #eee; padding:0.25em;">{{ row.label }}</th>
+        {% for cell in row.cells %}
+          <td style="border-bottom:1px solid #eee; padding:0.25em; text-align:center;">
+            {% if cell.distance != None %}
+              {{ cell.distance }}<br>
+              <small style="color:#777;">n={{ cell.overlap_n }}</small>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Item-by-item Breakdown</h3>
+
+{% for row in item_rows %}
+  {% with snap=row.snapshot %}
+  <div style="margin: 0 0 1.25em 0; padding: 0.75em; border: 1px solid #ddd;">
+    <div style="display:flex; justify-content:space-between; gap:1em; margin-bottom:0.5em;">
+      <div><strong>Item:</strong> {{ row.item_id }}</div>
+      <div>
+        <strong>AI mean:</strong> {{ row.mean_ai|default:"-" }}
+        &nbsp;&nbsp;
+        <strong>Human mean:</strong> {{ row.mean_human|default:"-" }}
+        &nbsp;&nbsp;
+        <strong>Overall mean:</strong> {{ row.mean_all|default:"-" }}
+      </div>
+    </div>
+
+    <div style="margin-bottom:0.5em;">
+      <strong>Text:</strong>
+      <div style="padding:0.5em; background:#fafafa; border:1px solid #eee;">
+        {{ snap.text_with_blank|default:"(missing text_with_blank)" }}
+      </div>
+    </div>
+
+    <div style="margin-bottom:0.5em;">
+      <strong>Target:</strong>
+      {% if snap.target %}
+        {{ snap.target.surface }} ({{ snap.target.lemma }}, {{ snap.target.pos }})
+      {% else %}
+        (missing target)
+      {% endif %}
+    </div>
+
+    <div style="margin-bottom:0.5em;">
+      <strong>Choices:</strong>
+      <ul style="margin:0.25em 0 0 1.25em;">
+        {% for c in snap.choices %}
+          <li>
+            {{ c.form }}
+            {% if c.is_correct %}<strong>(correct)</strong>{% endif %}
+            {% if c.reason %} — {{ c.reason }}{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <strong>Judgements:</strong>
+      <table style="width:100%; border-collapse:collapse; margin-top:0.5em;">
+        <thead>
+          <tr>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;">Judge</th>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;">Type</th>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;">Rating</th>
+            <th style="text-align:left; border-bottom:1px solid #ccc; padding:0.25em;">Summary / Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cell in row.judge_cells %}
+            <tr>
+              <td style="border-bottom:1px solid #eee; padding:0.25em;">{{ cell.judge_label }}</td>
+              <td style="border-bottom:1px solid #eee; padding:0.25em;">{{ cell.judge_type }}</td>
+              <td style="border-bottom:1px solid #eee; padding:0.25em;">
+                {% if cell.j %}
+                  {{ cell.j.rating|default:"-" }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td style="border-bottom:1px solid #eee; padding:0.25em;">
+                {% if cell.j %}
+                  {% if cell.j.summary %}<div><strong>Summary:</strong> {{ cell.j.summary }}</div>{% endif %}
+                  {% if cell.j.comment %}<div><strong>Comment:</strong> {{ cell.j.comment }}</div>{% endif %}
+                  {% if cell.j.issues %}
+                    <ul style="margin:0.25em 0 0 1.25em;">
+                      {% for issue in cell.j.issues %}
+                        <li>
+                          {% if issue.distractor %}<strong>{{ issue.distractor }}</strong>: {% endif %}
+                          {{ issue.problem }}
+                          {% if issue.suggestion %}<br><em>Suggest:</em> {{ issue.suggestion }}{% endif %}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endwith %}
+{% endfor %}
+
+<p style="margin-top: 1em;">
+  <a href="{% url 'project_detail' project.id %}">Back to project</a>
+</p>
+{% endblock %}
