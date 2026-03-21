@@ -15,6 +15,7 @@ import pprint
 import html
 from pathlib import Path
 import re
+import math
 
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -2723,3 +2724,353 @@ def _summarise_exercise_data(file_key: str, parsed) -> str:
 
     return "No summary available."
 
+@login_required
+def compare_exercise_judgements(request, project_id):
+    project = get_object_or_404(CLARAProject, pk=project_id)
+    clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
+
+    ai_blob = load_exercise_judgements_dict(clara_project_internal)
+    human_blob = load_exercise_human_judgements_dict(clara_project_internal)
+
+    ai_jud = (ai_blob or {}).get("judgements", {}) or {}
+    human_jud = (human_blob or {}).get("human_judgements", {}) or {}
+
+    # Exercise types available in either source
+    exercise_types = sorted(set(ai_jud.keys()) | set(human_jud.keys()))
+    selected_exercise_type = request.GET.get("exercise_type") or (exercise_types[0] if exercise_types else "")
+
+    ai_sets_dict = ai_jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
+    human_sets_dict = human_jud.get(selected_exercise_type, {}) if selected_exercise_type else {}
+
+    # Union of available set ids across AI + human sources
+    all_set_ids = sorted(set(ai_sets_dict.keys()) | set(human_sets_dict.keys()))
+
+    def _recover_set_metadata(set_id):
+        """
+        Recover created_at/theme/learner_level/n_items from either AI or human data.
+        Prefer AI if available, else human.
+        """
+        created_at = ""
+        theme = "none"
+        learner_level = "intermediate"
+        n_items = 0
+
+        # Prefer AI source because it is a little more structured for set browsing
+        if set_id in ai_sets_dict:
+            runs_for_set = ai_sets_dict.get(set_id, {}) or {}
+            if runs_for_set:
+                latest_run_id = sorted(runs_for_set.keys(), reverse=True)[0]
+                latest_run = runs_for_set.get(latest_run_id, {}) or {}
+                created_at = latest_run.get("created_at", "")
+                first_items = latest_run.get("items", {}) or {}
+                n_items = len(first_items)
+                if first_items:
+                    first_item_payload = next(iter(first_items.values()))
+                    snap = first_item_payload.get("item_snapshot", {}) if isinstance(first_item_payload, dict) else {}
+                    theme = snap.get("theme", theme)
+                    learner_level = snap.get("learner_level", learner_level)
+
+        # Fall back to human source if needed
+        if (not created_at or n_items == 0) and set_id in human_sets_dict:
+            runs_for_set = human_sets_dict.get(set_id, {}) or {}
+            if runs_for_set:
+                latest_run_id = sorted(runs_for_set.keys(), reverse=True)[0]
+                latest_run = runs_for_set.get(latest_run_id, {}) or {}
+                created_at = created_at or latest_run.get("created_at", "")
+                theme = latest_run.get("theme", theme)
+                learner_level = latest_run.get("learner_level", learner_level)
+                first_items = latest_run.get("items", {}) or {}
+                n_items = max(n_items, len(first_items))
+                if first_items:
+                    first_item_payload = next(iter(first_items.values()))
+                    snap = first_item_payload.get("item_snapshot", {}) if isinstance(first_item_payload, dict) else {}
+                    theme = latest_run.get("theme") or snap.get("theme", theme)
+                    learner_level = latest_run.get("learner_level") or snap.get("learner_level", learner_level)
+
+        return {
+            "created_at": created_at,
+            "theme": theme,
+            "learner_level": learner_level,
+            "n_items": n_items,
+        }
+
+    set_meta = {sid: _recover_set_metadata(sid) for sid in all_set_ids}
+    exercise_set_ids = sorted(
+        all_set_ids,
+        key=lambda sid: set_meta[sid]["created_at"],
+        reverse=True
+    )
+
+    requested_exercise_set_id = request.GET.get("exercise_set_id")
+    if requested_exercise_set_id in exercise_set_ids:
+        selected_exercise_set_id = requested_exercise_set_id
+    else:
+        selected_exercise_set_id = exercise_set_ids[0] if exercise_set_ids else ""
+
+    # Human-readable set labels
+    exercise_set_options = []
+    for sid in exercise_set_ids:
+        meta = set_meta[sid]
+        created_label = meta["created_at"][:16].replace("T", " ") if meta["created_at"] else sid
+        theme_label = "No theme" if meta["theme"] == "none" else meta["theme"]
+        label = f"{created_label} — {theme_label} — {meta['n_items']} items"
+        if meta["learner_level"]:
+            label += f" — {meta['learner_level']}"
+        exercise_set_options.append({
+            "value": sid,
+            "label": label,
+        })
+
+    if not selected_exercise_type or not selected_exercise_set_id:
+        messages.info(request, "No combined judgement data found yet for this project.")
+        return render(
+            request,
+            "clara_app/compare_exercise_judgements.html",
+            {
+                "project": project,
+                "exercise_types": exercise_types,
+                "exercise_set_options": exercise_set_options,
+            },
+        )
+
+    # -----------------------------
+    # Load AI side: latest run only
+    # -----------------------------
+    ai_runs_dict = ai_sets_dict.get(selected_exercise_set_id, {}) or {}
+    ai_run_ids = sorted(ai_runs_dict.keys(), reverse=True)
+    selected_ai_run_id = ai_run_ids[0] if ai_run_ids else ""
+    ai_run_payload = ai_runs_dict.get(selected_ai_run_id, {}) if selected_ai_run_id else {}
+    ai_items = (ai_run_payload.get("items") or {}) if isinstance(ai_run_payload, dict) else {}
+
+    # -----------------------------
+    # Load human side: all runs
+    # -----------------------------
+    human_runs_dict = human_sets_dict.get(selected_exercise_set_id, {}) or {}
+    human_run_ids = sorted(human_runs_dict.keys(), reverse=True)
+
+    def _norm_rating(v):
+        if isinstance(v, int) and v in (1, 2, 3, 4, 5):
+            return v
+        if isinstance(v, str):
+            try:
+                v = int(v)
+                if v in (1, 2, 3, 4, 5):
+                    return v
+            except Exception:
+                pass
+        return None
+
+    # -----------------------------------------
+    # Merge to a single item/judge information map
+    # -----------------------------------------
+    # Canonical judge ids:
+    #   ai:gpt5
+    #   human:mannyrayner
+    merged_items = {}     # item_id -> {snapshot, judgements{judge_id: {...}}}
+    judges = {}           # judge_id -> {label, judge_type}
+
+    def _ensure_item(item_id, snapshot):
+        entry = merged_items.setdefault(item_id, {
+            "item_id": item_id,
+            "snapshot": snapshot or {},
+            "judgements": {},
+        })
+        if snapshot and not entry["snapshot"]:
+            entry["snapshot"] = snapshot
+        return entry
+
+    # AI: latest run only
+    for item_id, item_payload in (ai_items or {}).items():
+        snapshot = item_payload.get("item_snapshot", {}) if isinstance(item_payload, dict) else {}
+        model_map = item_payload.get("models", {}) if isinstance(item_payload, dict) else {}
+        entry = _ensure_item(item_id, snapshot)
+
+        for model_name, r in model_map.items():
+            judge_id = f"ai:{model_name}"
+            judges[judge_id] = {"label": model_name, "judge_type": "ai"}
+            entry["judgements"][judge_id] = {
+                "rating": _norm_rating(r.get("rating")),
+                "summary": r.get("summary", ""),
+                "issues": r.get("issues", []),
+                "comment": "",
+            }
+
+    # Human: all runs for set
+    for rid in human_run_ids:
+        run_payload = human_runs_dict.get(rid, {}) or {}
+        user = run_payload.get("user") or rid
+        judge_id = f"human:{user}"
+        judges[judge_id] = {"label": user, "judge_type": "human"}
+
+        for item_id, payload in (run_payload.get("items") or {}).items():
+            snapshot = (payload.get("item_snapshot") or {})
+            entry = _ensure_item(item_id, snapshot)
+            entry["judgements"][judge_id] = {
+                "rating": _norm_rating(payload.get("rating")),
+                "summary": payload.get("summary", ""),
+                "issues": payload.get("issues", []),
+                "comment": payload.get("comment", ""),
+            }
+
+    # Stable item order
+    item_ids = sorted(merged_items.keys())
+    judge_ids = sorted(
+        judges.keys(),
+        key=lambda jid: (0 if judges[jid]["judge_type"] == "human" else 1, judges[jid]["label"].lower())
+    )
+
+    # -----------------------------------------
+    # Judge summary
+    # -----------------------------------------
+    judge_rows = []
+    all_human_ratings = []
+    all_ai_ratings = []
+    all_ratings = []
+
+    for judge_id in judge_ids:
+        ratings = []
+        for item_id in item_ids:
+            rating = merged_items[item_id]["judgements"].get(judge_id, {}).get("rating")
+            if isinstance(rating, int):
+                ratings.append(rating)
+
+        if ratings:
+            mean_rating = round(sum(ratings) / len(ratings), 2)
+        else:
+            mean_rating = None
+
+        judge_type = judges[judge_id]["judge_type"]
+        if judge_type == "human":
+            all_human_ratings.extend(ratings)
+        else:
+            all_ai_ratings.extend(ratings)
+        all_ratings.extend(ratings)
+
+        judge_rows.append({
+            "judge_id": judge_id,
+            "label": judges[judge_id]["label"],
+            "judge_type": judge_type,
+            "mean_rating": mean_rating,
+            "n_rated": len(ratings),
+        })
+
+    overall_mean_all = round(sum(all_ratings) / len(all_ratings), 2) if all_ratings else None
+    overall_mean_human = round(sum(all_human_ratings) / len(all_human_ratings), 2) if all_human_ratings else None
+    overall_mean_ai = round(sum(all_ai_ratings) / len(all_ai_ratings), 2) if all_ai_ratings else None
+
+    # -----------------------------------------
+    # Pairwise Euclidean distance matrix
+    # -----------------------------------------
+    def _judge_vector(judge_id):
+        return {item_id: merged_items[item_id]["judgements"].get(judge_id, {}).get("rating") for item_id in item_ids}
+
+    judge_vectors = {jid: _judge_vector(jid) for jid in judge_ids}
+
+    def _pairwise_distance(jid1, jid2):
+        vals1 = judge_vectors[jid1]
+        vals2 = judge_vectors[jid2]
+        overlap = []
+        for item_id in item_ids:
+            r1 = vals1.get(item_id)
+            r2 = vals2.get(item_id)
+            if isinstance(r1, int) and isinstance(r2, int):
+                overlap.append((r1, r2))
+        if not overlap:
+            return None, 0
+        s = sum((r1 - r2) ** 2 for (r1, r2) in overlap)
+        return round(math.sqrt(s), 3), len(overlap)
+
+    distance_rows = []
+    for row_jid in judge_ids:
+        cells = []
+        for col_jid in judge_ids:
+            dist, overlap_n = _pairwise_distance(row_jid, col_jid)
+            cells.append({
+                "judge_id": col_jid,
+                "distance": dist,
+                "overlap_n": overlap_n,
+            })
+        distance_rows.append({
+            "judge_id": row_jid,
+            "label": judges[row_jid]["label"],
+            "judge_type": judges[row_jid]["judge_type"],
+            "cells": cells,
+        })
+
+    # -----------------------------------------
+    # Item-by-item rows
+    # -----------------------------------------
+    item_rows = []
+    for item_id in item_ids:
+        entry = merged_items[item_id]
+        snapshot = entry["snapshot"]
+        judgements = entry["judgements"]
+
+        ai_ratings = []
+        human_ratings = []
+        all_item_ratings = []
+
+        judge_cells = []
+        for judge_id in judge_ids:
+            j = judgements.get(judge_id)
+            rating = j.get("rating") if j else None
+            if isinstance(rating, int):
+                all_item_ratings.append(rating)
+                if judges[judge_id]["judge_type"] == "ai":
+                    ai_ratings.append(rating)
+                else:
+                    human_ratings.append(rating)
+
+            judge_cells.append({
+                "judge_id": judge_id,
+                "judge_label": judges[judge_id]["label"],
+                "judge_type": judges[judge_id]["judge_type"],
+                "j": j,
+            })
+
+        mean_ai = round(sum(ai_ratings) / len(ai_ratings), 2) if ai_ratings else None
+        mean_human = round(sum(human_ratings) / len(human_ratings), 2) if human_ratings else None
+        mean_all = round(sum(all_item_ratings) / len(all_item_ratings), 2) if all_item_ratings else None
+
+        item_rows.append({
+            "item_id": item_id,
+            "snapshot": snapshot,
+            "judge_cells": judge_cells,
+            "mean_ai": mean_ai,
+            "mean_human": mean_human,
+            "mean_all": mean_all,
+        })
+
+    judge_columns = [
+        {
+            "judge_id": jid,
+            "label": judges[jid]["label"],
+            "judge_type": judges[jid]["judge_type"],
+        }
+        for jid in judge_ids
+    ]
+
+    return render(
+        request,
+        "clara_app/compare_exercise_judgements.html",
+        {
+            "project": project,
+            "exercise_types": exercise_types,
+            "selected_exercise_type": selected_exercise_type,
+            "exercise_set_options": exercise_set_options,
+            "selected_exercise_set_id": selected_exercise_set_id,
+            "selected_ai_run_id": selected_ai_run_id,
+
+            "judge_rows": judge_rows,
+            "overall_mean_all": overall_mean_all,
+            "overall_mean_human": overall_mean_human,
+            "overall_mean_ai": overall_mean_ai,
+
+            "judge_ids": judge_ids,
+            "judge_columns": judge_columns,
+            "judges": judges,
+            "distance_rows": distance_rows,
+
+            "item_rows": item_rows,
+        },
+    )
