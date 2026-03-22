@@ -2954,17 +2954,48 @@ def compare_exercise_judgements(request, project_id):
             "n_rated": len(ratings),
         })
 
+    # -----------------------------
+    # Add data for synthetic AI mean judge
+    # -----------------------------
+    ai_judge_ids = [judge_row['judge_id'] for judge_row in judge_rows if judge_row["judge_type"] == "ai"]
+
     overall_mean_all = round(sum(all_ratings) / len(all_ratings), 2) if all_ratings else None
     overall_mean_human = round(sum(all_human_ratings) / len(all_human_ratings), 2) if all_human_ratings else None
     overall_mean_ai = round(sum(all_ai_ratings) / len(all_ai_ratings), 2) if all_ai_ratings else None
 
     # -----------------------------------------
-    # Pairwise Euclidean distance matrix
+    # Pairwise distance matrix
     # -----------------------------------------
     def _judge_vector(judge_id):
         return {item_id: merged_items[item_id]["judgements"].get(judge_id, {}).get("rating") for item_id in item_ids}
 
     judge_vectors = {jid: _judge_vector(jid) for jid in judge_ids}
+
+    # -----------------------------
+    # Add data for synthetic AI mean judge
+    # -----------------------------
+
+    ai_mean_vector = {}
+
+    for item_id in item_ids:
+        vals = []
+        for jid in ai_judge_ids:
+            r = judge_vectors[jid].get(item_id)
+            if isinstance(r, int):
+                vals.append(r)
+        if vals:
+            ai_mean_vector[item_id] = round(sum(vals) / len(vals), 2)
+        else:
+            ai_mean_vector[item_id] = None
+
+    judges["ai:mean"] = {
+        "label": "AI (mean)",
+        "judge_type": "ai"
+    }
+
+    judge_vectors["ai:mean"] = ai_mean_vector
+
+    judge_ids.append("ai:mean")
 
     def _pairwise_distance(jid1, jid2):
         vals1 = judge_vectors[jid1]
@@ -2973,7 +3004,7 @@ def compare_exercise_judgements(request, project_id):
         for item_id in item_ids:
             r1 = vals1.get(item_id)
             r2 = vals2.get(item_id)
-            if isinstance(r1, int) and isinstance(r2, int):
+            if ( isinstance(r1, int) or isinstance(r1, float) ) and ( isinstance(r2, int) or isinstance(r2, float) ):
                 overlap.append((r1, r2))
         if not overlap:
             return None, 0
@@ -3012,14 +3043,22 @@ def compare_exercise_judgements(request, project_id):
 
         judge_cells = []
         for judge_id in judge_ids:
-            j = judgements.get(judge_id)
-            rating = j.get("rating") if j else None
-            if isinstance(rating, int):
+
+            # special case: synthetic AI mean
+            if judge_id == "ai:mean":
+                rating = ai_mean_vector.get(item_id)
+                j = {"rating": rating, "summary": "", "issues": [], "comment": ""} if rating is not None else None
                 all_item_ratings.append(rating)
-                if judges[judge_id]["judge_type"] == "ai":
-                    ai_ratings.append(rating)
-                else:
-                    human_ratings.append(rating)
+                ai_ratings.append(rating)
+            else:
+                j = judgements.get(judge_id)
+                rating = j.get("rating") if j else None
+                if isinstance(rating, int):
+                    all_item_ratings.append(rating)
+                    if judges[judge_id]["judge_type"] == "ai":
+                        ai_ratings.append(rating)
+                    else:
+                        human_ratings.append(rating)
 
             judge_cells.append({
                 "judge_id": judge_id,
