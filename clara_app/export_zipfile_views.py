@@ -144,19 +144,23 @@ def make_export_zipfile(request, project_id):
     if request.method == 'POST':
         form = MakeExportZipForm(request.POST)
         if form.is_valid():
+            export_format = form.cleaned_data['export_format']
             task_type = f'make_export_zipfile'
             callback, report_id = make_asynch_callback_and_report_id(request, task_type)
 
             # Enqueue the task
             try:
-                task_id = async_task(make_export_zipfile_with_messages, project, callback)
+                task_id = async_task(make_export_zipfile_with_messages, project, callback, export_format=export_format)
 
                 # Redirect to the monitor view, passing the task ID and report ID as parameters
                 return redirect('make_export_zipfile_monitor', project_id, report_id)
             except Exception as e:
                 messages.error(request, f"An internal error occurred in export zipfile creation. Error details: {str(e)}\n{traceback.format_exc()}")
                 form = MakeExportZipForm()
-                return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project})
+                clara_version = get_user_config(request.user)['clara_version']
+                return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project, 'clara_version': clara_version})
+        clara_version = get_user_config(request.user)['clara_version']
+        return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project, 'clara_version': clara_version})
     else:
         form = MakeExportZipForm()
 
@@ -164,9 +168,9 @@ def make_export_zipfile(request, project_id):
         
         return render(request, 'clara_app/make_export_zipfile.html', {'form': form, 'project': project, 'clara_version': clara_version})
 
-def make_export_zipfile_with_messages(project, callback):
+def make_export_zipfile_with_messages(project, callback, export_format='normal'):
     try:
-        zipfile = make_export_zipfile_internal(project)
+        zipfile = make_export_zipfile_internal(project, export_format=export_format, callback=callback)
         post_task_update(callback, f'--- Zipfile created and copied to {zipfile}')
         post_task_update(callback, 'finished')
         return zipfile

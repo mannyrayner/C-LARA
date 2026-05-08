@@ -705,7 +705,17 @@ class CreateLemmaAndGlossTaggedTextForm(CreateAnnotatedTextForm):
         ]
 
 class MakeExportZipForm(forms.Form):
-    pass
+    EXPORT_FORMAT_CHOICES = [
+        ('normal', 'Standard C-LARA project bundle'),
+        ('json', 'C-LARA-2 bundle with annotated_text.json'),
+    ]
+
+    export_format = forms.ChoiceField(
+        choices=EXPORT_FORMAT_CHOICES,
+        initial='normal',
+        widget=forms.RadioSelect,
+        label='Export format',
+    )
 
 class RenderTextForm(forms.Form):
     pass

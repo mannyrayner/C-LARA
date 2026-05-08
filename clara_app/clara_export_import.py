@@ -6,10 +6,11 @@ from .clara_utils import absolute_local_file_name, absolute_file_name
 from .clara_utils import pathname_parts, file_exists, local_file_exists, basename, copy_local_file, copy_to_local_file, remove_local_file
 from .clara_utils import make_local_directory, copy_directory_to_local_directory, local_directory_exists, remove_local_directory
 from .clara_utils import get_immediate_subdirectories_in_local_directory, get_files_in_local_directory, rename_file
-from .clara_utils import make_tmp_file, write_json_to_local_file, read_json_local_file, make_zipfile, unzip_file, post_task_update
+from .clara_utils import make_tmp_file, write_json_to_local_file, read_json_local_file, write_local_txt_file, make_zipfile, unzip_file, post_task_update
 from .clara_utils import export_zipfile_pathname_for_clara_project_internal
 from .utils import audio_info_for_project
 from .clara_audio_annotator import AudioAnnotator
+from .models import Acknowledgements
 ##from .clara_audio_repository import AudioRepository
 ##from .clara_audio_repository_orm import AudioRepositoryORM
 ##from .clara_image_repository import ImageRepository
@@ -20,7 +21,7 @@ import os
 import tempfile
 import traceback
 
-def make_export_zipfile_internal(project):
+def make_export_zipfile_internal(project, export_format='normal', callback=None):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     audio_info = audio_info_for_project(project)
@@ -57,7 +58,11 @@ def make_export_zipfile_internal(project):
     result = make_export_zipfile_from_data_and_metadata(global_metadata, project_directory,
                                                         audio_metadata, audio_metadata_phonetic,
                                                         image_metadata, image_description_metadata,
-                                                        zipfile)
+                                                        zipfile,
+                                                        clara_project_internal=clara_project_internal,
+                                                        project=project,
+                                                        export_format=export_format,
+                                                        callback=callback)
     if result:
         return zipfile
     else:
@@ -70,17 +75,25 @@ def make_export_zipfile_internal(project):
 def make_export_zipfile_from_data_and_metadata(global_metadata, project_directory,
                                                audio_metadata, audio_metadata_phonetic,
                                                image_metadata, image_description_metadata,
-                                               zipfile):
+                                               zipfile,
+                                               clara_project_internal=None, project=None,
+                                               export_format='normal', callback=None):
+    tmp_dir = None
+    tmp_zipfile = None
     try:
         tmp_dir = tempfile.mkdtemp()
         tmp_zipfile = make_tmp_file('project_zip', 'zip')
 
-        write_global_metadata_to_tmp_dir(global_metadata, tmp_dir)
-        copy_project_directory_to_tmp_dir(project_directory, tmp_dir)
-        copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False)
-        copy_audio_data_to_tmp_dir(audio_metadata_phonetic, tmp_dir, phonetic=True)
-        copy_image_data_to_tmp_dir(image_metadata, tmp_dir)
-        copy_image_description_data_to_tmp_dir(image_description_metadata, tmp_dir)
+        write_global_metadata_to_tmp_dir(global_metadata, tmp_dir, callback=callback)
+        if export_format == 'json':
+            write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global_metadata,
+                                                 tmp_dir, callback=callback)
+        else:
+            copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=callback)
+        copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False, callback=callback)
+        copy_audio_data_to_tmp_dir(audio_metadata_phonetic, tmp_dir, phonetic=True, callback=callback)
+        copy_image_data_to_tmp_dir(image_metadata, tmp_dir, callback=callback)
+        copy_image_description_data_to_tmp_dir(image_description_metadata, tmp_dir, callback=callback)
         
         make_zipfile(tmp_dir, tmp_zipfile)
         copy_local_file(tmp_zipfile, zipfile)
@@ -89,9 +102,9 @@ def make_export_zipfile_from_data_and_metadata(global_metadata, project_director
         raise e
     finally:
         # Remove the tmp dir and tmp zipfile once we've used them
-        if local_directory_exists(tmp_dir):
+        if tmp_dir and local_directory_exists(tmp_dir):
             remove_local_directory(tmp_dir)
-        if local_file_exists(tmp_zipfile):
+        if tmp_zipfile and local_file_exists(tmp_zipfile):
             remove_local_file(tmp_zipfile)
 
 def write_global_metadata_to_tmp_dir(global_metadata, tmp_dir, callback=None):
@@ -105,6 +118,32 @@ def copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=None)
     post_task_update(callback, f'--- Copying project directory')
     copy_directory_to_local_directory(project_directory, tmp_project_dir)
     post_task_update(callback, f'--- Project directory copied')
+
+def write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global_metadata, tmp_dir, callback=None):
+    if not clara_project_internal or not project:
+        raise InternalCLARAError(message='Internal project and Django project are required for JSON-format export')
+
+    annotated_text_file = os.path.join(tmp_dir, 'annotated_text.json')
+    title = clara_project_internal.load_text_version_or_null('title')
+    acknowledgements_info = Acknowledgements.objects.filter(project=project).first()
+
+    post_task_update(callback, f'--- Creating annotated text JSON')
+    text_object = clara_project_internal.get_internalised_and_annotated_text(
+        title=title,
+        uses_picture_glossing=project.uses_picture_glossing,
+        picture_gloss_style=project.picture_gloss_style,
+        human_voice_id=global_metadata['human_voice_id'],
+        audio_type_for_words=global_metadata['audio_type_for_words'],
+        audio_type_for_segments=global_metadata['audio_type_for_segments'],
+        acknowledgements_info=acknowledgements_info,
+        phonetic=False,
+        callback=callback,
+    )
+    if not text_object:
+        raise InternalCLARAError(message='Unable to create internalised and annotated text for JSON-format export')
+
+    write_local_txt_file(text_object.to_json(), annotated_text_file)
+    post_task_update(callback, f'--- Written annotated text JSON to annotated_text.json')
 
 ## Format looks like this:
 ##
