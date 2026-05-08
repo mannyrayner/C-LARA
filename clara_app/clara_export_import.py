@@ -163,7 +163,8 @@ def is_audio_file_path(value):
     return isinstance(value, str) and value.lower().endswith(('.mp3', '.wav', '.m4a'))
 
 def audio_zipfile_path_for_audio_file(pathname):
-    return f"audio/{pathname.replace('\\', '/').split('/')[-1]}"
+    normalised_pathname = pathname.replace('\\', '/')
+    return f"audio/{normalised_pathname.split('/')[-1]}"
 
 ## Format looks like this:
 ##
