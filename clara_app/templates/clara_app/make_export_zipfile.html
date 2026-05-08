@@ -7,6 +7,7 @@
   <h2>Make Export Zipfile ("{{ project.title }}")</h2>
   <form method="post" id="make_export-zipfile-form">
     {% csrf_token %}
+    {{ form.as_p }}
     <button type="submit" id="submit-button">Make zipfile</button>
   </form>
   </div>
