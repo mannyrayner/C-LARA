@@ -20,6 +20,7 @@ from pathlib import Path
 import os
 import tempfile
 import traceback
+import json
 
 def make_export_zipfile_internal(project, export_format='normal', callback=None):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
@@ -142,8 +143,27 @@ def write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global
     if not text_object:
         raise InternalCLARAError(message='Unable to create internalised and annotated text for JSON-format export')
 
-    write_local_txt_file(text_object.to_json(), annotated_text_file)
+    annotated_text_json = json.loads(text_object.to_json())
+    normalise_audio_file_paths_in_annotated_text_json(annotated_text_json)
+    write_local_txt_file(json.dumps(annotated_text_json, ensure_ascii=False), annotated_text_file)
     post_task_update(callback, f'--- Written annotated text JSON to annotated_text.json')
+
+def normalise_audio_file_paths_in_annotated_text_json(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key == 'file_path' and is_audio_file_path(item):
+                value[key] = audio_zipfile_path_for_audio_file(item)
+            else:
+                normalise_audio_file_paths_in_annotated_text_json(item)
+    elif isinstance(value, list):
+        for item in value:
+            normalise_audio_file_paths_in_annotated_text_json(item)
+
+def is_audio_file_path(value):
+    return isinstance(value, str) and value.lower().endswith(('.mp3', '.wav', '.m4a'))
+
+def audio_zipfile_path_for_audio_file(pathname):
+    return f"audio/{pathname.replace('\\', '/').split('/')[-1]}"
 
 ## Format looks like this:
 ##
