@@ -1,6 +1,8 @@
+import argparse
 import json
 import shutil
 import traceback
+import zipfile
 from pathlib import Path
 
 from django.contrib.auth import get_user_model
@@ -12,6 +14,10 @@ from clara_app.models import CLARAProject, HumanAudioInfo, PhoneticHumanAudioInf
 from clara_app.utils import create_internal_project_id
 
 User = get_user_model()
+
+
+class SkippedProject(Exception):
+    pass
 
 
 class Command(BaseCommand):
@@ -46,6 +52,17 @@ class Command(BaseCommand):
             help="Keep temporary CLARAProject database rows after conversion. By default they are deleted after each project is exported.",
         )
         parser.add_argument(
+            "--generate-audio",
+            action="store_true",
+            help="Generate missing TTS audio during JSON export. Default: do not generate missing audio.",
+        )
+        parser.add_argument(
+            "--skip-phonetic-projects",
+            action=argparse.BooleanOptionalAction,
+            default=True,
+            help="Skip projects that contain a phonetic text version (default: true). Use --no-skip-phonetic-projects to include them.",
+        )
+        parser.add_argument(
             "--dry-run",
             action="store_true",
             help="Report which project folders would be converted without importing or writing bundles.",
@@ -64,6 +81,8 @@ class Command(BaseCommand):
         existing = options["existing"]
         dry_run = options["dry_run"]
         keep_imported_projects = options["keep_imported_projects"]
+        generate_audio = options["generate_audio"]
+        skip_phonetic_projects = options["skip_phonetic_projects"]
 
         project_dirs = [path for path in sorted(source_root.iterdir()) if path.is_dir()]
         if not project_dirs:
@@ -80,6 +99,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE(f"Destination root: {dest_root}"))
         self.stdout.write(self.style.NOTICE(f"Project folders found: {len(project_dirs)}"))
         self.stdout.write(self.style.NOTICE(f"Temporary project owner: {owner.username}"))
+        self.stdout.write(self.style.NOTICE(f"Generate missing audio: {generate_audio}"))
+        self.stdout.write(self.style.NOTICE(f"Skip phonetic projects: {skip_phonetic_projects}"))
 
         for source_project_dir in project_dirs:
             try:
@@ -87,6 +108,11 @@ class Command(BaseCommand):
                 dest_project_dir = dest_root / source_project_dir.name
                 dest_zip_path = dest_project_dir / zip_path.name
                 dest_metadata_path = dest_project_dir / metadata_path.name
+
+                if skip_phonetic_projects and self._zip_has_phonetic_text_version(zip_path):
+                    self.stdout.write(f"- skip phonetic project: {source_project_dir.name}")
+                    skipped.append(source_project_dir.name)
+                    continue
 
                 if dest_project_dir.exists():
                     if existing == "skip":
@@ -105,8 +131,17 @@ class Command(BaseCommand):
 
                 dest_project_dir.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(metadata_path, dest_metadata_path)
-                self._convert_one_project(zip_path, metadata_path, dest_zip_path, owner, keep_imported_projects)
+                self._convert_one_project(
+                    zip_path, metadata_path, dest_zip_path, owner, keep_imported_projects,
+                    generate_audio=generate_audio, skip_phonetic_projects=skip_phonetic_projects
+                )
                 successes.append(source_project_dir.name)
+
+            except SkippedProject as e:
+                self.stdout.write(f"- skip {source_project_dir.name}: {e}")
+                skipped.append(source_project_dir.name)
+                if not dry_run and dest_project_dir.exists():
+                    shutil.rmtree(dest_project_dir)
 
             except Exception as e:
                 message = f"{type(e).__name__}: {e}"
@@ -161,7 +196,16 @@ class Command(BaseCommand):
             raise CommandError(f"Expected exactly one .json metadata file in {source_project_dir}, found {len(json_files)}")
         return zip_files[0], json_files[0]
 
-    def _convert_one_project(self, zip_path, metadata_path, dest_zip_path, owner, keep_imported_project):
+    def _zip_has_phonetic_text_version(self, zip_path):
+        with zipfile.ZipFile(zip_path) as zip_file:
+            for name in zip_file.namelist():
+                normalised_name = name.replace("\\", "/")
+                if "/phonetic/" in f"/{normalised_name}" and not normalised_name.endswith("/"):
+                    return True
+        return False
+
+    def _convert_one_project(self, zip_path, metadata_path, dest_zip_path, owner, keep_imported_project,
+                             generate_audio=False, skip_phonetic_projects=True):
         metadata = self._read_metadata(metadata_path)
         title = (metadata.get("title") or zip_path.stem or "Imported C-LARA project")[:200]
         l1 = metadata.get("l1") or "english"
@@ -183,9 +227,13 @@ class Command(BaseCommand):
             )
             if clara_project_internal is None:
                 raise CommandError(f"Unable to import legacy bundle {zip_path}")
+            if skip_phonetic_projects and clara_project_internal.text_versions.get("phonetic"):
+                raise SkippedProject(f"imported project contains a phonetic text version: {zip_path}")
 
             self._update_project_from_import(clara_project, clara_project_internal, global_metadata)
-            exported_zip_path = Path(make_export_zipfile_internal(clara_project, export_format="json", callback=None))
+            exported_zip_path = Path(make_export_zipfile_internal(
+                clara_project, export_format="json", generate_audio=generate_audio, callback=None
+            ))
             if not exported_zip_path.exists():
                 raise FileNotFoundError(f"JSON-format export zip was not created: {exported_zip_path}")
             shutil.copy2(exported_zip_path, dest_zip_path)

@@ -1388,7 +1388,7 @@ class CLARAProjectInternal:
                                             audio_type_for_words='tts', audio_type_for_segments='tts',
                                             preferred_tts_engine=None, preferred_tts_voice=None,
                                             acknowledgements_info=None,
-                                            phonetic=False, callback=None) -> str:
+                                            phonetic=False, generate_audio=True, callback=None) -> str:
         #trace = True
         trace = False
         post_task_update(callback, f"--- Creating internalised text")
@@ -1420,7 +1420,7 @@ class CLARAProjectInternal:
                                              audio_type_for_words=audio_type_for_words, audio_type_for_segments=audio_type_for_segments,
                                              preferred_tts_engine=preferred_tts_engine, preferred_tts_voice=preferred_tts_voice,
                                              phonetic=phonetic, callback=callback)
-            audio_annotator.annotate_text(text_object, phonetic=phonetic, callback=callback)
+            audio_annotator.annotate_text(text_object, phonetic=phonetic, generate_audio=generate_audio, callback=callback)
             post_task_update(callback, f"--- Audio annotations done")
             if trace:
                 print(f'Text object after audio annotation')

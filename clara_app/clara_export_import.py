@@ -22,7 +22,7 @@ import tempfile
 import traceback
 import json
 
-def make_export_zipfile_internal(project, export_format='normal', callback=None):
+def make_export_zipfile_internal(project, export_format='normal', generate_audio=True, callback=None):
     clara_project_internal = CLARAProjectInternal(project.internal_id, project.l2, project.l1)
 
     audio_info = audio_info_for_project(project)
@@ -63,6 +63,7 @@ def make_export_zipfile_internal(project, export_format='normal', callback=None)
                                                         clara_project_internal=clara_project_internal,
                                                         project=project,
                                                         export_format=export_format,
+                                                        generate_audio=generate_audio,
                                                         callback=callback)
     if result:
         return zipfile
@@ -78,7 +79,7 @@ def make_export_zipfile_from_data_and_metadata(global_metadata, project_director
                                                image_metadata, image_description_metadata,
                                                zipfile,
                                                clara_project_internal=None, project=None,
-                                               export_format='normal', callback=None):
+                                               export_format='normal', generate_audio=True, callback=None):
     tmp_dir = None
     tmp_zipfile = None
     try:
@@ -88,7 +89,7 @@ def make_export_zipfile_from_data_and_metadata(global_metadata, project_director
         write_global_metadata_to_tmp_dir(global_metadata, tmp_dir, callback=callback)
         if export_format == 'json':
             write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global_metadata,
-                                                 tmp_dir, callback=callback)
+                                                 tmp_dir, generate_audio=generate_audio, callback=callback)
         else:
             copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=callback)
         copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False, callback=callback)
@@ -120,7 +121,8 @@ def copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=None)
     copy_directory_to_local_directory(project_directory, tmp_project_dir)
     post_task_update(callback, f'--- Project directory copied')
 
-def write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global_metadata, tmp_dir, callback=None):
+def write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global_metadata, tmp_dir,
+                                         generate_audio=True, callback=None):
     if not clara_project_internal or not project:
         raise InternalCLARAError(message='Internal project and Django project are required for JSON-format export')
 
@@ -138,6 +140,7 @@ def write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global
         audio_type_for_segments=global_metadata['audio_type_for_segments'],
         acknowledgements_info=acknowledgements_info,
         phonetic=False,
+        generate_audio=generate_audio,
         callback=callback,
     )
     if not text_object:

@@ -5,7 +5,7 @@ Use the Django management command `convert_exported_project_bundles_to_json` whe
 1. one legacy C-LARA export zip, and
 2. one JSON metadata file.
 
-The command imports each legacy zip into the local C-LARA instance, immediately exports it again using the JSON-based export format (`annotated_text.json`), and writes a matching output folder. The metadata JSON file is copied unchanged.
+The command imports each legacy zip into the local C-LARA instance, immediately exports it again using the JSON-based export format (`annotated_text.json`), and writes a matching output folder. The metadata JSON file is copied unchanged. By default, it does not generate missing TTS audio and it skips projects that contain a phonetic text version.
 
 ## Basic invocation
 
@@ -51,9 +51,23 @@ python manage.py convert_exported_project_bundles_to_json SOURCE_ROOT DEST_ROOT 
 
 Keeps the temporary imported `CLARAProject` database rows after conversion. By default, the command deletes those rows after each JSON-format export has been written, so the conversion database does not fill up with temporary projects.
 
+```bash
+python manage.py convert_exported_project_bundles_to_json SOURCE_ROOT DEST_ROOT --generate-audio --username admin
+```
+
+Allows the JSON export step to generate missing TTS audio. The default is not to generate audio, which is usually the right behaviour for preprocessing downloaded Adelaide export bundles before transferring them to C-LARA-2.
+
+```bash
+python manage.py convert_exported_project_bundles_to_json SOURCE_ROOT DEST_ROOT --no-skip-phonetic-projects --username admin
+```
+
+Includes projects that contain a phonetic text version. The default is `--skip-phonetic-projects`, because C-LARA-2 does not yet support importing these projects.
+
 ## Notes
 
 - Run the command in a local C-LARA environment that can already import and export individual project bundles.
 - `SOURCE_ROOT` and `DEST_ROOT` must be different directories.
 - Each input project subfolder must contain exactly one `.zip` and exactly one `.json` file.
+- Missing audio is not generated unless you explicitly pass `--generate-audio`.
+- Phonetic projects are skipped unless you explicitly pass `--no-skip-phonetic-projects`.
 - If `--username` is omitted, the command uses the first superuser, then the first staff user, then the first user in the database.
