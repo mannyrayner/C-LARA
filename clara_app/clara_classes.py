@@ -27,6 +27,21 @@ import string
 import unicodedata
 import copy
 
+def _json_safe_value(value):
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, dict):
+        return {str(key): _json_safe_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_value(item) for item in value]
+    if hasattr(value, 'to_json'):
+        json_value = value.to_json()
+        if isinstance(json_value, str):
+            return json.loads(json_value)
+        else:
+            return _json_safe_value(json_value)
+    return repr(value)
+
 ##class ContentElement:
 ##    def __init__(self, element_type, content, annotations=None):
 ##        self.type = element_type
@@ -207,6 +222,15 @@ class ContentElement:
             Used by simple statistics and layout heuristics.
         """
         return 1 if self.type == "Word" else 0
+
+    def to_json(self) -> str:
+        """Serialize the content element, including JSON-safe nested content."""
+        payload = {
+            "type": self.type,
+            "content": _json_safe_value(self.content),
+            "annotations": _json_safe_value(self.annotations),
+        }
+        return json.dumps(payload, ensure_ascii=False)
 
     def __repr__(self) -> str:
         """Debug-friendly representation."""
@@ -400,6 +424,14 @@ class Segment:
         # In phonetic mode, a Segment corresponds to a word if its plain text
         # has non-punctuation content.
         return 0 if string_is_only_punctuation_spaces_and_separators(self.to_text()) else 1
+
+    def to_json(self) -> str:
+        """Serialize the segment, including all content elements and annotations."""
+        payload = {
+            "content_elements": [json.loads(element.to_json()) for element in self.content_elements],
+            "annotations": _json_safe_value(self.annotations),
+        }
+        return json.dumps(payload, ensure_ascii=False)
 
     def __repr__(self) -> str:
         return f"Segment(content_elements={self.content_elements!r}, annotations={self.annotations!r})"
@@ -627,24 +659,9 @@ class Page:
         }
         """
         payload = {
-            "segments": [],
-            "annotations": self.annotations,
+            "segments": [json.loads(seg.to_json()) for seg in self.segments],
+            "annotations": _json_safe_value(self.annotations),
         }
-
-        for seg in self.segments:
-            seg_obj = {
-                "content_elements": [],
-                "annotations": seg.annotations,
-            }
-            for el in seg.content_elements:
-                seg_obj["content_elements"].append(
-                    {
-                        "type": el.type,
-                        "content": el.content,
-                        "annotations": el.annotations,
-                    }
-                )
-            payload["segments"].append(seg_obj)
 
         return json.dumps(payload, ensure_ascii=False)
 
@@ -909,7 +926,7 @@ class Text:
             "l2_language": self.l2_language,
             "l1_language": self.l1_language,
             "pages": pages_payload,
-            "annotations": self.annotations,  # new but backward-compatible
+            "annotations": _json_safe_value(self.annotations),  # new but backward-compatible
             "voice": self.voice,              # optional
         }
         return json.dumps(payload, ensure_ascii=False)
