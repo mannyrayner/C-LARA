@@ -140,11 +140,11 @@ class AudioAnnotator:
     def delete_entries_for_language(self, callback=None):
         self.audio_repository.delete_entries_for_language(self.engine_id, self.language_id, callback=callback)
 
-    def annotate_text(self, text_obj, phonetic=False, callback=None):
+    def annotate_text(self, text_obj, phonetic=False, generate_audio=True, callback=None):
         words_data, segments_data = self._get_all_audio_data(text_obj, phonetic=phonetic, callback=callback)
         missing_words, missing_segments = self._get_missing_audio(words_data, segments_data, phonetic=phonetic, callback=callback)
 
-        if self.audio_type_for_words == 'tts' and self.word_engine_id and missing_words and self.audio_type_for_words == 'tts':
+        if generate_audio and self.audio_type_for_words == 'tts' and self.word_engine_id and missing_words and self.audio_type_for_words == 'tts':
             external_name_for_words = 'phonemes' if phonetic else 'words'
             post_task_update(callback, f"--- Creating TTS audio for {external_name_for_words}")
             new_words_data = self._create_and_store_missing_mp3s(missing_words, 'words', phonetic=phonetic, callback=callback)
@@ -152,7 +152,7 @@ class AudioAnnotator:
         else:
             new_words_data = []
 
-        if self.audio_type_for_segments == 'tts' and self.segment_engine_id and missing_segments and self.audio_type_for_segments == 'tts':
+        if generate_audio and self.audio_type_for_segments == 'tts' and self.segment_engine_id and missing_segments and self.audio_type_for_segments == 'tts':
             external_name_for_segments = 'words' if phonetic else 'segments'
             post_task_update(callback, f"--- Creating TTS audio for {external_name_for_segments}")
             new_segments_data = self._create_and_store_missing_mp3s(missing_segments, 'segments', phonetic=phonetic, callback=callback)
@@ -165,7 +165,7 @@ class AudioAnnotator:
 
         if not phonetic: 
             page_data = self._get_page_audio_data(text_obj, updated_segments_data, phonetic=False, callback=callback)
-            updated_page_data = self._generate_missing_page_audio(page_data, callback=None)
+            updated_page_data = self._generate_missing_page_audio(page_data, callback=None) if generate_audio else page_data
         else:
             updated_page_data = []
 
