@@ -5,7 +5,7 @@ Use the Django management command `convert_exported_project_bundles_to_json` whe
 1. one legacy C-LARA export zip, and
 2. one JSON metadata file.
 
-The command imports each legacy zip into the local C-LARA instance, immediately exports it again using the JSON-based export format (`annotated_text.json`), and writes a matching output folder. The metadata JSON file is copied unchanged. By default, it does not generate missing TTS audio and it skips projects that contain a phonetic text version.
+The command imports each legacy zip into the local C-LARA instance, immediately exports it again using the JSON-based export format (`annotated_text.json`), and writes a matching output folder. The metadata JSON file is copied unchanged. If the original project contains `project_dir/coherent_images_v2_project_dir`, the JSON-format zip includes that directory at top level as `coherent_images_v2_project_dir` so C-LARA-2 can postprocess the image-generation state. By default, the command does not generate missing TTS audio and skips projects that contain a phonetic text version.
 
 ## Basic invocation
 

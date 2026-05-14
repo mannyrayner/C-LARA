@@ -90,6 +90,7 @@ def make_export_zipfile_from_data_and_metadata(global_metadata, project_director
         if export_format == 'json':
             write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global_metadata,
                                                  tmp_dir, generate_audio=generate_audio, callback=callback)
+            copy_coherent_images_v2_project_dir_to_tmp_dir(clara_project_internal, tmp_dir, callback=callback)
         else:
             copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=callback)
         copy_audio_data_to_tmp_dir(audio_metadata, tmp_dir, phonetic=False, callback=callback)
@@ -120,6 +121,18 @@ def copy_project_directory_to_tmp_dir(project_directory, tmp_dir, callback=None)
     post_task_update(callback, f'--- Copying project directory')
     copy_directory_to_local_directory(project_directory, tmp_project_dir)
     post_task_update(callback, f'--- Project directory copied')
+
+def copy_coherent_images_v2_project_dir_to_tmp_dir(clara_project_internal, tmp_dir, callback=None):
+    if not clara_project_internal:
+        return
+    coherent_images_v2_project_dir = clara_project_internal.coherent_images_v2_project_dir
+    if not local_directory_exists(coherent_images_v2_project_dir):
+        return
+
+    tmp_coherent_images_v2_project_dir = os.path.join(tmp_dir, 'coherent_images_v2_project_dir')
+    post_task_update(callback, f'--- Copying coherent images V2 project directory')
+    copy_directory_to_local_directory(coherent_images_v2_project_dir, tmp_coherent_images_v2_project_dir)
+    post_task_update(callback, f'--- Coherent images V2 project directory copied')
 
 def write_annotated_text_json_to_tmp_dir(clara_project_internal, project, global_metadata, tmp_dir,
                                          generate_audio=True, callback=None):
